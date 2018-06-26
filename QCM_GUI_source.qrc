@@ -1,0 +1,24 @@
+<RCC>
+  <qresource prefix="icon">
+    <file>rc/ra.svg</file>
+    <file>rc/la.svg</file>
+    <file>rc/myvna.svg</file>
+    <file>rc/delete.svg</file>
+    <file>rc/export.svg</file>
+    <file>rc/reset.svg</file>
+    <file>rc/load_settings.svg</file>
+    <file>rc/load_data.svg</file>
+    <file>rc/temp_sensor.svg</file>
+    <file>rc/ref_channel.svg</file>
+    <file>rc/ref_input.svg</file>
+    <file>rc/ref_file.svg</file>
+    <file>rc/signal_ch1.svg</file>
+    <file>rc/signal_ch2.svg</file>
+    <file>rc/signal_ch12.svg</file>
+    <file>rc/signal_ch.svg</file>
+    <file>rc/saveAs.svg</file>
+    <file>rc/save.svg</file>
+    <file>rc/logo_2.svg</file>
+  </qresource>
+  <qresource prefix="button"/>
+</RCC>
