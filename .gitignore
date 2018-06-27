@@ -46,6 +46,7 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+<<<<<<< HEAD
 
 # vs code Folder
 .vscode/
@@ -151,3 +152,5 @@ venv.bak/
 
 # mkdocs documentation
 /site
+=======
+>>>>>>> parent of 13bca49... .gitignore changeed. add vs code folder
