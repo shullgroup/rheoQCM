@@ -146,24 +146,27 @@
        cy="267.39728"
        r="2.6458333" />
     <g
-       id="g5919-8"
-       transform="matrix(0.62710684,-0.62710684,0.62710684,0.62710684,-182.30913,107.25921)"
-       style="fill:#1a1a1a;stroke-width:1.12756979">
+       id="g950">
       <rect
-         y="283.36923"
-         x="23.386084"
-         height="2.271791"
-         width="11.091685"
-         id="rect5900-8"
-         style="opacity:1;fill:#1a1a1a;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.29833621;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill" />
+         transform="rotate(45)"
+         y="178.43449"
+         x="194.83971"
+         height="3.006963"
+         width="9.8840542"
+         id="rect5900-8-4"
+         style="opacity:1;fill:#1a1a1a;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.26458338;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill"
+         rx="0"
+         ry="0" />
       <rect
-         transform="rotate(90)"
-         y="-30.067822"
-         x="278.95929"
-         height="2.271791"
-         width="11.091685"
-         id="rect5900-0-4"
-         style="opacity:1;fill:#1a1a1a;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.29833621;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill" />
+         transform="rotate(135)"
+         y="-201.28522"
+         x="174.99594"
+         height="3.006963"
+         width="9.8840542"
+         id="rect5900-8-4-7"
+         style="opacity:1;fill:#1a1a1a;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.26458341;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill"
+         rx="0"
+         ry="0" />
     </g>
   </g>
 </svg>
