@@ -170,7 +170,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1447,6 +1447,12 @@ background-color: red;
               </item>
               <item>
                <widget class="QTreeWidget" name="treeWidget">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="sizeAdjustPolicy">
                  <enum>QAbstractScrollArea::AdjustToContents</enum>
                 </property>
@@ -1753,8 +1759,8 @@ border: none;
              <widget class="QComboBox" name="comboBox">
               <property name="geometry">
                <rect>
-                <x>10</x>
-                <y>10</y>
+                <x>20</x>
+                <y>40</y>
                 <width>91</width>
                 <height>22</height>
                </rect>
@@ -1793,8 +1799,8 @@ border: none;
              <widget class="QPushButton" name="pushButton_3">
               <property name="geometry">
                <rect>
-                <x>170</x>
-                <y>10</y>
+                <x>160</x>
+                <y>50</y>
                 <width>75</width>
                 <height>23</height>
                </rect>
@@ -1806,16 +1812,34 @@ border: none;
              <widget class="QGroupBox" name="groupBox">
               <property name="geometry">
                <rect>
-                <x>20</x>
-                <y>50</y>
+                <x>30</x>
+                <y>0</y>
                 <width>230</width>
-                <height>50</height>
+                <height>31</height>
                </rect>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
               </property>
               <property name="title">
                <string>Active Harmonics</string>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_12">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
                 <widget class="QCheckBox" name="checkBox">
                  <property name="text">
@@ -1863,8 +1887,8 @@ border: none;
              <widget class="QComboBox" name="comboBox_2">
               <property name="geometry">
                <rect>
-                <x>170</x>
-                <y>130</y>
+                <x>220</x>
+                <y>120</y>
                 <width>51</width>
                 <height>22</height>
                </rect>
@@ -2127,6 +2151,121 @@ border: none;
                <string>Error...</string>
               </property>
              </widget>
+             <widget class="QTreeWidget" name="treeWidget">
+              <property name="geometry">
+               <rect>
+                <x>10</x>
+                <y>60</y>
+                <width>141</width>
+                <height>71</height>
+               </rect>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="verticalScrollBarPolicy">
+               <enum>Qt::ScrollBarAlwaysOff</enum>
+              </property>
+              <property name="horizontalScrollBarPolicy">
+               <enum>Qt::ScrollBarAlwaysOff</enum>
+              </property>
+              <property name="sizeAdjustPolicy">
+               <enum>QAbstractScrollArea::AdjustToContents</enum>
+              </property>
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
+              <property name="indentation">
+               <number>16</number>
+              </property>
+              <property name="uniformRowHeights">
+               <bool>true</bool>
+              </property>
+              <attribute name="headerVisible">
+               <bool>false</bool>
+              </attribute>
+              <column>
+               <property name="text">
+                <string>Model</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Index</string>
+               </property>
+              </column>
+              <item>
+               <property name="text">
+                <string>Set Model</string>
+               </property>
+               <item>
+                <property name="text">
+                 <string>one layer</string>
+                </property>
+                <property name="text">
+                 <string>:::</string>
+                </property>
+                <property name="flags">
+                 <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>two layers</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="flags">
+                 <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>bulk</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="flags">
+                 <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>confined</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="flags">
+                 <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+                </property>
+               </item>
+              </item>
+             </widget>
+             <widget class="QLabel" name="label_6">
+              <property name="geometry">
+               <rect>
+                <x>160</x>
+                <y>100</y>
+                <width>101</width>
+                <height>16</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>Modulus Reference: </string>
+              </property>
+             </widget>
              <widget class="QWidget" name="">
               <property name="geometry">
                <rect>
@@ -2199,6 +2338,24 @@ border: none;
                </item>
               </layout>
              </widget>
+             <zorder>comboBox</zorder>
+             <zorder>pushButton_3</zorder>
+             <zorder>groupBox</zorder>
+             <zorder>comboBox_2</zorder>
+             <zorder>tableWidget_2</zorder>
+             <zorder>tableWidget_3</zorder>
+             <zorder>pushButton_9</zorder>
+             <zorder>pushButton_10</zorder>
+             <zorder>spinBox</zorder>
+             <zorder>spinBox_2</zorder>
+             <zorder>spinBox_3</zorder>
+             <zorder>comboBox_6</zorder>
+             <zorder>checkBox_7</zorder>
+             <zorder>checkBox_8</zorder>
+             <zorder>pushButton_12</zorder>
+             <zorder>treeWidget</zorder>
+             <zorder>treeWidget</zorder>
+             <zorder>label_6</zorder>
             </widget>
            </widget>
           </item>
@@ -2336,7 +2493,7 @@ background-respeat: none;
         <item>
          <widget class="QStackedWidget" name="stackedWidget_spectra_mechanics">
           <property name="currentIndex">
-           <number>2</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="page_spectra_show">
            <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -2699,6 +2856,12 @@ background-respeat: none;
                <layout class="QVBoxLayout" name="verticalLayout_21">
                 <item>
                  <widget class="QFrame" name="frame_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="minimumSize">
                    <size>
                     <width>0</width>
@@ -2719,12 +2882,12 @@ background-respeat: none;
                    <enum>Qt::Vertical</enum>
                   </property>
                   <property name="sizeType">
-                   <enum>QSizePolicy::Preferred</enum>
+                   <enum>QSizePolicy::Expanding</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
                     <width>20</width>
-                    <height>0</height>
+                    <height>13</height>
                    </size>
                   </property>
                  </spacer>
@@ -3057,7 +3220,7 @@ background-respeat: none;
         <item>
          <widget class="QStackedWidget" name="stackedWidget">
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="page_data_data">
            <layout class="QVBoxLayout" name="verticalLayout_22">
@@ -3611,6 +3774,8 @@ background-respeat: none;
     <addaction name="actionExport"/>
     <addaction name="separator"/>
     <addaction name="actionDelete_Data"/>
+    <addaction name="actionDelete_Selected"/>
+    <addaction name="separator"/>
     <addaction name="actionReset"/>
     <addaction name="actionExit"/>
    </widget>
@@ -3699,6 +3864,7 @@ background-respeat: none;
    <addaction name="separator"/>
    <addaction name="actionSave"/>
    <addaction name="actionDelete_Data"/>
+   <addaction name="actionDelete_Selected"/>
   </widget>
   <action name="actionLoad_Data">
    <property name="icon">
@@ -4023,6 +4189,15 @@ background-respeat: none;
   <action name="actionRepositroy">
    <property name="text">
     <string>Repositroy</string>
+   </property>
+  </action>
+  <action name="actionDelete_Selected">
+   <property name="icon">
+    <iconset resource="QCM_GUI_source.qrc">
+     <normaloff>:/icon/rc/delete_selected.svg</normaloff>:/icon/rc/delete_selected.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Delete Selected</string>
    </property>
   </action>
  </widget>

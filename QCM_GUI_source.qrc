@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icon">
+    <file>rc/delete_selected.svg</file>
     <file>rc/ra.svg</file>
     <file>rc/la.svg</file>
     <file>rc/myvna.svg</file>
