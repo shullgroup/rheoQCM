@@ -205,8 +205,13 @@ class QCMApp(QMainWindow):
         ##################### add Matplotlib figures in to frames ##########
 
         # add figure into frame_spactra_fit
-        self.ui.mpl_spectra_fit = MatplotlibWidget(self.ui.frame_spectra_fit)
+        self.ui.mpl_spectra_fit = MatplotlibWidget(
+            parent=self.ui.frame_spectra_fit, 
+            xlabel='Frequency (Hz)',
+            ylabel='Conductance (mS)',
+            )
         self.ui.mpl_spectra_fit.update_figure()
+        self.ui.mpl_spectra_fit.axes.plot([0, 1, 2, 3], [3,2,1,0])
         self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
 
 
