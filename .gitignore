@@ -152,3 +152,7 @@ venv.bak/
 
 # mkdocs documentation
 /site
+
+
+# folder for temporary test Files
+temp/

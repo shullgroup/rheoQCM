@@ -13,6 +13,20 @@ max_harmonic = 11
 # default harmonics 
 default_harmonics = [1, 3, 5]
 
+# default open/save data file type
+default_datafiletype = ';;'.join([
+    'Json file (*.json)',
+])
+
+# export  data file type
+export_datafiletype = ';;'.join([
+    'json file (*.json)',
+    'hdf5 file (*.h5)',
+    'Python file (*.py)',
+    'Matlab file (*.mat)',
+    'csv file (*.csv)',
+])
+
 # default label_actual_interval
 actual_interval = 2
 acquisition_interval = 2

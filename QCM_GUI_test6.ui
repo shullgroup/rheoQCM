@@ -136,32 +136,6 @@ background-color: red;
               </property>
              </widget>
             </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_clear_spectra">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Clear Raw Spectra</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="pushButton_clear_datapoints">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>Clear Datapoints</string>
-              </property>
-             </widget>
-            </item>
            </layout>
           </item>
           <item>
@@ -1557,6 +1531,7 @@ background-color: transparent;
 border-image: url(:/icon/rc/temp_sensor.svg);
 background: none;
 border: none;
+background-repeat: none;
 }
 </string>
                 </property>
@@ -1586,6 +1561,7 @@ background-color: transparent;
 border-image: url(:/icon/rc/signal_ch.svg);
 background: none;
 border: none;
+background-repeat: none;
 }
 </string>
                 </property>
@@ -1634,6 +1610,7 @@ background-color: transparent;
 border-image: url(:/icon/rc/ref_input.svg);
 background: none;
 border: none;
+background-repeat: none;
 }
 </string>
                 </property>
@@ -1686,24 +1663,11 @@ border: none;
              <attribute name="title">
               <string>Data</string>
              </attribute>
-             <widget class="QPushButton" name="pushButton_4">
-              <property name="geometry">
-               <rect>
-                <x>30</x>
-                <y>30</y>
-                <width>75</width>
-                <height>23</height>
-               </rect>
-              </property>
-              <property name="text">
-               <string>pick point</string>
-              </property>
-             </widget>
              <widget class="QPushButton" name="pushButton_5">
               <property name="geometry">
                <rect>
-                <x>150</x>
-                <y>30</y>
+                <x>170</x>
+                <y>20</y>
                 <width>75</width>
                 <height>23</height>
                </rect>
@@ -1715,8 +1679,8 @@ border: none;
              <widget class="QPushButton" name="pushButton_6">
               <property name="geometry">
                <rect>
-                <x>50</x>
-                <y>90</y>
+                <x>30</x>
+                <y>70</y>
                 <width>75</width>
                 <height>23</height>
                </rect>
@@ -1725,30 +1689,110 @@ border: none;
                <string>set reference</string>
               </property>
              </widget>
-             <widget class="QPushButton" name="pushButton_7">
+             <widget class="QPushButton" name="pushButton_13">
               <property name="geometry">
                <rect>
-                <x>60</x>
-                <y>160</y>
+                <x>30</x>
+                <y>140</y>
                 <width>75</width>
                 <height>23</height>
                </rect>
               </property>
               <property name="text">
-               <string>selected data</string>
+               <string>Mark Data</string>
               </property>
              </widget>
-             <widget class="QPushButton" name="pushButton_8">
+             <widget class="QGroupBox" name="groupBox_2">
               <property name="geometry">
                <rect>
-                <x>70</x>
-                <y>220</y>
-                <width>75</width>
-                <height>23</height>
+                <x>120</x>
+                <y>70</y>
+                <width>111</width>
+                <height>50</height>
+               </rect>
+              </property>
+              <property name="title">
+               <string>Show Data</string>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_15">
+               <property name="spacing">
+                <number>6</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QRadioButton" name="radioButton">
+                 <property name="text">
+                  <string>All</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QRadioButton" name="radioButton_2">
+                 <property name="text">
+                  <string>Marked</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+             <widget class="QTextEdit" name="textEdit">
+              <property name="geometry">
+               <rect>
+                <x>20</x>
+                <y>190</y>
+                <width>91</width>
+                <height>121</height>
+               </rect>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_7">
+              <property name="geometry">
+               <rect>
+                <x>30</x>
+                <y>170</y>
+                <width>111</width>
+                <height>16</height>
                </rect>
               </property>
               <property name="text">
-               <string>all data</string>
+               <string>Data Marked</string>
+              </property>
+             </widget>
+             <widget class="QLabel" name="label_10">
+              <property name="geometry">
+               <rect>
+                <x>140</x>
+                <y>170</y>
+                <width>81</width>
+                <height>16</height>
+               </rect>
+              </property>
+              <property name="text">
+               <string>Data Selected</string>
+              </property>
+             </widget>
+             <widget class="QTextEdit" name="textEdit_2">
+              <property name="geometry">
+               <rect>
+                <x>130</x>
+                <y>190</y>
+                <width>91</width>
+                <height>121</height>
+               </rect>
               </property>
              </widget>
             </widget>
@@ -2266,12 +2310,12 @@ border: none;
                <string>Modulus Reference: </string>
               </property>
              </widget>
-             <widget class="QWidget" name="">
+             <widget class="QWidget" name="layoutWidget">
               <property name="geometry">
                <rect>
                 <x>70</x>
                 <y>330</y>
-                <width>61</width>
+                <width>113</width>
                 <height>22</height>
                </rect>
               </property>
@@ -2338,6 +2382,7 @@ border: none;
                </item>
               </layout>
              </widget>
+             <zorder>layoutWidget</zorder>
              <zorder>comboBox</zorder>
              <zorder>pushButton_3</zorder>
              <zorder>groupBox</zorder>
@@ -2346,14 +2391,10 @@ border: none;
              <zorder>tableWidget_3</zorder>
              <zorder>pushButton_9</zorder>
              <zorder>pushButton_10</zorder>
-             <zorder>spinBox</zorder>
-             <zorder>spinBox_2</zorder>
-             <zorder>spinBox_3</zorder>
              <zorder>comboBox_6</zorder>
              <zorder>checkBox_7</zorder>
              <zorder>checkBox_8</zorder>
              <zorder>pushButton_12</zorder>
-             <zorder>treeWidget</zorder>
              <zorder>treeWidget</zorder>
              <zorder>label_6</zorder>
             </widget>
@@ -2414,13 +2455,7 @@ border: none;
            </spacer>
           </item>
           <item>
-           <widget class="QLabel" name="label_settings_la">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
+           <widget class="QPushButton" name="pushButton_settings_la">
             <property name="minimumSize">
              <size>
               <width>8</width>
@@ -2434,32 +2469,31 @@ border: none;
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">#label_settings_la
+             <string notr="true">#pushButton_settings_la
 {
 background-color: transparent;
 border-image: url(:/icon/rc/la.svg);
 background: none;
 border: none;
-background-respeat: none;
+background-repeat: none;
 }
+
+#pushButton_settings_la:hover:!pressed
+{
+background-color: rgba(155, 230, 255, 160);
+border: 1px solid blue;
+/* border-style: inset; */
+}
+
 </string>
             </property>
             <property name="text">
              <string/>
             </property>
-            <property name="scaledContents">
-             <bool>false</bool>
-            </property>
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_settings_ra">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
+           <widget class="QPushButton" name="pushButton_settings_ra">
             <property name="minimumSize">
              <size>
               <width>8</width>
@@ -2473,13 +2507,20 @@ background-respeat: none;
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">#label_settings_ra
+             <string notr="true">#pushButton_settings_ra
 {
 background-color: transparent;
 border-image: url(:/icon/rc/ra.svg);
 background: none;
 border: none;
-background-respeat: none;
+background-repeat: none;
+}
+
+#pushButton_settings_ra:hover:!pressed
+{
+background-color: rgba(155, 230, 255, 160);
+border: 1px solid blue;
+/* border-style: inset; */
 }
 </string>
             </property>
@@ -2491,9 +2532,9 @@ background-respeat: none;
          </layout>
         </item>
         <item>
-         <widget class="QStackedWidget" name="stackedWidget_spectra_mechanics">
+         <widget class="QStackedWidget" name="stackedWidget_spectra">
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="page_spectra_show">
            <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -2671,15 +2712,30 @@ background-respeat: none;
           </widget>
           <widget class="QWidget" name="page_spectra_fit">
            <layout class="QVBoxLayout" name="verticalLayout_27">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
             <item>
              <widget class="QSplitter" name="splitter_7">
               <property name="orientation">
                <enum>Qt::Vertical</enum>
               </property>
-              <widget class="QWidget" name="">
+              <widget class="QWidget" name="layoutWidget">
                <layout class="QVBoxLayout" name="verticalLayout_20">
                 <item>
-                 <widget class="QFrame" name="frame">
+                 <widget class="QFrame" name="frame_spectra_fit">
                   <property name="minimumSize">
                    <size>
                     <width>0</width>
@@ -2852,8 +2908,11 @@ background-respeat: none;
                 </size>
                </property>
               </widget>
-              <widget class="QWidget" name="">
+              <widget class="QWidget" name="layoutWidget">
                <layout class="QVBoxLayout" name="verticalLayout_21">
+                <property name="spacing">
+                 <number>0</number>
+                </property>
                 <item>
                  <widget class="QFrame" name="frame_2">
                   <property name="sizePolicy">
@@ -3034,7 +3093,7 @@ background-respeat: none;
                 </property>
                </column>
               </widget>
-              <widget class="QWidget" name="">
+              <widget class="QWidget" name="layoutWidget">
                <layout class="QVBoxLayout" name="verticalLayout_25">
                 <property name="spacing">
                  <number>0</number>
@@ -3141,13 +3200,7 @@ background-respeat: none;
            </spacer>
           </item>
           <item>
-           <widget class="QLabel" name="label_data_la">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
+           <widget class="QPushButton" name="pushButton_data_la">
             <property name="minimumSize">
              <size>
               <width>8</width>
@@ -3161,32 +3214,31 @@ background-respeat: none;
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">#label_data_la
+             <string notr="true">#pushButton_data_la
 {
 background-color: transparent;
 border-image: url(:/icon/rc/la.svg);
 background: none;
 border: none;
-background-respeat: none;
+background-repeat: none;
 }
+
+#pushButton_data_la:hover:!pressed
+{
+background-color: rgba(155, 230, 255, 160);
+border: 1px solid blue;
+/* border-style: inset; */
+}
+
 </string>
             </property>
             <property name="text">
              <string/>
             </property>
-            <property name="scaledContents">
-             <bool>false</bool>
-            </property>
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_data_ra">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
+           <widget class="QPushButton" name="pushButton_data_ra">
             <property name="minimumSize">
              <size>
               <width>8</width>
@@ -3200,13 +3252,20 @@ background-respeat: none;
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">#label_data_ra
+             <string notr="true">#pushButton_data_ra
 {
 background-color: transparent;
 border-image: url(:/icon/rc/ra.svg);
 background: none;
 border: none;
-background-respeat: none;
+background-repeat: none;
+}
+
+#pushButton_data_ra:hover:!pressed
+{
+background-color: rgba(155, 230, 255, 160);
+border: 1px solid blue;
+/* border-style: inset; */
 }
 </string>
             </property>
@@ -3218,7 +3277,7 @@ background-respeat: none;
          </layout>
         </item>
         <item>
-         <widget class="QStackedWidget" name="stackedWidget">
+         <widget class="QStackedWidget" name="stackedWidget_data">
           <property name="currentIndex">
            <number>0</number>
           </property>
@@ -3863,6 +3922,9 @@ background-respeat: none;
    <addaction name="actionOpen_MyVNA"/>
    <addaction name="separator"/>
    <addaction name="actionSave"/>
+   <addaction name="actionSave_As"/>
+   <addaction name="actionExport"/>
+   <addaction name="separator"/>
    <addaction name="actionDelete_Data"/>
    <addaction name="actionDelete_Selected"/>
   </widget>
@@ -4203,8 +4265,6 @@ background-respeat: none;
  </widget>
  <tabstops>
   <tabstop>pushButton_run_stop</tabstop>
-  <tabstop>pushButton_clear_spectra</tabstop>
-  <tabstop>pushButton_clear_datapoints</tabstop>
   <tabstop>pushButton_reset_reference_time</tabstop>
   <tabstop>lineEdit_acquisition_interval</tabstop>
   <tabstop>lineEdit_refresh_resolution</tabstop>

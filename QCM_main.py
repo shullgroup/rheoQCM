@@ -6,12 +6,13 @@ This is the main code of the QCM acquization program
 import sys
 import datetime
 from PyQt5.QtCore import pyqtSlot, Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout
 from PyQt5.QtGui import QIcon, QPixmap
 # from PyQt5.uic import loadUi
 from MainWindow import Ui_MainWindow
 import GUISettings as constant
 import GUIFunc
+from MatplotlibWidget import MatplotlibWidget
 
 class QCMApp(QMainWindow):
     '''
@@ -201,6 +202,15 @@ class QCMApp(QMainWindow):
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_f0BW)
 
 
+        ##################### add Matplotlib figures in to frames ##########
+
+        # add figure into frame_spactra_fit
+        self.ui.mpl_spectra_fit = MatplotlibWidget(self.ui.frame_spectra_fit)
+        self.ui.mpl_spectra_fit.update_figure()
+        self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
+
+
+
 
         ####### link functions  to UI ##########
         # set RUN/STOP button
@@ -222,16 +232,24 @@ class QCMApp(QMainWindow):
         # set pushButton_goto_folder
         self.ui.pushButton_goto_folder.clicked.connect(self.on_clicked_pushButton_goto_folder)
 
+        # set arrows (la and ra) to change pages 
+        self.ui.pushButton_settings_la.clicked.connect(lambda: self.set_stackedwidget_index(self.ui.stackedWidget_spectra, diret=-1)) # set index -1
+        self.ui.pushButton_settings_ra.clicked.connect(lambda: self.set_stackedwidget_index(self.ui.stackedWidget_spectra, diret=1)) # set index 1
+        self.ui.pushButton_data_la.clicked.connect(lambda: self.set_stackedwidget_index(self.ui.stackedWidget_data, diret=-1)) # set index -1
+        self.ui.pushButton_data_ra.clicked.connect(lambda: self.set_stackedwidget_index(self.ui.stackedWidget_data, diret=1)) # set index 1
+
         # set QAction
         self.ui.actionLoad_Settings.triggered.connect(self.on_triggered_load_settings)
         self.ui.actionLoad_Data.triggered.connect(self.on_triggered_load_data)
         self.ui.actionNew_Data.triggered.connect(self.on_triggered_new_data)
         self.ui.actionSave.triggered.connect(self.on_triggered_actionSave)
         self.ui.actionSave_As.triggered.connect(self.on_triggered_actionSave_As)
+        self.ui.actionExport.triggered.connect(self.on_triggered_actionExport)
         self.ui.actionReset.triggered.connect(self.on_triggered_actionReset)
 
 
     ########### creating functions ##############
+
     def create_combobox(self, name, contents, box_width, row_text='', parent=''):
         ''' this function create a combobox object with it's name = name, items = contents. and  set it't width. '''
         # create a combobox object
@@ -305,12 +323,12 @@ class QCMApp(QMainWindow):
         self.ui.label_actual_interval.setText(f'{acquisition_interval * refresh_resolution}  s')
 
     ## functions for open and save file
-    def openFileNameDialog(self, title, path=''):  
+    def openFileNameDialog(self, title, path='', filetype=constant.default_datafiletype):  
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getOpenFileName(self, title, path,"All Files (*);;Python Files (*.py)", options=options)
+        fileName, _ = QFileDialog.getOpenFileName(self, title, path, filetype, options=options)
         if fileName:
-            print(fileName)
+            print(type(fileName))
         else:
             fileName = ''
         return fileName
@@ -322,10 +340,10 @@ class QCMApp(QMainWindow):
     #     if files:
     #         print(files)
  
-    def saveFileDialog(self, title, path=''):    
+    def saveFileDialog(self, title, path='', filetype=constant.default_datafiletype):    
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(self,title,"","All Files (*);;Python File (*.py)", options=options)
+        fileName, _ = QFileDialog.getSaveFileName(self,title, path, filetype, options=options)
         if fileName:
             print(fileName)
         else:
@@ -333,9 +351,9 @@ class QCMApp(QMainWindow):
         return fileName 
 
     def on_triggered_new_data(self):
-        fileName = self.saveFileDialog('Choose a new file')
-        fileName_str = fileName
-        self.ui.lineEdit_data_file_str.setText(fileName_str)
+        fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
+        # change the displayed file directory in lineEdit_data_file_str
+        self.ui.lineEdit_data_file_str.setText(fileName)
         # reset lineEdit_reference_time
         self.reset_reference_time()
         # set lineEdit_reference_time editable and enable pushButton_reset_reference_time
@@ -343,9 +361,9 @@ class QCMApp(QMainWindow):
         self.ui.pushButton_reset_reference_time.setEnabled(True)
 
     def on_triggered_load_data(self):
-        fileName = self.openFileNameDialog('Choose an existing file to append')
-        fileName_str = fileName
-        self.ui.lineEdit_data_file_str.setText(fileName_str)
+        fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
+        # change the displayed file directory in lineEdit_data_file_str
+        self.ui.lineEdit_data_file_str.setText(fileName)
         # set lineEdit_reference_time
         # set lineEdit_reference_time read only and disable pushButton_reset_reference_time
         self.ui.lineEdit_reference_time.setReadOnly(True)
@@ -364,20 +382,52 @@ class QCMApp(QMainWindow):
 
     # 
     def on_triggered_load_settings(self):
-        fileName = self.openFileNameDialog('Choose a file to use it\'s setting')
+        fileName = self.openFileNameDialog('Choose a file to use it\'s setting') # !! add path of last opened folder
+        # change the displayed file directory in lineEdit_data_file_str
         self.ui.lineEdit_data_file_str.setText(fileName)
 
     def on_triggered_actionSave(self):
         # save current data to file
-        pass
+        print('save function  to be added...')
 
     def on_triggered_actionSave_As(self):
-        # save current data to a new file
-        pass
-    
+        # save current data to a new file 
+        fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
+        # change the displayed file directory in lineEdit_data_file_str
+        self.ui.lineEdit_data_file_str.setText(fileName)
+
+    def on_triggered_actionExport(self):
+        # export data to a selected form
+        fileName = self.saveFileDialog(title='Choose a file and data type', filetype=constant.export_datafiletype) # !! add path of last opened folder
+        # codes for data exporting
+
     def on_triggered_actionReset(self):
         # reset MainWindow
         pass
+
+    def set_frame_layout(self, widget):
+        '''set a dense layout for frame with a single widget'''
+        vbox = QVBoxLayout()
+        vbox.setContentsMargins(0, 0, 0, 0) # set layout margins (left, top, right, bottom)
+        vbox.addWidget(widget)
+        return vbox
+
+    def set_stackedwidget_index(self, stwgt, idx=[], diret=[]):
+        '''
+        chenge the index of stwgt to given idx (if not []) 
+        or to the given direction (if diret not [])
+          diret=1: index += 1;
+          diret=-1: index +=-1
+        '''
+        # print(self)
+        if idx: # if index is not []
+            stwgt.setCurrentIndex(idx) # set index to idx
+        elif diret: # if diret is not []
+            count = stwgt.count()  # get total pages
+            current_index = stwgt.currentIndex()  # get current index
+            stwgt.setCurrentIndex((current_index + diret) % count) # increase or decrease index by diret
+
+
 
 
 
