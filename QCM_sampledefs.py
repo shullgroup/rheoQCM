@@ -13,6 +13,16 @@ def PMMA_75k_Tom():
     return sample
 
 
+def PMMA_75k_Tom_2():
+    sample = {}
+    sample['datadir'] = '../data/Schmitt/'
+    sample['barefile'] = 'QCMS02_bare'
+    sample['filmfile'] = 'QCMS02_75kPMMA'
+    sample['nhcalc'] = ['355']
+    sample['nhplot'] = [3, 5]
+    return sample
+
+
 def PMMA_75k():
     sample = {}
     sample['datadir'] = '../data/Taghon/PMMA/'

@@ -17,7 +17,7 @@ from QCM_functions import QCManalyze
 
 # %%  toms PMMA 75k sample
 plt.close('all')
-QCManalyze(QCM_sampledefs.PMMA_75k_Tom())
+QCManalyze(QCM_sampledefs.PMMA_75k_Tom_2())
 
 
 # %%  Meredith's PMMA 75k sample
