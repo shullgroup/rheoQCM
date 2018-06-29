@@ -2743,7 +2743,7 @@ border: 1px solid blue;
                    </size>
                   </property>
                   <property name="frameShape">
-                   <enum>QFrame::Box</enum>
+                   <enum>QFrame::NoFrame</enum>
                   </property>
                   <property name="frameShadow">
                    <enum>QFrame::Raised</enum>
@@ -2764,16 +2764,16 @@ border: 1px solid blue;
                      </sizepolicy>
                     </property>
                     <property name="minimum">
-                     <number>-30</number>
+                     <number>-20</number>
                     </property>
                     <property name="maximum">
-                     <number>30</number>
+                     <number>20</number>
                     </property>
                     <property name="singleStep">
-                     <number>2</number>
+                     <number>1</number>
                     </property>
                     <property name="pageStep">
-                     <number>30</number>
+                     <number>40</number>
                     </property>
                     <property name="orientation">
                      <enum>Qt::Horizontal</enum>
@@ -2782,7 +2782,7 @@ border: 1px solid blue;
                      <enum>QSlider::TicksBelow</enum>
                     </property>
                     <property name="tickInterval">
-                     <number>10</number>
+                     <number>5</number>
                     </property>
                    </widget>
                   </item>
