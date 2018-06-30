@@ -1,4 +1,4 @@
-# Project Title
+# QCM Data Collection and Analysis Software
 
 One Paragraph of project description goes here
 
