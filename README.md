@@ -1,6 +1,6 @@
 # QCM Data Collection and Analysis Software
 
-One Paragraph of project description goes here
+This is the project page for the QCM data collection and analysis software used by the Shull research group at Northwestern University. The data collection part is very much under construction at the moment, and is not yet at a point where it is useful to the community.  Some of the analysis routines are potentially useful, however, and these are described below.
 
 ## Getting Started
 
