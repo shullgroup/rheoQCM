@@ -169,7 +169,6 @@ def solvefunction(soln_input):
 def QCManalyze(sample):
     # read in the optional inputs, assigning default values if not assigned
     nhplot = sample.get('nhplot', [1, 3, 5])
-    nhcalc = sample.get('nhcalc', ['353'])
     firstline = sample.get('firstline', 0)
     baretrange = sample.get('baretrange', [0, 0])
     filmtrange = sample.get('filmtrange', [0, 0])
@@ -179,7 +178,7 @@ def QCManalyze(sample):
     if Temp.shape[0] != 1:
         sample['xlabel'] = r'$T \: (^\circ$C)'
 
-    sample['nhcalc'] = sample.get('nhcalc', [])
+    sample['nhcalc'] = sample.get('nhcalc', ['353'])
 
     # now read in the variables that must exist in the sample dictionary
     filmfile = sample['datadir'] + sample['filmfile'] + '.mat'
