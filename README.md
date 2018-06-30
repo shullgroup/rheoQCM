@@ -72,13 +72,15 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## Authors
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+* **Josh Yeh** - *Initial developmen of the MATLAB version of this project* - [PurpleBooth](https://github.com/PurpleBooth)
+* **Qifeng Wang**  - *Primary Developer of the current (python) version of this project*
+* **Kenneth R. Shull** - *Project PI and author of some of the specific functions used in the project*
 
 See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+We haven't thought much licensing here, but we'll figure out eventually.  This is all meant to be free and open source.   [LICENSE.md](LICENSE.md) file for details
 
 ## Acknowledgments
 
