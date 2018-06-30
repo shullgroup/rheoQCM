@@ -4,7 +4,7 @@ This is the project page for the QCM data collection and analysis software used 
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+Instructions and other information still to come...
 
 ### Prerequisites
 

@@ -16,7 +16,6 @@ from QCM_functions import QCManalyze
 
 # %%  75k PMMA sample
 QCManalyze(example_sampledefs.PMMA_75k())
-plt.show()
 
 # %%  Temperature dependene for 3k PS sample
 QCManalyze(example_sampledefs.PS_3k_cool())
