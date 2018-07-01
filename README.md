@@ -4,87 +4,42 @@ This is the project page for the QCM data collection and analysis software used 
 
 ## Getting Started
 
-Instructions and other information still to come...
+The analysis portions of the software should work on Windows/Mac/Linux platforms.  In all cases you'll need some familiarity with running commands from the terminal, however.  It's assumed in the following that you know how to do this on your platform.  The softare to interface with the network analyzers only runs on Windows-based computers.
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
-
+* Download and install the Anaconda distribution of python from [anaconda.com](https://anaconda.com/download).
+* QCM data files are currently stored in a MATLAB-compatible .mat files.  In order to read and write these and get the analysis scripts to work, you need to install the hdf5storage package, which you can add with the following command (assuming you have already added the conda python distribution):
 ```
-Give examples
-```
-
-### Installing
-
-A step by step series of examples that tell you how to get a development env running
-
-Say what the step will be
-
-```
-Give the example
+conda install -c conda-forge hdf5storage 
 ```
 
-And repeat
+### Installation
+
+To install everything you need from this repository, run the following command from a command window in the directory where you want everthing to be installed:
 
 ```
-until finished
+git clone https://github.com/zhczq/QCM_py
 ```
 
-End with an example of getting some data out of the system or using it for a little demo
+If you just need the updated analysis software (which currently the only software that actually works) you'll want to download QCM_functions.py
 
-## Running the tests
+## Using the Analysis Program
 
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
-
-## Built With
-
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
-
-## Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
+To see an example of how the program works, run example_runfile.py, which will act on some of the data in the example_data directory and generate somf figures representing the data in a figures folder. 
 
 ## Authors
 
-* **Josh Yeh** - *Initial developmen of the MATLAB version of this project* - [PurpleBooth](https://github.com/PurpleBooth)
+* **Josh Yeh** - *Initial developmen of the MATLAB version of this project*
 * **Qifeng Wang**  - *Primary Developer of the current (python) version of this project*
 * **Kenneth R. Shull** - *Project PI and author of some of the specific functions used in the project*
 
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
-
 ## License
 
-We haven't thought much licensing here, but we'll figure out eventually.  This is all meant to be free and open source.   [LICENSE.md](LICENSE.md) file for details
+We haven't thought much licensing here, but this is all available for anyone to use.
 
 ## Acknowledgments
 
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+* Diethelm Johannsmann
+* Lauren Sturdy
 
