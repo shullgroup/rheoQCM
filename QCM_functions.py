@@ -8,6 +8,7 @@ Created on Thu Jan  4 09:19:59 2018
 import numpy as np
 from scipy.optimize import least_squares
 import matplotlib.pyplot as plt
+import os
 import hdf5storage
 from pathlib import Path
 from functools import reduce
@@ -151,14 +152,14 @@ def solvefunction(soln_input):
         delfstar_calc[n] = delfstarcalc(n, drho['soln2'], grho3['soln2'],
                                         phi['soln2'])
 
-#    errin = [delfn1err, delfn2err, delgn3err]
-#    Jinv = inv(J)
-#    errout = (Jinv ** 2*errin ** 2) ** 0.5
-#    err['drho'] = errout[1]
-#    err['grho3'] = errout[2]
-#    err['phi'] = errout[3]
-#    err['dlam3'] = NaN
-#    err['jdprime_rho'] = NaN
+    #    errin = [delfn1err, delfn2err, delgn3err]
+    #    Jinv = inv(J)
+    #    errout = (Jinv ** 2*errin ** 2) ** 0.5
+    #    err['drho'] = errout[1]
+    #    err['grho3'] = errout[2]
+    #    err['phi'] = errout[3]
+    #    err['dlam3'] = NaN
+    #    err['jdprime_rho'] = NaN
 
     soln_output = {'drho': drho, 'grho3': grho3, 'phi': phi, 'dlam3': dlam3,
                    'delfstar_calc': delfstarcalc}
@@ -166,7 +167,7 @@ def solvefunction(soln_input):
     return soln_output
 
 
-def QCManalyze(sample):
+def QCManalyze(sample, parms):
     # read in the optional inputs, assigning default values if not assigned
     nhplot = sample.get('nhplot', [1, 3, 5])
     firstline = sample.get('firstline', 0)
@@ -179,10 +180,22 @@ def QCManalyze(sample):
         sample['xlabel'] = r'$T \: (^\circ$C)'
 
     sample['nhcalc'] = sample.get('nhcalc', ['353'])
+    imagetype = parms.get('imagetype', 'svg')
+    figlocation = parms.get('figlocation', 'figures') 
+
+    # specify the location for the output figure files
+    if figlocation == 'datadir':
+        base_fig_name = sample['datadir']+sample['filmfile']
+    else:
+        base_fig_name = 'figures/'+sample['samplename']
+        if not os.path.exists('figures'):
+            os.mkdir('figures')
+
+    imagetype = parms.get('imagetype', 'svg')
 
     # now read in the variables that must exist in the sample dictionary
     filmfile = sample['datadir'] + sample['filmfile'] + '.mat'
-    filmdata = hdf5storage.loadmat(filmfile)
+    filmdata = hdf5storage.loadmat(filmfile) 
 
     # build the relevant filenames
     barefile = sample['datadir'] + sample['barefile'] + '.mat'
@@ -385,8 +398,8 @@ def QCManalyze(sample):
 
         # tidy up the solution check figure
         checkfig[nh]['figure'].tight_layout()
-        checkfig[nh]['figure'].savefig(sample['datadir'] + sample['filmfile'] +
-                                       '_'+nh+'.png')
+        checkfig[nh]['figure'].savefig(base_fig_name + '_'+nh+
+                                       '.'+ imagetype)
 
         # add property data to the property figure
         propfig['drho_ax'].plot(xdata, 1000*results[nh]['drho'],
@@ -403,9 +416,9 @@ def QCManalyze(sample):
 
     # tidy up the raw data and property figures
     rawfig['figure'].tight_layout()
-    rawfig['figure'].savefig(sample['datadir']+sample['filmfile']+'_raw.png')
+    rawfig['figure'].savefig(base_fig_name+'_raw.'+imagetype)
     propfig['figure'].tight_layout()
-    propfig['figure'].savefig(sample['datadir']+sample['filmfile']+'_prop.png')
+    propfig['figure'].savefig(base_fig_name+'_prop.'+imagetype)
 
 
 def idx_in_range(t, t_range):
@@ -453,6 +466,8 @@ def pickpoints(Temp, nx, idx_in, t_in, idx_file):
 
 def make_prop_axes(sample):
     # set up the property plot
+    if plt.fignum_exists('prop'):
+        plt.close('prop')
     fig = plt.figure('prop', figsize=(9, 3))
     drho_ax = fig.add_subplot(131)
     drho_ax.set_xlabel(sample['xlabel'])
@@ -474,6 +489,8 @@ def make_prop_axes(sample):
 
 def make_raw_axes(sample):
     # We make a figure that includes the bare crystal data and the film data
+    if plt.fignum_exists('Raw'):
+        plt.close('Raw')
     fig = plt.figure('Raw')
 
     baref_ax = fig.add_subplot(221)
@@ -503,6 +520,8 @@ def make_raw_axes(sample):
 
 
 def make_check_axes(sample, nh):
+    if plt.fignum_exists(nh + 'solution check'):
+        plt.close(nh + 'solution check')
     #  compare actual annd recaulated frequency and dissipation shifts.
     fig = plt.figure(nh + 'solution check')
     delf_ax = fig.add_subplot(221)

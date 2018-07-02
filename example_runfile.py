@@ -5,18 +5,24 @@ Created on Fri Jun  8 01:23:49 2018
 
 @author: ken
 
-""" 
+"""
 # This is an example runfile that illustrates the use of QCManalyze
-# it make use of the example_sampledefs.py, where which defines the 
+# it make use of the example_sampledefs.py, where which defines the
 # files to be analyzed
 # %%
 import matplotlib.pyplot as plt
-import example_sampledefs
+from example_sampledefs import sample_dict
 from QCM_functions import QCManalyze
+parms = {}  # parameters to pass to QCManalyze
+sample = sample_dict()  # read sample dictionary
+
+# specify any non-default parameters
+parms['imagetype'] = 'pdf'  # default is 'svg'
 
 # %%  75k PMMA sample
-QCManalyze(example_sampledefs.PMMA_75k())
+QCManalyze(sample['PMMA_75k'], parms)
 
 # %%  Temperature dependene for 3k PS sample
-QCManalyze(example_sampledefs.PS_3k_cool())
-plt.show()
+QCManalyze(sample['PS_3k_cool'], parms)
+
+
