@@ -26,7 +26,7 @@ If you just need the updated analysis software (which currently the only softwar
 
 ## Using the Analysis Program
 
-To see an example of how the program works, run example_runfile.py, which will act on some of the data in the example_data directory and generate somf figures representing the data in a figures folder. 
+To see an example of how the program works, run example_runfile.py, which will act on some of the data in the example_data directory and generate some figures representing the analyzed data in a figures folder. 
 
 ## Authors
 
@@ -36,7 +36,7 @@ To see an example of how the program works, run example_runfile.py, which will a
 
 ## License
 
-We haven't thought much licensing here, but this is all available for anyone to use.
+We still need to figure out the right license.  https://choosealicense.com/ might help.
 
 ## Acknowledgments
 
