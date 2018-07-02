@@ -25,4 +25,4 @@ QCManalyze(sample['PMMA_75k'], parms)
 # %%  Temperature dependene for 3k PS sample
 QCManalyze(sample['PS_3k_cool'], parms)
 
-
+# add additional lines as needed
