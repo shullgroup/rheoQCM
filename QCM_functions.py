@@ -179,7 +179,7 @@ def QCManalyze(sample, parms):
     if Temp.shape[0] != 1:
         sample['xlabel'] = r'$T \: (^\circ$C)'
 
-    sample['nhcalc'] = sample.get('nhcalc', ['353'])
+    sample['nhcalc'] = sample.get('nhcalc', ['355'])
     imagetype = parms.get('imagetype', 'svg')
     figlocation = parms.get('figlocation', 'figures') 
 
