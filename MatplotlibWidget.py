@@ -13,14 +13,14 @@ from matplotlib import rcParams
 from matplotlib import pyplot as plt
 
 rcParams['font.size'] = 9
+# rcParams['toolbar'] = 'toolmanager'
 
 class NavigationToolbar(NavigationToolbar2QT):
     # print(dir(NavigationToolbar2QT))
-    # only display the buttons we need
+    # only display the buttons we need: 'Home', 'Pan', 'Zoom', 'Save'
     toolitems = [t for t in NavigationToolbar2QT.toolitems if
-                 t[0] in ('Home', 'Pan', 'Zoom', 'Save')]
+                 t[0] in ('Home', 'Back', 'Forward', 'Pan', 'Zoom')]
 
-    contentsMargins = 0
 class MatplotlibWidget(QWidget):
     
 
@@ -30,7 +30,8 @@ class MatplotlibWidget(QWidget):
         # self.canvas = FigureCanvas(self.figure)
         # FigureCanvas.__init__(self, self.figure)
         # self.axes = self.figure.add_subplot(111)
-
+        
+        print(self)
         fig = Figure(tight_layout=True, dpi=dpi)
         self.axes = fig.add_subplot(111)
 
@@ -42,13 +43,11 @@ class MatplotlibWidget(QWidget):
         self.canvas.setFocus()
         self.toolbar = NavigationToolbar(self.canvas, self)
         # layout
-        # self.layoutmlp = QVBoxLayout()
-        # self.layoutmlp.addWidget(self.toolbar)
-        # self.layoutmlp.addWidget(self.canvas)
-        # self.setLayout(self.layoutmlp)
-        self.setLayout(QVBoxLayout())
-        self.layout().addWidget(self.toolbar)
-        self.layout().addWidget(self.canvas)
+        self.vbox = QVBoxLayout()
+        self.vbox.setContentsMargins(0, 0, 0, 0) # set layout margins
+        self.vbox.addWidget(self.toolbar)
+        self.vbox.addWidget(self.canvas)
+        self.setLayout(self.vbox)
 
         # axes
         self.axes.set_title(title)
@@ -63,6 +62,8 @@ class MatplotlibWidget(QWidget):
         if ylim is not None:
             self.axes.set_ylim(*ylim)
 
+        print(self.axes.format_coord)
+        print(self.axes.format_cursor_data)
         plt.tight_layout()
 
         # super(MatplotlibWidget, self).__init__(self.figure)

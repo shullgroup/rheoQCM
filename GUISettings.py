@@ -90,7 +90,7 @@ bandwidth_choose = {
 # key: number; val: for display in combobox
 ref_type_choose = {
     't0':  'First point',
-    'base_f':  'Base frequency',
+    't1t2':  'Selected range',
     'input':  'Input value',
     'file': 'File',
 }

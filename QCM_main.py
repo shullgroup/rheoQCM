@@ -9,6 +9,8 @@ from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout
 from PyQt5.QtGui import QIcon, QPixmap
 # from PyQt5.uic import loadUi
+
+# packages
 from MainWindow import Ui_MainWindow
 import GUISettings as constant
 import GUIFunc
@@ -123,14 +125,16 @@ class QCMApp(QMainWindow):
 
         # set treeWidget_harm_tree expanded
         self.ui.treeWidget_harm_tree.expandToDepth(0)
-        # set treeWidget_harm_tree expanded
+        # set treeWidget_settings_tree expanded
         self.ui.treeWidget_settings_tree.expandToDepth(0)
+        # set treeWidget_data_tree_reference expanded
+        self.ui.treeWidget_data_tree_reference.expandToDepth(0)
         
-        ### insert combobox into treewidget
+        ### add combobox into treewidget
         # comboBox_fit_method
         self.create_combobox('comboBox_fit_method', constant.span_mehtod_choose, 100, 'Method', self.ui.treeWidget_harm_tree)
 
-        # insert track_method
+        # add track_method
         self.create_combobox('comboBox_track_method', constant.track_mehtod_choose, 100, 'Tracking', self.ui.treeWidget_harm_tree)
 
         # insert sample_channel
@@ -143,7 +147,7 @@ class QCMApp(QMainWindow):
         self.create_combobox('comboBox_bandwidth', constant.bandwidth_choose, 100, 'Bandwidth', self.ui.treeWidget_settings_tree)
 
         # insert refernence type
-        self.create_combobox('comboBox_ref_type', constant.ref_type_choose, 100, 'Type', self.ui.treeWidget_settings_tree)
+        self.create_combobox('comboBox_ref_type', constant.ref_type_choose, 100, 'Type', self.ui.treeWidget_data_tree_reference)
 
         # move center pushButton_settings_harm_cntr to treeWidget_harm_tree
         self.ui.treeWidget_harm_tree.setItemWidget(self.ui.treeWidget_harm_tree.findItems('Scan', Qt.MatchExactly | Qt.MatchRecursive, 0)[0], 1, self.ui.pushButton_settings_harm_cntr)
@@ -152,7 +156,7 @@ class QCMApp(QMainWindow):
 
         
         # move center checkBox_settings_temp_sensor to treeWidget_settings_tree
-        self.ui.treeWidget_settings_tree.setItemWidget(self.ui.treeWidget_settings_tree.findItems('Collect', Qt.MatchExactly | Qt.MatchRecursive, 0)[0], 1, self.ui.checkBox_settings_temp_sensor)
+        self.ui.treeWidget_settings_tree.setItemWidget(self.ui.treeWidget_settings_tree.findItems('Temperature', Qt.MatchExactly | Qt.MatchRecursive, 0)[0], 1, self.ui.checkBox_settings_temp_sensor)
 
         # set tabWidget_settings background
         self.ui.tabWidget_settings.setStyleSheet(
@@ -168,6 +172,10 @@ class QCMApp(QMainWindow):
         )
         # set treeWidget_settings_tree background
         self.ui.treeWidget_settings_tree.setStyleSheet(
+            "QTreeWidget { background: transparent; }"
+        )
+        # set treeWidget_data_tree_reference background
+        self.ui.treeWidget_data_tree_reference.setStyleSheet(
             "QTreeWidget { background: transparent; }"
         )
 
@@ -189,7 +197,9 @@ class QCMApp(QMainWindow):
 
         
         #### add widgets to status bar. from left to right
-        # # move progressBar_status_interval_time to statusbar
+        # move label_status_coordinates to statusbar
+        self.ui.statusbar.addPermanentWidget(self.ui.label_status_coordinates)
+        # move progressBar_status_interval_time to statusbar
         self.ui.progressBar_status_interval_time.setAlignment(Qt.AlignCenter)
         self.ui.statusbar.addPermanentWidget(self.ui.progressBar_status_interval_time)
         # move label_status_signal_ch to statusbar
@@ -204,6 +214,11 @@ class QCMApp(QMainWindow):
 
         ##################### add Matplotlib figures in to frames ##########
 
+        # create an empty figure and move it's toolbar to TopToolBarArea of main window
+        self.ui.mpl_dummy_fig = MatplotlibWidget()
+        self.addToolBar(Qt.TopToolBarArea, self.ui.mpl_dummy_fig.toolbar)
+        self.ui.mpl_dummy_fig.hide() # hide the figure
+
         # add figure into frame_spactra_fit
         self.ui.mpl_spectra_fit = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit, 
@@ -213,6 +228,7 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.update_figure()
         self.ui.mpl_spectra_fit.axes.plot([0, 1, 2, 3], [3,2,1,0])
         self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
+
 
 
 
