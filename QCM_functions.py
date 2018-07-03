@@ -227,8 +227,8 @@ def QCManalyze(sample, parms):
     filmfreq = filmdata['abs_freq'][firstline:, 0:7]
 
     # get rid of all the rows that don't have any data
-    barefreq = barefreq[~np.isnan(barefreq).all(axis=1)]
-    filmfreq = filmfreq[~np.isnan(filmfreq).all(axis=1)]
+    barefreq = barefreq[~np.isnan(barefreq[:, 1:]).all(axis=1)]
+    filmfreq = filmfreq[~np.isnan(filmfreq[:, 1:]).all(axis=1)]
 
     # reference frequencies are the first data points for the bare crystal data
     freqref = barefreq[0, :]

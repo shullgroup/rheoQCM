@@ -17,7 +17,7 @@ def sample_dict():
     tempdic['nhcalc'] = ['355']  # default is ['353']
     sample[tempdic['samplename']] = tempdic
 
-    #  PMMA sample
+    #  PMMA sample - Meredith
     tempdic = {}
     tempdic['samplename'] = 'PMMA_75k'
     tempdic['datadir'] = 'example_data/PMMA/'
@@ -27,5 +27,25 @@ def sample_dict():
     tempdic['nhcalc'] = ['355']
     tempdic['nhplot'] = [3, 5]
     sample[tempdic['samplename']] = tempdic
+
+    #  PMMA sample - Tom sample 4
+    samplename = 'PMMA_75k_S04'
+    sample[samplename] = {
+            'samplename': samplename,
+            'datadir': 'example_data/PMMA/',
+            'barefile': 'QCMS04_bare',
+            'filmfile': 'QCMS04_75kPMMA',
+            'nhplot': [3, 5]
+            }
+
+    #  PMMA sample - Tom sample 5
+    samplename = 'PMMA_75k_S05'
+    sample[samplename] = {
+            'samplename': samplename,
+            'datadir': 'example_data/PMMA/',
+            'barefile': 'QCMS05_bare',
+            'filmfile': 'QCMS05_75kPMMA',
+            'nhplot': [3, 5]
+            }
 
     return sample

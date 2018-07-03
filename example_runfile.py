@@ -20,7 +20,10 @@ sample = sample_dict()  # read sample dictionary
 parms['imagetype'] = 'pdf'  # default is 'svg'
 
 # %%  75k PMMA sample
-QCManalyze(sample['PMMA_75k'], parms)
+QCManalyze(sample['PMMA_75k_S04'], parms)
+
+# %%  75k PMMA sample
+QCManalyze(sample['PMMA_75k_S05'], parms)
 
 # %%  Temperature dependene for 3k PS sample
 QCManalyze(sample['PS_3k_cool'], parms)
