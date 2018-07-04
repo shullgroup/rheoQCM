@@ -19,10 +19,13 @@ sample = sample_dict()  # read sample dictionary
 # specify any non-default parameters
 parms['imagetype'] = 'pdf'  # default is 'svg'
 
-# %%  75k PMMA sample
+# %%  75k PMMA sample from Meredith
+QCManalyze(sample['PMMA_75k_T01'], parms)
+
+# %%  75k PMMA sample from Tom
 QCManalyze(sample['PMMA_75k_S04'], parms)
 
-# %%  75k PMMA sample
+# %%  75k PMMA sample from Tom
 QCManalyze(sample['PMMA_75k_S05'], parms)
 
 # %%  Temperature dependene for 3k PS sample
