@@ -214,7 +214,7 @@ class QCMApp(QMainWindow):
 
         ##################### add Matplotlib figures in to frames ##########
 
-        # create an empty figure and move it's toolbar to TopToolBarArea of main window
+        # create an empty figure and move its toolbar to TopToolBarArea of main window
         self.ui.mpl_dummy_fig = MatplotlibWidget()
         self.addToolBar(Qt.TopToolBarArea, self.ui.mpl_dummy_fig.toolbar)
         self.ui.mpl_dummy_fig.hide() # hide the figure
@@ -272,12 +272,12 @@ class QCMApp(QMainWindow):
     ########### creating functions ##############
 
     def create_combobox(self, name, contents, box_width, row_text='', parent=''):
-        ''' this function create a combobox object with it's name = name, items = contents. and  set it't width. '''
+        ''' this function create a combobox object with its name = name, items = contents. and  set it't width. '''
         # create a combobox object
         setattr(self.ui, name, QComboBox())
         # get the object
         obj_box = getattr(self.ui, name)
-        # set it's size adjust policy
+        # set its size adjust policy
         obj_box.SizeAdjustPolicy(QComboBox.AdjustToContents)
         # add items from contents
         if isinstance(contents, list): # if given a list, add only the text
@@ -403,7 +403,7 @@ class QCMApp(QMainWindow):
 
     # 
     def on_triggered_load_settings(self):
-        fileName = self.openFileNameDialog('Choose a file to use it\'s setting') # !! add path of last opened folder
+        fileName = self.openFileNameDialog('Choose a file to use its setting') # !! add path of last opened folder
         # change the displayed file directory in lineEdit_data_file_str
         self.ui.lineEdit_data_file_str.setText(fileName)
 
