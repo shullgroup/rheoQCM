@@ -32,7 +32,7 @@ class QCMApp(QMainWindow):
         self.setWindowTitle(constant.window_title)
 
         # set displaying of harmonics
-        self.ui.tabWidget_harm.setCurrentIndex(0)
+        self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
         i = 1
         while True:
             try:
@@ -41,7 +41,7 @@ class QCMApp(QMainWindow):
 
                     # add checkbox to tabWidget_ham for harmonic selection
                     setattr(self.ui, 'checkBox_tree_harm' + str(i), QCheckBox())
-                    self.ui.tabWidget_harm.tabBar().setTabButton(self.ui.tabWidget_harm.indexOf(getattr(self.ui, 'tab_settings_harm_' + str(i))), QTabBar.LeftSide, getattr(self.ui, 'checkBox_tree_harm' + str(i)))
+                    self.ui.tabWidget_settings_settings_harm.tabBar().setTabButton(self.ui.tabWidget_settings_settings_harm.indexOf(getattr(self.ui, 'tab_settings_harm_' + str(i))), QTabBar.LeftSide, getattr(self.ui, 'checkBox_tree_harm' + str(i)))
 
                     # set signal
                     getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'checkBox_harm' + str(i)).setChecked)
@@ -76,10 +76,10 @@ class QCMApp(QMainWindow):
         
         max_gui_harmonic = i - 2 # maximum harmomic available in GUI
 
-        # remove tabs in tabWidget_harm
+        # remove tabs in tabWidget_settings_settings_harm
         for i in range(constant.max_harmonic, max_gui_harmonic):
-                # settings/settings/tabWidget_harm
-                getattr(self.ui, 'tabWidget_harm').removeTab(int((constant.max_harmonic-1)/2)+1) # remove the same index
+                # settings/settings/tabWidget_settings_settings_harm
+                getattr(self.ui, 'tabWidget_settings_settings_harm').removeTab(int((constant.max_harmonic-1)/2)+1) # remove the same index
 
         # set comboBox_plt1_choice, comboBox_plt2_choice
         # dict for the comboboxes
@@ -93,9 +93,9 @@ class QCMApp(QMainWindow):
         # print(self.ui.comboBox_plt1_choice.itemData(2))
 
         # set time interval
-        self.ui.label_actual_interval.setText(str(constant.actual_interval) + '  s')
-        self.ui.lineEdit_acquisition_interval.setText(str(constant.acquisition_interval))
-        self.ui.lineEdit_refresh_resolution.setText(str(constant.refresh_resolution))
+        self.ui.label_actualinterval.setText(str(constant.actual_interval) + '  s')
+        self.ui.lineEdit_acquisitioninterval.setText(str(constant.acquisition_interval))
+        self.ui.lineEdit_refreshresolution.setText(str(constant.refresh_resolution))
 
         # set action group channel
         self.ui.group_channel = QActionGroup(self, exclusive=True)
@@ -123,40 +123,40 @@ class QCMApp(QMainWindow):
         self.ui.group_BW.addAction(self.ui.actionBW_0_25_MHz)
         self.ui.group_BW.addAction(self.ui.actionBW_0_1_MHz)
 
-        # set treeWidget_harm_tree expanded
-        self.ui.treeWidget_harm_tree.expandToDepth(0)
-        # set treeWidget_settings_tree expanded
-        self.ui.treeWidget_settings_tree.expandToDepth(0)
-        # set treeWidget_data_tree_reference expanded
-        self.ui.treeWidget_data_tree_reference.expandToDepth(0)
+        # set treeWidget_settings_settings_harmtree expanded
+        self.ui.treeWidget_settings_settings_harmtree.expandToDepth(0)
+        # set treeWidget_settings_settings_hardware expanded
+        self.ui.treeWidget_settings_settings_hardware.expandToDepth(0)
+        # set treeWidget_settings_data_settings expanded
+        self.ui.treeWidget_settings_data_settings.expandToDepth(0)
         
         ### add combobox into treewidget
         # comboBox_fit_method
-        self.create_combobox('comboBox_fit_method', constant.span_mehtod_choose, 100, 'Method', self.ui.treeWidget_harm_tree)
+        self.create_combobox('comboBox_fit_method', constant.span_mehtod_choose, 100, 'Method', self.ui.treeWidget_settings_settings_harmtree)
 
         # add track_method
-        self.create_combobox('comboBox_track_method', constant.track_mehtod_choose, 100, 'Tracking', self.ui.treeWidget_harm_tree)
+        self.create_combobox('comboBox_track_method', constant.track_mehtod_choose, 100, 'Tracking', self.ui.treeWidget_settings_settings_harmtree)
 
         # insert sample_channel
-        self.create_combobox('comboBox_sample_channel', constant.sample_channel_choose, 100, 'Sample Channel', self.ui.treeWidget_settings_tree)
+        self.create_combobox('comboBox_sample_channel', constant.sample_channel_choose, 100, 'Sample Channel', self.ui.treeWidget_settings_settings_hardware)
 
         # insert base_frequency
-        self.create_combobox('comboBox_base_frequency', constant.base_frequency_choose, 100, 'Base Frequency', self.ui.treeWidget_settings_tree)
+        self.create_combobox('comboBox_base_frequency', constant.base_frequency_choose, 100, 'Base Frequency', self.ui.treeWidget_settings_settings_hardware)
 
         # insert bandwidth
-        self.create_combobox('comboBox_bandwidth', constant.bandwidth_choose, 100, 'Bandwidth', self.ui.treeWidget_settings_tree)
+        self.create_combobox('comboBox_bandwidth', constant.bandwidth_choose, 100, 'Bandwidth', self.ui.treeWidget_settings_settings_hardware)
 
         # insert refernence type
-        self.create_combobox('comboBox_ref_type', constant.ref_type_choose, 100, 'Type', self.ui.treeWidget_data_tree_reference)
+        self.create_combobox('comboBox_ref_type', constant.ref_type_choose, 100, 'Type', self.ui.treeWidget_settings_data_settings)
 
-        # move center pushButton_settings_harm_cntr to treeWidget_harm_tree
-        self.ui.treeWidget_harm_tree.setItemWidget(self.ui.treeWidget_harm_tree.findItems('Scan', Qt.MatchExactly | Qt.MatchRecursive, 0)[0], 1, self.ui.pushButton_settings_harm_cntr)
+        # move center pushButton_settings_harm_cntr to treeWidget_settings_settings_harmtree
+        self.ui.treeWidget_settings_settings_harmtree.setItemWidget(self.ui.treeWidget_settings_settings_harmtree.findItems('Scan', Qt.MatchExactly | Qt.MatchRecursive, 0)[0], 1, self.ui.pushButton_settings_harm_cntr)
         # set the pushbutton width
         self.ui.pushButton_settings_harm_cntr.setMaximumWidth(50)
 
         
-        # move center checkBox_settings_temp_sensor to treeWidget_settings_tree
-        self.ui.treeWidget_settings_tree.setItemWidget(self.ui.treeWidget_settings_tree.findItems('Temperature', Qt.MatchExactly | Qt.MatchRecursive, 0)[0], 1, self.ui.checkBox_settings_temp_sensor)
+        # move center checkBox_settings_temp_sensor to treeWidget_settings_settings_hardware
+        self.ui.treeWidget_settings_settings_hardware.setItemWidget(self.ui.treeWidget_settings_settings_hardware.findItems('Temperature', Qt.MatchExactly | Qt.MatchRecursive, 0)[0], 1, self.ui.checkBox_settings_temp_sensor)
 
         # set tabWidget_settings background
         self.ui.tabWidget_settings.setStyleSheet(
@@ -166,21 +166,21 @@ class QCMApp(QMainWindow):
             # "QTabBar::tab-bar { background: transparent; }"
         )
 
-        # set treeWidget_harm_tree background
-        self.ui.treeWidget_harm_tree.setStyleSheet(
+        # set treeWidget_settings_settings_harmtree background
+        self.ui.treeWidget_settings_settings_harmtree.setStyleSheet(
             "QTreeWidget { background: transparent; }"
         )
-        # set treeWidget_settings_tree background
-        self.ui.treeWidget_settings_tree.setStyleSheet(
+        # set treeWidget_settings_settings_hardware background
+        self.ui.treeWidget_settings_settings_hardware.setStyleSheet(
             "QTreeWidget { background: transparent; }"
         )
-        # set treeWidget_data_tree_reference background
-        self.ui.treeWidget_data_tree_reference.setStyleSheet(
+        # set treeWidget_settings_data_settings background
+        self.ui.treeWidget_settings_data_settings.setStyleSheet(
             "QTreeWidget { background: transparent; }"
         )
 
         # resize the TabBar.Button
-        self.ui.tabWidget_harm.setStyleSheet(
+        self.ui.tabWidget_settings_settings_harm.setStyleSheet(
             "QTabWidget::pane { border: 0px; }"
             "QTabWidget {background-color: transparent;}"
             "QTabWidget::tab-bar { left: 5px; /* move to the right by 5px */ }"
@@ -235,23 +235,17 @@ class QCMApp(QMainWindow):
 
         ####### link functions  to UI ##########
         # set RUN/STOP button
-        self.ui.pushButton_run_stop.clicked.connect(self.on_clicked_pushButton_run_stop)
+        self.ui.pushButton_runstop.clicked.connect(self.on_clicked_pushButton_runstop)
 
-        # set pushButton_reset_reference_time
-        self.ui.pushButton_reset_reference_time.clicked.connect(self.reset_reference_time)
+        # set pushButton_resetreftime
+        self.ui.pushButton_resetreftime.clicked.connect(self.reset_reftime)
 
-        # set label_actual_interval value
-        self.ui.lineEdit_acquisition_interval.textEdited.connect(self.set_label_actual_interval)
-        self.ui.lineEdit_refresh_resolution.textEdited.connect(self.set_label_actual_interval)
+        # set label_actualinterval value
+        self.ui.lineEdit_acquisitioninterval.textEdited.connect(self.set_label_actualinterval)
+        self.ui.lineEdit_refreshresolution.textEdited.connect(self.set_label_actualinterval)
 
-        # set pushButton_new_data
-        self.ui.pushButton_new_data.clicked.connect(self.on_triggered_new_data)
-
-        # set pushButton_append_data
-        self.ui.pushButton_append_data.clicked.connect(self.on_triggered_load_data)
-
-        # set pushButton_goto_folder
-        self.ui.pushButton_goto_folder.clicked.connect(self.on_clicked_pushButton_goto_folder)
+        # set pushButton_gotofolder
+        self.ui.pushButton_gotofolder.clicked.connect(self.on_clicked_pushButton_gotofolder)
 
         # set arrows (la and ra) to change pages 
         self.ui.pushButton_settings_la.clicked.connect(lambda: self.set_stackedwidget_index(self.ui.stackedWidget_spectra, diret=-1)) # set index -1
@@ -302,35 +296,24 @@ class QCMApp(QMainWindow):
 
     ########## action functions ##############
     # @pyqtSlot(bool)
-    def on_clicked_pushButton_run_stop(self, checked):
+    def on_clicked_pushButton_runstop(self, checked):
         if checked:
-            self.ui.pushButton_run_stop.setText('STOP')
+            self.ui.pushButton_runstop.setText('STOP')
         else:
-            self.ui.pushButton_run_stop.setText('RUN')
+            self.ui.pushButton_runstop.setText('RUN')
 
-    # @pyqtSlot(bool)
-    def on_triggered_gropu_layout(self):
-        if self.ui.group_layout.checkedAction() == self.ui.actionLayout_1: # basiview
-            self.ui.stackedWidget_harmonic.setCurrentIndex(0)
-            # set treewidget clapsed
-            self.ui.treeWidget_harm_tree.collapseAll()
-        elif self.ui.group_layout.checkedAction() == self.ui.actionLayout_2: #treeview
-            self.ui.stackedWidget_harmonic.setCurrentIndex(1)
-            # set treewidget all expanded
-            # self.ui.treeWidget_harm_tree.expandAll()
-            self.ui.treeWidget_harm_tree.expandToDepth(0)
 
     # @pyqtSlot()
-    def reset_reference_time(self):
-        ''' set time in lineEdit_reference_time '''
+    def reset_reftime(self):
+        ''' set time in lineEdit_reftime '''
         current_time = datetime.datetime.now()
-        self.ui.lineEdit_reference_time.setText(current_time.strftime('%Y-%m-%d %H:%M:%S'))
+        self.ui.lineEdit_reftime.setText(current_time.strftime('%Y-%m-%d %H:%M:%S'))
 
     # @pyqtSlot()
-    def set_label_actual_interval(self):
+    def set_label_actualinterval(self):
         # get text
-        acquisition_interval = self.ui.lineEdit_acquisition_interval.text()
-        refresh_resolution = self.ui.lineEdit_refresh_resolution.text()
+        acquisition_interval = self.ui.lineEdit_acquisitioninterval.text()
+        refresh_resolution = self.ui.lineEdit_refreshresolution.text()
         #convert to flot
         try:
             acquisition_interval = float(acquisition_interval)
@@ -340,8 +323,8 @@ class QCMApp(QMainWindow):
             refresh_resolution = float(refresh_resolution)
         except:
             refresh_resolution = 0
-        # set label_actual_interval
-        self.ui.label_actual_interval.setText(f'{acquisition_interval * refresh_resolution}  s')
+        # set label_actualinterval
+        self.ui.label_actualinterval.setText(f'{acquisition_interval * refresh_resolution}  s')
 
     ## functions for open and save file
     def openFileNameDialog(self, title, path='', filetype=constant.default_datafiletype):  
@@ -373,29 +356,29 @@ class QCMApp(QMainWindow):
 
     def on_triggered_new_data(self):
         fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
-        # change the displayed file directory in lineEdit_data_file_str
-        self.ui.lineEdit_data_file_str.setText(fileName)
-        # reset lineEdit_reference_time
-        self.reset_reference_time()
-        # set lineEdit_reference_time editable and enable pushButton_reset_reference_time
-        self.ui.lineEdit_reference_time.setReadOnly(False)
-        self.ui.pushButton_reset_reference_time.setEnabled(True)
+        # change the displayed file directory in lineEdit_datafilestr
+        self.ui.lineEdit_datafilestr.setText(fileName)
+        # reset lineEdit_reftime
+        self.reset_reftime()
+        # set lineEdit_reftime editable and enable pushButton_resetreftime
+        self.ui.lineEdit_reftime.setReadOnly(False)
+        self.ui.pushButton_resetreftime.setEnabled(True)
 
     def on_triggered_load_data(self):
         fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
-        # change the displayed file directory in lineEdit_data_file_str
-        self.ui.lineEdit_data_file_str.setText(fileName)
-        # set lineEdit_reference_time
-        # set lineEdit_reference_time read only and disable pushButton_reset_reference_time
-        self.ui.lineEdit_reference_time.setReadOnly(True)
-        self.ui.pushButton_reset_reference_time.setEnabled(False)
+        # change the displayed file directory in lineEdit_datafilestr
+        self.ui.lineEdit_datafilestr.setText(fileName)
+        # set lineEdit_reftime
+        # set lineEdit_reftime read only and disable pushButton_resetreftime
+        self.ui.lineEdit_reftime.setReadOnly(True)
+        self.ui.pushButton_resetreftime.setEnabled(False)
 
     # open folder in explorer
     # methods for different OS could be added
-    def on_clicked_pushButton_goto_folder(self):
+    def on_clicked_pushButton_gotofolder(self):
         # import subprocess
         import os
-        file_path = self.ui.lineEdit_data_file_str.text()
+        file_path = self.ui.lineEdit_datafilestr.text()
         path = os.path.abspath(os.path.join(file_path, os.pardir))
         # print(path)
         # subprocess.Popen(f'explorer "{path}"') # every time open a new window
@@ -404,8 +387,8 @@ class QCMApp(QMainWindow):
     # 
     def on_triggered_load_settings(self):
         fileName = self.openFileNameDialog('Choose a file to use its setting') # !! add path of last opened folder
-        # change the displayed file directory in lineEdit_data_file_str
-        self.ui.lineEdit_data_file_str.setText(fileName)
+        # change the displayed file directory in lineEdit_datafilestr
+        self.ui.lineEdit_datafilestr.setText(fileName)
 
     def on_triggered_actionSave(self):
         # save current data to file
@@ -414,8 +397,8 @@ class QCMApp(QMainWindow):
     def on_triggered_actionSave_As(self):
         # save current data to a new file 
         fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
-        # change the displayed file directory in lineEdit_data_file_str
-        self.ui.lineEdit_data_file_str.setText(fileName)
+        # change the displayed file directory in lineEdit_datafilestr
+        self.ui.lineEdit_datafilestr.setText(fileName)
 
     def on_triggered_actionExport(self):
         # export data to a selected form
