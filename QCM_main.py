@@ -41,13 +41,13 @@ class QCMApp(QMainWindow):
 
                     # add checkbox to tabWidget_ham for harmonic selection
                     setattr(self.ui, 'checkBox_tree_harm' + str(i), QCheckBox())
-                    self.ui.tabWidget_settings_settings_harm.tabBar().setTabButton(self.ui.tabWidget_settings_settings_harm.indexOf(getattr(self.ui, 'tab_settings_harm_' + str(i))), QTabBar.LeftSide, getattr(self.ui, 'checkBox_tree_harm' + str(i)))
+                    self.ui.tabWidget_settings_settings_harm.tabBar().setTabButton(self.ui.tabWidget_settings_settings_harm.indexOf(getattr(self.ui, 'tab_settings_settings_harm' + str(i))), QTabBar.LeftSide, getattr(self.ui, 'checkBox_tree_harm' + str(i)))
 
                     # set signal
                     getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'checkBox_harm' + str(i)).setChecked)
                     getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked)
-                    getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'sp' +str(i)).setVisible)
-                    getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'sp' +str(i)).setVisible)
+                    getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
+                    getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
                     
                     if i in constant.default_harmonics: # in the default range 
                         # settings/control/Harmonics
@@ -58,7 +58,7 @@ class QCMApp(QMainWindow):
                         getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(False)
                         getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(False)
                         # hide spectra/sp
-                        getattr(self.ui, 'sp' + str(i)).setVisible(False)
+                        getattr(self.ui, 'frame_sp' + str(i)).setVisible(False)
                 else: # to be hided
                     # settings/control/Harmonics
                     getattr(self.ui, 'checkBox_harm' + str(i)).hide()
@@ -69,7 +69,7 @@ class QCMApp(QMainWindow):
                     getattr(self.ui, 'checkBox_plt1_h' + str(i)).hide()
                     getattr(self.ui, 'checkBox_plt2_h' + str(i)).hide()
                     # spectra/sp
-                    getattr(self.ui, 'sp' + str(i)).setVisible(False)
+                    getattr(self.ui, 'frame_sp' + str(i)).setVisible(False)
                 i += 2 
             except: 
                 break
@@ -202,6 +202,8 @@ class QCMApp(QMainWindow):
         # move progressBar_status_interval_time to statusbar
         self.ui.progressBar_status_interval_time.setAlignment(Qt.AlignCenter)
         self.ui.statusbar.addPermanentWidget(self.ui.progressBar_status_interval_time)
+        # move label_status_pts to statusbar
+        self.ui.statusbar.addPermanentWidget(self.ui.label_status_pts)
         # move label_status_signal_ch to statusbar
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_signal_ch)
         # move label_status_reftype to statusbar
@@ -214,22 +216,63 @@ class QCMApp(QMainWindow):
 
         ##################### add Matplotlib figures in to frames ##########
 
-        # create an empty figure and move its toolbar to TopToolBarArea of main window
-        self.ui.mpl_dummy_fig = MatplotlibWidget()
-        self.addToolBar(Qt.TopToolBarArea, self.ui.mpl_dummy_fig.toolbar)
-        self.ui.mpl_dummy_fig.hide() # hide the figure
+        # # create an empty figure and move its toolbar to TopToolBarArea of main window
+        # self.ui.mpl_dummy_fig = MatplotlibWidget()
+        # self.addToolBar(Qt.TopToolBarArea, self.ui.mpl_dummy_fig.toolbar)
+        # self.ui.mpl_dummy_fig.hide() # hide the figure
 
-        # add figure into frame_spactra_fit
+        # add figure mpl_sp[n] into frame_sp[n]
+        for i in range(1, constant.max_harmonic+2, 2):
+            # add first ax
+            setattr(
+                self.ui, 'mpl_sp' + str(i), 
+                MatplotlibWidget(
+                    parent=getattr(self.ui, 'frame_sp' + str(i)), 
+                    xlabel='Frequency (Hz)', 
+                    ylabel='Conductance (mS)', 
+                    showtoolbar=False,
+                )
+            )
+            getattr(self.ui, 'mpl_sp' + str(i)).add2ndyaxis(
+                ylabel='Susceptance (mS)'
+            )
+            getattr(self.ui, 'frame_sp' + str(i)).setLayout(
+                self.set_frame_layout(
+                    getattr(self.ui, 'mpl_sp' + str(i))
+                )
+            )
+
+
+        # add figure mpl_spectra_fit into frame_spactra_fit
         self.ui.mpl_spectra_fit = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit, 
             xlabel='Frequency (Hz)',
             ylabel='Conductance (mS)',
+            showtoolbar=('Back', 'Forward', 'Pan', 'Zoom')
             )
         self.ui.mpl_spectra_fit.update_figure()
-        self.ui.mpl_spectra_fit.axes.plot([0, 1, 2, 3], [3,2,1,0])
+        self.ui.mpl_spectra_fit.add2ndyaxis(ylabel='Susceptance (mS)')
         self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
 
+        # add figure mpl_plt1 into frame_spactra_fit
+        self.ui.mpl_plt1 = MatplotlibWidget(
+            parent=self.ui.frame_spectra_fit, 
+            xlabel='Time (s)',
+            ylabel=r'$\Delta f/n$ (Hz)',
+            )
+        self.ui.mpl_plt1.update_figure()
+        self.ui.mpl_plt1.ax.plot([0, 1, 2, 3], [3,2,1,0])
+        self.ui.frame_plt1.setLayout(self.set_frame_layout(self.ui.mpl_plt1))
 
+        # add figure mpl_plt2 into frame_spactra_fit
+        self.ui.mpl_plt2 = MatplotlibWidget(
+            parent=self.ui.frame_spectra_fit, 
+            xlabel='Time (s)',
+            ylabel=r'$\Delta \Gamma$ (Hz)',
+            )
+        self.ui.mpl_plt2.update_figure()
+        self.ui.mpl_plt2.ax.plot([0, 1, 2, 3], [3,2,1,0])
+        self.ui.frame_plt2.setLayout(self.set_frame_layout(self.ui.mpl_plt2))
 
 
 
@@ -300,7 +343,7 @@ class QCMApp(QMainWindow):
         if checked:
             self.ui.pushButton_runstop.setText('STOP')
         else:
-            self.ui.pushButton_runstop.setText('RUN')
+            self.ui.pushButton_runstop.setText('START RECORD')
 
 
     # @pyqtSlot()
