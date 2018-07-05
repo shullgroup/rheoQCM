@@ -28,6 +28,10 @@ If you just need the updated analysis software (which currently the only softwar
 
 To see an example of how the program works, run example_runfile.py, which will act on some of the data in the example_data directory and generate some figures representing the analyzed data in a figures folder. 
 
+## Documentation
+
+The QCMnotes.pdf file has some background information on the rheometric mode of the QCM that we utilize, with some useful references include.
+
 ## Authors
 
 * **Josh Yeh** - *Initial developmen of the MATLAB version of this project*

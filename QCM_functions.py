@@ -98,7 +98,7 @@ def rdexp(nh, delfstar):
     return -np.imag(delfstar[n3])/np.real(delfstar[n3])
 
 
-def solvefunction(soln_input):
+def solve_onelayer(soln_input):
     nh = soln_input['nh']
     nhplot = soln_input['nhplot']
     delfstar = soln_input['delfstar']
@@ -356,7 +356,7 @@ def QCManalyze(sample, parms):
             # obtain the solution for the properties
             soln_input['nh'] = nh
             soln_input['delfstar'] = delfstar[i]
-            soln = solvefunction(soln_input)
+            soln = solve_onelayer(soln_input)
             results[nh]['drho'][i] = soln['drho']['soln2']
             results[nh]['grho3'][i] = soln['grho3']['soln2']
             results[nh]['phi'][i] = soln['phi']['soln2']
