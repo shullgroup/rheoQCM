@@ -159,3 +159,4 @@ venv.bak/
 
 # folder for temporary test Files
 temp/
+pyqt_gui_compile.bat
