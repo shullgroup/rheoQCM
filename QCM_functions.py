@@ -166,6 +166,69 @@ def solve_onelayer(soln_input):
 
     return soln_output
 
+def solve_bulk(soln_input):
+    n3 = 3 #  we only use third harmonic in this case
+    nhplot = soln_input['nhplot']
+    delfstar = soln_input['delfstar']
+    err = soln_input['err']
+    soln1_guess = soln_input['soln1_guess']
+
+    # first pass at solution comes from rh and rd
+    rd_exp = -np.imag(delfstar[n3])/np.real(delfstar[n3])
+
+    lb = [0, 0]  # lower bounds on dlam3 and phi
+    ub = [1, 90]  # upper bonds on dlam3 and phi
+
+    def ftosolve(x):
+        return [rhcalc(nh, x[0], x[1])-rh_exp, rdcalc(nh, x[0], x[1])-rd_exp]
+
+    soln1 = least_squares(ftosolve, soln1_guess, bounds=(lb, ub))
+
+    # put the properties into dictionaries that will include the first
+    # and second solutions
+    dlam3 = {'soln1': soln1['x'][0]}
+    phi = {'soln1': soln1['x'][1]}
+    drho = {'soln1': (sauerbreym(n1, np.real(delfstar[n1])) /
+            np.real(normdelfstar(n1, dlam3['soln1'], phi['soln1'])))}
+    grho3 = {'soln1': grho_from_dlam(3, drho['soln1'],
+                                     dlam3['soln1'], phi['soln1'])}
+
+    # now define guesses for drho, grho3, phi
+    x0 = np.array([drho['soln1'], grho3['soln1'], phi['soln1']])
+
+    # we solve it again to get the Jacobian with respect to our actual
+    # input variables - this is helpfulf for the error analysis
+    def ftosolve2(x):
+        return ([np.real(delfstar[n1]) -
+                np.real(delfstarcalc(n1, x[0], x[1], x[2])),
+                np.real(delfstar[n2]) -
+                np.real(delfstarcalc(n2, x[0], x[1], x[2])),
+                np.imag(delfstar[n3]) -
+                np.imag(delfstarcalc(n3, x[0], x[1], x[2]))])
+
+    soln2 = least_squares(ftosolve2, x0)
+    drho['soln2'] = soln2['x'][0]
+    grho3['soln2'] = soln2['x'][1]
+    phi['soln2'] = soln2['x'][2]
+    dlam3['soln2'] = d_lamcalc(3, drho['soln2'], grho3['soln2'], phi['soln2'])
+
+    delfstar_calc = {}
+    for n in nhplot:
+        delfstar_calc[n] = delfstarcalc(n, drho['soln2'], grho3['soln2'],
+                                        phi['soln2'])
+
+    #    errin = [delfn1err, delfn2err, delgn3err]
+    #    Jinv = inv(J)
+    #    errout = (Jinv ** 2*errin ** 2) ** 0.5
+    #    err['drho'] = errout[1]
+    #    err['grho3'] = errout[2]
+    #    err['phi'] = errout[3]
+    #    err['dlam3'] = NaN
+    #    err['jdprime_rho'] = NaN
+
+    soln_output = {'drho': drho, 'grho3': grho3, 'phi': phi, 'dlam3': dlam3,
+                   'delfstar_calc': delfstarcalc}
+    retirm soln_output
 
 def QCManalyze(sample, parms):
     # read in the optional inputs, assigning default values if not assigned
