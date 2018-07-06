@@ -2,6 +2,12 @@
 '''
 matplotlibwidget.py
 '''
+
+'''
+fig.delaxes(ax)
+ax.set_visible(False)
+'''
+
 import matplotlib
 matplotlib.use('QT5Agg')
 # matplotlib.rcParams['toolbar'] = 'toolmanager'
@@ -33,13 +39,9 @@ class MatplotlibWidget(QWidget):
 
     def __init__(self, parent=None, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', showtoolbar=True, dpi=100, *args, **kwargs):
         super(MatplotlibWidget, self).__init__(parent)
-        # self.figure = Figure(tight_layout=True, dpi=dpi)
-        # self.canvas = FigureCanvas(self.figure)
-        # FigureCanvas.__init__(self, self.figure)
-        # self.ax = self.figure.add_subplot(111)
         
         self.fig = Figure(tight_layout=True, dpi=dpi, facecolor='none')
-        self.ax = self.fig.add_subplot(111, facecolor='none')
+        ax = self.fig.add_subplot(111, facecolor='none')
 
         # FigureCanvas.__init__(self, fig)
         self.canvas = FigureCanvas(self.fig)
@@ -66,30 +68,24 @@ class MatplotlibWidget(QWidget):
             self.vbox.addWidget(self.toolbar)
 
         # axes
-        self.ax.set_title(title)
-        self.ax.set_xlabel(xlabel)
-        self.ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
         if xscale is not None:
-            self.ax.set_xscale(xscale)
+            ax.set_xscale(xscale)
         if yscale is not None:
-            self.ax.set_yscale(yscale)
+            ax.set_yscale(yscale)
         if xlim is not None:
-            self.ax.set_xlim(*xlim)
+            ax.set_xlim(*xlim)
         if ylim is not None:
-            self.ax.set_ylim(*ylim)
+            ax.set_ylim(*ylim)
 
-        # print(self.ax.format_coord)
-        # print(self.ax.format_cursor_data)
-        plt.tight_layout()
-
-        # super(MatplotlibWidget, self).__init__(self.figure)
-        # self.setParent(parent)
-        # super(MatplotlibWidget, self).setSizePolicy(
-        #     QSizePolicy.Expanding, QSizePolicy.Expanding
-        #     # QSizePolicy.Preferred, QSizePolicy.Preferred
-        #     )
-        # super(MatplotlibWidget, self).updateGeometry()
-        
+        # print(ax.format_coord)
+        # print(ax.format_cursor_data)
+        # plt.tight_layout()
+        # plt.tight_layout(pad=None, w_pad=None, h_pad=None,  rect=None)
+        self.ax_list = [] # create an array for axes
+        self.ax_list.append(ax)
 
     # def sizeHint(self):
     #     return QSize(*self.get_width_height())
@@ -109,26 +105,28 @@ class MatplotlibWidget(QWidget):
         self.toolbar.move(x,ynew)        
 
     def initial_figure(self):
-        self.ax.plot([0, 1, 2, 3], [1, 2, 0, 4], 'r')
+        self.ax[0].plot([0, 1, 2, 3], [1, 2, 0, 4], 'r')
 
     def update_figure(self):
         # self.ax.cla()
-        self.ax.plot([0, 1, 2, 3], [0, 1, 2, 3], 'r')
+        self.ax[0].plot([0, 1, 2, 3], [0, 1, 2, 3], 'r')
         self.canvas.draw()
 
-    def add2ndyaxis(self, ylabel):
+    def add2ndyaxis(self, ax1, ylabel):
         color = ['tab:red', 'tab:blue']
         
-        self.ax2 = self.ax.twinx()
-        self.ax2.set_ylabel(ylabel, color=color[1]) # set ylabel of axes2
-        self.ax2.tick_params(axis='y', labelcolor=color[1], color=color[1])
-        self.ax2.yaxis.label.set_color(color[1])
-        self.ax2.spines['right'].set_color(color[1])
+        ax2 = ax1.twinx()
+        ax2.set_ylabel(ylabel, color=color[1]) # set ylabel of axes2
+        ax2.tick_params(axis='y', labelcolor=color[1], color=color[1])
+        ax2.yaxis.label.set_color(color[1])
+        ax2.spines['right'].set_color(color[1])
 
         # change axes color
-        self.ax.tick_params(axis='y', labelcolor=color[0], color=color[0])
-        self.ax.yaxis.label.set_color(color[0])
-        self.ax.spines['left'].set_color(color[0])
+        ax1.tick_params(axis='y', labelcolor=color[0], color=color[0])
+        ax1.yaxis.label.set_color(color[0])
+        ax1.spines['left'].set_color(color[0])
 
-        self.ax2.spines['left'].set_visible(False)
-        self.ax.spines['right'].set_visible(False)
+        ax2.spines['left'].set_visible(False)
+        ax1.spines['right'].set_visible(False)
+
+        self.ax_list.append(ax2)

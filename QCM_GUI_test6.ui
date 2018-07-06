@@ -144,7 +144,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1811,7 +1811,7 @@ background-repeat: none;
               <item>
                <widget class="QLineEdit" name="lineEdit_settings_data_filename">
                 <property name="text">
-                 <string>File name</string>
+                 <string>&lt;File name&gt;</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -3025,7 +3025,6 @@ background-repeat: none;
                   </layout>
                  </item>
                 </layout>
-                <zorder></zorder>
                 <zorder></zorder>
                </widget>
               </item>
@@ -4642,8 +4641,8 @@ border: 1px solid blue;
                 <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2'; font-size:8.25pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
               </widget>
               <widget class="QWidget" name="layoutWidget">
@@ -5182,12 +5181,15 @@ border: 1px solid blue;
                 </property>
                 <item>
                  <layout class="QVBoxLayout" name="verticalLayout_5">
+                  <property name="spacing">
+                   <number>0</number>
+                  </property>
                   <item>
                    <widget class="QFrame" name="frame_plt1">
                     <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
                       <horstretch>0</horstretch>
-                      <verstretch>1</verstretch>
+                      <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
                     <property name="frameShape">
@@ -5201,7 +5203,7 @@ border: 1px solid blue;
                   <item>
                    <widget class="QGroupBox" name="groupBox_4">
                     <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
@@ -5209,21 +5211,24 @@ border: 1px solid blue;
                     <property name="title">
                      <string/>
                     </property>
+                    <property name="flat">
+                     <bool>false</bool>
+                    </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_2">
                      <property name="spacing">
                       <number>2</number>
                      </property>
                      <property name="leftMargin">
-                      <number>2</number>
+                      <number>0</number>
                      </property>
                      <property name="topMargin">
-                      <number>2</number>
+                      <number>0</number>
                      </property>
                      <property name="rightMargin">
-                      <number>2</number>
+                      <number>0</number>
                      </property>
                      <property name="bottomMargin">
-                      <number>2</number>
+                      <number>0</number>
                      </property>
                      <item>
                       <widget class="QComboBox" name="comboBox_plt1_choice">
@@ -5358,12 +5363,15 @@ border: 1px solid blue;
                 </property>
                 <item>
                  <layout class="QVBoxLayout" name="verticalLayout_7">
+                  <property name="spacing">
+                   <number>0</number>
+                  </property>
                   <item>
                    <widget class="QFrame" name="frame_plt2">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                       <horstretch>0</horstretch>
-                      <verstretch>1</verstretch>
+                      <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
                     <property name="frameShape">
@@ -5390,16 +5398,16 @@ border: 1px solid blue;
                       <number>2</number>
                      </property>
                      <property name="leftMargin">
-                      <number>2</number>
+                      <number>0</number>
                      </property>
                      <property name="topMargin">
-                      <number>2</number>
+                      <number>0</number>
                      </property>
                      <property name="rightMargin">
-                      <number>2</number>
+                      <number>0</number>
                      </property>
                      <property name="bottomMargin">
-                      <number>2</number>
+                      <number>0</number>
                      </property>
                      <item>
                       <widget class="QComboBox" name="comboBox_plt2_choice">
@@ -5550,7 +5558,7 @@ border: 1px solid blue;
      <x>0</x>
      <y>0</y>
      <width>1192</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

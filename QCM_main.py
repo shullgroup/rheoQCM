@@ -234,7 +234,7 @@ class QCMApp(QMainWindow):
                 )
             )
             getattr(self.ui, 'mpl_sp' + str(i)).add2ndyaxis(
-                ylabel='Susceptance (mS)'
+                self.ax_list[0], ylabel='Susceptance (mS)'
             )
             getattr(self.ui, 'frame_sp' + str(i)).setLayout(
                 self.set_frame_layout(
@@ -251,7 +251,7 @@ class QCMApp(QMainWindow):
             showtoolbar=('Back', 'Forward', 'Pan', 'Zoom')
             )
         self.ui.mpl_spectra_fit.update_figure()
-        self.ui.mpl_spectra_fit.add2ndyaxis(ylabel='Susceptance (mS)')
+        self.ui.mpl_spectra_fit.add2ndyaxis(self.ax_list[0], ylabel='Susceptance (mS)')
         self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
 
         # add figure mpl_plt1 into frame_spactra_fit
