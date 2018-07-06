@@ -95,3 +95,4 @@ ref_type_choose = {
     'file': 'File',
 }
 
+max_mpl_toolbar_height = 23 # in px
