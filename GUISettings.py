@@ -7,6 +7,9 @@ Change the following factors will change the apperiance of the GUI
 # title to display in the main GUI
 window_title = 'QCM-R'
 
+# window default size
+window_size = [1200, 800] # px
+
 # highest harmonic to display. the maximum value is 11
 max_harmonic = 11
 

@@ -6,7 +6,7 @@ This is the main code of the QCM acquization program
 import sys
 import datetime
 from PyQt5.QtCore import pyqtSlot, Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout
 from PyQt5.QtGui import QIcon, QPixmap
 # from PyQt5.uic import loadUi
 
@@ -30,7 +30,8 @@ class QCMApp(QMainWindow):
         ###### setup UI apperiance #################################
         # set window title
         self.setWindowTitle(constant.window_title)
-
+        # set window size
+        self.resize(*constant.window_size)
         # set displaying of harmonics
         self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
         i = 1
@@ -127,6 +128,8 @@ class QCMApp(QMainWindow):
         self.ui.treeWidget_settings_settings_harmtree.expandToDepth(0)
         # set treeWidget_settings_settings_hardware expanded
         self.ui.treeWidget_settings_settings_hardware.expandToDepth(0)
+        # set treeWidget_settings_settings_plots expanded
+        self.ui.treeWidget_settings_settings_plots.expandToDepth(0)
         # set treeWidget_settings_data_settings expanded
         self.ui.treeWidget_settings_data_settings.expandToDepth(0)
         
@@ -178,6 +181,11 @@ class QCMApp(QMainWindow):
         self.ui.treeWidget_settings_data_settings.setStyleSheet(
             "QTreeWidget { background: transparent; }"
         )
+        
+        # set treeWidget_settings_settings_plots background
+        self.ui.treeWidget_settings_settings_plots.setStyleSheet(
+            "QTreeWidget { background: transparent; }"
+        )
 
         # resize the TabBar.Button
         self.ui.tabWidget_settings_settings_harm.setStyleSheet(
@@ -195,7 +203,15 @@ class QCMApp(QMainWindow):
             )
 
 
-        
+        ######### 
+        # hide tableWidget_settings_mechanics_errortab
+        self.ui.tableWidget_settings_mechanics_errortab.hide()
+        # hide tableWidget_settings_mechanics_contoursettings
+        self.ui.tableWidget_settings_mechanics_contoursettings.hide()
+        # hide groupBox_settings_mechanics_simulator
+        self.ui.groupBox_settings_mechanics_simulator.hide()
+
+
         #### add widgets to status bar. from left to right
         # move label_status_coordinates to statusbar
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_coordinates)
@@ -230,11 +246,9 @@ class QCMApp(QMainWindow):
                     parent=getattr(self.ui, 'frame_sp' + str(i)), 
                     xlabel='Frequency (Hz)', 
                     ylabel='Conductance (mS)', 
+                    ylabel2='Susceptance (mS)',
                     showtoolbar=False,
                 )
-            )
-            getattr(self.ui, 'mpl_sp' + str(i)).add2ndyaxis(
-                self.ax_list[0], ylabel='Susceptance (mS)'
             )
             getattr(self.ui, 'frame_sp' + str(i)).setLayout(
                 self.set_frame_layout(
@@ -243,16 +257,45 @@ class QCMApp(QMainWindow):
             )
 
 
+        # add figure mpl_spectra_fit_polar into frame_spectra_fit_polar
+        self.ui.mpl_spectra_fit_polar = MatplotlibWidget(
+            parent=self.ui.frame_spectra_fit_polar, 
+            xlabel='Conductance (mS)',
+            ylabel='Susceptance (mS)',
+            )
+        # self.ui.mpl_spectra_fit.update_figure()
+        self.ui.frame_spectra_fit_polar.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit_polar))
+
         # add figure mpl_spectra_fit into frame_spactra_fit
         self.ui.mpl_spectra_fit = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit, 
             xlabel='Frequency (Hz)',
             ylabel='Conductance (mS)',
+            ylabel2='Susceptance (mS)',
             showtoolbar=('Back', 'Forward', 'Pan', 'Zoom')
             )
-        self.ui.mpl_spectra_fit.update_figure()
-        self.ui.mpl_spectra_fit.add2ndyaxis(self.ax_list[0], ylabel='Susceptance (mS)')
+        # self.ui.mpl_spectra_fit.update_figure()
         self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
+
+        # add figure mpl_countour1 into frame_spectra_mechanics_contour1
+        self.ui.mpl_countour1 = MatplotlibWidget(
+            parent=self.ui.frame_spectra_mechanics_contour1, 
+            xlabel=r'$d/\lambda$',
+            ylabel=r'$\Phi$ ($\degree$)',
+            )
+        # self.ui.mpl_countour1.update_figure()
+        self.ui.mpl_countour1.ax.plot([0, 1, 2, 3], [3,2,1,0])
+        self.ui.frame_spectra_mechanics_contour1.setLayout(self.set_frame_layout(self.ui.mpl_countour1))
+
+        # add figure mpl_countour2 into frame_spectra_mechanics_contour2
+        self.ui.mpl_countour2 = MatplotlibWidget(
+            parent=self.ui.frame_spectra_mechanics_contour2, 
+            xlabel=r'$d/\lambda$',
+            ylabel=r'$\Phi$ ($\degree$)',
+            )
+        # self.ui.mpl_countour2.update_figure()
+        self.ui.mpl_countour2.ax.plot([0, 1, 2, 3], [3,2,1,0])
+        self.ui.frame_spectra_mechanics_contour2.setLayout(self.set_frame_layout(self.ui.mpl_countour2))
 
         # add figure mpl_plt1 into frame_spactra_fit
         self.ui.mpl_plt1 = MatplotlibWidget(
@@ -260,7 +303,7 @@ class QCMApp(QMainWindow):
             xlabel='Time (s)',
             ylabel=r'$\Delta f/n$ (Hz)',
             )
-        self.ui.mpl_plt1.update_figure()
+        # self.ui.mpl_plt1.update_figure()
         self.ui.mpl_plt1.ax.plot([0, 1, 2, 3], [3,2,1,0])
         self.ui.frame_plt1.setLayout(self.set_frame_layout(self.ui.mpl_plt1))
 
@@ -270,7 +313,7 @@ class QCMApp(QMainWindow):
             xlabel='Time (s)',
             ylabel=r'$\Delta \Gamma$ (Hz)',
             )
-        self.ui.mpl_plt2.update_figure()
+        # self.ui.mpl_plt2.update_figure()
         self.ui.mpl_plt2.ax.plot([0, 1, 2, 3], [3,2,1,0])
         self.ui.frame_plt2.setLayout(self.set_frame_layout(self.ui.mpl_plt2))
 
@@ -304,7 +347,6 @@ class QCMApp(QMainWindow):
         self.ui.actionSave_As.triggered.connect(self.on_triggered_actionSave_As)
         self.ui.actionExport.triggered.connect(self.on_triggered_actionExport)
         self.ui.actionReset.triggered.connect(self.on_triggered_actionReset)
-
 
     ########### creating functions ##############
 
@@ -454,7 +496,7 @@ class QCMApp(QMainWindow):
 
     def set_frame_layout(self, widget):
         '''set a dense layout for frame with a single widget'''
-        vbox = QVBoxLayout()
+        vbox = QGridLayout()
         vbox.setContentsMargins(0, 0, 0, 0) # set layout margins (left, top, right, bottom)
         vbox.addWidget(widget)
         return vbox
