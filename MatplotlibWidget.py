@@ -6,6 +6,7 @@ matplotlibwidget.py
 '''
 fig.delaxes(ax)
 ax.set_visible(False)
+ax.change_geometry(2,2,i+1)
 '''
 
 import matplotlib
