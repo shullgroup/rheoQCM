@@ -11,7 +11,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 # from PyQt5.uic import loadUi
 
 # packages
-from UI.MainWindow import Ui_MainWindow
+from MainWindow import Ui_MainWindow
 import GUISettings as constant
 import GUIFunc
 from MatplotlibWidget import MatplotlibWidget
@@ -515,10 +515,6 @@ class QCMApp(QMainWindow):
             count = stwgt.count()  # get total pages
             current_index = stwgt.currentIndex()  # get current index
             stwgt.setCurrentIndex((current_index + diret) % count) # increase or decrease index by diret
-
-
-
-
 
 if __name__ == '__main__':
     import sys
