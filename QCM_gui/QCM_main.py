@@ -11,7 +11,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 # from PyQt5.uic import loadUi
 
 # packages
-from MainWindow import Ui_MainWindow
+from UI.MainWindow import Ui_MainWindow
 import GUISettings as constant
 import GUIFunc
 from MatplotlibWidget import MatplotlibWidget
