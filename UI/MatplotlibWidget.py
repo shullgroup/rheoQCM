@@ -11,7 +11,7 @@ ax.change_geometry(2,2,i+1)
 
 import matplotlib
 matplotlib.use('QT5Agg')
-# matplotlib.rcParams['toolbar'] = 'toolmanager'
+matplotlib.rcParams['toolbar'] = 'toolmanager'
 matplotlib.rcParams['font.size'] = 9
 
 # import matplotlib.rcParams
@@ -34,15 +34,27 @@ class NavigationToolbar(NavigationToolbar2QT):
     # set buttons to show in toolbar
     # toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in ('Home', 'Back', 'Forward', 'Pan', 'Zoom')]
     pass
+    # def __init__(self, canvas_, parent_):
+    #     self.toolitems = (
+    #         ('Home', 'Reset original view', 'home', 'home'),
+    #         ('Back', 'Back to      previous view', 'back', 'back'),
+    #         ('Forward', 'Forward to next view', 'forward', 'forward'),
+    #         (None, None, None, None),
+    #         ('Pan', 'Pan axes with left mouse, zoom with right', 'move', 'pan'),
+    #         ('Zoom', 'Zoom to rectangle', 'zoom_to_rect', 'zoom'),
+    #         (None, None, None, None),
+    #         ('Subplots', 'Configure subplots', 'subplots', 'configure_subplots'),
+    #         ('Save', 'Save the figure', 'filesave', 'save_figure'),
+    #         )   
+    #     NavigationToolbar2QT.__init__(self,canvas_,parent_)
 
 class MatplotlibWidget(QWidget):
     
 
-    def __init__(self, parent=None, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', showtoolbar=True, dpi=100, *args, **kwargs):
+    def __init__(self, parent=None, title='', xlabel='', ylabel='', ylabel2='', xlim=None, ylim=None, xscale='linear', yscale='linear', showtoolbar=True, dpi=100, *args, **kwargs):
         super(MatplotlibWidget, self).__init__(parent)
         
         self.fig = Figure(tight_layout=True, dpi=dpi, facecolor='none')
-        ax = self.fig.add_subplot(111, facecolor='none')
 
         # FigureCanvas.__init__(self, fig)
         self.canvas = FigureCanvas(self.fig)
@@ -62,13 +74,21 @@ class MatplotlibWidget(QWidget):
         if showtoolbar:
             if isinstance(showtoolbar, tuple):
                 NavigationToolbar.toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in showtoolbar]
+
             self.toolbar = NavigationToolbar(self.canvas, self)
             self.toolbar.setMaximumHeight(max_mpl_toolbar_height)
             self.toolbar.setStyleSheet("QToolBar { border: 0px;}")
+            # if isinstance(showtoolbar, tuple):
+            #     print(self.toolbar.toolitems)
+            #     NavigationToolbar.toolitems = (t for t in NavigationToolbar2QT.toolitems if t[0] in showtoolbar)
+            #     print(self.toolbar.toolitems)
+
+            # self.toolbar.hide() # hide toolbar (or setHidden(bool))
             self.toolbar.isMovable()
             self.vbox.addWidget(self.toolbar)
 
         # axes
+        ax = self.fig.add_subplot(111, facecolor='none')
         ax.set_title(title)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -85,8 +105,10 @@ class MatplotlibWidget(QWidget):
         # print(ax.format_cursor_data)
         # plt.tight_layout()
         # plt.tight_layout(pad=None, w_pad=None, h_pad=None,  rect=None)
-        self.ax_list = [] # create an array for axes
-        self.ax_list.append(ax)
+        if ylabel2: # create a xyy axes
+            ax = self.add2ndyaxis(ax, ylabel2) 
+        
+        self.ax = ax
 
     # def sizeHint(self):
     #     return QSize(*self.get_width_height())
@@ -113,11 +135,15 @@ class MatplotlibWidget(QWidget):
         self.ax[0].plot([0, 1, 2, 3], [0, 1, 2, 3], 'r')
         self.canvas.draw()
 
-    def add2ndyaxis(self, ax1, ylabel):
+    def add2ndyaxis(self, ax1, ylabel2):
+        '''
+        input: ax1 
+        output: [ax1, ax2]
+        '''
         color = ['tab:red', 'tab:blue']
         
         ax2 = ax1.twinx()
-        ax2.set_ylabel(ylabel, color=color[1]) # set ylabel of axes2
+        ax2.set_ylabel(ylabel2, color=color[1]) # set ylabel of axes2
         ax2.tick_params(axis='y', labelcolor=color[1], color=color[1])
         ax2.yaxis.label.set_color(color[1])
         ax2.spines['right'].set_color(color[1])
@@ -130,4 +156,9 @@ class MatplotlibWidget(QWidget):
         ax2.spines['left'].set_visible(False)
         ax1.spines['right'].set_visible(False)
 
-        self.ax_list.append(ax2)
+        # reform ax1
+        ax = []
+        ax.append(ax1)
+        ax.append(ax2)
+        return ax
+
