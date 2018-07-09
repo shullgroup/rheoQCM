@@ -26,14 +26,32 @@ class QCMApp(QMainWindow):
         self.ui.setupUi(self)
 
         # loadUi('QCM_GUI_test4.ui', self) # read .ui file directly. You still need to compile the .qrc file
+#region ###### setup UI apperiance #################################
 
-        ###### setup UI apperiance #################################
+#region main UI 
         # set window title
         self.setWindowTitle(constant.window_title)
         # set window size
         self.resize(*constant.window_size)
-        # set displaying of harmonics
+        # set delault displaying of tab_settings
+        self.ui.tabWidget_settings.setCurrentIndex(0)
+        # set delault displaying of stackedWidget_spectra
+        self.ui.stackedWidget_spectra.setCurrentIndex(0)
+        # set delault displaying of stackedWidget_data
+        self.ui.stackedWidget_data.setCurrentIndex(0)
+
+        # set delault displaying of harmonics
         self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
+
+        # link tabWidget_settings and stackedWidget_spectra and stackedWidget_data
+        self.ui.tabWidget_settings.currentChanged.connect(self.link_tab_page)
+
+#endregion
+
+
+#region cross different sections
+        # harmonic widgets
+        # loop for setting harmonics 
         i = 1
         while True:
             try:
@@ -63,8 +81,8 @@ class QCMApp(QMainWindow):
                 else: # to be hided
                     # settings/control/Harmonics
                     getattr(self.ui, 'checkBox_harm' + str(i)).hide()
-                    getattr(self.ui, 'lineEdit_start_f' + str(i)).hide()
-                    getattr(self.ui, 'lineEdit_end_f' + str(i)).hide()
+                    getattr(self.ui, 'lineEdit_startf' + str(i)).hide()
+                    getattr(self.ui, 'lineEdit_endf' + str(i)).hide()
                     getattr(self.ui, 'pushButton_cntr' + str(i)).hide()
                     # data/F1/checkbox
                     getattr(self.ui, 'checkBox_plt1_h' + str(i)).hide()
@@ -74,7 +92,7 @@ class QCMApp(QMainWindow):
                 i += 2 
             except: 
                 break
-        
+       
         max_gui_harmonic = i - 2 # maximum harmomic available in GUI
 
         # remove tabs in tabWidget_settings_settings_harm
@@ -93,46 +111,47 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_plt2_choice.setCurrentIndex(3)
         # print(self.ui.comboBox_plt1_choice.itemData(2))
 
+        # set RUN/STOP button
+        self.ui.pushButton_runstop.clicked.connect(self.on_clicked_pushButton_runstop)
+
+        # set arrows (la and ra) to change pages 
+        self.ui.pushButton_settings_la.clicked.connect(lambda: self.set_stackedwidget_index(self.ui.stackedWidget_spectra, diret=-1)) # set index -1
+        self.ui.pushButton_settings_ra.clicked.connect(lambda: self.set_stackedwidget_index(self.ui.stackedWidget_spectra, diret=1)) # set index 1
+        self.ui.pushButton_data_la.clicked.connect(lambda: self.set_stackedwidget_index(self.ui.stackedWidget_data, diret=-1)) # set index -1
+        self.ui.pushButton_data_ra.clicked.connect(lambda: self.set_stackedwidget_index(self.ui.stackedWidget_data, diret=1)) # set index 1
+
+#endregion
+
+
+#region settings_control
+
         # set time interval
         self.ui.label_actualinterval.setText(str(constant.actual_interval) + '  s')
         self.ui.lineEdit_acquisitioninterval.setText(str(constant.acquisition_interval))
         self.ui.lineEdit_refreshresolution.setText(str(constant.refresh_resolution))
 
-        # set action group channel
-        self.ui.group_channel = QActionGroup(self, exclusive=True)
-        self.ui.group_channel.addAction(self.ui.actionADC_1)
-        self.ui.group_channel.addAction(self.ui.actionADC_2)
 
-        # set action group refType
-        self.ui.group_refType = QActionGroup(self, exclusive=True)
-        self.ui.group_refType.addAction(self.ui.actionData_File)
-        self.ui.group_refType.addAction(self.ui.actionSingle_Point)
-        self.ui.group_refType.addAction(self.ui.actionExternal)
+        # set pushButton_resetreftime
+        self.ui.pushButton_resetreftime.clicked.connect(self.reset_reftime)
 
-        # set action group f0
-        self.ui.group_f0 = QActionGroup(self, exclusive=True)
-        self.ui.group_f0.addAction(self.ui.action5_MHz)
-        self.ui.group_f0.addAction(self.ui.action6_MHz)
-        self.ui.group_f0.addAction(self.ui.action9_MHz)
-        self.ui.group_f0.addAction(self.ui.action10_MHz)
+        # set label_actualinterval value
+        self.ui.lineEdit_acquisitioninterval.textEdited.connect(self.set_label_actualinterval)
+        self.ui.lineEdit_refreshresolution.textEdited.connect(self.set_label_actualinterval)
 
-        # set action group BW
-        self.ui.group_BW = QActionGroup(self, exclusive=True)
-        self.ui.group_BW.addAction(self.ui.actionBW_2_MHz)
-        self.ui.group_BW.addAction(self.ui.actionBW_1_MHz)
-        self.ui.group_BW.addAction(self.ui.actionBW_0_5_MHz)
-        self.ui.group_BW.addAction(self.ui.actionBW_0_25_MHz)
-        self.ui.group_BW.addAction(self.ui.actionBW_0_1_MHz)
+        # set pushButton_gotofolder
+        self.ui.pushButton_gotofolder.clicked.connect(self.on_clicked_pushButton_gotofolder)
 
-        # set treeWidget_settings_settings_harmtree expanded
-        self.ui.treeWidget_settings_settings_harmtree.expandToDepth(0)
-        # set treeWidget_settings_settings_hardware expanded
-        self.ui.treeWidget_settings_settings_hardware.expandToDepth(0)
-        # set treeWidget_settings_settings_plots expanded
-        self.ui.treeWidget_settings_settings_plots.expandToDepth(0)
-        # set treeWidget_settings_data_settings expanded
-        self.ui.treeWidget_settings_data_settings.expandToDepth(0)
-        
+        # set pushButton_newdata
+        self.ui.pushButton_newdata.clicked.connect(self.on_triggered_new_data)
+
+        # set pushButton_appenddata
+        self.ui.pushButton_appenddata.clicked.connect(self.on_triggered_load_data)
+
+
+#endregion
+
+
+#region settings_settings
         ### add combobox into treewidget
         # comboBox_fit_method
         self.create_combobox('comboBox_fit_method', constant.span_mehtod_choose, 100, 'Method', self.ui.treeWidget_settings_settings_harmtree)
@@ -151,6 +170,15 @@ class QCMApp(QMainWindow):
 
         # insert refernence type
         self.create_combobox('comboBox_ref_type', constant.ref_type_choose, 100, 'Type', self.ui.treeWidget_settings_data_settings)
+
+        # set treeWidget_settings_settings_harmtree expanded
+        self.ui.treeWidget_settings_settings_harmtree.expandToDepth(0)
+        # set treeWidget_settings_settings_hardware expanded
+        self.ui.treeWidget_settings_settings_hardware.expandToDepth(0)
+        # set treeWidget_settings_settings_plots expanded
+        self.ui.treeWidget_settings_settings_plots.expandToDepth(0)
+        # set treeWidget_settings_data_settings expanded
+        self.ui.treeWidget_settings_data_settings.expandToDepth(0)
 
         # move center pushButton_settings_harm_cntr to treeWidget_settings_settings_harmtree
         self.ui.treeWidget_settings_settings_harmtree.setItemWidget(self.ui.treeWidget_settings_settings_harmtree.findItems('Scan', Qt.MatchExactly | Qt.MatchRecursive, 0)[0], 1, self.ui.pushButton_settings_harm_cntr)
@@ -177,10 +205,6 @@ class QCMApp(QMainWindow):
         self.ui.treeWidget_settings_settings_hardware.setStyleSheet(
             "QTreeWidget { background: transparent; }"
         )
-        # set treeWidget_settings_data_settings background
-        self.ui.treeWidget_settings_data_settings.setStyleSheet(
-            "QTreeWidget { background: transparent; }"
-        )
         
         # set treeWidget_settings_settings_plots background
         self.ui.treeWidget_settings_settings_plots.setStyleSheet(
@@ -202,7 +226,20 @@ class QCMApp(QMainWindow):
             "QTabBar::tab:!selected { margin-top: 2px; }"
             )
 
+#endregion
 
+
+#region settings_data
+
+        # set treeWidget_settings_data_settings background
+        self.ui.treeWidget_settings_data_settings.setStyleSheet(
+            "QTreeWidget { background: transparent; }"
+        )
+
+#endregion 
+
+
+#region settings_mechanis
         ######### 
         # hide tableWidget_settings_mechanics_errortab
         self.ui.tableWidget_settings_mechanics_errortab.hide()
@@ -211,6 +248,37 @@ class QCMApp(QMainWindow):
         # hide groupBox_settings_mechanics_simulator
         self.ui.groupBox_settings_mechanics_simulator.hide()
 
+#endregion
+
+
+#region spectra_show
+
+#endregion
+
+
+#region spectra_fit
+
+
+#endregion
+
+
+#region spectra_mechanics
+
+
+#endregion
+
+
+#region data_data
+
+#endregion
+
+
+#region data_mechanics
+
+#endregion
+
+
+#region status bar
 
         #### add widgets to status bar. from left to right
         # move label_status_coordinates to statusbar
@@ -229,8 +297,49 @@ class QCMApp(QMainWindow):
         # move label_status_f0BW to statusbar
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_f0BW)
 
+#endregion
 
-        ##################### add Matplotlib figures in to frames ##########
+
+#region action group
+        # set action group channel
+        self.ui.group_channel = QActionGroup(self, exclusive=True)
+        self.ui.group_channel.addAction(self.ui.actionADC_1)
+        self.ui.group_channel.addAction(self.ui.actionADC_2)
+
+        # set action group refType
+        self.ui.group_refType = QActionGroup(self, exclusive=True)
+        self.ui.group_refType.addAction(self.ui.actionData_File)
+        self.ui.group_refType.addAction(self.ui.actionSingle_Point)
+        self.ui.group_refType.addAction(self.ui.actionExternal)
+
+        # set action group f0
+        self.ui.group_f0 = QActionGroup(self, exclusive=True)
+        self.ui.group_f0.addAction(self.ui.action5_MHz)
+        self.ui.group_f0.addAction(self.ui.action6_MHz)
+        self.ui.group_f0.addAction(self.ui.action9_MHz)
+        self.ui.group_f0.addAction(self.ui.action10_MHz)
+
+        # set action group BW
+        self.ui.group_BW = QActionGroup(self, exclusive=True)
+        self.ui.group_BW.addAction(self.ui.actionBW_2_MHz)
+        self.ui.group_BW.addAction(self.ui.actionBW_1_MHz)
+        self.ui.group_BW.addAction(self.ui.actionBW_0_5_MHz)
+        self.ui.group_BW.addAction(self.ui.actionBW_0_25_MHz)
+        self.ui.group_BW.addAction(self.ui.actionBW_0_1_MHz)
+
+        # set QAction
+        self.ui.actionLoad_Settings.triggered.connect(self.on_triggered_load_settings)
+        self.ui.actionLoad_Data.triggered.connect(self.on_triggered_load_data)
+        self.ui.actionNew_Data.triggered.connect(self.on_triggered_new_data)
+        self.ui.actionSave.triggered.connect(self.on_triggered_actionSave)
+        self.ui.actionSave_As.triggered.connect(self.on_triggered_actionSave_As)
+        self.ui.actionExport.triggered.connect(self.on_triggered_actionExport)
+        self.ui.actionReset.triggered.connect(self.on_triggered_actionReset)
+
+#endregion
+
+
+#region ###### add Matplotlib figures in to frames ##########
 
         # # create an empty figure and move its toolbar to TopToolBarArea of main window
         # self.ui.mpl_dummy_fig = MatplotlibWidget()
@@ -317,38 +426,22 @@ class QCMApp(QMainWindow):
         self.ui.mpl_plt2.ax.plot([0, 1, 2, 3], [3,2,1,0])
         self.ui.frame_plt2.setLayout(self.set_frame_layout(self.ui.mpl_plt2))
 
+#endregion
 
 
-        ####### link functions  to UI ##########
-        # set RUN/STOP button
-        self.ui.pushButton_runstop.clicked.connect(self.on_clicked_pushButton_runstop)
+#region #########  functions ##############
 
-        # set pushButton_resetreftime
-        self.ui.pushButton_resetreftime.clicked.connect(self.reset_reftime)
-
-        # set label_actualinterval value
-        self.ui.lineEdit_acquisitioninterval.textEdited.connect(self.set_label_actualinterval)
-        self.ui.lineEdit_refreshresolution.textEdited.connect(self.set_label_actualinterval)
-
-        # set pushButton_gotofolder
-        self.ui.pushButton_gotofolder.clicked.connect(self.on_clicked_pushButton_gotofolder)
-
-        # set arrows (la and ra) to change pages 
-        self.ui.pushButton_settings_la.clicked.connect(lambda: self.set_stackedwidget_index(self.ui.stackedWidget_spectra, diret=-1)) # set index -1
-        self.ui.pushButton_settings_ra.clicked.connect(lambda: self.set_stackedwidget_index(self.ui.stackedWidget_spectra, diret=1)) # set index 1
-        self.ui.pushButton_data_la.clicked.connect(lambda: self.set_stackedwidget_index(self.ui.stackedWidget_data, diret=-1)) # set index -1
-        self.ui.pushButton_data_ra.clicked.connect(lambda: self.set_stackedwidget_index(self.ui.stackedWidget_data, diret=1)) # set index 1
-
-        # set QAction
-        self.ui.actionLoad_Settings.triggered.connect(self.on_triggered_load_settings)
-        self.ui.actionLoad_Data.triggered.connect(self.on_triggered_load_data)
-        self.ui.actionNew_Data.triggered.connect(self.on_triggered_new_data)
-        self.ui.actionSave.triggered.connect(self.on_triggered_actionSave)
-        self.ui.actionSave_As.triggered.connect(self.on_triggered_actionSave_As)
-        self.ui.actionExport.triggered.connect(self.on_triggered_actionExport)
-        self.ui.actionReset.triggered.connect(self.on_triggered_actionReset)
-
-    ########### creating functions ##############
+    def link_tab_page(self, tab_idx):
+        print(tab_idx)
+        if tab_idx in [0]: # link settings_control to spectra_show and data_data
+            self.ui.stackedWidget_spectra.setCurrentIndex(0)
+            self.ui.stackedWidget_data.setCurrentIndex(0)
+        elif tab_idx in [1, 2]: # link settings_settings and settings_data to spectra_fit and data_data
+            self.ui.stackedWidget_spectra.setCurrentIndex(1)
+            self.ui.stackedWidget_data.setCurrentIndex(0)
+        elif tab_idx in [3]: # link settings_mechanics to spectra_mechanics and data_mechanics
+            self.ui.stackedWidget_spectra.setCurrentIndex(2)
+            self.ui.stackedWidget_data.setCurrentIndex(1)
 
     def create_combobox(self, name, contents, box_width, row_text='', parent=''):
         ''' this function create a combobox object with its name = name, items = contents. and  set it't width. '''
@@ -515,7 +608,10 @@ class QCMApp(QMainWindow):
             count = stwgt.count()  # get total pages
             current_index = stwgt.currentIndex()  # get current index
             stwgt.setCurrentIndex((current_index + diret) % count) # increase or decrease index by diret
+#endregion
 
+
+#endregion ####setup UI apperiance
 if __name__ == '__main__':
     import sys
 

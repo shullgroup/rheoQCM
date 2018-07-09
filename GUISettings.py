@@ -94,7 +94,7 @@ bandwidth_choose = {
 ref_type_choose = {
     't0':  'First point',
     't1t2':  'Selected range',
-    'input':  'Input value',
+    # 'input':  'Input value',
     'file': 'File',
 }
 
