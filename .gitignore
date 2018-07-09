@@ -1,3 +1,10 @@
+# files used to build documentation pdf
+doc/figures
+doc/MSEcore.bst
+doc/QCM.bib
+doc/QCMnotes.lyx
+doc/QCMnotes.lyx~
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
