@@ -432,7 +432,6 @@ class QCMApp(QMainWindow):
 #region #########  functions ##############
 
     def link_tab_page(self, tab_idx):
-        print(tab_idx)
         if tab_idx in [0]: # link settings_control to spectra_show and data_data
             self.ui.stackedWidget_spectra.setCurrentIndex(0)
             self.ui.stackedWidget_data.setCurrentIndex(0)
