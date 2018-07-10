@@ -11,3 +11,5 @@ def open_file(path):
     else: # mac and linux
         opener ="open" if sys.platform == "darwin" else "xdg-open" 
         subprocess.call([opener, path]) # this opens a new window on Linux every time
+
+

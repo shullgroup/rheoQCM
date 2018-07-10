@@ -11,10 +11,7 @@ settings_init = {
     'window_size': [1200, 800], # px
 
     # highest harmonic to display. the maximum value is 11
-    'max_harmonic': 11,
-
-    # default harmonics 
-    'default_harmonics': [1, 3, 5],
+    'max_harmonic': 11, # do not change
 
     # default open/save data file type
     'default_datafiletype': ';;'.join([
@@ -30,10 +27,6 @@ settings_init = {
         'csv file (*.csv)',
     ]),
 
-    # default label_actual_interval
-    'actual_interval': 2,
-    'acquisition_interval': 2,
-    'refresh_resolution': 1,
     # choice for plotting data shown in comboBox_plt1_choice & comboBox_plt2_choice
     'plt_choice': {
         'none':   'none',
@@ -70,23 +63,42 @@ settings_init = {
         '2': 'ADC 2'
     },
 
+    'ref_channel_choose': {
+    # key: number; val: for display in combobox
+        'none': '--',
+        '1': 'ADC 1',
+        '2': 'ADC 2'
+    },
+
+    'thrmcpl_choose': {
+    # key: number; val: for display in combobox
+        'J': 'J',
+        'K': 'K',
+        'N': 'N',
+        'R': 'R',
+        'S': 'S',
+        'T': 'T',
+        'B': 'B',
+        'E': 'E',
+    },
+
     # available base frequency of crystals
     # key: number; val: for display in combobox
     'base_frequency_choose': {
-        '5':  '5 MHz',
-        '6':  '6 MHz',
-        '9':  '9 MHz',
-        '10': '10 MHz',
+        5:  '5 MHz',
+        6:  '6 MHz',
+        9:  '9 MHz',
+        10: '10 MHz',
     },
 
     # available bandwidth limitation for each harmonic
     # key: number; val: for display in combobox
     'bandwidth_choose': {
-        '2':  '2 MHz',
-        '1':  '1 MHz',
-        '0_5':  '0.5 MHz',
-        '0_25': '0.25 MHz',
-        '0_1': '0.1 MHz',
+        2:  '2 MHz',
+        1:  '1 MHz',
+        0.5:  '0.5 MHz',
+        0.25: '0.25 MHz',
+        0.1: '0.1 MHz',
     },
 
     # reference type for showing delta f and delta gamma
@@ -99,4 +111,25 @@ settings_init = {
     },
 
     'max_mpl_toolbar_height': 23, # in px
+}
+
+settings_default = {
+    
+    # default harmonics 
+    'harmonics_check': [1, 3, 5],
+
+    # default label_actual_interval
+    'actual_interval': 2,
+    'acquisition_interval': 2,
+    'refresh_resolution': 1,
+
+    #################################
+    'checkBox_harm1': 1,
+    'lineEdit_startf1'
+    'lineEdit_endf1'
+    'lineEdit_reftime'
+    'lineEdit_acquisitioninterval': 2,
+    'lineEdit_refreshresolution': 2,
+    'label_actualinterval': 1,
+    'frame_sp1': 1
 }

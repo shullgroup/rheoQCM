@@ -20,7 +20,7 @@
    <string>QCM-r</string>
   </property>
   <property name="windowIcon">
-   <iconset>
+   <iconset resource="QCM_GUI_source.qrc">
     <normaloff>:/icon/rc/logo_2.svg</normaloff>:/icon/rc/logo_2.svg</iconset>
   </property>
   <property name="autoFillBackground">
@@ -156,7 +156,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1511,16 +1511,6 @@ background-color: red;
                  <item>
                   <property name="text">
                    <string>Module</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>Device</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>Channel</string>
                   </property>
                  </item>
                  <item>
@@ -5713,7 +5703,7 @@ border: 1px solid blue;
   </widget>
   <action name="actionLoad_Data">
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/load_data.svg</normaloff>:/icon/rc/load_data.svg</iconset>
    </property>
    <property name="text">
@@ -5725,7 +5715,7 @@ border: 1px solid blue;
   </action>
   <action name="actionLoad_Settings">
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/load_settings.svg</normaloff>:/icon/rc/load_settings.svg</iconset>
    </property>
    <property name="text">
@@ -5740,7 +5730,7 @@ border: 1px solid blue;
   </action>
   <action name="actionSave">
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/save.svg</normaloff>:/icon/rc/save.svg</iconset>
    </property>
    <property name="text">
@@ -5752,7 +5742,7 @@ border: 1px solid blue;
   </action>
   <action name="actionSave_As">
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/saveAs.svg</normaloff>:/icon/rc/saveAs.svg</iconset>
    </property>
    <property name="text">
@@ -5764,7 +5754,7 @@ border: 1px solid blue;
   </action>
   <action name="actionExport">
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/export.svg</normaloff>:/icon/rc/export.svg</iconset>
    </property>
    <property name="text">
@@ -5776,7 +5766,7 @@ border: 1px solid blue;
   </action>
   <action name="actionReset">
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/reset.svg</normaloff>:/icon/rc/reset.svg</iconset>
    </property>
    <property name="text">
@@ -5802,7 +5792,7 @@ border: 1px solid blue;
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/signal_ch1.svg</normaloff>:/icon/rc/signal_ch1.svg</iconset>
    </property>
    <property name="text">
@@ -5814,7 +5804,7 @@ border: 1px solid blue;
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/signal_ch2.svg</normaloff>:/icon/rc/signal_ch2.svg</iconset>
    </property>
    <property name="text">
@@ -5826,7 +5816,7 @@ border: 1px solid blue;
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/ref_channel.svg</normaloff>:/icon/rc/ref_channel.svg</iconset>
    </property>
    <property name="text">
@@ -5846,7 +5836,7 @@ border: 1px solid blue;
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/ref_file.svg</normaloff>:/icon/rc/ref_file.svg</iconset>
    </property>
    <property name="text">
@@ -5861,7 +5851,7 @@ border: 1px solid blue;
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/ref_input.svg</normaloff>:/icon/rc/ref_input.svg</iconset>
    </property>
    <property name="text">
@@ -5870,7 +5860,7 @@ border: 1px solid blue;
   </action>
   <action name="actionSet_Temperature_Sensor">
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/temp_sensor.svg</normaloff>:/icon/rc/temp_sensor.svg</iconset>
    </property>
    <property name="text">
@@ -5879,7 +5869,7 @@ border: 1px solid blue;
   </action>
   <action name="actionOpen_MyVNA">
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/myvna.svg</normaloff>:/icon/rc/myvna.svg</iconset>
    </property>
    <property name="text">
@@ -5891,7 +5881,7 @@ border: 1px solid blue;
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/temp_sensor.svg</normaloff>:/icon/rc/temp_sensor.svg</iconset>
    </property>
    <property name="text">
@@ -6024,7 +6014,7 @@ border: 1px solid blue;
   </action>
   <action name="actionClear_All">
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/delete.svg</normaloff>:/icon/rc/delete.svg</iconset>
    </property>
    <property name="text">
@@ -6038,7 +6028,7 @@ border: 1px solid blue;
   </action>
   <action name="actionDelete_Selected">
    <property name="icon">
-    <iconset>
+    <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/delete_selected.svg</normaloff>:/icon/rc/delete_selected.svg</iconset>
    </property>
    <property name="text">

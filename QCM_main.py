@@ -12,7 +12,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 
 # packages
 from MainWindow import Ui_MainWindow
-from GUISettings import settings_init
+from GUISettings import settings_init, settings_default
 from modules import GUIModules
 from MatplotlibWidget import MatplotlibWidget
 
@@ -26,7 +26,7 @@ class QCMApp(QMainWindow):
         self.ui.setupUi(self)
 
         # loadUi('QCM_GUI_test4.ui', self) # read .ui file directly. You still need to compile the .qrc file
-#region ###### setup UI apperiance #################################
+#region ###### initiate UI #################################
 
 #region main UI 
         # set window title
@@ -52,53 +52,19 @@ class QCMApp(QMainWindow):
 #region cross different sections
         # harmonic widgets
         # loop for setting harmonics 
-        i = 1
-        while True:
-            try:
-                if i <= settings_init['max_harmonic']: # in the range to display
-                    # set to visable which is default. nothing to do
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            # set to visable which is default. nothing to do
 
-                    # add checkbox to tabWidget_ham for harmonic selection
-                    setattr(self.ui, 'checkBox_tree_harm' + str(i), QCheckBox())
-                    self.ui.tabWidget_settings_settings_harm.tabBar().setTabButton(self.ui.tabWidget_settings_settings_harm.indexOf(getattr(self.ui, 'tab_settings_settings_harm' + str(i))), QTabBar.LeftSide, getattr(self.ui, 'checkBox_tree_harm' + str(i)))
+            # add checkbox to tabWidget_ham for harmonic selection
+            setattr(self.ui, 'checkBox_tree_harm' + str(i), QCheckBox())
+            self.ui.tabWidget_settings_settings_harm.tabBar().setTabButton(self.ui.tabWidget_settings_settings_harm.indexOf(getattr(self.ui, 'tab_settings_settings_harm' + str(i))), QTabBar.LeftSide, getattr(self.ui, 'checkBox_tree_harm' + str(i)))
 
-                    # set signal
-                    getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'checkBox_harm' + str(i)).setChecked)
-                    getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked)
-                    getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
-                    getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
-                    
-                    if i in settings_init['default_harmonics']: # in the default range 
-                        # settings/control/Harmonics
-                        getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(True)
-                        getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(True)
+            # set signal
+            getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'checkBox_harm' + str(i)).setChecked)
+            getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked)
+            getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
+            getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
 
-                    else: # out of the default range
-                        getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(False)
-                        getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(False)
-                        # hide spectra/sp
-                        getattr(self.ui, 'frame_sp' + str(i)).setVisible(False)
-                else: # to be hided
-                    # settings/control/Harmonics
-                    getattr(self.ui, 'checkBox_harm' + str(i)).hide()
-                    getattr(self.ui, 'lineEdit_startf' + str(i)).hide()
-                    getattr(self.ui, 'lineEdit_endf' + str(i)).hide()
-                    getattr(self.ui, 'pushButton_cntr' + str(i)).hide()
-                    # data/F1/checkbox
-                    getattr(self.ui, 'checkBox_plt1_h' + str(i)).hide()
-                    getattr(self.ui, 'checkBox_plt2_h' + str(i)).hide()
-                    # spectra/sp
-                    getattr(self.ui, 'frame_sp' + str(i)).setVisible(False)
-                i += 2 
-            except: 
-                break
-       
-        max_gui_harmonic = i - 2 # maximum harmomic available in GUI
-
-        # remove tabs in tabWidget_settings_settings_harm
-        for i in range(settings_init['max_harmonic'], max_gui_harmonic):
-                # settings/settings/tabWidget_settings_settings_harm
-                getattr(self.ui, 'tabWidget_settings_settings_harm').removeTab(int((settings_init['max_harmonic']-1)/2)+1) # remove the same index
 
         # set comboBox_plt1_choice, comboBox_plt2_choice
         # dict for the comboboxes
@@ -107,9 +73,6 @@ class QCMApp(QMainWindow):
             # userDat can be access with itemData(index)
             self.ui.comboBox_plt1_choice.addItem(val, key)
             self.ui.comboBox_plt2_choice.addItem(val, key)
-        self.ui.comboBox_plt1_choice.setCurrentIndex(2)
-        self.ui.comboBox_plt2_choice.setCurrentIndex(3)
-        # print(self.ui.comboBox_plt1_choice.itemData(2))
 
         # set RUN/STOP button
         self.ui.pushButton_runstop.clicked.connect(self.on_clicked_pushButton_runstop)
@@ -124,12 +87,6 @@ class QCMApp(QMainWindow):
 
 
 #region settings_control
-
-        # set time interval
-        self.ui.label_actualinterval.setText(str(settings_init['actual_interval']) + '  s')
-        self.ui.lineEdit_acquisitioninterval.setText(str(settings_init['acquisition_interval']))
-        self.ui.lineEdit_refreshresolution.setText(str(settings_init['refresh_resolution']))
-
 
         # set pushButton_resetreftime
         self.ui.pushButton_resetreftime.clicked.connect(self.reset_reftime)
@@ -162,11 +119,23 @@ class QCMApp(QMainWindow):
         # insert sample_channel
         self.create_combobox('comboBox_sample_channel', settings_init['sample_channel_choose'], 100, 'Sample Channel', self.ui.treeWidget_settings_settings_hardware)
 
+        # inser ref_channel
+        self.create_combobox('comboBox_ref_channel', settings_init['ref_channel_choose'], 100, 'Ref. Channel', self.ui.treeWidget_settings_settings_hardware)
+
+        # connect ref_channel
+        # self.ui.comboBox_ref_channel.currentIndexChanged.connect() #?? add function checking if sample and ref have the same channel
+
         # insert base_frequency
         self.create_combobox('comboBox_base_frequency', settings_init['base_frequency_choose'], 100, 'Base Frequency', self.ui.treeWidget_settings_settings_hardware)
 
         # insert bandwidth
         self.create_combobox('comboBox_bandwidth', settings_init['bandwidth_choose'], 100, 'Bandwidth', self.ui.treeWidget_settings_settings_hardware)
+
+        # insert temp. module
+
+
+        # insert thrmcpl type
+
 
         # insert refernence type
         self.create_combobox('comboBox_ref_type', settings_init['ref_type_choose'], 100, 'Type', self.ui.treeWidget_settings_data_settings)
@@ -181,13 +150,10 @@ class QCMApp(QMainWindow):
         self.ui.treeWidget_settings_data_settings.expandToDepth(0)
 
         # move center pushButton_settings_harm_cntr to treeWidget_settings_settings_harmtree
-        self.ui.treeWidget_settings_settings_harmtree.setItemWidget(self.ui.treeWidget_settings_settings_harmtree.findItems('Scan', Qt.MatchExactly | Qt.MatchRecursive, 0)[0], 1, self.ui.pushButton_settings_harm_cntr)
-        # set the pushbutton width
-        self.ui.pushButton_settings_harm_cntr.setMaximumWidth(50)
-
+        self.move_to_row2(self.ui.pushButton_settings_harm_cntr, self.ui.treeWidget_settings_settings_harmtree, 'Scan', 50)
         
         # move center checkBox_settings_temp_sensor to treeWidget_settings_settings_hardware
-        self.ui.treeWidget_settings_settings_hardware.setItemWidget(self.ui.treeWidget_settings_settings_hardware.findItems('Temperature', Qt.MatchExactly | Qt.MatchRecursive, 0)[0], 1, self.ui.checkBox_settings_temp_sensor)
+        self.move_to_row2(self.ui.checkBox_settings_temp_sensor, self.ui.treeWidget_settings_settings_hardware, 'Temperature')
 
         # set tabWidget_settings background
         self.ui.tabWidget_settings.setStyleSheet(
@@ -429,6 +395,34 @@ class QCMApp(QMainWindow):
 #endregion
 
 
+#endregion
+
+#region ###### set UI value ###############################
+
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            if i in settings_default['harmonics_check']: # in the default range 
+                # settings/control/Harmonics
+                getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(True)
+                getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(True)
+
+            else: # out of the default range
+                getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(False)
+                getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(False)
+                # hide spectra/sp
+                getattr(self.ui, 'frame_sp' + str(i)).setVisible(False)
+
+
+        self.ui.comboBox_plt1_choice.setCurrentIndex(2)
+        self.ui.comboBox_plt2_choice.setCurrentIndex(3)
+
+        # set time interval
+        self.ui.label_actualinterval.setText(str(settings_default['actual_interval']) + '  s')
+        self.ui.lineEdit_acquisitioninterval.setText(str(settings_default['acquisition_interval']))
+        self.ui.lineEdit_refreshresolution.setText(str(settings_default['refresh_resolution']))
+
+#endregion
+
+
 #region #########  functions ##############
 
     def link_tab_page(self, tab_idx):
@@ -443,7 +437,10 @@ class QCMApp(QMainWindow):
             self.ui.stackedWidget_data.setCurrentIndex(1)
 
     def create_combobox(self, name, contents, box_width, row_text='', parent=''):
-        ''' this function create a combobox object with its name = name, items = contents. and  set it't width. '''
+        ''' 
+        this function create a combobox object with its name = name, items = contents. and  set it't width. 
+        And move it to row[0] = row_text in parent
+        '''
         # create a combobox object
         setattr(self.ui, name, QComboBox())
         # get the object
@@ -457,18 +454,23 @@ class QCMApp(QMainWindow):
         elif isinstance(contents, dict): # if given a dict, add the text (val) and userData (key)
             for key, val in contents.items():
                 obj_box.addItem(val, key)
-        obj_box.setMaximumWidth(box_width)
+
         # insert to the row of row_text if row_text and parent_name are not empty
         if (row_text and parent):
-            # find item with row_text
-            item = parent.findItems(row_text, Qt.MatchExactly | Qt.MatchRecursive, 0)
-            if len(item) == 1:
-                item = item[0]
-            else:
-                return
-            # insert the combobox in to the 2nd column of row_text
-            parent.setItemWidget(item, 1, obj_box)
+            self.move_to_row2(obj_box, parent, row_text, box_width)
             
+
+    def move_to_row2(self, obj, parent, row_text, width=[]): 
+        if width: # set width of obj
+            obj.setMaximumWidth(width)
+        # find item with row_text
+        item = parent.findItems(row_text, Qt.MatchExactly | Qt.MatchRecursive, 0)
+        if len(item) == 1:
+            item = item[0]
+        else:
+            return
+        # insert the combobox in to the 2nd column of row_text
+        parent.setItemWidget(item, 1, obj)        
 
 
     ########## action functions ##############
@@ -609,7 +611,7 @@ class QCMApp(QMainWindow):
 #endregion
 
 
-#endregion ####setup UI apperiance
+
 if __name__ == '__main__':
     import sys
 
