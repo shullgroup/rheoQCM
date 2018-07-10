@@ -78,6 +78,7 @@ class QCMApp(QMainWindow):
                         getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(False)
                         # hide spectra/sp
                         getattr(self.ui, 'frame_sp' + str(i)).setVisible(False)
+
                 else: # to be hided
                     # settings/control/Harmonics
                     getattr(self.ui, 'checkBox_harm' + str(i)).hide()
@@ -94,6 +95,11 @@ class QCMApp(QMainWindow):
                 break
        
         max_gui_harmonic = i - 2 # maximum harmomic available in GUI
+
+        # set default starting and ending frequencies
+        for i in range(0, int(max_gui_harmonic/2)+1):
+            getattr(self.ui, 'lineEdit_startf' + str(2*i+1)).setText(str(settings_init['default_start_freqs'][i]))
+            getattr(self.ui, 'lineEdit_endf' + str(2*i+1)).setText(str(settings_init['default_end_freqs'][i]))
 
         # remove tabs in tabWidget_settings_settings_harm
         for i in range(settings_init['max_harmonic'], max_gui_harmonic):
