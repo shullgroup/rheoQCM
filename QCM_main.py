@@ -1,9 +1,7 @@
 '''
 This is the main code of the QCM acquization program
-test
 
 '''
-# test 2
 
 import os
 import datetime
