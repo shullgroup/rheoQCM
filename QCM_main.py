@@ -3,7 +3,7 @@ This is the main code of the QCM acquization program
 
 '''
 
-import sys
+import os
 import datetime
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout
@@ -12,8 +12,8 @@ from PyQt5.QtGui import QIcon, QPixmap
 
 # packages
 from MainWindow import Ui_MainWindow
-import GUISettings as constant
-import GUIFunc
+from GUISettings import settings_init
+from modules import GUIModules
 from MatplotlibWidget import MatplotlibWidget
 
 class QCMApp(QMainWindow):
@@ -30,9 +30,9 @@ class QCMApp(QMainWindow):
 
 #region main UI 
         # set window title
-        self.setWindowTitle(constant.window_title)
+        self.setWindowTitle(settings_init['window_title'])
         # set window size
-        self.resize(*constant.window_size)
+        self.resize(*settings_init['window_size'])
         # set delault displaying of tab_settings
         self.ui.tabWidget_settings.setCurrentIndex(0)
         # set delault displaying of stackedWidget_spectra
@@ -55,7 +55,7 @@ class QCMApp(QMainWindow):
         i = 1
         while True:
             try:
-                if i <= constant.max_harmonic: # in the range to display
+                if i <= settings_init['max_harmonic']: # in the range to display
                     # set to visable which is default. nothing to do
 
                     # add checkbox to tabWidget_ham for harmonic selection
@@ -68,7 +68,7 @@ class QCMApp(QMainWindow):
                     getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
                     getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
                     
-                    if i in constant.default_harmonics: # in the default range 
+                    if i in settings_init['default_harmonics']: # in the default range 
                         # settings/control/Harmonics
                         getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(True)
                         getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(True)
@@ -96,13 +96,13 @@ class QCMApp(QMainWindow):
         max_gui_harmonic = i - 2 # maximum harmomic available in GUI
 
         # remove tabs in tabWidget_settings_settings_harm
-        for i in range(constant.max_harmonic, max_gui_harmonic):
+        for i in range(settings_init['max_harmonic'], max_gui_harmonic):
                 # settings/settings/tabWidget_settings_settings_harm
-                getattr(self.ui, 'tabWidget_settings_settings_harm').removeTab(int((constant.max_harmonic-1)/2)+1) # remove the same index
+                getattr(self.ui, 'tabWidget_settings_settings_harm').removeTab(int((settings_init['max_harmonic']-1)/2)+1) # remove the same index
 
         # set comboBox_plt1_choice, comboBox_plt2_choice
         # dict for the comboboxes
-        for key, val in constant.plt_choice.items():
+        for key, val in settings_init['plt_choice'].items():
             # userData is setup for geting the plot type
             # userDat can be access with itemData(index)
             self.ui.comboBox_plt1_choice.addItem(val, key)
@@ -126,9 +126,9 @@ class QCMApp(QMainWindow):
 #region settings_control
 
         # set time interval
-        self.ui.label_actualinterval.setText(str(constant.actual_interval) + '  s')
-        self.ui.lineEdit_acquisitioninterval.setText(str(constant.acquisition_interval))
-        self.ui.lineEdit_refreshresolution.setText(str(constant.refresh_resolution))
+        self.ui.label_actualinterval.setText(str(settings_init['actual_interval']) + '  s')
+        self.ui.lineEdit_acquisitioninterval.setText(str(settings_init['acquisition_interval']))
+        self.ui.lineEdit_refreshresolution.setText(str(settings_init['refresh_resolution']))
 
 
         # set pushButton_resetreftime
@@ -154,22 +154,22 @@ class QCMApp(QMainWindow):
 #region settings_settings
         ### add combobox into treewidget
         # comboBox_fit_method
-        self.create_combobox('comboBox_fit_method', constant.span_mehtod_choose, 100, 'Method', self.ui.treeWidget_settings_settings_harmtree)
+        self.create_combobox('comboBox_fit_method', settings_init['span_mehtod_choose'], 100, 'Method', self.ui.treeWidget_settings_settings_harmtree)
 
         # add track_method
-        self.create_combobox('comboBox_track_method', constant.track_mehtod_choose, 100, 'Tracking', self.ui.treeWidget_settings_settings_harmtree)
+        self.create_combobox('comboBox_track_method', settings_init['track_mehtod_choose'], 100, 'Tracking', self.ui.treeWidget_settings_settings_harmtree)
 
         # insert sample_channel
-        self.create_combobox('comboBox_sample_channel', constant.sample_channel_choose, 100, 'Sample Channel', self.ui.treeWidget_settings_settings_hardware)
+        self.create_combobox('comboBox_sample_channel', settings_init['sample_channel_choose'], 100, 'Sample Channel', self.ui.treeWidget_settings_settings_hardware)
 
         # insert base_frequency
-        self.create_combobox('comboBox_base_frequency', constant.base_frequency_choose, 100, 'Base Frequency', self.ui.treeWidget_settings_settings_hardware)
+        self.create_combobox('comboBox_base_frequency', settings_init['base_frequency_choose'], 100, 'Base Frequency', self.ui.treeWidget_settings_settings_hardware)
 
         # insert bandwidth
-        self.create_combobox('comboBox_bandwidth', constant.bandwidth_choose, 100, 'Bandwidth', self.ui.treeWidget_settings_settings_hardware)
+        self.create_combobox('comboBox_bandwidth', settings_init['bandwidth_choose'], 100, 'Bandwidth', self.ui.treeWidget_settings_settings_hardware)
 
         # insert refernence type
-        self.create_combobox('comboBox_ref_type', constant.ref_type_choose, 100, 'Type', self.ui.treeWidget_settings_data_settings)
+        self.create_combobox('comboBox_ref_type', settings_init['ref_type_choose'], 100, 'Type', self.ui.treeWidget_settings_data_settings)
 
         # set treeWidget_settings_settings_harmtree expanded
         self.ui.treeWidget_settings_settings_harmtree.expandToDepth(0)
@@ -347,7 +347,7 @@ class QCMApp(QMainWindow):
         # self.ui.mpl_dummy_fig.hide() # hide the figure
 
         # add figure mpl_sp[n] into frame_sp[n]
-        for i in range(1, constant.max_harmonic+2, 2):
+        for i in range(1, settings_init['max_harmonic']+2, 2):
             # add first ax
             setattr(
                 self.ui, 'mpl_sp' + str(i), 
@@ -504,7 +504,7 @@ class QCMApp(QMainWindow):
         self.ui.label_actualinterval.setText(f'{acquisition_interval * refresh_resolution}  s')
 
     ## functions for open and save file
-    def openFileNameDialog(self, title, path='', filetype=constant.default_datafiletype):  
+    def openFileNameDialog(self, title, path='', filetype=settings_init['default_datafiletype']):  
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self, title, path, filetype, options=options)
@@ -521,7 +521,7 @@ class QCMApp(QMainWindow):
     #     if files:
     #         print(files)
  
-    def saveFileDialog(self, title, path='', filetype=constant.default_datafiletype):    
+    def saveFileDialog(self, title, path='', filetype=settings_init['default_datafiletype']):    
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(self,title, path, filetype, options=options)
@@ -553,13 +553,12 @@ class QCMApp(QMainWindow):
     # open folder in explorer
     # methods for different OS could be added
     def on_clicked_pushButton_gotofolder(self):
-        # import subprocess
-        import os
-        file_path = self.ui.lineEdit_datafilestr.text()
-        path = os.path.abspath(os.path.join(file_path, os.pardir))
+        file_path = self.ui.lineEdit_datafilestr.text() #?? replace with reading from settings dict
+        path = os.path.abspath(os.path.join(file_path, os.pardir)) # get the folder of the file
         # print(path)
         # subprocess.Popen(f'explorer "{path}"') # every time open a new window
-        os.startfile(f'{path}') # if the folder is opend, make it active
+        # os.startfile(f'{path}') # if the folder is opend, make it active
+        GUIModules.open_file(path)
 
     # 
     def on_triggered_load_settings(self):
@@ -579,7 +578,7 @@ class QCMApp(QMainWindow):
 
     def on_triggered_actionExport(self):
         # export data to a selected form
-        fileName = self.saveFileDialog(title='Choose a file and data type', filetype=constant.export_datafiletype) # !! add path of last opened folder
+        fileName = self.saveFileDialog(title='Choose a file and data type', filetype=settings_init['export_datafiletype']) # !! add path of last opened folder
         # codes for data exporting
 
     def on_triggered_actionReset(self):

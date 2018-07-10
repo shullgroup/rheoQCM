@@ -26,7 +26,7 @@ from matplotlib.backends.backend_qt5agg import (
 from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 from matplotlib.backend_tools import ToolBase, ToolToggleBase
-from GUISettings import max_mpl_toolbar_height
+from GUISettings import settings_init
 
 # rcParams['toolbar'] = 'toolmanager'
 
@@ -76,7 +76,7 @@ class MatplotlibWidget(QWidget):
                 NavigationToolbar.toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in showtoolbar]
 
             self.toolbar = NavigationToolbar(self.canvas, self)
-            self.toolbar.setMaximumHeight(max_mpl_toolbar_height)
+            self.toolbar.setMaximumHeight(settings_init['max_mpl_toolbar_height'])
             self.toolbar.setStyleSheet("QToolBar { border: 0px;}")
             # if isinstance(showtoolbar, tuple):
             #     print(self.toolbar.toolitems)
