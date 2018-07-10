@@ -52,6 +52,7 @@ class QCMApp(QMainWindow):
 #region cross different sections
         # harmonic widgets
         # loop for setting harmonics 
+<<<<<<< HEAD
         for i in range(1, settings_init['max_harmonic']+2, 2):
             # set to visable which is default. nothing to do
 
@@ -65,6 +66,61 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
             getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
 
+=======
+        i = 1
+        while True:
+            try:
+                if i <= settings_init['max_harmonic']: # in the range to display
+                    # set to visable which is default. nothing to do
+
+                    # add checkbox to tabWidget_ham for harmonic selection
+                    setattr(self.ui, 'checkBox_tree_harm' + str(i), QCheckBox())
+                    self.ui.tabWidget_settings_settings_harm.tabBar().setTabButton(self.ui.tabWidget_settings_settings_harm.indexOf(getattr(self.ui, 'tab_settings_settings_harm' + str(i))), QTabBar.LeftSide, getattr(self.ui, 'checkBox_tree_harm' + str(i)))
+
+                    # set signal
+                    getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'checkBox_harm' + str(i)).setChecked)
+                    getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked)
+                    getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
+                    getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
+                    
+                    if i in settings_init['default_harmonics']: # in the default range 
+                        # settings/control/Harmonics
+                        getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(True)
+                        getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(True)
+
+                    else: # out of the default range
+                        getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(False)
+                        getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(False)
+                        # hide spectra/sp
+                        getattr(self.ui, 'frame_sp' + str(i)).setVisible(False)
+
+                else: # to be hided
+                    # settings/control/Harmonics
+                    getattr(self.ui, 'checkBox_harm' + str(i)).hide()
+                    getattr(self.ui, 'lineEdit_startf' + str(i)).hide()
+                    getattr(self.ui, 'lineEdit_endf' + str(i)).hide()
+                    getattr(self.ui, 'pushButton_cntr' + str(i)).hide()
+                    # data/F1/checkbox
+                    getattr(self.ui, 'checkBox_plt1_h' + str(i)).hide()
+                    getattr(self.ui, 'checkBox_plt2_h' + str(i)).hide()
+                    # spectra/sp
+                    getattr(self.ui, 'frame_sp' + str(i)).setVisible(False)
+                i += 2 
+            except: 
+                break
+       
+        max_gui_harmonic = i - 2 # maximum harmomic available in GUI
+
+        # set default starting and ending frequencies
+        for i in range(0, int(max_gui_harmonic/2)+1):
+            getattr(self.ui, 'lineEdit_startf' + str(2*i+1)).setText(str(settings_init['default_start_freqs'][i]))
+            getattr(self.ui, 'lineEdit_endf' + str(2*i+1)).setText(str(settings_init['default_end_freqs'][i]))
+
+        # remove tabs in tabWidget_settings_settings_harm
+        for i in range(settings_init['max_harmonic'], max_gui_harmonic):
+                # settings/settings/tabWidget_settings_settings_harm
+                getattr(self.ui, 'tabWidget_settings_settings_harm').removeTab(int((settings_init['max_harmonic']-1)/2)+1) # remove the same index
+>>>>>>> 43b523567aa8a6c0f394aa72455c497de7b9eae7
 
         # set comboBox_plt1_choice, comboBox_plt2_choice
         # dict for the comboboxes

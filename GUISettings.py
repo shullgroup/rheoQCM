@@ -13,6 +13,12 @@ settings_init = {
     # highest harmonic to display. the maximum value is 11
     'max_harmonic': 11, # do not change
 
+    # default start harmonic frequencies
+    'default_start_freqs': [4.9, 14.9, 24.9, 34.9, 44.9, 54.9],
+
+    # default end harmonic frequencies
+    'default_end_freqs': [5.1, 15.1, 25.1, 35.1, 45.1, 55.1],
+    
     # default open/save data file type
     'default_datafiletype': ';;'.join([
         'Json file (*.json)',
