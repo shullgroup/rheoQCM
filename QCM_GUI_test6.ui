@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1192</width>
-    <height>824</height>
+    <height>822</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -854,31 +854,6 @@ background-color: red;
                        <height>16777215</height>
                       </size>
                      </property>
-                     <item>
-                      <property name="text">
-                       <string>6</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>5</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>4</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>3</string>
-                      </property>
-                     </item>
-                     <item>
-                      <property name="text">
-                       <string>2</string>
-                      </property>
-                     </item>
                     </widget>
                    </item>
                    <item>
@@ -1369,7 +1344,7 @@ background-color: red;
                  </property>
                  <item>
                   <property name="text">
-                   <string>factor</string>
+                   <string>Factor</string>
                   </property>
                  </item>
                 </item>
@@ -1597,12 +1572,12 @@ background-color: red;
                  </item>
                  <item>
                   <property name="text">
-                   <string>Γ scale</string>
+                   <string>Γ Scale</string>
                   </property>
                  </item>
                  <item>
                   <property name="text">
-                   <string>link Time</string>
+                   <string>Link Time</string>
                   </property>
                  </item>
                 </item>
@@ -1623,6 +1598,23 @@ background-color: red;
               </item>
               <item>
                <widget class="QCheckBox" name="checkBox_settings_temp_sensor">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_settings_settings_tempmodule">
+                <property name="text">
+                 <string>...</string>
+                </property>
+                <property name="readOnly">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_settings_settings_linktime">
                 <property name="text">
                  <string/>
                 </property>
@@ -4282,7 +4274,7 @@ border: 1px solid blue;
         <item>
          <widget class="QStackedWidget" name="stackedWidget_spectra">
           <property name="currentIndex">
-           <number>2</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="page_spectra_show">
            <layout class="QVBoxLayout" name="verticalLayout_19">

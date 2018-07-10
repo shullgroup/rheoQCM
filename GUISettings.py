@@ -12,13 +12,7 @@ settings_init = {
 
     # highest harmonic to display. the maximum value is 11
     'max_harmonic': 11, # do not change
-
-    # default start harmonic frequencies
-    'default_start_freqs': [4.9, 14.9, 24.9, 34.9, 44.9, 54.9],
-
-    # default end harmonic frequencies
-    'default_end_freqs': [5.1, 15.1, 25.1, 35.1, 45.1, 55.1],
-    
+ 
     # default open/save data file type
     'default_datafiletype': ';;'.join([
         'Json file (*.json)',
@@ -34,7 +28,7 @@ settings_init = {
     ]),
 
     # choice for plotting data shown in comboBox_plt1_choice & comboBox_plt2_choice
-    'plt_choice': {
+    'data_plt_choose': {
         'none':   'none',
         'df_t':   u'\u0394' + 'f - time',
         'dfn_t':  u'\u0394' + 'f/n - time',
@@ -43,6 +37,16 @@ settings_init = {
         'f_t':    'f - time',
         'g_t':    'g - time',
         'temp_t': 'temp. - time'
+    },
+
+    # comboBox_fitfactor
+    'fit_factor_choose': {
+        '6':   '6',
+        '5':   '5',
+        '4':   '4',
+        '3':   '3',
+        '2':   '2',
+
     },
 
     # comboBox_fit_method
@@ -87,6 +91,36 @@ settings_init = {
         'B': 'B',
         'E': 'E',
     },
+
+    'time_unit_choose': {
+    # key: number; val: for display in combobox
+        's': 's',
+        'm': 'min',
+        'h': 'h',
+        'd': 'day',
+    },
+
+    'temp_unit_choose': {
+    # key: number; val: for display in combobox
+        'C': '°C',
+        'K': 'K',
+        # 'F': '°F',
+    },
+
+    'time_scale_choose': {
+    # key: number; val: for display in combobox
+        'linear': 'linear',
+        'log': 'log',
+        # 'F': '°F',
+    },
+
+    'gamma_scale_choose': {
+    # key: number; val: for display in combobox
+        'linear': 'linear',
+        'log': 'log',
+        # 'F': '°F',
+    },
+
 
     # available base frequency of crystals
     # key: number; val: for display in combobox

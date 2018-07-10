@@ -52,7 +52,6 @@ class QCMApp(QMainWindow):
 #region cross different sections
         # harmonic widgets
         # loop for setting harmonics 
-<<<<<<< HEAD
         for i in range(1, settings_init['max_harmonic']+2, 2):
             # set to visable which is default. nothing to do
 
@@ -66,65 +65,10 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
             getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
 
-=======
-        i = 1
-        while True:
-            try:
-                if i <= settings_init['max_harmonic']: # in the range to display
-                    # set to visable which is default. nothing to do
-
-                    # add checkbox to tabWidget_ham for harmonic selection
-                    setattr(self.ui, 'checkBox_tree_harm' + str(i), QCheckBox())
-                    self.ui.tabWidget_settings_settings_harm.tabBar().setTabButton(self.ui.tabWidget_settings_settings_harm.indexOf(getattr(self.ui, 'tab_settings_settings_harm' + str(i))), QTabBar.LeftSide, getattr(self.ui, 'checkBox_tree_harm' + str(i)))
-
-                    # set signal
-                    getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'checkBox_harm' + str(i)).setChecked)
-                    getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked)
-                    getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
-                    getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(getattr(self.ui, 'frame_sp' +str(i)).setVisible)
-                    
-                    if i in settings_init['default_harmonics']: # in the default range 
-                        # settings/control/Harmonics
-                        getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(True)
-                        getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(True)
-
-                    else: # out of the default range
-                        getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(False)
-                        getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(False)
-                        # hide spectra/sp
-                        getattr(self.ui, 'frame_sp' + str(i)).setVisible(False)
-
-                else: # to be hided
-                    # settings/control/Harmonics
-                    getattr(self.ui, 'checkBox_harm' + str(i)).hide()
-                    getattr(self.ui, 'lineEdit_startf' + str(i)).hide()
-                    getattr(self.ui, 'lineEdit_endf' + str(i)).hide()
-                    getattr(self.ui, 'pushButton_cntr' + str(i)).hide()
-                    # data/F1/checkbox
-                    getattr(self.ui, 'checkBox_plt1_h' + str(i)).hide()
-                    getattr(self.ui, 'checkBox_plt2_h' + str(i)).hide()
-                    # spectra/sp
-                    getattr(self.ui, 'frame_sp' + str(i)).setVisible(False)
-                i += 2 
-            except: 
-                break
-       
-        max_gui_harmonic = i - 2 # maximum harmomic available in GUI
-
-        # set default starting and ending frequencies
-        for i in range(0, int(max_gui_harmonic/2)+1):
-            getattr(self.ui, 'lineEdit_startf' + str(2*i+1)).setText(str(settings_init['default_start_freqs'][i]))
-            getattr(self.ui, 'lineEdit_endf' + str(2*i+1)).setText(str(settings_init['default_end_freqs'][i]))
-
-        # remove tabs in tabWidget_settings_settings_harm
-        for i in range(settings_init['max_harmonic'], max_gui_harmonic):
-                # settings/settings/tabWidget_settings_settings_harm
-                getattr(self.ui, 'tabWidget_settings_settings_harm').removeTab(int((settings_init['max_harmonic']-1)/2)+1) # remove the same index
->>>>>>> 43b523567aa8a6c0f394aa72455c497de7b9eae7
 
         # set comboBox_plt1_choice, comboBox_plt2_choice
         # dict for the comboboxes
-        for key, val in settings_init['plt_choice'].items():
+        for key, val in settings_init['data_plt_choose'].items():
             # userData is setup for geting the plot type
             # userDat can be access with itemData(index)
             self.ui.comboBox_plt1_choice.addItem(val, key)
@@ -151,6 +95,10 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_acquisitioninterval.textEdited.connect(self.set_label_actualinterval)
         self.ui.lineEdit_refreshresolution.textEdited.connect(self.set_label_actualinterval)
 
+        # add value for the comboBox_fitfactor
+        for key, val in settings_init['fit_factor_choose'].items():
+            self.ui.comboBox_fitfactor.addItem(val, key)
+
         # set pushButton_gotofolder
         self.ui.pushButton_gotofolder.clicked.connect(self.on_clicked_pushButton_gotofolder)
 
@@ -172,6 +120,9 @@ class QCMApp(QMainWindow):
         # add track_method
         self.create_combobox('comboBox_track_method', settings_init['track_mehtod_choose'], 100, 'Tracking', self.ui.treeWidget_settings_settings_harmtree)
 
+        # add fit factor
+        self.create_combobox('comboBox_harmfitfactor', settings_init['fit_factor_choose'], 100, 'Factor', self.ui.treeWidget_settings_settings_harmtree)
+
         # insert sample_channel
         self.create_combobox('comboBox_sample_channel', settings_init['sample_channel_choose'], 100, 'Sample Channel', self.ui.treeWidget_settings_settings_hardware)
 
@@ -187,14 +138,26 @@ class QCMApp(QMainWindow):
         # insert bandwidth
         self.create_combobox('comboBox_bandwidth', settings_init['bandwidth_choose'], 100, 'Bandwidth', self.ui.treeWidget_settings_settings_hardware)
 
-        # insert temp. module
-
-
+        # move temp. module to treeWidget_settings_settings_hardware
+        self.move_to_row2(self.ui.lineEdit_settings_settings_tempmodule, self.ui.treeWidget_settings_settings_hardware, 'Module')
+        
         # insert thrmcpl type
+        self.create_combobox('comboBox_thrmcpltype', settings_init['thrmcpl_choose'], 100, 'Thrmcpl Type', self.ui.treeWidget_settings_settings_hardware)
 
+        # insert time_unit
+        self.create_combobox('comboBox_timeunit', settings_init['time_unit_choose'], 100, 'Time Unit', self.ui.treeWidget_settings_settings_plots)
 
-        # insert refernence type
-        self.create_combobox('comboBox_ref_type', settings_init['ref_type_choose'], 100, 'Type', self.ui.treeWidget_settings_data_settings)
+        # insert temp_unit
+        self.create_combobox('comboBox_timeunit', settings_init['temp_unit_choose'], 100, 'Temp. Unit', self.ui.treeWidget_settings_settings_plots)
+
+        # insert time scale
+        self.create_combobox('comboBox_timescale', settings_init['time_scale_choose'], 100, 'Time Scale', self.ui.treeWidget_settings_settings_plots)
+
+        # insert gamma scale
+        self.create_combobox('comboBox_gammascale', settings_init['gamma_scale_choose'], 100, 'Γ Scale', self.ui.treeWidget_settings_settings_plots)
+
+        # move checkBox_settings_settings_linktime to treeWidget_settings_settings_plots
+        self.move_to_row2(self.ui.checkBox_settings_settings_linktime, self.ui.treeWidget_settings_settings_plots, 'Link Time')
 
         # set treeWidget_settings_settings_harmtree expanded
         self.ui.treeWidget_settings_settings_harmtree.expandToDepth(0)
@@ -202,8 +165,7 @@ class QCMApp(QMainWindow):
         self.ui.treeWidget_settings_settings_hardware.expandToDepth(0)
         # set treeWidget_settings_settings_plots expanded
         self.ui.treeWidget_settings_settings_plots.expandToDepth(0)
-        # set treeWidget_settings_data_settings expanded
-        self.ui.treeWidget_settings_data_settings.expandToDepth(0)
+ 
 
         # move center pushButton_settings_harm_cntr to treeWidget_settings_settings_harmtree
         self.move_to_row2(self.ui.pushButton_settings_harm_cntr, self.ui.treeWidget_settings_settings_harmtree, 'Scan', 50)
@@ -257,6 +219,12 @@ class QCMApp(QMainWindow):
         self.ui.treeWidget_settings_data_settings.setStyleSheet(
             "QTreeWidget { background: transparent; }"
         )
+
+        # insert refernence type
+        self.create_combobox('comboBox_ref_type', settings_init['ref_type_choose'], 100, 'Type', self.ui.treeWidget_settings_data_settings)
+        
+       # set treeWidget_settings_data_settings expanded
+        self.ui.treeWidget_settings_data_settings.expandToDepth(0)
 
 #endregion 
 
