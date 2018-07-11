@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'QCM_GUI_test6.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.2
+# Created by: PyQt5 UI code generator 5.10.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -2033,7 +2033,7 @@ class Ui_MainWindow(object):
         self.tableWidget_spectra_mechanics_table.setHorizontalHeaderItem(3, item)
         item = QtWidgets.QTableWidgetItem()
         self.tableWidget_spectra_mechanics_table.setItem(0, 0, item)
-        self.tableWidget_spectra_mechanics_table.horizontalHeader().setVisible(False)
+        self.tableWidget_spectra_mechanics_table.horizontalHeader().setVisible(True)
         self.tableWidget_spectra_mechanics_table.horizontalHeader().setCascadingSectionResizes(True)
         self.tableWidget_spectra_mechanics_table.horizontalHeader().setDefaultSectionSize(72)
         self.tableWidget_spectra_mechanics_table.horizontalHeader().setStretchLastSection(False)
@@ -2308,7 +2308,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_24.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1192, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1192, 21))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -2541,7 +2541,7 @@ class Ui_MainWindow(object):
         self.tabWidget_settings_data_settingsharm.setCurrentIndex(5)
         self.tabWidget_settings_data_markindex.setCurrentIndex(0)
         self.comboBox_settings_mechanics_refG.setCurrentIndex(1)
-        self.stackedWidget_spectra.setCurrentIndex(1)
+        self.stackedWidget_spectra.setCurrentIndex(2)
         self.stackedWidget_data.setCurrentIndex(0)
         self.pushButton_settings_mechanics_simulator.clicked['bool'].connect(self.groupBox_settings_mechanics_simulator.setVisible)
         self.pushButton_settings_mechanics_countoursettings.clicked['bool'].connect(self.tableWidget_settings_mechanics_contoursettings.setVisible)
@@ -2953,8 +2953,8 @@ class Ui_MainWindow(object):
         self.textBrowser_spectra_fit_result.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\'; font-size:8.25pt;\"><br /></p></body></html>"))
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.label_10.setText(_translate("MainWindow", "Select item or row/column headers to plot"))
         self.pushButton_spectra_mechanics_clear.setText(_translate("MainWindow", "Clear"))
         self.toolButton_spectra_mechanics_plotrows.setText(_translate("MainWindow", "Plot Rows"))

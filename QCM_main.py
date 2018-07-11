@@ -308,13 +308,13 @@ class QCMApp(QMainWindow):
 
         # resize the TabBar.Button
         self.ui.tabWidget_settings_settings_harm.setStyleSheet(
-            "QTabWidget::pane { border: 0px; }"
+            "QTabWidget::pane { height: 0; border: 0px; }"
             "QTabWidget {background-color: transparent;}"
             "QTabWidget::tab-bar { left: 5px; /* move to the right by 5px */ }"
             "QTabBar::tab { border: 1px solid #9B9B9B; border-top-left-radius: 1px; border-top-right-radius: 1px;}"
-            "QTabBar::tab { height: 17px; width: 38px; padding: 0px; }" 
+            "QTabBar::tab { height: 20px; width: 38px; padding: 0px; }" 
             "QTabBar::tab:selected, QTabBar::tab:hover { background: white; }"
-            "QTabBar::tab:selected { height: 19px; width: 40px; border-bottom-color: none; }"
+            "QTabBar::tab:selected { height: 22px; width: 40px; border-bottom-color: none; }"
             "QTabBar::tab:selected { margin-left: -2px; margin-right: -2px; }"
             "QTabBar::tab:first:selected { margin-left: 0; width: 40px; }"
             "QTabBar::tab:last:selected { margin-right: 0; width: 40px; }"
@@ -757,8 +757,6 @@ class QCMApp(QMainWindow):
             n = round(n)
         else:
             n = 1/round(1 / n)
-
-        print(n)
 
         # set span
 
