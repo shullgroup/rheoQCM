@@ -26,7 +26,7 @@ from matplotlib.backends.backend_qt5agg import (
 from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 from matplotlib.backend_tools import ToolBase, ToolToggleBase
-from GUISettings import settings_init
+from UISettings import settings_init
 
 # rcParams['toolbar'] = 'toolmanager'
 
