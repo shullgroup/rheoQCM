@@ -147,10 +147,10 @@ settings_init = {
         't0':  'First point',
         't1t2':  'Selected range',
         # 'input':  'Input value',
-        'file': 'File',
+        'file': 'Other file',
     },
 
-    'max_mpl_toolbar_height': 23, # in px
+    'max_mpl_toolbar_height': 20, # in px
 }
 
 settings_default = {

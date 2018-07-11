@@ -12,8 +12,8 @@ from PyQt5.QtGui import QIcon, QPixmap
 
 # packages
 from MainWindow import Ui_MainWindow
-from GUISettings import settings_init, settings_default
-from modules import GUIModules
+from UISettings import settings_init, settings_default
+from modules import UIModules
 from MatplotlibWidget import MatplotlibWidget
 
 class QCMApp(QMainWindow):
@@ -584,7 +584,7 @@ class QCMApp(QMainWindow):
         # print(path)
         # subprocess.Popen(f'explorer "{path}"') # every time open a new window
         # os.startfile(f'{path}') # if the folder is opend, make it active
-        GUIModules.open_file(path)
+        UIModules.open_file(path)
 
     # 
     def on_triggered_load_settings(self):
