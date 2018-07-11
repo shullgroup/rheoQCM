@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'QCM_GUI_test6.ui'
 #
-# Created by: PyQt5 UI code generator 5.10.1
+# Created by: PyQt5 UI code generator 5.11.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1192, 822)
+        MainWindow.resize(1192, 943)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1841,14 +1841,17 @@ class Ui_MainWindow(object):
         self.horizontalLayout_14.addWidget(self.label_17)
         self.verticalLayout_43.addLayout(self.horizontalLayout_14)
         self.horizontalLayout_22.addLayout(self.verticalLayout_43)
-        self.label_9 = QtWidgets.QLabel(self.layoutWidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        self.label_spectra_fit_zoomtimes = QtWidgets.QLabel(self.layoutWidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.label_9.sizePolicy().hasHeightForWidth())
-        self.label_9.setSizePolicy(sizePolicy)
-        self.label_9.setObjectName("label_9")
-        self.horizontalLayout_22.addWidget(self.label_9)
+        sizePolicy.setHeightForWidth(self.label_spectra_fit_zoomtimes.sizePolicy().hasHeightForWidth())
+        self.label_spectra_fit_zoomtimes.setSizePolicy(sizePolicy)
+        self.label_spectra_fit_zoomtimes.setMinimumSize(QtCore.QSize(55, 0))
+        self.label_spectra_fit_zoomtimes.setMaximumSize(QtCore.QSize(55, 16777215))
+        self.label_spectra_fit_zoomtimes.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_spectra_fit_zoomtimes.setObjectName("label_spectra_fit_zoomtimes")
+        self.horizontalLayout_22.addWidget(self.label_spectra_fit_zoomtimes)
         self.lineEdit_spectra_fit_span = QtWidgets.QLineEdit(self.layoutWidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -2030,7 +2033,7 @@ class Ui_MainWindow(object):
         self.tableWidget_spectra_mechanics_table.setHorizontalHeaderItem(3, item)
         item = QtWidgets.QTableWidgetItem()
         self.tableWidget_spectra_mechanics_table.setItem(0, 0, item)
-        self.tableWidget_spectra_mechanics_table.horizontalHeader().setVisible(True)
+        self.tableWidget_spectra_mechanics_table.horizontalHeader().setVisible(False)
         self.tableWidget_spectra_mechanics_table.horizontalHeader().setCascadingSectionResizes(True)
         self.tableWidget_spectra_mechanics_table.horizontalHeader().setDefaultSectionSize(72)
         self.tableWidget_spectra_mechanics_table.horizontalHeader().setStretchLastSection(False)
@@ -2305,7 +2308,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_24.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1192, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1192, 22))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -2529,16 +2532,16 @@ class Ui_MainWindow(object):
         self.label.setBuddy(self.lineEdit_refreshresolution)
         self.label_4.setBuddy(self.comboBox_fitfactor)
         self.label_6.setBuddy(self.comboBox_settings_mechanics_refG)
-        self.label_9.setBuddy(self.lineEdit_spectra_fit_span)
+        self.label_spectra_fit_zoomtimes.setBuddy(self.lineEdit_spectra_fit_span)
         self.label_5.setBuddy(self.lineEdit_spectra_fit_span)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget_settings.setCurrentIndex(2)
+        self.tabWidget_settings.setCurrentIndex(1)
         self.tabWidget_settings_settings_harm.setCurrentIndex(0)
         self.tabWidget_settings_data_settingsharm.setCurrentIndex(5)
         self.tabWidget_settings_data_markindex.setCurrentIndex(0)
         self.comboBox_settings_mechanics_refG.setCurrentIndex(1)
-        self.stackedWidget_spectra.setCurrentIndex(2)
+        self.stackedWidget_spectra.setCurrentIndex(1)
         self.stackedWidget_data.setCurrentIndex(0)
         self.pushButton_settings_mechanics_simulator.clicked['bool'].connect(self.groupBox_settings_mechanics_simulator.setVisible)
         self.pushButton_settings_mechanics_countoursettings.clicked['bool'].connect(self.tableWidget_settings_mechanics_contoursettings.setVisible)
@@ -2629,7 +2632,7 @@ class Ui_MainWindow(object):
         self.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, _translate("MainWindow", "4.9"))
         self.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(0, _translate("MainWindow", "End"))
         self.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(1, _translate("MainWindow", "5.1"))
-        self.treeWidget_settings_settings_harmtree.topLevelItem(0).child(2).setText(0, _translate("MainWindow", "Ponts"))
+        self.treeWidget_settings_settings_harmtree.topLevelItem(0).child(2).setText(0, _translate("MainWindow", "Points"))
         self.treeWidget_settings_settings_harmtree.topLevelItem(0).child(2).setText(1, _translate("MainWindow", "200"))
         self.treeWidget_settings_settings_harmtree.topLevelItem(1).setText(0, _translate("MainWindow", "Span"))
         self.treeWidget_settings_settings_harmtree.topLevelItem(1).child(0).setText(0, _translate("MainWindow", "Method"))
@@ -2941,7 +2944,7 @@ class Ui_MainWindow(object):
         self.label_15.setText(_translate("MainWindow", "<html><head/><body><p>10<span style=\" vertical-align:super;\">0</span></p></body></html>"))
         self.label_16.setText(_translate("MainWindow", "<html><head/><body><p>10<span style=\" vertical-align:super;\">1</span></p></body></html>"))
         self.label_17.setText(_translate("MainWindow", "<html><head/><body><p>10<span style=\" vertical-align:super;\">2</span></p></body></html>"))
-        self.label_9.setText(_translate("MainWindow", "n*"))
+        self.label_spectra_fit_zoomtimes.setText(_translate("MainWindow", "n *"))
         self.label_5.setText(_translate("MainWindow", "kHz"))
         self.pushButton_spectra_fit_refresh.setText(_translate("MainWindow", "Refresh"))
         self.pushButton_spectra_fit_showall.setText(_translate("MainWindow", "Whole Range"))
@@ -2950,8 +2953,8 @@ class Ui_MainWindow(object):
         self.textBrowser_spectra_fit_result.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
+"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\'; font-size:8.25pt;\"><br /></p></body></html>"))
         self.label_10.setText(_translate("MainWindow", "Select item or row/column headers to plot"))
         self.pushButton_spectra_mechanics_clear.setText(_translate("MainWindow", "Clear"))
         self.toolButton_spectra_mechanics_plotrows.setText(_translate("MainWindow", "Plot Rows"))
