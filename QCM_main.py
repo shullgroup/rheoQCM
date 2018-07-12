@@ -25,11 +25,10 @@ class QCMApp(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        #initialize default settings
         self.settings = settings_default
+        self.set_default_freqs()
         self.harmonic_tab = 1
         self.update_all_settings()
-
         self.main()
 
     def main(self):
@@ -820,20 +819,11 @@ class QCMApp(QMainWindow):
         self.end_freq = self.harmonic_tab * self.settings['comboBox_base_frequency'] + self.settings['comboBox_bandwidth']
         self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.start_freq))
         self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(1, str(self.end_freq))
-        self.update_lineEdit_freqs()
 
-    def update_lineEdit_freqs(self):
+    def set_default_freqs(self):
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
-            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(str(self.get_default_harm_freq('start', i)))
-            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(str(self.get_default_harm_freq('end', i)))
-
-    def get_default_harm_freq(self, where, harmonic):
-        if where == "start":
-            return harmonic * self.settings['comboBox_base_frequency'] - self.settings['comboBox_bandwidth']
-        elif where == "end":
-            return harmonic * self.settings['comboBox_base_frequency'] + self.settings['comboBox_bandwidth']
-        else:
-            pass
+            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(str(self.settings['lineEdit_startf' + str(i)]))
+            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(str(self.settings['lineEdit_endf' + str(i)]))
 
 #endregion
 

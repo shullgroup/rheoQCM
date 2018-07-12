@@ -164,18 +164,19 @@ settings_default = {
     #'checkBox_harm7'
     #'checkBox_harm9'
     #'checkBox_harm11'
-    #'lineEdit_startf1'
-    #'lineEdit_startf3'
-    #'lineEdit_startf5'
-    #'lineEdit_startf7'
-    #'lineEdit_startf9'
-    #'lineEdit_startf11'
-    #'lineEdit_endf1'
-    #'lineEdit_endf3'
-    #'lineEdit_endf5'
-    #'lineEdit_endf7'
-    #'lineEdit_endf9'
-    #'lineEdit_endf11'
+
+    'lineEdit_startf1': 4.9,
+    'lineEdit_startf3': 14.9,
+    'lineEdit_startf5': 24.9,
+    'lineEdit_startf7': 34.9,
+    'lineEdit_startf9': 44.9,
+    'lineEdit_startf11': 54.9,
+    'lineEdit_endf1': 5.1,
+    'lineEdit_endf3': 15.1,
+    'lineEdit_endf5': 25.1,
+    'lineEdit_endf7': 35.1,
+    'lineEdit_endf9': 45.1,
+    'lineEdit_endf11': 55.1,
 
     #'lineEdit_reftime'
 
