@@ -146,6 +146,13 @@ class QCMApp(QMainWindow):
         # set pushButton_appenddata
         self.ui.pushButton_appenddata.clicked.connect(self.on_triggered_load_data)
 
+        self.ui.lineEdit_acquisitioninterval.textChanged[str].connect(self.update_acquisitioninterval)
+        self.ui.lineEdit_refreshresolution.textChanged[str].connect(self.update_refreshresolution)
+        self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_dynamicfit)
+        self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_showsusceptance)
+        self.ui.checkBox_showchi.stateChanged.connect(self.update_showchi)
+        self.ui.checkBox_polarplot.stateChanged.connect(self.update_showpolarplot)
+        self.ui.comboBox_fitfactor.activated[str].connect(self.update_fitfactor)
 
 #endregion
 
@@ -340,7 +347,6 @@ class QCMApp(QMainWindow):
         self.ui.tabWidget_settings_settings_harm.currentChanged.connect(self.update_harmonic_tab)
         self.ui.comboBox_base_frequency.activated[str].connect(self.update_base_freq)
         self.ui.comboBox_bandwidth.activated[str].connect(self.update_bandwidth)
-
 
         # set default values
         self.ui.comboBox_base_frequency.setCurrentIndex(0)
@@ -591,9 +597,9 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_plt2_choice.setCurrentIndex(3)
 
         # set time interval
-        self.ui.label_actualinterval.setText(str(settings_default['actual_interval']) + '  s')
-        self.ui.lineEdit_acquisitioninterval.setText(str(settings_default['acquisition_interval']))
-        self.ui.lineEdit_refreshresolution.setText(str(settings_default['refresh_resolution']))
+        self.ui.label_actualinterval.setText(str(self.settings['label_actualinterval']) + '  s')
+        self.ui.lineEdit_acquisitioninterval.setText(str(self.settings['lineEdit_acquisitioninterval']))
+        self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
 
 #endregion
 
@@ -837,6 +843,29 @@ class QCMApp(QMainWindow):
             count = stwgt.count()  # get total pages
             current_index = stwgt.currentIndex()  # get current index
             stwgt.setCurrentIndex((current_index + diret) % count) # increase or decrease index by diret
+        
+    def update_acquisitioninterval(self, acquisitioninterval_text):
+        if acquisitioninterval_text != '':
+            self.settings['lineEdit_acquisitioninterval'] = float(acquisitioninterval_text)
+    
+    def update_refreshresolution(self, refreshsolution_text):
+        if refreshsolution_text != '':
+            self.settings['lineEdit_refreshsolution'] = float(refreshsolution_text)
+
+    def update_dynamicfit(self):
+        self.settings['checkBox_dynamicfit'] = not self.settings['checkBox_dynamicfit']
+
+    def update_showsusceptance(self):
+        self.settings['checkBox_showsusceptance'] = not self.settings['checkBox_showsusceptance']
+
+    def update_showchi(self):
+        self.settings['checkBox_showchi'] = not self.settings['checkBox_showchi']
+
+    def update_showpolarplot(self):
+        self.settings['checkBox_polarplot'] = not self.settings['checkBox_polarplot']
+
+    def update_fitfactor(self, fitfactor_text):
+        self.settings['comboBox_fitfactor'] = float(fitfactor_text)
 
     def update_harmonic_tab(self):
         self.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1

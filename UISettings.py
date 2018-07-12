@@ -154,17 +154,19 @@ settings_init = {
 }
 
 settings_default = {
-    #### default settings control ####
+#### default settings control ####
     # default harmonics 
     'harmonics_check': [1, 3, 5],
 
-    #'checkBox_harm1'
-    #'checkBox_harm3'
-    #'checkBox_harm5'
-    #'checkBox_harm7'
-    #'checkBox_harm9'
-    #'checkBox_harm11'
+    # default checkbox harm states
+    'checkBox_harm1': True,
+    'checkBox_harm3': True,
+    'checkBox_harm5': True,
+    'checkBox_harm7': False,
+    'checkBox_harm9': False,
+    'checkBox_harm11': False,
 
+    # default lineEdit values
     'lineEdit_startf1': 4.9,
     'lineEdit_startf3': 14.9,
     'lineEdit_startf5': 24.9,
@@ -178,58 +180,153 @@ settings_default = {
     'lineEdit_endf9': 45.1,
     'lineEdit_endf11': 55.1,
 
-    #'lineEdit_reftime'
+
+    'lineEdit_reftime': 0,
 
     'lineEdit_acquisitioninterval': 2,
-    'lineEdit_refreshresolution': 2,
-    'label_actualinterval': 1,
-
-    #'frame_sp1'
-    #'frame_sp3'
-    #'frame_sp5'
-    #'frame_sp7'
-    #'frame_sp9'
-    #'frame_sp11'
-
-    # default label_actual_interval
-    'actual_interval': 2,
-    'acquisition_interval': 2,
-    'refresh_resolution': 1,
+    'lineEdit_refreshresolution': 1,
+    'label_actualinterval': 2,
 
     # default fitting and display options
-    #'checkBox_dynamicfit'
-    #'checkBox_polarplot'
-    #'checkBox_showsusceptance'
-    #'checkBox_showchi'
-    #'comboBox_fitfactor'
+    'checkBox_dynamicfit': True,
+    'checkBox_showsusceptance': True,
+    'checkBox_showchi': False,
+    'checkBox_polarplot': False,
+    'comboBox_fitfactor': 6,
 
-    #### default settings settings ####
-    #'tab_settings_settings_harm1'
-    #'tab_settings_settings_harm3'
-    #'tab_settings_settings_harm5'
-    #'tab_settings_settings_harm7'
-    #'tab_settings_settings_harm9'
-    #'tab_settings_settings_harm11'
+#### default settings settings ####
+    'tab_settings_settings_harm1': {
+        'comboBox_fit_method': 'Gmax',
+        'comboBox_track_method': 'Fix span',
+        'comboBox_harmfitfactor': 6,
 
-    #'comboBox_fit_method'
-    #'comboBox_track_method'
+        'comboBox_sample_channel': 'ADC 1',
+        'comboBox_ref_channel': '--',
+        
+        'comboBox_base_frequency': 5,
+        'comboBox_bandwidth': 0.1,
 
-    #'comboBox_harmfitfactor'
+        'Temperature': False,
+        'Module': '...',
+        'comboBox_thrmcpltype': 'J',
 
-    #'comboBox_sample_channel'
-    #'comboBox_ref_channel'
+        'comboBox_timeunit': 's',
+        'comboBox_tempunit': '°C',
+        'comboBox_timescale': 'linear',
+        'comboBox_gammascale': 'linear',
+        'Link Time': False
+    },
 
+    'tab_settings_settings_harm3': {
+        'comboBox_fit_method': 'Gmax',
+        'comboBox_track_method': 'Fix span',
+        'comboBox_harmfitfactor': 6,
+
+        'comboBox_sample_channel': 'ADC 1',
+        'comboBox_ref_channel': '--',
+        
+        'comboBox_base_frequency': 5,
+        'comboBox_bandwidth': 0.1,
+
+        'Temperature': False,
+        'Module': '...',
+        'comboBox_thrmcpltype': 'J',
+
+        'comboBox_timeunit': 's',
+        'comboBox_tempunit': '°C',
+        'comboBox_timescale': 'linear',
+        'comboBox_gammascale': 'linear',
+        'Link Time': False
+    },
+
+    'tab_settings_settings_harm5': {
+        'comboBox_fit_method': 'Gmax',
+        'comboBox_track_method': 'Fix span',
+        'comboBox_harmfitfactor': 6,
+
+        'comboBox_sample_channel': 'ADC 1',
+        'comboBox_ref_channel': '--',
+        
+        'comboBox_base_frequency': 5,
+        'comboBox_bandwidth': 0.1,
+
+        'Temperature': False,
+        'Module': '...',
+        'comboBox_thrmcpltype': 'J',
+
+        'comboBox_timeunit': 's',
+        'comboBox_tempunit': '°C',
+        'comboBox_timescale': 'linear',
+        'comboBox_gammascale': 'linear',
+        'Link Time': False
+    },
+
+    'tab_settings_settings_harm7': {
+        'comboBox_fit_method': 'Gmax',
+        'comboBox_track_method': 'Fix span',
+        'comboBox_harmfitfactor': 6,
+
+        'comboBox_sample_channel': 'ADC 1',
+        'comboBox_ref_channel': '--',
+        
+        'comboBox_base_frequency': 5,
+        'comboBox_bandwidth': 0.1,
+
+        'Temperature': False,
+        'Module': '...',
+        'comboBox_thrmcpltype': 'J',
+
+        'comboBox_timeunit': 's',
+        'comboBox_tempunit': '°C',
+        'comboBox_timescale': 'linear',
+        'comboBox_gammascale': 'linear',
+        'Link Time': False
+    },
+
+    'tab_settings_settings_harm9': {
+        'comboBox_fit_method': 'Gmax',
+        'comboBox_track_method': 'Fix span',
+        'comboBox_harmfitfactor': 6,
+
+        'comboBox_sample_channel': 'ADC 1',
+        'comboBox_ref_channel': '--',
+        
+        'comboBox_base_frequency': 5,
+        'comboBox_bandwidth': 0.1,
+
+        'Temperature': False,
+        'Module': '...',
+        'comboBox_thrmcpltype': 'J',
+
+        'comboBox_timeunit': 's',
+        'comboBox_tempunit': '°C',
+        'comboBox_timescale': 'linear',
+        'comboBox_gammascale': 'linear',
+        'Link Time': False
+    },
+
+    'tab_settings_settings_harm11': {
+        'comboBox_fit_method': 'Gmax',
+        'comboBox_track_method': 'Fix span',
+        'comboBox_harmfitfactor': 6,
+
+        'comboBox_sample_channel': 'ADC 1',
+        'comboBox_ref_channel': '--',
+        
+        'comboBox_base_frequency': 5,
+        'comboBox_bandwidth': 0.1,
+
+        'Temperature': False,
+        'Module': '...',
+        'comboBox_thrmcpltype': 'J',
+
+        'comboBox_timeunit': 's',
+        'comboBox_tempunit': '°C',
+        'comboBox_timescale': 'linear',
+        'comboBox_gammascale': 'linear',
+        'Link Time': False
+    },
+ 
     'comboBox_base_frequency': 5,
     'comboBox_bandwidth': 0.1
-
-    #'Temperature'
-    #'Module'
-    #'comboBox_thrmcpltype'
-
-    #'comboBox_timeunit'
-    #'comboBox_tempunit'
-    #'comboBox_timescale'
-    #'comboBox_gammascale'
-    #'Link Time' 
 }
-print(settings_default['lineEdit_acquisitioninterval'])
