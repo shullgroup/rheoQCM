@@ -26,11 +26,9 @@ class QCMApp(QMainWindow):
         self.ui.setupUi(self)
 
         #initialize default settings
-        self.harmonic_tab = 1
-        self.base_freq = 5
-        self.bandwidth = 0.1
+        self.settings = settings_default
         self.update_all_settings()
-
+        
         self.main()
 
     def main(self):
@@ -805,20 +803,20 @@ class QCMApp(QMainWindow):
             stwgt.setCurrentIndex((current_index + diret) % count) # increase or decrease index by diret
 
     def update_harmonic_tab(self):
-        self.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
+        self.settings['harmonic_tab'] = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
         self.update_all_settings()
 
     def update_base_freq(self, base_freq_text):
-        self.base_freq = float(base_freq_text[0:base_freq_text.index(" ")])
+        self.settings['base_freq'] = float(base_freq_text[0:base_freq_text.index(" ")])
         self.update_all_settings()
 
     def update_bandwidth(self, bandwidth_text):
-        self.bandwidth = float(bandwidth_text[0:bandwidth_text.index(" ")])
+        self.settings['bandwidth'] = float(bandwidth_text[0:bandwidth_text.index(" ")])
         self.update_all_settings()
 
     def update_all_settings(self):
-        self.start_freq = self.harmonic_tab * self.base_freq - self.bandwidth
-        self.end_freq = self.harmonic_tab * self.base_freq + self.bandwidth
+        self.start_freq = self.settings['harmonic_tab'] * self.settings['base_freq'] - self.settings['bandwidth']
+        self.end_freq = self.settings['harmonic_tab'] * self.settings['base_freq'] + self.settings['bandwidth']
         self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.start_freq))
         self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(1, str(self.end_freq))
         self.update_lineEdit_freqs()
@@ -830,9 +828,9 @@ class QCMApp(QMainWindow):
 
     def get_default_harm_freq(self, where, harmonic):
         if where == "start":
-            return harmonic * self.base_freq - self.bandwidth
+            return harmonic * self.settings['base_freq'] - self.settings['bandwidth']
         elif where == "end":
-            return harmonic * self.base_freq + self.bandwidth
+            return harmonic * self.settings['base_freq'] + self.settings['bandwidth']
         else:
             pass
 

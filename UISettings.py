@@ -155,6 +155,9 @@ settings_init = {
 
 settings_default = {
     
+    'harmonic_tab': 1,
+    'base_freq': 5,
+    'bandwidth': 0.1,
     # default harmonics 
     'harmonics_check': [1, 3, 5],
 
