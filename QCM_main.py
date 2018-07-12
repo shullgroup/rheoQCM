@@ -29,13 +29,9 @@ class QCMApp(QMainWindow):
         self.harmonic_tab = 1
         self.base_freq = 5
         self.bandwidth = 0.1
-
-        for i in range(1, int(settings_init['max_harmonic'])+2, 2):
-            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(str(self.get_default_harm_freq('start', i)))
-            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(str(self.get_default_harm_freq('end', i)))
+        self.update_all_settings()
 
         self.main()
-        #self.update_lineEdit_freqs()
 
     def main(self):
  # loadUi('QCM_GUI_test4.ui', self) # read .ui file directly. You still need to compile the .qrc file
@@ -336,8 +332,6 @@ class QCMApp(QMainWindow):
         
         # set signals
         self.ui.tabWidget_settings_settings_harm.currentChanged.connect(self.update_harmonic_tab)
-        self.ui.comboBox_base_frequency.highlighted.connect(self.update_lineEdit_freqs)
-        self.ui.comboBox_bandwidth.highlighted.connect(self.update_lineEdit_freqs)
         self.ui.comboBox_base_frequency.activated[str].connect(self.update_base_freq)
         self.ui.comboBox_bandwidth.activated[str].connect(self.update_bandwidth)
 
@@ -812,21 +806,22 @@ class QCMApp(QMainWindow):
 
     def update_harmonic_tab(self):
         self.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
-        self.update_settings_settings()
+        self.update_all_settings()
 
     def update_base_freq(self, base_freq_text):
         self.base_freq = float(base_freq_text[0:base_freq_text.index(" ")])
-        self.update_settings_settings()
+        self.update_all_settings()
 
     def update_bandwidth(self, bandwidth_text):
         self.bandwidth = float(bandwidth_text[0:bandwidth_text.index(" ")])
-        self.update_settings_settings()
+        self.update_all_settings()
 
-    def update_settings_settings(self):
+    def update_all_settings(self):
         self.start_freq = self.harmonic_tab * self.base_freq - self.bandwidth
         self.end_freq = self.harmonic_tab * self.base_freq + self.bandwidth
         self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.start_freq))
         self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(1, str(self.end_freq))
+        self.update_lineEdit_freqs()
 
     def update_lineEdit_freqs(self):
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
