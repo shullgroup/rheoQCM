@@ -30,11 +30,11 @@ from UISettings import settings_init
 
 # rcParams['toolbar'] = 'toolmanager'
 
-class NavigationToolbar(NavigationToolbar2QT):
+# class NavigationToolbar(NavigationToolbar2QT):
     # set buttons to show in toolbar
     # toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in ('Home', 'Back', 'Forward', 'Pan', 'Zoom')]
-    pass
-    # def __init__(self, canvas_, parent_):
+    # pass
+    # # def __init__(self, canvas_, parent_):
     #     self.toolitems = (
     #         ('Home', 'Reset original view', 'home', 'home'),
     #         ('Back', 'Back to      previous view', 'back', 'back'),
@@ -73,7 +73,11 @@ class MatplotlibWidget(QWidget):
         # add toolbar and buttons given by showtoolbar
         if showtoolbar:
             if isinstance(showtoolbar, tuple):
-                NavigationToolbar.toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in showtoolbar]
+                class NavigationToolbar(NavigationToolbar2QT):
+                    toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in showtoolbar]
+            else:
+                class NavigationToolbar(NavigationToolbar2QT):
+                    pass                    
 
             self.toolbar = NavigationToolbar(self.canvas, self)
             self.toolbar.setMaximumHeight(settings_init['max_mpl_toolbar_height'])
