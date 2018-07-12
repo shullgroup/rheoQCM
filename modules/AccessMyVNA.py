@@ -19,7 +19,7 @@ win_name = 'myVNA - Reflection mode "myVNA" [Embedded] '
 # win_name = 'AccessMyVNA'
 
 user32 = windll.user32
-vna = WinDLL(r'AccessMyVNAdll.dll', use_last_error=True) # this only works with AccessMyVNA
+vna = WinDLL(r'./dll/AccessMyVNAdll.dll', use_last_error=True) # this only works with AccessMyVNA
 # vna = OleDLL(r'AccessMyVNAdll.dll', use_last_error=True) # this only works with AccessMyVNA
 print(vars(vna))
 print(vna._handle)
@@ -509,10 +509,12 @@ MyVNAInit() == 0 )
 '''
 #endregion
 
-class AccVNA():
+class AccessMyVNA():
+    '''
+    the module used to comunicate with MyVNA
+    '''
     def __init__(self):
-        pass
-
+        super(AccessMyVNA, self).__init__()
 
     def Init(self):
         ret = MyVNAInit()
@@ -665,6 +667,7 @@ class AccVNA():
     def GetScanData(self, nStart=0, nEnd=299, nWhata=-1, nWhatb=15):
         # nStart = 0
         # nEnd = 49
+        print(nStart)
         nSteps = nEnd - nStart + 1
         
         double_n = c_double * nSteps
@@ -701,14 +704,14 @@ class AccVNA():
 
 # exit(0)
 if __name__ == '__main__':
-    from AccVNA import *
+    accvna = AccessMyVNA() 
     # call this function befoe trying to do anything else
     # Init()
     get_hWnd()
     # Init()
     # ShowWindow(nValue=0)               # AccessMyVNA Closed:OK
     # # SetScanSteps(nSteps=300)              # AccessMyVNA(Open: click NO; Closed:OK) NyVNA: set when it is closed. after restarted
-    ret, nSteps = GetScanSteps()                # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: after closed
+    ret, nSteps = accvna.GetScanSteps()                # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: after closed
     # SetScanAverage(nAverage=1)                 # AccessMyVNA(Open: click NO; Closed:OK) NyVNA: set when it is closed. after restarted
     # GetScanAverage()                   # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: after closed
     # Init()
@@ -720,9 +723,9 @@ if __name__ == '__main__':
     # Getinstrmode()                     # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: need restart
     # # Setdisplaymode()            # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: need restart
     # Getdisplaymode()           # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: need restart
-    SetFequencies()                # AccessMyVNA(O: click NO; C:OK) MyVNA: need restart
+    accvna.SetFequencies()                # AccessMyVNA(O: click NO; C:OK) MyVNA: need restart
     # Init()
-    SingleScan()                # AccessMyVNA(O: click NO; C:OK)
+    accvna.SingleScan()                # AccessMyVNA(O: click NO; C:OK)
     print('pause 2 s...')
     time.sleep(2)
     # # Autoscale()                 # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: doesn't affect
@@ -731,12 +734,12 @@ if __name__ == '__main__':
     # # Init()
     # # follow with SingleScan
     # # Init()
-    GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15) # open a MyVNA window with an error.
+    accvna.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15) # open a MyVNA window with an error.
     # Init()
     # GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=16)
-    get_hWnd()    
+    get_hWnd()
     # # MUST call this before the calling windows application closes
-    Close()
+    accvna.Close()
     get_hWnd()
 
 

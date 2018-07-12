@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1192</width>
-    <height>943</height>
+    <width>1176</width>
+    <height>822</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -4280,7 +4280,7 @@ border: 1px solid blue;
            </size>
           </property>
           <property name="currentIndex">
-           <number>2</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="page_spectra_show">
            <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -4548,6 +4548,9 @@ border: 1px solid blue;
                   </property>
                   <item>
                    <layout class="QVBoxLayout" name="verticalLayout_43">
+                    <property name="spacing">
+                     <number>0</number>
+                    </property>
                     <item>
                      <widget class="QSlider" name="horizontalSlider_spectra_fit_spanctrl">
                       <property name="sizePolicy">
@@ -5046,7 +5049,7 @@ p, li { white-space: pre-wrap; }
                    <bool>true</bool>
                   </property>
                   <attribute name="horizontalHeaderVisible">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </attribute>
                   <attribute name="horizontalHeaderCascadingSectionResizes">
                    <bool>true</bool>
@@ -5448,7 +5451,7 @@ border: 1px solid blue;
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_2">
                      <property name="spacing">
-                      <number>2</number>
+                      <number>6</number>
                      </property>
                      <property name="leftMargin">
                       <number>0</number>
@@ -5630,7 +5633,7 @@ border: 1px solid blue;
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_3">
                      <property name="spacing">
-                      <number>2</number>
+                      <number>6</number>
                      </property>
                      <property name="leftMargin">
                       <number>0</number>
@@ -5792,7 +5795,7 @@ border: 1px solid blue;
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1192</width>
+     <width>1176</width>
      <height>21</height>
     </rect>
    </property>

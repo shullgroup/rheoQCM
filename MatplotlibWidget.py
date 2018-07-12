@@ -21,7 +21,6 @@ from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtWidgets import QSizePolicy, QVBoxLayout, QWidget
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
-    # NavigationToolbar2QT as NavigationToolbar)
     NavigationToolbar2QT)
 from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
@@ -104,7 +103,7 @@ class MatplotlibWidget(QWidget):
             ax.set_xlim(*xlim)
         if ylim is not None:
             ax.set_ylim(*ylim)
-
+        ax.autoscale()
         # print(ax.format_coord)
         # print(ax.format_cursor_data)
         # plt.tight_layout()
@@ -144,13 +143,14 @@ class MatplotlibWidget(QWidget):
         input: ax1 
         output: [ax1, ax2]
         '''
-        color = ['tab:red', 'tab:blue']
+        color = ['tab:blue', 'tab:red']
         
         ax2 = ax1.twinx()
         ax2.set_ylabel(ylabel2, color=color[1]) # set ylabel of axes2
         ax2.tick_params(axis='y', labelcolor=color[1], color=color[1])
         ax2.yaxis.label.set_color(color[1])
         ax2.spines['right'].set_color(color[1])
+        ax2.autoscale()
 
         # change axes color
         ax1.tick_params(axis='y', labelcolor=color[0], color=color[0])

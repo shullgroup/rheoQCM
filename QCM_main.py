@@ -4,7 +4,7 @@ This is the main code of the QCM acquization program
 '''
 
 import os
-import datetime
+import datetime, time
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout
 from PyQt5.QtGui import QIcon, QPixmap
@@ -14,6 +14,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
 from modules import UIModules
+from modules.AccessMyVNA import AccessMyVNA
 from MatplotlibWidget import MatplotlibWidget
 
 class QCMApp(QMainWindow):
@@ -35,7 +36,9 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'lineEdit_endf' + str(i)).setText(str(self.get_default_harm_freq('end', i)))
 
         self.main()
-        #self.update_lineEdit_freqs()
+
+        # initialize AccessMyVNA
+        self.accvna = AccessMyVNA()
 
     def main(self):
  # loadUi('QCM_GUI_test4.ui', self) # read .ui file directly. You still need to compile the .qrc file
@@ -391,8 +394,11 @@ class QCMApp(QMainWindow):
 
 #region spectra_fit
 
-        self.ui.horizontalSlider_spectra_fit_spanctrl.valueChanged.connect(self.on_slider_spanctrl_changed)
-        self.ui.horizontalSlider_spectra_fit_spanctrl.sliderReleased.connect(self.on_slider_spanctrl_released)
+        self.ui.horizontalSlider_spectra_fit_spanctrl.valueChanged.connect(self.on_changed_slider_spanctrl)
+        self.ui.horizontalSlider_spectra_fit_spanctrl.sliderReleased.connect(self.on_released_slider_spanctrl)
+
+        # pushButton_spectra_fit_refresh
+        self.ui.pushButton_spectra_fit_refresh.clicked.connect(self.on_click_pushButton_spectra_fit_refresh)
 
 #endregion
 
@@ -520,6 +526,9 @@ class QCMApp(QMainWindow):
             )
         # self.ui.mpl_spectra_fit.update_figure()
         self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
+        # add plot
+        self.ui.mpl_spectra_fit.lG = self.ui.mpl_spectra_fit.ax[0].plot([], [], color='tab:blue') # G
+        self.ui.mpl_spectra_fit.lB = self.ui.mpl_spectra_fit.ax[1].plot([], [], color='tab:red') # B
 
         # add figure mpl_countour1 into frame_spectra_mechanics_contour1
         self.ui.mpl_countour1 = MatplotlibWidget(
@@ -763,7 +772,7 @@ class QCMApp(QMainWindow):
         # reset MainWindow
         pass
 
-    def on_slider_spanctrl_changed(self):
+    def on_changed_slider_spanctrl(self):
         # get slider value
         n = 10 ** (self.ui.horizontalSlider_spectra_fit_spanctrl.value() / 10)
         # format n
@@ -774,7 +783,7 @@ class QCMApp(QMainWindow):
         # set treeWidget_settings_settings_harmtree value
         self.ui.label_spectra_fit_zoomtimes.setText(str(n))
 
-    def on_slider_spanctrl_released(self):
+    def on_released_slider_spanctrl(self):
 
         # get slider value
         n = 10 ** (self.ui.horizontalSlider_spectra_fit_spanctrl.value() / 10)
@@ -793,7 +802,29 @@ class QCMApp(QMainWindow):
         # reset slider to 1
         self.ui.horizontalSlider_spectra_fit_spanctrl.setValue(0)
 
+    def on_click_pushButton_spectra_fit_refresh(self):
+        ret, nSteps = self.accvna.GetScanSteps()
+        ret, f1, f2 = self.accvna.SetFequencies()
+        self.accvna.SingleScan()
+        time.sleep(2)
+        ret, f, G = self.accvna.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
+        ret, _, B = self.accvna.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=16)
+        self.accvna.Close()
+        # print(f)
+        # print(G)
+        # print(self.ui.mpl_spectra_fit.lG[0].get_xdata())
+        self.ui.mpl_spectra_fit.lG[0].set_xdata(f)
+        self.ui.mpl_spectra_fit.lG[0].set_ydata(G)
+        self.ui.mpl_spectra_fit.lB[0].set_xdata(f)
+        self.ui.mpl_spectra_fit.lB[0].set_ydata(B)
 
+        self.ui.mpl_spectra_fit.ax[0].set_xlim([f[0], f[-1]])
+        self.ui.mpl_spectra_fit.ax[0].set_ylim([min(G), max(G)])
+        self.ui.mpl_spectra_fit.ax[1].set_xlim([f[0], f[-1]])
+        self.ui.mpl_spectra_fit.ax[1].set_ylim([min(B), max(B)])
+        self.ui.mpl_spectra_fit.canvas.draw()
+        # print(self.ui.mpl_spectra_fit.canvas)
+        # print(self.ui.mpl_spectra_fit.lG[0].get_xdata())
         
     def set_stackedwidget_index(self, stwgt, idx=[], diret=[]):
         '''
