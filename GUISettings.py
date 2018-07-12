@@ -1,7 +1,6 @@
 '''
 Setting factors for GUI
 Change the following factors will change the apperiance of the GUI
-
 '''
 settings_init = {
     # title to display in the main GUI
@@ -154,82 +153,25 @@ settings_init = {
 }
 
 settings_default = {
-    #### default settings control ####
+    'harmonic_tab': 1,
+    'base_freq': 5,
+    'bandwidth': 0.1,
+
     # default harmonics 
     'harmonics_check': [1, 3, 5],
-
-    #'checkBox_harm1'
-    #'checkBox_harm3'
-    #'checkBox_harm5'
-    #'checkBox_harm7'
-    #'checkBox_harm9'
-    #'checkBox_harm11'
-
-    'lineEdit_startf1': 4.9,
-    'lineEdit_startf3': 14.9,
-    'lineEdit_startf5': 24.9,
-    'lineEdit_startf7': 34.9,
-    'lineEdit_startf9': 44.9,
-    'lineEdit_startf11': 54.9,
-    'lineEdit_endf1': 5.1,
-    'lineEdit_endf3': 15.1,
-    'lineEdit_endf5': 25.1,
-    'lineEdit_endf7': 35.1,
-    'lineEdit_endf9': 45.1,
-    'lineEdit_endf11': 55.1,
-
-    #'lineEdit_reftime'
-
-    'lineEdit_acquisitioninterval': 2,
-    'lineEdit_refreshresolution': 2,
-    'label_actualinterval': 1,
-
-    #'frame_sp1'
-    #'frame_sp3'
-    #'frame_sp5'
-    #'frame_sp7'
-    #'frame_sp9'
-    #'frame_sp11'
 
     # default label_actual_interval
     'actual_interval': 2,
     'acquisition_interval': 2,
     'refresh_resolution': 1,
-
-    # default fitting and display options
-    #'checkBox_dynamicfit'
-    #'checkBox_polarplot'
-    #'checkBox_showsusceptance'
-    #'checkBox_showchi'
-    #'comboBox_fitfactor'
-
-    #### default settings settings ####
-    #'tab_settings_settings_harm1'
-    #'tab_settings_settings_harm3'
-    #'tab_settings_settings_harm5'
-    #'tab_settings_settings_harm7'
-    #'tab_settings_settings_harm9'
-    #'tab_settings_settings_harm11'
-
-    #'comboBox_fit_method'
-    #'comboBox_track_method'
-
-    #'comboBox_harmfitfactor'
-
-    #'comboBox_sample_channel'
-    #'comboBox_ref_channel'
-
-    'comboBox_base_frequency': 5,
-    'comboBox_bandwidth': 0.1
-
-    #'Temperature'
-    #'Module'
-    #'comboBox_thrmcpltype'
-
-    #'comboBox_timeunit'
-    #'comboBox_tempunit'
-    #'comboBox_timescale'
-    #'comboBox_gammascale'
-    #'Link Time' 
+    
+    #################################
+    'checkBox_harm1': 1,
+    'lineEdit_startf1'
+    'lineEdit_endf1'
+    'lineEdit_reftime'
+    'lineEdit_acquisitioninterval': 2,
+    'lineEdit_refreshresolution': 2,
+    'label_actualinterval': 1,
+    'frame_sp1': 1
 }
-print(settings_default['lineEdit_acquisitioninterval'])
