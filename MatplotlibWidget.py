@@ -21,20 +21,19 @@ from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtWidgets import QSizePolicy, QVBoxLayout, QWidget
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
-    # NavigationToolbar2QT as NavigationToolbar)
     NavigationToolbar2QT)
 from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 from matplotlib.backend_tools import ToolBase, ToolToggleBase
-from GUISettings import max_mpl_toolbar_height
+from UISettings import settings_init
 
 # rcParams['toolbar'] = 'toolmanager'
 
-class NavigationToolbar(NavigationToolbar2QT):
+# class NavigationToolbar(NavigationToolbar2QT):
     # set buttons to show in toolbar
     # toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in ('Home', 'Back', 'Forward', 'Pan', 'Zoom')]
-    pass
-    # def __init__(self, canvas_, parent_):
+    # pass
+    # # def __init__(self, canvas_, parent_):
     #     self.toolitems = (
     #         ('Home', 'Reset original view', 'home', 'home'),
     #         ('Back', 'Back to      previous view', 'back', 'back'),
@@ -73,10 +72,14 @@ class MatplotlibWidget(QWidget):
         # add toolbar and buttons given by showtoolbar
         if showtoolbar:
             if isinstance(showtoolbar, tuple):
-                NavigationToolbar.toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in showtoolbar]
+                class NavigationToolbar(NavigationToolbar2QT):
+                    toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in showtoolbar]
+            else:
+                class NavigationToolbar(NavigationToolbar2QT):
+                    pass                    
 
             self.toolbar = NavigationToolbar(self.canvas, self)
-            self.toolbar.setMaximumHeight(max_mpl_toolbar_height)
+            self.toolbar.setMaximumHeight(settings_init['max_mpl_toolbar_height'])
             self.toolbar.setStyleSheet("QToolBar { border: 0px;}")
             # if isinstance(showtoolbar, tuple):
             #     print(self.toolbar.toolitems)
@@ -100,7 +103,7 @@ class MatplotlibWidget(QWidget):
             ax.set_xlim(*xlim)
         if ylim is not None:
             ax.set_ylim(*ylim)
-
+        ax.autoscale()
         # print(ax.format_coord)
         # print(ax.format_cursor_data)
         # plt.tight_layout()
@@ -140,13 +143,14 @@ class MatplotlibWidget(QWidget):
         input: ax1 
         output: [ax1, ax2]
         '''
-        color = ['tab:red', 'tab:blue']
+        color = ['tab:blue', 'tab:red']
         
         ax2 = ax1.twinx()
         ax2.set_ylabel(ylabel2, color=color[1]) # set ylabel of axes2
         ax2.tick_params(axis='y', labelcolor=color[1], color=color[1])
         ax2.yaxis.label.set_color(color[1])
         ax2.spines['right'].set_color(color[1])
+        ax2.autoscale()
 
         # change axes color
         ax1.tick_params(axis='y', labelcolor=color[0], color=color[0])

@@ -19,13 +19,13 @@ win_name = 'myVNA - Reflection mode "myVNA" [Embedded] '
 # win_name = 'AccessMyVNA'
 
 user32 = windll.user32
-vna = WinDLL(r'AccessMyVNAdll.dll', use_last_error=True) # this only works with AccessMyVNA
+vna = WinDLL(r'./dll/AccessMyVNAdll.dll', use_last_error=True) # this only works with AccessMyVNA
 # vna = OleDLL(r'AccessMyVNAdll.dll', use_last_error=True) # this only works with AccessMyVNA
 print(vars(vna))
 print(vna._handle)
 # print(dir(vna))
 
-
+#region functions
 def check_zero(result, func, args):    
     if not result:
         err = get_last_error()
@@ -109,9 +109,9 @@ def get_hWnd():
     # hwnd = WinDLL.user32.FindWindowA(classname, title)
     return EnumWins()
 
+#endregion
 
-# assign functions
-#region
+#region assign functions
 #########################################
 MyVNAInit = vna[13] # MyVNAInit
 # // call this function befoe trying to do anything else. It attempts to execute myVNA
@@ -465,7 +465,7 @@ MyVNAGetScanData.argtypes = [
     # POINTER(double_n),   # _Out_ *pDataA
     # POINTER(double_n)]   # _Out_ *pDataA
 MyVNAGetScanData.restype = c_int
-   
+
 ##########################################
 MyVNAAutoscale = vna[1]
 # // execute the autoscale function (same as clicking the Autoscale button)
@@ -499,210 +499,219 @@ MyVNAAutoscale.restypes = c_int
 
 '''
 MyVNAInit() == 0 )
-	{
-		MyVNAShowWindow(1);
-		OnBnClickedButtonGetScanSteps();
-		OnBnClickedButtonGetscanavg();
-		OnBnClickedButtonGetfreq();
-		OnBnClickedButtonGetinstrmode();
-		OnBnClickedButtonGetdisplaymode();
+    {
+        MyVNAShowWindow(1);
+        OnBnClickedButtonGetScanSteps();
+        OnBnClickedButtonGetscanavg();
+        OnBnClickedButtonGetfreq();
+        OnBnClickedButtonGetinstrmode();
+        OnBnClickedButtonGetdisplaymode();
 '''
 #endregion
 
-def Init():
-	ret = MyVNAInit()
-	print('MyVNAInit\n', ret)
-	return ret
-
-def Close():
-    ret = MyVNAClose()
-    print('MyVNAClose\n', ret) #MyVNAAutoscale
-
-def ShowWindow(nValue=0):
+class AccessMyVNA():
     '''
-    nValue 0: show; 1:minimize
+    the module used to comunicate with MyVNA
     '''
-    ret = MyVNAShowWindow(nValue)
-    print('MyVNAShowWindow\n', ret)
-    return ret
+    def __init__(self):
+        super(AccessMyVNA, self).__init__()
 
-def GetScanSteps():
-    ret = MyVNAGetScanSteps(byref(nSteps))
-    print('MyVNAGetScanSteps\n', ret, nSteps)
-    return ret, nSteps.value
+    def Init(self):
+        ret = MyVNAInit()
+        print('MyVNAInit\n', ret)
+        return ret
 
-def SetScanSteps(nSteps=400):
-	# nSteps = c_int()
-	ret = MyVNASetScanSteps(nSteps)
-	print('MyVNASetScanSteps\n', ret, nSteps)
-	return ret, nSteps
+    def Close(self):
+        ret = MyVNAClose()
+        print('MyVNAClose\n', ret) #MyVNAAutoscale
 
-def GetScanAverage():
-    nAverage = c_int()
-    ret = MyVNAGetScanAverage(byref(nAverage))
-    print('MyVNAGetScanAverage\n', ret, nAverage)
-    return ret, nAverage
+    def ShowWindow(self, nValue=0):
+        '''
+        nValue 0: show; 1:minimize
+        '''
+        ret = MyVNAShowWindow(nValue)
+        print('MyVNAShowWindow\n', ret)
+        return ret
 
-def SetScanAverage(nAverage=1):
-    ret = MyVNASetScanAverage(nAverage)
-    print('MyVNASetScanAverage\n', ret, nAverage)
-    return ret, nAverage
+    def GetScanSteps(self):
+        ret = MyVNAGetScanSteps(byref(nSteps))
+        print('MyVNAGetScanSteps\n', ret, nSteps)
+        return ret, nSteps.value
+
+    def SetScanSteps(self, nSteps=400):
+        # nSteps = c_int()
+        ret = MyVNASetScanSteps(nSteps)
+        print('MyVNASetScanSteps\n', ret, nSteps)
+        return ret, nSteps
+
+    def GetScanAverage(self):
+        nAverage = c_int()
+        ret = MyVNAGetScanAverage(byref(nAverage))
+        print('MyVNAGetScanAverage\n', ret, nAverage)
+        return ret, nAverage
+
+    def SetScanAverage(self, nAverage=1):
+        ret = MyVNASetScanAverage(nAverage)
+        print('MyVNASetScanAverage\n', ret, nAverage)
+        return ret, nAverage
+        
+    #region
+    '''
+                                        nWhat   nArraySize
+    GET_SCAN_FREQ_DATA                  0       9
+    GETSET_MARKER_VALUES                1       2
+    GET_EQCCT_VALUES                    2       depends on model chosen
+    GETSET_DISPLAY_FT_AXIS_VALUES       3       2/4
+    GETSET_DISPLAY_VERTICAL_AXIS_VALUES 4       2
+    GETSET_N2PK_HARDWARE_VALUES         5       2/5
+    GETSET_SIMULATION_COMPONENT_VALUES  6       components * 2
+
+    GETSETSIMULATIONCONFIG                 5
+    GETSETTRACECALCULATIONOPTIONS          1
+    GETSETSWITCHATTENUATORCONFIG           3
+    GETSETSWITCHATTENUATORSETTINGS         2
+    '''
+    #endregion
+
+    def GetDoubleArray(self, nWhat=0, nIndex=0, nArraySize=9):
+        '''
+        Get frequency nWhat = GET_SCAN_FREQ_DATA 0
+        '''
+        double_n = c_double * (nArraySize)
+        # create array. Both ways below works
+        nResult = double_n()
+        # nResult = clib.as_ctypes(np.zeros(nArraySize))
+
+        # cast the array into a pointer of type c_double:
+        nRes_ptr = cast(nResult, POINTER(c_double))
+        print(nRes_ptr)
+        ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nRes_ptr)
+        # ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nResult)
+
+        print('MyVNAGetDoubleArray\n', ret, nResult[:])
+        return ret, nResult
+
+    def SetDoubleArray(self, nWhat=0, nIndex=0, nArraySize=9, nData=[]):
+        '''
+        Set frequency nWhat = GET_SCAN_FREQ_DATA 0
+        '''
+        double_n = c_double * (nArraySize)
+        # create array. Both ways below work
+        if len(nData) == nArraySize: # check nData size
+            if not isinstance(nData, Array): # check nData type
+                nData = double_n(*nData)
+                # nData = clib.as_ctypes(nData)
+        print(nData)
+
+        # cast the array into a pointer of type c_double:
+        nData_ptr = cast(nData, POINTER(c_double))
     
-#region
-'''
-                                    nWhat   nArraySize
-GET_SCAN_FREQ_DATA                  0       9
-GETSET_MARKER_VALUES                1       2
-GET_EQCCT_VALUES                    2       depends on model chosen
-GETSET_DISPLAY_FT_AXIS_VALUES       3       2/4
-GETSET_DISPLAY_VERTICAL_AXIS_VALUES 4       2
-GETSET_N2PK_HARDWARE_VALUES         5       2/5
-GETSET_SIMULATION_COMPONENT_VALUES  6       components * 2
+        ret = MyVNASetDoubleArray(nWhat, nIndex, nArraySize, nData_ptr)
+        # ret = MyVNASetDoubleArray(nWhat, nIndex, nArraySize, nData)
+        print('MyVNASetDoubleArray\n', ret, nData[:])
+        return ret, nData
 
-GETSETSIMULATIONCONFIG                 5
-GETSETTRACECALCULATIONOPTIONS          1
-GETSETSWITCHATTENUATORCONFIG           3
-GETSETSWITCHATTENUATORSETTINGS         2
-'''
-#endregion
+    def Getinstrmode(self):
+        nMode = c_int()
+        ret = MyVNAGetInstrumentMode(byref(nMode))
+        print('MyVNAGetInstrumentMode\n', ret, nMode.value)
+        return ret, nMode.value
 
-def GetDoubleArray(nWhat=0, nIndex=0, nArraySize=9):
-    '''
-    Get frequency nWhat = GET_SCAN_FREQ_DATA 0
-    '''
-    double_n = c_double * (nArraySize)
-    # create array. Both ways below works
-    nResult = double_n()
-    # nResult = clib.as_ctypes(np.zeros(nArraySize))
+    def Setinstrmode(self, nMode=0):
+        '''
+        nMode: 0, Reflection
+        '''
+        ret = MyVNASetInstrumentMode(nMode)
+        print('MyVNASetInstrumentMode\n', ret, nMode)
+        return ret, nMode.value
+        # __declspec(dllexport) int _stdcall MyVNASetInstrumentMode(int *pnMode)
+        # int nRet = MyVNASetInstrumentMode( &nTemp);
 
-    # cast the array into a pointer of type c_double:
-    nRes_ptr = cast(nResult, POINTER(c_double))
-    print(nRes_ptr)
-    ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nRes_ptr)
-    # ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nResult)
+    def Getdisplaymode(self):
+        nMode = c_int()
+        ret = MyVNAGetDisplayMode(byref(nMode))
+        print('MyVNAGetDisplayMode\n', ret, nMode.value)
+        return ret, nMode.value
 
-    print('MyVNAGetDoubleArray\n', ret, nResult[:])
-    return ret, nResult
+    def Setdisplaymode(self, nMode=0):
+        ret = MyVNASetDisplayMode(nMode)
+        print('MyVNASetDisplayMode\n', ret, nMode)
+        return ret, nMode.value
+        # __declspec(dllexport) int _stdcall MyVNASetDisplayMode(int nMode)
+        # int nRet = MyVNASetDisplayMode( nDisplayMode);
 
-def SetDoubleArray(nWhat=0, nIndex=0, nArraySize=9, nData=[]):
-    '''
-    Set frequency nWhat = GET_SCAN_FREQ_DATA 0
-    '''
-    double_n = c_double * (nArraySize)
-    # create array. Both ways below work
-    if len(nData) == nArraySize: # check nData size
-        if not isinstance(nData, Array): # check nData type
-            nData = double_n(*nData)
-            # nData = clib.as_ctypes(nData)
-    print(nData)
+    def SingleScan(self):
+        '''
+        starts a single scan 
+        '''
+        # ret = MyVNASingleScan(0x0111, get_hWnd(), 0x0400 + 0x1234, 0)
+        hWnd = get_hWnd()
+        ret = MyVNASingleScan(WM_COMMAND, hWnd, MESSAGE_SCAN_ENDED, 0)
+        print('MyVNASingleScan\n', ret, hWnd)
+        return ret, hWnd
 
-    # cast the array into a pointer of type c_double:
-    nData_ptr = cast(nData, POINTER(c_double))
-   
-    ret = MyVNASetDoubleArray(nWhat, nIndex, nArraySize, nData_ptr)
-    # ret = MyVNASetDoubleArray(nWhat, nIndex, nArraySize, nData)
-    print('MyVNASetDoubleArray\n', ret, nData[:])
-    return ret, nData
+    def EqCctRefine(self):
+        hWnd = get_hWnd()
+        ret = MyVNAEqCctRefine(WM_COMMAND, hWnd, MESSAGE_SCAN_ENDED, 0)
+        print('MyVNAEqCctRefine\n', ret, hWnd)
+        return ret, hWnd
 
-def Getinstrmode():
-    nMode = c_int()
-    ret = MyVNAGetInstrumentMode(byref(nMode))
-    print('MyVNAGetInstrumentMode\n', ret, nMode.value)
-    return ret, nMode.value
-
-def Setinstrmode(nMode=0):
-    '''
-    nMode: 0, Reflection
-    '''
-    ret = MyVNASetInstrumentMode(nMode)
-    print('MyVNASetInstrumentMode\n', ret, nMode)
-    return ret, nMode.value
-    # __declspec(dllexport) int _stdcall MyVNASetInstrumentMode(int *pnMode)
-    # int nRet = MyVNASetInstrumentMode( &nTemp);
-
-def Getdisplaymode():
-    nMode = c_int()
-    ret = MyVNAGetDisplayMode(byref(nMode))
-    print('MyVNAGetDisplayMode\n', ret, nMode.value)
-    return ret, nMode.value
-
-def Setdisplaymode(nMode=0):
-    ret = MyVNASetDisplayMode(nMode)
-    print('MyVNASetDisplayMode\n', ret, nMode)
-    return ret, nMode.value
-    # __declspec(dllexport) int _stdcall MyVNASetDisplayMode(int nMode)
-    # int nRet = MyVNASetDisplayMode( nDisplayMode);
-
-def SingleScan():
-    '''
-    starts a single scan 
-    '''
-    # ret = MyVNASingleScan(0x0111, get_hWnd(), 0x0400 + 0x1234, 0)
-    hWnd = get_hWnd()
-    ret = MyVNASingleScan(WM_COMMAND, hWnd, MESSAGE_SCAN_ENDED, 0)
-    print('MyVNASingleScan\n', ret, hWnd)
-    return ret, hWnd
-
-def EqCctRefine():
-    hWnd = get_hWnd()
-    ret = MyVNAEqCctRefine(WM_COMMAND, hWnd, MESSAGE_SCAN_ENDED, 0)
-    print('MyVNAEqCctRefine\n', ret, hWnd)
-    return ret, hWnd
-
-def SetFequencies(f1=4.95e6, f2=5.05e6, nFlags=1):
-    '''
-    nFlags: 1 = start / stop
-    '''
-    ret = MyVNASetFequencies(f1, f2, 1)
-    print('MyVNASetFequencies\n', ret, f1, f2) #MyVNASetFequencies
-    return ret, f1, f2
- 
-def GetScanData(nStart=0, nEnd=299, nWhata=-1, nWhatb=15):
-    # nStart = 0
-    # nEnd = 49
-    nSteps = nEnd - nStart + 1
+    def SetFequencies(self, f1=4.95e6, f2=5.05e6, nFlags=1):
+        '''
+        nFlags: 1 = start / stop
+        '''
+        ret = MyVNASetFequencies(f1, f2, 1)
+        print('MyVNASetFequencies\n', ret, f1, f2) #MyVNASetFequencies
+        return ret, f1, f2
     
-    double_n = c_double * nSteps
-    # data_a = clib.as_ctypes(np.zeros(nSteps))
-    # data_b = clib.as_ctypes(np.zeros(nSteps))
-    data_a = double_n()
-    data_b = double_n()
-    # print('data\n',  data_a[2], data_b[2])
-    # cast the array into a pointer of type c_double:
-    data_a_ptr = cast(data_a, POINTER(c_double))
-    data_b_ptr = cast(data_b, POINTER(c_double))
-   
-    # both of following two works
+    def GetScanData(self, nStart=0, nEnd=299, nWhata=-1, nWhatb=15):
+        # nStart = 0
+        # nEnd = 49
+        print(nStart)
+        nSteps = nEnd - nStart + 1
+        
+        double_n = c_double * nSteps
+        # data_a = clib.as_ctypes(np.zeros(nSteps))
+        # data_b = clib.as_ctypes(np.zeros(nSteps))
+        data_a = double_n()
+        data_b = double_n()
+        # print('data\n',  data_a[2], data_b[2])
+        # cast the array into a pointer of type c_double:
+        data_a_ptr = cast(data_a, POINTER(c_double))
+        data_b_ptr = cast(data_b, POINTER(c_double))
     
-    # code crushes here 
-    ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a_ptr, data_b_ptr)
-    # ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a, data_b)
-    
-    # ret
-    #  0: 
-    # -1: nSteps < 1
-    #  1: crushes before l682: (errcode = MyVNAInit()) == 0
-    print('MyVNAGetScanData\n', ret, data_a[0], data_b[0])
-    return ret, np.array(data_a), np.array(data_b)
-    # return ret, data_a, data_b
+        # both of following two works
+        
+        # code crushes here 
+        ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a_ptr, data_b_ptr)
+        # ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a, data_b)
+        
+        # ret
+        #  0: 
+        # -1: nSteps < 1
+        #  1: crushes before l682: (errcode = MyVNAInit()) == 0
+        print('MyVNAGetScanData\n', ret, data_a[0], data_b[0])
+        return ret, np.array(data_a), np.array(data_b)
+        # return ret, data_a, data_b
 
-def Autoscale():
-    ret = MyVNAAutoscale()
-    print('MyVNAAutoscale\n', ret) #MyVNAAutoscale
-    return ret
+    def Autoscale(self):
+        ret = MyVNAAutoscale()
+        print('MyVNAAutoscale\n', ret) #MyVNAAutoscale
+        return ret
 
 
 # get_hWnd()
 
 # exit(0)
 if __name__ == '__main__':
+    accvna = AccessMyVNA() 
     # call this function befoe trying to do anything else
     # Init()
     get_hWnd()
     # Init()
     # ShowWindow(nValue=0)               # AccessMyVNA Closed:OK
     # # SetScanSteps(nSteps=300)              # AccessMyVNA(Open: click NO; Closed:OK) NyVNA: set when it is closed. after restarted
-    ret, nSteps = GetScanSteps()                # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: after closed
+    ret, nSteps = accvna.GetScanSteps()                # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: after closed
     # SetScanAverage(nAverage=1)                 # AccessMyVNA(Open: click NO; Closed:OK) NyVNA: set when it is closed. after restarted
     # GetScanAverage()                   # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: after closed
     # Init()
@@ -714,9 +723,9 @@ if __name__ == '__main__':
     # Getinstrmode()                     # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: need restart
     # # Setdisplaymode()            # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: need restart
     # Getdisplaymode()           # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: need restart
-    SetFequencies()                # AccessMyVNA(O: click NO; C:OK) MyVNA: need restart
+    accvna.SetFequencies()                # AccessMyVNA(O: click NO; C:OK) MyVNA: need restart
     # Init()
-    SingleScan()                # AccessMyVNA(O: click NO; C:OK)
+    accvna.SingleScan()                # AccessMyVNA(O: click NO; C:OK)
     print('pause 2 s...')
     time.sleep(2)
     # # Autoscale()                 # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: doesn't affect
@@ -725,12 +734,12 @@ if __name__ == '__main__':
     # # Init()
     # # follow with SingleScan
     # # Init()
-    GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15) # open a MyVNA window with an error.
+    accvna.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15) # open a MyVNA window with an error.
     # Init()
     # GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=16)
-    get_hWnd()    
+    get_hWnd()
     # # MUST call this before the calling windows application closes
-    Close()
+    accvna.Close()
     get_hWnd()
 
 
