@@ -32,8 +32,12 @@ class QCMApp(QMainWindow):
         self.update_all_settings()
         self.main()
 
+        # check system
+        self.system = UIModules.system_check()
         # initialize AccessMyVNA
-        self.accvna = AccessMyVNA()
+        if self.system == 'win32':
+            self.accvna = AccessMyVNA()
+            
 
     def main(self):
  # loadUi('QCM_GUI_test4.ui', self) # read .ui file directly. You still need to compile the .qrc file
@@ -487,9 +491,9 @@ class QCMApp(QMainWindow):
                 self.ui, 'mpl_sp' + str(i), 
                 MatplotlibWidget(
                     parent=getattr(self.ui, 'frame_sp' + str(i)), 
-                    xlabel='Frequency (Hz)', 
-                    ylabel='Conductance (mS)', 
-                    ylabel2='Susceptance (mS)',
+                    xlabel=r'$f$ (Hz)', 
+                    ylabel=r'$G_P$ (mS)', 
+                    ylabel2=r'$B_P$ (mS)',
                     showtoolbar=False,
                 )
             )
@@ -503,8 +507,8 @@ class QCMApp(QMainWindow):
         # add figure mpl_spectra_fit_polar into frame_spectra_fit_polar
         self.ui.mpl_spectra_fit_polar = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit_polar, 
-            xlabel='Conductance (mS)',
-            ylabel='Susceptance (mS)',
+            xlabel=r'$G_P$ (mS)',
+            ylabel=r'$B_P$ (mS)',
             )
         # self.ui.mpl_spectra_fit.update_figure()
         self.ui.frame_spectra_fit_polar.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit_polar))
@@ -512,9 +516,9 @@ class QCMApp(QMainWindow):
         # add figure mpl_spectra_fit into frame_spactra_fit
         self.ui.mpl_spectra_fit = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit, 
-            xlabel='Frequency (Hz)',
-            ylabel='Conductance (mS)',
-            ylabel2='Susceptance (mS)',
+            xlabel=r'$f$ (Hz)',
+            ylabel=r'$G_P$ (mS)',
+            ylabel2=r'$B_P$ (mS)',
             showtoolbar=('Back', 'Forward', 'Pan', 'Zoom')
             )
         # self.ui.mpl_spectra_fit.update_figure()
