@@ -32,7 +32,7 @@
     "checkBox_polarplot": false,
     "comboBox_fitfactor": 6,
     "tab_settings_settings_harm1": {
-        "comboBox_fit_method": "Gmax",
+        "comboBox_fit_method": "dev",
         "comboBox_track_method": "Fix span",
         "comboBox_harmfitfactor": 6,
         "comboBox_sample_channel": "ADC 1",
@@ -49,7 +49,7 @@
         "checkBox_settings_settings_linktime": false
     },
     "tab_settings_settings_harm3": {
-        "comboBox_fit_method": "Gmax",
+        "comboBox_fit_method": "gmax",
         "comboBox_track_method": "Fix span",
         "comboBox_harmfitfactor": 6,
         "comboBox_sample_channel": "ADC 1",
@@ -66,7 +66,7 @@
         "checkBox_settings_settings_linktime": false
     },
     "tab_settings_settings_harm5": {
-        "comboBox_fit_method": "Gmax",
+        "comboBox_fit_method": "gmax",
         "comboBox_track_method": "Fix span",
         "comboBox_harmfitfactor": 6,
         "comboBox_sample_channel": "ADC 1",
@@ -83,7 +83,7 @@
         "checkBox_settings_settings_linktime": false
     },
     "tab_settings_settings_harm7": {
-        "comboBox_fit_method": "Gmax",
+        "comboBox_fit_method": "gmax",
         "comboBox_track_method": "Fix span",
         "comboBox_harmfitfactor": 6,
         "comboBox_sample_channel": "ADC 1",
@@ -100,7 +100,7 @@
         "checkBox_settings_settings_linktime": false
     },
     "tab_settings_settings_harm9": {
-        "comboBox_fit_method": "Gmax",
+        "comboBox_fit_method": "gmax",
         "comboBox_track_method": "Fix span",
         "comboBox_harmfitfactor": 6,
         "comboBox_sample_channel": "ADC 1",
@@ -117,7 +117,7 @@
         "checkBox_settings_settings_linktime": false
     },
     "tab_settings_settings_harm11": {
-        "comboBox_fit_method": "Gmax",
+        "comboBox_fit_method": "gmax",
         "comboBox_track_method": "Fix span",
         "comboBox_harmfitfactor": 6,
         "comboBox_sample_channel": "ADC 1",
@@ -134,8 +134,5 @@
         "checkBox_settings_settings_linktime": false
     },
     "comboBox_base_frequency": 5,
-    "comboBox_bandwidth": 0.1,
-    "comboBox_fit_method": "bmax",
-    "comboBox_track_method": "fixcenter",
-    "comboBox_harmfitfactor": "5"
+    "comboBox_bandwidth": 0.1
 }

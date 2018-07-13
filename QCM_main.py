@@ -366,6 +366,8 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_gammascale.activated.connect(self.update_gammascale)
         self.ui.checkBox_settings_settings_linktime.stateChanged.connect(self.update_linktime)
         # set default values
+        
+        
         self.ui.comboBox_base_frequency.setCurrentIndex(0)
         self.ui.comboBox_bandwidth.setCurrentIndex(4)
         self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
@@ -902,24 +904,24 @@ class QCMApp(QMainWindow):
     def update_harmonic_tab(self):
         self.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
         self.update_frequencies()
-
+        
     def update_base_freq(self, base_freq_index):
         value = self.ui.comboBox_base_frequency.itemData(base_freq_index)
-        self.settings['comboBox_base_frequency'] = value
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_base_frequency'] = value
         self.update_frequencies()
         self.log_update()
 
 
     def update_bandwidth(self, bandwidth_index):
         value = self.ui.comboBox_bandwidth.itemData(bandwidth_index)
-        self.settings['comboBox_bandwidth'] = value
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_bandwidth'] = value
         self.update_frequencies()
         self.log_update()
 
 
     def update_frequencies(self):
-        self.start_freq = self.harmonic_tab * self.settings['comboBox_base_frequency'] - self.settings['comboBox_bandwidth']
-        self.end_freq = self.harmonic_tab * self.settings['comboBox_base_frequency'] + self.settings['comboBox_bandwidth']
+        self.start_freq = self.harmonic_tab * self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_base_frequency'] - self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_bandwidth']
+        self.end_freq = self.harmonic_tab * self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_base_frequency'] + self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_bandwidth']
         self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.start_freq))
         self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(1, str(self.end_freq))
 
@@ -930,71 +932,71 @@ class QCMApp(QMainWindow):
 
     def update_fitmethod(self, fitmethod_index):
         value = self.ui.comboBox_fit_method.itemData(fitmethod_index)
-        self.settings['comboBox_fit_method'] = value
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_fit_method'] = value
         self.log_update()
 
 
     def update_trackmethod(self, trackmethod_index):
         value = self.ui.comboBox_track_method.itemData(trackmethod_index)
-        self.settings['comboBox_track_method'] = value
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_track_method'] = value
         self.log_update()
 
 
     def update_harmfitfactor(self, harmfitfactor_index):
         value = self.ui.comboBox_harmfitfactor.itemData(harmfitfactor_index)
-        self.settings['comboBox_harmfitfactor'] = value
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_harmfitfactor'] = value
         self.log_update()
 
 
     def update_samplechannel(self, samplechannel_index):
         value = self.ui.comboBox_sample_channel.itemData(samplechannel_index)
-        self.settings['comboBox_sample_channel'] = value
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_sample_channel'] = value
         self.log_update()
 
 
     def update_refchannel(self, refchannel_index):
         value = self.ui.comboBox_ref_channel.itemData(refchannel_index)
-        self.settings['comboBox_ref_channel'] = value
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_ref_channel'] = value
         self.log_update()
 
 
     def update_tempsensor(self):
-        self.settings['checkBox_settings_temp_sensor'] = not self.settings['checkBox_settings_temp_sensor']
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_temp_sensor'] = not self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_temp_sensor']
         self.log_update()
 
 
     def update_thrmcpltype(self, thrmcpltype_index):
         value = self.ui.comboBox_thrmcpltype.itemData(thrmcpltype_index)
-        self.settings['comboBox_thrmcpltype'] = value
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_thrmcpltype'] = value
         self.log_update()
 
 
     def update_timeunit(self, timeunit_index):
         value = self.ui.comboBox_timeunit.itemData(timeunit_index)
-        self.settings['comboBox_timeunit'] = value
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_timeunit'] = value
         self.log_update()
 
 
     def update_tempunit(self, tempunit_index):
         value = self.ui.comboBox_tempunit.itemData(tempunit_index)
-        self.settings['comboBox_tempunit'] = value
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_tempunit'] = value
         self.log_update()
 
 
     def update_timescale(self, timescale_index):
         value = self.ui.comboBox_timescale.itemData(timescale_index)
-        self.settings['comboBox_timescale'] = value
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_timescale'] = value
         self.log_update()
 
 
     def update_gammascale(self, gammascale_index):
         value = self.ui.comboBox_gammascale.itemData(gammascale_index)
-        self.settings['comboBox_gammascale'] = value
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_gammascale'] = value
         self.log_update()
 
 
     def update_linktime(self):
-        self.settings['checkBox_settings_settings_linktime'] = not self.settings['checkBox_settings_settings_linktime']
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_settings_linktime'] = not self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_settings_linktime']
         self.log_update()
 
     def log_update(self):
