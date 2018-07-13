@@ -782,6 +782,9 @@ class QCMApp(QMainWindow):
     def on_triggered_actionSave_As(self):
         # save current data to a new file 
         fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
+        with open(fileName, 'w') as f:
+           line = json.dumps(dict(self.settings), indent=4) + "\n"
+           f.write(line)
         # change the displayed file directory in lineEdit_datafilestr
         self.ui.lineEdit_datafilestr.setText(fileName)
 
@@ -866,40 +869,26 @@ class QCMApp(QMainWindow):
     def update_acquisitioninterval(self, acquisitioninterval_text):
         if acquisitioninterval_text != '':
             self.settings['lineEdit_acquisitioninterval'] = float(acquisitioninterval_text)
-            self.log_update()
-
     
     def update_refreshresolution(self, refreshsolution_text):
         if refreshsolution_text != '':
             self.settings['lineEdit_refreshsolution'] = float(refreshsolution_text)
-            self.log_update()
-
 
     def update_dynamicfit(self):
         self.settings['checkBox_dynamicfit'] = not self.settings['checkBox_dynamicfit']
-        self.log_update()
-
 
     def update_showsusceptance(self):
         self.settings['checkBox_showsusceptance'] = not self.settings['checkBox_showsusceptance']
-        self.log_update()
-
 
     def update_showchi(self):
         self.settings['checkBox_showchi'] = not self.settings['checkBox_showchi']
-        self.log_update()
-
 
     def update_showpolarplot(self):
         self.settings['checkBox_polarplot'] = not self.settings['checkBox_polarplot']
-        self.log_update()
-
 
     def update_fitfactor(self, fitfactor_index):
         value = self.ui.comboBox_fitfactor.itemData(fitfactor_index)
         self.settings['comboBox_fitfactor'] = value
-        self.log_update()
-
 
     def update_harmonic_tab(self):
         self.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
@@ -922,15 +911,11 @@ class QCMApp(QMainWindow):
         value = self.ui.comboBox_base_frequency.itemData(base_freq_index)
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_base_frequency'] = value
         self.update_frequencies()
-        self.log_update()
-
 
     def update_bandwidth(self, bandwidth_index):
         value = self.ui.comboBox_bandwidth.itemData(bandwidth_index)
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_bandwidth'] = value
         self.update_frequencies()
-        self.log_update()
-
 
     def update_frequencies(self):
         self.start_freq = self.harmonic_tab * self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_base_frequency'] - self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_bandwidth']
@@ -946,71 +931,49 @@ class QCMApp(QMainWindow):
     def update_fitmethod(self, fitmethod_index):
         value = self.ui.comboBox_fit_method.itemData(fitmethod_index)
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_fit_method'] = value
-        self.log_update()
-
 
     def update_trackmethod(self, trackmethod_index):
         value = self.ui.comboBox_track_method.itemData(trackmethod_index)
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_track_method'] = value
-        self.log_update()
-
 
     def update_harmfitfactor(self, harmfitfactor_index):
         value = self.ui.comboBox_harmfitfactor.itemData(harmfitfactor_index)
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_harmfitfactor'] = value
-        self.log_update()
-
 
     def update_samplechannel(self, samplechannel_index):
         value = self.ui.comboBox_sample_channel.itemData(samplechannel_index)
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_sample_channel'] = value
-        self.log_update()
-
 
     def update_refchannel(self, refchannel_index):
         value = self.ui.comboBox_ref_channel.itemData(refchannel_index)
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_ref_channel'] = value
-        self.log_update()
-
 
     def update_tempsensor(self):
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_temp_sensor'] = not self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_temp_sensor']
-        self.log_update()
-
 
     def update_thrmcpltype(self, thrmcpltype_index):
         value = self.ui.comboBox_thrmcpltype.itemData(thrmcpltype_index)
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_thrmcpltype'] = value
-        self.log_update()
-
 
     def update_timeunit(self, timeunit_index):
         value = self.ui.comboBox_timeunit.itemData(timeunit_index)
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_timeunit'] = value
-        self.log_update()
-
 
     def update_tempunit(self, tempunit_index):
         value = self.ui.comboBox_tempunit.itemData(tempunit_index)
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_tempunit'] = value
-        self.log_update()
 
 
     def update_timescale(self, timescale_index):
         value = self.ui.comboBox_timescale.itemData(timescale_index)
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_timescale'] = value
-        self.log_update()
-
 
     def update_gammascale(self, gammascale_index):
         value = self.ui.comboBox_gammascale.itemData(gammascale_index)
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_gammascale'] = value
-        self.log_update()
-
 
     def update_linktime(self):
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_settings_linktime'] = not self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_settings_linktime']
-        self.log_update()
 
     def update_guicombos(self, comboBox, name_in_settings, init_dict):
         for key, val in settings_init[init_dict].items():
