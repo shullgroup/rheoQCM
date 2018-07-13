@@ -27,6 +27,9 @@ from matplotlib import pyplot as plt
 from matplotlib.backend_tools import ToolBase, ToolToggleBase
 from UISettings import settings_init
 
+# color map for plot
+color = ['tab:blue', 'tab:red']
+
 # rcParams['toolbar'] = 'toolmanager'
 
 # class NavigationToolbar(NavigationToolbar2QT):
@@ -50,7 +53,7 @@ from UISettings import settings_init
 class MatplotlibWidget(QWidget):
     
 
-    def __init__(self, parent=None, title='', xlabel='', ylabel='', ylabel2='', xlim=None, ylim=None, xscale='linear', yscale='linear', showtoolbar=True, dpi=100, *args, **kwargs):
+    def __init__(self, parent=None, plttype='', title='', xlabel='', ylabel='', ylabel2='', xlim=None, ylim=None, xscale='linear', yscale='linear', showtoolbar=True, dpi=100, *args, **kwargs):
         super(MatplotlibWidget, self).__init__(parent)
         
         self.fig = Figure(tight_layout=True, dpi=dpi, facecolor='none')
@@ -89,9 +92,228 @@ class MatplotlibWidget(QWidget):
             # self.toolbar.hide() # hide toolbar (or setHidden(bool))
             self.toolbar.isMovable()
             self.vbox.addWidget(self.toolbar)
+        
+        # add axes
 
+
+    def initax_xy(self, *args, **kwargs):
         # axes
-        ax = self.fig.add_subplot(111, facecolor='none')
+        ax1 = self.fig.add_subplot(111, facecolor='none')
+        ax1.autoscale()
+        # print(ax.format_coord)
+        # print(ax.format_cursor_data)
+        # plt.tight_layout()
+        # plt.tight_layout(pad=None, w_pad=None, h_pad=None,  rect=None)
+        
+        # append to list
+        ax = []
+        ax.append(ax1)
+
+        self.ax = ax
+
+    def initiax_xyy(self):
+        '''
+        input: ax1 
+        output: [ax1, ax2]
+        '''
+        self.initax_xy()
+        
+        ax2 = self.ax[0].twinx()
+        ax2.tick_params(axis='y', labelcolor=color[1], color=color[1])
+        ax2.yaxis.label.set_color(color[1])
+        ax2.spines['right'].set_color(color[1])
+        ax2.autoscale()
+        ax2.spines['left'].set_visible(False)
+
+        # change axes color
+        self.ax[0].tick_params(axis='y', labelcolor=color[0], color=color[0])
+        self.ax[0].yaxis.label.set_color(color[0])
+        self.ax[0].spines['left'].set_color(color[0])
+        self.ax[0].spines['right'].set_visible(False)
+
+        # append ax2 to self.ax
+        self.ax.append(ax2)
+
+    def init_sp(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
+        '''
+        initialize the sp[n]
+        initialize ax[0]: .lG, .lGfit, .lp, .lpfit plot
+        initialize ax[1]: .lB, .lBfit, plot
+        '''
+        self.initax_xyy()
+        # set label of ax[1]
+        self.set_ax_items(self.ax[0], xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
+        self.set_ax_items(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
+
+        self.ax[0].margins(x=0)
+        self.ax[1].margins(x=0)
+        self.ax[0].margins(y=.05)
+        self.ax[1].margins(y=.05)
+
+        self.ax[0].autoscale()
+        self.ax[1].autoscale()
+
+        self.lG = self.ax[0].plot(
+            [], [], 
+            marker='o', 
+            markerfacecolor='none', 
+            color=color[0]
+        ) # G
+        self.lB = self.ax[1].plot(
+            [], [], 
+            marker='o', 
+            markerfacecolor='none', 
+            color=color[1]
+        ) # B
+        self.lGfit = self.ax[0].plot(
+            [], [], 
+            color='k'
+        ) # G fit
+        self.lBfit = self.ax[1].plot(
+            [], [], 
+            color='k'
+        ) # B fit
+        self.lp = self.ax[0].scatter(
+            [], [],
+            marker='x',
+            color='k'
+        ) # polar plot
+        self.lpfit = self.ax[0].plot(
+            [], [],
+            color='k'
+        ) # polar plot fit
+
+    def init_spectra_fit(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
+        '''
+        initialize the spectra fit
+        initialize .lG, .lB, .lGfit, .lBfit .lf, .lg plot
+        '''
+        self.initax_xyy()
+        # set label of ax[1]
+        self.set_ax_items(self.ax[0], xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
+        self.set_ax_items(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
+
+        self.ax[0].margins(x=0)
+        self.ax[1].margins(x=0)
+        self.ax[0].margins(y=.05)
+        self.ax[1].margins(y=.05)
+
+        self.ax[0].autoscale()
+        self.ax[1].autoscale()
+
+        self.lG = self.ax[0].plot(
+            [], [], 
+            marker='o', 
+            markerfacecolor='none', 
+            color=color[0]
+        ) # G
+        self.lB = self.ax[1].plot(
+            [], [], 
+            marker='o', 
+            markerfacecolor='none', 
+            color=color[1]
+        ) # B
+        self.lGfit = self.ax[0].plot(
+            [], [], 
+            color='k'
+        ) # G fit
+        self.lBfit = self.ax[1].plot(
+            [], [], 
+            color='k'
+        ) # B fit
+        self.lf = self.ax[1].scatter(
+            [], [],
+            marker='x',
+            color='k'
+        ) # f: G peak
+        self.lg = self.ax[1].plot(
+            [], [],
+            color='k'
+        ) # g: gamma (fwhm)
+
+    def init_spectra_polar(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
+        '''
+        initialize the spectra polar
+        initialize .l .lfit plot
+        '''
+        self.initax_xy()
+        # set label of ax[1]
+        self.set_ax_items(self.ax[0], xlabel=r'$G_P$ (mS)',ylabel=r'$B_P$ (mS)')
+
+        self.ax[0].autoscale()
+
+        self.l = self.ax[0].plot(
+            [], [], 
+            marker='o', 
+            markerfacecolor='none', 
+            color=color[0]
+        ) # G vs. B
+        self.lfit = self.ax[0].plot(
+            [], [], 
+            color='k'
+        ) # fit
+
+    def init_data(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
+        '''
+        initialize the mpl_plt1 & mpl_plt2
+        initialize plot: 
+            .l [0: (Settings_init['max_harmonic']-1)/2] 
+            .lm[0: (Settings_init['max_harmonic']-1)/2]
+        '''
+        self.initax_xy()
+        # set label of ax[1]
+        self.set_ax_items(self.ax[0], xlabel='Time (s)',ylabel=ylabel)
+
+        self.ax[0].autoscale()
+
+        for i in range(int(Settings_init['max_harmonic']+1)/2):
+            self.l[i] = self.ax[0].plot(
+                [], [], 
+                marker='o', 
+                markerfacecolor='none', 
+                color=color[0] #?? set color
+            ) # l
+            self.lm[i] = self.ax[0].plot(
+                [], [], 
+                marker='x', 
+                color=color[0] #?? set color
+            ) # lm
+
+    def init_contour(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
+        '''
+        initialize the mechanics_contour1 & mechanics_contour2
+        initialize plot: 
+            .l [0: (Settings_init['max_harmonic']-1)/2] 
+            .lm[0: (Settings_init['max_harmonic']-1)/2]
+        '''
+        self.initax_xy()
+        # set label of ax[1]
+        self.set_ax_items(self.ax[0], xlabel='Time (s)',ylabel=ylabel)
+
+        self.ax[0].autoscale()
+
+        for i in range(int(Settings_init['max_harmonic']+1)/2):
+            self.l[i] = self.ax[0].plot(
+                [], [], 
+                marker='o', 
+                markerfacecolor='none', 
+                color=color[0] #?? set color
+            ) # l
+            self.lm[i] = self.ax[0].plot(
+                [], [], 
+                marker='x', 
+                color=color[0] #?? set color
+            ) # lm
+
+
+
+    # def sizeHint(self):
+    #     return QSize(*self.get_width_height())
+
+    # def minimumSizeHint(self):
+    #     return QSize(10, 10)
+
+    def set_ax_items(self, ax, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         ax.set_title(title)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -103,22 +325,6 @@ class MatplotlibWidget(QWidget):
             ax.set_xlim(*xlim)
         if ylim is not None:
             ax.set_ylim(*ylim)
-        ax.autoscale()
-        # print(ax.format_coord)
-        # print(ax.format_cursor_data)
-        # plt.tight_layout()
-        # plt.tight_layout(pad=None, w_pad=None, h_pad=None,  rect=None)
-        if ylabel2: # create a xyy axes
-            ax = self.add2ndyaxis(ax, ylabel2) 
-        
-        self.ax = ax
-
-    # def sizeHint(self):
-    #     return QSize(*self.get_width_height())
-
-    # def minimumSizeHint(self):
-    #     return QSize(10, 10)
-
 
 
     def resize(self, event):
@@ -131,38 +337,10 @@ class MatplotlibWidget(QWidget):
         self.toolbar.move(x,ynew)        
 
     def initial_figure(self):
-        self.ax[0].plot([0, 1, 2, 3], [1, 2, 0, 4], 'r')
+        pass
 
     def update_figure(self):
         # self.ax.cla()
         self.ax[0].plot([0, 1, 2, 3], [0, 1, 2, 3], 'r')
         self.canvas.draw()
-
-    def add2ndyaxis(self, ax1, ylabel2):
-        '''
-        input: ax1 
-        output: [ax1, ax2]
-        '''
-        color = ['tab:blue', 'tab:red']
-        
-        ax2 = ax1.twinx()
-        ax2.set_ylabel(ylabel2, color=color[1]) # set ylabel of axes2
-        ax2.tick_params(axis='y', labelcolor=color[1], color=color[1])
-        ax2.yaxis.label.set_color(color[1])
-        ax2.spines['right'].set_color(color[1])
-        ax2.autoscale()
-
-        # change axes color
-        ax1.tick_params(axis='y', labelcolor=color[0], color=color[0])
-        ax1.yaxis.label.set_color(color[0])
-        ax1.spines['left'].set_color(color[0])
-
-        ax2.spines['left'].set_visible(False)
-        ax1.spines['right'].set_visible(False)
-
-        # reform ax1
-        ax = []
-        ax.append(ax1)
-        ax.append(ax2)
-        return ax
 

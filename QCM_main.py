@@ -530,9 +530,9 @@ class QCMApp(QMainWindow):
             )
         # self.ui.mpl_spectra_fit.update_figure()
         self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
-        # add plot
-        self.ui.mpl_spectra_fit.lG = self.ui.mpl_spectra_fit.ax[0].plot([], [], color='tab:blue') # G
-        self.ui.mpl_spectra_fit.lB = self.ui.mpl_spectra_fit.ax[1].plot([], [], color='tab:red') # B
+        # add plots .lG & .lB
+        self.ui.mpl_spectra_fit.lG = self.ui.mpl_spectra_fit.ax[0].plot([], [], marker='o', markerfacecolor='none', color='tab:blue') # G
+        self.ui.mpl_spectra_fit.lB = self.ui.mpl_spectra_fit.ax[1].plot([], [], marker='o', markerfacecolor='none', color='tab:red') # B
 
         # add figure mpl_countour1 into frame_spectra_mechanics_contour1
         self.ui.mpl_countour1 = MatplotlibWidget(
@@ -692,7 +692,8 @@ class QCMApp(QMainWindow):
         except:
             refresh_resolution = 0
         # set label_actualinterval
-        self.ui.label_actualinterval.setText(f'{acquisition_interval * refresh_resolution}  s')
+        # self.ui.label_actualinterval.setText(f'{acquisition_interval * refresh_resolution}  s')
+        self.ui.label_actualinterval.setText('{}  s'.format(acquisition_interval * refresh_resolution)) # python < 3.5
 
     ## functions for open and save file
     def openFileNameDialog(self, title, path='', filetype=settings_init['default_datafiletype']):  
@@ -746,9 +747,6 @@ class QCMApp(QMainWindow):
     def on_clicked_pushButton_gotofolder(self):
         file_path = self.ui.lineEdit_datafilestr.text() #?? replace with reading from settings dict
         path = os.path.abspath(os.path.join(file_path, os.pardir)) # get the folder of the file
-        # print(path)
-        # subprocess.Popen(f'explorer "{path}"') # every time open a new window
-        # os.startfile(f'{path}') # if the folder is opend, make it active
         UIModules.open_file(path)
 
     # 
@@ -781,9 +779,11 @@ class QCMApp(QMainWindow):
         n = 10 ** (self.ui.horizontalSlider_spectra_fit_spanctrl.value() / 10)
         # format n
         if n >= 1:
-            n = f'{round(n)} *'
+            # n = f'{round(n)} *'
+            n = '{} *'.format(round(n)) # python < 3.5
         else:
-            n = f'1/{round(1/n)} *'
+            # n = f'1/{round(1/n)} *'
+            n = '1/{} *'.format(round(1/n)) # python < 3.5
         # set treeWidget_settings_settings_harmtree value
         self.ui.label_spectra_fit_zoomtimes.setText(str(n))
 
@@ -807,16 +807,20 @@ class QCMApp(QMainWindow):
         self.ui.horizontalSlider_spectra_fit_spanctrl.setValue(0)
 
     def on_click_pushButton_spectra_fit_refresh(self):
-        ret, nSteps = self.accvna.GetScanSteps()
-        ret, f1, f2 = self.accvna.SetFequencies()
-        self.accvna.SingleScan()
-        time.sleep(2)
-        ret, f, G = self.accvna.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
-        ret, _, B = self.accvna.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=16)
-        self.accvna.Close()
+        # ret, nSteps = self.accvna.GetScanSteps()
+        # ret, f1, f2 = self.accvna.SetFequencies()
+        # self.accvna.SingleScan()
+        # time.sleep(2)
+        # ret, f, G = self.accvna.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
+        # ret, _, B = self.accvna.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=16)
+        # self.accvna.Close()
         # print(f)
         # print(G)
         # print(self.ui.mpl_spectra_fit.lG[0].get_xdata())
+        with self.accvna as accvna:
+            accvna.set_steps_freq()
+            ret, f, G, B = accvna.single_scan()
+
         self.ui.mpl_spectra_fit.lG[0].set_xdata(f)
         self.ui.mpl_spectra_fit.lG[0].set_ydata(G)
         self.ui.mpl_spectra_fit.lB[0].set_xdata(f)
