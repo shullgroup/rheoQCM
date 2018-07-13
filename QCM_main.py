@@ -153,7 +153,8 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_showsusceptance)
         self.ui.checkBox_showchi.stateChanged.connect(self.update_showchi)
         self.ui.checkBox_polarplot.stateChanged.connect(self.update_showpolarplot)
-        self.ui.comboBox_fitfactor.activated[str].connect(self.update_fitfactor)
+        self.ui.comboBox_fitfactor.activated.connect(self.update_fitfactor)
+        
 
 #endregion
 
@@ -346,8 +347,8 @@ class QCMApp(QMainWindow):
         
         # set signals
         self.ui.tabWidget_settings_settings_harm.currentChanged.connect(self.update_harmonic_tab)
-        self.ui.comboBox_base_frequency.activated[str].connect(self.update_base_freq)
-        self.ui.comboBox_bandwidth.activated[str].connect(self.update_bandwidth)
+        self.ui.comboBox_base_frequency.activated.connect(self.update_base_freq)
+        self.ui.comboBox_bandwidth.activated.connect(self.update_bandwidth)
 
         # set default values
         self.ui.comboBox_base_frequency.setCurrentIndex(0)
@@ -865,19 +866,22 @@ class QCMApp(QMainWindow):
     def update_showpolarplot(self):
         self.settings['checkBox_polarplot'] = not self.settings['checkBox_polarplot']
 
-    def update_fitfactor(self, fitfactor_text):
-        self.settings['comboBox_fitfactor'] = float(fitfactor_text)
+    def update_fitfactor(self, fitfactor_index):
+        value = self.ui.comboBox_fitfactor.itemData(fitfactor_index)
+        self.settings['comboBox_fitfactor'] = value
 
     def update_harmonic_tab(self):
         self.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
         self.update_all_settings()
 
-    def update_base_freq(self, base_freq_text):
-        self.settings['comboBox_base_frequency'] = float(base_freq_text[0:base_freq_text.index(" ")])
+    def update_base_freq(self, base_freq_index):
+        value = self.ui.comboBox_base_frequency.itemData(base_freq_index)
+        self.settings['comboBox_base_frequency'] = value
         self.update_all_settings()
 
-    def update_bandwidth(self, bandwidth_text):
-        self.settings['comboBox_bandwidth'] = float(bandwidth_text[0:bandwidth_text.index(" ")])
+    def update_bandwidth(self, bandwidth_index):
+        value = self.ui.comboBox_bandwidth.itemData(bandwidth_index)
+        self.settings['comboBox_bandwidth'] = value
         self.update_all_settings()
 
     def update_all_settings(self):
