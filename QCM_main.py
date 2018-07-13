@@ -904,7 +904,20 @@ class QCMApp(QMainWindow):
     def update_harmonic_tab(self):
         self.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
         self.update_frequencies()
-        
+
+        self.update_guichecks(self.ui.checkBox_settings_temp_sensor, 'checkBox_settings_temp_sensor')
+        self.update_guichecks(self.ui.checkBox_settings_settings_linktime, 'checkBox_settings_settings_linktime')
+
+        self.update_guicombos(self.ui.comboBox_fit_method, 'comboBox_fit_method', 'span_mehtod_choose')
+        self.update_guicombos(self.ui.comboBox_track_method, 'comboBox_track_method', 'track_mehtod_choose')
+        self.update_guicombos(self.ui.comboBox_sample_channel, 'comboBox_sample_channel', 'sample_channel_choose')
+        self.update_guicombos(self.ui.comboBox_ref_channel, 'comboBox_ref_channel', 'ref_channel_choose')
+        self.update_guicombos(self.ui.comboBox_thrmcpltype, 'comboBox_thrmcpltype', 'thrmcpl_choose')
+        self.update_guicombos(self.ui.comboBox_timeunit, 'comboBox_timeunit', 'time_unit_choose')
+        self.update_guicombos(self.ui.comboBox_tempunit, 'comboBox_tempunit', 'temp_unit_choose')
+        self.update_guicombos(self.ui.comboBox_timescale, 'comboBox_timescale', 'time_scale_choose')
+        self.update_guicombos(self.ui.comboBox_gammascale, 'comboBox_gammascale', 'gamma_scale_choose')
+
     def update_base_freq(self, base_freq_index):
         value = self.ui.comboBox_base_frequency.itemData(base_freq_index)
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_base_frequency'] = value
@@ -999,14 +1012,19 @@ class QCMApp(QMainWindow):
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_settings_linktime'] = not self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_settings_linktime']
         self.log_update()
 
+    def update_guicombos(self, comboBox, name_in_settings, init_dict):
+        for key, val in settings_init[init_dict].items():
+            if key == self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)][name_in_settings]:
+                comboBox.setCurrentIndex(comboBox.findData(key))
+                break
+
+    def update_guichecks(self, checkBox, name_in_settings):
+        checkBox.setChecked(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)][name_in_settings])
+    
     def log_update(self):
         with open('settings.json', 'w') as f:
             line = json.dumps(dict(self.settings), indent=4) + "\n"
             f.write(line)
-
-
-
-
 
 #endregion
 
