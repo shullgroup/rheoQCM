@@ -516,6 +516,16 @@ class AccessMyVNA():
     def __init__(self):
         super(AccessMyVNA, self).__init__()
 
+    # use __enter__ __exit__ for with or use try finally
+    def __enter__(self):
+        self.Init()
+        print('in')
+
+    def __exit__(self, type, value, traceback):
+        self.Close()
+        print('out')
+        
+
     def Init(self):
         ret = MyVNAInit()
         print('MyVNAInit\n', ret)
@@ -699,13 +709,45 @@ class AccessMyVNA():
         print('MyVNAAutoscale\n', ret) #MyVNAAutoscale
         return ret
 
+    # combined functions
+    def single_scan(self, nSteps, nAverage, f1, f2):
+        self.Init()
+        # set scan parameters
+        ret, nSteps = self.GetScanSteps()
+        self.SetScanAverage(nAverage=1)
+        self.SetFequencies(f1, f2, nFlags=1)
+        self.SingleScan()
+        # wait for some time
+        time.sleep(2)
+        self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
+        self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-2, nWhatb=16)
+        self.Close()
+    
+    def change_settings(self, refChn=1, nMode=0, nSteps=400, nAverage=1):
+        ret =           self.Init()
+        ret, nMode =    self.Setinstrmode(nMode)
+        ret, nData =    self.setADVChannel(refChn)
+        ret, nSteps =   self.SetScanSteps(nSteps)
+        ret, nAverage = self.SetScanAverage(nAverage)
+        ret =           self.Close()
+
+    def setADVChannel(self, refChn):
+        # switch ADV channel for test
+        # nData = [transChn, refChn]
+        if refChn == 1:
+            nData = np.array([2, 1])
+        elif refChn == 2:
+            nData = np.array([1, 2])
+
+        ret, nData = self.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=nData)
+        return ret, nData
 
 # get_hWnd()
 
 # exit(0)
 if __name__ == '__main__':
     accvna = AccessMyVNA() 
-    # call this function befoe trying to do anything else
+    # call this function before trying to do anything else
     # Init()
     get_hWnd()
     # Init()

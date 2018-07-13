@@ -14,7 +14,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
 from modules import UIModules
-from modules.AccessMyVNA import AccessMyVNA
+
 from MatplotlibWidget import MatplotlibWidget
 
 class QCMApp(QMainWindow):
@@ -36,6 +36,7 @@ class QCMApp(QMainWindow):
         self.system = UIModules.system_check()
         # initialize AccessMyVNA
         if self.system == 'win32':
+            from modules.AccessMyVNA import AccessMyVNA
             self.accvna = AccessMyVNA()
             
 
