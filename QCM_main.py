@@ -147,6 +147,7 @@ class QCMApp(QMainWindow):
         # set pushButton_appenddata
         self.ui.pushButton_appenddata.clicked.connect(self.on_triggered_load_data)
 
+        # set signals to update settings
         self.ui.lineEdit_acquisitioninterval.textChanged[str].connect(self.update_acquisitioninterval)
         self.ui.lineEdit_refreshresolution.textChanged[str].connect(self.update_refreshresolution)
         self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_dynamicfit)
@@ -154,7 +155,6 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_showchi.stateChanged.connect(self.update_showchi)
         self.ui.checkBox_polarplot.stateChanged.connect(self.update_showpolarplot)
         self.ui.comboBox_fitfactor.activated.connect(self.update_fitfactor)
-        
 
 #endregion
 
@@ -345,11 +345,25 @@ class QCMApp(QMainWindow):
             "QTabBar::tab:!selected { margin-top: 2px; }"
             )
         
-        # set signals
+        # set signals to update
+        self.ui.comboBox_fit_method.activated.connect(self.update_fitmethod)
+        self.ui.comboBox_track_method.activated.connect(self.update_trackmethod)
+        self.ui.comboBox_harmfitfactor.activated.connect(self.update_harmfitfactor)
+        self.ui.comboBox_sample_channel.activated.connect(self.update_samplechannel)
+        self.ui.comboBox_ref_channel.activated.connect(self.update_refchannel)
+
         self.ui.tabWidget_settings_settings_harm.currentChanged.connect(self.update_harmonic_tab)
         self.ui.comboBox_base_frequency.activated.connect(self.update_base_freq)
         self.ui.comboBox_bandwidth.activated.connect(self.update_bandwidth)
 
+        self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
+        self.ui.comboBox_thrmcpltype.activated.connect(self.update_thrmcpltype)
+
+        self.ui.comboBox_timeunit.activated.connect(self.update_timeunit)
+        self.ui.comboBox_tempunit.activated.connect(self.update_tempunit)
+        self.ui.comboBox_timescale.activated.connect(self.update_timescale)
+        self.ui.comboBox_gammascale.activated.connect(self.update_gammascale)
+        self.ui.checkBox_settings_settings_linktime.stateChanged.connect(self.update_linktime)
         # set default values
         self.ui.comboBox_base_frequency.setCurrentIndex(0)
         self.ui.comboBox_bandwidth.setCurrentIndex(4)
@@ -894,6 +908,52 @@ class QCMApp(QMainWindow):
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
             getattr(self.ui, 'lineEdit_startf' + str(i)).setText(str(self.settings['lineEdit_startf' + str(i)]))
             getattr(self.ui, 'lineEdit_endf' + str(i)).setText(str(self.settings['lineEdit_endf' + str(i)]))
+
+    def update_fitmethod(self, fitmethod_index):
+        value = self.ui.comboBox_fit_method.itemData(fitmethod_index)
+        self.settings['comboBox_fit_method'] = value
+
+    def update_trackmethod(self, trackmethod_index):
+        value = self.ui.comboBox_track_method.itemData(trackmethod_index)
+        self.settings['comboBox_track_method'] = value
+
+    def update_harmfitfactor(self, harmfitfactor_index):
+        value = self.ui.comboBox_harmfitfactor.itemData(harmfitfactor_index)
+        self.settings['comboBox_harmfitfactor'] = value
+
+    def update_samplechannel(self, samplechannel_index):
+        value = self.ui.comboBox_sample_channel.itemData(samplechannel_index)
+        self.settings['comboBox_sample_channel'] = value
+
+    def update_refchannel(self, refchannel_index):
+        value = self.ui.comboBox_ref_channel.itemData(refchannel_index)
+        self.settings['comboBox_ref_channel'] = value
+
+    def update_tempsensor(self):
+        self.settings['checkBox_settings_temp_sensor'] = not self.settings['checkBox_settings_temp_sensor']
+
+    def update_thrmcpltype(self, thrmcpltype_index):
+        value = self.ui.comboBox_thrmcpltype.itemData(thrmcpltype_index)
+        self.settings['comboBox_thrmcpltype'] = value
+
+    def update_timeunit(self, timeunit_index):
+        value = self.ui.comboBox_timeunit.itemData(timeunit_index)
+        self.settings['comboBox_timeunit'] = value
+
+    def update_tempunit(self, tempunit_index):
+        value = self.ui.comboBox_tempunit.itemData(tempunit_index)
+        self.settings['comboBox_tempunit'] = value
+
+    def update_timescale(self, timescale_index):
+        value = self.ui.comboBox_timescale.itemData(timescale_index)
+        self.settings['comboBox_timescale'] = value
+
+    def update_gammascale(self, gammascale_index):
+        value = self.ui.comboBox_gammascale.itemData(gammascale_index)
+        self.settings['comboBox_gammascale'] = value
+
+    def update_linktime(self):
+        self.settings['checkBox_settings_settings_linktime'] = not self.settings['checkBox_settings_settings_linktime']
 
 #endregion
 

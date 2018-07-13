@@ -206,7 +206,7 @@ settings_default = {
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
-        'Temperature': False,
+        'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
@@ -214,7 +214,7 @@ settings_default = {
         'comboBox_tempunit': '°C',
         'comboBox_timescale': 'linear',
         'comboBox_gammascale': 'linear',
-        'Link Time': False
+        'checkBox_settings_settings_linktime': False
     },
 
     'tab_settings_settings_harm3': {
@@ -228,7 +228,7 @@ settings_default = {
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
-        'Temperature': False,
+        'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
@@ -236,7 +236,7 @@ settings_default = {
         'comboBox_tempunit': '°C',
         'comboBox_timescale': 'linear',
         'comboBox_gammascale': 'linear',
-        'Link Time': False
+        'checkBox_settings_settings_linktime': False
     },
 
     'tab_settings_settings_harm5': {
@@ -250,7 +250,7 @@ settings_default = {
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
-        'Temperature': False,
+        'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
@@ -258,7 +258,7 @@ settings_default = {
         'comboBox_tempunit': '°C',
         'comboBox_timescale': 'linear',
         'comboBox_gammascale': 'linear',
-        'Link Time': False
+        'checkBox_settings_settings_linktime': False
     },
 
     'tab_settings_settings_harm7': {
@@ -272,7 +272,7 @@ settings_default = {
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
-        'Temperature': False,
+        'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
@@ -280,7 +280,7 @@ settings_default = {
         'comboBox_tempunit': '°C',
         'comboBox_timescale': 'linear',
         'comboBox_gammascale': 'linear',
-        'Link Time': False
+        'checkBox_settings_settings_linktime': False
     },
 
     'tab_settings_settings_harm9': {
@@ -294,7 +294,7 @@ settings_default = {
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
-        'Temperature': False,
+        'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
@@ -302,7 +302,7 @@ settings_default = {
         'comboBox_tempunit': '°C',
         'comboBox_timescale': 'linear',
         'comboBox_gammascale': 'linear',
-        'Link Time': False
+        'checkBox_settings_settings_linktime': False
     },
 
     'tab_settings_settings_harm11': {
@@ -316,7 +316,7 @@ settings_default = {
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
-        'Temperature': False,
+        'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
@@ -324,7 +324,7 @@ settings_default = {
         'comboBox_tempunit': '°C',
         'comboBox_timescale': 'linear',
         'comboBox_gammascale': 'linear',
-        'Link Time': False
+        'checkBox_settings_settings_linktime': False
     },
  
     'comboBox_base_frequency': 5,
