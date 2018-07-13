@@ -196,135 +196,135 @@ settings_default = {
 
 #### default settings settings ####
     'tab_settings_settings_harm1': {
-        'comboBox_fit_method': 'Gmax',
-        'comboBox_track_method': 'Fix span',
-        'comboBox_harmfitfactor': 6,
+        'comboBox_fit_method': 'gmax',
+        'comboBox_track_method': 'fixspan',
+        'comboBox_harmfitfactor': '6',
 
-        'comboBox_sample_channel': 'ADC 1',
-        'comboBox_ref_channel': '--',
+        'comboBox_sample_channel': '1',
+        'comboBox_ref_channel': 'none',
         
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
-        'Temperature': False,
+        'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
         'comboBox_timeunit': 's',
-        'comboBox_tempunit': '°C',
+        'comboBox_tempunit': 'C',
         'comboBox_timescale': 'linear',
         'comboBox_gammascale': 'linear',
-        'Link Time': False
+        'checkBox_settings_settings_linktime': False
     },
 
     'tab_settings_settings_harm3': {
-        'comboBox_fit_method': 'Gmax',
-        'comboBox_track_method': 'Fix span',
-        'comboBox_harmfitfactor': 6,
+        'comboBox_fit_method': 'gmax',
+        'comboBox_track_method': 'fixspan',
+        'comboBox_harmfitfactor': '6',
 
-        'comboBox_sample_channel': 'ADC 1',
-        'comboBox_ref_channel': '--',
+        'comboBox_sample_channel': '1',
+        'comboBox_ref_channel': 'none',
         
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
-        'Temperature': False,
+        'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
         'comboBox_timeunit': 's',
-        'comboBox_tempunit': '°C',
+        'comboBox_tempunit': 'C',
         'comboBox_timescale': 'linear',
         'comboBox_gammascale': 'linear',
-        'Link Time': False
+        'checkBox_settings_settings_linktime': False
     },
 
     'tab_settings_settings_harm5': {
-        'comboBox_fit_method': 'Gmax',
-        'comboBox_track_method': 'Fix span',
-        'comboBox_harmfitfactor': 6,
+        'comboBox_fit_method': 'gmax',
+        'comboBox_track_method': 'fixspan',
+        'comboBox_harmfitfactor': '6',
 
-        'comboBox_sample_channel': 'ADC 1',
-        'comboBox_ref_channel': '--',
+        'comboBox_sample_channel': '1',
+        'comboBox_ref_channel': 'none',
         
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
-        'Temperature': False,
+        'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
         'comboBox_timeunit': 's',
-        'comboBox_tempunit': '°C',
+        'comboBox_tempunit': 'C',
         'comboBox_timescale': 'linear',
         'comboBox_gammascale': 'linear',
-        'Link Time': False
+        'checkBox_settings_settings_linktime': False
     },
 
     'tab_settings_settings_harm7': {
-        'comboBox_fit_method': 'Gmax',
-        'comboBox_track_method': 'Fix span',
-        'comboBox_harmfitfactor': 6,
+        'comboBox_fit_method': 'gmax',
+        'comboBox_track_method': 'fixspan',
+        'comboBox_harmfitfactor': '6',
 
-        'comboBox_sample_channel': 'ADC 1',
-        'comboBox_ref_channel': '--',
+        'comboBox_sample_channel': '1',
+        'comboBox_ref_channel': 'none',
         
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
-        'Temperature': False,
+        'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
         'comboBox_timeunit': 's',
-        'comboBox_tempunit': '°C',
+        'comboBox_tempunit': 'C',
         'comboBox_timescale': 'linear',
         'comboBox_gammascale': 'linear',
-        'Link Time': False
+        'checkBox_settings_settings_linktime': False
     },
 
     'tab_settings_settings_harm9': {
-        'comboBox_fit_method': 'Gmax',
-        'comboBox_track_method': 'Fix span',
-        'comboBox_harmfitfactor': 6,
+        'comboBox_fit_method': 'gmax',
+        'comboBox_track_method': 'fixspan',
+        'comboBox_harmfitfactor': '6',
 
-        'comboBox_sample_channel': 'ADC 1',
-        'comboBox_ref_channel': '--',
+        'comboBox_sample_channel': '1',
+        'comboBox_ref_channel': 'none',
         
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
-        'Temperature': False,
+        'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
         'comboBox_timeunit': 's',
-        'comboBox_tempunit': '°C',
+        'comboBox_tempunit': 'C',
         'comboBox_timescale': 'linear',
         'comboBox_gammascale': 'linear',
-        'Link Time': False
+        'checkBox_settings_settings_linktime': False
     },
 
     'tab_settings_settings_harm11': {
-        'comboBox_fit_method': 'Gmax',
-        'comboBox_track_method': 'Fix span',
-        'comboBox_harmfitfactor': 6,
+        'comboBox_fit_method': 'gmax',
+        'comboBox_track_method': 'fixspan',
+        'comboBox_harmfitfactor': '6',
 
-        'comboBox_sample_channel': 'ADC 1',
-        'comboBox_ref_channel': '--',
+        'comboBox_sample_channel': '1',
+        'comboBox_ref_channel': 'none',
         
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
-        'Temperature': False,
+        'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
         'comboBox_timeunit': 's',
-        'comboBox_tempunit': '°C',
+        'comboBox_tempunit': 'C',
         'comboBox_timescale': 'linear',
         'comboBox_gammascale': 'linear',
-        'Link Time': False
+        'checkBox_settings_settings_linktime': False
     },
  
     'comboBox_base_frequency': 5,
