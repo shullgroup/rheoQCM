@@ -53,7 +53,7 @@ color = ['tab:blue', 'tab:red']
 class MatplotlibWidget(QWidget):
     
 
-    def __init__(self, parent=None, plttype='', title='', xlabel='', ylabel='', ylabel2='', xlim=None, ylim=None, xscale='linear', yscale='linear', showtoolbar=True, dpi=100, *args, **kwargs):
+    def __init__(self, parent=None, axtype='', title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', showtoolbar=True, dpi=100, *args, **kwargs):
         super(MatplotlibWidget, self).__init__(parent)
         
         self.fig = Figure(tight_layout=True, dpi=dpi, facecolor='none')
@@ -93,7 +93,8 @@ class MatplotlibWidget(QWidget):
             self.toolbar.isMovable()
             self.vbox.addWidget(self.toolbar)
         
-        # add axes
+        # initialize axes
+        self.initial_axes(title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
 
 
     def initax_xy(self, *args, **kwargs):
@@ -183,7 +184,7 @@ class MatplotlibWidget(QWidget):
             color='k'
         ) # polar plot fit
 
-    def init_spectra_fit(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
+    def init_sp_fit(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
         initialize the spectra fit
         initialize .lG, .lB, .lGfit, .lBfit .lf, .lg plot
@@ -231,7 +232,7 @@ class MatplotlibWidget(QWidget):
             color='k'
         ) # g: gamma (fwhm)
 
-    def init_spectra_polar(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
+    def init_sp_polar(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
         initialize the spectra polar
         initialize .l .lfit plot
@@ -266,45 +267,35 @@ class MatplotlibWidget(QWidget):
 
         self.ax[0].autoscale()
 
-        for i in range(int(Settings_init['max_harmonic']+1)/2):
+        for i in range(int(settings_init['max_harmonic']+1)/2):
             self.l[i] = self.ax[0].plot(
                 [], [], 
                 marker='o', 
                 markerfacecolor='none', 
-                color=color[0] #?? set color
             ) # l
             self.lm[i] = self.ax[0].plot(
                 [], [], 
                 marker='x', 
-                color=color[0] #?? set color
+                color=self.l[i][0].get_color() # set the same color as .l
             ) # lm
 
     def init_contour(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
         initialize the mechanics_contour1 & mechanics_contour2
         initialize plot: 
-            .l [0: (Settings_init['max_harmonic']-1)/2] 
-            .lm[0: (Settings_init['max_harmonic']-1)/2]
+            .C (contour) 
+            .cbar (colorbar)
         '''
         self.initax_xy()
         # set label of ax[1]
-        self.set_ax_items(self.ax[0], xlabel='Time (s)',ylabel=ylabel)
+        self.set_ax_items(self.ax[0], xlabel=r'$d/\lambda$',ylabel=r'$\Phi$ ($\degree$)')
 
         self.ax[0].autoscale()
 
-        for i in range(int(Settings_init['max_harmonic']+1)/2):
-            self.l[i] = self.ax[0].plot(
-                [], [], 
-                marker='o', 
-                markerfacecolor='none', 
-                color=color[0] #?? set color
-            ) # l
-            self.lm[i] = self.ax[0].plot(
-                [], [], 
-                marker='x', 
-                color=color[0] #?? set color
-            ) # lm
-
+        self.C = self.ax[0].contourf(
+            [], [], [], [], # X, Y, Z, N
+        ) # l
+        self.cbar = plt.colorbar(self.C) # lm
 
 
     # def sizeHint(self):
@@ -336,11 +327,59 @@ class MatplotlibWidget(QWidget):
         ynew = figh*self.fig.dpi-y - self.toolbar.frameGeometry().height()
         self.toolbar.move(x,ynew)        
 
-    def initial_figure(self):
-        pass
+    def initial_axes(self, axtype='', *args, **kwargs):
+        '''
+        intialize axes by axtype:
+        'xy', 'xyy', 'sp', 'sp_fit', 'sp_polar', 'data', 'contour'
+        '''
+        if axtype == 'xy':
+            self.initax_xy()
+        elif axtype == 'xyy':
+            self.initax_xyy()
+        elif axtype == 'sp':
+            self.init_sp(title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
+        elif axtype == 'sp_fit':
+            self.init_sp_fit(title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
+        elif axtype == 'sp_polar':
+            self.init_sp_polar(title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
+        elif axtype == 'data':
+            self.init_data(title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
+        elif axtype == 'contour':
+            self.init_contour(title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
+        else:
+            pass
 
-    def update_figure(self):
-        # self.ax.cla()
-        self.ax[0].plot([0, 1, 2, 3], [0, 1, 2, 3], 'r')
+    def update_data(self, ls=[], xdata=[], ydata=[]):
+        ''' 
+        update data of given ls 
+        '''
+        if not isinstance(ls, list):
+            ls.set_xdata(xdata)
+            ls.set_ydata(ydata)
+        else:
+            for l, x, y in zip(ls, xdata, ydata):
+                l.set_xdata(x)
+                l.set_ydata(y)
         self.canvas.draw()
 
+    def new_data(self, xdata=[], ydata=[], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
+        ''' 
+        plot data of in new plots 
+        #?? need to define xdata, ydata structure
+        [[x1], [x2], ...] ?
+        '''
+        self.initax_xy()
+        # set label of ax[1]
+        self.set_ax_items(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
+
+        self.ax[0].autoscale()
+
+        self.l = []
+        for x, y in zip(xdata, ydata):
+            self.l.append(
+                self.ax[0].plot(
+                    [], [], 
+                    marker='o', 
+                    markerfacecolor='none', 
+                ) # l
+            )

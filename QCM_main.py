@@ -516,9 +516,7 @@ class QCMApp(QMainWindow):
                 self.ui, 'mpl_sp' + str(i), 
                 MatplotlibWidget(
                     parent=getattr(self.ui, 'frame_sp' + str(i)), 
-                    xlabel=r'$f$ (Hz)', 
-                    ylabel=r'$G_P$ (mS)', 
-                    ylabel2=r'$B_P$ (mS)',
+                    axtype='sp',
                     showtoolbar=False,
                 )
             )
@@ -532,8 +530,7 @@ class QCMApp(QMainWindow):
         # add figure mpl_spectra_fit_polar into frame_spectra_fit_polar
         self.ui.mpl_spectra_fit_polar = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit_polar, 
-            xlabel=r'$G_P$ (mS)',
-            ylabel=r'$B_P$ (mS)',
+            axtype='fit_polar'
             )
         # self.ui.mpl_spectra_fit.update_figure()
         self.ui.frame_spectra_fit_polar.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit_polar))
@@ -541,55 +538,40 @@ class QCMApp(QMainWindow):
         # add figure mpl_spectra_fit into frame_spactra_fit
         self.ui.mpl_spectra_fit = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit, 
-            xlabel=r'$f$ (Hz)',
-            ylabel=r'$G_P$ (mS)',
-            ylabel2=r'$B_P$ (mS)',
+            axtype='sp_fit',
             showtoolbar=('Back', 'Forward', 'Pan', 'Zoom')
             )
         # self.ui.mpl_spectra_fit.update_figure()
         self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
-        # add plots .lG & .lB
-        self.ui.mpl_spectra_fit.lG = self.ui.mpl_spectra_fit.ax[0].plot([], [], marker='o', markerfacecolor='none', color='tab:blue') # G
-        self.ui.mpl_spectra_fit.lB = self.ui.mpl_spectra_fit.ax[1].plot([], [], marker='o', markerfacecolor='none', color='tab:red') # B
 
         # add figure mpl_countour1 into frame_spectra_mechanics_contour1
         self.ui.mpl_countour1 = MatplotlibWidget(
             parent=self.ui.frame_spectra_mechanics_contour1, 
-            xlabel=r'$d/\lambda$',
-            ylabel=r'$\Phi$ ($\degree$)',
+            axtype='contour'
             )
-        # self.ui.mpl_countour1.update_figure()
-        self.ui.mpl_countour1.ax.plot([0, 1, 2, 3], [3,2,1,0])
         self.ui.frame_spectra_mechanics_contour1.setLayout(self.set_frame_layout(self.ui.mpl_countour1))
 
         # add figure mpl_countour2 into frame_spectra_mechanics_contour2
         self.ui.mpl_countour2 = MatplotlibWidget(
             parent=self.ui.frame_spectra_mechanics_contour2, 
-            xlabel=r'$d/\lambda$',
-            ylabel=r'$\Phi$ ($\degree$)',
+            axtype='contour',
             )
-        # self.ui.mpl_countour2.update_figure()
-        self.ui.mpl_countour2.ax.plot([0, 1, 2, 3], [3,2,1,0])
         self.ui.frame_spectra_mechanics_contour2.setLayout(self.set_frame_layout(self.ui.mpl_countour2))
 
         # add figure mpl_plt1 into frame_spactra_fit
         self.ui.mpl_plt1 = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit, 
-            xlabel='Time (s)',
+            axtype='data',
             ylabel=r'$\Delta f/n$ (Hz)',
             )
-        # self.ui.mpl_plt1.update_figure()
-        self.ui.mpl_plt1.ax.plot([0, 1, 2, 3], [3,2,1,0])
         self.ui.frame_plt1.setLayout(self.set_frame_layout(self.ui.mpl_plt1))
 
         # add figure mpl_plt2 into frame_spactra_fit
         self.ui.mpl_plt2 = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit, 
-            xlabel='Time (s)',
+            axtype='data',
             ylabel=r'$\Delta \Gamma$ (Hz)',
             )
-        # self.ui.mpl_plt2.update_figure()
-        self.ui.mpl_plt2.ax.plot([0, 1, 2, 3], [3,2,1,0])
         self.ui.frame_plt2.setLayout(self.set_frame_layout(self.ui.mpl_plt2))
 
 #endregion
