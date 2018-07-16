@@ -36,6 +36,7 @@ The QCMnotes.pdf file has some background information on the rheometric mode of 
 
 * **Josh Yeh** - *Initial developmen of the MATLAB version of this project*
 * **Qifeng Wang**  - *Primary Developer of the current (python) version of this project*
+* **Megan Yang**  - *Developer of the current (python) version of this project*
 * **Kenneth R. Shull** - *Project PI and author of some of the specific functions used in the project*
 
 ## License
@@ -46,4 +47,5 @@ We still need to figure out the right license.  https://choosealicense.com/ migh
 
 * Diethelm Johannsmann
 * Lauren Sturdy
+* Ivan Makarov
 
