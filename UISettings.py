@@ -174,7 +174,7 @@ settings_default = {
     'checkBox_harm9': False,
     'checkBox_harm11': False,
 
-    # default lineEdit values
+    # default start/end freq lineEdit values
     'lineEdit_startf1': 4.9,
     'lineEdit_startf3': 14.9,
     'lineEdit_startf5': 24.9,
@@ -188,9 +188,9 @@ settings_default = {
     'lineEdit_endf9': 45.1,
     'lineEdit_endf11': 55.1,
 
-
+    # default time settings
     'lineEdit_reftime': 0,
-
+    
     'lineEdit_acquisitioninterval': 2,
     'lineEdit_refreshresolution': 1,
     'label_actualinterval': 2,
@@ -204,20 +204,31 @@ settings_default = {
 
 #### default settings settings ####
     'tab_settings_settings_harm1': {
+        # default scan settings
+        'start_freq': 4.9,
+        'end_freq': 5.1,
+
+        # default span settings
         'comboBox_fit_method': 'gmax',
         'comboBox_track_method': 'fixspan',
+        
+        # default fit settings
         'comboBox_harmfitfactor': '6',
-
+        
+        # default VNA settings
         'comboBox_sample_channel': '1',
         'comboBox_ref_channel': 'none',
         
+        # default crystal settings
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
+        # default temperature settings
         'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
+        # default plots settings
         'comboBox_timeunit': 's',
         'comboBox_tempunit': 'C',
         'comboBox_timescale': 'linear',
@@ -226,20 +237,31 @@ settings_default = {
     },
 
     'tab_settings_settings_harm3': {
+        # default scan settings
+        'start_freq': 4.9,
+        'end_freq': 5.1,
+        
+        # default span settings
         'comboBox_fit_method': 'gmax',
         'comboBox_track_method': 'fixspan',
+        
+        # default fit settings
         'comboBox_harmfitfactor': '6',
-
+        
+        # default VNA settings
         'comboBox_sample_channel': '1',
         'comboBox_ref_channel': 'none',
         
+        # default crystal settings
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
+        # default temperature settings
         'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
+        # default plots settings
         'comboBox_timeunit': 's',
         'comboBox_tempunit': 'C',
         'comboBox_timescale': 'linear',
@@ -248,20 +270,31 @@ settings_default = {
     },
 
     'tab_settings_settings_harm5': {
+        # default scan settings
+        'start_freq': 4.9,
+        'end_freq': 5.1,
+        
+        # default span settings
         'comboBox_fit_method': 'gmax',
         'comboBox_track_method': 'fixspan',
+        
+        # default fit settings
         'comboBox_harmfitfactor': '6',
-
+        
+        # default VNA settings
         'comboBox_sample_channel': '1',
         'comboBox_ref_channel': 'none',
         
+        # default crystal settings
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
+        # default temperature settings
         'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
+        # default plots settings
         'comboBox_timeunit': 's',
         'comboBox_tempunit': 'C',
         'comboBox_timescale': 'linear',
@@ -270,20 +303,31 @@ settings_default = {
     },
 
     'tab_settings_settings_harm7': {
+        # default scan settings
+        'start_freq': 4.9,
+        'end_freq': 5.1,
+        
+        # default span settings
         'comboBox_fit_method': 'gmax',
         'comboBox_track_method': 'fixspan',
+        
+        # default fit settings
         'comboBox_harmfitfactor': '6',
-
+        
+        # default VNA settings
         'comboBox_sample_channel': '1',
         'comboBox_ref_channel': 'none',
         
+        # default crystal settings
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
+        # default temperature settings
         'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
+        # default plots settings
         'comboBox_timeunit': 's',
         'comboBox_tempunit': 'C',
         'comboBox_timescale': 'linear',
@@ -292,20 +336,31 @@ settings_default = {
     },
 
     'tab_settings_settings_harm9': {
+        # default scan settings
+        'start_freq': 4.9,
+        'end_freq': 5.1,
+        
+        # default span settings
         'comboBox_fit_method': 'gmax',
         'comboBox_track_method': 'fixspan',
+        
+        # default fit settings
         'comboBox_harmfitfactor': '6',
-
+        
+        # default VNA settings
         'comboBox_sample_channel': '1',
         'comboBox_ref_channel': 'none',
         
+        # default crystal settings
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
+        # default temperature settings
         'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
+        # default plots settings
         'comboBox_timeunit': 's',
         'comboBox_tempunit': 'C',
         'comboBox_timescale': 'linear',
@@ -314,27 +369,35 @@ settings_default = {
     },
 
     'tab_settings_settings_harm11': {
+        # default scan settings
+        'start_freq': 4.9,
+        'end_freq': 5.1,
+        
+        # default span settings
         'comboBox_fit_method': 'gmax',
         'comboBox_track_method': 'fixspan',
+        
+        # default fit settings
         'comboBox_harmfitfactor': '6',
-
+        
+        # default VNA settings
         'comboBox_sample_channel': '1',
         'comboBox_ref_channel': 'none',
         
+        # default crystal settings
         'comboBox_base_frequency': 5,
         'comboBox_bandwidth': 0.1,
 
+        # default temperature settings
         'checkBox_settings_temp_sensor': False,
         'Module': '...',
         'comboBox_thrmcpltype': 'J',
 
+        # default plots settings
         'comboBox_timeunit': 's',
         'comboBox_tempunit': 'C',
         'comboBox_timescale': 'linear',
         'comboBox_gammascale': 'linear',
         'checkBox_settings_settings_linktime': False
     },
- 
-    'comboBox_base_frequency': 5,
-    'comboBox_bandwidth': 0.1
 }

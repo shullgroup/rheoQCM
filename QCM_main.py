@@ -157,7 +157,7 @@ class QCMApp(QMainWindow):
         # set pushButton_appenddata
         self.ui.pushButton_appenddata.clicked.connect(self.on_triggered_load_data)
 
-        # set signals to update settings
+        # set signals to update lineEdit_start settings
         self.ui.lineEdit_startf1.textChanged[str].connect(self.update_startf1)
         self.ui.lineEdit_startf3.textChanged[str].connect(self.update_startf3)
         self.ui.lineEdit_startf5.textChanged[str].connect(self.update_startf5)
@@ -165,6 +165,7 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_startf9.textChanged[str].connect(self.update_startf9)
         self.ui.lineEdit_startf11.textChanged[str].connect(self.update_startf11)
 
+        # set signals to update lineEdit_end settings
         self.ui.lineEdit_endf1.textChanged[str].connect(self.update_endf1)
         self.ui.lineEdit_endf3.textChanged[str].connect(self.update_endf3)
         self.ui.lineEdit_endf5.textChanged[str].connect(self.update_endf5)
@@ -172,8 +173,7 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_endf9.textChanged[str].connect(self.update_endf9)
         self.ui.lineEdit_endf11.textChanged[str].connect(self.update_endf11)
 
-        self.ui.lineEdit_acquisitioninterval.textChanged[str].connect(self.update_acquisitioninterval)
-        self.ui.lineEdit_refreshresolution.textChanged[str].connect(self.update_refreshresolution)
+        # set signals to update fitting and display options
         self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_dynamicfit)
         self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_showsusceptance)
         self.ui.checkBox_showchi.stateChanged.connect(self.update_showchi)
@@ -368,29 +368,33 @@ class QCMApp(QMainWindow):
             "QTabBar::tab:last:selected { margin-right: 0; width: 40px; }"
             "QTabBar::tab:!selected { margin-top: 2px; }"
             )
-        
-        # set signals to update
-        self.ui.comboBox_fit_method.activated.connect(self.update_fitmethod)
-        self.ui.comboBox_track_method.activated.connect(self.update_trackmethod)
-        self.ui.comboBox_harmfitfactor.activated.connect(self.update_harmfitfactor)
-        self.ui.comboBox_sample_channel.activated.connect(self.update_samplechannel)
-        self.ui.comboBox_ref_channel.activated.connect(self.update_refchannel)
 
+        # set signals to update scan and crystal settings_settings
         self.ui.tabWidget_settings_settings_harm.currentChanged.connect(self.update_harmonic_tab)
         self.ui.comboBox_base_frequency.activated.connect(self.update_base_freq)
         self.ui.comboBox_bandwidth.activated.connect(self.update_bandwidth)
 
+        # set signals to update span settings_settings
+        self.ui.comboBox_fit_method.activated.connect(self.update_fitmethod)
+        self.ui.comboBox_track_method.activated.connect(self.update_trackmethod)
+
+        # set signals to update fit settings_settings
+        self.ui.comboBox_harmfitfactor.activated.connect(self.update_harmfitfactor)
+        self.ui.comboBox_sample_channel.activated.connect(self.update_samplechannel)
+        self.ui.comboBox_ref_channel.activated.connect(self.update_refchannel)
+
+        # set signals to update temperature settings_settings
         self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
         self.ui.comboBox_thrmcpltype.activated.connect(self.update_thrmcpltype)
 
+        # set signals to update plots settings_settings
         self.ui.comboBox_timeunit.activated.connect(self.update_timeunit)
         self.ui.comboBox_tempunit.activated.connect(self.update_tempunit)
         self.ui.comboBox_timescale.activated.connect(self.update_timescale)
         self.ui.comboBox_gammascale.activated.connect(self.update_gammascale)
         self.ui.checkBox_settings_settings_linktime.stateChanged.connect(self.update_linktime)
+        
         # set default values
-        
-        
         self.ui.comboBox_base_frequency.setCurrentIndex(0)
         self.ui.comboBox_bandwidth.setCurrentIndex(4)
         self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
@@ -699,6 +703,8 @@ class QCMApp(QMainWindow):
         ''' set time in lineEdit_reftime '''
         current_time = datetime.datetime.now()
         self.ui.lineEdit_reftime.setText(current_time.strftime('%Y-%m-%d %H:%M:%S'))
+        # update reftime in settings dict
+        self.settings['lineEdit_reftime'] = current_time.strftime('%Y-%m-%d %H:%M:%S')
 
     # @pyqtSlot()
     def set_label_actualinterval(self):
@@ -716,6 +722,9 @@ class QCMApp(QMainWindow):
             refresh_resolution = 0
         # set label_actualinterval
         # self.ui.label_actualinterval.setText(f'{acquisition_interval * refresh_resolution}  s')
+        self.settings['lineEdit_acquisitioninterval'] = float(acquisition_interval)
+        self.settings['lineEdit_refreshresolution'] = float(refresh_resolution)
+        self.settings['label_actualinterval'] = acquisition_interval * refresh_resolution
         self.ui.label_actualinterval.setText('{}  s'.format(acquisition_interval * refresh_resolution)) # python < 3.5
 
     ## functions for open and save file
@@ -1006,10 +1015,10 @@ class QCMApp(QMainWindow):
         self.update_frequencies()
 
     def update_frequencies(self):
-        self.start_freq = self.harmonic_tab * self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_base_frequency'] - self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_bandwidth']
-        self.end_freq = self.harmonic_tab * self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_base_frequency'] + self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_bandwidth']
-        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.start_freq))
-        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(1, str(self.end_freq))
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['start_freq'] = self.harmonic_tab * self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_base_frequency'] - self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_bandwidth']
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['end_freq'] = self.harmonic_tab * self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_base_frequency'] + self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_bandwidth']
+        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['start_freq']))
+        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['end_freq']))
 
     def set_default_freqs(self):
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
@@ -1037,6 +1046,7 @@ class QCMApp(QMainWindow):
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_ref_channel'] = value
 
     def update_tempsensor(self):
+        print(str(not self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_temp_sensor']))
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_temp_sensor'] = not self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_temp_sensor']
 
     def update_thrmcpltype(self, thrmcpltype_index):
