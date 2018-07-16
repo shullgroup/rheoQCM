@@ -158,6 +158,20 @@ class QCMApp(QMainWindow):
         self.ui.pushButton_appenddata.clicked.connect(self.on_triggered_load_data)
 
         # set signals to update settings
+        self.ui.lineEdit_startf1.textChanged[str].connect(self.update_startf1)
+        self.ui.lineEdit_startf3.textChanged[str].connect(self.update_startf3)
+        self.ui.lineEdit_startf5.textChanged[str].connect(self.update_startf5)
+        self.ui.lineEdit_startf7.textChanged[str].connect(self.update_startf7)
+        self.ui.lineEdit_startf9.textChanged[str].connect(self.update_startf9)
+        self.ui.lineEdit_startf11.textChanged[str].connect(self.update_startf11)
+
+        self.ui.lineEdit_endf1.textChanged[str].connect(self.update_endf1)
+        self.ui.lineEdit_endf3.textChanged[str].connect(self.update_endf3)
+        self.ui.lineEdit_endf5.textChanged[str].connect(self.update_endf5)
+        self.ui.lineEdit_endf7.textChanged[str].connect(self.update_endf7)
+        self.ui.lineEdit_endf9.textChanged[str].connect(self.update_endf9)
+        self.ui.lineEdit_endf11.textChanged[str].connect(self.update_endf11)
+
         self.ui.lineEdit_acquisitioninterval.textChanged[str].connect(self.update_acquisitioninterval)
         self.ui.lineEdit_refreshresolution.textChanged[str].connect(self.update_refreshresolution)
         self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_dynamicfit)
@@ -860,6 +874,54 @@ class QCMApp(QMainWindow):
             count = stwgt.count()  # get total pages
             current_index = stwgt.currentIndex()  # get current index
             stwgt.setCurrentIndex((current_index + diret) % count) # increase or decrease index by diret
+    
+    def update_startf1(self, freq_text):
+        if freq_text != '':
+            self.settings['lineEdit_startf1'] = float(freq_text)
+
+    def update_startf3(self, freq_text):
+        if freq_text != '':
+            self.settings['lineEdit_startf3'] = float(freq_text)
+
+    def update_startf5(self, freq_text):
+        if freq_text != '':
+            self.settings['lineEdit_startf5'] = float(freq_text)
+
+    def update_startf7(self, freq_text):
+        if freq_text != '':
+            self.settings['lineEdit_startf7'] = float(freq_text)
+
+    def update_startf9(self, freq_text):
+        if freq_text != '':
+            self.settings['lineEdit_startf9'] = float(freq_text)
+
+    def update_startf11(self, freq_text):
+        if freq_text != '':
+            self.settings['lineEdit_startf11'] = float(freq_text)
+
+    def update_endf1(self, freq_text):
+        if freq_text != '':
+            self.settings['lineEdit_endf1'] = float(freq_text)
+
+    def update_endf3(self, freq_text):
+        if freq_text != '':
+            self.settings['lineEdit_endf3'] = float(freq_text)
+
+    def update_endf5(self, freq_text):
+        if freq_text != '':
+            self.settings['lineEdit_endf5'] = float(freq_text)
+
+    def update_endf7(self, freq_text):
+        if freq_text != '':
+            self.settings['lineEdit_endf7'] = float(freq_text)
+
+    def update_endf9(self, freq_text):
+        if freq_text != '':
+            self.settings['lineEdit_endf9'] = float(freq_text)
+
+    def update_endf11(self, freq_text):
+        if freq_text != '':
+            self.settings['lineEdit_endf11'] = float(freq_text)
         
     def update_acquisitioninterval(self, acquisitioninterval_text):
         if acquisitioninterval_text != '':
@@ -901,6 +963,9 @@ class QCMApp(QMainWindow):
         self.update_guicombos(self.ui.comboBox_tempunit, 'comboBox_tempunit', 'temp_unit_choose')
         self.update_guicombos(self.ui.comboBox_timescale, 'comboBox_timescale', 'time_scale_choose')
         self.update_guicombos(self.ui.comboBox_gammascale, 'comboBox_gammascale', 'gamma_scale_choose')
+        
+        self.update_guicombos(self.ui.comboBox_bandwidth, 'comboBox_bandwidth', 'bandwidth_choose')
+        self.update_guicombos(self.ui.comboBox_base_frequency, 'comboBox_base_frequency', 'base_frequency_choose')
 
     def update_base_freq(self, base_freq_index):
         value = self.ui.comboBox_base_frequency.itemData(base_freq_index)
