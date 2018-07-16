@@ -36,10 +36,19 @@ class QCMApp(QMainWindow):
         # check system
         self.system = UIModules.system_check()
         # initialize AccessMyVNA
-        if self.system == 'win32':
+        #?? add more code to disable settings_control tab and widges in settings_settings tab
+        if self.system == 'win32': # windows
             from modules.AccessMyVNA import AccessMyVNA
             self.accvna = AccessMyVNA()
-            
+            # test if MyVNA program is available
+            with self.accvna as accvna:
+                ret = accvna.Init()
+                if ret == 0: # is available
+                    pass
+                else: # not available
+                    self.accvna = None
+        else: # other system, data analysis only
+            self.accvna = None    
 
     def main(self):
  # loadUi('QCM_GUI_test4.ui', self) # read .ui file directly. You still need to compile the .qrc file
@@ -530,7 +539,7 @@ class QCMApp(QMainWindow):
         # add figure mpl_spectra_fit_polar into frame_spectra_fit_polar
         self.ui.mpl_spectra_fit_polar = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit_polar, 
-            axtype='fit_polar'
+            axtype='sp_polar'
             )
         # self.ui.mpl_spectra_fit.update_figure()
         self.ui.frame_spectra_fit_polar.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit_polar))

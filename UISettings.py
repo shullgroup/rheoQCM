@@ -151,6 +151,14 @@ settings_init = {
     },
 
     'max_mpl_toolbar_height': 20, # in px
+
+    'contour': {
+        'levels': 20, # contour levels
+        'num': 100, # percentage of step increase for phi and dlam
+        'phi_lim': [0, 90], # phi limit in degree
+        'dlam_lim': [0, 1], # d/lambda limit
+    }
+
 }
 
 settings_default = {
