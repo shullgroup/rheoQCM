@@ -789,6 +789,8 @@ class QCMApp(QMainWindow):
             # load json file containing formerly saved settings
             with open(self.fileName, "r") as f:
                 self.settings = json.load(f)
+            # load settings from file into gui
+            self.load_settings()
             # change the displayed file directory in lineEdit_datafilestr
             self.ui.lineEdit_datafilestr.setText(self.fileName)
             # indicate that a file has been loadded
@@ -1105,10 +1107,40 @@ class QCMApp(QMainWindow):
     def update_guichecks(self, checkBox, name_in_settings):
         checkBox.setChecked(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)][name_in_settings])
     
+    # debug func
     def log_update(self):
         with open('settings.json', 'w') as f:
             line = json.dumps(dict(self.settings), indent=4) + "\n"
             f.write(line)
+
+    def load_settings(self):
+        #region ### load default settings control ###
+
+        # load default start and end frequencies for lineEdit harmonics
+        for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
+            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(str(self.settings['lineEdit_startf' + str(i)]))
+            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(str(self.settings['lineEdit_endf' + str(i)]))
+        # load default acquisition interval
+        self.ui.lineEdit_acquisitioninterval.setText(str(self.settings['lineEdit_acquisitioninterval']))
+        # load default spectra refresh resolution
+        self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
+        # load default fitting and display options
+        self.ui.checkBox_dynamicfit.setChecked(self.settings['checkBox_dynamicfit'])
+        self.ui.checkBox_showsusceptance.setChecked(self.settings['checkBox_showsusceptance'])
+        self.ui.checkBox_showchi.setChecked(self.settings['checkBox_showchi'])
+        self.ui.checkBox_polarplot.setChecked(self.settings['checkBox_polarplot'])
+        # load default fit factor range
+        #for key, val in self.settings.items():
+            #if key == self.settings['comboBox_fitfactor']:
+                #self.ui.comboBox_fitfactor.setCurrentIndex(self.comboBox_fitfactor.findData(key))
+                #break
+
+        # endregion
+
+        #region ### load default settings settings ###
+
+        # endregion
+
 
 #endregion
 
