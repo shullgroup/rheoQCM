@@ -30,7 +30,7 @@
     "checkBox_showsusceptance": true,
     "checkBox_showchi": false,
     "checkBox_polarplot": false,
-    "comboBox_fitfactor": "5",
+    "comboBox_fitfactor": "2",
     "tab_settings_settings_harm1": {
         "start_freq": 4.9,
         "end_freq": 5.1,

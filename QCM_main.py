@@ -26,7 +26,8 @@ class QCMApp(QMainWindow):
         super(QCMApp, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-
+        self.fileFlag = False
+        self.fileName = ''
         self.settings = settings_default
         self.set_default_freqs()
         self.harmonic_tab = 1
@@ -766,7 +767,7 @@ class QCMApp(QMainWindow):
         self.ui.pushButton_resetreftime.setEnabled(True)
 
     def on_triggered_load_data(self):
-        fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
+        self.fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
         # change the displayed file directory in lineEdit_datafilestr
         self.ui.lineEdit_datafilestr.setText(fileName)
         # set lineEdit_reftime
@@ -783,22 +784,44 @@ class QCMApp(QMainWindow):
 
     # 
     def on_triggered_load_settings(self):
-        fileName = self.openFileNameDialog('Choose a file to use its setting') # !! add path of last opened folder
-        # change the displayed file directory in lineEdit_datafilestr
-        self.ui.lineEdit_datafilestr.setText(fileName)
+        self.fileName = self.openFileNameDialog('Choose a file to use its setting') # !! add path of last opened folder
+        try:
+            # load json file containing formerly saved settings
+            with open(self.fileName, "r") as f:
+                self.settings = json.load(f)
+            # change the displayed file directory in lineEdit_datafilestr
+            self.ui.lineEdit_datafilestr.setText(self.fileName)
+            # indicate that a file has been loadded
+            self.fileFlag = True
+        # pass if action cancelled
+        except:
+            pass
 
     def on_triggered_actionSave(self):
-        # save current data to file
-        print('save function  to be added...')
+        # save current data to file if file has been opened
+        if self.fileFlag == True:
+            with open(self.fileName, 'w') as f:
+                line = json.dumps(dict(self.settings), indent=4) + "\n"
+                f.write(line)
+        # save current data to new file otherwise
+        else:
+            self.on_triggered_actionSave_As()
+
 
     def on_triggered_actionSave_As(self):
         # save current data to a new file 
-        fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
-        with open(fileName, 'w') as f:
-           line = json.dumps(dict(self.settings), indent=4) + "\n"
-           f.write(line)
-        # change the displayed file directory in lineEdit_datafilestr
-        self.ui.lineEdit_datafilestr.setText(fileName)
+        self.fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
+        try:
+            with open(self.fileName, 'w') as f:
+                line = json.dumps(dict(self.settings), indent=4) + "\n"
+                f.write(line)
+            # change the displayed file directory in lineEdit_datafilestr
+            self.ui.lineEdit_datafilestr.setText(self.fileName)
+            # indicate that a file has been loaded
+            self.fileFlag = True
+        # pass if action cancelled
+        except:
+            pass
 
     def on_triggered_actionExport(self):
         # export data to a selected form
