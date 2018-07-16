@@ -876,60 +876,88 @@ class QCMApp(QMainWindow):
             stwgt.setCurrentIndex((current_index + diret) % count) # increase or decrease index by diret
     
     def update_startf1(self, freq_text):
-        if freq_text != '':
+        try:
             self.settings['lineEdit_startf1'] = float(freq_text)
+        except:
+            pass
 
     def update_startf3(self, freq_text):
-        if freq_text != '':
+        try:
             self.settings['lineEdit_startf3'] = float(freq_text)
+        except:
+            pass
 
     def update_startf5(self, freq_text):
-        if freq_text != '':
+        try:
             self.settings['lineEdit_startf5'] = float(freq_text)
+        except:
+            pass
 
     def update_startf7(self, freq_text):
-        if freq_text != '':
+        try:
             self.settings['lineEdit_startf7'] = float(freq_text)
+        except:
+            pass
 
     def update_startf9(self, freq_text):
-        if freq_text != '':
+        try:
             self.settings['lineEdit_startf9'] = float(freq_text)
+        except:
+            pass
 
     def update_startf11(self, freq_text):
-        if freq_text != '':
+        try:
             self.settings['lineEdit_startf11'] = float(freq_text)
+        except:
+            pass
 
     def update_endf1(self, freq_text):
-        if freq_text != '':
+        try:
             self.settings['lineEdit_endf1'] = float(freq_text)
+        except:
+            pass
 
     def update_endf3(self, freq_text):
-        if freq_text != '':
+        try:
             self.settings['lineEdit_endf3'] = float(freq_text)
+        except:
+            pass
 
     def update_endf5(self, freq_text):
-        if freq_text != '':
+        try:
             self.settings['lineEdit_endf5'] = float(freq_text)
+        except:
+            pass
 
     def update_endf7(self, freq_text):
-        if freq_text != '':
+        try:
             self.settings['lineEdit_endf7'] = float(freq_text)
+        except:
+            pass
 
     def update_endf9(self, freq_text):
-        if freq_text != '':
+        try:
             self.settings['lineEdit_endf9'] = float(freq_text)
+        except:
+            pass
 
     def update_endf11(self, freq_text):
-        if freq_text != '':
+        try:
             self.settings['lineEdit_endf11'] = float(freq_text)
+        except:
+            pass
         
     def update_acquisitioninterval(self, acquisitioninterval_text):
-        if acquisitioninterval_text != '':
+        try:
             self.settings['lineEdit_acquisitioninterval'] = float(acquisitioninterval_text)
+        except:
+            pass
     
     def update_refreshresolution(self, refreshsolution_text):
-        if refreshsolution_text != '':
+        try:
             self.settings['lineEdit_refreshsolution'] = float(refreshsolution_text)
+        except:
+            pass
 
     def update_dynamicfit(self):
         self.settings['checkBox_dynamicfit'] = not self.settings['checkBox_dynamicfit']
