@@ -11,7 +11,7 @@ ax.change_geometry(2,2,i+1)
 
 import matplotlib
 matplotlib.use('QT5Agg')
-matplotlib.rcParams['toolbar'] = 'toolmanager'
+# matplotlib.rcParams['toolbar'] = 'toolmanager'
 matplotlib.rcParams['font.size'] = 9
 
 # import matplotlib.rcParams
@@ -358,13 +358,13 @@ class MatplotlibWidget(QWidget):
         else:
             pass
 
-    def update_data(self, ld={}, xdata=[], ydata=[]):
+    def update_data(self, ls=[], xdata=[], ydata=[]):
         ''' 
-        update data of given ld (dict of string)
+        update data of given ld (list of string)
         '''
-        for ln, x, y in zip(ld, xdata, ydata):
-            self.l[ln].set_xdata(x)
-            self.l[ln].set_ydata(y)
+        for l, x, y in zip(ls, xdata, ydata):
+            self.l[l][0].set_xdata(x)
+            self.l[l][0].set_ydata(y)
         self.canvas.draw()
 
     def new_data(self, xdata=[], ydata=[], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):

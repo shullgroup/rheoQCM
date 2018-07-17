@@ -21,7 +21,7 @@ win_name = 'myVNA - Reflection mode "myVNA" [Embedded] '
 user32 = windll.user32
 vna = WinDLL(r'./dll/AccessMyVNAdll.dll', use_last_error=True) # this only works with AccessMyVNA
 # vna = OleDLL(r'AccessMyVNAdll.dll', use_last_error=True) # this only works with AccessMyVNA
-print(vars(vna))
+# print(vars(vna))
 print(vna._handle)
 # print(dir(vna))
 
@@ -680,13 +680,15 @@ class AccessMyVNA():
         # nStart = 0
         # nEnd = 49
         # print(nStart)
+        print('GetScanData 0')
         nSteps = nEnd - nStart + 1
         
-        double_n = c_double * nSteps
+        double_na = c_double * nSteps
+        double_nb = c_double * nSteps
         # data_a = clib.as_ctypes(np.zeros(nSteps))
         # data_b = clib.as_ctypes(np.zeros(nSteps))
-        data_a = double_n()
-        data_b = double_n()
+        data_a = double_na()
+        data_b = double_nb()
         # print('data\n',  data_a[2], data_b[2])
         # cast the array into a pointer of type c_double:
         data_a_ptr = cast(data_a, POINTER(c_double))
@@ -694,9 +696,11 @@ class AccessMyVNA():
     
         # both of following two works
         
+        print('GetScanData 1')
         # code crushes here 
         ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a_ptr, data_b_ptr)
         # ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a, data_b)
+        print('GetScanData 2')
         
         # ret
         #  0: 
@@ -719,16 +723,16 @@ class AccessMyVNA():
         # wait for some time
         time.sleep(2)
         ret, nSteps = self.GetScanSteps()
-        ret, f, G = self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
+        ret, f, G = self.GetScanData(nStart=0, nEnd=nSteps-2, nWhata=-1, nWhatb=15)
         time.sleep(1)
-        ret, _, B = self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-2, nWhatb=16)
+        ret, _, B = self.GetScanData(nStart=0, nEnd=nSteps-2, nWhata=-2, nWhatb=16)
         # self.Close()
         return ret, f, G, B
     
     def change_settings(self, refChn=1, nMode=0, nSteps=400, nAverage=1):
         # ret =           self.Init()
         ret, nMode =    self.Setinstrmode(nMode)
-        ret, nData =    self.setADVChannel(refChn)
+        ret, nData =    self.setADCChannel(refChn)
         ret, nSteps =   self.SetScanSteps(nSteps)
         ret, nAverage = self.SetScanAverage(nAverage)
         # ret =           self.Close()
@@ -738,7 +742,7 @@ class AccessMyVNA():
         ret, nSteps =   self.SetScanSteps(nSteps)
         self.SetFequencies(f1, f2, nFlags=1)
 
-    def setADVChannel(self, refChn):
+    def setADCChannel(self, refChn):
         # switch ADV channel for test
         # nData = [transChn, refChn]
         if refChn == 1:
@@ -755,7 +759,8 @@ class AccessMyVNA():
 if __name__ == '__main__':
     
     with AccessMyVNA() as accvna:
-        accvna.single_scan(300, 4.95e6, 5.0e6)
+        ret, f, G, B = accvna.single_scan()
+        print(ret)
     # accvna = AccessMyVNA() 
     # # call this function before trying to do anything else
     # # Init()
