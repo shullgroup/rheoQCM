@@ -87,6 +87,7 @@ class MatplotlibWidget(QWidget):
         self.l = {} # all the plot stored in dict
         
         self.initial_axes(axtype=axtype, title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale='linear')
+        # self.canvas.draw()
 
     def initax_xy(self, *args, **kwargs):
         # axes
@@ -154,6 +155,18 @@ class MatplotlibWidget(QWidget):
             markerfacecolor='none', 
             color=color[1]
         ) # B
+        self.l['lGpre'] = self.ax[0].plot(
+            [], [], 
+            marker='o', 
+            markerfacecolor='none', 
+            color='gray'
+        ) # previous G
+        self.l['lBpre'] = self.ax[1].plot(
+            [], [], 
+            marker='o', 
+            markerfacecolor='none', 
+            color='gray'
+        ) # previous B
         self.l['lGfit'] = self.ax[0].plot(
             [], [], 
             color='k'
@@ -292,8 +305,7 @@ class MatplotlibWidget(QWidget):
         self.l['C'] = self.ax[0].contourf(
             X, Y, Z, levels, # X, Y, Z, N
         ) # l
-        self.l['cbar'] = plt.colorbar(self.l['C']) # lm
-
+        self.l['cbar'] = plt.colorbar(self.l['C'], ax=self.ax[0]) # lm
 
     # def sizeHint(self):
     #     return QSize(*self.get_width_height())
