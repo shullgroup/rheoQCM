@@ -4,6 +4,7 @@ This is the main code of the QCM acquization program
 '''
 
 import os
+import math
 import json
 import datetime, time
 from PyQt5.QtCore import pyqtSlot, Qt
@@ -735,8 +736,12 @@ class QCMApp(QMainWindow):
         # self.ui.lineEdit_scaninterval.setText(f'{record_interval * refresh_resolution}  s')
         self.settings['lineEdit_recordinterval'] = float(record_interval)
         self.settings['lineEdit_refreshresolution'] = float(refresh_resolution)
-        self.settings['lineEdit_scaninterval'] = record_interval / refresh_resolution
-        self.ui.lineEdit_scaninterval.setText('{0:.3g}'.format(record_interval / refresh_resolution)) # python < 3.5
+        try:
+            self.settings['lineEdit_scaninterval'] = record_interval / refresh_resolution
+            self.ui.lineEdit_scaninterval.setText('{0:.3g}'.format(record_interval / refresh_resolution)) # python < 3.5
+        except ZeroDivisionError:
+            self.settings['lineEdit_scaninterval'] = 1
+            self.ui.lineEdit_scaninterval.setText('{0:.3g}'.format(math.inf)) # python < 3.5
 
     ## functions for open and save file
     def openFileNameDialog(self, title, path='', filetype=settings_init['default_datafiletype']):  
@@ -923,85 +928,86 @@ class QCMApp(QMainWindow):
         try:
             self.settings['lineEdit_startf1'] = float(freq_text)
         except:
-            pass
+            self.settings['lineEdit_startf1'] = 0
 
     def update_startf3(self, freq_text):
         try:
             self.settings['lineEdit_startf3'] = float(freq_text)
         except:
-            pass
+            self.settings['lineEdit_startf3'] = 0
 
     def update_startf5(self, freq_text):
         try:
             self.settings['lineEdit_startf5'] = float(freq_text)
         except:
-            pass
+            self.settings['lineEdit_startf5'] = 0
 
     def update_startf7(self, freq_text):
         try:
             self.settings['lineEdit_startf7'] = float(freq_text)
         except:
-            pass
+            self.settings['lineEdit_startf7'] = 0
 
     def update_startf9(self, freq_text):
         try:
             self.settings['lineEdit_startf9'] = float(freq_text)
         except:
-            pass
+            self.settings['lineEdit_startf9'] = 0
 
     def update_startf11(self, freq_text):
         try:
             self.settings['lineEdit_startf11'] = float(freq_text)
         except:
-            pass
+            self.settings['lineEdit_startf11'] = 0
 
     def update_endf1(self, freq_text):
         try:
             self.settings['lineEdit_endf1'] = float(freq_text)
         except:
-            pass
+            self.settings['lineEdit_endf1'] = 0
 
     def update_endf3(self, freq_text):
         try:
             self.settings['lineEdit_endf3'] = float(freq_text)
         except:
-            pass
+            self.settings['lineEdit_endf3'] = 0
 
     def update_endf5(self, freq_text):
         try:
             self.settings['lineEdit_endf5'] = float(freq_text)
         except:
-            pass
+            self.settings['lineEdit_endf5'] = 0
 
     def update_endf7(self, freq_text):
         try:
             self.settings['lineEdit_endf7'] = float(freq_text)
         except:
-            pass
+            self.settings['lineEdit_endf7'] = 0
 
     def update_endf9(self, freq_text):
         try:
             self.settings['lineEdit_endf9'] = float(freq_text)
         except:
-            pass
+            self.settings['lineEdit_endf9'] = 0
 
     def update_endf11(self, freq_text):
         try:
             self.settings['lineEdit_endf11'] = float(freq_text)
         except:
-            pass
+            self.settings['lineEdit_endf11'] = 0
+
         
     def update_acquisitioninterval(self, acquisitioninterval_text):
         try:
             self.settings['lineEdit_acquisitioninterval'] = float(acquisitioninterval_text)
         except:
-            pass
+            self.settings['lineEdit_acquisitioninterval'] = 0
     
     def update_refreshresolution(self, refreshsolution_text):
         try:
             self.settings['lineEdit_refreshsolution'] = float(refreshsolution_text)
         except:
-            pass
+            self.settings['lineEdit_refreshsolution'] = 0
 
     def update_dynamicfit(self):
         self.settings['checkBox_dynamicfit'] = not self.settings['checkBox_dynamicfit']
@@ -1138,7 +1144,7 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_dynamicfit.setChecked(self.settings['checkBox_dynamicfit'])
         self.ui.checkBox_showsusceptance.setChecked(self.settings['checkBox_showsusceptance'])
         self.ui.checkBox_showchi.setChecked(self.settings['checkBox_showchi'])
-        self.ui.checkBox_polarplot.setChecked(self.settings['checkBox_polarplot'])
+        self.ui.checkBox_showpolar.setChecked(self.settings['checkBox_showpolar'])
         # load default fit factor range
         #for key, val in self.settings.items():
             #if key == self.settings['comboBox_fitfactor']:
@@ -1148,6 +1154,7 @@ class QCMApp(QMainWindow):
         # endregion
 
         #region ### load default settings settings ###
+
 
         # endregion
 
