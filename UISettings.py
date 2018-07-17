@@ -208,7 +208,7 @@ settings_default = {
     'checkBox_showsusceptance': True,
     'checkBox_showchi': False,
     'checkBox_showpolar': False,
-    'comboBox_fitfactor': 6,
+    'comboBox_fitfactor': '6',
 
 #### default settings settings ####
     'tab_settings_settings_harm1': {

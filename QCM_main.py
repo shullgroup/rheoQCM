@@ -30,9 +30,7 @@ class QCMApp(QMainWindow):
         self.fileFlag = False
         self.fileName = ''
         self.settings = settings_default
-        self.set_default_freqs()
-        self.harmonic_tab = 1
-        self.update_frequencies()
+        self.load_settings()
         self.main()
 
         # check system
@@ -58,18 +56,18 @@ class QCMApp(QMainWindow):
 
 #region main UI 
         # set window title
-        self.setWindowTitle(settings_init['window_title'])
+        #self.setWindowTitle(settings_init['window_title'])
         # set window size
-        self.resize(*settings_init['window_size'])
+        #self.resize(*settings_init['window_size'])
         # set delault displaying of tab_settings
-        self.ui.tabWidget_settings.setCurrentIndex(0)
+        #self.ui.tabWidget_settings.setCurrentIndex(0)
         # set delault displaying of stackedWidget_spectra
-        self.ui.stackedWidget_spectra.setCurrentIndex(0)
+        #self.ui.stackedWidget_spectra.setCurrentIndex(0)
         # set delault displaying of stackedWidget_data
-        self.ui.stackedWidget_data.setCurrentIndex(0)
+        #self.ui.stackedWidget_data.setCurrentIndex(0)
 
         # set delault displaying of harmonics
-        self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
+        #self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
 
         # link tabWidget_settings and stackedWidget_spectra and stackedWidget_data
         self.ui.tabWidget_settings.currentChanged.connect(self.link_tab_page)
@@ -997,11 +995,11 @@ class QCMApp(QMainWindow):
             self.settings['lineEdit_endf11'] = 0
 
         
-    def update_acquisitioninterval(self, acquisitioninterval_text):
+    def update_recordinterval(self, recordinterval_text):
         try:
-            self.settings['lineEdit_acquisitioninterval'] = float(acquisitioninterval_text)
+            self.settings['lineEdit_recordinterval'] = float(recorddinterval_text)
         except:
-            self.settings['lineEdit_acquisitioninterval'] = 0
+            self.settings['lineEdit_recordinterval'] = 0
     
     def update_refreshresolution(self, refreshsolution_text):
         try:
@@ -1130,14 +1128,23 @@ class QCMApp(QMainWindow):
             f.write(line)
 
     def load_settings(self):
-        #region ### load default settings control ###
+        # set window title
+        self.setWindowTitle(settings_init['window_title'])
+        # set window size
+        self.resize(*settings_init['window_size'])
+        # set delault displaying of tab_settings
+        self.ui.tabWidget_settings.setCurrentIndex(0)
+        # set delault displaying of stackedWidget_spectra
+        self.ui.stackedWidget_spectra.setCurrentIndex(0)
+        # set delault displaying of stackedWidget_data
+        self.ui.stackedWidget_data.setCurrentIndex(0)
 
         # load default start and end frequencies for lineEdit harmonics
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
             getattr(self.ui, 'lineEdit_startf' + str(i)).setText(str(self.settings['lineEdit_startf' + str(i)]))
             getattr(self.ui, 'lineEdit_endf' + str(i)).setText(str(self.settings['lineEdit_endf' + str(i)]))
-        # load default acquisition interval
-        self.ui.lineEdit_acquisitioninterval.setText(str(self.settings['lineEdit_acquisitioninterval']))
+        # load default record interval
+        self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         # load default spectra refresh resolution
         self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
         # load default fitting and display options
@@ -1146,17 +1153,14 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_showchi.setChecked(self.settings['checkBox_showchi'])
         self.ui.checkBox_showpolar.setChecked(self.settings['checkBox_showpolar'])
         # load default fit factor range
-        #for key, val in self.settings.items():
-            #if key == self.settings['comboBox_fitfactor']:
-                #self.ui.comboBox_fitfactor.setCurrentIndex(self.comboBox_fitfactor.findData(key))
-                #break
-
-        # endregion
-
-        #region ### load default settings settings ###
-
-
-        # endregion
+        for key, val in settings_init['fit_factor_choose'].items():
+            if key == self.settings['comboBox_fitfactor']:
+                self.ui.comboBox_fitfactor.setCurrentIndex(self.ui.comboBox_fitfactor.findData(key))
+                break
+        # set opened harmonic tab
+        self.harmonic_tab = 1
+        # set delault displaying of harmonics, triggered when index changed
+        self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
 
 
 #endregion
