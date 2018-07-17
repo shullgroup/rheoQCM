@@ -27,6 +27,12 @@ settings_init = {
         'csv file (*.csv)',
     ]),
 
+    # scan mode
+    'scan_mode': {
+        'startstop':  'Start/Stop',
+        'centerspan': 'Center/Span',
+    },
+
     # choice for plotting data shown in comboBox_plt1_choice & comboBox_plt2_choice
     'data_plt_choose': {
         'none':   'none',
@@ -150,6 +156,8 @@ settings_init = {
         'file': 'Other file',
     },
 
+    'span_ctrl_steps': [1, 2, 5, 10, 20, 50, 100],
+
     'max_mpl_toolbar_height': 20, # in px
 
     'contour': {
@@ -191,9 +199,9 @@ settings_default = {
     # default time settings
     'lineEdit_reftime': 0,
     
-    'lineEdit_acquisitioninterval': 2,
+    'lineEdit_recordinterval': 2,
     'lineEdit_refreshresolution': 1,
-    'label_actualinterval': 2,
+    'label_scaninterval': 2,
 
     # default fitting and display options
     'checkBox_dynamicfit': True,

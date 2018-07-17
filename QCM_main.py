@@ -140,11 +140,15 @@ class QCMApp(QMainWindow):
         # set pushButton_resetreftime
         self.ui.pushButton_resetreftime.clicked.connect(self.reset_reftime)
 
-        # set label_actualinterval value
-        self.ui.lineEdit_acquisitioninterval.textEdited.connect(self.set_label_actualinterval)
-        self.ui.lineEdit_refreshresolution.textEdited.connect(self.set_label_actualinterval)
+        # set label_scaninterval value
+        self.ui.lineEdit_recordinterval.textEdited.connect(self.set_label_scaninterval)
+        self.ui.lineEdit_refreshresolution.textEdited.connect(self.set_label_scaninterval)
 
-        # add value for the comboBox_fitfactor
+        # add value to the comboBox_settings_control_scanmode
+        for key, val in settings_init['scan_mode'].items():
+            self.ui.comboBox_settings_control_scanmode.addItem(val, key)
+
+        # add value to the comboBox_fitfactor
         for key, val in settings_init['fit_factor_choose'].items():
             self.ui.comboBox_fitfactor.addItem(val, key)
 
@@ -547,6 +551,7 @@ class QCMApp(QMainWindow):
                     showtoolbar=False,
                 )
             )
+            getattr(self.ui, 'mpl_sp' + str(i)).fig.text(0.01, 0.98, str(i), va='top',ha='left', weight='bold')
             getattr(self.ui, 'frame_sp' + str(i)).setLayout(
                 self.set_frame_layout(
                     getattr(self.ui, 'mpl_sp' + str(i))
@@ -609,7 +614,7 @@ class QCMApp(QMainWindow):
 #region ###### set UI value ###############################
 
         for i in range(1, settings_init['max_harmonic']+2, 2):
-            if i in settings_default['harmonics_check']: # in the default range 
+            if i in self.settings['harmonics_check']: # in the default range 
                 # settings/control/Harmonics
                 getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(True)
                 getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(True)
@@ -625,8 +630,8 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_plt2_choice.setCurrentIndex(3)
 
         # set time interval
-        self.ui.label_actualinterval.setText(str(self.settings['label_actualinterval']) + '  s')
-        self.ui.lineEdit_acquisitioninterval.setText(str(self.settings['lineEdit_acquisitioninterval']))
+        self.ui.label_scaninterval.setText(str(self.settings['label_scaninterval']))
+        self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
 
 #endregion
@@ -707,25 +712,25 @@ class QCMApp(QMainWindow):
         self.settings['lineEdit_reftime'] = current_time.strftime('%Y-%m-%d %H:%M:%S')
 
     # @pyqtSlot()
-    def set_label_actualinterval(self):
+    def set_label_scaninterval(self):
         # get text
-        acquisition_interval = self.ui.lineEdit_acquisitioninterval.text()
+        record_interval = self.ui.lineEdit_recordinterval.text()
         refresh_resolution = self.ui.lineEdit_refreshresolution.text()
         #convert to flot
         try:
-            acquisition_interval = float(acquisition_interval)
+            record_interval = float(record_interval)
         except:
-            acquisition_interval = 0
+            record_interval = 0
         try:
             refresh_resolution = float(refresh_resolution)
         except:
             refresh_resolution = 0
-        # set label_actualinterval
-        # self.ui.label_actualinterval.setText(f'{acquisition_interval * refresh_resolution}  s')
-        self.settings['lineEdit_acquisitioninterval'] = float(acquisition_interval)
+        # set label_scaninterval
+        # self.ui.label_scaninterval.setText(f'{record_interval * refresh_resolution}  s')
+        self.settings['lineEdit_recordinterval'] = float(record_interval)
         self.settings['lineEdit_refreshresolution'] = float(refresh_resolution)
-        self.settings['label_actualinterval'] = acquisition_interval * refresh_resolution
-        self.ui.label_actualinterval.setText('{}  s'.format(acquisition_interval * refresh_resolution)) # python < 3.5
+        self.settings['label_scaninterval'] = record_interval * refresh_resolution
+        self.ui.label_scaninterval.setText('{}  s'.format(record_interval / refresh_resolution)) # python < 3.5
 
     ## functions for open and save file
     def openFileNameDialog(self, title, path='', filetype=settings_init['default_datafiletype']):  
@@ -815,10 +820,10 @@ class QCMApp(QMainWindow):
         # format n
         if n >= 1:
             # n = f'{round(n)} *'
-            n = '{} *'.format(round(n)) # python < 3.5
+            n = '{} *'.format(min(settings_init['span_ctrl_steps'], key=lambda x:abs(x-n))) # python < 3.5
         else:
             # n = f'1/{round(1/n)} *'
-            n = '1/{} *'.format(round(1/n)) # python < 3.5
+            n = '1/{} *'.format(min(settings_init['span_ctrl_steps'], key=lambda x:abs(x-1/n))) # python < 3.5
         # set treeWidget_settings_settings_harmtree value
         self.ui.label_spectra_fit_zoomtimes.setText(str(n))
 
@@ -828,9 +833,9 @@ class QCMApp(QMainWindow):
         n = 10 ** (self.ui.horizontalSlider_spectra_fit_spanctrl.value() / 10)
         # format n
         if n >= 1:
-            n = round(n)
+            n = min(settings_init['span_ctrl_steps'], key=lambda x:abs(x-n))
         else:
-            n = 1/round(1 / n)
+            n = 1/min(settings_init['span_ctrl_steps'], key=lambda x:abs(x-1/n))
 
         # set span
 

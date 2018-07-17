@@ -16,4 +16,8 @@ def system_check():
     import sys
     return sys.platform
 
-
+def closest_spanctr_step(l, n):
+    if n >= 1:
+        return min(l, key=lambda x:abs(x-n))
+    elif n < 1:
+        return min(l, key=lambda x:abs(x-1/n))

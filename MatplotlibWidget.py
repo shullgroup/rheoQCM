@@ -131,7 +131,7 @@ class MatplotlibWidget(QWidget):
         '''
         self.initax_xyy()
         # set label of ax[1]
-        self.set_ax_items(self.ax[0], xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
+        self.set_ax_items(self.ax[0], title=title, xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
         self.set_ax_items(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
 
         self.ax[0].margins(x=0)
@@ -302,7 +302,7 @@ class MatplotlibWidget(QWidget):
     #     return QSize(10, 10)
 
     def set_ax_items(self, ax, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
-        ax.set_title(title)
+        ax.set_title(title, fontsize=8)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         if xscale is not None:
