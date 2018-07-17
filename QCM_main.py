@@ -941,91 +941,6 @@ class QCMApp(QMainWindow):
             value = self.sender().itemData(signal)
             self.settings[self.sender().objectName()] = value
     
-    def update_startf1(self, freq_text):
-        try:
-            self.settings['lineEdit_startf1'] = float(freq_text)
-        except:
-            self.settings['lineEdit_startf1'] = 0
-
-    def update_startf3(self, freq_text):
-        try:
-            self.settings['lineEdit_startf3'] = float(freq_text)
-        except:
-            self.settings['lineEdit_startf3'] = 0
-
-    def update_startf5(self, freq_text):
-        try:
-            self.settings['lineEdit_startf5'] = float(freq_text)
-        except:
-            self.settings['lineEdit_startf5'] = 0
-
-    def update_startf7(self, freq_text):
-        try:
-            self.settings['lineEdit_startf7'] = float(freq_text)
-        except:
-            self.settings['lineEdit_startf7'] = 0
-
-    def update_startf9(self, freq_text):
-        try:
-            self.settings['lineEdit_startf9'] = float(freq_text)
-        except:
-            self.settings['lineEdit_startf9'] = 0
-
-    def update_startf11(self, freq_text):
-        try:
-            self.settings['lineEdit_startf11'] = float(freq_text)
-        except:
-            self.settings['lineEdit_startf11'] = 0
-
-    def update_endf1(self, freq_text):
-        try:
-            self.settings['lineEdit_endf1'] = float(freq_text)
-        except:
-            self.settings['lineEdit_endf1'] = 0
-
-    def update_endf3(self, freq_text):
-        try:
-            self.settings['lineEdit_endf3'] = float(freq_text)
-        except:
-            self.settings['lineEdit_endf3'] = 0
-
-    def update_endf5(self, freq_text):
-        try:
-            self.settings['lineEdit_endf5'] = float(freq_text)
-        except:
-            self.settings['lineEdit_endf5'] = 0
-
-    def update_endf7(self, freq_text):
-        try:
-            self.settings['lineEdit_endf7'] = float(freq_text)
-        except:
-            self.settings['lineEdit_endf7'] = 0
-
-    def update_endf9(self, freq_text):
-        try:
-            self.settings['lineEdit_endf9'] = float(freq_text)
-        except:
-            self.settings['lineEdit_endf9'] = 0
-
-    def update_endf11(self, freq_text):
-        try:
-            self.settings['lineEdit_endf11'] = float(freq_text)
-        except:
-            self.settings['lineEdit_endf11'] = 0
-
-        
-    def update_recordinterval(self, recordinterval_text):
-        try:
-            self.settings['lineEdit_recordinterval'] = float(recordinterval_text)
-        except:
-            self.settings['lineEdit_recordinterval'] = 0
-    
-    def update_refreshresolution(self, refreshsolution_text):
-        try:
-            self.settings['lineEdit_refreshsolution'] = float(refreshsolution_text)
-        except:
-            self.settings['lineEdit_refreshsolution'] = 0
-
     def update_dynamicfit(self):
         self.settings['checkBox_dynamicfit'] = not self.settings['checkBox_dynamicfit']
 
@@ -1037,10 +952,6 @@ class QCMApp(QMainWindow):
 
     def update_showpolarplot(self):
         self.settings['checkBox_showpolar'] = not self.settings['checkBox_showpolar']
-
-    def update_fitfactor(self, fitfactor_index):
-        value = self.ui.comboBox_fitfactor.itemData(fitfactor_index)
-        self.settings['comboBox_fitfactor'] = value
 
     def update_harmonic_tab(self):
         self.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
