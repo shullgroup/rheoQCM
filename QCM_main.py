@@ -26,7 +26,8 @@ class QCMApp(QMainWindow):
         super(QCMApp, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-
+        self.fileFlag = False
+        self.fileName = ''
         self.settings = settings_default
         self.set_default_freqs()
         self.harmonic_tab = 1
@@ -771,7 +772,7 @@ class QCMApp(QMainWindow):
         self.ui.pushButton_resetreftime.setEnabled(True)
 
     def on_triggered_load_data(self):
-        fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
+        self.fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
         # change the displayed file directory in lineEdit_datafilestr
         self.ui.lineEdit_datafilestr.setText(fileName)
         # set lineEdit_reftime
@@ -788,22 +789,46 @@ class QCMApp(QMainWindow):
 
     # 
     def on_triggered_load_settings(self):
-        fileName = self.openFileNameDialog('Choose a file to use its setting') # !! add path of last opened folder
-        # change the displayed file directory in lineEdit_datafilestr
-        self.ui.lineEdit_datafilestr.setText(fileName)
+        self.fileName = self.openFileNameDialog('Choose a file to use its setting') # !! add path of last opened folder
+        try:
+            # load json file containing formerly saved settings
+            with open(self.fileName, "r") as f:
+                self.settings = json.load(f)
+            # load settings from file into gui
+            self.load_settings()
+            # change the displayed file directory in lineEdit_datafilestr
+            self.ui.lineEdit_datafilestr.setText(self.fileName)
+            # indicate that a file has been loadded
+            self.fileFlag = True
+        # pass if action cancelled
+        except:
+            pass
 
     def on_triggered_actionSave(self):
-        # save current data to file
-        print('save function  to be added...')
+        # save current data to file if file has been opened
+        if self.fileFlag == True:
+            with open(self.fileName, 'w') as f:
+                line = json.dumps(dict(self.settings), indent=4) + "\n"
+                f.write(line)
+        # save current data to new file otherwise
+        else:
+            self.on_triggered_actionSave_As()
+
 
     def on_triggered_actionSave_As(self):
         # save current data to a new file 
-        fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
-        with open(fileName, 'w') as f:
-           line = json.dumps(dict(self.settings), indent=4) + "\n"
-           f.write(line)
-        # change the displayed file directory in lineEdit_datafilestr
-        self.ui.lineEdit_datafilestr.setText(fileName)
+        self.fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
+        try:
+            with open(self.fileName, 'w') as f:
+                line = json.dumps(dict(self.settings), indent=4) + "\n"
+                f.write(line)
+            # change the displayed file directory in lineEdit_datafilestr
+            self.ui.lineEdit_datafilestr.setText(self.fileName)
+            # indicate that a file has been loaded
+            self.fileFlag = True
+        # pass if action cancelled
+        except:
+            pass
 
     def on_triggered_actionExport(self):
         # export data to a selected form
@@ -1087,10 +1112,40 @@ class QCMApp(QMainWindow):
     def update_guichecks(self, checkBox, name_in_settings):
         checkBox.setChecked(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)][name_in_settings])
     
+    # debug func
     def log_update(self):
         with open('settings.json', 'w') as f:
             line = json.dumps(dict(self.settings), indent=4) + "\n"
             f.write(line)
+
+    def load_settings(self):
+        #region ### load default settings control ###
+
+        # load default start and end frequencies for lineEdit harmonics
+        for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
+            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(str(self.settings['lineEdit_startf' + str(i)]))
+            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(str(self.settings['lineEdit_endf' + str(i)]))
+        # load default acquisition interval
+        self.ui.lineEdit_acquisitioninterval.setText(str(self.settings['lineEdit_acquisitioninterval']))
+        # load default spectra refresh resolution
+        self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
+        # load default fitting and display options
+        self.ui.checkBox_dynamicfit.setChecked(self.settings['checkBox_dynamicfit'])
+        self.ui.checkBox_showsusceptance.setChecked(self.settings['checkBox_showsusceptance'])
+        self.ui.checkBox_showchi.setChecked(self.settings['checkBox_showchi'])
+        self.ui.checkBox_polarplot.setChecked(self.settings['checkBox_polarplot'])
+        # load default fit factor range
+        #for key, val in self.settings.items():
+            #if key == self.settings['comboBox_fitfactor']:
+                #self.ui.comboBox_fitfactor.setCurrentIndex(self.comboBox_fitfactor.findData(key))
+                #break
+
+        # endregion
+
+        #region ### load default settings settings ###
+
+        # endregion
+
 
 #endregion
 
