@@ -8,7 +8,7 @@ import math
 import json
 import datetime, time
 from PyQt5.QtCore import pyqtSlot, Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox
 from PyQt5.QtGui import QIcon, QPixmap
 # from PyQt5.uic import loadUi
 
@@ -162,20 +162,20 @@ class QCMApp(QMainWindow):
         self.ui.pushButton_appenddata.clicked.connect(self.on_triggered_load_data)
 
         # set signals to update lineEdit_start settings
-        self.ui.lineEdit_startf1.textChanged[str].connect(self.update_startf1)
-        self.ui.lineEdit_startf3.textChanged[str].connect(self.update_startf3)
-        self.ui.lineEdit_startf5.textChanged[str].connect(self.update_startf5)
-        self.ui.lineEdit_startf7.textChanged[str].connect(self.update_startf7)
-        self.ui.lineEdit_startf9.textChanged[str].connect(self.update_startf9)
-        self.ui.lineEdit_startf11.textChanged[str].connect(self.update_startf11)
+        self.ui.lineEdit_startf1.textChanged[str].connect(self.update_widget)
+        self.ui.lineEdit_startf3.textChanged[str].connect(self.update_widget)
+        self.ui.lineEdit_startf5.textChanged[str].connect(self.update_widget)
+        self.ui.lineEdit_startf7.textChanged[str].connect(self.update_widget)
+        self.ui.lineEdit_startf9.textChanged[str].connect(self.update_widget)
+        self.ui.lineEdit_startf11.textChanged[str].connect(self.update_widget)
 
         # set signals to update lineEdit_end settings
-        self.ui.lineEdit_endf1.textChanged[str].connect(self.update_endf1)
-        self.ui.lineEdit_endf3.textChanged[str].connect(self.update_endf3)
-        self.ui.lineEdit_endf5.textChanged[str].connect(self.update_endf5)
-        self.ui.lineEdit_endf7.textChanged[str].connect(self.update_endf7)
-        self.ui.lineEdit_endf9.textChanged[str].connect(self.update_endf9)
-        self.ui.lineEdit_endf11.textChanged[str].connect(self.update_endf11)
+        self.ui.lineEdit_endf1.textChanged[str].connect(self.update_widget)
+        self.ui.lineEdit_endf3.textChanged[str].connect(self.update_widget)
+        self.ui.lineEdit_endf5.textChanged[str].connect(self.update_widget)
+        self.ui.lineEdit_endf7.textChanged[str].connect(self.update_widget)
+        self.ui.lineEdit_endf9.textChanged[str].connect(self.update_widget)
+        self.ui.lineEdit_endf11.textChanged[str].connect(self.update_widget)
 
         # set lineEdit_scaninterval background
         self.ui.lineEdit_scaninterval.setStyleSheet(
@@ -183,11 +183,11 @@ class QCMApp(QMainWindow):
         )
 
         # set signals to update fitting and display options
-        self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_dynamicfit)
-        self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_showsusceptance)
-        self.ui.checkBox_showchi.stateChanged.connect(self.update_showchi)
-        self.ui.checkBox_showpolar.stateChanged.connect(self.update_showpolarplot)
-        self.ui.comboBox_fitfactor.activated.connect(self.update_fitfactor)
+        self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_showchi.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_showpolar.stateChanged.connect(self.update_widget)
+        self.ui.comboBox_fitfactor.activated.connect(self.update_widget)
 
 #endregion
 
@@ -923,6 +923,24 @@ class QCMApp(QMainWindow):
             current_index = stwgt.currentIndex()  # get current index
             stwgt.setCurrentIndex((current_index + diret) % count) # increase or decrease index by diret
     
+    # update widget values in settings dict
+    def update_widget(self, signal):
+        print(self.sender().objectName())
+        print(type(self.sender()))
+        # if the sender of the signal isA QLineEdit object, update QLineEdit vals in dict
+        if isinstance(self.sender(), QLineEdit):
+            try:
+                self.settings[self.sender().objectName()] = float(signal)
+            except:
+                self.settings[self.sender().objectName()] = 0
+        # if the sender of the signal isA QCheckBox object, update QCheckBox vals in dict
+        elif isinstance(self.sender(), QCheckBox):
+            self.settings[self.sender().objectName()] = not self.settings[self.sender().objectName()]
+        # if the sender of the signal isA QComboBox object, udpate QComboBox vals in dict
+        elif isinstance(self.sender(), QComboBox):
+            value = self.sender().itemData(signal)
+            self.settings[self.sender().objectName()] = value
+    
     def update_startf1(self, freq_text):
         try:
             self.settings['lineEdit_startf1'] = float(freq_text)
@@ -998,7 +1016,7 @@ class QCMApp(QMainWindow):
         
     def update_recordinterval(self, recordinterval_text):
         try:
-            self.settings['lineEdit_recordinterval'] = float(recorddinterval_text)
+            self.settings['lineEdit_recordinterval'] = float(recordinterval_text)
         except:
             self.settings['lineEdit_recordinterval'] = 0
     
@@ -1086,7 +1104,6 @@ class QCMApp(QMainWindow):
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_ref_channel'] = value
 
     def update_tempsensor(self):
-        print(str(not self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_temp_sensor']))
         self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_temp_sensor'] = not self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_temp_sensor']
 
     def update_thrmcpltype(self, thrmcpltype_index):
@@ -1121,7 +1138,7 @@ class QCMApp(QMainWindow):
 
     def update_guichecks(self, checkBox, name_in_settings):
         checkBox.setChecked(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)][name_in_settings])
-    
+        
     # debug func
     def log_update(self):
         with open('settings.json', 'w') as f:
