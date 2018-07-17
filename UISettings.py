@@ -201,7 +201,7 @@ settings_default = {
     
     'lineEdit_recordinterval': 2,
     'lineEdit_refreshresolution': 1,
-    'label_scaninterval': 2,
+    'lineEdit_scaninterval': 2,
 
     # default fitting and display options
     'checkBox_dynamicfit': True,

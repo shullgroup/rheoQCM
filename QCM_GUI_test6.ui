@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1176</width>
-    <height>822</height>
+    <height>943</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -547,7 +547,7 @@ background-color: red;
                 <property name="sizeHint" stdset="0">
                  <size>
                   <width>20</width>
-                  <height>20</height>
+                  <height>10</height>
                  </size>
                 </property>
                </spacer>
@@ -585,14 +585,14 @@ background-color: red;
                  <item row="5" column="2">
                   <widget class="QLineEdit" name="lineEdit_refreshresolution">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>50</width>
+                     <width>16777215</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -610,14 +610,14 @@ background-color: red;
                  <item row="4" column="2">
                   <widget class="QLineEdit" name="lineEdit_recordinterval">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>50</width>
+                     <width>16777215</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -730,25 +730,6 @@ background-color: red;
                    </property>
                   </spacer>
                  </item>
-                 <item row="6" column="2">
-                  <widget class="QLabel" name="label_scaninterval">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <weight>50</weight>
-                     <bold>false</bold>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>[time]</string>
-                   </property>
-                  </widget>
-                 </item>
                  <item row="6" column="1">
                   <widget class="QLabel" name="label_8">
                    <property name="sizePolicy">
@@ -759,6 +740,19 @@ background-color: red;
                    </property>
                    <property name="text">
                     <string>Scan interval (s) = a / b  </string>
+                   </property>
+                   <property name="buddy">
+                    <cstring>lineEdit_scaninterval</cstring>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="6" column="2">
+                  <widget class="QLineEdit" name="lineEdit_scaninterval">
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                   <property name="readOnly">
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>
@@ -776,7 +770,7 @@ background-color: red;
                 <property name="sizeHint" stdset="0">
                  <size>
                   <width>20</width>
-                  <height>20</height>
+                  <height>10</height>
                  </size>
                 </property>
                </spacer>
@@ -912,7 +906,7 @@ background-color: red;
                   </widget>
                  </item>
                  <item row="3" column="0">
-                  <widget class="QCheckBox" name="checkBox_polarplot">
+                  <widget class="QCheckBox" name="checkBox_showpolar">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                      <horstretch>0</horstretch>
@@ -928,7 +922,7 @@ background-color: red;
                </widget>
               </item>
               <item>
-               <spacer name="verticalSpacer_4">
+               <spacer name="verticalSpacer_5">
                 <property name="orientation">
                  <enum>Qt::Vertical</enum>
                 </property>
@@ -938,7 +932,7 @@ background-color: red;
                 <property name="sizeHint" stdset="0">
                  <size>
                   <width>20</width>
-                  <height>20</height>
+                  <height>10</height>
                  </size>
                 </property>
                </spacer>
@@ -987,13 +981,16 @@ background-color: red;
                       </sizepolicy>
                      </property>
                      <property name="text">
-                      <string>&lt;output filename&gt;</string>
+                      <string/>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                      </property>
                      <property name="readOnly">
                       <bool>true</bool>
+                     </property>
+                     <property name="placeholderText">
+                      <string>&lt;output filename&gt;</string>
                      </property>
                     </widget>
                    </item>
@@ -1011,8 +1008,11 @@ background-color: red;
                        <height>16777215</height>
                       </size>
                      </property>
+                     <property name="toolTip">
+                      <string>Go to data folder</string>
+                     </property>
                      <property name="text">
-                      <string>go to</string>
+                      <string>Go to</string>
                      </property>
                     </widget>
                    </item>
@@ -1028,8 +1028,11 @@ background-color: red;
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
-                     <property name="text">
+                     <property name="toolTip">
                       <string>Choose a new file</string>
+                     </property>
+                     <property name="text">
+                      <string>New file</string>
                      </property>
                     </widget>
                    </item>
@@ -1041,37 +1044,44 @@ background-color: red;
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
-                     <property name="text">
+                     <property name="toolTip">
                       <string>Append to existing file</string>
+                     </property>
+                     <property name="text">
+                      <string>Append</string>
                      </property>
                     </widget>
                    </item>
                   </layout>
                  </item>
-                 <item>
-                  <spacer name="verticalSpacer_5">
-                   <property name="orientation">
-                    <enum>Qt::Vertical</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>20</width>
-                     <height>40</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
                 </layout>
                </widget>
               </item>
+              <item>
+               <spacer name="verticalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Expanding</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
              </layout>
              <zorder>groupBox_settings_harmonics</zorder>
-             <zorder>groupBox_settings_output</zorder>
              <zorder>groupBox_settingstime</zorder>
              <zorder>verticalSpacer_4</zorder>
              <zorder>groupBox_settings_fitting</zorder>
              <zorder>verticalSpacer_2</zorder>
              <zorder>verticalSpacer_3</zorder>
+             <zorder>groupBox_settings_output</zorder>
+             <zorder>verticalSpacer_5</zorder>
             </widget>
             <widget class="QWidget" name="tab_settings_settings">
              <property name="sizePolicy">
@@ -1124,7 +1134,7 @@ background-color: red;
                  <enum>QTabWidget::Rounded</enum>
                 </property>
                 <property name="currentIndex">
-                 <number>0</number>
+                 <number>5</number>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1822,7 +1832,7 @@ background-repeat: none;
               <item>
                <widget class="QLabel" name="label_status_pts">
                 <property name="text">
-                 <string>pts: #</string>
+                 <string>pts</string>
                 </property>
                </widget>
               </item>
@@ -1871,13 +1881,16 @@ background-repeat: none;
               <item>
                <widget class="QLineEdit" name="lineEdit_settings_data_filename">
                 <property name="text">
-                 <string>&lt;File name&gt;</string>
+                 <string/>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
                 <property name="readOnly">
                  <bool>true</bool>
+                </property>
+                <property name="placeholderText">
+                 <string>&lt;File name&gt;</string>
                 </property>
                </widget>
               </item>
@@ -1886,14 +1899,14 @@ background-repeat: none;
                 <item>
                  <widget class="QGroupBox" name="groupBox_settings_data_showdata">
                   <property name="title">
-                   <string>Show Data of</string>
+                   <string>Show &amp; Browse Data</string>
                   </property>
                   <property name="flat">
                    <bool>true</bool>
                   </property>
-                  <layout class="QHBoxLayout" name="horizontalLayout_15">
+                  <layout class="QVBoxLayout" name="verticalLayout_44">
                    <property name="spacing">
-                    <number>6</number>
+                    <number>0</number>
                    </property>
                    <property name="leftMargin">
                     <number>0</number>
@@ -1908,21 +1921,124 @@ background-repeat: none;
                     <number>0</number>
                    </property>
                    <item>
-                    <widget class="QRadioButton" name="radioButton_settings_data_showall">
-                     <property name="text">
-                      <string>All</string>
-                     </property>
-                     <property name="checked">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
+                    <layout class="QHBoxLayout" name="horizontalLayout_15">
+                     <item>
+                      <widget class="QRadioButton" name="radioButton_settings_data_showall">
+                       <property name="text">
+                        <string>All</string>
+                       </property>
+                       <property name="checked">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QRadioButton" name="radioButton_settings_data_showmarked">
+                       <property name="text">
+                        <string>Marked</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
                    </item>
                    <item>
-                    <widget class="QRadioButton" name="radioButton_settings_data_showmarked">
-                     <property name="text">
-                      <string>Marked</string>
+                    <layout class="QHBoxLayout" name="horizontalLayout_24">
+                     <property name="spacing">
+                      <number>0</number>
                      </property>
-                    </widget>
+                     <item>
+                      <widget class="QPushButton" name="pushButton_settings_data_tostart">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>23</width>
+                         <height>16</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string>|&lt;&lt;</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="pushButton_settings_data_toprevious">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>23</width>
+                         <height>16</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string>&lt;</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="pushButton_settings_data_tonext">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>23</width>
+                         <height>16</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string>&gt;</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="pushButton_settings_data_toend">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>23</width>
+                         <height>16</height>
+                        </size>
+                       </property>
+                       <property name="text">
+                        <string>&gt;&gt;|</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="horizontalSpacer_24">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeType">
+                        <enum>QSizePolicy::Preferred</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>0</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
                    </item>
                   </layout>
                  </widget>
@@ -1942,7 +2058,7 @@ background-repeat: none;
                    </size>
                   </property>
                   <property name="text">
-                   <string>refit</string>
+                   <string>Refit</string>
                   </property>
                   <property name="popupMode">
                    <enum>QToolButton::MenuButtonPopup</enum>
@@ -4333,7 +4449,7 @@ border: 1px solid blue;
            </size>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="page_spectra_show">
            <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -4357,6 +4473,74 @@ border: 1px solid blue;
               <property name="sizeConstraint">
                <enum>QLayout::SetDefaultConstraint</enum>
               </property>
+              <item>
+               <widget class="QGroupBox" name="groupBox_2">
+                <property name="title">
+                 <string/>
+                </property>
+                <property name="flat">
+                 <bool>true</bool>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_25">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QLabel" name="label_18">
+                   <property name="text">
+                    <string>Show: </string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="radioButton_spectra_showBp">
+                   <property name="text">
+                    <string>Bp</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="radioButton_spectra_showpolar">
+                   <property name="text">
+                    <string>Polar plot</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_spectra_shoechi">
+                   <property name="text">
+                    <string>Χsq </string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="horizontalSpacer_25">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>0</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+              </item>
               <item>
                <widget class="QFrame" name="frame_sp1">
                 <property name="sizePolicy">
@@ -4935,8 +5119,8 @@ border: 1px solid blue;
                 <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2'; font-size:8.25pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
               </widget>
               <widget class="QWidget" name="layoutWidget">
@@ -5066,7 +5250,7 @@ p, li { white-space: pre-wrap; }
                      </sizepolicy>
                     </property>
                     <property name="text">
-                     <string>Plot Rows</string>
+                     <string>Plot Selects</string>
                     </property>
                     <property name="popupMode">
                      <enum>QToolButton::MenuButtonPopup</enum>
@@ -5855,7 +6039,7 @@ border: 1px solid blue;
      <x>0</x>
      <y>0</y>
      <width>1176</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

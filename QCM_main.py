@@ -141,9 +141,9 @@ class QCMApp(QMainWindow):
         # set pushButton_resetreftime
         self.ui.pushButton_resetreftime.clicked.connect(self.reset_reftime)
 
-        # set label_scaninterval value
-        self.ui.lineEdit_recordinterval.textEdited.connect(self.set_label_scaninterval)
-        self.ui.lineEdit_refreshresolution.textEdited.connect(self.set_label_scaninterval)
+        # set lineEdit_scaninterval value
+        self.ui.lineEdit_recordinterval.textEdited.connect(self.set_lineEdit_scaninterval)
+        self.ui.lineEdit_refreshresolution.textEdited.connect(self.set_lineEdit_scaninterval)
 
         # add value to the comboBox_settings_control_scanmode
         for key, val in settings_init['scan_mode'].items():
@@ -178,11 +178,16 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_endf9.textChanged[str].connect(self.update_endf9)
         self.ui.lineEdit_endf11.textChanged[str].connect(self.update_endf11)
 
+        # set lineEdit_scaninterval background
+        self.ui.lineEdit_scaninterval.setStyleSheet(
+            "QLineEdit { background: transparent; }"
+        )
+
         # set signals to update fitting and display options
         self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_dynamicfit)
         self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_showsusceptance)
         self.ui.checkBox_showchi.stateChanged.connect(self.update_showchi)
-        self.ui.checkBox_polarplot.stateChanged.connect(self.update_showpolarplot)
+        self.ui.checkBox_showpolar.stateChanged.connect(self.update_showpolarplot)
         self.ui.comboBox_fitfactor.activated.connect(self.update_fitfactor)
 
 #endregion
@@ -631,7 +636,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_plt2_choice.setCurrentIndex(3)
 
         # set time interval
-        self.ui.label_scaninterval.setText(str(self.settings['label_scaninterval']))
+        self.ui.lineEdit_scaninterval.setText(str(self.settings['lineEdit_scaninterval']))
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
 
@@ -641,10 +646,10 @@ class QCMApp(QMainWindow):
 #region #########  functions ##############
 
     def link_tab_page(self, tab_idx):
-        if tab_idx in [0]: # link settings_control to spectra_show and data_data
+        if tab_idx in [0, 2]: # link settings_control to spectra_show and data_data
             self.ui.stackedWidget_spectra.setCurrentIndex(0)
             self.ui.stackedWidget_data.setCurrentIndex(0)
-        elif tab_idx in [1, 2]: # link settings_settings and settings_data to spectra_fit and data_data
+        elif tab_idx in [1]: # link settings_settings and settings_data to spectra_fit 
             self.ui.stackedWidget_spectra.setCurrentIndex(1)
             self.ui.stackedWidget_data.setCurrentIndex(0)
         elif tab_idx in [3]: # link settings_mechanics to spectra_mechanics and data_mechanics
@@ -713,7 +718,7 @@ class QCMApp(QMainWindow):
         self.settings['lineEdit_reftime'] = current_time.strftime('%Y-%m-%d %H:%M:%S')
 
     # @pyqtSlot()
-    def set_label_scaninterval(self):
+    def set_lineEdit_scaninterval(self):
         # get text
         record_interval = self.ui.lineEdit_recordinterval.text()
         refresh_resolution = self.ui.lineEdit_refreshresolution.text()
@@ -726,12 +731,12 @@ class QCMApp(QMainWindow):
             refresh_resolution = float(refresh_resolution)
         except:
             refresh_resolution = 0
-        # set label_scaninterval
-        # self.ui.label_scaninterval.setText(f'{record_interval * refresh_resolution}  s')
+        # set lineEdit_scaninterval
+        # self.ui.lineEdit_scaninterval.setText(f'{record_interval * refresh_resolution}  s')
         self.settings['lineEdit_recordinterval'] = float(record_interval)
         self.settings['lineEdit_refreshresolution'] = float(refresh_resolution)
-        self.settings['label_scaninterval'] = record_interval * refresh_resolution
-        self.ui.label_scaninterval.setText('{}  s'.format(record_interval / refresh_resolution)) # python < 3.5
+        self.settings['lineEdit_scaninterval'] = record_interval / refresh_resolution
+        self.ui.lineEdit_scaninterval.setText('{0:.3g}'.format(record_interval / refresh_resolution)) # python < 3.5
 
     ## functions for open and save file
     def openFileNameDialog(self, title, path='', filetype=settings_init['default_datafiletype']):  
@@ -1008,7 +1013,7 @@ class QCMApp(QMainWindow):
         self.settings['checkBox_showchi'] = not self.settings['checkBox_showchi']
 
     def update_showpolarplot(self):
-        self.settings['checkBox_polarplot'] = not self.settings['checkBox_polarplot']
+        self.settings['checkBox_showpolar'] = not self.settings['checkBox_showpolar']
 
     def update_fitfactor(self, fitfactor_index):
         value = self.ui.comboBox_fitfactor.itemData(fitfactor_index)
