@@ -457,7 +457,7 @@ class QCMApp(QMainWindow):
         self.ui.horizontalSlider_spectra_fit_spanctrl.sliderReleased.connect(self.on_released_slider_spanctrl)
 
         # pushButton_spectra_fit_refresh
-        self.ui.pushButton_spectra_fit_refresh.clicked.connect(self.on_click_pushButton_spectra_fit_refresh)
+        self.ui.pushButton_spectra_fit_refresh.clicked.connect(self.on_clicked_pushButton_spectra_fit_refresh)
 
 #endregion
 
@@ -481,8 +481,6 @@ class QCMApp(QMainWindow):
 #region status bar
 
         #### add widgets to status bar. from left to right
-        # move label_status_coordinates to statusbar
-        self.ui.statusbar.addPermanentWidget(self.ui.label_status_coordinates)
         # move progressBar_status_interval_time to statusbar
         self.ui.progressBar_status_interval_time.setAlignment(Qt.AlignCenter)
         self.ui.statusbar.addPermanentWidget(self.ui.progressBar_status_interval_time)
@@ -876,7 +874,7 @@ class QCMApp(QMainWindow):
         # reset slider to 1
         self.ui.horizontalSlider_spectra_fit_spanctrl.setValue(0)
 
-    def on_click_pushButton_spectra_fit_refresh(self):
+    def on_clicked_pushButton_spectra_fit_refresh(self):
         # ret, nSteps = self.accvna.GetScanSteps()
         # ret, f1, f2 = self.accvna.SetFequencies()
         # self.accvna.SingleScan()
@@ -891,16 +889,19 @@ class QCMApp(QMainWindow):
             accvna.set_steps_freq()
             ret, f, G, B = accvna.single_scan()
 
-        self.ui.mpl_spectra_fit.lG[0].set_xdata(f)
-        self.ui.mpl_spectra_fit.lG[0].set_ydata(G)
-        self.ui.mpl_spectra_fit.lB[0].set_xdata(f)
-        self.ui.mpl_spectra_fit.lB[0].set_ydata(B)
+        self.ui.mpl_spectra_fit.update_data(ls=['lG'], xdata=[f], ydata=[G])
+        self.ui.mpl_spectra_fit.update_data(ls=['lB'], xdata=[f], ydata=[B])
+        # self.ui.mpl_spectra_fit.l['lG'][0].set_xdata(f)
+        # self.ui.mpl_spectra_fit.l['lG'][0].set_ydata(G)
+        # self.ui.mpl_spectra_fit.l['lB'][0].set_xdata(f)
+        # self.ui.mpl_spectra_fit.l['lB'][0].set_ydata(B)
 
-        self.ui.mpl_spectra_fit.ax[0].set_xlim([f[0], f[-1]])
-        self.ui.mpl_spectra_fit.ax[0].set_ylim([min(G), max(G)])
-        self.ui.mpl_spectra_fit.ax[1].set_xlim([f[0], f[-1]])
-        self.ui.mpl_spectra_fit.ax[1].set_ylim([min(B), max(B)])
-        self.ui.mpl_spectra_fit.canvas.draw()
+        # self.ui.mpl_spectra_fit.ax[0].set_xlim([f[0], f[-1]])
+        # self.ui.mpl_spectra_fit.ax[0].set_ylim([min(G), max(G)])
+        # self.ui.mpl_spectra_fit.ax[1].set_xlim([f[0], f[-1]])
+        # self.ui.mpl_spectra_fit.ax[1].set_ylim([min(B), max(B)])
+        # self.ui.mpl_spectra_fit.canvas.draw()
+
         # print(self.ui.mpl_spectra_fit.canvas)
         # print(self.ui.mpl_spectra_fit.lG[0].get_xdata())
         

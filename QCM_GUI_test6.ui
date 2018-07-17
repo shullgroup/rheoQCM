@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1176</width>
-    <height>943</height>
+    <height>822</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -156,7 +156,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>0</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1837,13 +1837,6 @@ background-repeat: none;
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="label_status_coordinates">
-                <property name="text">
-                 <string>x,y,z</string>
-                </property>
-               </widget>
-              </item>
-              <item>
                <spacer name="verticalSpacer_6">
                 <property name="orientation">
                  <enum>Qt::Vertical</enum>
@@ -1961,7 +1954,7 @@ background-repeat: none;
                         </size>
                        </property>
                        <property name="text">
-                        <string>|&lt;&lt;</string>
+                        <string>&lt;&lt;</string>
                        </property>
                       </widget>
                      </item>
@@ -2018,7 +2011,7 @@ background-repeat: none;
                         </size>
                        </property>
                        <property name="text">
-                        <string>&gt;&gt;|</string>
+                        <string>&gt;|</string>
                        </property>
                       </widget>
                      </item>
@@ -4474,12 +4467,12 @@ border: 1px solid blue;
                <enum>QLayout::SetDefaultConstraint</enum>
               </property>
               <item>
-               <widget class="QGroupBox" name="groupBox_2">
-                <property name="title">
-                 <string/>
+               <widget class="QFrame" name="frame">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
                 </property>
-                <property name="flat">
-                 <bool>true</bool>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_25">
                  <property name="leftMargin">
@@ -4504,7 +4497,7 @@ border: 1px solid blue;
                  <item>
                   <widget class="QRadioButton" name="radioButton_spectra_showBp">
                    <property name="text">
-                    <string>Bp</string>
+                    <string>Susceptance (Bp)</string>
                    </property>
                    <property name="checked">
                     <bool>true</bool>
@@ -5119,8 +5112,8 @@ border: 1px solid blue;
                 <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2'; font-size:8.25pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
               </widget>
               <widget class="QWidget" name="layoutWidget">
@@ -5662,6 +5655,9 @@ border: 1px solid blue;
                   <property name="spacing">
                    <number>0</number>
                   </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
                   <item>
                    <widget class="QFrame" name="frame_plt1">
                     <property name="sizePolicy">
@@ -5679,20 +5675,20 @@ border: 1px solid blue;
                    </widget>
                   </item>
                   <item>
-                   <widget class="QGroupBox" name="groupBox_4">
+                   <widget class="QFrame" name="frame_2">
                     <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
-                    <property name="title">
-                     <string/>
+                    <property name="frameShape">
+                     <enum>QFrame::StyledPanel</enum>
                     </property>
-                    <property name="flat">
-                     <bool>false</bool>
+                    <property name="frameShadow">
+                     <enum>QFrame::Raised</enum>
                     </property>
-                    <layout class="QHBoxLayout" name="horizontalLayout_2">
+                    <layout class="QHBoxLayout" name="horizontalLayout_26">
                      <property name="spacing">
                       <number>6</number>
                      </property>
@@ -5767,7 +5763,7 @@ border: 1px solid blue;
                       </widget>
                      </item>
                      <item>
-                      <spacer name="horizontalSpacer_9">
+                      <spacer name="horizontalSpacer_26">
                        <property name="orientation">
                         <enum>Qt::Horizontal</enum>
                        </property>
@@ -5800,7 +5796,7 @@ border: 1px solid blue;
                       </widget>
                      </item>
                      <item>
-                      <spacer name="horizontalSpacer_7">
+                      <spacer name="horizontalSpacer_27">
                        <property name="orientation">
                         <enum>Qt::Horizontal</enum>
                        </property>
@@ -5847,10 +5843,13 @@ border: 1px solid blue;
                   <property name="spacing">
                    <number>0</number>
                   </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
                   <item>
                    <widget class="QFrame" name="frame_plt2">
                     <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
@@ -5864,20 +5863,20 @@ border: 1px solid blue;
                    </widget>
                   </item>
                   <item>
-                   <widget class="QGroupBox" name="groupBox_5">
+                   <widget class="QFrame" name="frame_3">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
-                    <property name="title">
-                     <string/>
+                    <property name="frameShape">
+                     <enum>QFrame::StyledPanel</enum>
+                    </property>
+                    <property name="frameShadow">
+                     <enum>QFrame::Raised</enum>
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_3">
-                     <property name="spacing">
-                      <number>6</number>
-                     </property>
                      <property name="leftMargin">
                       <number>0</number>
                      </property>
@@ -6039,7 +6038,7 @@ border: 1px solid blue;
      <x>0</x>
      <y>0</y>
      <width>1176</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -6498,20 +6497,6 @@ border: 1px solid blue;
   <tabstop>checkBox_showchi</tabstop>
   <tabstop>lineEdit_datafilestr</tabstop>
   <tabstop>pushButton_gotofolder</tabstop>
-  <tabstop>comboBox_plt1_choice</tabstop>
-  <tabstop>checkBox_plt1_h1</tabstop>
-  <tabstop>checkBox_plt1_h3</tabstop>
-  <tabstop>checkBox_plt1_h5</tabstop>
-  <tabstop>checkBox_plt1_h7</tabstop>
-  <tabstop>checkBox_plt1_h9</tabstop>
-  <tabstop>checkBox_plt1_h11</tabstop>
-  <tabstop>comboBox_plt2_choice</tabstop>
-  <tabstop>checkBox_plt2_h1</tabstop>
-  <tabstop>checkBox_plt2_h3</tabstop>
-  <tabstop>checkBox_plt2_h5</tabstop>
-  <tabstop>checkBox_plt2_h7</tabstop>
-  <tabstop>checkBox_plt2_h9</tabstop>
-  <tabstop>checkBox_plt2_h11</tabstop>
  </tabstops>
  <resources>
   <include location="QCM_GUI_source.qrc"/>
