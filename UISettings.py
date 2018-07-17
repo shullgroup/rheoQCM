@@ -207,8 +207,8 @@ settings_default = {
     'checkBox_dynamicfit': True,
     'checkBox_showsusceptance': True,
     'checkBox_showchi': False,
-    'checkBox_polarplot': False,
-    'comboBox_fitfactor': 6,
+    'checkBox_showpolar': False,
+    'comboBox_fitfactor': '6',
 
 #### default settings settings ####
     'tab_settings_settings_harm1': {
