@@ -46,6 +46,8 @@ class MatplotlibWidget(QWidget):
         super(MatplotlibWidget, self).__init__(parent)
         
         self.fig = Figure(tight_layout=True, dpi=dpi, facecolor='none')
+        # set figure background transparsent
+        self.setStyleSheet("background: transparent;")
 
         # FigureCanvas.__init__(self, fig)
         self.canvas = FigureCanvas(self.fig)
@@ -62,38 +64,44 @@ class MatplotlibWidget(QWidget):
         self.setLayout(self.vbox)
 
         # add toolbar and buttons given by showtoolbar
+        if isinstance(showtoolbar, tuple):
+            class NavigationToolbar(NavigationToolbar2QT):
+                toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in showtoolbar]
+        else:
+            class NavigationToolbar(NavigationToolbar2QT):
+                pass                    
+
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        self.toolbar.setMaximumHeight(settings_init['max_mpl_toolbar_height'])
+        self.toolbar.setStyleSheet("QToolBar { border: 0px;}")
+        # if isinstance(showtoolbar, tuple):
+        #     print(self.toolbar.toolitems)
+        #     NavigationToolbar.toolitems = (t for t in NavigationToolbar2QT.toolitems if t[0] in showtoolbar)
+        #     print(self.toolbar.toolitems)
+
+        # self.toolbar.hide() # hide toolbar (or setHidden(bool))
+        self.toolbar.isMovable()
         if showtoolbar:
-            if isinstance(showtoolbar, tuple):
-                class NavigationToolbar(NavigationToolbar2QT):
-                    toolitems = [t for t in NavigationToolbar2QT.toolitems if t[0] in showtoolbar]
-            else:
-                class NavigationToolbar(NavigationToolbar2QT):
-                    pass                    
-
-            self.toolbar = NavigationToolbar(self.canvas, self)
-            self.toolbar.setMaximumHeight(settings_init['max_mpl_toolbar_height'])
-            self.toolbar.setStyleSheet("QToolBar { border: 0px;}")
-            # if isinstance(showtoolbar, tuple):
-            #     print(self.toolbar.toolitems)
-            #     NavigationToolbar.toolitems = (t for t in NavigationToolbar2QT.toolitems if t[0] in showtoolbar)
-            #     print(self.toolbar.toolitems)
-
-            # self.toolbar.hide() # hide toolbar (or setHidden(bool))
-            self.toolbar.isMovable()
             self.vbox.addWidget(self.toolbar)
+        else:
+            self.toolbar.hide() # hide toolbar
         
         # initialize axes (ax) and plots (l)
         self.ax = [] # list of axes 
         self.l = {} # all the plot stored in dict
+        self.leg = '' # initiate legend 
         
         self.initial_axes(axtype=axtype, title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale='linear')
         # self.canvas.draw()
-        # looks doesn't work
+        
+        # doesn't work
         self.fig.tight_layout(pad=1, h_pad=0, w_pad=0, rect=(0, 0, 0.5, 1.5)) 
-        self.fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=None)
-        self.fig.set_constrained_layout_pads(w_pad=0., h_pad=0.,
-        hspace=0., wspace=0.)
-        self.fig.tight_layout()
+        self.fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
+        # self.fig.set_constrained_layout_pads(w_pad=0., h_pad=0., hspace=0., wspace=0.) # for python >= 3.6
+        # self.fig.tight_layout()
+
+
+
 
     def initax_xy(self, *args, **kwargs):
         # axes
@@ -115,11 +123,14 @@ class MatplotlibWidget(QWidget):
         self.initax_xy()
         
         ax2 = self.ax[0].twinx()
+        self.ax[0].set_zorder(self.ax[0].get_zorder()+1)
+
         ax2.tick_params(axis='y', labelcolor=color[1], color=color[1])
         ax2.yaxis.label.set_color(color[1])
         ax2.spines['right'].set_color(color[1])
         ax2.autoscale()
         ax2.spines['left'].set_visible(False)
+
 
         # change axes color
         self.ax[0].tick_params(axis='y', labelcolor=color[0], color=color[0])
@@ -183,6 +194,15 @@ class MatplotlibWidget(QWidget):
             [], [], 
             color='k'
         ) # B fit
+        self.l['lf'] = self.ax[1].scatter(
+            [], [],
+            marker='x',
+            color='k'
+        ) # f: G peak
+        self.l['lg'] = self.ax[1].plot(
+            [], [],
+            color='k'
+        ) # g: gamma (fwhm)
         self.l['lp'] = self.ax[0].scatter(
             [], [],
             marker='x',
@@ -223,6 +243,18 @@ class MatplotlibWidget(QWidget):
             markerfacecolor='none', 
             color=color[1]
         ) # B
+        self.l['lGpre'] = self.ax[0].plot(
+            [], [], 
+            marker='o', 
+            markerfacecolor='none', 
+            color='gray'
+        ) # previous G
+        self.l['lBpre'] = self.ax[1].plot(
+            [], [], 
+            marker='o', 
+            markerfacecolor='none', 
+            color='gray'
+        ) # previous B
         self.l['lGfit'] = self.ax[0].plot(
             [], [], 
             color='k'
@@ -316,6 +348,33 @@ class MatplotlibWidget(QWidget):
         ) # l
         self.l['cbar'] = plt.colorbar(self.l['C'], ax=self.ax[0]) # lm
 
+    def init_legendfig(self,  *args, **kwargs):
+        ''' 
+        plot a figure with only legend
+        '''
+        self.initax_xy()
+        # set label of ax[1]
+        self.set_ax_items(self.ax[0], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
+
+        self.ax[0].set_axis_off() # turn off the axis
+
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            self.ax[0].plot([], [], label=i) # l[i]
+        self.leg = self.fig.legend(
+            loc='upper center', 
+            bbox_to_anchor=(0.5, 1),
+            borderaxespad=0.,
+            ncol=int((settings_init['max_harmonic']+1)/2), 
+            frameon=False, facecolor='none')
+        # self.canvas.draw()
+        # print(dir(self.leg))
+        # p = self.leg.get_window_extent() #Bbox of legend
+        # # set window height
+        # dpi = self.fig.get_dpi()
+        # # print(dir(self.fig))
+        # fsize = self.fig.get_figheight()
+ 
+
     # def sizeHint(self):
     #     return QSize(*self.get_width_height())
 
@@ -364,6 +423,8 @@ class MatplotlibWidget(QWidget):
             self.init_data(title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
         elif axtype == 'contour':
             self.init_contour(title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
+        elif axtype == 'legend':
+            self.init_legendfig()
         else:
             pass
 

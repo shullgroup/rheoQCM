@@ -571,6 +571,17 @@ class QCMApp(QMainWindow):
         # self.addToolBar(Qt.TopToolBarArea, self.ui.mpl_dummy_fig.toolbar)
         # self.ui.mpl_dummy_fig.hide() # hide the figure
 
+        # add mpl_legend into frame_legend
+        self.ui.mpl_legend = MatplotlibWidget(
+            parent=self.ui.frame_legend, 
+            axtype='legend',
+            showtoolbar=False,
+            )  
+        self.ui.frame_legend.setLayout(self.set_frame_layout(self.ui.mpl_legend))
+        # change frame_legend height
+        mpl_legend_p = self.ui.mpl_legend.leg.get_window_extent()
+        self.ui.frame_legend.setFixedHeight((mpl_legend_p.p1[1]-mpl_legend_p.p0[1]))
+        
         # add figure mpl_sp[n] into frame_sp[n]
         for i in range(1, settings_init['max_harmonic']+2, 2):
             # add first ax
@@ -582,7 +593,12 @@ class QCMApp(QMainWindow):
                     showtoolbar=False,
                 )
             )
-            getattr(self.ui, 'mpl_sp' + str(i)).fig.text(0.01, 0.98, str(i), va='top',ha='left', weight='bold')
+            getattr(self.ui, 'mpl_sp' + str(i)).fig.text(0.01, 0.98, str(i), va='top',ha='left') # option: weight='bold'
+            # set mpl_sp<n> border
+            getattr(self.ui, 'mpl_sp' + str(i)).setStyleSheet(
+                "border: 0;"
+            )
+            getattr(self.ui, 'mpl_sp' + str(i)).setContentsMargins(0, 0, 0, 0)
             getattr(self.ui, 'frame_sp' + str(i)).setLayout(
                 self.set_frame_layout(
                     getattr(self.ui, 'mpl_sp' + str(i))

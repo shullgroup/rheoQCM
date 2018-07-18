@@ -156,7 +156,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>0</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1134,7 +1134,7 @@ background-color: red;
                  <enum>QTabWidget::Rounded</enum>
                 </property>
                 <property name="currentIndex">
-                 <number>5</number>
+                 <number>2</number>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -4497,7 +4497,7 @@ border: 1px solid blue;
                  <item>
                   <widget class="QRadioButton" name="radioButton_spectra_showBp">
                    <property name="text">
-                    <string>Susceptance (Bp)</string>
+                    <string>Bp</string>
                    </property>
                    <property name="checked">
                     <bool>true</bool>
@@ -5510,6 +5510,34 @@ p, li { white-space: pre-wrap; }
           <property name="rightMargin">
            <number>6</number>
           </property>
+          <item>
+           <widget class="QFrame" name="frame_legend">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Sunken</enum>
+            </property>
+           </widget>
+          </item>
           <item>
            <spacer name="horizontalSpacer_14">
             <property name="orientation">
