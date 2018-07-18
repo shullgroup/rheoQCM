@@ -682,13 +682,13 @@ class AccessMyVNA():
         # print(nStart)
         print('GetScanData 0')
         nSteps = nEnd - nStart + 1
-        
-        double_na = c_double * nSteps
-        double_nb = c_double * nSteps
+        print('nSteps=', nSteps)
+        double_n = c_double * (nSteps)
+        # double_nb = c_double * nSteps
         # data_a = clib.as_ctypes(np.zeros(nSteps))
         # data_b = clib.as_ctypes(np.zeros(nSteps))
-        data_a = double_na()
-        data_b = double_nb()
+        data_a = double_n()
+        data_b = double_n()
         # print('data\n',  data_a[2], data_b[2])
         # cast the array into a pointer of type c_double:
         data_a_ptr = cast(data_a, POINTER(c_double))
@@ -723,9 +723,9 @@ class AccessMyVNA():
         # wait for some time
         time.sleep(2)
         ret, nSteps = self.GetScanSteps()
-        ret, f, G = self.GetScanData(nStart=0, nEnd=nSteps-2, nWhata=-1, nWhatb=15)
+        ret, f, G = self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
         time.sleep(1)
-        ret, _, B = self.GetScanData(nStart=0, nEnd=nSteps-2, nWhata=-2, nWhatb=16)
+        ret, _, B = self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-2, nWhatb=16)
         # self.Close()
         return ret, f, G, B
     
@@ -759,6 +759,8 @@ class AccessMyVNA():
 if __name__ == '__main__':
     
     with AccessMyVNA() as accvna:
+        ret = accvna.GetDoubleArray()
+        # ret, f, G = accvna.GetScanData(nStart=0, nEnd=10-1, nWhata=-1, nWhatb=15)
         ret, f, G, B = accvna.single_scan()
         print(ret)
     # accvna = AccessMyVNA() 
