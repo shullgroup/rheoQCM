@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1176</width>
+    <width>1114</width>
     <height>822</height>
    </rect>
   </property>
@@ -156,7 +156,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -6037,7 +6037,7 @@ border: 1px solid blue;
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1176</width>
+     <width>1114</width>
      <height>21</height>
     </rect>
    </property>
