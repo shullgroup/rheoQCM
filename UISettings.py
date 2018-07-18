@@ -408,4 +408,31 @@ settings_default = {
         'comboBox_gammascale': 'linear',
         'checkBox_settings_settings_linktime': False
     },
+
+    # default selections for spectra show
+    'radioButton_spectra_showBp': True,
+    'radioButton_spectra_showpolar': False,
+    'checkBox_spectra_shoechi': False,
+
+    # default selections for plot 1 elements
+    'comboBox_plt1_choice': 'dfn_t', 
+    'checkBox_plt1_h1': False,
+    'checkBox_plt1_h3': False,
+    'checkBox_plt1_h5': False,
+    'checkBox_plt1_h7': False,
+    'checkBox_plt1_h9': False,
+    'checkBox_plt1_h11': False,
+    'radioButton_plt1_samp': True,
+    'radioButton_plt1_ref': False,
+
+    # default selections for plot 2 elements
+    'comboBox_plt2_choice': 'dg_t',
+    'checkBox_plt2_h1': False,
+    'checkBox_plt2_h3': False,
+    'checkBox_plt2_h5': False,
+    'checkBox_plt2_h7': False,
+    'checkBox_plt2_h9': False,
+    'checkBox_plt2_h11': False,
+    'radioButton_plt2_samp': False,
+    'radioButton_plt2_ref': True
 }

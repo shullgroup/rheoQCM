@@ -8,7 +8,7 @@ import math
 import json
 import datetime, time
 from PyQt5.QtCore import pyqtSlot, Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton
 from PyQt5.QtGui import QIcon, QPixmap
 # from PyQt5.uic import loadUi
 
@@ -30,9 +30,10 @@ class QCMApp(QMainWindow):
         self.fileFlag = False
         self.fileName = ''
         self.settings = settings_default
-        self.load_settings()
+        self.harmonic_tab = 1
         self.main()
-
+        self.load_settings()
+  
         # check system
         self.system = UIModules.system_check()
         # initialize AccessMyVNA
@@ -182,12 +183,39 @@ class QCMApp(QMainWindow):
             "QLineEdit { background: transparent; }"
         )
 
-        # set signals to update fitting and display options
+        # set signals to update fitting and display settings
         self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_widget)
         self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_widget)
         self.ui.checkBox_showchi.stateChanged.connect(self.update_widget)
         self.ui.checkBox_showpolar.stateChanged.connect(self.update_widget)
         self.ui.comboBox_fitfactor.activated.connect(self.update_widget)
+
+        # set signals to update spectra show display options
+        self.ui.radioButton_spectra_showBp.toggled.connect(self.update_widget)
+        self.ui.radioButton_spectra_showpolar.toggled.connect(self.update_widget)
+        self.ui.checkBox_spectra_shoechi.toggled.connect(self.update_widget)
+
+        # set signals to update plot 1 options
+        self.ui.comboBox_plt1_choice.activated.connect(self.update_widget)
+        self.ui.checkBox_plt1_h1.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h3.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h5.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h7.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h9.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h11.stateChanged.connect(self.update_widget)
+        self.ui.radioButton_plt1_ref.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt1_samp.toggled.connect(self.update_widget)
+
+        # set signals to update plot 2 options
+        self.ui.comboBox_plt2_choice.activated.connect(self.update_widget)
+        self.ui.checkBox_plt2_h1.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h3.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h5.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h7.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h9.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h11.stateChanged.connect(self.update_widget)
+        self.ui.radioButton_plt2_ref.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt2_samp.toggled.connect(self.update_widget)
 
 #endregion
 
@@ -780,7 +808,7 @@ class QCMApp(QMainWindow):
     def on_triggered_load_data(self):
         self.fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
         # change the displayed file directory in lineEdit_datafilestr
-        self.ui.lineEdit_datafilestr.setText(fileName)
+        self.ui.lineEdit_datafilestr.setText(self.fileName)
         # set lineEdit_reftime
         # set lineEdit_reftime read only and disable pushButton_resetreftime
         self.ui.lineEdit_reftime.setReadOnly(True)
@@ -798,7 +826,7 @@ class QCMApp(QMainWindow):
         self.fileName = self.openFileNameDialog('Choose a file to use its setting') # !! add path of last opened folder
         try:
             # load json file containing formerly saved settings
-            with open(self.fileName, "r") as f:
+            with open(self.fileName, 'r') as f:
                 self.settings = json.load(f)
             # load settings from file into gui
             self.load_settings()
@@ -923,7 +951,7 @@ class QCMApp(QMainWindow):
             current_index = stwgt.currentIndex()  # get current index
             stwgt.setCurrentIndex((current_index + diret) % count) # increase or decrease index by diret
     
-    # update widget values in settings dict
+    # update widget values in settings dict, only works with elements out of settings_settings
     def update_widget(self, signal):
         print(self.sender().objectName())
         print(type(self.sender()))
@@ -935,6 +963,9 @@ class QCMApp(QMainWindow):
                 self.settings[self.sender().objectName()] = 0
         # if the sender of the signal isA QCheckBox object, update QCheckBox vals in dict
         elif isinstance(self.sender(), QCheckBox):
+            self.settings[self.sender().objectName()] = not self.settings[self.sender().objectName()]
+        # if the sender of the signal isA QRadioButton object, update QRadioButton vals in dict
+        elif isinstance(self.sender(), QRadioButton):
             self.settings[self.sender().objectName()] = not self.settings[self.sender().objectName()]
         # if the sender of the signal isA QComboBox object, udpate QComboBox vals in dict
         elif isinstance(self.sender(), QComboBox):
@@ -1086,11 +1117,46 @@ class QCMApp(QMainWindow):
             if key == self.settings['comboBox_fitfactor']:
                 self.ui.comboBox_fitfactor.setCurrentIndex(self.ui.comboBox_fitfactor.findData(key))
                 break
+
         # set opened harmonic tab
         self.harmonic_tab = 1
-        # set delault displaying of harmonics, triggered when index changed
+        # set tab displayed to harm 1
         self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
+        # set default displaying of setting settings
+        self.update_harmonic_tab()
 
+        # set default displaying of spectra show options
+        self.ui.radioButton_spectra_showBp.setChecked(self.settings['radioButton_spectra_showBp'])
+        self.ui.radioButton_spectra_showpolar.setChecked(self.settings['radioButton_spectra_showpolar'])
+        self.ui.checkBox_spectra_shoechi.setChecked(self.settings['checkBox_spectra_shoechi'])
+
+        # set default displaying of plot 1 options
+        for key, val in settings_init['data_plt_choose'].items():
+            if key == self.settings['comboBox_plt1_choice']:
+                self.ui.comboBox_plt1_choice.setCurrentIndex(self.ui.comboBox_plt1_choice.findData(key))
+                break
+        self.ui.checkBox_plt1_h1.setChecked(self.settings['checkBox_plt1_h1'])
+        self.ui.checkBox_plt1_h3.setChecked(self.settings['checkBox_plt1_h3'])
+        self.ui.checkBox_plt1_h5.setChecked(self.settings['checkBox_plt1_h5'])
+        self.ui.checkBox_plt1_h7.setChecked(self.settings['checkBox_plt1_h7'])
+        self.ui.checkBox_plt1_h9.setChecked(self.settings['checkBox_plt1_h9'])
+        self.ui.checkBox_plt1_h11.setChecked(self.settings['checkBox_plt1_h11'])
+        self.ui.radioButton_plt1_samp.setChecked(self.settings['radioButton_plt1_samp'])
+        self.ui.radioButton_plt1_ref.setChecked(self.settings['radioButton_plt1_ref'])
+
+        # set default displaying of plot 2 options
+        for key, val in settings_init['data_plt_choose'].items():
+            if key == self.settings['comboBox_plt2_choice']:
+                self.ui.comboBox_plt2_choice.setCurrentIndex(self.ui.comboBox_plt2_choice.findData(key))
+                break
+        self.ui.checkBox_plt2_h1.setChecked(self.settings['checkBox_plt2_h1'])
+        self.ui.checkBox_plt2_h3.setChecked(self.settings['checkBox_plt2_h3'])
+        self.ui.checkBox_plt2_h5.setChecked(self.settings['checkBox_plt2_h5'])
+        self.ui.checkBox_plt2_h7.setChecked(self.settings['checkBox_plt2_h7'])
+        self.ui.checkBox_plt2_h9.setChecked(self.settings['checkBox_plt2_h9'])
+        self.ui.checkBox_plt2_h11.setChecked(self.settings['checkBox_plt2_h11'])
+        self.ui.radioButton_plt2_samp.setChecked(self.settings['radioButton_plt2_samp'])
+        self.ui.radioButton_plt2_ref.setChecked(self.settings['radioButton_plt2_ref'])
 
 #endregion
 
