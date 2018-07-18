@@ -88,6 +88,12 @@ class MatplotlibWidget(QWidget):
         
         self.initial_axes(axtype=axtype, title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale='linear')
         # self.canvas.draw()
+        # looks doesn't work
+        self.fig.tight_layout(pad=1, h_pad=0, w_pad=0, rect=(0, 0, 0.5, 1.5)) 
+        self.fig.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=None)
+        self.fig.set_constrained_layout_pads(w_pad=0., h_pad=0.,
+        hspace=0., wspace=0.)
+        self.fig.tight_layout()
 
     def initax_xy(self, *args, **kwargs):
         # axes
@@ -130,10 +136,12 @@ class MatplotlibWidget(QWidget):
         initialize ax[0]: .lG, .lGfit, .lp, .lpfit plot
         initialize ax[1]: .lB, .lBfit, plot
         '''
+
         self.initax_xyy()
         # set label of ax[1]
         self.set_ax_items(self.ax[0], title=title, xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
         self.set_ax_items(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
+
 
         self.ax[0].margins(x=0)
         self.ax[1].margins(x=0)
@@ -243,6 +251,7 @@ class MatplotlibWidget(QWidget):
         self.set_ax_items(self.ax[0], xlabel=r'$G_P$ (mS)',ylabel=r'$B_P$ (mS)')
 
         self.ax[0].autoscale()
+        self.ax[0].set_aspect('equal')
 
         self.l['l'] = self.ax[0].plot(
             [], [], 
