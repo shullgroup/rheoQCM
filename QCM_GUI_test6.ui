@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1114</width>
-    <height>943</height>
+    <height>839</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -162,7 +162,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1898,7 +1898,7 @@ background-repeat: none;
                 <item>
                  <widget class="QGroupBox" name="groupBox_settings_data_showdata">
                   <property name="title">
-                   <string>Show &amp; Browse Data</string>
+                   <string>Show Browse Data</string>
                   </property>
                   <property name="flat">
                    <bool>true</bool>
@@ -1960,7 +1960,7 @@ background-repeat: none;
                         </size>
                        </property>
                        <property name="text">
-                        <string>&lt;&lt;</string>
+                        <string>|&lt;</string>
                        </property>
                       </widget>
                      </item>
@@ -2060,10 +2060,16 @@ background-repeat: none;
                    <string>Refit</string>
                   </property>
                   <property name="popupMode">
-                   <enum>QToolButton::MenuButtonPopup</enum>
+                   <enum>QToolButton::InstantPopup</enum>
                   </property>
                   <property name="toolButtonStyle">
                    <enum>Qt::ToolButtonTextOnly</enum>
+                  </property>
+                  <property name="autoRaise">
+                   <bool>false</bool>
+                  </property>
+                  <property name="arrowType">
+                   <enum>Qt::NoArrow</enum>
                   </property>
                  </widget>
                 </item>
@@ -3307,7 +3313,7 @@ background-repeat: none;
                    <string> Solve</string>
                   </property>
                   <property name="popupMode">
-                   <enum>QToolButton::MenuButtonPopup</enum>
+                   <enum>QToolButton::InstantPopup</enum>
                   </property>
                   <property name="toolButtonStyle">
                    <enum>Qt::ToolButtonTextOnly</enum>
@@ -3621,21 +3627,9 @@ border-image: url(:/button/rc/plus_p.svg);
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="pushButton_settings_mechanics_errorsettings">
-                  <property name="maximumSize">
-                   <size>
-                    <width>24</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
+                 <widget class="QToolButton" name="toolButton_settings_mechanics_errorsettings">
                   <property name="text">
                    <string>...</string>
-                  </property>
-                  <property name="checkable">
-                   <bool>true</bool>
-                  </property>
-                  <property name="checked">
-                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -4358,7 +4352,7 @@ border-image: url(:/button/rc/plus_p.svg);
              </sizepolicy>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="page_spectra_topshow">
              <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -4770,7 +4764,7 @@ border: 1px solid blue;
                 <item>
                  <widget class="QFrame" name="frame_spectra_fit">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
                     <horstretch>0</horstretch>
                     <verstretch>1</verstretch>
                    </sizepolicy>
@@ -4995,7 +4989,7 @@ border: 1px solid blue;
                      </size>
                     </property>
                     <property name="text">
-                     <string>n *</string>
+                     <string>1 *</string>
                     </property>
                     <property name="alignment">
                      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -5018,6 +5012,9 @@ border: 1px solid blue;
                       <width>80</width>
                       <height>16777215</height>
                      </size>
+                    </property>
+                    <property name="readOnly">
+                     <bool>true</bool>
                     </property>
                    </widget>
                   </item>
@@ -5133,8 +5130,8 @@ border: 1px solid blue;
                 <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2'; font-size:8.25pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
               </widget>
               <widget class="QWidget" name="layoutWidget">
@@ -5147,13 +5144,13 @@ p, li { white-space: pre-wrap; }
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
                     <horstretch>0</horstretch>
-                    <verstretch>1</verstretch>
+                    <verstretch>2</verstretch>
                    </sizepolicy>
                   </property>
                   <property name="minimumSize">
                    <size>
                     <width>0</width>
-                    <height>150</height>
+                    <height>200</height>
                    </size>
                   </property>
                   <property name="frameShape">
@@ -5250,6 +5247,12 @@ p, li { white-space: pre-wrap; }
                   </item>
                   <item>
                    <widget class="QPushButton" name="pushButton_spectra_mechanics_clear">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="text">
                      <string>Clear</string>
                     </property>
@@ -5263,11 +5266,17 @@ p, li { white-space: pre-wrap; }
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>23</height>
+                     </size>
+                    </property>
                     <property name="text">
-                     <string>Plot Selects</string>
+                     <string>Plot</string>
                     </property>
                     <property name="popupMode">
-                     <enum>QToolButton::MenuButtonPopup</enum>
+                     <enum>QToolButton::InstantPopup</enum>
                     </property>
                     <property name="toolButtonStyle">
                      <enum>Qt::ToolButtonTextBesideIcon</enum>
@@ -5500,7 +5509,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QGroupBox" name="groupBox_data">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-         <horstretch>2</horstretch>
+         <horstretch>1</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
@@ -5542,13 +5551,13 @@ p, li { white-space: pre-wrap; }
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>20</height>
+              <height>17</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
-              <height>20</height>
+              <height>17</height>
              </size>
             </property>
             <property name="frameShape">
@@ -6105,7 +6114,7 @@ border: 1px solid blue;
      <x>0</x>
      <y>0</y>
      <width>1114</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -6197,7 +6206,7 @@ border: 1px solid blue;
     <string>toolBar</string>
    </property>
    <property name="toolButtonStyle">
-    <enum>Qt::ToolButtonIconOnly</enum>
+    <enum>Qt::ToolButtonTextUnderIcon</enum>
    </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
@@ -6205,6 +6214,7 @@ border: 1px solid blue;
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionNew_Data"/>
    <addaction name="actionLoad_Data"/>
    <addaction name="actionLoad_Settings"/>
    <addaction name="separator"/>
@@ -6521,6 +6531,10 @@ border: 1px solid blue;
    </property>
   </action>
   <action name="actionNew_Data">
+   <property name="icon">
+    <iconset resource="QCM_GUI_source.qrc">
+     <normaloff>:/icon/rc/new.svg</normaloff>:/icon/rc/new.svg</iconset>
+   </property>
    <property name="text">
     <string>New Data</string>
    </property>
@@ -6549,6 +6563,70 @@ border: 1px solid blue;
    </property>
    <property name="text">
     <string>Delete Selected</string>
+   </property>
+  </action>
+  <action name="actionFit_all">
+   <property name="text">
+    <string>Fit all</string>
+   </property>
+   <property name="toolTip">
+    <string>Fit all data</string>
+   </property>
+  </action>
+  <action name="actionFit_marked">
+   <property name="text">
+    <string>Fit marked</string>
+   </property>
+   <property name="toolTip">
+    <string>Fit marked data</string>
+   </property>
+  </action>
+  <action name="actionFit_selected">
+   <property name="text">
+    <string>Fit selected</string>
+   </property>
+   <property name="toolTip">
+    <string>Fit selected data</string>
+   </property>
+  </action>
+  <action name="actionSolve_all">
+   <property name="text">
+    <string>Solve all</string>
+   </property>
+   <property name="toolTip">
+    <string>Solve all data</string>
+   </property>
+  </action>
+  <action name="actionSolve_marked">
+   <property name="text">
+    <string>Solve marked</string>
+   </property>
+   <property name="toolTip">
+    <string>Solve marked data</string>
+   </property>
+  </action>
+  <action name="actionSolve_selected">
+   <property name="text">
+    <string>Solve selected</string>
+   </property>
+   <property name="toolTip">
+    <string>Solve selected data</string>
+   </property>
+  </action>
+  <action name="actionRows_time">
+   <property name="text">
+    <string>Rows - time</string>
+   </property>
+   <property name="toolTip">
+    <string>Plot selected rows vs. time</string>
+   </property>
+  </action>
+  <action name="actionRow_s1_Row_s2">
+   <property name="text">
+    <string>Row[s1] - Row[s2]</string>
+   </property>
+   <property name="toolTip">
+    <string>Plot selected two rows (Row[s1] vs. Row[s2])</string>
    </property>
   </action>
  </widget>
@@ -6598,22 +6676,6 @@ border: 1px solid blue;
     <hint type="destinationlabel">
      <x>249</x>
      <y>667</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>pushButton_settings_mechanics_errorsettings</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>tableWidget_settings_mechanics_errortab</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>100</x>
-     <y>347</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>141</x>
-     <y>425</y>
     </hint>
    </hints>
   </connection>

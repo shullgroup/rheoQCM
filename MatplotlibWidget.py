@@ -9,10 +9,10 @@ ax.set_visible(False)
 ax.change_geometry(2,2,i+1)
 '''
 
-import matplotlib
-matplotlib.use('QT5Agg')
+# import matplotlib
+# matplotlib.use('QT5Agg')
 # matplotlib.rcParams['toolbar'] = 'toolmanager'
-matplotlib.rcParams['font.size'] = 7
+# matplotlib.rcParams['font.size'] = 10
 
 # import matplotlib.rcParams
 # rcParams['font.size'] = 9
@@ -44,15 +44,19 @@ class MatplotlibWidget(QWidget):
 
     def __init__(self, parent=None, axtype='', title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', showtoolbar=True, dpi=100, *args, **kwargs):
         super(MatplotlibWidget, self).__init__(parent)
-        
-        self.fig = Figure(tight_layout=True, dpi=dpi, facecolor='none')
+
+        # initialize axes (ax) and plots (l)
+        self.axtype = axtype
+        self.ax = [] # list of axes 
+        self.l = {} # all the plot stored in dict
+        self.leg = '' # initiate legend 
+
+        if axtype == 'sp': 
+            self.fig = Figure(tight_layout={'pad': 0.}, dpi=dpi, facecolor='none')
+        else:
+            self.fig = Figure(tight_layout={'pad': 0.2}, dpi=dpi, facecolor='none')
         ### set figure background transparsent
         # self.setStyleSheet("background: transparent;")
-        
-        if axtype == 'sp':
-            matplotlib.rcParams['font.size'] = 5
-        else:
-            matplotlib.rcParams['font.size'] = 8
 
         # FigureCanvas.__init__(self, fig)
         self.canvas = FigureCanvas(self.fig)
@@ -60,6 +64,7 @@ class MatplotlibWidget(QWidget):
                                    QSizePolicy.Expanding)
         self.canvas.setFocusPolicy(Qt.ClickFocus)
         self.canvas.setFocus()
+        # connect with resize function
         # self.canvas.mpl_connect("resize_event", self.resize)
 
         # layout
@@ -92,21 +97,18 @@ class MatplotlibWidget(QWidget):
             # pass
             self.toolbar.hide() # hide toolbar. remove this will make every figure with shwotoolbar = False show tiny short toolbar 
         
-        # initialize axes (ax) and plots (l)
-        self.ax = [] # list of axes 
-        self.l = {} # all the plot stored in dict
-        self.leg = '' # initiate legend 
-        
-        self.initial_axes(axtype=axtype, title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale='linear')
+       
+        self.initial_axes(title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale='linear')
 
         # set figure border
+        # self.resize('draw_event')
         # if axtype == 'sp':
         #     plt.tight_layout(pad=1.08)
         # else:
         #     self.fig.subplots_adjust(left=0.12, bottom=0.13, right=.97, top=.98, wspace=0, hspace=0)
         #     # self.fig.tight_layout()
         #     # self.fig.tight_layout(pad=0.5, h_pad=0, w_pad=0, rect=(0, 0, 1, 1))
-        # self.canvas.draw()
+        self.canvas.draw()
     
              
         # self.fig.set_constrained_layout_pads(w_pad=0., h_pad=0., hspace=0., wspace=0.) # for python >= 3.6
@@ -161,10 +163,6 @@ class MatplotlibWidget(QWidget):
         '''
 
         self.initax_xyy()
-        # set label of ax[1]
-        self.set_ax_items(self.ax[0], title=title, xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
-        self.set_ax_items(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
-
 
         self.ax[0].margins(x=0)
         self.ax[1].margins(x=0)
@@ -198,6 +196,12 @@ class MatplotlibWidget(QWidget):
             markerfacecolor='none', 
             color='gray'
         ) # previous B
+        self.l['lPpre'] = self.ax[1].plot(
+            [], [], 
+            marker='o', 
+            markerfacecolor='none', 
+            color='gray'
+        ) # previous polar
         self.l['lGfit'] = self.ax[0].plot(
             [], [], 
             color='k'
@@ -215,15 +219,20 @@ class MatplotlibWidget(QWidget):
             [], [],
             color='k'
         ) # g: gamma (fwhm)
-        self.l['lp'] = self.ax[0].scatter(
+        self.l['lP'] = self.ax[0].scatter(
             [], [],
             marker='x',
             color='k'
         ) # polar plot
-        self.l['lpfit'] = self.ax[0].plot(
+        self.l['lPfit'] = self.ax[0].plot(
             [], [],
             color='k'
         ) # polar plot fit
+
+        # set label of ax[1]
+        self.set_ax(self.ax[0], title=title, xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
+        self.set_ax(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
+
 
     def init_sp_fit(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
@@ -231,17 +240,6 @@ class MatplotlibWidget(QWidget):
         initialize .lG, .lB, .lGfit, .lBfit .lf, .lg plot
         '''
         self.initax_xyy()
-        # set label of ax[1]
-        self.set_ax_items(self.ax[0], xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
-        self.set_ax_items(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
-
-        self.ax[0].margins(x=0)
-        self.ax[1].margins(x=0)
-        self.ax[0].margins(y=.05)
-        self.ax[1].margins(y=.05)
-
-        self.ax[0].autoscale()
-        self.ax[1].autoscale()
 
         self.l['lG'] = self.ax[0].plot(
             [], [], 
@@ -285,17 +283,25 @@ class MatplotlibWidget(QWidget):
             color='k'
         ) # g: gamma (fwhm)
 
+        # set label of ax[1]
+        self.set_ax(self.ax[0], xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
+        self.set_ax(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
+
+        self.ax[0].margins(x=0)
+        self.ax[1].margins(x=0)
+        self.ax[0].margins(y=.05)
+        self.ax[1].margins(y=.05)
+
+        self.ax[0].autoscale()
+        self.ax[1].autoscale()
+
+
     def init_sp_polar(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
         initialize the spectra polar
         initialize plot: l['l'], l['lfit']
         '''
         self.initax_xy()
-        # set label of ax[1]
-        self.set_ax_items(self.ax[0], xlabel=r'$G_P$ (mS)',ylabel=r'$B_P$ (mS)')
-
-        self.ax[0].autoscale()
-        self.ax[0].set_aspect('equal')
 
         self.l['l'] = self.ax[0].plot(
             [], [], 
@@ -308,6 +314,13 @@ class MatplotlibWidget(QWidget):
             color='k'
         ) # fit
 
+        # set label of ax[1]
+        self.set_ax(self.ax[0], xlabel=r'$G_P$ (mS)',ylabel=r'$B_P$ (mS)')
+
+        self.ax[0].autoscale()
+        self.ax[0].set_aspect('equal')
+
+
     def init_data(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
         initialize the mpl_plt1 & mpl_plt2
@@ -316,10 +329,6 @@ class MatplotlibWidget(QWidget):
             .lm<nharm>
         '''
         self.initax_xy()
-        # set label of ax[1]
-        self.set_ax_items(self.ax[0], xlabel='Time (s)',ylabel=ylabel)
-
-        self.ax[0].autoscale()
 
         for i in range(1, int(settings_init['max_harmonic']+2), 2):
             self.l['l' + str(i)] = self.ax[0].plot(
@@ -333,6 +342,12 @@ class MatplotlibWidget(QWidget):
                     color=self.l['l' + str(i)][0].get_color() # set the same color as .l
                 ) # lm
 
+        # set label of ax[1]
+        self.set_ax(self.ax[0], xlabel='Time (s)',ylabel=ylabel)
+
+        self.ax[0].autoscale()
+
+
     def init_contour(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
         initialize the mechanics_contour1 & mechanics_contour2
@@ -341,10 +356,6 @@ class MatplotlibWidget(QWidget):
             .l['cbar'] (colorbar)
         '''
         self.initax_xy()
-        # set label of ax[1]
-        self.set_ax_items(self.ax[0], xlabel=r'$d/\lambda$',ylabel=r'$\Phi$ ($\degree$)')
-
-        self.ax[0].autoscale()
 
         # initiate X, Y, Z data
         levels = settings_init['contour']['levels']
@@ -358,17 +369,20 @@ class MatplotlibWidget(QWidget):
         self.l['C'] = self.ax[0].contourf(
             X, Y, Z, levels, # X, Y, Z, N
         ) # l
-        self.l['cbar'] = plt.colorbar(self.l['C'], ax=self.ax[0]) # lm
+        self.l['colorbar'] = plt.colorbar(self.l['C'], ax=self.ax[0]) # lm
+        self.canvas.draw()
+
+        # set label of ax[1]
+        self.set_ax(self.ax[0], xlabel=r'$d/\lambda$',ylabel=r'$\Phi$ ($\degree$)')
+
+        self.ax[0].autoscale()
+
 
     def init_legendfig(self,  *args, **kwargs):
         ''' 
         plot a figure with only legend
         '''
         self.initax_xy()
-        # set label of ax[1]
-        self.set_ax_items(self.ax[0], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
-
-        self.ax[0].set_axis_off() # turn off the axis
 
         for i in range(1, settings_init['max_harmonic']+2, 2):
             self.ax[0].plot([], [], label=i) # l[i]
@@ -378,7 +392,13 @@ class MatplotlibWidget(QWidget):
             borderaxespad=0.,
             ncol=int((settings_init['max_harmonic']+1)/2), 
             frameon=False, facecolor='none')
-        # self.canvas.draw()
+        self.canvas.draw()
+
+        # set label of ax[1]
+        self.set_ax(self.ax[0], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
+
+        self.ax[0].set_axis_off() # turn off the axis
+
         # print(dir(self.leg))
         # p = self.leg.get_window_extent() #Bbox of legend
         # # set window height
@@ -393,10 +413,18 @@ class MatplotlibWidget(QWidget):
     # def minimumSizeHint(self):
     #     return QSize(10, 10)
 
+    def set_ax(self, ax, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
+        self.set_ax_items(ax, title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
+        self.set_ax_font(ax)
+
     def set_ax_items(self, ax, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
-        ax.set_title(title, fontsize=8)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
+        if title:
+            ax.set_title(title)
+        if xlabel:
+            ax.set_xlabel(xlabel)
+        if ylabel:
+            ax.set_ylabel(ylabel)
+
         if xscale is not None:
             ax.set_xscale(xscale)
         if yscale is not None:
@@ -406,36 +434,73 @@ class MatplotlibWidget(QWidget):
         if ylim is not None:
             ax.set_ylim(*ylim)
 
+    def set_ax_font(self, ax, *args, **kwargs):
+        if self.axtype == 'sp':
+            fontsize = settings_init['mpl_sp_fontsize']
+            legfontsize = settings_init['mpl_sp_legfontsize']
+        else:
+            fontsize = settings_init['mpl_fontsize']
+            legfontsize = settings_init['mpl_legfontsize']
+
+        if self.axtype == 'contour':
+            for ticklabel in self.l['colorbar'].ax.yaxis.get_ticklabels():
+                ticklabel.set_size(fontsize)
+
+        if self.axtype == 'legend':
+            self.leg
+            plt.setp(self.leg.get_texts(), fontsize=legfontsize) 
+            
+        ax.title.set_fontsize(fontsize+1)
+        ax.xaxis.label.set_size(fontsize+1)
+        ax.yaxis.label.set_size(fontsize+1)
+        # ax.set_ylabel(fontsize=fontsize+1)
+        ax.tick_params(labelsize=fontsize)
 
     def resize(self, event):
         # on resize reposition the navigation toolbar to (0,0) of the axes.
         # require connect
         # self.canvas.mpl_connect("resize_event", self.resize)
-        x,y = self.fig.axes[0].transAxes.transform((0,0))
-        figw, figh = self.fig.get_size_inches()
-        ynew = figh*self.fig.dpi-y - self.toolbar.frameGeometry().height()
-        self.toolbar.move(x,ynew)        
 
-    def initial_axes(self, axtype='', title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
+        # borders = [60, 40, 10, 5] # left, bottom, right, top in px
+        # figw, figh = self.fig.get_size_inches()
+        # dpi = self.fig.dpi
+        # borders = [
+        #     borders[0] / int(figw * dpi), # left
+        #     borders[1] / int(figh * dpi), # bottom
+        #     (int(figw * dpi) - borders[2]) / int(figw * dpi), # right
+        #     (int(figh * dpi) - borders[3]) / int(figh * dpi), # top
+        # ]
+        # print(figw, figh)
+        # print(borders)
+        # self.fig.subplots_adjust(left=borders[0], bottom=borders[1], right=borders[2], top=borders[3], wspace=0, hspace=0)
+        
+        self.fig.tight_layout(pad=1.08)
+        # x,y = self.ax[0].transAxes.transform((0,0))
+        # print(x, y)
+        # figw, figh = self.fig.get_size_inches()
+        # ynew = figh*self.fig.dpi-y - self.toolbar.frameGeometry().height()
+        # self.toolbar.move(x,ynew)        
+
+    def initial_axes(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
         intialize axes by axtype:
         'xy', 'xyy', 'sp', 'sp_fit', 'sp_polar', 'data', 'contour'
         '''
-        if axtype == 'xy':
+        if self.axtype == 'xy':
             self.initax_xy()
-        elif axtype == 'xyy':
+        elif self.axtype == 'xyy':
             self.initax_xyy()
-        elif axtype == 'sp':
+        elif self.axtype == 'sp':
             self.init_sp(title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
-        elif axtype == 'sp_fit':
+        elif self.axtype == 'sp_fit':
             self.init_sp_fit(title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
-        elif axtype == 'sp_polar':
+        elif self.axtype == 'sp_polar':
             self.init_sp_polar(title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
-        elif axtype == 'data':
+        elif self.axtype == 'data':
             self.init_data(title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
-        elif axtype == 'contour':
+        elif self.axtype == 'contour':
             self.init_contour(title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
-        elif axtype == 'legend':
+        elif self.axtype == 'legend':
             self.init_legendfig()
         else:
             pass
@@ -457,7 +522,7 @@ class MatplotlibWidget(QWidget):
         '''
         self.initax_xy()
         # set label of ax[1]
-        self.set_ax_items(self.ax[0], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
+        self.set_ax(self.ax[0], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
 
         self.ax[0].autoscale()
 

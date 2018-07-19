@@ -8,7 +8,7 @@ import math
 import json
 import datetime, time
 from PyQt5.QtCore import pyqtSlot, Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton, QMenu
 from PyQt5.QtGui import QIcon, QPixmap
 # from PyQt5.uic import loadUi
 
@@ -526,6 +526,35 @@ class QCMApp(QMainWindow):
 
 
 #region action group
+
+        # add menu to toolbutton
+
+        # toolButton_settings_data_refit
+        # create menu: menu_settings_data_refit
+        self.ui.menu_settings_data_refit = QMenu(self.ui.toolButton_settings_data_refit)
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_all)
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_marked)
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_selected)
+        # add menu to toolbutton
+        self.ui.toolButton_settings_data_refit.setMenu(self.ui.menu_settings_data_refit)
+
+        # toolButton_settings_mechanics_solve
+        # create menu: menu_settings_mechanics_solve
+        self.ui.menu_settings_mechanics_solve = QMenu(self.ui.toolButton_settings_mechanics_solve)
+        self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_all)
+        self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_marked)
+        self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_selected)
+        # add menu to toolbutton
+        self.ui.toolButton_settings_mechanics_solve.setMenu(self.ui.menu_settings_mechanics_solve)
+
+        # toolButton_spectra_mechanics_plotrows
+        # create menu: menu_spectra_mechanics_plotrows
+        self.ui.menu_spectra_mechanics_plotrows = QMenu(self.ui.toolButton_spectra_mechanics_plotrows)
+        self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRows_time)
+        self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRow_s1_Row_s2)
+        # add menu to toolbutton
+        self.ui.toolButton_spectra_mechanics_plotrows.setMenu(self.ui.menu_spectra_mechanics_plotrows)
+
         # set action group channel
         self.ui.group_channel = QActionGroup(self, exclusive=True)
         self.ui.group_channel.addAction(self.ui.actionADC_1)
@@ -581,8 +610,9 @@ class QCMApp(QMainWindow):
         self.ui.frame_legend.setLayout(self.set_frame_layout(self.ui.mpl_legend))
         # change frame_legend height
         mpl_legend_p = self.ui.mpl_legend.leg.get_window_extent()
-        # self.ui.frame_legend.setFixedHeight((mpl_legend_p.p1[1]-mpl_legend_p.p0[1]))
-        print(mpl_legend_p)
+        self.ui.frame_legend.setFixedHeight((mpl_legend_p.p1[1]-mpl_legend_p.p0[1]))
+        # self.ui.frame_legend.adjustSize()
+        print('mpl_legend_p',mpl_legend_p)
         
         # add figure mpl_sp[n] into frame_sp[n]
         for i in range(1, settings_init['max_harmonic']+2, 2):

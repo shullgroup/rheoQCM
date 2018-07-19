@@ -158,6 +158,8 @@ settings_init = {
 
     'span_ctrl_steps': [1, 2, 5, 10, 20, 50, 100],
 
+
+    # mpl setings
     'max_mpl_toolbar_height': 20, # in px
 
     'contour': {
@@ -165,8 +167,16 @@ settings_init = {
         'num': 100, # percentage of step increase for phi and dlam
         'phi_lim': [0, 90], # phi limit in degree
         'dlam_lim': [0, 1], # d/lambda limit
-    }
+    },
 
+    # font size for mpl_sp figures
+    'mpl_sp_fontsize': 5,
+    # font size for normal figures
+    'mpl_fontsize': 8,
+    # legend font size for mpl_sp figures
+    'mpl_sp_legfontsize': 5,
+    # legend font size for normal figures
+    'mpl_legfontsize': 8,
 }
 
 settings_default = {
