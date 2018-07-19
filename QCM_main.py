@@ -576,11 +576,13 @@ class QCMApp(QMainWindow):
             parent=self.ui.frame_legend, 
             axtype='legend',
             showtoolbar=False,
-            )  
+            )
+        self.ui.mpl_legend.setStyleSheet("background: transparent;")
         self.ui.frame_legend.setLayout(self.set_frame_layout(self.ui.mpl_legend))
         # change frame_legend height
         mpl_legend_p = self.ui.mpl_legend.leg.get_window_extent()
-        self.ui.frame_legend.setFixedHeight((mpl_legend_p.p1[1]-mpl_legend_p.p0[1]))
+        # self.ui.frame_legend.setFixedHeight((mpl_legend_p.p1[1]-mpl_legend_p.p0[1]))
+        print(mpl_legend_p)
         
         # add figure mpl_sp[n] into frame_sp[n]
         for i in range(1, settings_init['max_harmonic']+2, 2):
@@ -1110,6 +1112,8 @@ class QCMApp(QMainWindow):
         self.resize(*settings_init['window_size'])
         # set delault displaying of tab_settings
         self.ui.tabWidget_settings.setCurrentIndex(0)
+        # set delault displaying of stackedWidget_spetratop
+        self.ui.stackedWidget_spetratop.setCurrentIndex(0)
         # set delault displaying of stackedWidget_spectra
         self.ui.stackedWidget_spectra.setCurrentIndex(0)
         # set delault displaying of stackedWidget_data

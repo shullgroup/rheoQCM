@@ -12,7 +12,7 @@ ax.change_geometry(2,2,i+1)
 import matplotlib
 matplotlib.use('QT5Agg')
 # matplotlib.rcParams['toolbar'] = 'toolmanager'
-matplotlib.rcParams['font.size'] = 9
+matplotlib.rcParams['font.size'] = 7
 
 # import matplotlib.rcParams
 # rcParams['font.size'] = 9
@@ -46,8 +46,13 @@ class MatplotlibWidget(QWidget):
         super(MatplotlibWidget, self).__init__(parent)
         
         self.fig = Figure(tight_layout=True, dpi=dpi, facecolor='none')
-        # set figure background transparsent
-        self.setStyleSheet("background: transparent;")
+        ### set figure background transparsent
+        # self.setStyleSheet("background: transparent;")
+        
+        if axtype == 'sp':
+            matplotlib.rcParams['font.size'] = 5
+        else:
+            matplotlib.rcParams['font.size'] = 8
 
         # FigureCanvas.__init__(self, fig)
         self.canvas = FigureCanvas(self.fig)
@@ -84,7 +89,8 @@ class MatplotlibWidget(QWidget):
         if showtoolbar:
             self.vbox.addWidget(self.toolbar)
         else:
-            self.toolbar.hide() # hide toolbar
+            # pass
+            self.toolbar.hide() # hide toolbar. remove this will make every figure with shwotoolbar = False show tiny short toolbar 
         
         # initialize axes (ax) and plots (l)
         self.ax = [] # list of axes 
@@ -92,11 +98,17 @@ class MatplotlibWidget(QWidget):
         self.leg = '' # initiate legend 
         
         self.initial_axes(axtype=axtype, title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale='linear')
+
+        # set figure border
+        # if axtype == 'sp':
+        #     plt.tight_layout(pad=1.08)
+        # else:
+        #     self.fig.subplots_adjust(left=0.12, bottom=0.13, right=.97, top=.98, wspace=0, hspace=0)
+        #     # self.fig.tight_layout()
+        #     # self.fig.tight_layout(pad=0.5, h_pad=0, w_pad=0, rect=(0, 0, 1, 1))
         # self.canvas.draw()
-        
-        # doesn't work
-        self.fig.tight_layout(pad=1, h_pad=0, w_pad=0, rect=(0, 0, 0.5, 1.5)) 
-        self.fig.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
+    
+             
         # self.fig.set_constrained_layout_pads(w_pad=0., h_pad=0., hspace=0., wspace=0.) # for python >= 3.6
         # self.fig.tight_layout()
 

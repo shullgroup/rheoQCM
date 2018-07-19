@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1114</width>
-    <height>822</height>
+    <height>943</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -45,6 +45,12 @@
     </property>
     <item>
      <widget class="QSplitter" name="splitter">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
@@ -156,7 +162,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>3</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -4344,6 +4350,86 @@ border-image: url(:/button/rc/plus_p.svg);
            <number>6</number>
           </property>
           <item>
+           <widget class="QStackedWidget" name="stackedWidget_spetratop">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="currentIndex">
+             <number>1</number>
+            </property>
+            <widget class="QWidget" name="page_spectra_topshow">
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label_18">
+                <property name="text">
+                 <string>Show: </string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="radioButton_spectra_showBp">
+                <property name="text">
+                 <string>Bp</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QRadioButton" name="radioButton_spectra_showpolar">
+                <property name="text">
+                 <string>Polar plot</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_spectra_shoechi">
+                <property name="text">
+                 <string>Χsq </string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="page_spectra_topempty2">
+             <layout class="QHBoxLayout" name="horizontalLayout_27">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+             </layout>
+            </widget>
+            <widget class="QWidget" name="page_spectra_topempty3"/>
+           </widget>
+          </item>
+          <item>
            <spacer name="horizontalSpacer_5">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -4463,77 +4549,12 @@ border: 1px solid blue;
             </property>
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_9">
+              <property name="spacing">
+               <number>0</number>
+              </property>
               <property name="sizeConstraint">
                <enum>QLayout::SetDefaultConstraint</enum>
               </property>
-              <item>
-               <widget class="QFrame" name="frame">
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Raised</enum>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_25">
-                 <property name="leftMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="topMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="rightMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="bottomMargin">
-                  <number>0</number>
-                 </property>
-                 <item>
-                  <widget class="QLabel" name="label_18">
-                   <property name="text">
-                    <string>Show: </string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QRadioButton" name="radioButton_spectra_showBp">
-                   <property name="text">
-                    <string>Bp</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QRadioButton" name="radioButton_spectra_showpolar">
-                   <property name="text">
-                    <string>Polar plot</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QCheckBox" name="checkBox_spectra_shoechi">
-                   <property name="text">
-                    <string>Χsq </string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="horizontalSpacer_25">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>0</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </widget>
-              </item>
               <item>
                <widget class="QFrame" name="frame_sp1">
                 <property name="sizePolicy">
@@ -5105,15 +5126,15 @@ border: 1px solid blue;
                <property name="maximumSize">
                 <size>
                  <width>16777215</width>
-                 <height>150</height>
+                 <height>100</height>
                 </size>
                </property>
                <property name="html">
                 <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2'; font-size:8.25pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
               </widget>
               <widget class="QWidget" name="layoutWidget">
@@ -5513,25 +5534,25 @@ p, li { white-space: pre-wrap; }
           <item>
            <widget class="QFrame" name="frame_legend">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>1</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>0</height>
+              <height>20</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
-              <height>16777215</height>
+              <height>20</height>
              </size>
             </property>
             <property name="frameShape">
-             <enum>QFrame::StyledPanel</enum>
+             <enum>QFrame::NoFrame</enum>
             </property>
             <property name="frameShadow">
              <enum>QFrame::Sunken</enum>
@@ -5553,6 +5574,12 @@ p, li { white-space: pre-wrap; }
           </item>
           <item>
            <widget class="QPushButton" name="pushButton_data_la">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimumSize">
              <size>
               <width>8</width>
@@ -5591,6 +5618,12 @@ border: 1px solid blue;
           </item>
           <item>
            <widget class="QPushButton" name="pushButton_data_ra">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimumSize">
              <size>
               <width>8</width>
@@ -5652,6 +5685,12 @@ border: 1px solid blue;
             </property>
             <item>
              <widget class="QSplitter" name="splitter_2">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="orientation">
                <enum>Qt::Vertical</enum>
               </property>
@@ -6066,7 +6105,7 @@ border: 1px solid blue;
      <x>0</x>
      <y>0</y>
      <width>1114</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -6537,8 +6576,8 @@ border: 1px solid blue;
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>69</x>
-     <y>618</y>
+     <x>80</x>
+     <y>708</y>
     </hint>
     <hint type="destinationlabel">
      <x>87</x>
@@ -6553,12 +6592,12 @@ border: 1px solid blue;
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>283</x>
-     <y>504</y>
+     <x>248</x>
+     <y>590</y>
     </hint>
     <hint type="destinationlabel">
-     <x>284</x>
-     <y>582</y>
+     <x>249</x>
+     <y>667</y>
     </hint>
    </hints>
   </connection>
@@ -6569,12 +6608,12 @@ border: 1px solid blue;
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>85</x>
-     <y>276</y>
+     <x>100</x>
+     <y>347</y>
     </hint>
     <hint type="destinationlabel">
-     <x>130</x>
-     <y>355</y>
+     <x>141</x>
+     <y>425</y>
     </hint>
    </hints>
   </connection>
@@ -6585,12 +6624,12 @@ border: 1px solid blue;
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>16</x>
-     <y>474</y>
+     <x>26</x>
+     <y>670</y>
     </hint>
     <hint type="destinationlabel">
-     <x>344</x>
-     <y>484</y>
+     <x>370</x>
+     <y>286</y>
     </hint>
    </hints>
   </connection>
@@ -6601,12 +6640,28 @@ border: 1px solid blue;
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>73</x>
-     <y>479</y>
+     <x>83</x>
+     <y>670</y>
     </hint>
     <hint type="destinationlabel">
-     <x>359</x>
-     <y>647</y>
+     <x>370</x>
+     <y>292</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stackedWidget_spectra</sender>
+   <signal>currentChanged(int)</signal>
+   <receiver>stackedWidget_spetratop</receiver>
+   <slot>setCurrentIndex(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>356</x>
+     <y>132</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>513</x>
+     <y>100</y>
     </hint>
    </hints>
   </connection>
