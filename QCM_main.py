@@ -27,8 +27,8 @@ class QCMApp(QMainWindow):
         super(QCMApp, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.fileFlag = False
         self.fileName = ''
+        self.fileFlag = False
         self.settings = settings_default
         self.harmonic_tab = 1
         self.main()
@@ -192,7 +192,7 @@ class QCMApp(QMainWindow):
 
         # set signals to update spectra show display options
         self.ui.radioButton_spectra_showBp.toggled.connect(self.update_widget)
-        self.ui.radioButton_spectra_showpolar.toggled.connect(self.update_widget)
+        #self.ui.radioButton_spectra_showpolar.toggled.connect(self.update_widget)
         self.ui.checkBox_spectra_shoechi.toggled.connect(self.update_widget)
 
         # set signals to update plot 1 options
@@ -415,8 +415,9 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_fit_method.activated.connect(self.update_fitmethod)
         self.ui.comboBox_track_method.activated.connect(self.update_trackmethod)
 
-        # set signals to update fit settings_settings
         self.ui.comboBox_harmfitfactor.activated.connect(self.update_harmfitfactor)
+
+        # set signals to update fit settings_settings
         self.ui.comboBox_sample_channel.activated.connect(self.update_samplechannel)
         self.ui.comboBox_ref_channel.activated.connect(self.update_refchannel)
 
@@ -429,7 +430,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_tempunit.activated.connect(self.update_tempunit)
         self.ui.comboBox_timescale.activated.connect(self.update_timescale)
         self.ui.comboBox_gammascale.activated.connect(self.update_gammascale)
-        self.ui.checkBox_settings_settings_linktime.stateChanged.connect(self.update_linktime)
+        self.ui.checkBox_settings_settings_linktime.stateChanged.connect(self.update_widget)
         
         # set default values
         self.ui.comboBox_base_frequency.setCurrentIndex(0)
@@ -971,8 +972,8 @@ class QCMApp(QMainWindow):
     
     # update widget values in settings dict, only works with elements out of settings_settings
     def update_widget(self, signal):
-        print(self.sender().objectName())
-        print(type(self.sender()))
+        #print(self.sender().objectName())
+        #print(type(self.sender()))
         # if the sender of the signal isA QLineEdit object, update QLineEdit vals in dict
         if isinstance(self.sender(), QLineEdit):
             try:
@@ -990,51 +991,53 @@ class QCMApp(QMainWindow):
             value = self.sender().itemData(signal)
             self.settings[self.sender().objectName()] = value
     
-    def update_dynamicfit(self):
-        self.settings['checkBox_dynamicfit'] = not self.settings['checkBox_dynamicfit']
+    #def update_dynamicfit(self):
+    #    self.settings['checkBox_dynamicfit'] = not self.settings['checkBox_dynamicfit']
 
-    def update_showsusceptance(self):
-        self.settings['checkBox_showsusceptance'] = not self.settings['checkBox_showsusceptance']
+    #def update_showsusceptance(self):
+    #    self.settings['checkBox_showsusceptance'] = not self.settings['checkBox_showsusceptance']
 
-    def update_showchi(self):
-        self.settings['checkBox_showchi'] = not self.settings['checkBox_showchi']
+    #def update_showchi(self):
+    #    self.settings['checkBox_showchi'] = not self.settings['checkBox_showchi']
 
-    def update_showpolarplot(self):
-        self.settings['checkBox_showpolar'] = not self.settings['checkBox_showpolar']
+    #def update_showpolarplot(self):
+    #    self.settings['checkBox_showpolar'] = not self.settings['checkBox_showpolar']
 
     def update_harmonic_tab(self):
+        #print("update_harmonic_tab was called")
         self.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
         self.update_frequencies()
 
-        self.update_guichecks(self.ui.checkBox_settings_temp_sensor, 'checkBox_settings_temp_sensor')
-        self.update_guichecks(self.ui.checkBox_settings_settings_linktime, 'checkBox_settings_settings_linktime')
+        #self.update_guichecks(self.ui.checkBox_settings_temp_sensor, 'checkBox_settings_temp_sensor')
+        #self.update_guichecks(self.ui.checkBox_settings_settings_linktime, 'checkBox_settings_settings_linktime')
 
         self.update_guicombos(self.ui.comboBox_fit_method, 'comboBox_fit_method', 'span_mehtod_choose')
         self.update_guicombos(self.ui.comboBox_track_method, 'comboBox_track_method', 'track_mehtod_choose')
-        self.update_guicombos(self.ui.comboBox_sample_channel, 'comboBox_sample_channel', 'sample_channel_choose')
-        self.update_guicombos(self.ui.comboBox_ref_channel, 'comboBox_ref_channel', 'ref_channel_choose')
-        self.update_guicombos(self.ui.comboBox_thrmcpltype, 'comboBox_thrmcpltype', 'thrmcpl_choose')
-        self.update_guicombos(self.ui.comboBox_timeunit, 'comboBox_timeunit', 'time_unit_choose')
-        self.update_guicombos(self.ui.comboBox_tempunit, 'comboBox_tempunit', 'temp_unit_choose')
-        self.update_guicombos(self.ui.comboBox_timescale, 'comboBox_timescale', 'time_scale_choose')
-        self.update_guicombos(self.ui.comboBox_gammascale, 'comboBox_gammascale', 'gamma_scale_choose')
+        self.update_guicombos(self.ui.comboBox_harmfitfactor, 'comboBox_harmfitfactor', 'fit_factor_choose')
+        #self.update_guicombos(self.ui.comboBox_sample_channel, 'comboBox_sample_channel', 'sample_channel_choose')
+        #self.update_guicombos(self.ui.comboBox_ref_channel, 'comboBox_ref_channel', 'ref_channel_choose')
+        #self.update_guicombos(self.ui.comboBox_thrmcpltype, 'comboBox_thrmcpltype', 'thrmcpl_choose')
+        #self.update_guicombos(self.ui.comboBox_timeunit, 'comboBox_timeunit', 'time_unit_choose')
+        #self.update_guicombos(self.ui.comboBox_tempunit, 'comboBox_tempunit', 'temp_unit_choose')
+        #self.update_guicombos(self.ui.comboBox_timescale, 'comboBox_timescale', 'time_scale_choose')
+        #self.update_guicombos(self.ui.comboBox_gammascale, 'comboBox_gammascale', 'gamma_scale_choose')
         
-        self.update_guicombos(self.ui.comboBox_bandwidth, 'comboBox_bandwidth', 'bandwidth_choose')
-        self.update_guicombos(self.ui.comboBox_base_frequency, 'comboBox_base_frequency', 'base_frequency_choose')
+        #self.update_guicombos(self.ui.comboBox_bandwidth, 'comboBox_bandwidth', 'bandwidth_choose')
+        #self.update_guicombos(self.ui.comboBox_base_frequency, 'comboBox_base_frequency', 'base_frequency_choose')
 
     def update_base_freq(self, base_freq_index):
         value = self.ui.comboBox_base_frequency.itemData(base_freq_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_base_frequency'] = value
+        self.settings['comboBox_base_frequency'] = value
         self.update_frequencies()
 
     def update_bandwidth(self, bandwidth_index):
         value = self.ui.comboBox_bandwidth.itemData(bandwidth_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_bandwidth'] = value
+        self.settings['comboBox_bandwidth'] = value
         self.update_frequencies()
 
     def update_frequencies(self):
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['start_freq'] = self.harmonic_tab * self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_base_frequency'] - self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_bandwidth']
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['end_freq'] = self.harmonic_tab * self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_base_frequency'] + self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_bandwidth']
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['start_freq'] = self.harmonic_tab * self.settings['comboBox_base_frequency'] - self.settings['comboBox_bandwidth']
+        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['end_freq'] = self.harmonic_tab * self.settings['comboBox_base_frequency'] + self.settings['comboBox_bandwidth']
         self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['start_freq']))
         self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['end_freq']))
 
@@ -1057,38 +1060,38 @@ class QCMApp(QMainWindow):
 
     def update_samplechannel(self, samplechannel_index):
         value = self.ui.comboBox_sample_channel.itemData(samplechannel_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_sample_channel'] = value
+        self.settings['comboBox_sample_channel'] = value
 
     def update_refchannel(self, refchannel_index):
         value = self.ui.comboBox_ref_channel.itemData(refchannel_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_ref_channel'] = value
+        self.settings['comboBox_ref_channel'] = value
 
     def update_tempsensor(self):
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_temp_sensor'] = not self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_temp_sensor']
+        print("update_tempsensor was called")
+        self.settings['checkBox_settings_temp_sensor'] = not self.settings['checkBox_settings_temp_sensor']
 
     def update_thrmcpltype(self, thrmcpltype_index):
         value = self.ui.comboBox_thrmcpltype.itemData(thrmcpltype_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_thrmcpltype'] = value
+        self.settings['comboBox_thrmcpltype'] = value
 
     def update_timeunit(self, timeunit_index):
         value = self.ui.comboBox_timeunit.itemData(timeunit_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_timeunit'] = value
+        self.settings['comboBox_timeunit'] = value
 
     def update_tempunit(self, tempunit_index):
         value = self.ui.comboBox_tempunit.itemData(tempunit_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_tempunit'] = value
-
+        self.settings['comboBox_tempunit'] = value
 
     def update_timescale(self, timescale_index):
         value = self.ui.comboBox_timescale.itemData(timescale_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_timescale'] = value
+        self.settings['comboBox_timescale'] = value
 
     def update_gammascale(self, gammascale_index):
         value = self.ui.comboBox_gammascale.itemData(gammascale_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_gammascale'] = value
+        self.settings['comboBox_gammascale'] = value
 
-    def update_linktime(self):
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_settings_linktime'] = not self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['checkBox_settings_settings_linktime']
+    #def update_linktime(self):
+    #    self.settings['checkBox_settings_settings_linktime'] = not self.settings['checkBox_settings_settings_linktime']
 
     def update_guicombos(self, comboBox, name_in_settings, init_dict):
         for key, val in settings_init[init_dict].items():
@@ -1097,6 +1100,7 @@ class QCMApp(QMainWindow):
                 break
 
     def update_guichecks(self, checkBox, name_in_settings):
+        print("update_guichecks was called")
         checkBox.setChecked(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)][name_in_settings])
         
     # debug func
@@ -1132,17 +1136,36 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_showsusceptance.setChecked(self.settings['checkBox_showsusceptance'])
         self.ui.checkBox_showchi.setChecked(self.settings['checkBox_showchi'])
         self.ui.checkBox_showpolar.setChecked(self.settings['checkBox_showpolar'])
+
+        def load_comboBox(comboBox, comboBoxName, choose_dict):
+            for key, val in settings_init[choose_dict].items():
+                if key == self.settings[comboBoxName]:
+                    comboBox.setCurrentIndex(comboBox.findData(key))
+                    break
+
         # load default fit factor range
-        for key, val in settings_init['fit_factor_choose'].items():
-            if key == self.settings['comboBox_fitfactor']:
-                self.ui.comboBox_fitfactor.setCurrentIndex(self.ui.comboBox_fitfactor.findData(key))
-                break
+        load_comboBox(self.ui.comboBox_fitfactor, 'comboBox_fitfactor', 'fit_factor_choose')
+
+        # load default VNA settings
+        load_comboBox(self.ui.comboBox_sample_channel, 'comboBox_sample_channel', 'sample_channel_choose')
+        load_comboBox(self.ui.comboBox_ref_channel, 'comboBox_ref_channel', 'ref_channel_choose')
+        # load default crystal settings
+        load_comboBox(self.ui.comboBox_base_frequency, 'comboBox_base_frequency', 'base_frequency_choose')
+        load_comboBox(self.ui.comboBox_bandwidth, 'comboBox_bandwidth', 'bandwidth_choose')
+        # load default temperature settings
+        self.ui.checkBox_settings_temp_sensor.setChecked(self.settings['checkBox_settings_temp_sensor'])
+        load_comboBox(self.ui.comboBox_thrmcpltype, 'comboBox_thrmcpltype', 'thrmcpl_choose')
+        # load default plots settings
+        load_comboBox(self.ui.comboBox_timeunit, 'comboBox_timeunit', 'time_unit_choose')
+        load_comboBox(self.ui.comboBox_tempunit, 'comboBox_tempunit', 'temp_unit_choose')
+        load_comboBox(self.ui.comboBox_timescale, 'comboBox_timescale', 'time_scale_choose')
+        load_comboBox(self.ui.comboBox_gammascale, 'comboBox_gammascale', 'gamma_scale_choose')
+        self.ui.checkBox_settings_settings_linktime.setChecked(self.settings['checkBox_settings_settings_linktime'])
 
         # set opened harmonic tab
         self.harmonic_tab = 1
         # set tab displayed to harm 1
         self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
-        # set default displaying of setting settings
         self.update_harmonic_tab()
 
         # set default displaying of spectra show options
