@@ -454,13 +454,14 @@ MyVNAGetScanData = vna[10] # MyVNAGetScanData
 # MyVNAGetScanData(0, 199, -1, 15, &dFreq[0], &dData[0]);//scan data
 # nWhat -2: nothing; -1: frequency; 15: Gp; 16:Bp (see the defination in .h file)
 MyVNAGetScanData.errcheck = check_zero
+LP_c_double = POINTER(c_double)
 MyVNAGetScanData.argtypes = [
     c_int,               # _In_ nStart
     c_int,               # _In_ nEnd
     c_int,               # _In_ nWhata
     c_int,               # _In_ nWhatb
-    POINTER(c_double),   # _Out_ *pDataA
-    POINTER(c_double)]   # _Out_ *pDataA
+    LP_c_double,   # _Out_ *pDataA
+    LP_c_double]   # _Out_ *pDataA
 
     # POINTER(double_n),   # _Out_ *pDataA
     # POINTER(double_n)]   # _Out_ *pDataA
@@ -537,7 +538,7 @@ class AccessMyVNA():
         ret = MyVNAClose()
         print('MyVNAClose\n', ret) #MyVNAAutoscale
 
-    def ShowWindow(self, nValue=0):
+    def ShowWindow(self, nValue=1):
         '''
         nValue 0: show; 1:minimize
         '''
@@ -599,6 +600,7 @@ class AccessMyVNA():
         print(nRes_ptr)
         ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nRes_ptr)
         # ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nResult)
+        assert ret != 0, 'MyVNAGetDoubleArray failed'
 
         print('MyVNAGetDoubleArray\n', ret, nResult[:])
         return ret, nResult
@@ -759,9 +761,9 @@ class AccessMyVNA():
 if __name__ == '__main__':
     
     with AccessMyVNA() as accvna:
-        ret = accvna.GetDoubleArray()
-        # ret, f, G = accvna.GetScanData(nStart=0, nEnd=10-1, nWhata=-1, nWhatb=15)
-        ret, f, G, B = accvna.single_scan()
+        # ret = accvna.GetDoubleArray()
+        ret, f, G = accvna.GetScanData(nStart=0, nEnd=10-1, nWhata=-1, nWhatb=15)
+        # ret, f, G, B = accvna.single_scan()
         print(ret)
     # accvna = AccessMyVNA() 
     # # call this function before trying to do anything else

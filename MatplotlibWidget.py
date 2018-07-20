@@ -120,7 +120,7 @@ class MatplotlibWidget(QWidget):
     def initax_xy(self, *args, **kwargs):
         # axes
         ax1 = self.fig.add_subplot(111, facecolor='none')
-        ax1.autoscale()
+        # ax1.autoscale()
         # print(ax.format_coord)
         # print(ax.format_cursor_data)
         # plt.tight_layout()
@@ -142,7 +142,7 @@ class MatplotlibWidget(QWidget):
         ax2.tick_params(axis='y', labelcolor=color[1], color=color[1])
         ax2.yaxis.label.set_color(color[1])
         ax2.spines['right'].set_color(color[1])
-        ax2.autoscale()
+        # ax2.autoscale()
         ax2.spines['left'].set_visible(False)
 
 
@@ -169,8 +169,8 @@ class MatplotlibWidget(QWidget):
         self.ax[0].margins(y=.05)
         self.ax[1].margins(y=.05)
 
-        self.ax[0].autoscale()
-        self.ax[1].autoscale()
+        # self.ax[0].autoscale()
+        # self.ax[1].autoscale()
 
         self.l['lG'] = self.ax[0].plot(
             [], [], 
@@ -292,8 +292,8 @@ class MatplotlibWidget(QWidget):
         self.ax[0].margins(y=.05)
         self.ax[1].margins(y=.05)
 
-        self.ax[0].autoscale()
-        self.ax[1].autoscale()
+        # self.ax[0].autoscale()
+        # self.ax[1].autoscale()
 
 
     def init_sp_polar(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
@@ -317,7 +317,7 @@ class MatplotlibWidget(QWidget):
         # set label of ax[1]
         self.set_ax(self.ax[0], xlabel=r'$G_P$ (mS)',ylabel=r'$B_P$ (mS)')
 
-        self.ax[0].autoscale()
+        # self.ax[0].autoscale()
         self.ax[0].set_aspect('equal')
 
 
@@ -345,7 +345,7 @@ class MatplotlibWidget(QWidget):
         # set label of ax[1]
         self.set_ax(self.ax[0], xlabel='Time (s)',ylabel=ylabel)
 
-        self.ax[0].autoscale()
+        # self.ax[0].autoscale()
 
 
     def init_contour(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
@@ -375,10 +375,10 @@ class MatplotlibWidget(QWidget):
         # set label of ax[1]
         self.set_ax(self.ax[0], xlabel=r'$d/\lambda$',ylabel=r'$\Phi$ ($\degree$)')
 
-        self.ax[0].autoscale()
+        # self.ax[0].autoscale()
 
 
-    def init_legendfig(self,  *args, **kwargs):
+    def init_legendfig(self, *args, **kwargs):
         ''' 
         plot a figure with only legend
         '''
@@ -509,10 +509,17 @@ class MatplotlibWidget(QWidget):
         ''' 
         update data of given ld (list of string)
         '''
+        axs = set() # initialize a empty set
         for l, x, y in zip(ls, xdata, ydata):
             self.l[l][0].set_xdata(x)
             self.l[l][0].set_ydata(y)
+            axs.add(self.l[l][0].axes)
+
+        for ax in axs:
+            ax.relim()
+            ax.autoscale_view(True,True,True)
         self.canvas.draw()
+
 
     def new_data(self, xdata=[], ydata=[], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         ''' 
@@ -524,7 +531,7 @@ class MatplotlibWidget(QWidget):
         # set label of ax[1]
         self.set_ax(self.ax[0], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
 
-        self.ax[0].autoscale()
+
 
         self.l = {}
         for i, x, y in enumerate(zip(xdata, ydata)):
@@ -533,3 +540,5 @@ class MatplotlibWidget(QWidget):
                 marker='o', 
                 markerfacecolor='none', 
             ) # l[i]
+
+        self.ax[0].autoscale()
