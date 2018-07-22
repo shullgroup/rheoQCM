@@ -600,7 +600,7 @@ class AccessMyVNA():
         print(nRes_ptr)
         ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nRes_ptr)
         # ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nResult)
-        assert ret != 0, 'MyVNAGetDoubleArray failed'
+        # assert ret != 0, 'MyVNAGetDoubleArray failed'
 
         print('MyVNAGetDoubleArray\n', ret, nResult[:])
         return ret, nResult
@@ -683,24 +683,53 @@ class AccessMyVNA():
         # nEnd = 49
         # print(nStart)
         print('GetScanData 0')
-        nSteps = nEnd - nStart + 1
+        nSteps = nEnd - nStart + 2
         print('nSteps=', nSteps)
         double_n = c_double * (nSteps)
-        # double_nb = c_double * nSteps
+
+        # use clib
         # data_a = clib.as_ctypes(np.zeros(nSteps))
         # data_b = clib.as_ctypes(np.zeros(nSteps))
-        data_a = double_n()
-        data_b = double_n()
+
+        # use ctypes
+        # data_a = double_n()
+        # data_b = double_n()
+
+
+
+        ##########################################
+        # needs a safearray
+        ##########################################
+
+        
+        # use np
+        data_a = np.zeros(nSteps)
+        data_b = np.zeros(nSteps)
         # print('data\n',  data_a[2], data_b[2])
         # cast the array into a pointer of type c_double:
-        data_a_ptr = cast(data_a, POINTER(c_double))
-        data_b_ptr = cast(data_b, POINTER(c_double))
+        # data_a_ptr = cast(data_a, POINTER(c_double))
+        # data_b_ptr = cast(data_b, POINTER(c_double))
     
+        # print(data_a_ptr)
+        # print(data_b_ptr)
         # both of following two works
-        
+        # ?MyVNAGetScanData@@YGHHHHHPAN0@Z
+
+        # WINFUNCTYPE method
+        # prototype = WINFUNCTYPE(int, int, int, int, int, POINTER(c_double), POINTER(c_double))
+        # paramflags = (1, 'nStart'), (1, 'nEnd'), (1, 'nWhata'), (1, 'nWhatb'), (1, 'pDataA'), (1, 'pDataB')
+        # _GetScandata = prototype(('?MyVNAGetScanData@@YGHHHHHPAN0@Z', vna), paramflags)
         print('GetScanData 1')
         # code crushes here 
-        ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a_ptr, data_b_ptr)
+        #
+        # ret = _GetScandata(nStart, nEnd, nWhata, nWhatb, data_a, data_b)
+        # use np array
+        ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a.ctypes.data_as(POINTER(c_double)), data_b.ctypes.data_as(POINTER(c_double)))
+
+        # use ctypes pointer
+        # ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a_ptr, data_b_ptr)
+
+        # use array
         # ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a, data_b)
         print('GetScanData 2')
         
@@ -708,9 +737,11 @@ class AccessMyVNA():
         #  0: 
         # -1: nSteps < 1
         #  1: crushes before l682: (errcode = MyVNAInit()) == 0
-        print('MyVNAGetScanData\n', ret, data_a[0], data_b[0])
+        print('MyVNAGetScanData\n', ret, data_a[-2], data_b[-1])
         return ret, np.array(data_a), np.array(data_b)
-        # return ret, data_a, data_b
+        
+        # simple way
+        # return MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a.ctypes.data_as(POINTER(c_double)), data_b.ctypes.data_as(POINTER(c_double)))
 
     def Autoscale(self):
         ret = MyVNAAutoscale()
@@ -762,8 +793,8 @@ if __name__ == '__main__':
     
     with AccessMyVNA() as accvna:
         # ret = accvna.GetDoubleArray()
-        ret, f, G = accvna.GetScanData(nStart=0, nEnd=10-1, nWhata=-1, nWhatb=15)
-        # ret, f, G, B = accvna.single_scan()
+        # ret, f, G = accvna.GetScanData(nStart=0, nEnd=10-1, nWhata=-1, nWhatb=15)
+        ret, f, G, B = accvna.single_scan()
         print(ret)
     # accvna = AccessMyVNA() 
     # # call this function before trying to do anything else
