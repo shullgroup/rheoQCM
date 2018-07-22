@@ -27,6 +27,12 @@ settings_init = {
         'csv file (*.csv)',
     ]),
 
+    # scan mode
+    'scan_mode': {
+        'startstop':  'Start/Stop',
+        'centerspan': 'Center/Span',
+    },
+
     # choice for plotting data shown in comboBox_plt1_choice & comboBox_plt2_choice
     'data_plt_choose': {
         'none':   'none',
@@ -150,21 +156,43 @@ settings_init = {
         'file': 'Other file',
     },
 
+    'span_ctrl_steps': [1, 2, 5, 10, 20, 50, 100],
+
+
+    # mpl setings
     'max_mpl_toolbar_height': 20, # in px
+
+    'contour': {
+        'levels': 20, # contour levels
+        'num': 100, # percentage of step increase for phi and dlam
+        'phi_lim': [0, 90], # phi limit in degree
+        'dlam_lim': [0, 1], # d/lambda limit
+    },
+
+    # font size for mpl_sp figures
+    'mpl_sp_fontsize': 5,
+    # font size for normal figures
+    'mpl_fontsize': 8,
+    # legend font size for mpl_sp figures
+    'mpl_sp_legfontsize': 5,
+    # legend font size for normal figures
+    'mpl_legfontsize': 8,
 }
 
 settings_default = {
-    #### default settings control ####
+#### default settings control ####
     # default harmonics 
     'harmonics_check': [1, 3, 5],
 
-    #'checkBox_harm1'
-    #'checkBox_harm3'
-    #'checkBox_harm5'
-    #'checkBox_harm7'
-    #'checkBox_harm9'
-    #'checkBox_harm11'
+    # default checkbox harm states
+    'checkBox_harm1': True,
+    'checkBox_harm3': True,
+    'checkBox_harm5': True,
+    'checkBox_harm7': False,
+    'checkBox_harm9': False,
+    'checkBox_harm11': False,
 
+    # default start/end freq lineEdit values
     'lineEdit_startf1': 4.9,
     'lineEdit_startf3': 14.9,
     'lineEdit_startf5': 24.9,
@@ -178,58 +206,265 @@ settings_default = {
     'lineEdit_endf9': 45.1,
     'lineEdit_endf11': 55.1,
 
-    #'lineEdit_reftime'
-
-    'lineEdit_acquisitioninterval': 2,
-    'lineEdit_refreshresolution': 2,
-    'label_actualinterval': 1,
-
-    #'frame_sp1'
-    #'frame_sp3'
-    #'frame_sp5'
-    #'frame_sp7'
-    #'frame_sp9'
-    #'frame_sp11'
-
-    # default label_actual_interval
-    'actual_interval': 2,
-    'acquisition_interval': 2,
-    'refresh_resolution': 1,
+    # default time settings
+    'lineEdit_reftime': 0,
+    
+    'lineEdit_recordinterval': 2,
+    'lineEdit_refreshresolution': 1,
+    'lineEdit_scaninterval': 2,
 
     # default fitting and display options
-    #'checkBox_dynamicfit'
-    #'checkBox_polarplot'
-    #'checkBox_showsusceptance'
-    #'checkBox_showchi'
-    #'comboBox_fitfactor'
+    'checkBox_dynamicfit': True,
+    'checkBox_showsusceptance': False,
+    'checkBox_showchi': False,
+    'checkBox_showpolar': False,
+    'comboBox_fitfactor': '6',
 
-    #### default settings settings ####
-    #'tab_settings_settings_harm1'
-    #'tab_settings_settings_harm3'
-    #'tab_settings_settings_harm5'
-    #'tab_settings_settings_harm7'
-    #'tab_settings_settings_harm9'
-    #'tab_settings_settings_harm11'
+#### default settings settings ####
+    'tab_settings_settings_harm1': {
+        # default scan settings
+        'start_freq': 4.9,
+        'end_freq': 5.1,
+        
+        # default span settings
+        'comboBox_fit_method': 'gmax',
+        'comboBox_track_method': 'fixspan',
+        
+        # default fit settings
+        'comboBox_harmfitfactor': '6',
+        
+        # default VNA settings
+        # 'comboBox_sample_channel': '1',
+        # 'comboBox_ref_channel': 'none',
+        
+        # default crystal settings
+        #'comboBox_base_frequency': 5,
+        #'comboBox_bandwidth': 0.1,
 
-    #'comboBox_fit_method'
-    #'comboBox_track_method'
+        # default temperature settings
+        #'checkBox_settings_temp_sensor': False,
+        #'Module': '...',
+        #'comboBox_thrmcpltype': 'J',
 
-    #'comboBox_harmfitfactor'
+        # default plots settings
+        #'comboBox_timeunit': 's',
+        #'comboBox_tempunit': 'C',
+        #'comboBox_timescale': 'linear',
+        #'comboBox_gammascale': 'linear',
+        #'checkBox_settings_settings_linktime': False
+    },
 
-    #'comboBox_sample_channel'
-    #'comboBox_ref_channel'
+    'tab_settings_settings_harm3': {
+        # default scan settings
+        'start_freq': 4.9,
+        'end_freq': 5.1,
+        
+        # default span settings
+        'comboBox_fit_method': 'gmax',
+        'comboBox_track_method': 'fixspan',
+        
+        # default fit settings
+        'comboBox_harmfitfactor': '6',
+        
+        # default VNA settings
+        # 'comboBox_sample_channel': '1',
+        # 'comboBox_ref_channel': 'none',
+        
+        # default crystal settings
+        #'comboBox_base_frequency': 5,
+        #'comboBox_bandwidth': 0.1,
 
+        # default temperature settings
+        #'checkBox_settings_temp_sensor': False,
+        #'Module': '...',
+        #'comboBox_thrmcpltype': 'J',
+
+        # default plots settings
+        #'comboBox_timeunit': 's',
+        #'comboBox_tempunit': 'C',
+        #'comboBox_timescale': 'linear',
+        #'comboBox_gammascale': 'linear',
+        #'checkBox_settings_settings_linktime': False
+    },
+
+    'tab_settings_settings_harm5': {
+        # default scan settings
+        'start_freq': 4.9,
+        'end_freq': 5.1,
+        
+        # default span settings
+        'comboBox_fit_method': 'gmax',
+        'comboBox_track_method': 'fixspan',
+        
+        # default fit settings
+        'comboBox_harmfitfactor': '6',
+        
+        # default VNA settings
+        # 'comboBox_sample_channel': '1',
+        # 'comboBox_ref_channel': 'none',
+        
+        # default crystal settings
+        #'comboBox_base_frequency': 5,
+        #'comboBox_bandwidth': 0.1,
+
+        # default temperature settings
+        #'checkBox_settings_temp_sensor': False,
+        #'Module': '...',
+        #'comboBox_thrmcpltype': 'J',
+
+        # default plots settings
+        #'comboBox_timeunit': 's',
+        #'comboBox_tempunit': 'C',
+        #'comboBox_timescale': 'linear',
+        #'comboBox_gammascale': 'linear',
+        #'checkBox_settings_settings_linktime': False
+    },
+
+    'tab_settings_settings_harm7': {
+        # default scan settings
+        'start_freq': 4.9,
+        'end_freq': 5.1,
+        
+        # default span settings
+        'comboBox_fit_method': 'gmax',
+        'comboBox_track_method': 'fixspan',
+        
+        # default fit settings
+        'comboBox_harmfitfactor': '6',
+        
+        # default VNA settings
+        # 'comboBox_sample_channel': '1',
+        # 'comboBox_ref_channel': 'none',
+        
+        # default crystal settings
+        #'comboBox_base_frequency': 5,
+        #'comboBox_bandwidth': 0.1,
+
+        # default temperature settings
+        #'checkBox_settings_temp_sensor': False,
+        #'Module': '...',
+        #'comboBox_thrmcpltype': 'J',
+
+        # default plots settings
+        #'comboBox_timeunit': 's',
+        #'comboBox_tempunit': 'C',
+        #'comboBox_timescale': 'linear',
+        #'comboBox_gammascale': 'linear',
+        #'checkBox_settings_settings_linktime': False
+    },
+
+    'tab_settings_settings_harm9': {
+        # default scan settings
+        'start_freq': 4.9,
+        'end_freq': 5.1,
+        
+        # default span settings
+        'comboBox_fit_method': 'gmax',
+        'comboBox_track_method': 'fixspan',
+        
+        # default fit settings
+        'comboBox_harmfitfactor': '6',
+        
+        # default VNA settings
+        # 'comboBox_sample_channel': '1',
+        # 'comboBox_ref_channel': 'none',
+        
+        # default crystal settings
+        #'comboBox_base_frequency': 5,
+        #'comboBox_bandwidth': 0.1,
+
+        # default temperature settings
+        #'checkBox_settings_temp_sensor': False,
+        #'Module': '...',
+        #'comboBox_thrmcpltype': 'J',
+
+        # default plots settings
+        #'comboBox_timeunit': 's',
+        #'comboBox_tempunit': 'C',
+        #'comboBox_timescale': 'linear',
+        #'comboBox_gammascale': 'linear',
+        #'checkBox_settings_settings_linktime': False
+    },
+
+    'tab_settings_settings_harm11': {
+        # default scan settings
+        'start_freq': 4.9,
+        'end_freq': 5.1,
+        
+        # default span settings
+        'comboBox_fit_method': 'gmax',
+        'comboBox_track_method': 'fixspan',
+        
+        # default fit settings
+        'comboBox_harmfitfactor': '6',
+        
+        # default VNA settings
+        # 'comboBox_sample_channel': '1',
+        # 'comboBox_ref_channel': 'none',
+        
+        # default crystal settings
+        #'comboBox_base_frequency': 5,
+        #'comboBox_bandwidth': 0.1,
+
+        # default temperature settings
+        #'checkBox_settings_temp_sensor': False,
+        #'Module': '...',
+        #'comboBox_thrmcpltype': 'J',
+
+        # default plots settings
+        #'comboBox_timeunit': 's',
+        #'comboBox_tempunit': 'C',
+        #'comboBox_timescale': 'linear',
+        #'comboBox_gammascale': 'linear',
+        #'checkBox_settings_settings_linktime': False
+    },
+
+    ### default hardware settings ###
+    # default VNA settings
+    'comboBox_sample_channel': '1',
+    'comboBox_ref_channel': 'none',
+
+    # default crystal settings
     'comboBox_base_frequency': 5,
-    'comboBox_bandwidth': 0.1
+    'comboBox_bandwidth': 0.1,
 
-    #'Temperature'
-    #'Module'
-    #'comboBox_thrmcpltype'
+    # default temperature settings
+    'checkBox_settings_temp_sensor': False,
+    'Module': '...',
+    'comboBox_thrmcpltype': 'J',
 
-    #'comboBox_timeunit'
-    #'comboBox_tempunit'
-    #'comboBox_timescale'
-    #'comboBox_gammascale'
-    #'Link Time' 
+    # default plots settings
+    'comboBox_timeunit': 's',
+    'comboBox_tempunit': 'C',
+    'comboBox_timescale': 'linear',
+    'comboBox_gammascale': 'linear',
+    'checkBox_settings_settings_linktime': False,
+
+    ### default plot selections ###
+    # default selections for spectra show
+    'radioButton_spectra_showBp': True,
+    'radioButton_spectra_showpolar': False,
+    'checkBox_spectra_shoechi': False,
+
+    # default selections for plot 1 elements
+    'comboBox_plt1_choice': 'dfn_t', 
+    'checkBox_plt1_h1': False,
+    'checkBox_plt1_h3': False,
+    'checkBox_plt1_h5': False,
+    'checkBox_plt1_h7': False,
+    'checkBox_plt1_h9': False,
+    'checkBox_plt1_h11': False,
+    'radioButton_plt1_samp': True,
+    'radioButton_plt1_ref': False,
+
+    # default selections for plot 2 elements
+    'comboBox_plt2_choice': 'dg_t',
+    'checkBox_plt2_h1': False,
+    'checkBox_plt2_h3': False,
+    'checkBox_plt2_h5': False,
+    'checkBox_plt2_h7': False,
+    'checkBox_plt2_h9': False,
+    'checkBox_plt2_h11': False,
+    'radioButton_plt2_samp': True,
+    'radioButton_plt2_ref': False
 }
-print(settings_default['lineEdit_acquisitioninterval'])
