@@ -6,8 +6,12 @@ from ctypes.wintypes import HWND, LONG, BOOL, LPARAM, LPDWORD, DWORD, LPWSTR
 import numpy.ctypeslib as clib
 import sys, struct, time
 
+import win32ui
+import win32process
+
 print(sys.version)
 print(struct.calcsize('P') * 8)
+
 
 # constant
 WM_USER = 0x0400                 # WM_USER   0x0400
@@ -15,7 +19,7 @@ WM_COMMAND = 0x0111                # WM_COMMAND 0x0111
 MESSAGE_SCAN_ENDED = WM_USER + 0x1234  # MESSAGE_SCAN_ENDED (WM_USER+0x1234)
 
 # window name
-win_name = 'myVNA - Reflection mode "myVNA" [Embedded] '
+win_name = u'myVNA - Reflection mode "myVNA" [Embedded] '
 # win_name = 'AccessMyVNA'
 
 user32 = windll.user32
@@ -24,6 +28,7 @@ vna = WinDLL(r'./dll/AccessMyVNAdll.dll', use_last_error=True) # this only works
 # print(vars(vna))
 print(vna._handle)
 # print(dir(vna))
+
 
 #region functions
 def check_zero(result, func, args):    
@@ -34,80 +39,18 @@ def check_zero(result, func, args):
     return args
 
 def get_hWnd():
-    WNDENUMPROC = WINFUNCTYPE(
-    BOOL,
-    HWND,    # _In_ hWnd
-    LPARAM, )  # _In_ lParam
+    hWnd = win32ui.FindWindow(None, win_name).GetSafeHwnd()
+    pid = win32process.GetWindowThreadProcessId(hWnd)[1]
+    # print(hWnd)
+    # print(pid)
+    if not hWnd:
+        hWnd = None
+        print('hWnd', hWnd)
+    else: 
+        print('hWnd', hWnd, '"' + win_name + '"') 
+    return hWnd
 
-    user32.EnumWindows.errcheck = check_zero
-    user32.EnumWindows.argtypes = [
-    WNDENUMPROC,      # _In_ lpEnumFunc
-    LPARAM]  # _In_ lParam
-
-    user32.IsWindowVisible.argtypes = [
-        HWND]  # _In_ hWnd
-
-    user32.GetWindowThreadProcessId.restype = DWORD
-    user32.GetWindowThreadProcessId.argtypes = [
-    HWND,       # _In_      hWnd
-    LPDWORD]    # _Out_opt_ lpdwProcessId
-
-    user32.GetWindowTextLengthW.errcheck = check_zero
-    user32.GetWindowTextLengthW.argtypes = [
-    HWND]       # _In_ hWnd
-
-    user32.GetWindowTextW.errcheck = check_zero
-    user32.GetWindowTextW.argtypes = [
-        HWND,   # _In_  hWnd
-        LPWSTR, # _Out_ lpString
-        c_int]           # _In_  nMaxCount
-
-    user32.GetClassNameA.argtypes = [
-        HWND,   # _In_  hWnd
-        LPWSTR, # _Out_ lpString
-        c_int]           # _In_  nMaxCount
-
-    def EnumWins():
-        hWnd_vna = []
-        @WNDENUMPROC
-        def enum_proc(hWnd, lParam):
-            if user32.IsWindowVisible(hWnd):
-                # get PID
-                pid = DWORD()
-                tid = user32.GetWindowThreadProcessId(
-                            hWnd, byref(pid))
-                length = user32.GetWindowTextLengthW(hWnd) + 1
-                # get title
-                title = create_unicode_buffer(length)
-                user32.GetWindowTextW(hWnd, title, length)
-                # fet classname
-                classname = create_unicode_buffer(length)
-                user32.GetClassNameA(hWnd, classname, 10) # return ''?
-                # print(pid, title.value)
-                if title.value == win_name:
-                    hWnd_vna.append(hWnd)
-                    return False
-            return True
-        user32.EnumWindows(enum_proc, 0)
-        if not hWnd_vna:
-            hWnd_vna = None
-            print('hWnd', hWnd_vna)
-        else: 
-            hWnd_vna = hWnd_vna[0]
-            print('hWnd', hWnd_vna, '"' + win_name + '"') 
-        return hWnd_vna
-
-    # hWnd = None
-    # example: 
-    # hWnd = 19598842 # 'myVNA - Reflection mode "myVNA" [Embedded] '
-    
     # hWnd = win32ui.GetMainFrame.GetSafeHwnd
-    # hWnd = win32ui.GetWindow.GetSafeHwnd
-    # # EnumWindows = WinDLL.user32.EnumWindows
-    # handle = ctypes.windll.user32.GetForegroundWindow()
-    # PID = ctypes.windll.kernel32.GetProcessId(handle)
-    # hwnd = WinDLL.user32.FindWindowA(classname, title)
-    return EnumWins()
 
 #endregion
 
@@ -590,15 +533,18 @@ class AccessMyVNA():
         '''
         Get frequency nWhat = GET_SCAN_FREQ_DATA 0
         '''
+        nArraySize = 20
         double_n = c_double * (nArraySize)
         # create array. Both ways below works
-        nResult = double_n()
+        # nResult = double_n()
         # nResult = clib.as_ctypes(np.zeros(nArraySize))
+        nResult = np.zeros(nArraySize)
 
         # cast the array into a pointer of type c_double:
-        nRes_ptr = cast(nResult, POINTER(c_double))
-        print(nRes_ptr)
-        ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nRes_ptr)
+        # nRes_ptr = ca
+        
+        ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nResult.ctypes.data_as(POINTER(c_double)))
+        # ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nRes_ptr)
         # ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nResult)
         # assert ret != 0, 'MyVNAGetDoubleArray failed'
 
@@ -684,6 +630,7 @@ class AccessMyVNA():
         # print(nStart)
         print('GetScanData 0')
         nSteps = nEnd - nStart + 2
+        nSteps = 1000
         print('nSteps=', nSteps)
         double_n = c_double * (nSteps)
 
@@ -701,7 +648,7 @@ class AccessMyVNA():
         # needs a safearray
         ##########################################
 
-        
+
         # use np
         data_a = np.zeros(nSteps)
         data_b = np.zeros(nSteps)
@@ -737,7 +684,7 @@ class AccessMyVNA():
         #  0: 
         # -1: nSteps < 1
         #  1: crushes before l682: (errcode = MyVNAInit()) == 0
-        print('MyVNAGetScanData\n', ret, data_a[-2], data_b[-1])
+        print('MyVNAGetScanData\n', ret, data_a[0], data_b[0])
         return ret, np.array(data_a), np.array(data_b)
         
         # simple way
@@ -792,7 +739,7 @@ class AccessMyVNA():
 if __name__ == '__main__':
     
     with AccessMyVNA() as accvna:
-        # ret = accvna.GetDoubleArray()
+        ret = accvna.GetDoubleArray()
         # ret, f, G = accvna.GetScanData(nStart=0, nEnd=10-1, nWhata=-1, nWhatb=15)
         ret, f, G, B = accvna.single_scan()
         print(ret)
