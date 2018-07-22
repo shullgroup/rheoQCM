@@ -1,4 +1,8 @@
 
+# initialize UI
+
+
+
 # Widgets functions
 
 ## groupBox_settings
@@ -27,6 +31,8 @@ start timer
 timer loop:  
 >> harmonic loop: [1, 3, 5, ...]
 >>> set vna parameter  
+get time  
+get temp if `checkBox_control_rectemp` is checked AND harm == 1  
 `single_scan`  
 `get_data` (if Failed, try again)  
 set frmae_sp[n]: .l['Gpre'] = .l['G'], .l['Bpre'] = .l['B'] and .l['Ppre'] = .l['P']  
@@ -182,7 +188,7 @@ plot mpl_spectra_fit_polar: data to .l['P']
 
 #### `refesh_spectra_fit`  
 
-read data from mpl_spectra_fit: `f`, `Gp` and `Bp`  
+read data from mpl_spectra_fit ax[0]: `f`, `Gp` and `Bp`  
 `fit function` return parameters
 
 plot mpl_spectra_fit: .l['Gfit'], .l['Bfit'], .l['lf'], .l['lg']  

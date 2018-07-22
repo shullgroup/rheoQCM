@@ -436,12 +436,16 @@ def QCManalyze(sample, parms):
                                        '.' + imagetype)
 
         # add property data to the property figure
-        propfig['drho_ax'].plot(xdata, 1000*results[nh]['drho'],
-                                marker=markers[nh], label=nh)
-        propfig['grho_ax'].plot(xdata, results[nh]['grho3']/1000,
-                                marker=markers[nh], label=nh)
-        propfig['phi_ax'].plot(xdata, results[nh]['phi'],
-                               marker=markers[nh], label=nh)
+        drho = 1000*results[nh]['drho']
+        grho3 = results[nh]['grho3']/1000
+        phi = results[nh]['phi']
+        
+        propfig['drho_ax'].plot(xdata, drho, marker=markers[nh], label=nh)
+        propfig['grho_ax'].plot(xdata, grho3, marker=markers[nh], label=nh)
+        propfig['phi_ax'].plot(xdata, phi, marker=markers[nh], label=nh)
+        output_data = np.stack((xdata, drho, grho3, phi), axis=-1)
+        np.savetxt(base_fig_name+'_'+nh+'.txt', output_data, 
+                   delimiter=',', header='xdata, drho, grho, phi')
 
     # add legends to the property figure
     propfig['drho_ax'].legend()
