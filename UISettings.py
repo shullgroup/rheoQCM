@@ -468,3 +468,8 @@ settings_default = {
     'radioButton_plt2_samp': True,
     'radioButton_plt2_ref': False
 }
+
+test = True
+test1 = False
+oink = test==test1
+print(str(oink))

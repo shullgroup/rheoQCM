@@ -7,6 +7,9 @@ import os
 import math
 import json
 import datetime, time
+import numpy as np
+import scipy.signal
+
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton, QMenu
 from PyQt5.QtGui import QIcon, QPixmap
@@ -1218,6 +1221,99 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_plt2_h11.setChecked(self.settings['checkBox_plt2_h11'])
         self.ui.radioButton_plt2_samp.setChecked(self.settings['radioButton_plt2_samp'])
         self.ui.radioButton_plt2_ref.setChecked(self.settings['radioButton_plt2_ref'])
+    
+    # TODO python implementation of MATLAB's find function
+    def find(self, array, expression, n):
+        pass
+    
+    # TODO python implementation of MATLAB's findpeaks function
+    def findpeaks(self, array, a, b):
+        pass
+
+    def smart_peak_tracker(self, harmonic, freq, conductance, susceptance, G_parameters):
+        resonance = None
+        self.f0 = G_parameters[0]
+        self.gamma0 = G_parameters[1]
+
+        # determine the structure field that should be used to extract out the initial-guessing method
+        name = 'fit' + str(harmonic) 
+        if self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_fit_method'] == 'bmax':
+            resonance = susceptance
+        else:
+            resonance = conductance
+        index = self.findpeaks(resonance, 'sortstr', 'descend')
+        peak_f = freq[index[0]]
+        # determine the estimated associated conductance (or susceptance) value at the resonance peak
+        Gmax = resonance[index[0]] 
+        # determine the estimated half-max conductance (or susceptance) of the resonance peak
+        halfg = (Gmax-np.amin(resonance))/2 + np.amin(resonance) 
+        halfg_freq = np.absolute(self.find(freq, np.absolute(halfg-resonance)==np.amin(np.absolute(halfg-resonance)),1) - peak_f)
+        # extract the peak tracking conditions
+        track_method = self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_track_method'] 
+        if track_method == 'fixspan':
+            current_span = (float(self.settings['lineEdit_endf' + str(harmonic)]) - \
+            # get the current span of the data in Hz
+            float(self.settings['lineEdit_startf' + str(harmonic)])) * 1e6 
+            if np.absolute(np.mean(np.array(freq[0],freq[len(freq)-1]))-peak_f) > 0.1 * current_span:
+                # new start and end frequencies in MHz
+                new_xlim=np.multiply(np.array(peak_f-0.5*current_span,peak_f+0.5*current_span), 1e-6) 
+                new_xlim = np.around(new_xlim, decimals=12) # TODO make a sig fig around function
+                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0])
+                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1])
+        elif track_method == 'fixcenter':
+            # get current start and end frequencies of the data in Hz
+            current_xlim = np.multiply(np.array(float(self.settings['lineEdit_startf' + str(harmonic)]),\
+            float(self.settings['lineEdit_endf' + str(harmonic)])), 1e6) 
+            # get the current center of the data in Hz
+            current_center = ((float(self.settings['lineEdit_startf' + str(harmonic)]) + \
+            float(self.settings['lineEdit_endf' + str(harmonic)]))*1e6)/2 
+            # find the starting and ending frequency of only the peak in Hz
+            peak_xlim = np.array[peak_f-halfg_freq*3, peak_f+halfg_freq*3] 
+            if np.sum(np.absolute(np.subtract(current_xlim, np.array(current_center-3*halfg_freq, current_center + 3*halfg_freq)))) > 3e3:
+                # set new start and end freq based on the location of the peak in MHz
+                new_xlim = np.multiply(np.array(current_center-3*halfg_freq, current_center+3*halfg_freq), 1e-6) 
+                new_xlim = np.around(new_xlim, decimals=12) # TODO make a sig fig around function
+                # set new start freq in MHz
+                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) 
+                # set new end freq in MHz
+                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) 
+        elif track_method == 'fixrange':
+            # adjust window if neither span or center is fixed (default)
+            current_xlim = np.array(float(self.settings['lineEdit_startf' + str(harmonic)]),float(self.settings['lineEdit_endf' + str(harmonic)]))
+            # get the current span of the data in Hz
+            current_span = (float(self.settings['lineEdit_endf' + str(harmonic)]) - float(self.settings['lineEdit_startf' + str(harmonic)])) * 1e6
+            if(np.mean(current_xlim)*1e6-peak_f) > 1*current_span/12:
+                new_xlim = (np.multiply(current_xlim,1e6)-current_span/15)*1e-6  # new start and end frequencies in MHz
+                new_xlim = np.around(new_xlim, decimals=12)
+                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
+                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+            elif (np.mean(current_xlim)*1e6-peak_f) < -1*current_span/12:
+                new_xlim = (np.multiply(current_xlim,1e6)+current_span/15)*1e-6  # new start and end frequencies in MHz
+                new_xlim = np.around(new_xlim, decimals=12)
+                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
+                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+            else:
+                thresh1=.05*current_span + current_xlim[0]*1e6 # Threshold frequency in Hz
+                thresh2=.03*current_span # Threshold frequency span in Hz
+                LB_peak=peak_f-halfg_freq*3 # lower bound of the resonance peak
+                if LB_peak-thresh1 > halfg_freq*8: # if peak is too thin, zoom into the peak
+                    new_xlim[0]=(current_xlim[0]*1e6 + thresh2)*1e-6 # MHz
+                    new_xlim[1]=(current_xlim[1]*1e6 - thresh2)*1e-6 # MHz
+                    new_xlim = np.around(new_xlim, decimals=12)
+                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
+                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+                elif thresh1-LB_peak > -halfg_freq*5: # if the peak is too fat, zoom out of the peak
+                    new_xlim[0]=(current_xlim[0]*1e6-thresh2)*1e-6 # MHz
+                    new_xlim[1]=(current_xlim[1]*1e6+thresh2)*1e-6 # MHz
+                    new_xlim = np.around(new_xlim, decimals=12)
+                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
+                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+        elif track_method == 'usrdef': #run custom tracking algorithm
+            ### CUSTOM, USER-DEFINED
+            ### CUSTOM, USER-DEFINED
+            ### CUSTOM, USER-DEFINED
+            pass
+        # TODO check_freq_range(handles.din.harmonic, handles.din.freq_range(0.5*(handles.din.harmonic+1),1), handles.din.freq_range(0.5*(handles.din.harmonic+1),2), handles)
 
 #endregion
 
