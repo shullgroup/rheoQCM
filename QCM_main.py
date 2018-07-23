@@ -849,22 +849,28 @@ class QCMApp(QMainWindow):
 
     def on_triggered_new_data(self):
         fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
-        # change the displayed file directory in lineEdit_datafilestr
-        self.ui.lineEdit_datafilestr.setText(fileName)
-        # reset lineEdit_reftime
-        self.reset_reftime()
-        # set lineEdit_reftime editable and enable pushButton_resetreftime
-        self.ui.lineEdit_reftime.setReadOnly(False)
-        self.ui.pushButton_resetreftime.setEnabled(True)
+        if fileName:
+            # change the displayed file directory in lineEdit_datafilestr
+            self.ui.lineEdit_datafilestr.setText(fileName)
+            # reset lineEdit_reftime
+            self.reset_reftime()
+            # set lineEdit_reftime editabled and enable pushButton_resetreftime
+            self.ui.lineEdit_reftime.setReadOnly(False)
+            self.ui.pushButton_resetreftime.setEnabled(True)
+            self.fileName = fileName
 
-    def on_triggered_load_data(self):
-        self.fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
-        # change the displayed file directory in lineEdit_datafilestr
-        self.ui.lineEdit_datafilestr.setText(self.fileName)
-        # set lineEdit_reftime
-        # set lineEdit_reftime read only and disable pushButton_resetreftime
-        self.ui.lineEdit_reftime.setReadOnly(True)
-        self.ui.pushButton_resetreftime.setEnabled(False)
+    def on_triggered_load_data(self): 
+        fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
+        if fileName:
+            # change the displayed file directory in lineEdit_datafilestr
+            self.ui.lineEdit_datafilestr.setText(self.fileName)
+            # set lineEdit_reftime
+            # set lineEdit_reftime read only and disable pushButton_resetreftime
+            self.ui.lineEdit_reftime.setReadOnly(True)
+            # ??  set reftime in fileName to lineEdit_reftime
+
+            self.ui.pushButton_resetreftime.setEnabled(False)
+            self.fileName = fileName
 
     # open folder in explorer
     # methods for different OS could be added
