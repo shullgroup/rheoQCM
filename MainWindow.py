@@ -734,7 +734,7 @@ class Ui_MainWindow(object):
         self.label_status_temp_sensor.setStyleSheet("#label_status_temp_sensor\n"
 "{\n"
 "background-color: transparent;\n"
-"border-image: url(:/icon/rc/temp_sensor.svg);\n"
+"border-image: url(:/icon/rc/temp_sensor_off.svg);\n"
 "background: none;\n"
 "border: none;\n"
 "background-repeat: none;\n"

@@ -203,27 +203,8 @@ class QCMApp(QMainWindow):
         #self.ui.radioButton_spectra_showpolar.toggled.connect(self.update_widget)
         self.ui.checkBox_spectra_shoechi.toggled.connect(self.update_widget)
 
-        # set signals to update plot 1 options
-        self.ui.comboBox_plt1_choice.activated.connect(self.update_widget)
-        self.ui.checkBox_plt1_h1.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h3.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h5.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h7.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h9.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h11.stateChanged.connect(self.update_widget)
-        self.ui.radioButton_plt1_ref.toggled.connect(self.update_widget)
-        self.ui.radioButton_plt1_samp.toggled.connect(self.update_widget)
-
-        # set signals to update plot 2 options
-        self.ui.comboBox_plt2_choice.activated.connect(self.update_widget)
-        self.ui.checkBox_plt2_h1.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h3.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h5.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h7.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h9.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h11.stateChanged.connect(self.update_widget)
-        self.ui.radioButton_plt2_ref.toggled.connect(self.update_widget)
-        self.ui.radioButton_plt2_samp.toggled.connect(self.update_widget)
+        # set signals to checkBox_control_rectemp
+        self.ui.checkBox_control_rectemp.stateChanged.connect(self.on_statechanged_set_temp_sensor)
 
 #endregion
 
@@ -434,7 +415,8 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_ref_channel.activated.connect(self.update_refchannel)
 
         # set signals to update temperature settings_settings
-        self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
+        # self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
+        self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.on_statechanged_set_temp_sensor)
         self.ui.comboBox_thrmcpltype.activated.connect(self.update_thrmcpltype)
 
         # set signals to update plots settings_settings
@@ -509,6 +491,27 @@ class QCMApp(QMainWindow):
 
 
 #region data_data
+        # set signals to update plot 1 options
+        self.ui.comboBox_plt1_choice.activated.connect(self.update_widget)
+        self.ui.checkBox_plt1_h1.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h3.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h5.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h7.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h9.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h11.stateChanged.connect(self.update_widget)
+        self.ui.radioButton_plt1_ref.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt1_samp.toggled.connect(self.update_widget)
+
+        # set signals to update plot 2 options
+        self.ui.comboBox_plt2_choice.activated.connect(self.update_widget)
+        self.ui.checkBox_plt2_h1.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h3.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h5.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h7.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h9.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h11.stateChanged.connect(self.update_widget)
+        self.ui.radioButton_plt2_ref.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt2_samp.toggled.connect(self.update_widget)
 
 #endregion
 
@@ -980,7 +983,32 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.update_data(ls=['lG'], xdata=[f], ydata=[G])
         self.ui.mpl_spectra_fit.update_data(ls=['lB'], xdata=[f], ydata=[B])
 
+
+    def on_statechanged_set_temp_sensor(self):
         
+        # get all tempsensor settings 
+        # temp_module = self.settings['comBox_tempmodule'] # get temp module
+        # thrmcpltype = self.settings['comboBox_thrmcpltype'] # get thermocouple type
+
+        # check senor availability
+        # import getattr(settings_init['tempmodules_path'][1:].replace('/', '.'), temp_module.replace('.py', '')) as tempModule
+        # # tempModule should take one arg 'thrmcpltype' and return temperature in C by calling tempModule.get_tempC
+
+        # curr_temp = tempModule.get_tempC(thrmcp)
+
+        if self.ui.checkBox_settings_temp_sensor.isChecked():
+            self.ui.label_status_temp_sensor.setStyleSheet(
+                " border-image: url(:/icon/rc/temp_sensor.svg); "
+            )
+        else:
+            self.ui.label_status_temp_sensor.setStyleSheet(
+                " border-image: url(:/icon/rc/temp_sensor_off.svg); "
+            )
+            
+        # update checkBox_settings_temp_sensor to self.settings
+        self.update_tempsensor()
+
+
     def set_stackedwidget_index(self, stwgt, idx=[], diret=[]):
         '''
         chenge the index of stwgt to given idx (if not []) 

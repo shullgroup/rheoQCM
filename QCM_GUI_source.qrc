@@ -19,6 +19,8 @@
     <file>rc/signal_ch.svg</file>
     <file>rc/saveAs.svg</file>
     <file>rc/save.svg</file>
+    <file>rc/ref_0.svg</file>
+    <file>rc/temp_sensor_off.svg</file>
     <file>rc/logo_2.svg</file>
   </qresource>
   <qresource prefix="button">

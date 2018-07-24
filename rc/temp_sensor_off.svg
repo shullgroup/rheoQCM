@@ -15,7 +15,7 @@
    version="1.1"
    id="svg1839"
    inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
-   sodipodi:docname="temp_sensor.svg">
+   sodipodi:docname="temp_sensor_off.svg">
   <defs
      id="defs1833" />
   <sodipodi:namedview
@@ -26,8 +26,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="-117.98911"
-     inkscape:cy="78.659987"
+     inkscape:cx="-46.560535"
+     inkscape:cy="21.51713"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -45,7 +45,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -73,7 +73,7 @@
          inkscape:connector-curvature="0"
          id="rect2407-9-9"
          d="m 13.129087,275.61417 v 7.80689 c -2.032739,1.2328 -3.27321,3.42488 -3.275317,5.78791 2.05e-4,3.75074 3.066213,6.79117 6.848157,6.79102 3.781693,-2e-4 6.847308,-3.04053 6.847513,-6.79102 -0.0033,-2.36154 -1.243353,-4.55183 -3.274675,-5.78408 v -7.81072 z"
-         style="opacity:1;fill:#aa0000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3.10293579;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers fill stroke" />
+         style="opacity:1;fill:#666666;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3.10293579;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers fill stroke" />
     </g>
   </g>
 </svg>
