@@ -220,10 +220,10 @@ save values in those three widgets to `self.settings`
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |clicked(bool)|checkBox_settings_temp_sensor |setChecked(bool)|done in Designer|
-| |clicked(bool)|label_status_temp_sensor |`set_temp_sensor`|enabled(bool)|
+| |clicked(bool)|label_status_temp_sensor |`on_statechanged_set_temp_sensor`|enabled(bool)|
 
 
-`set_temp_sensor`
+`on_statechanged_set_temp_sensor`
 
 > if True:  
 >> get all temp sensor setting parameters  
@@ -351,7 +351,7 @@ defined above
 | |clicked(bool)|checkBox_control_rectemp|setChecked(bool))|done in Designer|
 | |clicked(bool)|label_status_temp_sensor |`set_temp_sensor`|enabled(bool)|
 
-`set_temp_sensor`  
+`on_statechanged_set_temp_sensor`  
 defined above  
 
 ###### comboBox_settings_settings_tempmodule
