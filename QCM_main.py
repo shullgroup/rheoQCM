@@ -294,11 +294,15 @@ class QCMApp(QMainWindow):
             self.ui.treeWidget_settings_settings_hardware
         )
 
-        # move temp. module to treeWidget_settings_settings_hardware
-        self.move_to_row2(
-            self.ui.lineEdit_settings_settings_tempmodule, 
+        # ?? add comBox_tempmodule to treeWidget_settings_settings_hardware
+        temp_modules = UIModules.list_modules(settings_init['tempmodules_path'])
+        print(temp_modules)
+        self.create_combobox(
+            'comBox_tempmodule',
+            temp_modules,  
+            100,
+            'Module',
             self.ui.treeWidget_settings_settings_hardware, 
-            'Module'
         )
         
         # insert thrmcpl type
@@ -347,7 +351,7 @@ class QCMApp(QMainWindow):
         )
 
         # move checkBox_settings_settings_linktime to treeWidget_settings_settings_plots
-        self.move_to_row2(
+        self.move_to_col2(
             self.ui.checkBox_settings_settings_linktime, 
             self.ui.treeWidget_settings_settings_plots, 
             'Link Time'
@@ -362,7 +366,7 @@ class QCMApp(QMainWindow):
 
 
         # move center pushButton_settings_harm_cntr to treeWidget_settings_settings_harmtree
-        self.move_to_row2(
+        self.move_to_col2(
             self.ui.pushButton_settings_harm_cntr, 
             self.ui.treeWidget_settings_settings_harmtree, 
             'Scan', 
@@ -370,7 +374,7 @@ class QCMApp(QMainWindow):
         )
         
         # move center checkBox_settings_temp_sensor to treeWidget_settings_settings_hardware
-        self.move_to_row2(
+        self.move_to_col2(
             self.ui.checkBox_settings_temp_sensor, 
             self.ui.treeWidget_settings_settings_hardware, 
             'Temperature'
@@ -757,10 +761,10 @@ class QCMApp(QMainWindow):
 
         # insert to the row of row_text if row_text and parent_name are not empty
         if (row_text and parent):
-            self.move_to_row2(obj_box, parent, row_text, box_width)
+            self.move_to_col2(obj_box, parent, row_text, box_width)
             
 
-    def move_to_row2(self, obj, parent, row_text, width=[]): 
+    def move_to_col2(self, obj, parent, row_text, width=[]): 
         if width: # set width of obj
             obj.setMaximumWidth(width)
         # find item with row_text
@@ -944,7 +948,7 @@ class QCMApp(QMainWindow):
         else:
             # n = f'1/{round(1/n)} *'
             n = '1/{} *'.format(min(settings_init['span_ctrl_steps'], key=lambda x:abs(x-1/n))) # python < 3.5
-        # set treeWidget_settings_settings_harmtree value
+        # set label_spectra_fit_zoomtimes value
         self.ui.label_spectra_fit_zoomtimes.setText(str(n))
 
     def on_released_slider_spanctrl(self):
