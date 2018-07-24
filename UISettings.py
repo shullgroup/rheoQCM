@@ -12,10 +12,7 @@ settings_init = {
 
     # highest harmonic to display. the maximum value is 11
     'max_harmonic': 11, # do not change
-
-    # temperature modules path
-    'tempmodules_path': r'./modules/temp/',
-    
+ 
     # default open/save data file type
     'default_datafiletype': ';;'.join([
         'Json file (*.json)',
@@ -472,7 +469,3 @@ settings_default = {
     'radioButton_plt2_ref': False
 }
 
-test = True
-test1 = False
-oink = test==test1
-print(str(oink))
