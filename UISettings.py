@@ -15,7 +15,7 @@ settings_init = {
     
     # temperature modules path
     'tempmodules_path': r'./modules/temp/', 
-    
+
     # default open/save data file type
     'default_datafiletype': ';;'.join([
         'Json file (*.json)',
@@ -69,9 +69,10 @@ settings_init = {
 
     # track_method
     'track_mehtod_choose': {
+        'free':      'Free',
         'fixspan':   'Fix span',
         'fixcenter': 'Fix center',
-        'fixrange':  'Fix range',
+        'fixcntspn':  'Fix center/span',
         'usrdef':    'User-defined...'
     },
 
