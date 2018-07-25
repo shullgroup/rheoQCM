@@ -26,7 +26,7 @@ def num2str(A,precision=None, formatSpec=None):
             print('not implemented')
         else:
             print('not available')
-            
+
 def findpeaks(array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf, 
             threshold=0, minpeakdistance=0, widthreference=None, minpeakwidth=0, maxpeakwidth=np.inf):
     indices = np.array([]).astype('int64')

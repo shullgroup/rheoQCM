@@ -1295,10 +1295,6 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_plt2_h11.setChecked(self.settings['checkBox_plt2_h11'])
         self.ui.radioButton_plt2_samp.setChecked(self.settings['radioButton_plt2_samp'])
         self.ui.radioButton_plt2_ref.setChecked(self.settings['radioButton_plt2_ref'])
-    
-    # TODO python implementation of MATLAB's find function
-    def find(self, array, expression, n):
-        pass
 
     def smart_peak_tracker(self, harmonic, freq, conductance, susceptance, G_parameters):
         resonance = None
@@ -1317,7 +1313,7 @@ class QCMApp(QMainWindow):
         Gmax = resonance[index[0]] 
         # determine the estimated half-max conductance (or susceptance) of the resonance peak
         halfg = (Gmax-np.amin(resonance))/2 + np.amin(resonance) 
-        halfg_freq = np.absolute(self.find(freq, np.absolute(halfg-resonance)==np.amin(np.absolute(halfg-resonance)),1) - peak_f)
+        halfg_freq = np.absolute(freq[np.where(np.abs(halfg-resonance)==np.min(np.abs(halfg-resonance)))[0][0]])
         # extract the peak tracking conditions
         track_method = self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_track_method'] 
         if track_method == 'fixspan':
