@@ -1296,6 +1296,34 @@ class QCMApp(QMainWindow):
         self.ui.radioButton_plt2_samp.setChecked(self.settings['radioButton_plt2_samp'])
         self.ui.radioButton_plt2_ref.setChecked(self.settings['radioButton_plt2_ref'])
 
+    def check_freq_range(self, harmonic, min_range, max_range):
+        startname = 'lineEdit_startf' + str(harmonic)
+        endname = 'lineEdit_endf' + str(harmonic)
+        # check start frequency range
+        if float(self.settings[startname]) <= min_range or float(self.settings[startname]) >= max_range:
+            print('ERROR')
+            self.settings[startname] = float(min_range) + 0.9
+        if float(self.settings[startname]) >= float(self.settings[endname]):
+            if float(self.settings[startname]) == float(self.settings[endname]):
+                print('The start frequency cannot be the same as the end frequency!')
+                self.settings[startname] = min_range + 0.9
+                self.settings[endname] = max_range - 0.9
+            else:
+                print('The start frequency is greater than the end frequency!')
+                self.settings[startname] = min_range + 0.9
+        # check end frequency range
+        if float(self.settings[endname]) <= min_range or float(self.settings[endname]) >= max_range:
+            print('ERROR')
+            self.settings[endname] = max_range - 0.9
+        if float(self.settings[endname]) <= float(self.settings[startname]):
+            print('ERROR: The end frequency is less than the start frequency!')
+            if float(self.settings[startname]) == max_range:
+                print('The start frequency cannot be the same as the end frequency!')
+                self.settings[startname] = min_range + 0.9
+                self.settings[endname] = max_range - 0.9
+            else:
+                self.settings[endname] = max_range - 0.9
+
     def smart_peak_tracker(self, harmonic, freq, conductance, susceptance, G_parameters):
         resonance = None
         self.f0 = G_parameters[0]
@@ -1379,7 +1407,7 @@ class QCMApp(QMainWindow):
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
             pass
-        # TODO check_freq_range(handles.din.harmonic, handles.din.freq_range(0.5*(handles.din.harmonic+1),1), handles.din.freq_range(0.5*(handles.din.harmonic+1),2), handles)
+        self.check_freq_range(harmonic, self.settings['freq_range'][harmonic][0], self.settings['freq_range'][harmonic][1])
 
 #endregion
 
