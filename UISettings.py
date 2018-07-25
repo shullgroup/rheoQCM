@@ -232,6 +232,16 @@ settings_default = {
     'checkBox_showpolar': False,
     'comboBox_fitfactor': '6',
 
+    # default frequency ranges for each harmonic
+    'freq_range': {
+        1: [4, 6],
+        3: [14, 16],
+        5: [24, 26],
+        7: [34, 36],
+        9: [44, 46],
+        11: [54, 56]
+    },
+
 #### default settings settings ####
     'tab_settings_settings_harm1': {
         # default scan settings

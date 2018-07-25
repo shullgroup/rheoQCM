@@ -1363,14 +1363,34 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_plt2_h11.setChecked(self.settings['checkBox_plt2_h11'])
         self.ui.radioButton_plt2_samp.setChecked(self.settings['radioButton_plt2_samp'])
         self.ui.radioButton_plt2_ref.setChecked(self.settings['radioButton_plt2_ref'])
-    
-    # TODO python implementation of MATLAB's find function
-    def find(self, array, expression, n):
-        pass
-    
-    # TODO python implementation of MATLAB's findpeaks function
-    def findpeaks(self, array, a, b):
-        pass
+
+    def check_freq_range(self, harmonic, min_range, max_range):
+        startname = 'lineEdit_startf' + str(harmonic)
+        endname = 'lineEdit_endf' + str(harmonic)
+        # check start frequency range
+        if float(self.settings[startname]) <= min_range or float(self.settings[startname]) >= max_range:
+            print('ERROR')
+            self.settings[startname] = float(min_range) + 0.9
+        if float(self.settings[startname]) >= float(self.settings[endname]):
+            if float(self.settings[startname]) == float(self.settings[endname]):
+                print('The start frequency cannot be the same as the end frequency!')
+                self.settings[startname] = min_range + 0.9
+                self.settings[endname] = max_range - 0.9
+            else:
+                print('The start frequency is greater than the end frequency!')
+                self.settings[startname] = min_range + 0.9
+        # check end frequency range
+        if float(self.settings[endname]) <= min_range or float(self.settings[endname]) >= max_range:
+            print('ERROR')
+            self.settings[endname] = max_range - 0.9
+        if float(self.settings[endname]) <= float(self.settings[startname]):
+            print('ERROR: The end frequency is less than the start frequency!')
+            if float(self.settings[startname]) == max_range:
+                print('The start frequency cannot be the same as the end frequency!')
+                self.settings[startname] = min_range + 0.9
+                self.settings[endname] = max_range - 0.9
+            else:
+                self.settings[endname] = max_range - 0.9
 
     def smart_peak_tracker(self, harmonic, freq, conductance, susceptance, G_parameters):
         resonance = None
@@ -1383,13 +1403,13 @@ class QCMApp(QMainWindow):
             resonance = susceptance
         else:
             resonance = conductance
-        index = self.findpeaks(resonance, 'sortstr', 'descend')
+        index = mlf.findpeaks(resonance, output='indices', sortstr='descend')
         peak_f = freq[index[0]]
         # determine the estimated associated conductance (or susceptance) value at the resonance peak
         Gmax = resonance[index[0]] 
         # determine the estimated half-max conductance (or susceptance) of the resonance peak
         halfg = (Gmax-np.amin(resonance))/2 + np.amin(resonance) 
-        halfg_freq = np.absolute(self.find(freq, np.absolute(halfg-resonance)==np.amin(np.absolute(halfg-resonance)),1) - peak_f)
+        halfg_freq = np.absolute(freq[np.where(np.abs(halfg-resonance)==np.min(np.abs(halfg-resonance)))[0][0]])
         # extract the peak tracking conditions
         track_method = self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_track_method'] 
         if track_method == 'fixspan':
@@ -1455,7 +1475,7 @@ class QCMApp(QMainWindow):
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
             pass
-        # TODO check_freq_range(handles.din.harmonic, handles.din.freq_range(0.5*(handles.din.harmonic+1),1), handles.din.freq_range(0.5*(handles.din.harmonic+1),2), handles)
+        self.check_freq_range(harmonic, self.settings['freq_range'][harmonic][0], self.settings['freq_range'][harmonic][1])
 
 #endregion
 
