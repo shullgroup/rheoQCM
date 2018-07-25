@@ -1230,10 +1230,6 @@ class QCMApp(QMainWindow):
     # TODO python implementation of MATLAB's find function
     def find(self, array, expression, n):
         pass
-    
-    # TODO python implementation of MATLAB's findpeaks function
-    def findpeaks(self, array, a, b):
-        pass
 
     def smart_peak_tracker(self, harmonic, freq, conductance, susceptance, G_parameters):
         resonance = None
@@ -1246,7 +1242,7 @@ class QCMApp(QMainWindow):
             resonance = susceptance
         else:
             resonance = conductance
-        index = self.findpeaks(resonance, 'sortstr', 'descend')
+        index = mlf.findpeaks(resonance, output='indices', sortstr='descend')
         peak_f = freq[index[0]]
         # determine the estimated associated conductance (or susceptance) value at the resonance peak
         Gmax = resonance[index[0]] 
