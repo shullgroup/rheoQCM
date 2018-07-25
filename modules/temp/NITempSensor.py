@@ -1,45 +1,37 @@
 import nidaqmx
 from nidaqmx import Task
 import matplotlib.pyplot as plt
-import numpy as np
-
-
-
-# add NI sensors into the dict and the code will check if the devices in its keys.
-# the values are the number of samples per test for average
-devices_dict = {'USB-TC01': 1, 'PCIe-6321': 100}
-
-def list_devices():
-    ''' return a list of connected NI devices '''
-    system = nidaqmx.system.System.local()
-    # list all connected NI devices
-    devices = []
-    for device in system.devices:
-        print('Device Name: {0}, Product Category: {1}, Product Type: {2}'.format(
-            device.name, device.product_category, device.product_type))
-        devices.append(device)
-    return devices
-
-
-def available_devices():
-    ''' return a list of available devices in the NI_devices '''
-    devices = list_devices()
-    for device in devices:
-        if device.product_type not in devices_dict.keys():
-            devices.remove(device)
-    return devices            
-
+import numpy as np     
 
 class TempSensor():
-    def __init__(self, device, ai_channel, thrmpl_type):
+    def __init__(self, device, ai_channel, thrmpl_type, nsamples):
         self.thrmcpl_chan = device.name + '/' + ai_channel
         self.thrmcpl_type = getattr(nidaqmx.constants.ThermocoupleType, thrmpl_type)
         self.cjc_source = nidaqmx.constants.CJCSource.BUILT_IN
-        self.nsample =devices_dict.get(device.product_type, [])
-        if not self.nsample:
+        self.nsamples = nsamples
+        if not self.nsamples:
             print('device is not found or not available.')
-            return        
-        
+            return
+
+        # init task
+        # self.task = nidaqmx.Task()
+        # self.task.ai_channels.add_ai_thrmcpl_chan(
+        #     self.thrmcpl_chan,
+        #     # name_to_assign_to_channel="", 
+        #     # min_val=0.0,
+        #     # max_val=100.0, 
+        #     # units=nidaqmx.constants.TemperatureUnits.DEG_C,
+        #     thermocouple_type=self.thrmcpl_type,
+        #     # cjc_source=nidaqmx.constants.CJCSource.CONSTANT_USER_VALUE, 
+        #     cjc_source=self.cjc_source, 
+        #     # cjc_val=20.0,
+        #     # cjc_channel=""
+        # )
+
+
+    # def readC(self):
+    #     data = self.task.read(number_of_samples_per_channel=self.nsamples)
+    #     return np.mean(data)
 
     def get_tempC(self):
         with nidaqmx.Task() as task:
@@ -55,7 +47,7 @@ class TempSensor():
                 # cjc_val=20.0,
                 # cjc_channel=""
                 )
-            data = task.read(number_of_samples_per_channel=self.nsample)
+            data = task.read(number_of_samples_per_channel=self.nsamples)
             return np.mean(data)
 
 ############## test code below

@@ -227,11 +227,10 @@ save values in those three widgets to `self.settings`
 
 > if True:  
 >> get all temp sensor setting parameters  
-
 >> if the sensor is available:
 >>> setChecked(True) checkBox_settings_temp_sensor  
 setEnabled(True) label_status_temp_sensor  
-save values of those three to `self.settings`  
+save values of those three to `self.settings` 
 >> else:  
 >>> set self setChecked(False)  
 show result in statusbar  
@@ -265,6 +264,7 @@ save lineEdit_reftime to `self.settings`
 save filename to `self.fileName`  
 
 #### pushButton_appenddata
+
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |clicked()|lineEdit_datafilestr|`on_triggered_load_data`|show the appended file path|
@@ -291,6 +291,7 @@ save filename to `self.fileName`
 | |currentChanged()|treeWidget_settings_settings_harmtree|`update_harmonic_tab`|display value|
 
 ##### treeWidget_settings_settings_harmtree
+
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |valueChanged()||`updatesettings_settings_harmtree`|update values to `self.settings`|
@@ -302,6 +303,7 @@ comboBox_track_method
 comboBox_harmfitfactor  
 
 ##### pushButton_settings_harm_cntr
+
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |clicked()|  |`goto_cnetering(harm)`|set UI for fitting and starts a scan|
@@ -315,6 +317,7 @@ get harm from treeWidget_settings_settings_harmtree.currentIndex()
 ##### treeWidget_settings_settings_hardware
 
 ###### comboBox_sample_channel
+
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |currentIndexChanged()|  |`updatesettings_samp_ref_chn`|check sample and reference channel selection and save them to `self.settings`|
@@ -327,7 +330,8 @@ if samp == ref:
 > 
 > save values of those two to `self.settings`  
 
-###### comboBox_ref_channel
+###### comboBox_ref_channel  
+
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |currentIndexChanged()|  |`updatesettings_samp_ref_chn`|check sample and reference channel selection and save them to `self.settings`|
@@ -335,17 +339,20 @@ if samp == ref:
 `updatesettings_samp_ref_chn`  
 defined above  
 
-###### comboBox_base_frequency
+###### comboBox_base_frequency  
+
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |currentIndexChanged()|  |`update_base_freq`|save value to `self.settings` and update frequency display (`update_frequencies`)|
 
-###### comboBox_base_frequency
+###### comboBox_base_frequency  
+
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |currentIndexChanged()|  |`update_bandwidth`|save value to `self.settings` and update frequency display (`update_frequencies`)|
 
-###### checkBox_settings_temp_sensor
+###### checkBox_settings_temp_sensor  
+
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |clicked(bool)|checkBox_control_rectemp|setChecked(bool))|done in Designer|

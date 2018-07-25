@@ -23,23 +23,13 @@ def closest_spanctr_step(l, n):
         return min(l, key=lambda x:abs(x-1/n))
 
 def list_modules(path):
+    # return a dict of available temp modules stored in path
     from os import listdir
     from os.path import isfile
-    modules = [f for f in listdir(path) if isfile and f != '__init__.py']
+    modules = {f.replace('.py', ''): f.replace('.py', '') for f in listdir(path) if isfile and f != '__init__.py'}
     return modules
 
 def split_path(path):
     pass
 
-def temp_by_unit(data, unit):
-    '''
-data: double or ndarray
-unit: str. C for celsius, K for Kelvin and F for fahrenheit
-'''
-if unit == 'C':
-    pass # temp data is saved as C
-elif unit == 'K': # convert to K
-    return data + 273.15 
-elif unit == 'F': # convert to F
-    return data * 9 / 5 + 32
 

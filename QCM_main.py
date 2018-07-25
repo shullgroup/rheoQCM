@@ -4,6 +4,7 @@ This is the main code of the QCM acquization program
 '''
 
 import os
+import importlib
 import math
 import json
 import datetime, time
@@ -19,7 +20,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 # packages
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
-from modules import UIModules, MathModules
+from modules import UIModules, MathModules, tempDevices
 
 from MatplotlibWidget import MatplotlibWidget
 
@@ -42,6 +43,7 @@ class QCMApp(QMainWindow):
         self.accvna = None 
         self.idle = True # if test is running
         self.reading = False # if myVNA is scanning and reading data
+        self.tempsensor = None # class for temp sensor
         
         # check system
         self.system = UIModules.system_check()
@@ -209,7 +211,7 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_spectra_shoechi.toggled.connect(self.update_widget)
 
         # set signals to checkBox_control_rectemp
-        self.ui.checkBox_control_rectemp.clicked(bool).connect(self.on_clicked_set_temp_sensor)
+        self.ui.checkBox_control_rectemp.clicked['bool'].connect(self.on_clicked_set_temp_sensor)
 
 #endregion
 
@@ -281,7 +283,7 @@ class QCMApp(QMainWindow):
             self.ui.treeWidget_settings_settings_hardware
         )
 
-        # ?? add comBox_tempmodule to treeWidget_settings_settings_hardware
+        # add comBox_tempmodule to treeWidget_settings_settings_hardware
         self.create_combobox(
             'comboBox_tempmodule',
             UIModules.list_modules(settings_init['tempmodules_path']),  
@@ -289,7 +291,20 @@ class QCMApp(QMainWindow):
             'Module',
             self.ui.treeWidget_settings_settings_hardware, 
         )
-        
+        self.settings['comboBox_tempmodule'] = self.ui.comboBox_tempmodule.itemData(self.ui.comboBox_tempmodule.currentIndex())
+        self.ui.comboBox_tempmodule.activated.connect(self.update_widget)
+
+        # add comBox_tempdevice to treeWidget_settings_settings_hardware
+        self.create_combobox(
+            'comBox_tempdevice',
+            tempDevices.dict_available_devs(settings_init['devices_dict']),  
+            100,
+            'Device',
+            self.ui.treeWidget_settings_settings_hardware, 
+        )
+        self.settings['comBox_tempdevice'] = self.ui.comBox_tempdevice.itemData(self.ui.comBox_tempdevice.currentIndex())
+        self.ui.comBox_tempdevice.activated.connect(self.update_widget)
+
         # insert thrmcpl type
         self.create_combobox(
             'comboBox_thrmcpltype', 
@@ -419,7 +434,7 @@ class QCMApp(QMainWindow):
 
         # set signals to update temperature settings_settings
         # self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
-        self.ui.checkBox_settings_temp_sensor.clicked(bool).connect(self.on_clicked_set_temp_sensor)
+        self.ui.checkBox_settings_temp_sensor.clicked['bool'].connect(self.on_clicked_set_temp_sensor)
         self.ui.comboBox_thrmcpltype.activated.connect(self.update_thrmcpltype)
 
         # set signals to update plots settings_settings
@@ -538,6 +553,7 @@ class QCMApp(QMainWindow):
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_reftype)
         # move label_status_temp_sensor to statusbar
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_temp_sensor)
+        self.ui.label_status_temp_sensor.setScaledContents(True)
         # move label_status_f0BW to statusbar
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_f0BW)
 
@@ -756,6 +772,8 @@ class QCMApp(QMainWindow):
         setattr(self.ui, name, QComboBox())
         # get the object
         obj_box = getattr(self.ui, name)
+        # set objectName
+        obj_box.setObjectName(name)
         # set its size adjust policy
         obj_box.SizeAdjustPolicy(QComboBox.AdjustToContents)
         # add items from contents
@@ -792,7 +810,7 @@ class QCMApp(QMainWindow):
 
 
     ########## action functions ##############
-    # @pyqtSlot(bool)
+    # @pyqtSlot['bool']
     def on_clicked_pushButton_runstop(self, checked):
         if checked:
             self.ui.pushButton_runstop.setText('STOP')
@@ -990,64 +1008,110 @@ class QCMApp(QMainWindow):
     def on_clicked_set_temp_sensor(self, checked):
         
         if checked: # checkbox is checked
-            if not tempModule: # tempModule is not initialized 
-                # get all tempsensor settings 
-                try:
-                    tempmodule_name = self.settings['comboBox_tempmodule'] # get temp module
-                except:
-                    tempmodule_name = self.ui.comboBox_tempmodule.itemText(self.ui.comboBox_tempmodule.currentIndex())
-                # thrmcpltype = self.settings['comboBox_thrmcpltype'] # get thermocouple type
+            # if not self.tempsensor: # tempModule is not initialized 
+            # get all tempsensor settings 
+            tempmodule_name = self.settings['comboBox_tempmodule'] # get temp module
 
-                # check senor availability
-                if self.accvna: # add not for testing code
-                    package_str = settings_init['tempmodules_path'][2:].replace('/', '.') + tempmodule_name.replace('.py', '')
-                    # import package
-                    tempModule = __import__(package_str)
-                else: # accvna == None
-                    return
+            thrmcpltype = self.settings['comboBox_thrmcpltype'] # get thermocouple type
+            tempdevice = tempDevices.device_info(self.settings['comBox_tempdevice']) #get temp device info
+
+            # check senor availability
+            if self.accvna: # add not for testing code
+                package_str = settings_init['tempmodules_path'][2:].replace('/', '.') + tempmodule_name
+                print(package_str)
+                # import package
+                tempsensor = getattr(importlib.import_module(package_str), 'TempSensor')
+
+                try:
+                    self.tempsensor = tempsensor(
+                        tempdevice,
+                        'ai0',
+                        thrmcpltype,
+                        settings_init['devices_dict'][tempdevice.product_type]
+                    )
+                except: # if failed return
+                    #?? update in statusbar
+                    return 
+            else: # accvna == None
+                return
 
             # after tempModule loaded
             # # tempModule should take one arg 'thrmcpltype' and return temperature in C by calling tempModule.get_tempC
             try:
-                thrmcpltype = self.settings['comboBox_thrmcpltype']
-                curr_temp = tempModule.get_tempC(thrmcpltype)
-
-                # set statusbar label_status_temp_sensor text
-                self.statusbar_temp_update(curr_temp)
+                curr_temp = self.tempsensor.get_tempC()
 
                 # save values to self.settings
                 self.settings['checkBox_control_rectemp'] = True
                 self.settings['checkBox_settings_temp_sensor'] = True
+                # set statusbar label_status_temp_sensor text
+                self.statusbar_temp_update()
+                # disable items to keep the setting
+                self.ui.comboBox_tempmodule.setEnabled(False)
+                self.ui.comBox_tempdevice.setEnabled(False)
+                self.ui.comboBox_thrmcpltype.setEnabled(False)
 
-            except: # failed to get temperature from sensor
+            except Exception as e: # failed to get temperature from sensor
+                print(e)
                 # uncheck checkBoxes
                 self.ui.checkBox_control_rectemp.setChecked(False)
                 self.ui.checkBox_settings_temp_sensor.setChecked(False)
                 #?? update in statusbar
         else: # is unchecked
-            self.settings['checkBox_control_rectemp'] = False
-            self.settings['checkBox_settings_temp_sensor'] = False            
             
+            self.settings['checkBox_control_rectemp'] = False
+            self.settings['checkBox_settings_temp_sensor'] = False
+
+            # set statusbar label_status_temp_sensor text
+            self.statusbar_temp_update()
+            
+            # enable items to keep the setting
+            self.ui.comboBox_tempmodule.setEnabled(True)
+            self.ui.comBox_tempdevice.setEnabled(True)
+            self.ui.comboBox_thrmcpltype.setEnabled(True)
+
+            # reset self.tempsensor
+            self.tempsensor = None
+            
+            
+        # update checkBox_settings_temp_sensor to self.settings
+        # self.update_tempsensor()
+
+    def statusbar_temp_update(self):
+
         # update statusbar temp sensor image
-        if self.ui.checkBox_settings_temp_sensor.isChecked():
+        if self.settings['checkBox_settings_temp_sensor']: # checked
             self.ui.label_status_temp_sensor.setStyleSheet(
                 " border-image: url(:/icon/rc/temp_sensor.svg); "
             )
+            # change temp unit by self.settings['temp_unit_choose']
+            try:
+                curr_temp = self.temp_by_unit(self.tempsensor.get_tempC())
+                print(curr_temp)
+                unit = settings_init['temp_unit_choose'].get(self.settings['comboBox_tempunit'])
+                self.ui.label_status_temp_sensor.setText('{:.1f} {}'.format(curr_temp, unit))
+                self.ui.label_status_temp_sensor.setToolTip('Last updated temp.')
+            except:
+                #?? update in statusbar
+                pass
         else:
             self.ui.label_status_temp_sensor.setStyleSheet(
                 " border-image: url(:/icon/rc/temp_sensor_off.svg); "
             )
             self.ui.label_status_temp_sensor.setText('')
-            
-        # update checkBox_settings_temp_sensor to self.settings
-        self.update_tempsensor()
+            self.ui.label_status_temp_sensor.setToolTip('Temp. sensor is off.')
 
-    def statusbar_temp_update(self, temp_org):
-        # change temp unit by self.settings['temp_unit_choose']
-        temp = UIModules.temp_by_unit(temp_org, self.settings['temp_unit_choose'])
-        unit = settings_init['temp_unit_choose'][self.settings['temp_unit_choose']]
-        
-        self.ui.label_status_temp_sensor.setText('{0:.1g} {}'.format(temp, unit))
+    def temp_by_unit(self, data):
+        '''
+        data: double or ndarray
+        unit: str. C for celsius, K for Kelvin and F for fahrenheit
+        '''
+        unit = self.settings['comboBox_tempunit']
+        if unit == 'C':
+            return data # temp data is saved as C
+        elif unit == 'K': # convert to K
+            return data + 273.15 
+        elif unit == 'F': # convert to F
+            return data * 9 / 5 + 32
         
 
     def set_stackedwidget_index(self, stwgt, idx=[], diret=[]):
@@ -1067,6 +1131,7 @@ class QCMApp(QMainWindow):
     
     # update widget values in settings dict, only works with elements out of settings_settings
     def update_widget(self, signal):
+        print('update_widget')
         #print(self.sender().objectName())
         #print(type(self.sender()))
         # if the sender of the signal isA QLineEdit object, update QLineEdit vals in dict
@@ -1083,9 +1148,12 @@ class QCMApp(QMainWindow):
             self.settings[self.sender().objectName()] = not self.settings[self.sender().objectName()]
         # if the sender of the signal isA QComboBox object, udpate QComboBox vals in dict
         elif isinstance(self.sender(), QComboBox):
-            value = self.sender().itemData(signal)
+            try: # if w/ userData, use userData
+                value = self.sender().itemData(signal)
+            except: # if w/o userData, use the text
+                value = self.sender().itemText(signal)
             self.settings[self.sender().objectName()] = value
-    
+        print(self.sender().objectName(), self.settings[self.sender().objectName()])
     #def update_dynamicfit(self):
     #    self.settings['checkBox_dynamicfit'] = not self.settings['checkBox_dynamicfit']
 

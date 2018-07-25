@@ -808,7 +808,7 @@ background-color: red;
                  <item>
                   <widget class="QCheckBox" name="checkBox_control_rectemp">
                    <property name="text">
-                    <string>Rrecord temperature data</string>
+                    <string>Rrecord temperature data (setup in Settings Tab)</string>
                    </property>
                   </widget>
                  </item>
@@ -1664,6 +1664,11 @@ background-color: red;
                     </item>
                     <item>
                      <property name="text">
+                      <string>Device</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
                       <string>Thrmcpl Type</string>
                      </property>
                     </item>
@@ -1840,6 +1845,9 @@ background-color: red;
                   <height>0</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>Temp sensor is off</string>
+                </property>
                 <property name="styleSheet">
                  <string notr="true">#label_status_temp_sensor
 {
@@ -1853,6 +1861,9 @@ background-repeat: none;
                 </property>
                 <property name="text">
                  <string/>
+                </property>
+                <property name="scaledContents">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>

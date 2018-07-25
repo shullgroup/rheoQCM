@@ -15,7 +15,15 @@ settings_init = {
     
     # temperature modules path
     'tempmodules_path': r'./modules/temp/', 
-
+    
+    # add NI sensors into the dict and the code will check if the devices in its keys.
+    # the values are the number of samples per test for average
+    # the channel MUST be 'ai0'
+    'devices_dict': {
+        'USB-TC01': 1, 
+        'PCIe-6321': 100
+    },
+    
     # default open/save data file type
     'default_datafiletype': ';;'.join([
         'Json file (*.json)',
