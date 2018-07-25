@@ -19,7 +19,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 # packages
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
-from modules import UIModules
+from modules import UIModules, MathModules
 
 from MatplotlibWidget import MatplotlibWidget
 
@@ -38,26 +38,31 @@ class QCMApp(QMainWindow):
         self.main()
         self.load_settings()
   
+        # define instrument state variables
+        self.accvna = None 
+        self.idle = True # if test is running
+        self.reading = False # if myVNA is scanning and reading data
+        
         # check system
         self.system = UIModules.system_check()
         # initialize AccessMyVNA
         #?? add more code to disable settings_control tab and widges in settings_settings tab
         if self.system == 'win32': # windows
-            from modules.AccessMyVNA import AccessMyVNA
-            self.accvna = AccessMyVNA()
-            # test if MyVNA program is available
-            with self.accvna as accvna:
-                ret = accvna.Init()
-                if ret == 0: # is available
-                    pass
-                else: # not available
-                    self.accvna = None
+            try:
+                from modules.AccessMyVNA import AccessMyVNA
+                self.accvna = AccessMyVNA()
+                # test if MyVNA program is available
+                with self.accvna as accvna:
+                    ret = accvna.Init()
+                    if ret == 0: # is available
+                        pass
+                    else: # not available
+                        pass
+            except:
+                pass
         else: # other system, data analysis only
-            self.accvna = None
+            pass
 
-        # define instrument state variables
-        self.idle = True # if test is running
-        self.reading = False # if myVNA is scanning and reading data
 
     def main(self):
  # loadUi('QCM_GUI_test4.ui', self) # read .ui file directly. You still need to compile the .qrc file
@@ -203,27 +208,8 @@ class QCMApp(QMainWindow):
         #self.ui.radioButton_spectra_showpolar.toggled.connect(self.update_widget)
         self.ui.checkBox_spectra_shoechi.toggled.connect(self.update_widget)
 
-        # set signals to update plot 1 options
-        self.ui.comboBox_plt1_choice.activated.connect(self.update_widget)
-        self.ui.checkBox_plt1_h1.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h3.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h5.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h7.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h9.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h11.stateChanged.connect(self.update_widget)
-        self.ui.radioButton_plt1_ref.toggled.connect(self.update_widget)
-        self.ui.radioButton_plt1_samp.toggled.connect(self.update_widget)
-
-        # set signals to update plot 2 options
-        self.ui.comboBox_plt2_choice.activated.connect(self.update_widget)
-        self.ui.checkBox_plt2_h1.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h3.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h5.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h7.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h9.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h11.stateChanged.connect(self.update_widget)
-        self.ui.radioButton_plt2_ref.toggled.connect(self.update_widget)
-        self.ui.radioButton_plt2_samp.toggled.connect(self.update_widget)
+        # set signals to checkBox_control_rectemp
+        self.ui.checkBox_control_rectemp.clicked(bool).connect(self.on_clicked_set_temp_sensor)
 
 #endregion
 
@@ -296,11 +282,9 @@ class QCMApp(QMainWindow):
         )
 
         # ?? add comBox_tempmodule to treeWidget_settings_settings_hardware
-        temp_modules = UIModules.list_modules(settings_init['tempmodules_path'])
-        print(temp_modules)
         self.create_combobox(
-            'comBox_tempmodule',
-            temp_modules,  
+            'comboBox_tempmodule',
+            UIModules.list_modules(settings_init['tempmodules_path']),  
             100,
             'Module',
             self.ui.treeWidget_settings_settings_hardware, 
@@ -434,7 +418,8 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_ref_channel.activated.connect(self.update_refchannel)
 
         # set signals to update temperature settings_settings
-        self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
+        # self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
+        self.ui.checkBox_settings_temp_sensor.clicked(bool).connect(self.on_clicked_set_temp_sensor)
         self.ui.comboBox_thrmcpltype.activated.connect(self.update_thrmcpltype)
 
         # set signals to update plots settings_settings
@@ -509,6 +494,27 @@ class QCMApp(QMainWindow):
 
 
 #region data_data
+        # set signals to update plot 1 options
+        self.ui.comboBox_plt1_choice.activated.connect(self.update_widget)
+        self.ui.checkBox_plt1_h1.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h3.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h5.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h7.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h9.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h11.stateChanged.connect(self.update_widget)
+        self.ui.radioButton_plt1_ref.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt1_samp.toggled.connect(self.update_widget)
+
+        # set signals to update plot 2 options
+        self.ui.comboBox_plt2_choice.activated.connect(self.update_widget)
+        self.ui.checkBox_plt2_h1.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h3.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h5.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h7.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h9.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h11.stateChanged.connect(self.update_widget)
+        self.ui.radioButton_plt2_ref.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt2_samp.toggled.connect(self.update_widget)
 
 #endregion
 
@@ -980,7 +986,70 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.update_data(ls=['lG'], xdata=[f], ydata=[G])
         self.ui.mpl_spectra_fit.update_data(ls=['lB'], xdata=[f], ydata=[B])
 
+
+    def on_clicked_set_temp_sensor(self, checked):
         
+        if checked: # checkbox is checked
+            if not tempModule: # tempModule is not initialized 
+                # get all tempsensor settings 
+                try:
+                    tempmodule_name = self.settings['comboBox_tempmodule'] # get temp module
+                except:
+                    tempmodule_name = self.ui.comboBox_tempmodule.itemText(self.ui.comboBox_tempmodule.currentIndex())
+                # thrmcpltype = self.settings['comboBox_thrmcpltype'] # get thermocouple type
+
+                # check senor availability
+                if self.accvna: # add not for testing code
+                    package_str = settings_init['tempmodules_path'][2:].replace('/', '.') + tempmodule_name.replace('.py', '')
+                    # import package
+                    tempModule = __import__(package_str)
+                else: # accvna == None
+                    return
+
+            # after tempModule loaded
+            # # tempModule should take one arg 'thrmcpltype' and return temperature in C by calling tempModule.get_tempC
+            try:
+                thrmcpltype = self.settings['comboBox_thrmcpltype']
+                curr_temp = tempModule.get_tempC(thrmcpltype)
+
+                # set statusbar label_status_temp_sensor text
+                self.statusbar_temp_update(curr_temp)
+
+                # save values to self.settings
+                self.settings['checkBox_control_rectemp'] = True
+                self.settings['checkBox_settings_temp_sensor'] = True
+
+            except: # failed to get temperature from sensor
+                # uncheck checkBoxes
+                self.ui.checkBox_control_rectemp.setChecked(False)
+                self.ui.checkBox_settings_temp_sensor.setChecked(False)
+                #?? update in statusbar
+        else: # is unchecked
+            self.settings['checkBox_control_rectemp'] = False
+            self.settings['checkBox_settings_temp_sensor'] = False            
+            
+        # update statusbar temp sensor image
+        if self.ui.checkBox_settings_temp_sensor.isChecked():
+            self.ui.label_status_temp_sensor.setStyleSheet(
+                " border-image: url(:/icon/rc/temp_sensor.svg); "
+            )
+        else:
+            self.ui.label_status_temp_sensor.setStyleSheet(
+                " border-image: url(:/icon/rc/temp_sensor_off.svg); "
+            )
+            self.ui.label_status_temp_sensor.setText('')
+            
+        # update checkBox_settings_temp_sensor to self.settings
+        self.update_tempsensor()
+
+    def statusbar_temp_update(self, temp_org):
+        # change temp unit by self.settings['temp_unit_choose']
+        temp = UIModules.temp_by_unit(temp_org, self.settings['temp_unit_choose'])
+        unit = settings_init['temp_unit_choose'][self.settings['temp_unit_choose']]
+        
+        self.ui.label_status_temp_sensor.setText('{0:.1g} {}'.format(temp, unit))
+        
+
     def set_stackedwidget_index(self, stwgt, idx=[], diret=[]):
         '''
         chenge the index of stwgt to given idx (if not []) 

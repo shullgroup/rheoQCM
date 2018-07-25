@@ -41,7 +41,7 @@ class TempSensor():
             return        
         
 
-    def get_temp(self):
+    def get_tempC(self):
         with nidaqmx.Task() as task:
             task.ai_channels.add_ai_thrmcpl_chan(
                 self.thrmcpl_chan,

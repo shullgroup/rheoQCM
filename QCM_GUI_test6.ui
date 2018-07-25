@@ -1844,7 +1844,7 @@ background-color: red;
                  <string notr="true">#label_status_temp_sensor
 {
 background-color: transparent;
-border-image: url(:/icon/rc/temp_sensor.svg);
+border-image: url(:/icon/rc/temp_sensor_off.svg);
 background: none;
 border: none;
 background-repeat: none;
@@ -6852,8 +6852,8 @@ border: 1px solid blue;
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>277</x>
-     <y>611</y>
+     <x>292</x>
+     <y>557</y>
     </hint>
     <hint type="destinationlabel">
      <x>249</x>
@@ -6872,8 +6872,8 @@ border: 1px solid blue;
      <y>670</y>
     </hint>
     <hint type="destinationlabel">
-     <x>660</x>
-     <y>708</y>
+     <x>656</x>
+     <y>701</y>
     </hint>
    </hints>
   </connection>
@@ -6888,8 +6888,8 @@ border: 1px solid blue;
      <y>670</y>
     </hint>
     <hint type="destinationlabel">
-     <x>660</x>
-     <y>937</y>
+     <x>656</x>
+     <y>941</y>
     </hint>
    </hints>
   </connection>
@@ -6904,8 +6904,8 @@ border: 1px solid blue;
      <y>132</y>
     </hint>
     <hint type="destinationlabel">
-     <x>621</x>
-     <y>128</y>
+     <x>563</x>
+     <y>103</y>
     </hint>
    </hints>
   </connection>
@@ -6916,8 +6916,8 @@ border: 1px solid blue;
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>85</x>
-     <y>356</y>
+     <x>101</x>
+     <y>293</y>
     </hint>
     <hint type="destinationlabel">
      <x>102</x>
@@ -6932,12 +6932,12 @@ border: 1px solid blue;
    <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>145</x>
-     <y>532</y>
+     <x>153</x>
+     <y>480</y>
     </hint>
     <hint type="destinationlabel">
-     <x>145</x>
-     <y>609</y>
+     <x>154</x>
+     <y>520</y>
     </hint>
    </hints>
   </connection>
@@ -6948,12 +6948,12 @@ border: 1px solid blue;
    <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>145</x>
-     <y>609</y>
+     <x>154</x>
+     <y>520</y>
     </hint>
     <hint type="destinationlabel">
-     <x>145</x>
-     <y>532</y>
+     <x>153</x>
+     <y>480</y>
     </hint>
    </hints>
   </connection>
