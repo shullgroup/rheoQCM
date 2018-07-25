@@ -28,18 +28,25 @@ def num2str(A,precision=None, formatSpec=None):
             print('not available')
             
 def findpeaks(array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf, 
-                minpeakprominence=0, threshold=0, minpeakdistance=0, widthreference=None, 
-                minpeakwidth=0, maxpeakwidth=np.inf):
+            threshold=0, minpeakdistance=0, widthreference=None, minpeakwidth=0, maxpeakwidth=np.inf):
     indices = np.array([]).astype('int64')
     values = np.array([]).astype('float64')
     data = np.atleast_1d(array).astype('float64')
     if data.size < 3:
         return np.array([])
+
+    hnpeaks = 0
     diffs = data[1:]-data[:-1]
     for i in range(diffs.size-1):
+        if hnpeaks >= npeaks:
+            break
         if diffs[i] > 0 and diffs[i+1] < 0:
-            indices = np.append(indices, i+1)
-            values = np.append(values, data[i+1])
+            lthreshold = np.absolute(diffs[i])
+            rthreshold = np.absolute(diffs[i+1])
+            if data[i+1] >= minpeakheight and lthreshold >= threshold and rthreshold >= threshold:
+                indices = np.append(indices, i+1)
+                values = np.append(values, data[i+1])
+                hnpeaks = hnpeaks + 1
 
     indices_copy = np.copy(indices)
     if sortstr:
@@ -58,7 +65,3 @@ def findpeaks(array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf,
         return indices
     elif output.lower() == 'values':
         return values
-
-#data = np.array([6, 2, 1, 5, 10, 9, 8, 20, 1, 3, 1, 5, 2, 3, 1])
-#data = np.array([3, 0])
-#print(findpeaks(data, 'values'))
