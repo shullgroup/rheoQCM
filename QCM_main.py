@@ -1147,15 +1147,15 @@ class QCMApp(QMainWindow):
     
     # update widget values in settings dict, only works with elements out of settings_settings
     def update_widget(self, signal):
-        print('update_widget')
-        #print(self.sender().objectName())
-        #print(type(self.sender()))
         # if the sender of the signal isA QLineEdit object, update QLineEdit vals in dict
         if isinstance(self.sender(), QLineEdit):
-            try:
-                self.settings[self.sender().objectName()] = float(signal)
-            except:
-                self.settings[self.sender().objectName()] = 0
+                try:
+                    if 'lineEdit_startf' in self.sender().objectName() or 'lineEdit_endf' in self.sender().objectName():
+                        self.settings[self.sender().objectName()] = float(signal)*1e6
+                    else:
+                        self.settings[self.sender().objectName()] = float(signal)
+                except:
+                    self.settings[self.sender().objectName()] = 0
         # if the sender of the signal isA QCheckBox object, update QCheckBox vals in dict
         elif isinstance(self.sender(), QCheckBox):
             self.settings[self.sender().objectName()] = not self.settings[self.sender().objectName()]
@@ -1169,7 +1169,7 @@ class QCMApp(QMainWindow):
             except: # if w/o userData, use the text
                 value = self.sender().itemText(signal)
             self.settings[self.sender().objectName()] = value
-        print(self.sender().objectName(), self.settings[self.sender().objectName()])
+        #print(self.sender().objectName(), self.settings[self.sender().objectName()])
     #def update_dynamicfit(self):
     #    self.settings['checkBox_dynamicfit'] = not self.settings['checkBox_dynamicfit']
 
@@ -1307,8 +1307,8 @@ class QCMApp(QMainWindow):
 
         # load default start and end frequencies for lineEdit harmonics
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
-            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(str(self.settings['lineEdit_startf' + str(i)]))
-            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(str(self.settings['lineEdit_endf' + str(i)]))
+            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(mlf.num2str(self.settings['lineEdit_startf' + str(i)]*1e-6, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(mlf.num2str(self.settings['lineEdit_endf' + str(i)]*1e-6, precision=12)) # display as MHz
         # load default record interval
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         # load default spectra refresh resolution
@@ -1435,61 +1435,53 @@ class QCMApp(QMainWindow):
         if track_method == 'fixspan':
             current_span = (float(self.settings['lineEdit_endf' + str(harmonic)]) - \
             # get the current span of the data in Hz
-            float(self.settings['lineEdit_startf' + str(harmonic)])) * 1e6 
+            float(self.settings['lineEdit_startf' + str(harmonic)]))
             if np.absolute(np.mean(np.array([freq[0],freq[len(freq)-1]]))-peak_f) > 0.1 * current_span:
-                # new start and end frequencies in MHz
-                new_xlim=np.multiply(np.array([peak_f-0.5*current_span,peak_f+0.5*current_span]), 1e-6) 
-                new_xlim = mlf.num2str(new_xlim, precision=12)
-                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0])
-                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1])
+                # new start and end frequencies in Hz
+                new_xlim=np.array([peak_f-0.5*current_span,peak_f+0.5*current_span])
+                self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0]
+                self.settings['lineEdit_endf' + str(harmonic)] = new_xlim[1]
         elif track_method == 'fixcenter':
             # get current start and end frequencies of the data in Hz
-            current_xlim = np.multiply(np.array([float(self.settings['lineEdit_startf' + str(harmonic)]),\
-            float(self.settings['lineEdit_endf' + str(harmonic)])]), 1e6) 
+            current_xlim = np.array([float(self.settings['lineEdit_startf' + str(harmonic)]),float(self.settings['lineEdit_endf' + str(harmonic)])])
             # get the current center of the data in Hz
-            current_center = ((float(self.settings['lineEdit_startf' + str(harmonic)]) + \
-            float(self.settings['lineEdit_endf' + str(harmonic)]))*1e6)/2 
+            current_center = (float(self.settings['lineEdit_startf' + str(harmonic)]) + float(self.settings['lineEdit_endf' + str(harmonic)]))/2 
             # find the starting and ending frequency of only the peak in Hz
             peak_xlim = np.array([peak_f-halfg_freq*3, peak_f+halfg_freq*3]) 
             if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*halfg_freq, current_center + 3*halfg_freq])))) > 3e3:
-                # set new start and end freq based on the location of the peak in MHz
-                new_xlim = np.multiply(np.array(current_center-3*halfg_freq, current_center+3*halfg_freq), 1e-6) 
-                new_xlim = mlf.num2str(new_xlim, precision=12)
-                # set new start freq in MHz
-                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) 
-                # set new end freq in MHz
-                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) 
+                # set new start and end freq based on the location of the peak in Hz
+                new_xlim = np.array(current_center-3*halfg_freq, current_center+3*halfg_freq)
+                # set new start freq in Hz
+                self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0]
+                # set new end freq in Hz
+                self.settings['lineEdit_endf' + str(harmonic)] = new_xlim[1]
         elif track_method == 'fixrange':
             # adjust window if neither span or center is fixed (default)
             current_xlim = np.array([float(self.settings['lineEdit_startf' + str(harmonic)]),float(self.settings['lineEdit_endf' + str(harmonic)])])
             # get the current span of the data in Hz
-            current_span = (float(self.settings['lineEdit_endf' + str(harmonic)]) - float(self.settings['lineEdit_startf' + str(harmonic)])) * 1e6
-            if(np.mean(current_xlim)*1e6-peak_f) > 1*current_span/12:
-                new_xlim = (np.multiply(current_xlim,1e6)-current_span/15)*1e-6  # new start and end frequencies in MHz
-                new_xlim = mlf.num2str(new_xlim, precision=12)
-                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
-                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
-            elif (np.mean(current_xlim)*1e6-peak_f) < -1*current_span/12:
-                new_xlim = (np.multiply(current_xlim,1e6)+current_span/15)*1e-6  # new start and end frequencies in MHz
-                new_xlim = mlf.num2str(new_xlim, precision=12)
-                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
-                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+            current_span = float(self.settings['lineEdit_endf' + str(harmonic)]) - float(self.settings['lineEdit_startf' + str(harmonic)])
+            if(np.mean(current_xlim)-peak_f) > 1*current_span/12:
+                new_xlim = current_xlim-current_span/15  # new start and end frequencies in Hz
+                self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0] # set new start freq in Hz
+                self.settings['lineEdit_endf' + str(harmonic)] = new_xlim[1] # set new end freq in Hz
+            elif (np.mean(current_xlim)-peak_f) < -1*current_span/12:
+                new_xlim = current_xlim+current_span/15  # new start and end frequencies in Hz
+                self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0] # set new start freq in Hz
+                self.settings['lineEdit_endf' + str(harmonic)] = new_xlim[1] # set new end freq in Hz
             else:
-                thresh1=.05*current_span + current_xlim[0]*1e6 # Threshold frequency in Hz
+                thresh1=.05*current_span + current_xlim[0] # Threshold frequency in Hz
                 thresh2=.03*current_span # Threshold frequency span in Hz
                 LB_peak=peak_f-halfg_freq*3 # lower bound of the resonance peak
                 if LB_peak-thresh1 > halfg_freq*8: # if peak is too thin, zoom into the peak
-                    new_xlim[0]=(current_xlim[0]*1e6 + thresh2)*1e-6 # MHz
-                    new_xlim[1]=(current_xlim[1]*1e6 - thresh2)*1e-6 # MHz
-                    new_xlim = mlf.num2str(new_xlim, precision=12)
-                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
-                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+                    new_xlim[0]=(current_xlim[0] + thresh2) # Hz
+                    new_xlim[1]=(current_xlim[1] - thresh2) # Hz
+                    self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0] # set new start freq in Hz
+                    self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[1] # set new end freq in Hz
                 elif thresh1-LB_peak > -halfg_freq*5: # if the peak is too fat, zoom out of the peak
-                    new_xlim[0]=(current_xlim[0]*1e6-thresh2)*1e-6 # MHz
-                    new_xlim[1]=(current_xlim[1]*1e6+thresh2)*1e-6 # MHz
-                    new_xlim = mlf.num2str(new_xlim, precision=12)
-                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
-                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+                    new_xlim[0]=current_xlim[0]-thresh2 # Hz
+                    new_xlim[1]=current_xlim[1]+thresh2 # Hz
+                    self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0] # set new start freq in Hz
+                    self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[1] # set new end freq in Hz
         elif track_method == 'usrdef': #run custom tracking algorithm
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
