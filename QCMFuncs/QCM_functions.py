@@ -190,8 +190,6 @@ def QCManalyze(sample, parms):
     # read in the optional inputs, assigning default values if not assigned
     nhplot = sample.get('nhplot', [1, 3, 5])
     firstline = sample.get('firstline', 0)
-    baretrange = sample.get('baretrange', [0, 0])
-    filmtrange = sample.get('filmtrange', [0, 0])
     sample['xlabel'] = sample.get('xlabel',  't (min.)')
     Temp = np.array(sample.get('Temp', [22]))
 
@@ -213,17 +211,7 @@ def QCManalyze(sample, parms):
 
     imagetype = parms.get('imagetype', 'svg')
 
-    # now read in the variables that must exist in the sample dictionary
-    filmfile = sample['datadir'] + sample['filmfile'] + '.mat'
-    filmdata = hdf5storage.loadmat(filmfile)
-
-    # build the relevant filenames
-    barefile = sample['datadir'] + sample['barefile'] + '.mat'
-    film_idx_file = Path(sample['datadir']+sample['filmfile']+'_film_idx.txt')
-    baredata = hdf5storage.loadmat(barefile)
-    bare_idx_file = Path(sample['datadir']+sample['filmfile']+'_bare_idx.txt')
-
-    # define uncertainties in freqency, dissipation
+       # define uncertainties in freqency, dissipation
     err = {}
     err['f1'] = [50, 3e-3]
     err['f3'] = [50, 3e-3]
@@ -242,97 +230,29 @@ def QCManalyze(sample, parms):
     # initialize the dictionary we'll use to keep track of the points to plot
     idx = {}
 
-    # read in the frequency data
-    barefreq = baredata['abs_freq'][firstline:, 0:7]
-    filmfreq = filmdata['abs_freq'][firstline:, 0:7]
-
-    # get rid of all the rows that don't have any data
-    barefreq = barefreq[~np.isnan(barefreq[:, 1:]).all(axis=1)]
-    filmfreq = filmfreq[~np.isnan(filmfreq[:, 1:]).all(axis=1)]
-
-    # reference frequencies are the first data points for the bare crystal data
-    freqref = barefreq[0, :]
-
-    # extract frequency information
-    bare_t = barefreq[:, 0]
-    film_t = filmfreq[:, 0]
-    baref = {}
-    filmf = {}
-    bareg = {}
-    filmg = {}
-
-    for n in nhplot:
-        baref[n] = barefreq[:, n] - freqref[n]
-        filmf[n] = filmfreq[:, n] - freqref[n]
-        bareg[n] = barefreq[:, n+1]
-        filmg[n] = filmfreq[:, n+1]
-
-    #  find all the time points between specified by timerange
-    #  if the min and max values for the time range are equal, we use
-    #    all the points
-    idx['b_all'] = idx_in_range(bare_t, baretrange)
-    idx['f_all'] = idx_in_range(film_t, filmtrange)
-
-    # figure out how man total points we have for bare and film data
-    n_all = {'b': idx['b_all'].shape[0], 'f': idx['f_all'].shape[0]}
-
+    # plot and process bare crystal data
+    bare = process_raw(sample, 'bare')
+    
+    # plot and process the film data
+    film = process_raw(sample, 'film')
+    
     # if there is only one temperature, than we use time as the x axis, using
     # up to ten user-selected points
     if Temp.shape[0] == 1:
-        nx = min(10, n_all['b'], n_all['f'])
+        nx = min(10, film['n_all'], bare['n_all'])
     else:
         nx = Temp.shape[0]
-
-    # rewrite nhplot to account for the fact that data may not exist for all
-    # of the harmonics
-    n_exist_bare = np.array([]).astype(int)
-    n_exist_film = np.array([]).astype(int)
-    for n in nhplot:
-        if not all(np.isnan(baref[n])):
-            n_exist_bare = np.append(n_exist_bare, n)
-        if not all(np.isnan(filmf[n])):
-            n_exist_film = np.append(n_exist_film, n)
-
-    # only include harmonics were both film and bare data exist
-    nhplot = reduce(np.intersect1d, (nhplot, n_exist_bare, n_exist_film))
-
-    # make the axes for the raw data
-    rawfig = make_raw_axes(sample)
-
-    # plot the raw data
-    for n in nhplot:
-        (rawfig['baref_ax'].plot(bare_t[idx['b_all']], baref[n][idx['b_all']]
-         / n, color=colors[n], label='n='+str(n)))
-        (rawfig['bareg_ax'].plot(bare_t[idx['b_all']], bareg[n][idx['b_all']],
-         color=colors[n], label='n='+str(n)))
-        (rawfig['filmf_ax'].plot(film_t[idx['f_all']], filmf[n][idx['f_all']]
-         / n, color=colors[n], label='n='+str(n)))
-        (rawfig['filmg_ax'].plot(film_t[idx['f_all']], filmg[n][idx['f_all']],
-         color=colors[n], label='n='+str(n)))
-
-    # add the legends
-    rawfig['baref_ax'].legend()
-    rawfig['bareg_ax'].legend()
-    rawfig['filmf_ax'].legend()
-    rawfig['filmg_ax'].legend()
-
-    # pick the points that we want to analyze
-    idx['b'] = pickpoints(Temp, nx, idx['b_all'],
-                          bare_t, bare_idx_file)
-    idx['f'] = pickpoints(Temp, nx, idx['f_all'],
-                          film_t, film_idx_file)
-
-    # now add these points to the plots
-    rawplots = {}
-    for n in nhplot:
-        rawplots[str(n)+'1'] = (rawfig['baref_ax'].plot(bare_t[idx['b']],
-                                baref[n][idx['b']]/n, 'x', color=colors[n]))
-        rawplots[str(n)+'1'] = (rawfig['bareg_ax'].plot(bare_t[idx['b']],
-                                bareg[n][idx['b']], 'x', color=colors[n]))
-        rawplots[str(n)+'1'] = (rawfig['filmf_ax'].plot(film_t[idx['f']],
-                                filmf[n][idx['f']]/n, 'x', color=colors[n]))
-        rawplots[str(n)+'1'] = (rawfig['filmg_ax'].plot(film_t[idx['f']],
-                                filmg[n][idx['f']], 'x', color=colors[n]))
+    
+    # pick the points that we want to analyze and add them to the plots
+    for dict in [bare, film]:
+        dict['idx'] = pickpoints(Temp, nx, dict)
+        idx = dict['idx']
+        for n in nhplot:
+            t = dict['t'][idx]
+            f = dict['f'][n][idx]/n
+            g = dict['g'][n][idx]
+            (dict['f_ax'].plot(t, f, 'x', color=colors[n], label='n='+str(n)))
+            (dict['g_ax'].plot(t, g, 'x', color=colors[n], label='n='+str(n)))
 
     # adjust nhcalc to account to only include calculations for for which
     # the data exist
@@ -345,11 +265,12 @@ def QCManalyze(sample, parms):
     # now calculate the frequency and dissipation shifts
     delfstar = {}
     for i in np.arange(nx):
+        idxb = bare['idx'][i]
+        idxf = film['idx'][i]
         delfstar[i] = {}
         for n in nhplot:
-            delfstar[i][n] = (filmf[n][idx['f'][i]] -
-                              baref[n][idx['b'][i]] + 1j *
-                              (filmg[n][idx['f'][i]] - bareg[n][idx['b'][i]]))
+            delfstar[i][n] = (film['f'][n][idxf] - bare['f'][n][idxb] + 1j *
+                              (film['g'][n][idxf] - bare['g'][n][idxb]))
 
     # set up the property axes
     propfig = make_prop_axes(sample)
@@ -359,7 +280,7 @@ def QCManalyze(sample, parms):
 
     # set the appropriate value for xdata
     if Temp.shape[0] == 1:
-        xdata = film_t[idx['f']]
+        xdata = film['t'][film['idx']]
     else:
         xdata = Temp
 
@@ -453,8 +374,6 @@ def QCManalyze(sample, parms):
     propfig['phi_ax'].legend()
 
     # tidy up the raw data and property figures
-    rawfig['figure'].tight_layout()
-    rawfig['figure'].savefig(base_fig_name+'_raw.'+imagetype)
     propfig['figure'].tight_layout()
     propfig['figure'].savefig(base_fig_name+'_prop.'+imagetype)
 
@@ -483,7 +402,10 @@ def nhcalc_in_nhplot(nhcalc_in, nhplot):
     return nhcalc_out
 
 
-def pickpoints(Temp, nx, idx_in, t_in, idx_file):
+def pickpoints(Temp, nx, dict):
+    t_in = dict['t']
+    idx_in = dict['idx_all']
+    idx_file = dict['idx_file']
     idx_out = np.array([], dtype=int)
     if Temp.shape[0] == 1:
         t = np.linspace(min(t_in[idx_in]), max(t_in[idx_in]), nx)
@@ -494,6 +416,8 @@ def pickpoints(Temp, nx, idx_in, t_in, idx_file):
     elif idx_file.is_file():
         idx_out = np.loadtxt(idx_file, dtype=int)
     else:
+        # make the correct figure active
+        plt.figure(dict['rawfigname'])
         pts = plt.ginput(nx)
         pts = np.array(pts)[:, 0]
         for n in np.arange(nx):
@@ -527,36 +451,84 @@ def make_prop_axes(sample):
             'phi_ax': phi_ax}
 
 
-def make_raw_axes(sample):
-    # We make a figure that includes the bare crystal data and the film data
-    if plt.fignum_exists('Raw'):
-        plt.close('Raw')
-    fig = plt.figure('Raw')
+def process_raw(sample, data_type):
+    colors = {1: [1, 0, 0], 3: [0, 0.5, 0], 5: [0, 0, 1]}
+    # specify the film filenames
+    firstline = sample.get('firstline', 0)
+    nhplot = sample.get('nhplot', [1, 3, 5])
+    trange = sample.get(data_type+'trange', [0, 0])
+    dict = {}
+    dict['file'] = sample['datadir'] + sample[data_type+'file'] + '.mat'
+    dict['data'] = hdf5storage.loadmat(dict['file'])
+    dict['idx_file'] = Path(sample['datadir']+sample[data_type+'file']+
+                            '_film_idx.txt')
 
-    baref_ax = fig.add_subplot(221)
-    baref_ax.set_xlabel(sample['xlabel'])
-    baref_ax.set_ylabel(r'$\Delta f_n/n$ (Hz)')
-    baref_ax.set_title('bare crystal')
+    # extract the frequency data from the appropriate file
+    freq = dict['data']['abs_freq'][firstline:, 0:7]
 
-    bareg_ax = fig.add_subplot(222)
-    bareg_ax.set_xlabel(sample['xlabel'])
-    bareg_ax.set_ylabel(r'$\Gamma$ (Hz)')
-    bareg_ax.set_title('bare crystal')
+    # get rid of all the rows that don't have any data
+    freq = freq[~np.isnan(freq[:, 1:]).all(axis=1)]
 
-    filmf_ax = fig.add_subplot(223)
-    filmf_ax.set_xlabel(sample['xlabel'])
-    filmf_ax.set_ylabel(r'$\Delta f_n/n$ (Hz)')
-    filmf_ax.set_title('film')
+    # reference frequencies are the first data points for the bare crystal data
+    sample['freqref'] = sample.get('freqref', freq[0, :])
 
-    filmg_ax = fig.add_subplot(224)
-    filmg_ax.set_xlabel(sample['xlabel'])
-    filmg_ax.set_ylabel(r'$\Gamma$ (Hz)')
-    filmg_ax.set_title('film')
+    # extract frequency information
+    dict['t'] = freq[:, 0]
+    dict['f'] = {}
+    dict['g'] = {}
 
-    fig.tight_layout()
+    for n in nhplot:        
+        dict['f'][n] = freq[:, n] - sample['freqref'][n]
+        dict['g'][n] = freq[:, n+1]
 
-    return {'figure': fig, 'baref_ax': baref_ax, 'bareg_ax': bareg_ax,
-            'filmf_ax': filmf_ax, 'filmg_ax': filmg_ax}
+    #  find all the time points between specified by timerange
+    #  if the min and max values for the time range are equal, we use
+    #    all the points
+    dict['idx_all'] = idx_in_range(dict['t'], trange)
+
+    # figure out how man total points we have
+    dict['n_all'] = dict['idx_all'].shape[0]
+
+    # rewrite nhplot to account for the fact that data may not exist for all
+    # of the harmonics
+    dict['n_exist'] = np.array([]).astype(int)
+
+    for n in nhplot:
+        if not all(np.isnan(dict['f'][n])):
+            dict['n_exist'] = np.append(dict['n_exist'], n)
+            
+    # make the figure with its axis
+    rawfigname = 'raw_'+data_type
+    if plt.fignum_exists(rawfigname):
+        plt.close(rawfigname)
+    dict['rawfig'] = plt.figure(rawfigname)
+
+    dict['f_ax'] = dict['rawfig'].add_subplot(121)
+    dict['f_ax'].set_xlabel('t (min.)')
+    dict['f_ax'].set_ylabel(r'$\Delta f_n/n$ (Hz)')
+    dict['f_ax'].set_title(data_type)
+
+    dict['g_ax'] = dict['rawfig'].add_subplot(122)
+    dict['g_ax'].set_xlabel('t (min.)')
+    dict['g_ax'].set_ylabel(r'$\Gamma$ (Hz)')
+    dict['g_ax'].set_title(data_type)
+    
+    # plot the raw data
+    for n in nhplot:
+        t = dict['t'][dict['idx_all']]
+        f = dict['f'][n][dict['idx_all']]/n
+        g = dict['g'][n][dict['idx_all']]
+        (dict['f_ax'].plot(t, f, color=colors[n], label='n='+str(n)))
+        (dict['g_ax'].plot(t, g, color=colors[n], label='n='+str(n)))
+
+    # add the legends
+    dict['f_ax'].legend()
+    dict['g_ax'].legend()
+    
+    dict['rawfig'].tight_layout() 
+    dict['rawfigname'] = rawfigname
+    
+    return dict
 
 
 def make_check_axes(sample, nh):
@@ -614,3 +586,4 @@ def thinfilm_guess(delfstar):
     # really a placeholder function until we develop a more creative strategy
     # for estimating the starting point
     return [0.05, 5]
+
