@@ -28,7 +28,7 @@ class GuessParameters:
     def __init__(self):
         self.f0 = None
         self.gamma0 = None
-        
+
 class QCMApp(QMainWindow):
     '''
     The settings of the app is stored in a dict
@@ -207,9 +207,9 @@ class QCMApp(QMainWindow):
 
         # set signals to update fitting and display settings
         self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_showchi.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_showpolar.stateChanged.connect(self.update_widget)
+        #self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_widget)
+        #self.ui.checkBox_showchi.stateChanged.connect(self.update_widget)
+        #self.ui.checkBox_showpolar.stateChanged.connect(self.update_widget)
         self.ui.comboBox_fitfactor.activated.connect(self.update_widget)
 
         # set signals to update spectra show display options
@@ -450,6 +450,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_ref_channel.activated.connect(self.update_refchannel)
 
         # set signals to update temperature settings_settings
+        self.ui.comboBox_settings_mechanics_selectmodel.activated[str].connect(self.update_module)
         # self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
         self.ui.checkBox_settings_temp_sensor.clicked['bool'].connect(self.on_clicked_set_temp_sensor)
         self.ui.comboBox_thrmcpltype.activated.connect(self.update_thrmcpltype)
@@ -1244,6 +1245,9 @@ class QCMApp(QMainWindow):
         value = self.ui.comboBox_ref_channel.itemData(refchannel_index)
         self.settings['comboBox_ref_channel'] = value
 
+    def update_module(self, module_text):
+        self.settings['comboBox_settings_mechanics_selectmodel'] = module_text
+
     def update_tempsensor(self):
         print("update_tempsensor was called")
         self.settings['checkBox_settings_temp_sensor'] = not self.settings['checkBox_settings_temp_sensor']
@@ -1311,9 +1315,9 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
         # load default fitting and display options
         self.ui.checkBox_dynamicfit.setChecked(self.settings['checkBox_dynamicfit'])
-        self.ui.checkBox_showsusceptance.setChecked(self.settings['checkBox_showsusceptance'])
-        self.ui.checkBox_showchi.setChecked(self.settings['checkBox_showchi'])
-        self.ui.checkBox_showpolar.setChecked(self.settings['checkBox_showpolar'])
+        #self.ui.checkBox_showsusceptance.setChecked(self.settings['checkBox_showsusceptance'])
+        #self.ui.checkBox_showchi.setChecked(self.settings['checkBox_showchi'])
+        #self.ui.checkBox_showpolar.setChecked(self.settings['checkBox_showpolar'])
 
         def load_comboBox(comboBox, comboBoxName, choose_dict):
             for key, val in settings_init[choose_dict].items():
@@ -1331,6 +1335,8 @@ class QCMApp(QMainWindow):
         load_comboBox(self.ui.comboBox_base_frequency, 'comboBox_base_frequency', 'base_frequency_choose')
         load_comboBox(self.ui.comboBox_bandwidth, 'comboBox_bandwidth', 'bandwidth_choose')
         # load default temperature settings
+        self.ui.comboBox_settings_mechanics_selectmodel.setCurrentIndex\
+        (self.ui.comboBox_settings_mechanics_selectmodel.findText(self.settings['comboBox_settings_mechanics_selectmodel']))
         self.ui.checkBox_settings_temp_sensor.setChecked(self.settings['checkBox_settings_temp_sensor'])
         load_comboBox(self.ui.comboBox_thrmcpltype, 'comboBox_thrmcpltype', 'thrmcpl_choose')
         # load default plots settings

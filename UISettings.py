@@ -452,7 +452,7 @@ settings_default = {
 
     # default temperature settings
     'checkBox_settings_temp_sensor': False,
-    'Module': '...',
+    'comboBox_settings_mechanics_selectmodel': '',
     'comboBox_thrmcpltype': 'J',
 
     # default plots settings
@@ -491,10 +491,3 @@ settings_default = {
     'radioButton_plt2_ref': False
 }
 
-class FittingParameters:
-    def __init__(self):
-        self.f0 = 3
-        self.gamma0 = 2
-
-param = FittingParameters()
-print(param.f0)
