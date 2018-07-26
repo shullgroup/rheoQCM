@@ -1465,31 +1465,31 @@ class QCMApp(QMainWindow):
             # get the current span of the data in Hz
             current_span = (float(self.settings['lineEdit_endf' + str(harmonic)]) - float(self.settings['lineEdit_startf' + str(harmonic)])) * 1e6
             if(np.mean(current_xlim)*1e6-peak_f) > 1*current_span/12:
-                new_xlim = (np.multiply(current_xlim,1e6)-current_span/15)  # new start and end frequencies in Hz
+                new_xlim = (np.multiply(current_xlim,1e6)-current_span/15)*1e-6  # new start and end frequencies in MHz
                 new_xlim = mlf.num2str(new_xlim, precision=12)
-                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in Hz
-                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in Hz
+                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
+                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
             elif (np.mean(current_xlim)*1e6-peak_f) < -1*current_span/12:
-                new_xlim = (np.multiply(current_xlim,1e6)+current_span/15)  # new start and end frequencies in Hz
+                new_xlim = (np.multiply(current_xlim,1e6)+current_span/15)*1e-6  # new start and end frequencies in MHz
                 new_xlim = mlf.num2str(new_xlim, precision=12)
-                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in Hz
-                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in Hz
+                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
+                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
             else:
                 thresh1=.05*current_span + current_xlim[0]*1e6 # Threshold frequency in Hz
                 thresh2=.03*current_span # Threshold frequency span in Hz
                 LB_peak=peak_f-halfg_freq*3 # lower bound of the resonance peak
                 if LB_peak-thresh1 > halfg_freq*8: # if peak is too thin, zoom into the peak
-                    new_xlim[0]=(current_xlim[0]*1e6 + thresh2) # Hz
-                    new_xlim[1]=(current_xlim[1]*1e6 - thresh2) # Hz
+                    new_xlim[0]=(current_xlim[0]*1e6 + thresh2)*1e-6 # MHz
+                    new_xlim[1]=(current_xlim[1]*1e6 - thresh2)*1e-6 # MHz
                     new_xlim = mlf.num2str(new_xlim, precision=12)
-                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in Hz
-                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in Hz
+                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
+                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
                 elif thresh1-LB_peak > -halfg_freq*5: # if the peak is too fat, zoom out of the peak
-                    new_xlim[0]=(current_xlim[0]*1e6-thresh2) # Hz
-                    new_xlim[1]=(current_xlim[1]*1e6+thresh2) # Hz
+                    new_xlim[0]=(current_xlim[0]*1e6-thresh2)*1e-6 # MHz
+                    new_xlim[1]=(current_xlim[1]*1e6+thresh2)*1e-6 # MHz
                     new_xlim = mlf.num2str(new_xlim, precision=12)
-                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in Hz
-                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in Hz
+                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
+                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
         elif track_method == 'usrdef': #run custom tracking algorithm
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
