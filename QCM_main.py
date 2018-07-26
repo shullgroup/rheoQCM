@@ -4,9 +4,14 @@ This is the main code of the QCM acquization program
 '''
 
 import os
+import importlib
 import math
 import json
 import datetime, time
+import numpy as np
+import scipy.signal
+import matlabfunctions as mlf
+
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton, QMenu
 from PyQt5.QtGui import QIcon, QPixmap
@@ -15,7 +20,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 # packages
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
-from modules import UIModules
+from modules import UIModules, MathModules
 
 from MatplotlibWidget import MatplotlibWidget
 
@@ -31,29 +36,36 @@ class QCMApp(QMainWindow):
         self.fileFlag = False
         self.settings = settings_default
         self.harmonic_tab = 1
-        self.main()
-        self.load_settings()
   
+        # define instrument state variables
+        self.accvna = None 
+        self.idle = True # if test is running
+        self.reading = False # if myVNA is scanning and reading data
+        self.tempsensor = None # class for temp sensor
+        
         # check system
         self.system = UIModules.system_check()
         # initialize AccessMyVNA
         #?? add more code to disable settings_control tab and widges in settings_settings tab
         if self.system == 'win32': # windows
-            from modules.AccessMyVNA import AccessMyVNA
-            self.accvna = AccessMyVNA()
-            # test if MyVNA program is available
-            with self.accvna as accvna:
-                ret = accvna.Init()
+            try:
+                from modules.AccessMyVNA import AccessMyVNA
+                # test if MyVNA program is available
+                with AccessMyVNA() as accvna:
+                    ret = accvna.Init()
                 if ret == 0: # is available
-                    pass
+                    self.accvna = AccessMyVNA()
+                    from modules import tempDevices # load temp related module whith dependency of nidaqmix
                 else: # not available
-                    self.accvna = None
+                    pass
+            except:
+                pass
         else: # other system, data analysis only
-            self.accvna = None
+            pass
 
-        # define instrument state variables
-        self.idle = True # if test is running
-        self.reading = False # if myVNA is scanning and reading data
+        self.main()
+        self.load_settings()
+
 
     def main(self):
  # loadUi('QCM_GUI_test4.ui', self) # read .ui file directly. You still need to compile the .qrc file
@@ -199,27 +211,8 @@ class QCMApp(QMainWindow):
         #self.ui.radioButton_spectra_showpolar.toggled.connect(self.update_widget)
         self.ui.checkBox_spectra_shoechi.toggled.connect(self.update_widget)
 
-        # set signals to update plot 1 options
-        self.ui.comboBox_plt1_choice.activated.connect(self.update_widget)
-        self.ui.checkBox_plt1_h1.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h3.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h5.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h7.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h9.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h11.stateChanged.connect(self.update_widget)
-        self.ui.radioButton_plt1_ref.toggled.connect(self.update_widget)
-        self.ui.radioButton_plt1_samp.toggled.connect(self.update_widget)
-
-        # set signals to update plot 2 options
-        self.ui.comboBox_plt2_choice.activated.connect(self.update_widget)
-        self.ui.checkBox_plt2_h1.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h3.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h5.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h7.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h9.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h11.stateChanged.connect(self.update_widget)
-        self.ui.radioButton_plt2_ref.toggled.connect(self.update_widget)
-        self.ui.radioButton_plt2_samp.toggled.connect(self.update_widget)
+        # set signals to checkBox_control_rectemp
+        self.ui.checkBox_control_rectemp.clicked['bool'].connect(self.on_clicked_set_temp_sensor)
 
 #endregion
 
@@ -291,13 +284,38 @@ class QCMApp(QMainWindow):
             self.ui.treeWidget_settings_settings_hardware
         )
 
-        # move temp. module to treeWidget_settings_settings_hardware
-        self.move_to_row2(
-            self.ui.lineEdit_settings_settings_tempmodule, 
+        # add comBox_tempmodule to treeWidget_settings_settings_hardware
+        self.create_combobox(
+            'comboBox_tempmodule',
+            UIModules.list_modules(settings_init['tempmodules_path']),  
+            100,
+            'Module',
             self.ui.treeWidget_settings_settings_hardware, 
-            'Module'
         )
-        
+        self.settings['comboBox_tempmodule'] = self.ui.comboBox_tempmodule.itemData(self.ui.comboBox_tempmodule.currentIndex())
+        self.ui.comboBox_tempmodule.activated.connect(self.update_widget)
+
+        # add comBox_tempdevice to treeWidget_settings_settings_hardware
+        if self.accvna:
+            self.create_combobox(
+                'comBox_tempdevice',
+                tempDevices.dict_available_devs(settings_init['devices_dict']),  
+                100,
+                'Device',
+                self.ui.treeWidget_settings_settings_hardware, 
+            )
+            self.settings['comBox_tempdevice'] = self.ui.comBox_tempdevice.itemData(self.ui.comBox_tempdevice.currentIndex())
+            self.ui.comBox_tempdevice.activated.connect(self.update_widget)
+        else: # accvna is not available
+            self.create_combobox(
+                'comBox_tempdevice',
+                [],  # an empty list
+                100,
+                'Device',
+                self.ui.treeWidget_settings_settings_hardware, 
+            )
+            self.settings['comBox_tempdevice'] = None # set to None 
+
         # insert thrmcpl type
         self.create_combobox(
             'comboBox_thrmcpltype', 
@@ -344,7 +362,7 @@ class QCMApp(QMainWindow):
         )
 
         # move checkBox_settings_settings_linktime to treeWidget_settings_settings_plots
-        self.move_to_row2(
+        self.move_to_col2(
             self.ui.checkBox_settings_settings_linktime, 
             self.ui.treeWidget_settings_settings_plots, 
             'Link Time'
@@ -359,7 +377,7 @@ class QCMApp(QMainWindow):
 
 
         # move center pushButton_settings_harm_cntr to treeWidget_settings_settings_harmtree
-        self.move_to_row2(
+        self.move_to_col2(
             self.ui.pushButton_settings_harm_cntr, 
             self.ui.treeWidget_settings_settings_harmtree, 
             'Scan', 
@@ -367,7 +385,7 @@ class QCMApp(QMainWindow):
         )
         
         # move center checkBox_settings_temp_sensor to treeWidget_settings_settings_hardware
-        self.move_to_row2(
+        self.move_to_col2(
             self.ui.checkBox_settings_temp_sensor, 
             self.ui.treeWidget_settings_settings_hardware, 
             'Temperature'
@@ -426,7 +444,8 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_ref_channel.activated.connect(self.update_refchannel)
 
         # set signals to update temperature settings_settings
-        self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
+        # self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
+        self.ui.checkBox_settings_temp_sensor.clicked['bool'].connect(self.on_clicked_set_temp_sensor)
         self.ui.comboBox_thrmcpltype.activated.connect(self.update_thrmcpltype)
 
         # set signals to update plots settings_settings
@@ -501,6 +520,27 @@ class QCMApp(QMainWindow):
 
 
 #region data_data
+        # set signals to update plot 1 options
+        self.ui.comboBox_plt1_choice.activated.connect(self.update_widget)
+        self.ui.checkBox_plt1_h1.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h3.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h5.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h7.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h9.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt1_h11.stateChanged.connect(self.update_widget)
+        self.ui.radioButton_plt1_ref.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt1_samp.toggled.connect(self.update_widget)
+
+        # set signals to update plot 2 options
+        self.ui.comboBox_plt2_choice.activated.connect(self.update_widget)
+        self.ui.checkBox_plt2_h1.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h3.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h5.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h7.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h9.stateChanged.connect(self.update_widget)
+        self.ui.checkBox_plt2_h11.stateChanged.connect(self.update_widget)
+        self.ui.radioButton_plt2_ref.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt2_samp.toggled.connect(self.update_widget)
 
 #endregion
 
@@ -524,6 +564,7 @@ class QCMApp(QMainWindow):
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_reftype)
         # move label_status_temp_sensor to statusbar
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_temp_sensor)
+        self.ui.label_status_temp_sensor.setScaledContents(True)
         # move label_status_f0BW to statusbar
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_f0BW)
 
@@ -742,6 +783,8 @@ class QCMApp(QMainWindow):
         setattr(self.ui, name, QComboBox())
         # get the object
         obj_box = getattr(self.ui, name)
+        # set objectName
+        obj_box.setObjectName(name)
         # set its size adjust policy
         obj_box.SizeAdjustPolicy(QComboBox.AdjustToContents)
         # add items from contents
@@ -754,10 +797,10 @@ class QCMApp(QMainWindow):
 
         # insert to the row of row_text if row_text and parent_name are not empty
         if (row_text and parent):
-            self.move_to_row2(obj_box, parent, row_text, box_width)
+            self.move_to_col2(obj_box, parent, row_text, box_width)
             
 
-    def move_to_row2(self, obj, parent, row_text, width=[]): 
+    def move_to_col2(self, obj, parent, row_text, width=[]): 
         if width: # set width of obj
             obj.setMaximumWidth(width)
         # find item with row_text
@@ -778,7 +821,7 @@ class QCMApp(QMainWindow):
 
 
     ########## action functions ##############
-    # @pyqtSlot(bool)
+    # @pyqtSlot['bool']
     def on_clicked_pushButton_runstop(self, checked):
         if checked:
             self.ui.pushButton_runstop.setText('STOP')
@@ -849,22 +892,28 @@ class QCMApp(QMainWindow):
 
     def on_triggered_new_data(self):
         fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
-        # change the displayed file directory in lineEdit_datafilestr
-        self.ui.lineEdit_datafilestr.setText(fileName)
-        # reset lineEdit_reftime
-        self.reset_reftime()
-        # set lineEdit_reftime editable and enable pushButton_resetreftime
-        self.ui.lineEdit_reftime.setReadOnly(False)
-        self.ui.pushButton_resetreftime.setEnabled(True)
+        if fileName:
+            # change the displayed file directory in lineEdit_datafilestr
+            self.ui.lineEdit_datafilestr.setText(fileName)
+            # reset lineEdit_reftime
+            self.reset_reftime()
+            # set lineEdit_reftime editabled and enable pushButton_resetreftime
+            self.ui.lineEdit_reftime.setReadOnly(False)
+            self.ui.pushButton_resetreftime.setEnabled(True)
+            self.fileName = fileName
 
-    def on_triggered_load_data(self):
-        self.fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
-        # change the displayed file directory in lineEdit_datafilestr
-        self.ui.lineEdit_datafilestr.setText(self.fileName)
-        # set lineEdit_reftime
-        # set lineEdit_reftime read only and disable pushButton_resetreftime
-        self.ui.lineEdit_reftime.setReadOnly(True)
-        self.ui.pushButton_resetreftime.setEnabled(False)
+    def on_triggered_load_data(self): 
+        fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
+        if fileName:
+            # change the displayed file directory in lineEdit_datafilestr
+            self.ui.lineEdit_datafilestr.setText(self.fileName)
+            # set lineEdit_reftime
+            # set lineEdit_reftime read only and disable pushButton_resetreftime
+            self.ui.lineEdit_reftime.setReadOnly(True)
+            # ??  set reftime in fileName to lineEdit_reftime
+
+            self.ui.pushButton_resetreftime.setEnabled(False)
+            self.fileName = fileName
 
     # open folder in explorer
     # methods for different OS could be added
@@ -935,7 +984,7 @@ class QCMApp(QMainWindow):
         else:
             # n = f'1/{round(1/n)} *'
             n = '1/{} *'.format(min(settings_init['span_ctrl_steps'], key=lambda x:abs(x-1/n))) # python < 3.5
-        # set treeWidget_settings_settings_harmtree value
+        # set label_spectra_fit_zoomtimes value
         self.ui.label_spectra_fit_zoomtimes.setText(str(n))
 
     def on_released_slider_spanctrl(self):
@@ -966,7 +1015,114 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.update_data(ls=['lG'], xdata=[f], ydata=[G])
         self.ui.mpl_spectra_fit.update_data(ls=['lB'], xdata=[f], ydata=[B])
 
+
+    def on_clicked_set_temp_sensor(self, checked):
+        # below only runs when accvna is available
+        if self.accvna: # add not for testing code    
+            if checked: # checkbox is checked
+                # if not self.tempsensor: # tempModule is not initialized 
+                # get all tempsensor settings 
+                tempmodule_name = self.settings['comboBox_tempmodule'] # get temp module
+
+                thrmcpltype = self.settings['comboBox_thrmcpltype'] # get thermocouple type
+                tempdevice = tempDevices.device_info(self.settings['comBox_tempdevice']) #get temp device info
+
+                # check senor availability
+                package_str = settings_init['tempmodules_path'][2:].replace('/', '.') + tempmodule_name
+                print(package_str)
+                # import package
+                tempsensor = getattr(importlib.import_module(package_str), 'TempSensor')
+
+                try:
+                    self.tempsensor = tempsensor(
+                        tempdevice,
+                        'ai0',
+                        thrmcpltype,
+                        settings_init['devices_dict'][tempdevice.product_type]
+                    )
+                except: # if failed return
+                    #?? update in statusbar
+                    return 
+
+                # after tempModule loaded
+                # # tempModule should take one arg 'thrmcpltype' and return temperature in C by calling tempModule.get_tempC
+                try:
+                    curr_temp = self.tempsensor.get_tempC()
+
+                    # save values to self.settings
+                    self.settings['checkBox_control_rectemp'] = True
+                    self.settings['checkBox_settings_temp_sensor'] = True
+                    # set statusbar label_status_temp_sensor text
+                    self.statusbar_temp_update()
+                    # disable items to keep the setting
+                    self.ui.comboBox_tempmodule.setEnabled(False)
+                    self.ui.comBox_tempdevice.setEnabled(False)
+                    self.ui.comboBox_thrmcpltype.setEnabled(False)
+
+                except Exception as e: # failed to get temperature from sensor
+                    print(e)
+                    # uncheck checkBoxes
+                    self.ui.checkBox_control_rectemp.setChecked(False)
+                    self.ui.checkBox_settings_temp_sensor.setChecked(False)
+                    #?? update in statusbar
+            else: # is unchecked
+                
+                self.settings['checkBox_control_rectemp'] = False
+                self.settings['checkBox_settings_temp_sensor'] = False
+
+                # set statusbar label_status_temp_sensor text
+                self.statusbar_temp_update()
+                
+                # enable items to keep the setting
+                self.ui.comboBox_tempmodule.setEnabled(True)
+                self.ui.comBox_tempdevice.setEnabled(True)
+                self.ui.comboBox_thrmcpltype.setEnabled(True)
+
+                # reset self.tempsensor
+                self.tempsensor = None
+                
+                
+            # update checkBox_settings_temp_sensor to self.settings
+            # self.update_tempsensor()
+
+    def statusbar_temp_update(self):
+
+        # update statusbar temp sensor image
+        if self.settings['checkBox_settings_temp_sensor']: # checked
+            self.ui.label_status_temp_sensor.setStyleSheet(
+                " border-image: url(:/icon/rc/temp_sensor.svg); "
+            )
+            # change temp unit by self.settings['temp_unit_choose']
+            try:
+                curr_temp = self.temp_by_unit(self.tempsensor.get_tempC())
+                print(curr_temp)
+                unit = settings_init['temp_unit_choose'].get(self.settings['comboBox_tempunit'])
+                self.ui.label_status_temp_sensor.setText('{:.1f} {}'.format(curr_temp, unit))
+                self.ui.label_status_temp_sensor.setToolTip('Last updated temp.')
+            except:
+                #?? update in statusbar
+                pass
+        else:
+            self.ui.label_status_temp_sensor.setStyleSheet(
+                " border-image: url(:/icon/rc/temp_sensor_off.svg); "
+            )
+            self.ui.label_status_temp_sensor.setText('')
+            self.ui.label_status_temp_sensor.setToolTip('Temp. sensor is off.')
+
+    def temp_by_unit(self, data):
+        '''
+        data: double or ndarray
+        unit: str. C for celsius, K for Kelvin and F for fahrenheit
+        '''
+        unit = self.settings['comboBox_tempunit']
+        if unit == 'C':
+            return data # temp data is saved as C
+        elif unit == 'K': # convert to K
+            return data + 273.15 
+        elif unit == 'F': # convert to F
+            return data * 9 / 5 + 32
         
+
     def set_stackedwidget_index(self, stwgt, idx=[], diret=[]):
         '''
         chenge the index of stwgt to given idx (if not []) 
@@ -984,6 +1140,7 @@ class QCMApp(QMainWindow):
     
     # update widget values in settings dict, only works with elements out of settings_settings
     def update_widget(self, signal):
+        print('update_widget')
         #print(self.sender().objectName())
         #print(type(self.sender()))
         # if the sender of the signal isA QLineEdit object, update QLineEdit vals in dict
@@ -1000,9 +1157,12 @@ class QCMApp(QMainWindow):
             self.settings[self.sender().objectName()] = not self.settings[self.sender().objectName()]
         # if the sender of the signal isA QComboBox object, udpate QComboBox vals in dict
         elif isinstance(self.sender(), QComboBox):
-            value = self.sender().itemData(signal)
+            try: # if w/ userData, use userData
+                value = self.sender().itemData(signal)
+            except: # if w/o userData, use the text
+                value = self.sender().itemText(signal)
             self.settings[self.sender().objectName()] = value
-    
+        print(self.sender().objectName(), self.settings[self.sender().objectName()])
     #def update_dynamicfit(self):
     #    self.settings['checkBox_dynamicfit'] = not self.settings['checkBox_dynamicfit']
 
@@ -1213,6 +1373,119 @@ class QCMApp(QMainWindow):
         self.ui.radioButton_plt2_samp.setChecked(self.settings['radioButton_plt2_samp'])
         self.ui.radioButton_plt2_ref.setChecked(self.settings['radioButton_plt2_ref'])
 
+    def check_freq_range(self, harmonic, min_range, max_range):
+        startname = 'lineEdit_startf' + str(harmonic)
+        endname = 'lineEdit_endf' + str(harmonic)
+        # check start frequency range
+        if float(self.settings[startname]) <= min_range or float(self.settings[startname]) >= max_range:
+            print('ERROR')
+            self.settings[startname] = float(min_range) + 0.9
+        if float(self.settings[startname]) >= float(self.settings[endname]):
+            if float(self.settings[startname]) == float(self.settings[endname]):
+                print('The start frequency cannot be the same as the end frequency!')
+                self.settings[startname] = min_range + 0.9
+                self.settings[endname] = max_range - 0.9
+            else:
+                print('The start frequency is greater than the end frequency!')
+                self.settings[startname] = min_range + 0.9
+        # check end frequency range
+        if float(self.settings[endname]) <= min_range or float(self.settings[endname]) >= max_range:
+            print('ERROR')
+            self.settings[endname] = max_range - 0.9
+        if float(self.settings[endname]) <= float(self.settings[startname]):
+            print('ERROR: The end frequency is less than the start frequency!')
+            if float(self.settings[startname]) == max_range:
+                print('The start frequency cannot be the same as the end frequency!')
+                self.settings[startname] = min_range + 0.9
+                self.settings[endname] = max_range - 0.9
+            else:
+                self.settings[endname] = max_range - 0.9
+
+    def smart_peak_tracker(self, harmonic, freq, conductance, susceptance, G_parameters):
+        resonance = None
+        self.f0 = G_parameters[0]
+        self.gamma0 = G_parameters[1]
+
+        # determine the structure field that should be used to extract out the initial-guessing method
+        name = 'fit' + str(harmonic) 
+        if self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_fit_method'] == 'bmax':
+            resonance = susceptance
+        else:
+            resonance = conductance
+        index = mlf.findpeaks(resonance, output='indices', sortstr='descend')
+        peak_f = freq[index[0]]
+        # determine the estimated associated conductance (or susceptance) value at the resonance peak
+        Gmax = resonance[index[0]] 
+        # determine the estimated half-max conductance (or susceptance) of the resonance peak
+        halfg = (Gmax-np.amin(resonance))/2 + np.amin(resonance) 
+        halfg_freq = np.absolute(freq[np.where(np.abs(halfg-resonance)==np.min(np.abs(halfg-resonance)))[0][0]])
+        # extract the peak tracking conditions
+        track_method = self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_track_method'] 
+        if track_method == 'fixspan':
+            current_span = (float(self.settings['lineEdit_endf' + str(harmonic)]) - \
+            # get the current span of the data in Hz
+            float(self.settings['lineEdit_startf' + str(harmonic)])) * 1e6 
+            if np.absolute(np.mean(np.array([freq[0],freq[len(freq)-1]]))-peak_f) > 0.1 * current_span:
+                # new start and end frequencies in MHz
+                new_xlim=np.multiply(np.array([peak_f-0.5*current_span,peak_f+0.5*current_span]), 1e-6) 
+                new_xlim = mlf.num2str(new_xlim, precision=12)
+                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0])
+                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1])
+        elif track_method == 'fixcenter':
+            # get current start and end frequencies of the data in Hz
+            current_xlim = np.multiply(np.array([float(self.settings['lineEdit_startf' + str(harmonic)]),\
+            float(self.settings['lineEdit_endf' + str(harmonic)])]), 1e6) 
+            # get the current center of the data in Hz
+            current_center = ((float(self.settings['lineEdit_startf' + str(harmonic)]) + \
+            float(self.settings['lineEdit_endf' + str(harmonic)]))*1e6)/2 
+            # find the starting and ending frequency of only the peak in Hz
+            peak_xlim = np.array([peak_f-halfg_freq*3, peak_f+halfg_freq*3]) 
+            if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*halfg_freq, current_center + 3*halfg_freq])))) > 3e3:
+                # set new start and end freq based on the location of the peak in MHz
+                new_xlim = np.multiply(np.array(current_center-3*halfg_freq, current_center+3*halfg_freq), 1e-6) 
+                new_xlim = mlf.num2str(new_xlim, precision=12)
+                # set new start freq in MHz
+                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) 
+                # set new end freq in MHz
+                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) 
+        elif track_method == 'fixrange':
+            # adjust window if neither span or center is fixed (default)
+            current_xlim = np.array([float(self.settings['lineEdit_startf' + str(harmonic)]),float(self.settings['lineEdit_endf' + str(harmonic)])])
+            # get the current span of the data in Hz
+            current_span = (float(self.settings['lineEdit_endf' + str(harmonic)]) - float(self.settings['lineEdit_startf' + str(harmonic)])) * 1e6
+            if(np.mean(current_xlim)*1e6-peak_f) > 1*current_span/12:
+                new_xlim = (np.multiply(current_xlim,1e6)-current_span/15)*1e-6  # new start and end frequencies in MHz
+                new_xlim = mlf.num2str(new_xlim, precision=12)
+                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
+                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+            elif (np.mean(current_xlim)*1e6-peak_f) < -1*current_span/12:
+                new_xlim = (np.multiply(current_xlim,1e6)+current_span/15)*1e-6  # new start and end frequencies in MHz
+                new_xlim = mlf.num2str(new_xlim, precision=12)
+                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
+                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+            else:
+                thresh1=.05*current_span + current_xlim[0]*1e6 # Threshold frequency in Hz
+                thresh2=.03*current_span # Threshold frequency span in Hz
+                LB_peak=peak_f-halfg_freq*3 # lower bound of the resonance peak
+                if LB_peak-thresh1 > halfg_freq*8: # if peak is too thin, zoom into the peak
+                    new_xlim[0]=(current_xlim[0]*1e6 + thresh2)*1e-6 # MHz
+                    new_xlim[1]=(current_xlim[1]*1e6 - thresh2)*1e-6 # MHz
+                    new_xlim = mlf.num2str(new_xlim, precision=12)
+                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
+                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+                elif thresh1-LB_peak > -halfg_freq*5: # if the peak is too fat, zoom out of the peak
+                    new_xlim[0]=(current_xlim[0]*1e6-thresh2)*1e-6 # MHz
+                    new_xlim[1]=(current_xlim[1]*1e6+thresh2)*1e-6 # MHz
+                    new_xlim = mlf.num2str(new_xlim, precision=12)
+                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
+                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+        elif track_method == 'usrdef': #run custom tracking algorithm
+            ### CUSTOM, USER-DEFINED
+            ### CUSTOM, USER-DEFINED
+            ### CUSTOM, USER-DEFINED
+            pass
+        self.check_freq_range(harmonic, self.settings['freq_range'][harmonic][0], self.settings['freq_range'][harmonic][1])
+
 #endregion
 
 
@@ -1224,4 +1497,4 @@ if __name__ == '__main__':
     qcm_app = QCMApp()
     qcm_app.show()
     sys.exit(app.exec_())
-    
+

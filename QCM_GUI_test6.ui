@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1114</width>
-    <height>839</height>
+    <height>964</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -350,7 +350,7 @@ background-color: red;
                     </widget>
                    </item>
                    <item row="0" column="1">
-                    <widget class="QLabel" name="label_14">
+                    <widget class="QLabel" name="label_settings_control_label1">
                      <property name="text">
                       <string>Start (MHz)</string>
                      </property>
@@ -515,7 +515,7 @@ background-color: red;
                     <widget class="QLineEdit" name="lineEdit_endf3"/>
                    </item>
                    <item row="0" column="2">
-                    <widget class="QLabel" name="label_13">
+                    <widget class="QLabel" name="label_settings_control_label2">
                      <property name="text">
                       <string>End (MHz)</string>
                      </property>
@@ -808,7 +808,7 @@ background-color: red;
                  <item>
                   <widget class="QCheckBox" name="checkBox_control_rectemp">
                    <property name="text">
-                    <string>Rrecord temperature data</string>
+                    <string>Rrecord temperature data (setup in Settings Tab)</string>
                    </property>
                   </widget>
                  </item>
@@ -861,6 +861,38 @@ background-color: red;
                  <property name="spacing">
                   <number>2</number>
                  </property>
+                 <item row="4" column="0">
+                  <widget class="QCheckBox" name="checkBox_showchi">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="text">
+                    <string>Show Χsq parameter</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="0">
+                  <widget class="QCheckBox" name="checkBox_showpolar">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="text">
+                    <string>Show Polar plot</string>
+                   </property>
+                  </widget>
+                 </item>
                  <item row="0" column="0">
                   <widget class="QCheckBox" name="checkBox_dynamicfit">
                    <property name="sizePolicy">
@@ -932,34 +964,11 @@ background-color: red;
                    </item>
                   </layout>
                  </item>
-                 <item row="3" column="0">
-                  <widget class="QCheckBox" name="checkBox_showpolar">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="text">
-                    <string>Show Polar plot</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="4" column="0">
-                  <widget class="QCheckBox" name="checkBox_showchi">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="text">
-                    <string>Show Χsq parameter</string>
-                   </property>
-                  </widget>
-                 </item>
                  <item row="2" column="0">
                   <widget class="QCheckBox" name="checkBox_showsusceptance">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                      <horstretch>0</horstretch>
@@ -1209,7 +1218,7 @@ background-color: red;
                     <enum>QTabWidget::Rounded</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>3</number>
                    </property>
                    <property name="iconSize">
                     <size>
@@ -1655,6 +1664,11 @@ background-color: red;
                     </item>
                     <item>
                      <property name="text">
+                      <string>Device</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
                       <string>Thrmcpl Type</string>
                      </property>
                     </item>
@@ -1799,16 +1813,6 @@ background-color: red;
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_settings_settings_tempmodule">
-                <property name="text">
-                 <string>...</string>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
                <widget class="QCheckBox" name="checkBox_settings_settings_linktime">
                 <property name="text">
                  <string/>
@@ -1841,11 +1845,14 @@ background-color: red;
                   <height>0</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>Temp sensor is off</string>
+                </property>
                 <property name="styleSheet">
                  <string notr="true">#label_status_temp_sensor
 {
 background-color: transparent;
-border-image: url(:/icon/rc/temp_sensor.svg);
+border-image: url(:/icon/rc/temp_sensor_off.svg);
 background: none;
 border: none;
 background-repeat: none;
@@ -1854,6 +1861,9 @@ background-repeat: none;
                 </property>
                 <property name="text">
                  <string/>
+                </property>
+                <property name="scaledContents">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -2024,7 +2034,7 @@ background-repeat: none;
                 <item>
                  <widget class="QGroupBox" name="groupBox_settings_data_showdata">
                   <property name="title">
-                   <string>Show Browse Data</string>
+                   <string>Show, Browse Data </string>
                   </property>
                   <property name="flat">
                    <bool>true</bool>
@@ -3748,14 +3758,29 @@ border-image: url(:/button/rc/plus_p.svg);
                 <item>
                  <widget class="QCheckBox" name="checkBox_settings_mechanics_witherror">
                   <property name="text">
-                   <string>Error</string>
+                   <string>Errorbar</string>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QToolButton" name="toolButton_settings_mechanics_errorsettings">
+                 <widget class="QPushButton" name="pushButton_settings_mechanics_errorsettings">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>24</width>
+                    <height>16777215</height>
+                   </size>
+                  </property>
                   <property name="text">
                    <string>...</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
@@ -4055,6 +4080,12 @@ border-image: url(:/button/rc/plus_p.svg);
                    </item>
                    <item>
                     <widget class="QPushButton" name="pushButton_settings_mechanics_countoursettings">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
                      <property name="maximumSize">
                       <size>
                        <width>24</width>
@@ -4478,7 +4509,7 @@ border-image: url(:/button/rc/plus_p.svg);
              </sizepolicy>
             </property>
             <property name="currentIndex">
-             <number>0</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="page_spectra_topshow">
              <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -4543,7 +4574,7 @@ border-image: url(:/button/rc/plus_p.svg);
               </item>
              </layout>
             </widget>
-            <widget class="QWidget" name="page_spectra_topempty2">
+            <widget class="QWidget" name="page_spectra_topfit">
              <layout class="QHBoxLayout" name="horizontalLayout_27">
               <property name="spacing">
                <number>0</number>
@@ -4562,7 +4593,41 @@ border-image: url(:/button/rc/plus_p.svg);
               </property>
              </layout>
             </widget>
-            <widget class="QWidget" name="page_spectra_topempty3"/>
+            <widget class="QWidget" name="page_spectra_topmechanics">
+             <layout class="QHBoxLayout" name="horizontalLayout_25">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="label_10">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Select item or row/column headers to plot</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+             <zorder></zorder>
+             <zorder></zorder>
+             <zorder>label_10</zorder>
+            </widget>
            </widget>
           </item>
           <item>
@@ -5353,21 +5418,7 @@ p, li { white-space: pre-wrap; }
                  <number>0</number>
                 </property>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_20">
-                  <item>
-                   <widget class="QLabel" name="label_10">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="text">
-                     <string>Select item or row/column headers to plot</string>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
+                 <layout class="QHBoxLayout" name="horizontalLayout_20"/>
                 </item>
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_21">
@@ -6812,8 +6863,8 @@ border: 1px solid blue;
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>590</y>
+     <x>292</x>
+     <y>557</y>
     </hint>
     <hint type="destinationlabel">
      <x>249</x>
@@ -6832,8 +6883,8 @@ border: 1px solid blue;
      <y>670</y>
     </hint>
     <hint type="destinationlabel">
-     <x>370</x>
-     <y>286</y>
+     <x>656</x>
+     <y>701</y>
     </hint>
    </hints>
   </connection>
@@ -6848,8 +6899,8 @@ border: 1px solid blue;
      <y>670</y>
     </hint>
     <hint type="destinationlabel">
-     <x>370</x>
-     <y>292</y>
+     <x>656</x>
+     <y>941</y>
     </hint>
    </hints>
   </connection>
@@ -6864,8 +6915,56 @@ border: 1px solid blue;
      <y>132</y>
     </hint>
     <hint type="destinationlabel">
-     <x>513</x>
-     <y>100</y>
+     <x>563</x>
+     <y>103</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_settings_mechanics_errorsettings</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>tableWidget_settings_mechanics_errortab</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>101</x>
+     <y>293</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>102</x>
+     <y>390</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_settings_temp_sensor</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_control_rectemp</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>153</x>
+     <y>480</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>154</x>
+     <y>520</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_control_rectemp</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_settings_temp_sensor</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>154</x>
+     <y>520</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>153</x>
+     <y>480</y>
     </hint>
    </hints>
   </connection>

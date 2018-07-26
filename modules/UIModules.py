@@ -21,3 +21,15 @@ def closest_spanctr_step(l, n):
         return min(l, key=lambda x:abs(x-n))
     elif n < 1:
         return min(l, key=lambda x:abs(x-1/n))
+
+def list_modules(path):
+    # return a dict of available temp modules stored in path
+    from os import listdir
+    from os.path import isfile
+    modules = {f.replace('.py', ''): f.replace('.py', '') for f in listdir(path) if isfile and f != '__init__.py'}
+    return modules
+
+def split_path(path):
+    pass
+
+

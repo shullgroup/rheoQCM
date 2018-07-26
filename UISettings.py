@@ -12,7 +12,18 @@ settings_init = {
 
     # highest harmonic to display. the maximum value is 11
     'max_harmonic': 11, # do not change
- 
+    
+    # temperature modules path
+    'tempmodules_path': r'./modules/temp/', 
+    
+    # add NI sensors into the dict and the code will check if the devices in its keys.
+    # the values are the number of samples per test for average
+    # the channel MUST be 'ai0'
+    'devices_dict': {
+        'USB-TC01': 1, 
+        'PCIe-6321': 100
+    },
+    
     # default open/save data file type
     'default_datafiletype': ';;'.join([
         'Json file (*.json)',
@@ -66,9 +77,10 @@ settings_init = {
 
     # track_method
     'track_mehtod_choose': {
+        'free':      'Free',
         'fixspan':   'Fix span',
         'fixcenter': 'Fix center',
-        'fixrange':  'Fix range',
+        'fixcntspn':  'Fix center/span',
         'usrdef':    'User-defined...'
     },
 
@@ -219,6 +231,16 @@ settings_default = {
     'checkBox_showchi': False,
     'checkBox_showpolar': False,
     'comboBox_fitfactor': '6',
+
+    # default frequency ranges for each harmonic
+    'freq_range': {
+        1: [4, 6],
+        3: [14, 16],
+        5: [24, 26],
+        7: [34, 36],
+        9: [44, 46],
+        11: [54, 56]
+    },
 
 #### default settings settings ####
     'tab_settings_settings_harm1': {
@@ -468,3 +490,4 @@ settings_default = {
     'radioButton_plt2_samp': True,
     'radioButton_plt2_ref': False
 }
+
