@@ -491,3 +491,10 @@ settings_default = {
     'radioButton_plt2_ref': False
 }
 
+class FittingParameters:
+    def __init__(self):
+        self.f0 = 3
+        self.gamma0 = 2
+
+param = FittingParameters()
+print(param.f0)

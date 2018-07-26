@@ -24,6 +24,11 @@ from modules import UIModules, MathModules
 
 from MatplotlibWidget import MatplotlibWidget
 
+class GuessParameters:
+    def __init__(self):
+        self.f0 = None
+        self.gamma0 = None
+        
 class QCMApp(QMainWindow):
     '''
     The settings of the app is stored in a dict
@@ -36,6 +41,7 @@ class QCMApp(QMainWindow):
         self.fileFlag = False
         self.settings = settings_default
         self.harmonic_tab = 1
+        self.guess_params = GuessParameters()
   
         # define instrument state variables
         self.accvna = None 
@@ -1403,11 +1409,10 @@ class QCMApp(QMainWindow):
 
     def smart_peak_tracker(self, harmonic, freq, conductance, susceptance, G_parameters):
         resonance = None
-        self.f0 = G_parameters[0]
-        self.gamma0 = G_parameters[1]
+        self.guess_params.f0 = G_parameters[0]
+        self.guess_params.gamma0 = G_parameters[1]
 
         # determine the structure field that should be used to extract out the initial-guessing method
-        name = 'fit' + str(harmonic) 
         if self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_fit_method'] == 'bmax':
             resonance = susceptance
         else:
