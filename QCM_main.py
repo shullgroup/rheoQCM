@@ -20,7 +20,17 @@ from PyQt5.QtGui import QIcon, QPixmap
 # packages
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
-from modules import UIModules, MathModules
+from modules import UIModules, MathModules, tempDevices
+
+if UIModules.system_check() == 'win32': # windows
+    try:
+        from modules.AccessMyVNA import AccessMyVNA
+        # test if MyVNA program is available
+        with AccessMyVNA() as accvna:
+            if accvna.Init() == 0: # connection with myVNA is available
+                from modules import tempDevices
+    except: # no myVNA connected. Analysis only
+        pass
 
 from MatplotlibWidget import MatplotlibWidget
 
@@ -48,21 +58,17 @@ class QCMApp(QMainWindow):
         # initialize AccessMyVNA
         #?? add more code to disable settings_control tab and widges in settings_settings tab
         if self.system == 'win32': # windows
-            try:
-                from modules.AccessMyVNA import AccessMyVNA
+            if AccessMyVNA:
                 # test if MyVNA program is available
                 with AccessMyVNA() as accvna:
-                    ret = accvna.Init()
-                if ret == 0: # is available
-                    self.accvna = AccessMyVNA()
-                    from modules import tempDevices # load temp related module whith dependency of nidaqmix
-                else: # not available
-                    pass
-            except:
-                pass
+                    if accvna.Init() == 0: # is available
+                        self.accvna = AccessMyVNA() # save class AccessMyVNA to accvna
+                    else: # not available
+                        pass
+
         else: # other system, data analysis only
             pass
-
+        print(self.accvna)
         self.main()
         self.load_settings()
 
@@ -558,13 +564,12 @@ class QCMApp(QMainWindow):
         self.ui.statusbar.addPermanentWidget(self.ui.progressBar_status_interval_time)
         # move label_status_pts to statusbar
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_pts)
-        # move label_status_signal_ch to statusbar
-        self.ui.statusbar.addPermanentWidget(self.ui.label_status_signal_ch)
-        # move label_status_reftype to statusbar
-        self.ui.statusbar.addPermanentWidget(self.ui.label_status_reftype)
-        # move label_status_temp_sensor to statusbar
-        self.ui.statusbar.addPermanentWidget(self.ui.label_status_temp_sensor)
-        self.ui.label_status_temp_sensor.setScaledContents(True)
+        # move pushButton_status_reftype to statusbar
+        self.ui.statusbar.addPermanentWidget(self.ui.pushButton_status_reftype)
+         # move pushButton_status_signal_ch to statusbar
+        self.ui.statusbar.addPermanentWidget(self.ui.pushButton_status_signal_ch)
+       # move pushButton_status_temp_sensor to statusbar
+        self.ui.statusbar.addPermanentWidget(self.ui.pushButton_status_temp_sensor)
         # move label_status_f0BW to statusbar
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_f0BW)
 
@@ -1052,7 +1057,7 @@ class QCMApp(QMainWindow):
                     # save values to self.settings
                     self.settings['checkBox_control_rectemp'] = True
                     self.settings['checkBox_settings_temp_sensor'] = True
-                    # set statusbar label_status_temp_sensor text
+                    # set statusbar pushButton_status_temp_sensor text
                     self.statusbar_temp_update()
                     # disable items to keep the setting
                     self.ui.comboBox_tempmodule.setEnabled(False)
@@ -1070,7 +1075,7 @@ class QCMApp(QMainWindow):
                 self.settings['checkBox_control_rectemp'] = False
                 self.settings['checkBox_settings_temp_sensor'] = False
 
-                # set statusbar label_status_temp_sensor text
+                # set statusbar pushButton_status_temp_sensor text
                 self.statusbar_temp_update()
                 
                 # enable items to keep the setting
@@ -1089,25 +1094,21 @@ class QCMApp(QMainWindow):
 
         # update statusbar temp sensor image
         if self.settings['checkBox_settings_temp_sensor']: # checked
-            self.ui.label_status_temp_sensor.setStyleSheet(
-                " border-image: url(:/icon/rc/temp_sensor.svg); "
-            )
-            # change temp unit by self.settings['temp_unit_choose']
+            self.ui.pushButton_status_temp_sensor.setIcon(QIcon(":/icon/rc/temp_sensor.svg"))
             try:
+            # get temp and change temp unit by self.settings['temp_unit_choose']
                 curr_temp = self.temp_by_unit(self.tempsensor.get_tempC())
                 print(curr_temp)
                 unit = settings_init['temp_unit_choose'].get(self.settings['comboBox_tempunit'])
-                self.ui.label_status_temp_sensor.setText('{:.1f} {}'.format(curr_temp, unit))
-                self.ui.label_status_temp_sensor.setToolTip('Last updated temp.')
+                self.ui.pushButton_status_temp_sensor.setText('{:.1f} {}'.format(curr_temp, unit))
+                self.ui.pushButton_status_temp_sensor.setIcon(QIcon(":/icon/rc/temp_sensor.svg"))
             except:
                 #?? update in statusbar
                 pass
         else:
-            self.ui.label_status_temp_sensor.setStyleSheet(
-                " border-image: url(:/icon/rc/temp_sensor_off.svg); "
-            )
-            self.ui.label_status_temp_sensor.setText('')
-            self.ui.label_status_temp_sensor.setToolTip('Temp. sensor is off.')
+            self.ui.pushButton_status_temp_sensor.setIcon(QIcon(":/icon/rc/temp_sensor_off.svg"))
+            self.ui.pushButton_status_temp_sensor.setText('')
+            self.ui.pushButton_status_temp_sensor.setToolTip('Temp. sensor is off.')
 
     def temp_by_unit(self, data):
         '''
