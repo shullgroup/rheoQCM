@@ -1,4 +1,6 @@
 
+import os
+import signal
 import numpy as np
 from ctypes import *
 # from ctypes import windll, WinDLL, wintypes, WINFUNCTYPE, POINTER, c_int, c_double, byref, Array, cast, get_last_error, WinError
@@ -9,6 +11,11 @@ import sys, struct, time
 import win32ui
 import win32process
 
+try: # run from main
+    from modules.retrying import retry
+except: # run by itself
+    from retrying import retry
+
 print(sys.version)
 print(struct.calcsize('P') * 8)
 
@@ -17,6 +24,10 @@ print(struct.calcsize('P') * 8)
 WM_USER = 0x0400                 # WM_USER   0x0400
 WM_COMMAND = 0x0111                # WM_COMMAND 0x0111
 MESSAGE_SCAN_ENDED = WM_USER + 0x1234  # MESSAGE_SCAN_ENDED (WM_USER+0x1234)
+# retry decorator
+wait_fixed = 10
+stop_max_attempt_number = 10
+stop_max_delay=10000
 
 # window name
 win_name = u'myVNA - Reflection mode "myVNA" [Embedded] '
@@ -42,26 +53,41 @@ def check_zero(result, func, args):
             raise WinError(err)
     return args
 
-def get_hWnd():
-    hWnd = win32ui.FindWindow(None, win_name).GetSafeHwnd()
-    pid = win32process.GetWindowThreadProcessId(hWnd)[1]
-    # print(hWnd)
-    print('hWnd', type(hWnd))
-    print(pid)
-    if not hWnd:
+def get_hWnd(win_name=win_name):
+    try:
+        hWnd = win32ui.FindWindow(None, win_name).GetSafeHwnd()
+        pid = win32process.GetWindowThreadProcessId(hWnd)[1]
+    except:
         hWnd = None
-        print('hWnd', hWnd)
-    else: 
-        print('hWnd', hWnd, '"' + win_name + '"') 
+    print('hWnd', hWnd, '"' + win_name + '"') 
     return hWnd
 
     # hWnd = win32ui.GetMainFrame.GetSafeHwnd
+
+def get_pid(hWnd):
+    if not hWnd:
+        print('PID did not find!')
+        pid = None        
+    else:
+        pid = win32process.GetWindowThreadProcessId(hWnd)[1]
+
+    return pid
+
+def close_vna():
+    # close myVNA initiated by AccessMyVNA
+    hWnd = get_hWnd()
+    print('hWnd', hWnd)
+    pid = get_pid(hWnd)
+    print('pid', pid)
+    if pid:
+        os.kill(pid, signal.SIGTERM)
+
 #endregion
 
 #region assign functions
 #########################################
 MyVNAInit = vna[13] # MyVNAInit
-# // call this function befoe trying to do anything else. It attempts to execute myVNA
+# // call this function befoe trying to do anything else. It attempts to executeF myVNA
 # // and establish it as an automation server
 # // OLE equivalent:
 # // Connect to the server using the CLSID
@@ -477,6 +503,8 @@ class AccessMyVNA():
         
 
     def Init(self):
+        # close vna window
+        close_vna()
         ret = MyVNAInit()
         print('MyVNAInit\n', ret)
         return ret
@@ -533,6 +561,7 @@ class AccessMyVNA():
     '''
     #endregion
 
+    @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay)
     def GetDoubleArray(self, nWhat=0, nIndex=0, nArraySize=9):
         '''
         Get frequency nWhat = GET_SCAN_FREQ_DATA 0
@@ -552,8 +581,11 @@ class AccessMyVNA():
         # ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nResult)
         # assert ret != 0, 'MyVNAGetDoubleArray failed'
 
-        print('MyVNAGetDoubleArray\n', ret, nResult[:])
-        return ret, nResult
+        # print(nResult)
+        ndRes = nResult[:] 
+        del nResult
+        print('MyVNAGetDoubleArray\n', ret, ndRes)
+        return ret, ndRes
 
     def SetDoubleArray(self, nWhat=0, nIndex=0, nArraySize=9, nData=[]):
         '''
@@ -628,13 +660,14 @@ class AccessMyVNA():
         print('MyVNASetFequencies\n', ret, f1, f2) #MyVNASetFequencies
         return ret, f1, f2
     
+    @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay)
     def GetScanData(self, nStart=0, nEnd=299, nWhata=-1, nWhatb=15):
-        nStart = 1
+        # nStart = 0
         # nEnd = 49
         # print(nStart)
         print('GetScanData 0')
-        nSteps = nEnd - nStart + 2
-        nSteps = 1000
+        nSteps = nEnd - nStart + 1
+        nSteps = nSteps * 2
         print('nSteps=', nSteps)
         # double_n = c_double * (nSteps)
 
@@ -689,7 +722,12 @@ class AccessMyVNA():
         # -1: nSteps < 1
         #  1: crushes before l682: (errcode = MyVNAInit()) == 0
         print('MyVNAGetScanData\n', ret, data_a[0], data_b[0])
-        return ret, np.array(data_a), np.array(data_b)
+
+        da = data_a[:nEnd]
+        db = data_b[:nEnd]
+        del data_a, data_b
+
+        return ret, da, db
         
         # simple way
         # return MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a.ctypes.data_as(POINTER(c_double)), data_b.ctypes.data_as(POINTER(c_double)))
@@ -705,10 +743,10 @@ class AccessMyVNA():
         self.SingleScan()
         self.Autoscale()
         # wait for some time
-        time.sleep(2)
+        time.sleep(1)
         ret, nSteps = self.GetScanSteps()
         ret, f, G = self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
-        time.sleep(1)
+        # time.sleep(1)
         ret, _, B = self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-2, nWhatb=16)
         # self.Close()
         return ret, f, G, B
@@ -746,10 +784,20 @@ if __name__ == '__main__':
     # ret, f, G, B = accvna.single_scan()
 
     with AccessMyVNA() as accvna:
-        ret = accvna.GetDoubleArray()
+        ret, nResult = accvna.GetDoubleArray()
+        print('nR', nResult)
         # ret, f, G = accvna.GetScanData(nStart=0, nEnd=10-1, nWhata=-1, nWhatb=15)
         ret, f, G, B = accvna.single_scan()
+        # ret = accvna.SingleScan()
         print(ret)
+
+    # vna = AccessMyVNA()
+    # vna.Init()
+    # vna.SingleScan()
+    # vna.GetDoubleArray()                 # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: doesn't affect
+    # vna.Close()
+    
+    
     # accvna = AccessMyVNA() 
     # # call this function before trying to do anything else
     # # Init()
@@ -764,7 +812,6 @@ if __name__ == '__main__':
     # # GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)                 # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: doesn't affect
     # # SetDoubleArray(nWhat=3, nIndex=0, nArraySize=2, nData=np.array([4.9e6, 5.1e6])) # AccessMyVNA(Open: error)
     # # Init()
-    # # GetDoubleArray()                 # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: doesn't affect
     # # # Setinstrmode()                      # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: need restart
     # # Getinstrmode()                     # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: need restart
     # # # Setdisplaymode()            # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: need restart
@@ -785,7 +832,6 @@ if __name__ == '__main__':
     # # GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=16)
     # get_hWnd()
     # # # MUST call this before the calling windows application closes
-    # accvna.Close()
     # get_hWnd()
 
 

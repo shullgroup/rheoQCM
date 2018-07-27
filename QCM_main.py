@@ -25,12 +25,14 @@ from modules import UIModules, MathModules, tempDevices
 if UIModules.system_check() == 'win32': # windows
     try:
         from modules.AccessMyVNA import AccessMyVNA
+        print(AccessMyVNA)
         # test if MyVNA program is available
         with AccessMyVNA() as accvna:
             if accvna.Init() == 0: # connection with myVNA is available
                 from modules import tempDevices
-    except: # no myVNA connected. Analysis only
-        pass
+    except Exception as e: # no myVNA connected. Analysis only
+        print('Failed to import AccessMyVNA module!')
+        print(e)
 
 from MatplotlibWidget import MatplotlibWidget
 
@@ -62,15 +64,17 @@ class QCMApp(QMainWindow):
         # check system
         self.system = UIModules.system_check()
         # initialize AccessMyVNA
-        #?? add more code to disable settings_control tab and widges in settings_settings tab
+        #TODO add more code to disable settings_control tab and widges in settings_settings tab
         if self.system == 'win32': # windows
-            if AccessMyVNA:
+            try:
                 # test if MyVNA program is available
                 with AccessMyVNA() as accvna:
                     if accvna.Init() == 0: # is available
                         self.accvna = AccessMyVNA() # save class AccessMyVNA to accvna
                     else: # not available
                         pass
+            except:
+                pass
 
         else: # other system, data analysis only
             pass
@@ -276,7 +280,7 @@ class QCMApp(QMainWindow):
             self.ui.treeWidget_settings_settings_hardware
         )
         # connect ref_channel
-        # self.ui.comboBox_ref_channel.currentIndexChanged.connect() #?? add function checking if sample and ref have the same channel
+        # self.ui.comboBox_ref_channel.currentIndexChanged.connect() #TODO add function checking if sample and ref have the same channel
 
         # insert base_frequency
         self.create_combobox(
@@ -930,7 +934,7 @@ class QCMApp(QMainWindow):
     # open folder in explorer
     # methods for different OS could be added
     def on_clicked_pushButton_gotofolder(self):
-        file_path = self.ui.lineEdit_datafilestr.text() #?? replace with reading from settings dict
+        file_path = self.ui.lineEdit_datafilestr.text() #TODO replace with reading from settings dict
         path = os.path.abspath(os.path.join(file_path, os.pardir)) # get the folder of the file
         UIModules.open_file(path)
 
@@ -1053,7 +1057,7 @@ class QCMApp(QMainWindow):
                         settings_init['devices_dict'][tempdevice.product_type]
                     )
                 except: # if failed return
-                    #?? update in statusbar
+                    #TODO update in statusbar
                     return 
 
                 # after tempModule loaded
@@ -1076,7 +1080,7 @@ class QCMApp(QMainWindow):
                     # uncheck checkBoxes
                     self.ui.checkBox_control_rectemp.setChecked(False)
                     self.ui.checkBox_settings_temp_sensor.setChecked(False)
-                    #?? update in statusbar
+                    #TODO update in statusbar
             else: # is unchecked
                 
                 self.settings['checkBox_control_rectemp'] = False
@@ -1110,7 +1114,7 @@ class QCMApp(QMainWindow):
                 self.ui.pushButton_status_temp_sensor.setText('{:.1f} {}'.format(curr_temp, unit))
                 self.ui.pushButton_status_temp_sensor.setIcon(QIcon(":/icon/rc/temp_sensor.svg"))
             except:
-                #?? update in statusbar
+                #TODO update in statusbar
                 pass
         else:
             self.ui.pushButton_status_temp_sensor.setIcon(QIcon(":/icon/rc/temp_sensor_off.svg"))

@@ -524,7 +524,7 @@ class MatplotlibWidget(QWidget):
     def new_data(self, xdata=[], ydata=[], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         ''' 
         plot data of in new plots 
-        #?? need to define xdata, ydata structure
+        #TODO need to define xdata, ydata structure
         [[x1], [x2], ...] ?
         '''
         self.initax_xy()
