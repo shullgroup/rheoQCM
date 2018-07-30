@@ -4,13 +4,13 @@ This is the main code of the QCM acquization program
 '''
 
 import os
+import csv
 import importlib
 import math
 import json
 import datetime, time
 import numpy as np
 import scipy.signal
-import matlabfunctions as mlf
 
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton, QMenu
@@ -36,10 +36,17 @@ if UIModules.system_check() == 'win32': # windows
 
 from MatplotlibWidget import MatplotlibWidget
 
-class GuessParameters:
+class PeakTracker:
     def __init__(self):
         self.f0 = None
         self.gamma0 = None
+        self.freq = None
+        self.conductance = None
+        self.susceptance = None
+        self.refit_flag = 0
+        self.refit_counter = 1
+
+        self.harmonic_tab = 1
 
 class QCMApp(QMainWindow):
     '''
@@ -52,8 +59,7 @@ class QCMApp(QMainWindow):
         self.fileName = ''
         self.fileFlag = False
         self.settings = settings_default
-        self.harmonic_tab = 1
-        self.guess_params = GuessParameters()
+        self.peak_tracker = PeakTracker()
   
         # define instrument state variables
         self.accvna = None 
@@ -1189,7 +1195,7 @@ class QCMApp(QMainWindow):
 
     def update_harmonic_tab(self):
         #print("update_harmonic_tab was called")
-        self.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
+        self.peak_tracker.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
         self.update_frequencies()
 
         #self.update_guichecks(self.ui.checkBox_settings_temp_sensor, 'checkBox_settings_temp_sensor')
@@ -1220,10 +1226,10 @@ class QCMApp(QMainWindow):
         self.update_frequencies()
 
     def update_frequencies(self):
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['start_freq'] = self.harmonic_tab * self.settings['comboBox_base_frequency'] - self.settings['comboBox_bandwidth']
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['end_freq'] = self.harmonic_tab * self.settings['comboBox_base_frequency'] + self.settings['comboBox_bandwidth']
-        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['start_freq']))
-        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['end_freq']))
+        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['start_freq'] = self.peak_tracker.harmonic_tab * self.settings['comboBox_base_frequency'] - self.settings['comboBox_bandwidth']
+        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['end_freq'] = self.peak_tracker.harmonic_tab * self.settings['comboBox_base_frequency'] + self.settings['comboBox_bandwidth']
+        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['start_freq']))
+        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['end_freq']))
 
     def set_default_freqs(self):
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
@@ -1232,15 +1238,15 @@ class QCMApp(QMainWindow):
 
     def update_fitmethod(self, fitmethod_index):
         value = self.ui.comboBox_fit_method.itemData(fitmethod_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_fit_method'] = value
+        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_fit_method'] = value
 
     def update_trackmethod(self, trackmethod_index):
         value = self.ui.comboBox_track_method.itemData(trackmethod_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_track_method'] = value
+        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_track_method'] = value
 
     def update_harmfitfactor(self, harmfitfactor_index):
         value = self.ui.comboBox_harmfitfactor.itemData(harmfitfactor_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_harmfitfactor'] = value
+        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_harmfitfactor'] = value
 
     def update_samplechannel(self, samplechannel_index):
         value = self.ui.comboBox_sample_channel.itemData(samplechannel_index)
@@ -1282,13 +1288,13 @@ class QCMApp(QMainWindow):
 
     def update_guicombos(self, comboBox, name_in_settings, init_dict):
         for key, val in settings_init[init_dict].items():
-            if key == self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)][name_in_settings]:
+            if key == self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)][name_in_settings]:
                 comboBox.setCurrentIndex(comboBox.findData(key))
                 break
 
     def update_guichecks(self, checkBox, name_in_settings):
         print("update_guichecks was called")
-        checkBox.setChecked(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)][name_in_settings])
+        checkBox.setChecked(self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)][name_in_settings])
         
     # debug func
     def log_update(self):
@@ -1312,8 +1318,8 @@ class QCMApp(QMainWindow):
 
         # load default start and end frequencies for lineEdit harmonics
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
-            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(mlf.num2str(self.settings['lineEdit_startf' + str(i)]*1e-6, precision=12)) # display as MHz
-            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(mlf.num2str(self.settings['lineEdit_endf' + str(i)]*1e-6, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(num2str(self.settings['lineEdit_startf' + str(i)]*1e-6, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(num2str(self.settings['lineEdit_endf' + str(i)]*1e-6, precision=12)) # display as MHz
         # load default record interval
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         # load default spectra refresh resolution
@@ -1352,7 +1358,7 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_settings_settings_linktime.setChecked(self.settings['checkBox_settings_settings_linktime'])
 
         # set opened harmonic tab
-        self.harmonic_tab = 1
+        self.peak_tracker.harmonic_tab = 1
         # set tab displayed to harm 1
         self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
         self.update_harmonic_tab()
@@ -1419,16 +1425,15 @@ class QCMApp(QMainWindow):
                 self.settings[endname] = max_range - 0.9
 
     def smart_peak_tracker(self, harmonic, freq, conductance, susceptance, G_parameters):
-        resonance = None
-        self.guess_params.f0 = G_parameters[0]
-        self.guess_params.gamma0 = G_parameters[1]
+        self.peak_tracker.f0 = G_parameters[0]
+        self.peak_tracker.gamma0 = G_parameters[1]
 
         # determine the structure field that should be used to extract out the initial-guessing method
         if self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_fit_method'] == 'bmax':
             resonance = susceptance
         else:
             resonance = conductance
-        index = mlf.findpeaks(resonance, output='indices', sortstr='descend')
+        index = findpeaks(resonance, output='indices', sortstr='descend')
         peak_f = freq[index[0]]
         # determine the estimated associated conductance (or susceptance) value at the resonance peak
         Gmax = resonance[index[0]] 
@@ -1493,6 +1498,33 @@ class QCMApp(QMainWindow):
             ### CUSTOM, USER-DEFINED
             pass
         self.check_freq_range(harmonic, self.settings['freq_range'][harmonic][0], self.settings['freq_range'][harmonic][1])
+    
+    def read_scan(self, harmonic):
+        # read in live data scans
+        if self.peak_tracker.refit_flag == 0:
+            flag = 0
+            rawdata = np.array([])
+            start1 = self.settings['lineEdit_startf' + str(harmonic)]
+            end1 = self.settings['lineEdit_endf' + str(harmonic)]
+            if harmonic < 11:
+                rawfile = 'myVNAdata0' + str(harmonic) + '.csv'
+            else:
+                rawfile = 'myVNAdata11.csv'
+            while flag == 0:
+                with open(rawfile, newline='') as csvfile:
+                    reader = csv.DictReader(csvfile)
+                    for row in reader:
+                        np.append(rawdata, row[0])
+                num_pts = self.settings['tab_settings_settings_harm' + str(harmonic)][num_datapoints]
+                if len(rawdata) == num_pts*2:
+                    self.peak_tracker.conductance = 1e3 * rawdata[:num_pts+1]
+                    self.peak_tracker.susceptance = 1e3 * rawdata[num_pts:]
+                    self.peak_tracker.freq = np.arange(start1,end1-(end1-start1)/num_pts+1,(end1-start1)/num_pts)
+                    flag = 1
+                    print('Status: Scan successful.')
+        # TODO refit loaded raw spectra data
+        else:
+            pass
 
 #endregion
 
