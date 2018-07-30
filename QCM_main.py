@@ -11,7 +11,6 @@ import json
 import datetime, time
 import numpy as np
 import scipy.signal
-import matlabfunctions as mlf
 
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton, QMenu
@@ -1319,8 +1318,8 @@ class QCMApp(QMainWindow):
 
         # load default start and end frequencies for lineEdit harmonics
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
-            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(mlf.num2str(self.settings['lineEdit_startf' + str(i)]*1e-6, precision=12)) # display as MHz
-            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(mlf.num2str(self.settings['lineEdit_endf' + str(i)]*1e-6, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(num2str(self.settings['lineEdit_startf' + str(i)]*1e-6, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(num2str(self.settings['lineEdit_endf' + str(i)]*1e-6, precision=12)) # display as MHz
         # load default record interval
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         # load default spectra refresh resolution
@@ -1434,7 +1433,7 @@ class QCMApp(QMainWindow):
             resonance = susceptance
         else:
             resonance = conductance
-        index = mlf.findpeaks(resonance, output='indices', sortstr='descend')
+        index = findpeaks(resonance, output='indices', sortstr='descend')
         peak_f = freq[index[0]]
         # determine the estimated associated conductance (or susceptance) value at the resonance peak
         Gmax = resonance[index[0]] 
