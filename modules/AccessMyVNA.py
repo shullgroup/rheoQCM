@@ -5,6 +5,8 @@ import numpy as np
 from ctypes import *
 # from ctypes import windll, WinDLL, wintypes, WINFUNCTYPE, POINTER, c_int, c_double, byref, Array, cast, get_last_error, WinError
 from ctypes.wintypes import HWND, LONG, BOOL, LPARAM, LPDWORD, DWORD, LPWSTR
+from comtypes.safearray import safearray_as_ndarray
+
 import numpy.ctypeslib as clib
 import sys, struct, time
 
@@ -427,18 +429,18 @@ MyVNAGetScanData = vna[10] # MyVNAGetScanData
 # MyVNAGetScanData(0, 199, -1, 15, &dFreq[0], &dData[0]);//scan data
 # nWhat -2: nothing; -1: frequency; 15: Gp; 16:Bp (see the defination in .h file)
 MyVNAGetScanData.errcheck = check_zero
-LP_c_double = POINTER(c_double)
-MyVNAGetScanData.argtypes = [
-    c_int,               # _In_ nStart
-    c_int,               # _In_ nEnd
-    c_int,               # _In_ nWhata
-    c_int,               # _In_ nWhatb
-    LP_c_double,   # _Out_ *pDataA
-    LP_c_double]   # _Out_ *pDataA
+# LP_c_double = POINTER(c_double)
+# MyVNAGetScanData.argtypes = [
+#     c_int,               # _In_ nStart
+#     c_int,               # _In_ nEnd
+#     c_int,               # _In_ nWhata
+#     c_int,               # _In_ nWhatb
+#     LP_c_double,   # _Out_ *pDataA
+#     LP_c_double]   # _Out_ *pDataA
 
-    # POINTER(double_n),   # _Out_ *pDataA
-    # POINTER(double_n)]   # _Out_ *pDataA
-MyVNAGetScanData.restype = c_int
+#     # POINTER(double_n),   # _Out_ *pDataA
+#     # POINTER(double_n)]   # _Out_ *pDataA
+# MyVNAGetScanData.restype = c_int
 
 ##########################################
 MyVNAAutoscale = vna[1]
@@ -489,6 +491,8 @@ class AccessMyVNA():
     '''
     def __init__(self):
         super(AccessMyVNA, self).__init__()
+        self.scandata_a = []
+        self.scandata_b = []
 
     # use __enter__ __exit__ for with or use try finally
     def __enter__(self):
@@ -660,8 +664,9 @@ class AccessMyVNA():
         print('MyVNASetFequencies\n', ret, f1, f2) #MyVNASetFequencies
         return ret, f1, f2
     
-    @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay)
+    # @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay)
     def GetScanData(self, nStart=0, nEnd=299, nWhata=-1, nWhatb=15):
+        
         # nStart = 0
         # nEnd = 49
         # print(nStart)
@@ -671,15 +676,73 @@ class AccessMyVNA():
         print('nSteps=', nSteps)
         # double_n = c_double * (nSteps)
 
-        # use clib
+
+
+        ########### np ######################
+        # MyVNAGetScanData.argtypes = [
+        #     c_int,               # _In_ nStart
+        #     c_int,               # _In_ nEnd
+        #     c_int,               # _In_ nWhata
+        #     c_int,               # _In_ nWhatb
+        #     np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='CONTIGUOUS'),   # _Out_ *pDataA
+        #     np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='CONTIGUOUS'),   # _Out_ *pDataA
+        # ]
+        # MyVNAGetScanData.restype = c_int
+
+        # data_a = np.zeros(nSteps, dtype=np.float, order='C')
+        # data_b = np.zeros(nSteps, dtype=np.float, order='C')
+
+        # print('GetScanData 1')
+        # ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a, data_b)
+        # print('GetScanData 2')
+
+        ########### end np #################
+
+
+        ########### clib ###############
         # data_a = clib.as_ctypes(np.zeros(nSteps))
         # data_b = clib.as_ctypes(np.zeros(nSteps))
+        ########### end clib ###############
 
-        # use ctypes
+
+        ########### ctypes ################
         # data_a = double_n()
         # data_b = double_n()
+        ########### endctypes ####################
 
 
+        ########### dynamic allocation throuth callback ####
+        # ALLOCATOR = CFUNCTYPE(c_int, c_int, c_int, c_int, c_int,POINTER(c_double), POINTER(c_double))
+        # MyVNAGetScanData.restype = None
+        # MyVNAGetScanData.argtypes = [ALLOCATOR]
+
+        # ?MyVNAGetScanData@@YGHHHHHPAN0@Z
+        # WINFUNCTYPE method
+        prototype = WINFUNCTYPE(c_int, c_int, c_int, c_int, c_int, POINTER(c_double), POINTER(c_double))
+        # [1=input, 2=output], python name, default value
+        paramflags = (1, 'nStart', 0), (1, 'nEnd', 0), (1, 'nWhata, 0'), (1, 'nWhatb', 0), (1, 'data_a', 0), (1, 'data_a', 0)
+        # paramflags = (1, 'nStart'), (1, 'nEnd'), (1, 'nWhata'), (1, 'nWhatb'), (1, 'data_a'), (1, 'data_a')
+        _GetScandata = prototype(('?MyVNAGetScanData@@YGHHHHHPAN0@Z', vna), paramflags)
+        # _GetScandata =WINFUNCTYPE(c_int, c_int, c_int, c_int, c_int, POINTER(c_double), POINTER(c_double))(('?MyVNAGetScanData@@YGHHHHHPAN0@Z', vna))
+
+        data_a = np.zeros(nSteps, dtype=np.float, order='C')
+        data_b = np.zeros(nSteps, dtype=np.float, order='C')
+        # self.scandata_a.append(data_a)
+        # self.scandata_b.append(data_b)
+
+        with safearray_as_ndarray:
+            data_a = np.zeros(nSteps, dtype=np.float, order='C')
+            data_b = np.zeros(nSteps, dtype=np.float, order='C')
+        print(type(data_a))
+
+        # data_a_ptr = cast(data_a, POINTER(c_double))
+        # data_b_ptr = cast(data_b, POINTER(c_double))
+
+        print('GetScanData 1')
+        # ret = _GetScandata(nStart, nEnd, nWhata, nWhatb, data_a_ptr, data_b_ptr)
+        ret = _GetScandata(nStart, nEnd, nWhata, nWhatb, data_a.ctypes.data_as(POINTER(c_double)), data_b.ctypes.data_as(POINTER(c_double)))
+
+        print('GetScanData 2')
 
         ##########################################
         # needs a safearray ??
@@ -687,8 +750,8 @@ class AccessMyVNA():
 
 
         # use np
-        data_a = np.zeros(nSteps)
-        data_b = np.zeros(nSteps)
+        # data_a = np.zeros(nSteps, dtype=np.float)
+        # data_b = np.zeros(nSteps, dtype=np.float)
         # print('data\n',  data_a[2], data_b[2])
         # cast the array into a pointer of type c_double:
         # data_a_ptr = cast(data_a, POINTER(c_double))
@@ -697,18 +760,14 @@ class AccessMyVNA():
         # print(data_a_ptr)
         # print(data_b_ptr)
         # both of following two works
-        # ?MyVNAGetScanData@@YGHHHHHPAN0@Z
 
-        # WINFUNCTYPE method
-        # prototype = WINFUNCTYPE(int, int, int, int, int, POINTER(c_double), POINTER(c_double))
-        # paramflags = (1, 'nStart'), (1, 'nEnd'), (1, 'nWhata'), (1, 'nWhatb'), (1, 'pDataA'), (1, 'pDataB')
-        # _GetScandata = prototype(('?MyVNAGetScanData@@YGHHHHHPAN0@Z', vna), paramflags)
+
         print('GetScanData 1')
         # code crushes here 
         #
-        # ret = _GetScandata(nStart, nEnd, nWhata, nWhatb, data_a, data_b)
+        # ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a, data_b)
         # use np array
-        ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a.ctypes.data_as(POINTER(c_double)), data_b.ctypes.data_as(POINTER(c_double)))
+        # ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a.ctypes.data_as(POINTER(c_double)), data_b.ctypes.data_as(POINTER(c_double)))
 
         # use ctypes pointer
         # ret = MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a_ptr, data_b_ptr)
