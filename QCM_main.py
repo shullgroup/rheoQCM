@@ -1058,11 +1058,11 @@ class QCMApp(QMainWindow):
                 try:
                     self.tempsensor = tempsensor(
                         tempdevice,
-                        'ai0',
+                        settings_init['devices_dict'][tempdevice.product_type],
                         thrmcpltype,
-                        settings_init['devices_dict'][tempdevice.product_type]
                     )
-                except: # if failed return
+                except Exception as e: # if failed return
+                    print(e)
                     #TODO update in statusbar
                     return 
 
@@ -1119,6 +1119,7 @@ class QCMApp(QMainWindow):
                 unit = settings_init['temp_unit_choose'].get(self.settings['comboBox_tempunit'])
                 self.ui.pushButton_status_temp_sensor.setText('{:.1f} {}'.format(curr_temp, unit))
                 self.ui.pushButton_status_temp_sensor.setIcon(QIcon(":/icon/rc/temp_sensor.svg"))
+                self.ui.pushButton_status_temp_sensor.setToolTip('Temp. sensor is on.')
             except:
                 #TODO update in statusbar
                 pass
@@ -1318,8 +1319,8 @@ class QCMApp(QMainWindow):
 
         # load default start and end frequencies for lineEdit harmonics
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
-            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(num2str(self.settings['lineEdit_startf' + str(i)]*1e-6, precision=12)) # display as MHz
-            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(num2str(self.settings['lineEdit_endf' + str(i)]*1e-6, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(MathModules.num2str(self.settings['lineEdit_startf' + str(i)]*1e-6, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(MathModules.num2str(self.settings['lineEdit_endf' + str(i)]*1e-6, precision=12)) # display as MHz
         # load default record interval
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         # load default spectra refresh resolution

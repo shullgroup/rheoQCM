@@ -20,8 +20,16 @@ settings_init = {
     # the values are the number of samples per test for average
     # the channel MUST be 'ai0'
     'devices_dict': {
-        'USB-TC01': 1, 
-        'PCIe-6321': 100
+        'USB-TC01': {
+            'nsamples': 1,            # number of points for average,
+            'thrmcpl_chan': 'ai0',    # thermocouple channel,
+            'cjc_source': 'BUILT_IN', # channel for cjc,
+        }, 
+        'PCIe-6321': {
+            'nsamples': 100,       # number of points for average,
+            'thrmcpl_chan': 'ai0', # thermocouple channel,
+            'cjc_source': '',      # channel for cjc,
+        }, 
     },
     
     # default open/save data file type

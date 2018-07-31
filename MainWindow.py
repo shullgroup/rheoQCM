@@ -732,25 +732,6 @@ class Ui_MainWindow(object):
         self.label_status_f0BW.setMaximumSize(QtCore.QSize(50, 16777215))
         self.label_status_f0BW.setObjectName("label_status_f0BW")
         self.verticalLayout_14.addWidget(self.label_status_f0BW)
-        self.label_status_reftype = QtWidgets.QLabel(self.tab_settings_settings)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.label_status_reftype.sizePolicy().hasHeightForWidth())
-        self.label_status_reftype.setSizePolicy(sizePolicy)
-        self.label_status_reftype.setMinimumSize(QtCore.QSize(16, 16))
-        self.label_status_reftype.setStyleSheet("#label_status_reftype\n"
-"{\n"
-"background-color: transparent;\n"
-"border-image: url(:/icon/rc/ref_input.svg);\n"
-"background: none;\n"
-"border: none;\n"
-"background-repeat: none;\n"
-"}\n"
-"")
-        self.label_status_reftype.setText("")
-        self.label_status_reftype.setObjectName("label_status_reftype")
-        self.verticalLayout_14.addWidget(self.label_status_reftype)
         self.pushButton_status_reftype = QtWidgets.QPushButton(self.tab_settings_settings)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)

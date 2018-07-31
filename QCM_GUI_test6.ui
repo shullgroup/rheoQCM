@@ -1839,36 +1839,6 @@ background-color: red;
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="label_status_reftype">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>16</width>
-                  <height>16</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">#label_status_reftype
-{
-background-color: transparent;
-border-image: url(:/icon/rc/ref_input.svg);
-background: none;
-border: none;
-background-repeat: none;
-}
-</string>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-               </widget>
-              </item>
-              <item>
                <widget class="QPushButton" name="pushButton_status_reftype">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
