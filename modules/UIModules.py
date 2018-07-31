@@ -26,7 +26,8 @@ def list_modules(path):
     # return a dict of available temp modules stored in path
     from os import listdir
     from os.path import isfile
-    modules = {f.replace('.py', ''): f.replace('.py', '') for f in listdir(path) if isfile and f != '__init__.py'}
+        
+    modules = {f.replace('.py', ''): f.replace('.py', '') for f in listdir(path) if isfile and '__' not in f}
     return modules
 
 def split_path(path):

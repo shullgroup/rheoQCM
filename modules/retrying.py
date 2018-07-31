@@ -77,7 +77,9 @@ class Retrying(object):
                  wait_func=None,
                  wait_jitter_max=None,
                  before_attempts=None,
-                 after_attempts=None):
+                 after_attempts=None,
+                 logger=False,   # added for displaying attempt_number
+                 ):
 
         self._stop_max_attempt_number = 5       if stop_max_attempt_number is None else stop_max_attempt_number
         self._stop_max_delay = 100              if stop_max_delay is None else stop_max_delay
@@ -92,6 +94,7 @@ class Retrying(object):
         self._wait_jitter_max = 0               if wait_jitter_max is None else wait_jitter_max
         self._before_attempts = before_attempts
         self._after_attempts = after_attempts
+        self._logger = logger # adder for displaying attempt_number
 
         # TODO add chaining of stop behaviors
         # stop behavior
@@ -247,6 +250,9 @@ class Retrying(object):
                     sleep = sleep + max(0, jitter)
                 time.sleep(sleep / 1000.0)
 
+            # added to print attempt number
+            if self._logger:
+                print('attempted: ', attempt_number)
             attempt_number += 1
 
 
