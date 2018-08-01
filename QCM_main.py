@@ -24,7 +24,7 @@ from modules import UIModules, MathModules, tempDevices
 
 if UIModules.system_check() == 'win32': # windows
     try:
-        from modules.AccessMyVNA import AccessMyVNA
+        from modules.AccessMyVNA_np import AccessMyVNA
         print(AccessMyVNA)
         # test if MyVNA program is available
         with AccessMyVNA() as accvna:

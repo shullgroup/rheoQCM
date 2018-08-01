@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="AccessMyVNA">
+</Property><Property Name="Solution File" Value="C:\Users\Josh\Dropbox\myvna_matlab\AcessMyVNAv0.7\AccessMyVNA.sln">
+</Property><Property Name="User Options File" Value="C:\Users\Josh\Dropbox\myvna_matlab\AcessMyVNAv0.7\AccessMyVNA.suo">
+</Property><Property Name="Date" Value="Monday, November 11, 2013">
+</Property><Property Name="Time" Value="16:07 PM">
+</Property></Properties><Event ErrorLevel="0" Project="" Source="AccessMyVNA.sln" Description="File successfully backed up as C:\Users\Josh\Dropbox\myvna_matlab\AcessMyVNAv0.7\AccessMyVNA.sln.old">
+</Event><Event ErrorLevel="0" Project="" Source="AccessMyVNA.suo" Description="File successfully backed up as C:\Users\Josh\Dropbox\myvna_matlab\AcessMyVNAv0.7\AccessMyVNA.suo.old">
+</Event><Event ErrorLevel="0" Project="AccessMyVNA" Source="AccessMyVNA\AccessMyVNA.vcproj" Description="Converting project file 'C:\Users\Josh\Dropbox\myvna_matlab\AcessMyVNAv0.7\AccessMyVNA\AccessMyVNA.vcproj'.">
+</Event><Event ErrorLevel="1" Project="AccessMyVNA" Source="AccessMyVNA\AccessMyVNA.vcproj" Description="This application has been updated to include settings related to the User Account Control (UAC) feature of Windows Vista. By default, when run on Windows Vista with UAC enabled, this application is marked to run with the same privileges as the process that launched it. This marking also disables the application from running with virtualization. You can change UAC related settings from the Property Pages of the project.">
+</Event><Event ErrorLevel="1" Project="AccessMyVNA" Source="AccessMyVNA\AccessMyVNA.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="1" Project="AccessMyVNA" Source="AccessMyVNA\AccessMyVNA.vcproj" Description="Attribute 'Detect64BitPortabilityProblems' of 'VCCLCompilerTool' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="0" Project="AccessMyVNA" Source="AccessMyVNA\AccessMyVNA.vcproj" Description="Web deployment to the local IIS server is no longer supported. The Web Deployment build tool has been removed from your project settings.">
+</Event><Event ErrorLevel="1" Project="AccessMyVNA" Source="AccessMyVNA\AccessMyVNA.vcproj" Description="Attribute 'Detect64BitPortabilityProblems' of 'VCCLCompilerTool' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="0" Project="AccessMyVNA" Source="AccessMyVNA\AccessMyVNA.vcproj" Description="Done converting to new project file 'C:\Users\Josh\Dropbox\myvna_matlab\AcessMyVNAv0.7\AccessMyVNA\AccessMyVNA.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="AccessMyVNA" Source="AccessMyVNA\AccessMyVNA.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="AccessMyVNAdll" Source="AccessMyVNAdll\AccessMyVNAdll.vcproj" Description="Converting project file 'C:\Users\Josh\Dropbox\myvna_matlab\AcessMyVNAv0.7\AccessMyVNAdll\AccessMyVNAdll.vcproj'.">
+</Event><Event ErrorLevel="1" Project="AccessMyVNAdll" Source="AccessMyVNAdll\AccessMyVNAdll.vcproj" Description="This application has been updated to include settings related to the User Account Control (UAC) feature of Windows Vista. By default, when run on Windows Vista with UAC enabled, this application is marked to run with the same privileges as the process that launched it. This marking also disables the application from running with virtualization. You can change UAC related settings from the Property Pages of the project.">
+</Event><Event ErrorLevel="1" Project="AccessMyVNAdll" Source="AccessMyVNAdll\AccessMyVNAdll.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="1" Project="AccessMyVNAdll" Source="AccessMyVNAdll\AccessMyVNAdll.vcproj" Description="Attribute 'Detect64BitPortabilityProblems' of 'VCCLCompilerTool' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="0" Project="AccessMyVNAdll" Source="AccessMyVNAdll\AccessMyVNAdll.vcproj" Description="Web deployment to the local IIS server is no longer supported. The Web Deployment build tool has been removed from your project settings.">
+</Event><Event ErrorLevel="1" Project="AccessMyVNAdll" Source="AccessMyVNAdll\AccessMyVNAdll.vcproj" Description="Attribute 'Detect64BitPortabilityProblems' of 'VCCLCompilerTool' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="0" Project="AccessMyVNAdll" Source="AccessMyVNAdll\AccessMyVNAdll.vcproj" Description="Done converting to new project file 'C:\Users\Josh\Dropbox\myvna_matlab\AcessMyVNAv0.7\AccessMyVNAdll\AccessMyVNAdll.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="AccessMyVNAdll" Source="AccessMyVNAdll\AccessMyVNAdll.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="AccessMyVNA.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="AccessMyVNA.sln" Description="Converted">
+</Event></UpgradeLog>

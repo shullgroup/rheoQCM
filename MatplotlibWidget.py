@@ -385,8 +385,10 @@ class MatplotlibWidget(QWidget):
         self.initax_xy()
 
         for i in range(1, settings_init['max_harmonic']+2, 2):
-            self.ax[0].plot([], [], label=i) # l[i]
+            l = self.ax[0].plot([], [], label=i) # l[i]
         self.leg = self.fig.legend(
+            handles=l,
+            labels=range(1, settings_init['max_harmonic']+2, 2),
             loc='upper center', 
             bbox_to_anchor=(0.5, 1),
             borderaxespad=0.,

@@ -5,7 +5,7 @@ import numpy as np
 from ctypes import *
 # from ctypes import windll, WinDLL, wintypes, WINFUNCTYPE, POINTER, c_int, c_double, byref, Array, cast, get_last_error, WinError
 from ctypes.wintypes import HWND, LONG, BOOL, LPARAM, LPDWORD, DWORD, LPWSTR
-from comtypes.safearray import safearray_as_ndarray
+# from comtypes.safearray import safearray_as_ndarray
 
 import numpy.ctypeslib as clib
 import sys, struct, time

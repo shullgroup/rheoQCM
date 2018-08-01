@@ -5,7 +5,7 @@ import numpy as np
 from ctypes import *
 # from ctypes import windll, WinDLL, wintypes, WINFUNCTYPE, POINTER, c_int, c_double, byref, Array, cast, get_last_error, WinError
 from ctypes.wintypes import HWND, LONG, BOOL, LPARAM, LPDWORD, DWORD, LPWSTR
-from comtypes.safearray import safearray_as_ndarray
+# from comtypes.safearray import safearray_as_ndarray
 
 import numpy.ctypeslib as clib
 import sys, struct, time
@@ -268,11 +268,11 @@ MyVNASetDoubleArray = vna[21] # MyVNASetDoubleArray
 # // so for 8 components it needs an array of 16 doubles
 # #define GETSET_SIMULATION_COMPONENT_VALUES 6
 MyVNASetDoubleArray.argtypes = [
-    c_int,               # _In_  nWhat
-    c_int,               # _In_  nIndex
-    c_int,               # _In_  nArraySize
+    c_long,               # _In_  nWhat
+    c_long,               # _In_  nIndex
+    c_long,               # _In_  nArraySize
     POINTER(c_double)]   # _Out_ *pnResult
-MyVNASetDoubleArray.restype = c_int
+MyVNASetDoubleArray.restype = c_long
 
 ##########################################
 MyVNAGetInstrumentMode = vna[7] # MyVNAGetInstrumentMode
@@ -629,6 +629,7 @@ class AccessMyVNA():
         if len(nData) == nArraySize: # check nData size
             if not isinstance(nData, np.ndarray): # check nData type
                 nData = np.array(nData)
+            nData.astype(np.float, order='C')
         print(nData)
 
         # cast the array into a pointer of type c_double:
@@ -637,9 +638,10 @@ class AccessMyVNA():
         print('MyVNASetDoubleArray\n', ret, nData)
         
         nD = nData
-        del nData
+        rt = ret
+        del nData, ret
 
-        return ret, nD
+        return rt, nD
 
     def Getinstrmode(self):
         nMode = np.array(0, dtype=int)
@@ -773,9 +775,9 @@ class AccessMyVNA():
         ret, nSteps = self.GetScanSteps()
         ret, f, G = self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
         # time.sleep(1)
-        # ret, f, B = self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=16)
+        ret, f, B = self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=16)
         # self.Close()
-        return ret, f, G
+        return ret, f, G, B
     
     def change_settings(self, refChn=1, nMode=0, nSteps=400, nAverage=1):
         # ret =           self.Init()
@@ -822,11 +824,11 @@ if __name__ == '__main__':
         ret, nMode = accvna.SingleScan()
         ret, nMode = accvna.EqCctRefine()
         ret = accvna.SetFequencies()
-        # ret, nResult = accvna.SetDoubleArray(nWhat=3, nIndex=0, nArraySize=2, nData=np.array([4.9e6, 5.1e6]))
+        ret, nResult = accvna.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=[1, 2])
         ret, nResult = accvna.GetDoubleArray()
         # print('nR', nResult)
         ret, f, G = accvna.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
-        # ret, f, G = accvna.single_scan()
+        ret, f, G, B = accvna.single_scan()
         # ret = accvna.SingleScan()
         print(ret)
 
