@@ -174,31 +174,36 @@ class MatplotlibWidget(QWidget):
 
         self.l['lG'] = self.ax[0].plot(
             [], [], 
-            marker='o', 
+            marker='.', 
+            linestyle='none',
             markerfacecolor='none', 
             color=color[0]
         ) # G
         self.l['lB'] = self.ax[1].plot(
             [], [], 
-            marker='o', 
+            marker='.', 
+            linestyle='none',
             markerfacecolor='none', 
             color=color[1]
         ) # B
         self.l['lGpre'] = self.ax[0].plot(
             [], [], 
-            marker='o', 
+            marker='.', 
+            linestyle='none',
             markerfacecolor='none', 
             color='gray'
         ) # previous G
         self.l['lBpre'] = self.ax[1].plot(
             [], [], 
-            marker='o', 
+            marker='.', 
+            linestyle='none',
             markerfacecolor='none', 
             color='gray'
         ) # previous B
         self.l['lPpre'] = self.ax[1].plot(
             [], [], 
-            marker='o', 
+            marker='.', 
+            linestyle='none',
             markerfacecolor='none', 
             color='gray'
         ) # previous polar
@@ -243,25 +248,29 @@ class MatplotlibWidget(QWidget):
 
         self.l['lG'] = self.ax[0].plot(
             [], [], 
-            marker='o', 
+            marker='.', 
+            linestyle='none',
             markerfacecolor='none', 
             color=color[0]
         ) # G
         self.l['lB'] = self.ax[1].plot(
             [], [], 
-            marker='o', 
+            marker='.', 
+            linestyle='none',
             markerfacecolor='none', 
             color=color[1]
         ) # B
         self.l['lGpre'] = self.ax[0].plot(
             [], [], 
-            marker='o', 
+            marker='.', 
+            linestyle='none',
             markerfacecolor='none', 
             color='gray'
         ) # previous G
         self.l['lBpre'] = self.ax[1].plot(
             [], [], 
-            marker='o', 
+            marker='.', 
+            linestyle='none',
             markerfacecolor='none', 
             color='gray'
         ) # previous B
@@ -305,7 +314,8 @@ class MatplotlibWidget(QWidget):
 
         self.l['l'] = self.ax[0].plot(
             [], [], 
-            marker='o', 
+            marker='.', 
+            linestyle='none',
             markerfacecolor='none', 
             color=color[0]
         ) # G vs. B
@@ -387,8 +397,8 @@ class MatplotlibWidget(QWidget):
         for i in range(1, settings_init['max_harmonic']+2, 2):
             l = self.ax[0].plot([], [], label=i) # l[i]
         self.leg = self.fig.legend(
-            handles=l,
-            labels=range(1, settings_init['max_harmonic']+2, 2),
+            # handles=l,
+            # labels=range(1, settings_init['max_harmonic']+2, 2),
             loc='upper center', 
             bbox_to_anchor=(0.5, 1),
             borderaxespad=0.,

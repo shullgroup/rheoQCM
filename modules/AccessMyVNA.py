@@ -525,6 +525,7 @@ class AccessMyVNA():
         '''
         ret = MyVNAShowWindow(nValue)
         print('MyVNAShowWindow\n', ret)
+
         return ret
 
     def GetScanSteps(self):
@@ -572,12 +573,21 @@ class AccessMyVNA():
         '''
         Get frequency nWhat = GET_SCAN_FREQ_DATA 0
         '''
+
         # nArraySize = 20
         double_n = c_double * (nArraySize)
         # create array. Both ways below works
         nResult = double_n()
         # nResult = clib.as_ctypes(np.zeros(nArraySize))
         # nResult = np.zeros(nArraySize)
+        print(nResult)
+        MyVNAGetDoubleArray.argtypes = [
+            c_int,               # _In_  nWhat
+            c_int,               # _In_  nIndex
+            c_int,               # _In_  nArraySize
+            POINTER(c_double),   # _Out_ *pnResult
+            ]  
+        MyVNAGetDoubleArray.restype = c_int
 
         # cast the array into a pointer of type c_double:
         nRes_ptr = cast(nResult, POINTER(c_double))
@@ -589,29 +599,59 @@ class AccessMyVNA():
 
         # print(nResult)
         ndRes = nResult[:] 
-        del nResult, nRes_ptr
-        print('MyVNAGetDoubleArray\n', ret, ndRes)
-        return ret, ndRes
+        print(nRes_ptr)
+        print(nRes_ptr.contents)
+        # ndRes = nRes_ptr.contents
+        rt = ret
+        del nResult, nRes_ptr, ret
+        print('MyVNAGetDoubleArray\n', rt, ndRes)
+        return rt, ndRes
 
     def SetDoubleArray(self, nWhat=0, nIndex=0, nArraySize=9, nData=[]):
         '''
         Set frequency nWhat = GET_SCAN_FREQ_DATA 0
         '''
-        double_n = c_double * (nArraySize)
-        # create array. Both ways below work
-        if len(nData) == nArraySize: # check nData size
-            if not isinstance(nData, Array): # check nData type
-                nData = double_n(*nData)
-                # nData = clib.as_ctypes(nData)
+        print('MyVNASetDoubleArray')
+        double_n = c_int * (nArraySize)
+
+        # MyVNASetDoubleArray.argtypes = [
+        #     c_int,               # _In_  nWhat
+        #     c_int,               # _In_  nIndex
+        #     c_int,               # _In_  nArraySize
+        #     POINTER(c_double),   # _Out_ *pnResult
+        #     ]  
+        # MyVNASetDoubleArray.restype = c_int
+
+        nWhat = c_int(nWhat)
+        nIndex = c_int(nIndex)
+        nArraySize = c_int(nArraySize)
+        nData = double_n(*nData)
+        # if len(nData) == nArraySize: # check nData size
+        #     if not isinstance(nData, Array): # check nData type
+        #         nData = double_n(*nData)
         print(nData)
+
 
         # cast the array into a pointer of type c_double:
         nData_ptr = cast(nData, POINTER(c_double))
     
         ret = MyVNASetDoubleArray(nWhat, nIndex, nArraySize, nData_ptr)
         # ret = MyVNASetDoubleArray(nWhat, nIndex, nArraySize, nData)
-        print('MyVNASetDoubleArray\n', ret, nData[:])
-        return ret, nData
+        print(nData_ptr)
+        print(nData_ptr.contents)
+        print('p-1', nData_ptr[-1])
+        print('p0', nData_ptr[0])
+        print('p1', nData_ptr[1])
+        print('p2', nData_ptr[2])
+        print('p3', nData_ptr[3])
+        print('p4', nData_ptr[4])
+        print(nData[:])
+        nD = nData[:]
+        rt = ret
+        del nData, ret
+        print(rt, nD)
+
+        return rt, nD
 
     def Getinstrmode(self):
         nMode = c_int()
@@ -846,8 +886,16 @@ if __name__ == '__main__':
     # ret, f, G, B = accvna.single_scan()
 
     with AccessMyVNA() as accvna:
-        ret, nResult = accvna.GetDoubleArray()
-        print('nR', nResult)
+        # ret, nResult = accvna.GetDoubleArray()
+        # print('nR', nResult)
+        i = 0
+        while i <= 100:
+            print('i: ', i)
+            ret, nData = accvna.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=[1, 2])
+            # print('nD', nData)
+            time.sleep(0.01)
+            ret, nResult = accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
+            i += 1
         # ret, f, G = accvna.GetScanData(nStart=0, nEnd=10-1, nWhata=-1, nWhatb=15)
         # ret, f, G = accvna.single_scan()
         # ret = accvna.SingleScan()

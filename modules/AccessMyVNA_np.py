@@ -50,7 +50,7 @@ print(vna._handle)
 
 
 #region functions
-def check_zero(result, func, args):    
+def _check_zero(result, func, args):    
     if not result:
         err = get_last_error()
         if err:
@@ -77,7 +77,7 @@ def get_pid(hWnd):
 
     return pid
 
-def close_vna():
+def close_win():
     # close myVNA initiated by AccessMyVNA
     hWnd = get_hWnd()
     print('hWnd', hWnd)
@@ -86,23 +86,45 @@ def close_vna():
     if pid:
         os.kill(pid, signal.SIGTERM)
 
+# make function prototypes 
+def wfunc(name, dll, result, *args):
+    '''
+    build and apply a ctypes prototype complete with   rameter flags
+    
+    name: string of function name in the dll, 
+    dll: dll object, 
+    out: type of the output, 
+    *args: list of tuples(argtype, (in/out, argname[, default]) 
+        argname: name of the argument, 
+        argtype: type, 
+        in/out: 1=input and 2=output,
+        default: optional default value.
+    '''
+    atypes = []
+    aflags = []
+    for arg in args:
+        atypes.append(arg[0])
+        aflags.append(arg[1])
+    return WINFUNCTYPE(result, *atypes)((name, dll), tuple(aflags))
+    # return WINFUNCTYPE(result, *atypes)((name, dll)) #, tuple(aflags))
 
 #endregion
 
 #region assign functions
 #########################################
-MyVNAInit = vna[13] # MyVNAInit
+# MyVNAInit = vna[13] # MyVNAInit
 # // call this function befoe trying to do anything else. It attempts to executeF myVNA
 # // and establish it as an automation server
 # // OLE equivalent:
 # // Connect to the server using the CLSID
 # __declspec(dllexport) int _stdcall MyVNAInit(void)
-MyVNAInit.errcheck = check_zero
-# MyVNAInit.argtypes = None
-MyVNAInit.restype = c_int
+
+_MyVNAInit = wfunc(
+    '?MyVNAInit@@YGHXZ', vna, c_int,
+)
 
 ##########################################
-MyVNAClose =  vna[3] # MyVNAClose
+# MyVNAClose =  vna[3] # MyVNAClose
 # MyVNAClose = getattr(vna, '?MyVNAClose@@YGHXZ') # MyVNAClose
 
 # // you MUST call this before the calling windows application closes in order to correctly shut down OLE
@@ -111,11 +133,12 @@ MyVNAClose =  vna[3] # MyVNAClose
 # // simply release the interface	
 # __declspec(dllexport) int _stdcall MyVNAClose(void);
 
-# MyVNAClose.argtypes = None
-MyVNAClose.restype = c_int
+_MyVNAClose = wfunc(
+    '?MyVNAClose@@YGHXZ', vna, c_int,
+)
 
 ##########################################
-MyVNAShowWindow = vna[29] # MyVNAShowWindow
+# MyVNAShowWindow = vna[29] # MyVNAShowWindow
 # // show or hide the current myVNA window.
 # // nValue set to 0 causes SW_SHOWDEFAULT
 # // nValue set to 1 causes SW_SHOWMINIMIZED
@@ -123,54 +146,63 @@ MyVNAShowWindow = vna[29] # MyVNAShowWindow
 # // OLE equivalent:
 # // void ShowWindowAutomation(LONG nValue);
 # __declspec(dllexport) int _stdcall MyVNAShowWindow(int nValue)
-MyVNAShowWindow.argtypes = [c_int] # _In_ nValue
-MyVNAShowWindow.restypes = c_int
-
+_MyVNAShowWindow = wfunc(
+    '?MyVNAShowWindow@@YGHH@Z', vna, c_int,
+    (c_int, (1, 'nValue', 1))
+)
 ##########################################
-MyVNAGetScanSteps = vna[11] # MyVNAGetScanSteps
+# MyVNAGetScanSteps = vna[11] # MyVNAGetScanSteps
 # // read the current scan steps value
 # // OLE equivalent:
 # // Get property nScanSteps
 # __declspec(dllexport) int _stdcall MyVNAGetScanSteps(int *pnSteps);
 # int nTemp;
 # int nRet = MyVNAGetScanSteps(&nTemp);
-MyVNAGetScanSteps.argtypes = [POINTER(c_int)] # _Out_ *pnSteps
-MyVNAGetScanSteps.restypes = c_int
+_MyVNAGetScanSteps = wfunc(
+    '?MyVNAGetScanSteps@@YGHPAH@Z', vna, c_int,
+    (POINTER(c_int), (1, 'pnSteps', 200))
+)
 
 
 ##########################################
-MyVNASetScanSteps = vna[27] # MyVNASetScanSteps
+# MyVNASetScanSteps = vna[27] # MyVNASetScanSteps
 # // sets the number of steps ( min 2 max 50,000 but note this can take a huge amount of memory)
 # // OLE equivalent:
 # // Set property nScanSteps
 # __declspec(dllexport) int _stdcall MyVNASetScanSteps(int nSteps);
 # __declspec(dllexport) int _stdcall MyVNASetScanSteps(int *pnSteps)
 # int nTemp;
-# int nRet = MyVNASetScanSteps(&nTemp);
-MyVNASetScanSteps.argtypes = [c_int] # _In_ *pnSteps
-MyVNASetScanSteps.restypes = c_int
+# int nRet = MyVNASetScanSteps(nTemp);
+_MyVNASetScanSteps = wfunc(
+    '?MyVNASetScanSteps@@YGHH@Z', vna, c_int,
+    (c_int, (1, 'nSteps', 200))
+)
 
 ##########################################
-MyVNAGetScanAverage = vna[9] # MyVNAGetScanAverage
+# MyVNAGetScanAverage = vna[9] # MyVNAGetScanAverage
 # __declspec(dllexport) int _stdcall MyVNAGetScanAverage(int *pnAverage)
 # int nTemp;
 # int nRet = MyVNAGetScanAverage(&nTemp);
-MyVNAGetScanAverage.argtypes = [POINTER(c_int)]  # _Out_ *pnAverage
-MyVNAGetScanAverage.restypes = c_int
+_MyVNAGetScanAverage = wfunc(
+    '?MyVNAGetScanAverage@@YGHPAH@Z', vna, c_int,
+    (POINTER(c_int), (1, 'pnAverage', 1))
+)
 
 ##########################################
-MyVNASetScanAverage = vna[26] # MyVNASetScanAverage
+# MyVNASetScanAverage = vna[26] # MyVNASetScanAverage
 # // set the current scan trace average count
 # // OLE equivalent:
 # // Set property nAverage
 # __declspec(dllexport) int _stdcall MyVNASetScanAverage(int nAverage)
 # int nTemp;
 # int nRet = MyVNASetScanAverage(&nTemp);
-MyVNASetScanAverage.argtypes = [c_int]  # _In_ nAverage
-MyVNASetScanAverage.restypes = c_int
+_MyVNASetScanAverage = wfunc(
+    '?MyVNASetScanAverage@@YGHH@Z', vna, c_int,
+    (c_int, (1, 'nAverage', 1))
+)
 
 ##########################################
-MyVNAGetDoubleArray = vna[6] # MyVNAGetDoubleArray
+# MyVNAGetDoubleArray = vna[6] # MyVNAGetDoubleArray
 # __declspec(dllexport) int _stdcall MyVNAGetDoubleArray(int nWhat, int nIndex, int nArraySize, double *pnResult)
 # double dFreqData[10];
 # 	if( MyVNAGetDoubleArray( GET_SCAN_FREQ_DATA, 0, 9, &dFreqData[0] ) == 0 )
@@ -179,15 +211,17 @@ MyVNAGetDoubleArray = vna[6] # MyVNAGetDoubleArray
 #   	dFreqStop = dFreqData[3] / 1e6;
 #   }
 #
-MyVNAGetDoubleArray.argtypes = [
-    c_int,               # _In_  nWhat
-    c_int,               # _In_  nIndex
-    c_int,               # _In_  nArraySize
-    POINTER(c_double)]   # _Out_ *pnResult
-MyVNAGetDoubleArray.restype = c_int
+_MyVNAGetDoubleArray = wfunc(
+    '?MyVNAGetDoubleArray@@YGHHHHPAN@Z', vna, c_int,
+    (c_int, (1, 'nwhat')), 
+    (c_int, (1, 'nIndex')), 
+    (c_int, (1, 'nArraySize')),
+    # (c_void_p, (1, 'npResult')) 
+    (POINTER(c_double), (1, 'npResult')) 
+)
 
 ##########################################
-MyVNASetDoubleArray = vna[21] # MyVNASetDoubleArray
+# MyVNASetDoubleArray = vna[21] # MyVNASetDoubleArray
 #__declspec(dllexport) int _stdcall MyVNASetDoubleArray(int nWhat, int nIndex, int nArraySize, double *pnData)
 # double dFreqData[10];
 # 	if( MyVNASetDoubleArray( GET_SCAN_FREQ_DATA, 0, 9, &dFreqData[0] ) == 0 )
@@ -267,22 +301,26 @@ MyVNASetDoubleArray = vna[21] # MyVNASetDoubleArray
 # // etc
 # // so for 8 components it needs an array of 16 doubles
 # #define GETSET_SIMULATION_COMPONENT_VALUES 6
-MyVNASetDoubleArray.argtypes = [
-    c_long,               # _In_  nWhat
-    c_long,               # _In_  nIndex
-    c_long,               # _In_  nArraySize
-    POINTER(c_double)]   # _Out_ *pnResult
-MyVNASetDoubleArray.restype = c_long
+_MyVNASetDoubleArray = wfunc(
+    '?MyVNASetDoubleArray@@YGHHHHPAN@Z', vna, c_int,
+    (c_int, (1, 'nwhat')), 
+    (c_int, (1, 'nIndex')), 
+    (c_int, (1, 'nArraySize')),
+    # (c_void_p, (1, 'pnData')) 
+    (POINTER(c_double), (1, 'pnData')) 
+)
 
 ##########################################
-MyVNAGetInstrumentMode = vna[7] # MyVNAGetInstrumentMode
+# MyVNAGetInstrumentMode = vna[7] # MyVNAGetInstrumentMode
 # __declspec(dllexport) int _stdcall MyVNAGetInstrumentMode(int *pnMode)
 # int nRet = MyVNAGetInstrumentMode( &nTemp);
-MyVNAGetInstrumentMode.argtypes = [POINTER(c_int)]  # _In_ *pnMode
-MyVNAGetInstrumentMode.restypes = c_int # 0: reflection
+_MyVNAGetInstrumentMode = wfunc(
+    '?MyVNAGetInstrumentMode@@YGHPAH@Z', vna, c_int,
+    (POINTER(c_int), (1, 'pnMode', 0)) # 0: reflection
+) 
 
 ##########################################
-MyVNASetInstrumentMode = vna[24] # MyVNASetInstrumentMode
+# MyVNASetInstrumentMode = vna[24] # MyVNASetInstrumentMode
 # // get and set the basic instrument mode
 # // OLE equivalent:
 # // Set / Get property nInstrumentMode
@@ -307,18 +345,22 @@ MyVNASetInstrumentMode = vna[24] # MyVNASetInstrumentMode
 # #define REFMODE_SCAN (1<<7)
 # // bit 8 if set causes log frequency scale mode to be selected
 # #define LOGF_SCAN (1<<8)
-MyVNASetInstrumentMode.argtypes = [c_int]   # _In_ nMode
-MyVNASetInstrumentMode.restypes = c_int     # 0: reflection
+_MyVNASetInstrumentMode = wfunc(
+    '?MyVNASetInstrumentMode@@YGHH@Z', vna, c_int,
+    (c_int, (1, 'nMode', 0))
+)     # 0: reflection
 
 ##########################################
-MyVNAGetDisplayMode = vna[5] # MyVNAGetDisplayMode
-# __declspec(dllexport) int _stdcall MyVNAGetDisplayMode(int nMode)
+# MyVNAGetDisplayMode = vna[5] # MyVNAGetDisplayMode
+# __declspec(dllexport) int _stdcall MyVNAGetDisplayMode(int *pnMode)
 # int nRet = MyVNAGetDisplayMode( nInstrumentMode);
-MyVNAGetDisplayMode.argtypes = [POINTER(c_int)]   # _Out_ *pnMode
-MyVNAGetDisplayMode.restypes = c_int
+_MyVNAGetDisplayMode= wfunc(
+    '?MyVNAGetDisplayMode@@YGHPAH@Z', vna, c_int,
+    (POINTER(c_int), (1, 'pnMode'), 0)
+)
 
 ##########################################
-MyVNASetDisplayMode = vna[20] # MyVNASetDisplayMode
+# MyVNASetDisplayMode = vna[20] # MyVNASetDisplayMode
 # // get and set the basic display mode
 # __declspec(dllexport) int _stdcall MyVNASetDisplayMode(int nMode);
 # __declspec(dllexport) int _stdcall MyVNAGetDisplayMode(int *pnMode);
@@ -327,11 +369,13 @@ MyVNASetDisplayMode = vna[20] # MyVNASetDisplayMode
 # #define DISP_MODE_REPORT 1
 # #define DISP_MODE_EQ_CCT 2
 # #define DISP_MODE_POLAR 3
-MyVNASetDisplayMode.argtypes = [c_int] # _In_ nMode
-MyVNASetDisplayMode.restypes = c_int
+_MyVNASetDisplayMode = wfunc(
+    '?MyVNASetDisplayMode@@YGHH@Z', vna, c_int,
+    (c_int, (1, 'nMode', 0))
+)
 
 ##########################################
-MyVNASingleScan = vna[30] # MyVNASingleScan
+# MyVNASingleScan = vna[30] # MyVNASingleScan
 # .h
 # // MyVNASingleScan()
 # // attempt to single scan the VNA. On completion myVNA will post a message ( Message) to the queue of the specified
@@ -343,16 +387,17 @@ MyVNASingleScan = vna[30] # MyVNASingleScan
 # // perform (or stop if in progress) a single scan
 # __declspec(dllexport) int _stdcall MyVNASingleScan(int Message, HWND hWnd, int nCommand, int lParam )
 # int nRet = MyVNASingleScan(WM_COMMAND, GetSafeHwnd(), MESSAGE_SCAN_ENDED, 0 );
-MyVNASingleScan.errcheck = check_zero
-MyVNASingleScan.argtypes = [
-    c_int,   # _In_ WM_COMMAND 
-    HWND,    # _In_ GetSafeHwand()
-    c_int,   # _In_ MESSAGE_SCAN_ENDED
-    c_int]   # _In_ lParam 0
-MyVNASingleScan.restype = c_int
+
+_MyVNASingleScan = wfunc(
+    '?MyVNASingleScan@@YGHHPAUHWND__@@HH@Z', vna, c_int,
+    (c_int, (1, 'Message'), WM_COMMAND),
+    (HWND, (1, 'hWnd'), WM_COMMAND),
+    (c_int, (1, 'nCommand'), MESSAGE_SCAN_ENDED),
+    (c_int, (1, 'lParam'), 0),
+)
 
 ##########################################
-MyVNAEqCctRefine = vna[4] # MyVNAEqCctRefine
+# MyVNAEqCctRefine = vna[4] # MyVNAEqCctRefine
 # .h
 # // MyVNAEqCctRefine()
 # // attempt to refine an equivalent circuit. On completion myVNA will post a message ( Message) to the queue of the specified
@@ -365,15 +410,17 @@ MyVNAEqCctRefine = vna[4] # MyVNAEqCctRefine
 # __declspec(dllexport) int _stdcall MyVNAEqCctRefine(int Message, HWND hWnd, int nCommand, int lParam )
 
 # int nRet = MyVNAEqCctRefine(WM_COMMAND, GetSafeHwnd(), MESSAGE_SCAN_ENDED, 0 );
-MyVNAEqCctRefine.argtypes = [
-    c_int,   # _In_ WM_COMMAND 
-    HWND,    # _In_ GetSafeHwand()
-    c_int,   # _In_ MESSAGE_SCAN_ENDED
-    c_int]   # _In_ lParam 0
-MyVNAEqCctRefine.restype = c_int
+
+_MyVNAEqCctRefine = wfunc(
+    '?MyVNAEqCctRefine@@YGHHPAUHWND__@@HH@Z', vna, c_int,
+    (c_int, (1, 'Message'), WM_COMMAND),
+    (HWND, (1, 'hWnd'), WM_COMMAND),
+    (c_int, (1, 'nCommand'), MESSAGE_SCAN_ENDED),
+    (c_int, (1, 'lParam'), 0),
+)
 
 ##########################################
-MyVNASetFequencies = vna[23]
+# MyVNASetFequencies = vna[23]
 # // frequency set / get functions
 # // this first one sets start & end and also sets frequency control mode.
 # // nFlags bits 0..3 set scan mode where f1 is first parameter / f2 is the second
@@ -398,14 +445,16 @@ MyVNASetFequencies = vna[23]
 # // int SetScanDetailsAutomation(double dF1, double dF2, LONG nFlags);
 # __declspec(dllexport) int _stdcall MyVNASetFequencies(double f1, double f2, int nFlags)
 # int nRet = MyVNASetFequencies( dFreqStart*1e6, dFreqStop*1e6, 1 );
-MyVNASetFequencies.argtypes = [
-    c_double,  # _In_ f1
-    c_double,  # _In_ f2
-    c_int]     # _In_ nFlags
-MyVNASetFequencies.restype = c_int  
+
+_MyVNASetFequencies = wfunc(
+    '?MyVNASetFequencies@@YGHNNH@Z', vna, c_int,
+    (c_double, (1, 'f1')),
+    (c_double, (1, 'f2')),
+    (c_int, (1, 'nflags')),
+)  
 
 ##########################################
-MyVNAGetScanData = vna[10] # MyVNAGetScanData
+# MyVNAGetScanData = vna[10] # MyVNAGetScanData
 # .h
 # // MyVNAGetScanData()
 # // get current scan data results starting from scan point nStart up to and including nEnd
@@ -431,29 +480,28 @@ MyVNAGetScanData = vna[10] # MyVNAGetScanData
 # __declspec(dllexport) int _stdcall MyVNAGetScanData(int nStart, int nEnd, int nWhata, int nWhatb, double *pDataA, double *pDataB )
 # MyVNAGetScanData(0, 199, -1, 15, &dFreq[0], &dData[0]);//scan data
 # nWhat -2: nothing; -1: frequency; 15: Gp; 16:Bp (see the defination in .h file)
-MyVNAGetScanData.errcheck = check_zero
-LP_c_double = POINTER(c_double)
-MyVNAGetScanData.argtypes = [
-    c_int,               # _In_ nStart
-    c_int,               # _In_ nEnd
-    c_int,               # _In_ nWhata
-    c_int,               # _In_ nWhatb
-    LP_c_double,   # _Out_ *pDataA
-    LP_c_double]   # _Out_ *pDataA
 
-    # POINTER(double_n),   # _Out_ *pDataA
-    # POINTER(double_n)]   # _Out_ *pDataA
-MyVNAGetScanData.restype = c_int
+_MyVNAGetScanData = wfunc(
+    '?MyVNAGetScanData@@YGHHHHHPAN0@Z', vna, c_int,
+    (c_int, (1, 'nStart')),
+    (c_int, (1, 'nEnd')),
+    (c_int, (1, 'nWhata')),
+    (c_int, (1, 'nWthab')),
+    (POINTER(c_double), (1, 'pDataA')),
+    (POINTER(c_double), (1, 'pDataB')),
+)
 
 ##########################################
-MyVNAAutoscale = vna[1]
+# MyVNAAutoscale = vna[1]
 # // execute the autoscale function (same as clicking the Autoscale button)
 # // OLE equivalent:
 # // int AutoscaleAutomation(void);
 # __declspec(dllexport) int _stdcall MyVNAAutoscale()
 # MyVNAAutoscale = getattr(vna, '?MyVNAAutoscale@@YGHXZ')
 # MyVNAAutoscale.argtypes = None
-MyVNAAutoscale.restypes = c_int
+_MyVNAAutoscale = wfunc(
+    '?MyVNAAutoscale@@YGHXZ', vna, c_int
+)
 
 #endregion
 
@@ -483,10 +531,11 @@ class AccessMyVNA():
     the module used to comunicate with MyVNA
     '''
     def __init__(self):
-        super(AccessMyVNA, self).__init__()
+        # super(AccessMyVNA, self).__init__()
         self.scandata_a = []
         self.scandata_b = []
         self.narray = []
+        
 
     # use __enter__ __exit__ for with or use try finally
     def __enter__(self):
@@ -499,37 +548,37 @@ class AccessMyVNA():
         self.Close()
         print('out2')
         
-
+    
     def Init(self):
         # close vna window
-        close_vna()
-        ret = MyVNAInit()
+        close_win()
+        ret = _MyVNAInit()
         print('MyVNAInit\n', ret)
         return ret
 
     def Close(self):
-        ret = MyVNAClose()
+        ret = _MyVNAClose()
         print('MyVNAClose\n', ret) #MyVNAAutoscale
 
     def ShowWindow(self, nValue=1):
         '''
         nValue 0: show; 1:minimize
         '''
-        ret = MyVNAShowWindow(nValue)
+        ret = _MyVNAShowWindow(nValue)
         print('MyVNAShowWindow\n', ret)
         return ret
 
     def SetScanSteps(self, nSteps=400):
         # if not isinstance(nSteps, np.ndarray):
         #     nSteps = np.array(nSteps, dtype=int)
-        ret = MyVNASetScanSteps(nSteps)
+        ret = _MyVNASetScanSteps(nSteps)
         # ret = MyVNASetScanSteps(nSteps)
         print('MyVNASetScanSteps\n', ret, nSteps)
         return ret, nSteps
 
     def GetScanSteps(self):
         nSteps = np.array(0, dtype=int)
-        ret = MyVNAGetScanSteps(nSteps.ctypes.data_as(POINTER(c_int)))
+        ret = _MyVNAGetScanSteps(nSteps.ctypes.data_as(POINTER(c_int)))
         # ret = MyVNAGetScanSteps(byref(nSteps))
         print('MyVNAGetScanSteps\n', ret, nSteps)
 
@@ -541,7 +590,7 @@ class AccessMyVNA():
     def SetScanAverage(self, nAverage=1):
         # if not isinstance(nAverage, np.ndarray):
         #     nAverage = np.array(nAverage, dtype=int)
-        ret = MyVNASetScanAverage(nAverage)
+        ret = _MyVNASetScanAverage(nAverage)
         # ret = MyVNASetScanAverage(nAverage)
         print('MyVNASetScanAverage\n', ret, nAverage)
         return ret, nAverage
@@ -549,7 +598,7 @@ class AccessMyVNA():
     def GetScanAverage(self):
         # nAverage = c_int()
         nAverage = np.array(0, dtype=int)
-        ret = MyVNAGetScanAverage(nAverage.ctypes.data_as(POINTER(c_int)))
+        ret = _MyVNAGetScanAverage(nAverage.ctypes.data_as(POINTER(c_int)))
         print('MyVNAGetScanAverage\n', ret, nAverage)
 
         nAve = nAverage
@@ -581,61 +630,44 @@ class AccessMyVNA():
         '''
         Get frequency nWhat = GET_SCAN_FREQ_DATA 0
         '''
-        # MyVNAGetDoubleArray.argtypes = [
-        #     c_int,               # _In_  nWhat
-        #     c_int,               # _In_  nIndex
-        #     c_int,               # _In_  nArraySize
-        #     # clib.ndpointer(dtype=np.float64, ndim=1, shape=nArraySize, flags='C_CONTIGUOUS'),   # _Out_ *pnResult
-        #     POINTER(c_double),   # _Out_ *pnResult
-        #     ]  
-        # MyVNAGetDoubleArray.restype = c_int
-        
-        nResult = np.zeros(nArraySize, dtype=np.float64, order='C')
-        self.narray = nResult
-        ######### array ###############
-        # ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nResult)
-        ######### end array ############
+        print('MyVNAGetDoubleArray')
 
-        ######### pointer ##############
-        ret = MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nResult.ctypes.data_as(POINTER(c_double)))
+        nResult = np.zeros(nArraySize, dtype=np.float, order='C')
+        self.narray = nResult
+
+        nRes_ptr = nResult.ctypes.data_as(POINTER(c_double))
+        ret = _MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nRes_ptr)
+        # ret = _MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, c_void_p(nResult))
         ######### end pointer ##########
 
-        ######### function allocate ####
-        # # prototype = WINFUNCTYPE(c_int, c_int, c_int, c_int, clib.ndpointer(dtype=np.float64, ndim=1, shape=nArraySize, flags='CONTIGUOUS'))
-        # prototype = WINFUNCTYPE(c_int, c_int, c_int, c_int, POINTER(c_double))
-        # # [1=input, 2=output], python name, default value
-        # paramflags = (1, 'nWhat', 0), (1, 'nIndex', 0), (1, 'nArraySize', 0), (1, 'pnResult', 0)
-        # # paramflags = (1, 'nWhat'), (1, 'nIndex'), (1, 'nArraySize'), (1, 'pnResult')
-
-        # _MyVNAGetDoubleArray = prototype(('?MyVNAGetDoubleArray@@YGHHHHPAN@Z', vna), paramflags)
-        # # _MyVNAGetDoubleArray =WINFUNCTYPE(c_int, c_int, c_int, c_int, POINTER(c_double*nArraySize), POINTER(c_double*nArraySize))(('?MyVNAGetDoubleArray@@YGHHHHPAN@Z', vna), paramflags)
-    
-        # ret = _MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nResult.ctypes.data_as(POINTER(c_double)))
-        ######### end function allocate
-
-        # print(nResult)
+        print(nRes_ptr)
+        print(nRes_ptr.contents)
         ndRes = nResult[:] 
         del nResult
 
-        print('MyVNAGetDoubleArray\n', ret, ndRes)
+        print(ret, ndRes)
         return ret, ndRes
+
 
     @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
     def SetDoubleArray(self, nWhat=0, nIndex=0, nArraySize=9, nData=[]):
         '''
         Set frequency nWhat = GET_SCAN_FREQ_DATA 0
         '''
-        # create array. Both ways below work
+        print('MyVNASetDoubleArray')
         if len(nData) == nArraySize: # check nData size
             if not isinstance(nData, np.ndarray): # check nData type
                 nData = np.array(nData)
-            nData.astype(np.float, order='C')
-        print(nData)
+            nData.astype(np.float64, order='C')
+        # print(nData)
+        # print(nData.ctypes.data)
 
         # cast the array into a pointer of type c_double:
-        ret = MyVNASetDoubleArray(nWhat, nIndex, nArraySize, nData.ctypes.data_as(POINTER(c_double)))
-        # ret = MyVNASetDoubleArray(nWhat, nIndex, nArraySize, nData)
-        print('MyVNASetDoubleArray\n', ret, nData)
+        ptr = nData.ctypes.data_as(POINTER(c_double))
+        ret = _MyVNASetDoubleArray(nWhat, nIndex, nArraySize, ptr)
+        # ret = _MyVNASetDoubleArray(nWhat, nIndex, nArraySize, c_void_p(nData.ctypes.data))
+
+        print(ret, nData)
         
         nD = nData
         rt = ret
@@ -645,7 +677,7 @@ class AccessMyVNA():
 
     def Getinstrmode(self):
         nMode = np.array(0, dtype=int)
-        ret = MyVNAGetInstrumentMode(nMode.ctypes.data_as(POINTER(c_int)))
+        ret = _MyVNAGetInstrumentMode(nMode.ctypes.data_as(POINTER(c_int)))
         print('MyVNAGetInstrumentMode\n', ret, nMode)
 
         nM = nMode
@@ -657,19 +689,19 @@ class AccessMyVNA():
         '''
         nMode: 0, Reflection
         '''
-        ret = MyVNASetInstrumentMode(nMode)
+        ret = _MyVNASetInstrumentMode(nMode)
         print('MyVNASetInstrumentMode\n', ret, nMode)
         return ret, nMode
 
 
     def Getdisplaymode(self):
         nMode = np.array(0, dtype=int)
-        ret = MyVNAGetDisplayMode(nMode.ctypes.data_as(POINTER(c_int)))
+        ret = _MyVNAGetDisplayMode(nMode.ctypes.data_as(POINTER(c_int)))
         print('MyVNAGetDisplayMode\n', ret, nMode)
         return ret, nMode
 
     def Setdisplaymode(self, nMode=0):
-        ret = MyVNASetDisplayMode(nMode)
+        ret = _MyVNASetDisplayMode(nMode)
         print('MyVNASetDisplayMode\n', ret, nMode)
         return ret, nMode
         # __declspec(dllexport) int _stdcall MyVNASetDisplayMode(int nMode)
@@ -681,13 +713,13 @@ class AccessMyVNA():
         '''
         # ret = MyVNASingleScan(0x0111, get_hWnd(), 0x0400 + 0x1234, 0)
         hWnd = get_hWnd()
-        ret = MyVNASingleScan(WM_COMMAND, hWnd, MESSAGE_SCAN_ENDED, 0)
+        ret = _MyVNASingleScan(WM_COMMAND, hWnd, MESSAGE_SCAN_ENDED, 0)
         print('MyVNASingleScan\n', ret, hWnd)
         return ret, hWnd
 
     def EqCctRefine(self):
         hWnd = get_hWnd()
-        ret = MyVNAEqCctRefine(WM_COMMAND, hWnd, MESSAGE_SCAN_ENDED, 0)
+        ret = _MyVNAEqCctRefine(WM_COMMAND, hWnd, MESSAGE_SCAN_ENDED, 0)
         print('MyVNAEqCctRefine\n', ret, hWnd)
         return ret, hWnd
 
@@ -695,78 +727,55 @@ class AccessMyVNA():
         '''
         nFlags: 1 = start / stop
         '''
-        ret = MyVNASetFequencies(f1, f2, 1)
+        ret = _MyVNASetFequencies(f1, f2, 1)
         print('MyVNASetFequencies\n', ret, f1, f2) #MyVNASetFequencies
         return ret, f1, f2
     
     @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay)
     def GetScanData(self, nStart=0, nEnd=299, nWhata=-1, nWhatb=15):
 
-        print('GetScanData 0')
+        print('MyVNAGetScanData')
         nSteps = nEnd - nStart + 1
         # nSteps = nSteps * 2
         print('nSteps=', nSteps)
 
 
+        data_a = np.zeros(nSteps, dtype=np.float, order='C')
+        data_b = np.zeros(nSteps, dtype=np.float, order='C')
 
-        ########### np ######################
-        # MyVNAGetScanData.argtypes = [
-        #     c_int,               # _In_ nStart
-        #     c_int,               # _In_ nEnd
-        #     c_int,               # _In_ nWhata
-        #     c_int,               # _In_ nWhatb
-        #     np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, shape=nSteps, flags='CONTIGUOUS'),   # _Out_ *pDataA
-        #     np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, shape=nSteps, flags='CONTIGUOUS'),   # _Out_ *pDataA
-        # ]
-        MyVNAGetScanData.restype = c_int
+        ptr_a = data_a.ctypes.data_as(POINTER(c_double))
+        ptr_b = data_b.ctypes.data_as(POINTER(c_double))
 
-        data_a = np.zeros(nSteps, dtype=np.float64, order='C')
-        data_b = np.zeros(nSteps, dtype=np.float64, order='C')
+        self.scandata_a.append(ptr_a)
+        self.scandata_b.append(ptr_b)
 
-        self.scandata_a.append(data_a)
-        self.scandata_b.append(data_b)
+        ret = _MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, ptr_a, ptr_b)
 
-        ########### dynamic allocation throuth callback ####
-        # ?MyVNAGetScanData@@YGHHHHHPAN0@Z
-        # WINFUNCTYPE method
-        prototype = WINFUNCTYPE(c_int, c_int, c_int, c_int, c_int, np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, shape=nSteps, flags='CONTIGUOUS'), np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, shape=nSteps, flags='CONTIGUOUS'))
-        # prototype = WINFUNCTYPE(c_int, c_int, c_int, c_int, c_int, POINTER(c_double), POINTER(c_double))
-        # [1=input, 2=output], python name, default value
-        paramflags = (1, 'nStart', 0), (1, 'nEnd', 0), (1, 'nWhata, 0'), (1, 'nWhatb', 0), (1, 'data_a', 0), (1, 'data_a', 0)
-        # paramflags = (1, 'nStart'), (1, 'nEnd'), (1, 'nWhata'), (1, 'nWhatb'), (1, 'data_a'), (1, 'data_a')
-        _GetScandata = prototype(('?MyVNAGetScanData@@YGHHHHHPAN0@Z', vna), paramflags)
-        # _GetScandata =WINFUNCTYPE(c_int, c_int, c_int, c_int, c_int, POINTER(c_double), POINTER(c_double))(('?MyVNAGetScanData@@YGHHHHHPAN0@Z', vna))
-
-        print('GetScanData 1')
-        ret = _GetScandata(nStart, nEnd, nWhata, nWhatb, data_a, data_b)
-        # ret = _GetScandata(nStart, nEnd, nWhata, nWhatb, data_a.ctypes.data_as(POINTER(c_double)), data_b.ctypes.data_as(POINTER(c_double)))
-
-        print('GetScanData 2')
-
-            
         # ret
         #  0: 
         # -1: nSteps < 1
         #  1: crushes before l682: (errcode = MyVNAInit()) == 0
-        print('MyVNAGetScanData\n', ret, data_a[0], data_b[0])
+        print(ret, data_a[0], data_b[0])
 
         da = data_a[:nEnd]
         db = data_b[:nEnd]
-        del data_a, data_b
+        rt = ret
+        del data_a, data_b, ret
 
-        return ret, da, db
+        return rt, da, db
         
         # simple way
         # return MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, data_a.ctypes.data_as(POINTER(c_double)), data_b.ctypes.data_as(POINTER(c_double)))
 
 
     def Autoscale(self):
-        ret = MyVNAAutoscale()
+        ret = _MyVNAAutoscale()
         print('MyVNAAutoscale\n', ret) #MyVNAAutoscale
         return ret
 
     ################ combined functions #################
     def single_scan(self):
+        print('single_scan')
         # self.Init()
         self.SingleScan()
         self.Autoscale()
@@ -824,11 +833,13 @@ if __name__ == '__main__':
         ret, nMode = accvna.SingleScan()
         ret, nMode = accvna.EqCctRefine()
         ret = accvna.SetFequencies()
-        ret, nResult = accvna.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=[1, 2])
+        # for i in range(100):
+        #     print('i:', i)
+        #     ret, nResult = accvna.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=[1, 2])
         ret, nResult = accvna.GetDoubleArray()
         # print('nR', nResult)
-        ret, f, G = accvna.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
         ret, f, G, B = accvna.single_scan()
+        ret, f, G = accvna.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
         # ret = accvna.SingleScan()
         print(ret)
 

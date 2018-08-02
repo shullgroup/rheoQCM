@@ -24,7 +24,7 @@ from modules import UIModules, MathModules, tempDevices
 
 if UIModules.system_check() == 'win32': # windows
     try:
-        from modules.AccessMyVNA_np import AccessMyVNA
+        from modules.AccessMyVNA_dump import AccessMyVNA
         print(AccessMyVNA)
         # test if MyVNA program is available
         with AccessMyVNA() as accvna:
@@ -1029,6 +1029,8 @@ class QCMApp(QMainWindow):
         self.ui.horizontalSlider_spectra_fit_spanctrl.setValue(0)
 
     def on_clicked_pushButton_spectra_fit_refresh(self):
+        print('accvna', self.accvna)
+        # get parameters from current setup: harm_tab
         with self.accvna as accvna:
             accvna.set_steps_freq()
             ret, f, G, B = accvna.single_scan()
@@ -1036,6 +1038,8 @@ class QCMApp(QMainWindow):
         # f = G = B = range(10)
         self.ui.mpl_spectra_fit.update_data(ls=['lG'], xdata=[f], ydata=[G])
         self.ui.mpl_spectra_fit.update_data(ls=['lB'], xdata=[f], ydata=[B])
+
+        self.ui.mpl_spectra_fit_polar.update_data(ls=['l'], xdata=[G], ydata=[B])
 
 
     def on_clicked_set_temp_sensor(self, checked):
