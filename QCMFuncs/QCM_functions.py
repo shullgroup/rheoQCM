@@ -29,16 +29,6 @@ def fstar_err_calc(fstar):
     return fstar_err
 
 
-def err_spec():
-    errparms = {}
-    # a more complicated form can eventually be set up, but for now
-    # we use the same form for each harmonic
-    errparms[1] = [50 + 1j*10, 1e-2 + 1j*1e-2]
-    errparms[3] = errparms[1]
-    errparms[5] = errparms[1]
-    return errparms
-
-
 def cosd(phi):  # need to define matlab-like functions that accept degrees
     return np.cos(np.deg2rad(phi))
 
