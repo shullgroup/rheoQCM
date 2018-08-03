@@ -20,7 +20,7 @@ from PyQt5.QtGui import QIcon, QPixmap
 # packages
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
-from modules import UIModules, MathModules, tempDevices
+from modules import UIModules, MathModules
 
 if UIModules.system_check() == 'win32': # windows
     try:
