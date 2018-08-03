@@ -1,5 +1,12 @@
 import numpy as np
 
+def datarange(data):
+    # find the min and max of data
+    if data:
+        return min(data), max(data)
+    else:
+        return None, None
+
 def num2str(A,precision=None):
     if isinstance(A, np.ndarray):
         if A.any() and not precision:

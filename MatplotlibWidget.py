@@ -9,7 +9,7 @@ ax.set_visible(False)
 ax.change_geometry(2,2,i+1)
 '''
 
-import matplotlib
+# import matplotlib
 # matplotlib.use('QT5Agg')
 # matplotlib.rcParams['toolbar'] = 'toolmanager'
 # matplotlib.rcParams['font.size'] = 10
@@ -19,6 +19,7 @@ import matplotlib
 
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtWidgets import QSizePolicy, QVBoxLayout, QWidget
+
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT)
@@ -26,6 +27,10 @@ from matplotlib.figure import Figure
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.backend_tools import ToolBase, ToolToggleBase
+from matplotlib.projections import register_projection
+
+import types
+
 import numpy as np
 from UISettings import settings_init
 
@@ -43,14 +48,15 @@ class AxesLockY(Axes):
     '''
     cutomized axes with constrained pan/zoom to x only
     '''
+    def __init__(self, partent=None):
+        super(AxesLockY, self).__init__(partent)
     name = 'AxeslockY'
     def drag_pan(self, button, key, x, y):
-        Axes.drag_pan(self, button, 'x', x, y) # pretend key=='x
-
-matplotlib.projections.register_projection(AxesLockY)
+        Axes.drag_pan(self, button, key, 'x', y) # pretend key=='x
+        
+register_projection(AxesLockY)
 
 class MatplotlibWidget(QWidget):
-    
 
     def __init__(self, parent=None, axtype='', title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', showtoolbar=True, dpi=100, *args, **kwargs):
         super(MatplotlibWidget, self).__init__(parent)
@@ -61,6 +67,7 @@ class MatplotlibWidget(QWidget):
         self.l = {} # all the plot stored in dict
         self.leg = '' # initiate legend 
 
+        # set padding size
         if axtype == 'sp': 
             self.fig = Figure(tight_layout={'pad': 0.}, dpi=dpi, facecolor='none')
         else:
@@ -103,6 +110,8 @@ class MatplotlibWidget(QWidget):
         self.toolbar.isMovable()
         if showtoolbar:
             self.vbox.addWidget(self.toolbar)
+            if self.axtype == 'sp_fit':
+                self.toolbar.press_zoom = types.MethodType(press_zoomX, self.toolbar)
         else:
             # pass
             self.toolbar.hide() # hide toolbar. remove this will make every figure with shwotoolbar = False show tiny short toolbar 
@@ -130,11 +139,12 @@ class MatplotlibWidget(QWidget):
     def initax_xy(self, *args, **kwargs):
         # axes
         ax1 = self.fig.add_subplot(111, facecolor='none')
-        if self.axtype == 'sp_fit':
-            setattr(ax1, 'drag_pan', AxesLockY.drag_pan)
-            # ax1 = self.fig.add_subplot(111, facecolor='none', projection='AxesLockY')
+        # if self.axtype == 'sp_fit':
+        #     # setattr(ax1, 'drag_pan', AxesLockY.drag_pan)
+        #     ax1 = self.fig.add_subplot(111, facecolor='none', projection='AxesLockY')
         # else:
         #     ax1 = self.fig.add_subplot(111, facecolor='none')
+
         # ax1.autoscale()
         # print(ax.format_coord)
         # print(ax.format_cursor_data)
@@ -569,3 +579,9 @@ class MatplotlibWidget(QWidget):
             ) # l[i]
 
         self.ax[0].autoscale()
+
+def press_zoomX(self, event):
+    event.key = 'x'
+    print('event',event)
+    NavigationToolbar2QT.press_zoom(self, event)
+    print('zoomed on x')

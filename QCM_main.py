@@ -11,10 +11,12 @@ import json
 import datetime, time
 import numpy as np
 import scipy.signal
-
-from PyQt5.QtCore import pyqtSlot, Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton, QMenu
-from PyQt5.QtGui import QIcon, QPixmap
+import types
+from PyQt5.QtCore import pyqtSlot, Qt, QEvent
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton, QMenu
+)
+from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent
 # from PyQt5.uic import loadUi
 
 # packages
@@ -717,10 +719,12 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit, 
             axtype='sp_fit',
-            showtoolbar=('Back', 'Forward', 'Pan', 'Zoom')
-            )
+            showtoolbar=('Back', 'Forward', 'Zoom')
+            ) #TODO add 'Pan' and figure out how to identify mouse is draging 
         # self.ui.mpl_spectra_fit.update_figure()
         self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
+        # connect signal
+        self.ui.mpl_spectra_fit.ax[0].cid = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('xlim_changed', self.on_fit_lims_change)
 
         # add figure mpl_countour1 into frame_spectra_mechanics_contour1
         self.ui.mpl_countour1 = MatplotlibWidget(
@@ -1030,7 +1034,7 @@ class QCMApp(QMainWindow):
 
     def on_clicked_pushButton_spectra_fit_refresh(self):
         print('accvna', self.accvna)
-        # get parameters from current setup: harm_tab
+        #TODO get parameters from current setup: harm_tab
         with self.accvna as accvna:
             accvna.set_steps_freq()
             ret, f, G, B = accvna.single_scan()
@@ -1041,6 +1045,29 @@ class QCMApp(QMainWindow):
 
         self.ui.mpl_spectra_fit_polar.update_data(ls=['l'], xdata=[G], ydata=[B])
 
+    def on_fit_lims_change(self, axes):
+        ax1 = self.ui.mpl_spectra_fit.ax[0]
+        ax2 = self.ui.mpl_spectra_fit.ax[1]
+
+        # print('g', ax1.get_contains())
+        # print('r', ax1.contains('button_release_event'))
+        # print('p', ax1.contains('button_press_event'))
+
+        # data lims [xlim_min, xlim_max]
+        dlims = MathModules.datarange(self.ui.mpl_spectra_fit.l['lG'][0].get_xdata())
+        # get axes lims
+        xlims = ax1.get_xlim()
+
+        # ax1.autoscale(axis='y')
+        # ax2.autoscale(axis='y')
+        # axes.autoscale(axis='y')
+        if dlims != xlims:
+            self.ui.mpl_spectra_fit.ax[0].callbacks.disconnect(self.ui.mpl_spectra_fit.ax[0].cid)
+            ax1.autoscale(axis='y')
+            ax2.autoscale(axis='y')
+            # axes.autoscale(axis='y')
+            # ax1.set_xlim(4e6, 6e6)
+            self.ui.mpl_spectra_fit.ax[0].cid = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('xlim_changed', self.on_fit_lims_change)
 
     def on_clicked_set_temp_sensor(self, checked):
         # below only runs when accvna is available
