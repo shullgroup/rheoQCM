@@ -4,13 +4,13 @@ This is the main code of the QCM acquization program
 '''
 
 import os
+import csv
 import importlib
 import math
 import json
 import datetime, time
 import numpy as np
 import scipy.signal
-import matlabfunctions as mlf
 
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton, QMenu
@@ -22,7 +22,31 @@ from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
 from modules import UIModules, MathModules
 
+if UIModules.system_check() == 'win32': # windows
+    try:
+        from modules.AccessMyVNA_dump import AccessMyVNA
+        print(AccessMyVNA)
+        # test if MyVNA program is available
+        with AccessMyVNA() as accvna:
+            if accvna.Init() == 0: # connection with myVNA is available
+                from modules import tempDevices
+    except Exception as e: # no myVNA connected. Analysis only
+        print('Failed to import AccessMyVNA module!')
+        print(e)
+
 from MatplotlibWidget import MatplotlibWidget
+
+class PeakTracker:
+    def __init__(self):
+        self.f0 = None
+        self.gamma0 = None
+        self.freq = None
+        self.conductance = None
+        self.susceptance = None
+        self.refit_flag = 0
+        self.refit_counter = 1
+
+        self.harmonic_tab = 1
 
 class QCMApp(QMainWindow):
     '''
@@ -35,7 +59,7 @@ class QCMApp(QMainWindow):
         self.fileName = ''
         self.fileFlag = False
         self.settings = settings_default
-        self.harmonic_tab = 1
+        self.peak_tracker = PeakTracker()
   
         # define instrument state variables
         self.accvna = None 
@@ -46,23 +70,21 @@ class QCMApp(QMainWindow):
         # check system
         self.system = UIModules.system_check()
         # initialize AccessMyVNA
-        #?? add more code to disable settings_control tab and widges in settings_settings tab
+        #TODO add more code to disable settings_control tab and widges in settings_settings tab
         if self.system == 'win32': # windows
             try:
-                from modules.AccessMyVNA import AccessMyVNA
                 # test if MyVNA program is available
                 with AccessMyVNA() as accvna:
-                    ret = accvna.Init()
-                if ret == 0: # is available
-                    self.accvna = AccessMyVNA()
-                    from modules import tempDevices # load temp related module whith dependency of nidaqmix
-                else: # not available
-                    pass
+                    if accvna.Init() == 0: # is available
+                        self.accvna = AccessMyVNA() # save class AccessMyVNA to accvna
+                    else: # not available
+                        pass
             except:
                 pass
+
         else: # other system, data analysis only
             pass
-
+        print(self.accvna)
         self.main()
         self.load_settings()
 
@@ -201,9 +223,9 @@ class QCMApp(QMainWindow):
 
         # set signals to update fitting and display settings
         self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_showchi.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_showpolar.stateChanged.connect(self.update_widget)
+        #self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_widget)
+        #self.ui.checkBox_showchi.stateChanged.connect(self.update_widget)
+        #self.ui.checkBox_showpolar.stateChanged.connect(self.update_widget)
         self.ui.comboBox_fitfactor.activated.connect(self.update_widget)
 
         # set signals to update spectra show display options
@@ -264,7 +286,7 @@ class QCMApp(QMainWindow):
             self.ui.treeWidget_settings_settings_hardware
         )
         # connect ref_channel
-        # self.ui.comboBox_ref_channel.currentIndexChanged.connect() #?? add function checking if sample and ref have the same channel
+        # self.ui.comboBox_ref_channel.currentIndexChanged.connect() #TODO add function checking if sample and ref have the same channel
 
         # insert base_frequency
         self.create_combobox(
@@ -444,6 +466,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_ref_channel.activated.connect(self.update_refchannel)
 
         # set signals to update temperature settings_settings
+        self.ui.comboBox_settings_mechanics_selectmodel.activated[str].connect(self.update_module)
         # self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
         self.ui.checkBox_settings_temp_sensor.clicked['bool'].connect(self.on_clicked_set_temp_sensor)
         self.ui.comboBox_thrmcpltype.activated.connect(self.update_thrmcpltype)
@@ -558,13 +581,12 @@ class QCMApp(QMainWindow):
         self.ui.statusbar.addPermanentWidget(self.ui.progressBar_status_interval_time)
         # move label_status_pts to statusbar
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_pts)
-        # move label_status_signal_ch to statusbar
-        self.ui.statusbar.addPermanentWidget(self.ui.label_status_signal_ch)
-        # move label_status_reftype to statusbar
-        self.ui.statusbar.addPermanentWidget(self.ui.label_status_reftype)
-        # move label_status_temp_sensor to statusbar
-        self.ui.statusbar.addPermanentWidget(self.ui.label_status_temp_sensor)
-        self.ui.label_status_temp_sensor.setScaledContents(True)
+        # move pushButton_status_reftype to statusbar
+        self.ui.statusbar.addPermanentWidget(self.ui.pushButton_status_reftype)
+         # move pushButton_status_signal_ch to statusbar
+        self.ui.statusbar.addPermanentWidget(self.ui.pushButton_status_signal_ch)
+       # move pushButton_status_temp_sensor to statusbar
+        self.ui.statusbar.addPermanentWidget(self.ui.pushButton_status_temp_sensor)
         # move label_status_f0BW to statusbar
         self.ui.statusbar.addPermanentWidget(self.ui.label_status_f0BW)
 
@@ -918,7 +940,7 @@ class QCMApp(QMainWindow):
     # open folder in explorer
     # methods for different OS could be added
     def on_clicked_pushButton_gotofolder(self):
-        file_path = self.ui.lineEdit_datafilestr.text() #?? replace with reading from settings dict
+        file_path = self.ui.lineEdit_datafilestr.text() #TODO replace with reading from settings dict
         path = os.path.abspath(os.path.join(file_path, os.pardir)) # get the folder of the file
         UIModules.open_file(path)
 
@@ -1007,6 +1029,8 @@ class QCMApp(QMainWindow):
         self.ui.horizontalSlider_spectra_fit_spanctrl.setValue(0)
 
     def on_clicked_pushButton_spectra_fit_refresh(self):
+        print('accvna', self.accvna)
+        # get parameters from current setup: harm_tab
         with self.accvna as accvna:
             accvna.set_steps_freq()
             ret, f, G, B = accvna.single_scan()
@@ -1014,6 +1038,8 @@ class QCMApp(QMainWindow):
         # f = G = B = range(10)
         self.ui.mpl_spectra_fit.update_data(ls=['lG'], xdata=[f], ydata=[G])
         self.ui.mpl_spectra_fit.update_data(ls=['lB'], xdata=[f], ydata=[B])
+
+        self.ui.mpl_spectra_fit_polar.update_data(ls=['l'], xdata=[G], ydata=[B])
 
 
     def on_clicked_set_temp_sensor(self, checked):
@@ -1036,12 +1062,12 @@ class QCMApp(QMainWindow):
                 try:
                     self.tempsensor = tempsensor(
                         tempdevice,
-                        'ai0',
+                        settings_init['devices_dict'][tempdevice.product_type],
                         thrmcpltype,
-                        settings_init['devices_dict'][tempdevice.product_type]
                     )
-                except: # if failed return
-                    #?? update in statusbar
+                except Exception as e: # if failed return
+                    print(e)
+                    #TODO update in statusbar
                     return 
 
                 # after tempModule loaded
@@ -1052,7 +1078,7 @@ class QCMApp(QMainWindow):
                     # save values to self.settings
                     self.settings['checkBox_control_rectemp'] = True
                     self.settings['checkBox_settings_temp_sensor'] = True
-                    # set statusbar label_status_temp_sensor text
+                    # set statusbar pushButton_status_temp_sensor text
                     self.statusbar_temp_update()
                     # disable items to keep the setting
                     self.ui.comboBox_tempmodule.setEnabled(False)
@@ -1064,13 +1090,13 @@ class QCMApp(QMainWindow):
                     # uncheck checkBoxes
                     self.ui.checkBox_control_rectemp.setChecked(False)
                     self.ui.checkBox_settings_temp_sensor.setChecked(False)
-                    #?? update in statusbar
+                    #TODO update in statusbar
             else: # is unchecked
                 
                 self.settings['checkBox_control_rectemp'] = False
                 self.settings['checkBox_settings_temp_sensor'] = False
 
-                # set statusbar label_status_temp_sensor text
+                # set statusbar pushButton_status_temp_sensor text
                 self.statusbar_temp_update()
                 
                 # enable items to keep the setting
@@ -1089,25 +1115,22 @@ class QCMApp(QMainWindow):
 
         # update statusbar temp sensor image
         if self.settings['checkBox_settings_temp_sensor']: # checked
-            self.ui.label_status_temp_sensor.setStyleSheet(
-                " border-image: url(:/icon/rc/temp_sensor.svg); "
-            )
-            # change temp unit by self.settings['temp_unit_choose']
+            self.ui.pushButton_status_temp_sensor.setIcon(QIcon(":/icon/rc/temp_sensor.svg"))
             try:
+            # get temp and change temp unit by self.settings['temp_unit_choose']
                 curr_temp = self.temp_by_unit(self.tempsensor.get_tempC())
                 print(curr_temp)
                 unit = settings_init['temp_unit_choose'].get(self.settings['comboBox_tempunit'])
-                self.ui.label_status_temp_sensor.setText('{:.1f} {}'.format(curr_temp, unit))
-                self.ui.label_status_temp_sensor.setToolTip('Last updated temp.')
+                self.ui.pushButton_status_temp_sensor.setText('{:.1f} {}'.format(curr_temp, unit))
+                self.ui.pushButton_status_temp_sensor.setIcon(QIcon(":/icon/rc/temp_sensor.svg"))
+                self.ui.pushButton_status_temp_sensor.setToolTip('Temp. sensor is on.')
             except:
-                #?? update in statusbar
+                #TODO update in statusbar
                 pass
         else:
-            self.ui.label_status_temp_sensor.setStyleSheet(
-                " border-image: url(:/icon/rc/temp_sensor_off.svg); "
-            )
-            self.ui.label_status_temp_sensor.setText('')
-            self.ui.label_status_temp_sensor.setToolTip('Temp. sensor is off.')
+            self.ui.pushButton_status_temp_sensor.setIcon(QIcon(":/icon/rc/temp_sensor_off.svg"))
+            self.ui.pushButton_status_temp_sensor.setText('')
+            self.ui.pushButton_status_temp_sensor.setToolTip('Temp. sensor is off.')
 
     def temp_by_unit(self, data):
         '''
@@ -1140,15 +1163,15 @@ class QCMApp(QMainWindow):
     
     # update widget values in settings dict, only works with elements out of settings_settings
     def update_widget(self, signal):
-        print('update_widget')
-        #print(self.sender().objectName())
-        #print(type(self.sender()))
         # if the sender of the signal isA QLineEdit object, update QLineEdit vals in dict
         if isinstance(self.sender(), QLineEdit):
-            try:
-                self.settings[self.sender().objectName()] = float(signal)
-            except:
-                self.settings[self.sender().objectName()] = 0
+                try:
+                    if 'lineEdit_startf' in self.sender().objectName() or 'lineEdit_endf' in self.sender().objectName():
+                        self.settings[self.sender().objectName()] = float(signal)*1e6
+                    else:
+                        self.settings[self.sender().objectName()] = float(signal)
+                except:
+                    self.settings[self.sender().objectName()] = 0
         # if the sender of the signal isA QCheckBox object, update QCheckBox vals in dict
         elif isinstance(self.sender(), QCheckBox):
             self.settings[self.sender().objectName()] = not self.settings[self.sender().objectName()]
@@ -1162,7 +1185,7 @@ class QCMApp(QMainWindow):
             except: # if w/o userData, use the text
                 value = self.sender().itemText(signal)
             self.settings[self.sender().objectName()] = value
-        print(self.sender().objectName(), self.settings[self.sender().objectName()])
+        #print(self.sender().objectName(), self.settings[self.sender().objectName()])
     #def update_dynamicfit(self):
     #    self.settings['checkBox_dynamicfit'] = not self.settings['checkBox_dynamicfit']
 
@@ -1177,7 +1200,7 @@ class QCMApp(QMainWindow):
 
     def update_harmonic_tab(self):
         #print("update_harmonic_tab was called")
-        self.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
+        self.peak_tracker.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
         self.update_frequencies()
 
         #self.update_guichecks(self.ui.checkBox_settings_temp_sensor, 'checkBox_settings_temp_sensor')
@@ -1208,10 +1231,10 @@ class QCMApp(QMainWindow):
         self.update_frequencies()
 
     def update_frequencies(self):
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['start_freq'] = self.harmonic_tab * self.settings['comboBox_base_frequency'] - self.settings['comboBox_bandwidth']
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['end_freq'] = self.harmonic_tab * self.settings['comboBox_base_frequency'] + self.settings['comboBox_bandwidth']
-        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['start_freq']))
-        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['end_freq']))
+        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['start_freq'] = self.peak_tracker.harmonic_tab * self.settings['comboBox_base_frequency'] - self.settings['comboBox_bandwidth']
+        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['end_freq'] = self.peak_tracker.harmonic_tab * self.settings['comboBox_base_frequency'] + self.settings['comboBox_bandwidth']
+        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['start_freq']))
+        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['end_freq']))
 
     def set_default_freqs(self):
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
@@ -1220,15 +1243,15 @@ class QCMApp(QMainWindow):
 
     def update_fitmethod(self, fitmethod_index):
         value = self.ui.comboBox_fit_method.itemData(fitmethod_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_fit_method'] = value
+        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_fit_method'] = value
 
     def update_trackmethod(self, trackmethod_index):
         value = self.ui.comboBox_track_method.itemData(trackmethod_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_track_method'] = value
+        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_track_method'] = value
 
     def update_harmfitfactor(self, harmfitfactor_index):
         value = self.ui.comboBox_harmfitfactor.itemData(harmfitfactor_index)
-        self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['comboBox_harmfitfactor'] = value
+        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_harmfitfactor'] = value
 
     def update_samplechannel(self, samplechannel_index):
         value = self.ui.comboBox_sample_channel.itemData(samplechannel_index)
@@ -1237,6 +1260,9 @@ class QCMApp(QMainWindow):
     def update_refchannel(self, refchannel_index):
         value = self.ui.comboBox_ref_channel.itemData(refchannel_index)
         self.settings['comboBox_ref_channel'] = value
+
+    def update_module(self, module_text):
+        self.settings['comboBox_settings_mechanics_selectmodel'] = module_text
 
     def update_tempsensor(self):
         print("update_tempsensor was called")
@@ -1267,13 +1293,13 @@ class QCMApp(QMainWindow):
 
     def update_guicombos(self, comboBox, name_in_settings, init_dict):
         for key, val in settings_init[init_dict].items():
-            if key == self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)][name_in_settings]:
+            if key == self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)][name_in_settings]:
                 comboBox.setCurrentIndex(comboBox.findData(key))
                 break
 
     def update_guichecks(self, checkBox, name_in_settings):
         print("update_guichecks was called")
-        checkBox.setChecked(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)][name_in_settings])
+        checkBox.setChecked(self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)][name_in_settings])
         
     # debug func
     def log_update(self):
@@ -1297,17 +1323,17 @@ class QCMApp(QMainWindow):
 
         # load default start and end frequencies for lineEdit harmonics
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
-            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(str(self.settings['lineEdit_startf' + str(i)]))
-            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(str(self.settings['lineEdit_endf' + str(i)]))
+            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(MathModules.num2str(self.settings['lineEdit_startf' + str(i)]*1e-6, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(MathModules.num2str(self.settings['lineEdit_endf' + str(i)]*1e-6, precision=12)) # display as MHz
         # load default record interval
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         # load default spectra refresh resolution
         self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
         # load default fitting and display options
         self.ui.checkBox_dynamicfit.setChecked(self.settings['checkBox_dynamicfit'])
-        self.ui.checkBox_showsusceptance.setChecked(self.settings['checkBox_showsusceptance'])
-        self.ui.checkBox_showchi.setChecked(self.settings['checkBox_showchi'])
-        self.ui.checkBox_showpolar.setChecked(self.settings['checkBox_showpolar'])
+        #self.ui.checkBox_showsusceptance.setChecked(self.settings['checkBox_showsusceptance'])
+        #self.ui.checkBox_showchi.setChecked(self.settings['checkBox_showchi'])
+        #self.ui.checkBox_showpolar.setChecked(self.settings['checkBox_showpolar'])
 
         def load_comboBox(comboBox, comboBoxName, choose_dict):
             for key, val in settings_init[choose_dict].items():
@@ -1325,6 +1351,8 @@ class QCMApp(QMainWindow):
         load_comboBox(self.ui.comboBox_base_frequency, 'comboBox_base_frequency', 'base_frequency_choose')
         load_comboBox(self.ui.comboBox_bandwidth, 'comboBox_bandwidth', 'bandwidth_choose')
         # load default temperature settings
+        self.ui.comboBox_settings_mechanics_selectmodel.setCurrentIndex\
+        (self.ui.comboBox_settings_mechanics_selectmodel.findText(self.settings['comboBox_settings_mechanics_selectmodel']))
         self.ui.checkBox_settings_temp_sensor.setChecked(self.settings['checkBox_settings_temp_sensor'])
         load_comboBox(self.ui.comboBox_thrmcpltype, 'comboBox_thrmcpltype', 'thrmcpl_choose')
         # load default plots settings
@@ -1335,7 +1363,7 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_settings_settings_linktime.setChecked(self.settings['checkBox_settings_settings_linktime'])
 
         # set opened harmonic tab
-        self.harmonic_tab = 1
+        self.peak_tracker.harmonic_tab = 1
         # set tab displayed to harm 1
         self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
         self.update_harmonic_tab()
@@ -1402,17 +1430,15 @@ class QCMApp(QMainWindow):
                 self.settings[endname] = max_range - 0.9
 
     def smart_peak_tracker(self, harmonic, freq, conductance, susceptance, G_parameters):
-        resonance = None
-        self.f0 = G_parameters[0]
-        self.gamma0 = G_parameters[1]
+        self.peak_tracker.f0 = G_parameters[0]
+        self.peak_tracker.gamma0 = G_parameters[1]
 
         # determine the structure field that should be used to extract out the initial-guessing method
-        name = 'fit' + str(harmonic) 
         if self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_fit_method'] == 'bmax':
             resonance = susceptance
         else:
             resonance = conductance
-        index = mlf.findpeaks(resonance, output='indices', sortstr='descend')
+        index = findpeaks(resonance, output='indices', sortstr='descend')
         peak_f = freq[index[0]]
         # determine the estimated associated conductance (or susceptance) value at the resonance peak
         Gmax = resonance[index[0]] 
@@ -1424,67 +1450,86 @@ class QCMApp(QMainWindow):
         if track_method == 'fixspan':
             current_span = (float(self.settings['lineEdit_endf' + str(harmonic)]) - \
             # get the current span of the data in Hz
-            float(self.settings['lineEdit_startf' + str(harmonic)])) * 1e6 
+            float(self.settings['lineEdit_startf' + str(harmonic)]))
             if np.absolute(np.mean(np.array([freq[0],freq[len(freq)-1]]))-peak_f) > 0.1 * current_span:
-                # new start and end frequencies in MHz
-                new_xlim=np.multiply(np.array([peak_f-0.5*current_span,peak_f+0.5*current_span]), 1e-6) 
-                new_xlim = mlf.num2str(new_xlim, precision=12)
-                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0])
-                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1])
+                # new start and end frequencies in Hz
+                new_xlim=np.array([peak_f-0.5*current_span,peak_f+0.5*current_span])
+                self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0]
+                self.settings['lineEdit_endf' + str(harmonic)] = new_xlim[1]
         elif track_method == 'fixcenter':
             # get current start and end frequencies of the data in Hz
-            current_xlim = np.multiply(np.array([float(self.settings['lineEdit_startf' + str(harmonic)]),\
-            float(self.settings['lineEdit_endf' + str(harmonic)])]), 1e6) 
+            current_xlim = np.array([float(self.settings['lineEdit_startf' + str(harmonic)]),float(self.settings['lineEdit_endf' + str(harmonic)])])
             # get the current center of the data in Hz
-            current_center = ((float(self.settings['lineEdit_startf' + str(harmonic)]) + \
-            float(self.settings['lineEdit_endf' + str(harmonic)]))*1e6)/2 
+            current_center = (float(self.settings['lineEdit_startf' + str(harmonic)]) + float(self.settings['lineEdit_endf' + str(harmonic)]))/2 
             # find the starting and ending frequency of only the peak in Hz
             peak_xlim = np.array([peak_f-halfg_freq*3, peak_f+halfg_freq*3]) 
             if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*halfg_freq, current_center + 3*halfg_freq])))) > 3e3:
-                # set new start and end freq based on the location of the peak in MHz
-                new_xlim = np.multiply(np.array(current_center-3*halfg_freq, current_center+3*halfg_freq), 1e-6) 
-                new_xlim = mlf.num2str(new_xlim, precision=12)
-                # set new start freq in MHz
-                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) 
-                # set new end freq in MHz
-                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) 
+                # set new start and end freq based on the location of the peak in Hz
+                new_xlim = np.array(current_center-3*halfg_freq, current_center+3*halfg_freq)
+                # set new start freq in Hz
+                self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0]
+                # set new end freq in Hz
+                self.settings['lineEdit_endf' + str(harmonic)] = new_xlim[1]
         elif track_method == 'fixrange':
             # adjust window if neither span or center is fixed (default)
             current_xlim = np.array([float(self.settings['lineEdit_startf' + str(harmonic)]),float(self.settings['lineEdit_endf' + str(harmonic)])])
             # get the current span of the data in Hz
-            current_span = (float(self.settings['lineEdit_endf' + str(harmonic)]) - float(self.settings['lineEdit_startf' + str(harmonic)])) * 1e6
-            if(np.mean(current_xlim)*1e6-peak_f) > 1*current_span/12:
-                new_xlim = (np.multiply(current_xlim,1e6)-current_span/15)*1e-6  # new start and end frequencies in MHz
-                new_xlim = mlf.num2str(new_xlim, precision=12)
-                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
-                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
-            elif (np.mean(current_xlim)*1e6-peak_f) < -1*current_span/12:
-                new_xlim = (np.multiply(current_xlim,1e6)+current_span/15)*1e-6  # new start and end frequencies in MHz
-                new_xlim = mlf.num2str(new_xlim, precision=12)
-                self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
-                self.settings['lineEdit_endf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+            current_span = float(self.settings['lineEdit_endf' + str(harmonic)]) - float(self.settings['lineEdit_startf' + str(harmonic)])
+            if(np.mean(current_xlim)-peak_f) > 1*current_span/12:
+                new_xlim = current_xlim-current_span/15  # new start and end frequencies in Hz
+                self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0] # set new start freq in Hz
+                self.settings['lineEdit_endf' + str(harmonic)] = new_xlim[1] # set new end freq in Hz
+            elif (np.mean(current_xlim)-peak_f) < -1*current_span/12:
+                new_xlim = current_xlim+current_span/15  # new start and end frequencies in Hz
+                self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0] # set new start freq in Hz
+                self.settings['lineEdit_endf' + str(harmonic)] = new_xlim[1] # set new end freq in Hz
             else:
-                thresh1=.05*current_span + current_xlim[0]*1e6 # Threshold frequency in Hz
+                thresh1=.05*current_span + current_xlim[0] # Threshold frequency in Hz
                 thresh2=.03*current_span # Threshold frequency span in Hz
                 LB_peak=peak_f-halfg_freq*3 # lower bound of the resonance peak
                 if LB_peak-thresh1 > halfg_freq*8: # if peak is too thin, zoom into the peak
-                    new_xlim[0]=(current_xlim[0]*1e6 + thresh2)*1e-6 # MHz
-                    new_xlim[1]=(current_xlim[1]*1e6 - thresh2)*1e-6 # MHz
-                    new_xlim = mlf.num2str(new_xlim, precision=12)
-                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
-                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+                    new_xlim[0]=(current_xlim[0] + thresh2) # Hz
+                    new_xlim[1]=(current_xlim[1] - thresh2) # Hz
+                    self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0] # set new start freq in Hz
+                    self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[1] # set new end freq in Hz
                 elif thresh1-LB_peak > -halfg_freq*5: # if the peak is too fat, zoom out of the peak
-                    new_xlim[0]=(current_xlim[0]*1e6-thresh2)*1e-6 # MHz
-                    new_xlim[1]=(current_xlim[1]*1e6+thresh2)*1e-6 # MHz
-                    new_xlim = mlf.num2str(new_xlim, precision=12)
-                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[0]) # set new start freq in MHz
-                    self.settings['lineEdit_startf' + str(harmonic)] = str(new_xlim[1]) # set new end freq in MHz
+                    new_xlim[0]=current_xlim[0]-thresh2 # Hz
+                    new_xlim[1]=current_xlim[1]+thresh2 # Hz
+                    self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0] # set new start freq in Hz
+                    self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[1] # set new end freq in Hz
         elif track_method == 'usrdef': #run custom tracking algorithm
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
             pass
         self.check_freq_range(harmonic, self.settings['freq_range'][harmonic][0], self.settings['freq_range'][harmonic][1])
+    
+    def read_scan(self, harmonic):
+        # read in live data scans
+        if self.peak_tracker.refit_flag == 0:
+            flag = 0
+            rawdata = np.array([])
+            start1 = self.settings['lineEdit_startf' + str(harmonic)]
+            end1 = self.settings['lineEdit_endf' + str(harmonic)]
+            if harmonic < 11:
+                rawfile = 'myVNAdata0' + str(harmonic) + '.csv'
+            else:
+                rawfile = 'myVNAdata11.csv'
+            while flag == 0:
+                with open(rawfile, newline='') as csvfile:
+                    reader = csv.DictReader(csvfile)
+                    for row in reader:
+                        np.append(rawdata, row[0])
+                num_pts = self.settings['tab_settings_settings_harm' + str(harmonic)][num_datapoints]
+                if len(rawdata) == num_pts*2:
+                    self.peak_tracker.conductance = 1e3 * rawdata[:num_pts+1]
+                    self.peak_tracker.susceptance = 1e3 * rawdata[num_pts:]
+                    self.peak_tracker.freq = np.arange(start1,end1-(end1-start1)/num_pts+1,(end1-start1)/num_pts)
+                    flag = 1
+                    print('Status: Scan successful.')
+        # TODO refit loaded raw spectra data
+        else:
+            pass
 
 #endregion
 

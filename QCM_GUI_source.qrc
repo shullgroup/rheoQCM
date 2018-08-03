@@ -1,7 +1,7 @@
 <RCC>
   <qresource prefix="icon">
+    <file>rc/ref_self.svg</file>
     <file>rc/new.svg</file>
-    <file>rc/delete_spectra.svg</file>
     <file>rc/delete_selected.svg</file>
     <file>rc/myvna.svg</file>
     <file>rc/delete.svg</file>
@@ -13,10 +13,8 @@
     <file>rc/ref_channel.svg</file>
     <file>rc/ref_input.svg</file>
     <file>rc/ref_file.svg</file>
-    <file>rc/signal_ch1.svg</file>
-    <file>rc/signal_ch2.svg</file>
-    <file>rc/signal_ch12.svg</file>
     <file>rc/signal_ch.svg</file>
+    <file>rc/signal_ch_off.svg</file>
     <file>rc/saveAs.svg</file>
     <file>rc/save.svg</file>
     <file>rc/ref_0.svg</file>

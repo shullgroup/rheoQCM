@@ -4,11 +4,29 @@ import matplotlib.pyplot as plt
 import numpy as np     
 
 class TempSensor():
-    def __init__(self, device, ai_channel, thrmpl_type, nsamples):
-        self.thrmcpl_chan = device.name + '/' + ai_channel
-        self.thrmcpl_type = getattr(nidaqmx.constants.ThermocoupleType, thrmpl_type)
-        self.cjc_source = nidaqmx.constants.CJCSource.BUILT_IN
-        self.nsamples = nsamples
+    def __init__(self, device, device_params, thrmcpl_type):
+        '''
+        devices (class NI device): 
+            device.name ('Dev1'), 
+            device.product_category ('ProductCategory.USBDAQ'), 
+            device.product_type ('USB-TC01') 
+            ...
+        device_params={
+            'nsmples': # of points for average,
+            'thrmcpl_chan: thermocouple channel,
+            'cjc_source': channel for cjc,
+        }
+        '''
+
+        self.thrmcpl_chan = device.name + '/' + device_params['thrmcpl_chan']
+        self.thrmcpl_type = getattr(nidaqmx.constants.ThermocoupleType, thrmcpl_type)
+        if device_params['cjc_source']: 
+            self.cjc_source = getattr(nidaqmx.constants.CJCSource, device_params['cjc_source'])
+        else:
+            self.cjc_source = ''   # assign '' if no matching
+
+        self.nsamples = device_params['nsamples']
+
         if not self.nsamples:
             print('device is not found or not available.')
             return
@@ -34,21 +52,30 @@ class TempSensor():
     #     return np.mean(data)
 
     def get_tempC(self):
-        with nidaqmx.Task() as task:
-            task.ai_channels.add_ai_thrmcpl_chan(
-                self.thrmcpl_chan,
-                # name_to_assign_to_channel="", 
-                # min_val=0.0,
-                # max_val=100.0, 
-                # units=nidaqmx.constants.TemperatureUnits.DEG_C,
-                thermocouple_type=self.thrmcpl_type,
-                # cjc_source=nidaqmx.constants.CJCSource.CONSTANT_USER_VALUE, 
-                cjc_source=self.cjc_source, 
-                # cjc_val=20.0,
-                # cjc_channel=""
-                )
-            data = task.read(number_of_samples_per_channel=self.nsamples)
-            return np.mean(data)
+        if self.cjc_source:
+            with nidaqmx.Task() as task:
+                task.ai_channels.add_ai_thrmcpl_chan(
+                    self.thrmcpl_chan,
+                    # name_to_assign_to_channel="", 
+                    # min_val=0.0,
+                    # max_val=100.0, 
+                    # units=nidaqmx.constants.TemperatureUnits.DEG_C,
+                    thermocouple_type=self.thrmcpl_type,
+                    # cjc_source=nidaqmx.constants.CJCSource.CONSTANT_USER_VALUE, 
+                    cjc_source=self.cjc_source, 
+                    # cjc_val=20.0,
+                    # cjc_channel=""
+                    )
+                data = task.read(number_of_samples_per_channel=self.nsamples)
+                return np.mean(data)
+        else:
+            with nidaqmx.Task() as task:
+                task.ai_channels.add_ai_thrmcpl_chan(
+                    self.thrmcpl_chan,
+                    thermocouple_type=self.thrmcpl_type,
+                    )
+                data = task.read(number_of_samples_per_channel=self.nsamples)
+                return np.mean(data)
 
 ############## test code below
 

@@ -1820,84 +1820,6 @@ background-color: red;
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="label_status_temp_sensor">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>16</width>
-                  <height>16</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="baseSize">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="toolTip">
-                 <string>Temp sensor is off</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">#label_status_temp_sensor
-{
-background-color: transparent;
-border-image: url(:/icon/rc/temp_sensor_off.svg);
-background: none;
-border: none;
-background-repeat: none;
-}
-</string>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="scaledContents">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_status_signal_ch">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>16</width>
-                  <height>16</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">#label_status_signal_ch
-{
-background-color: transparent;
-border-image: url(:/icon/rc/signal_ch.svg);
-background: none;
-border: none;
-background-repeat: none;
-}
-</string>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-               </widget>
-              </item>
-              <item>
                <widget class="QLabel" name="label_status_f0BW">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -1917,32 +1839,30 @@ background-repeat: none;
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="label_status_reftype">
+               <widget class="QPushButton" name="pushButton_status_reftype">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>16</width>
-                  <height>16</height>
-                 </size>
-                </property>
                 <property name="styleSheet">
-                 <string notr="true">#label_status_reftype
+                 <string notr="true">#pushButton_status_reftype
 {
 background-color: transparent;
-border-image: url(:/icon/rc/ref_input.svg);
 background: none;
 border: none;
-background-repeat: none;
-}
-</string>
+}</string>
                 </property>
                 <property name="text">
                  <string/>
+                </property>
+                <property name="icon">
+                 <iconset resource="QCM_GUI_source.qrc">
+                  <normaloff>:/icon/rc/ref_0.svg</normaloff>:/icon/rc/ref_0.svg</iconset>
+                </property>
+                <property name="flat">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -1968,6 +1888,72 @@ background-repeat: none;
                 </property>
                 <property name="format">
                  <string>%p</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_status_temp_sensor">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>16</width>
+                  <height>16</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">#pushButton_status_temp_sensor
+{
+background-color: transparent;
+background: none;
+border: none;
+}
+</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="icon">
+                 <iconset resource="QCM_GUI_source.qrc">
+                  <normaloff>:/icon/rc/temp_sensor_off.svg</normaloff>:/icon/rc/temp_sensor_off.svg</iconset>
+                </property>
+                <property name="flat">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_status_signal_ch">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">#pushButton_status_signal_ch
+{
+background-color: transparent;
+background: none;
+border: none;
+}</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="icon">
+                 <iconset resource="QCM_GUI_source.qrc">
+                  <normaloff>:/icon/rc/signal_ch_off.svg</normaloff>:/icon/rc/signal_ch_off.svg</iconset>
+                </property>
+                <property name="flat">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -4509,7 +4495,7 @@ border-image: url(:/button/rc/plus_p.svg);
              </sizepolicy>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="page_spectra_topshow">
              <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -4624,9 +4610,6 @@ border-image: url(:/button/rc/plus_p.svg);
                </widget>
               </item>
              </layout>
-             <zorder></zorder>
-             <zorder></zorder>
-             <zorder>label_10</zorder>
             </widget>
            </widget>
           </item>
@@ -6511,7 +6494,7 @@ border: 1px solid blue;
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="QCM_GUI_source.qrc">
+    <iconset>
      <normaloff>:/icon/rc/signal_ch1.svg</normaloff>:/icon/rc/signal_ch1.svg</iconset>
    </property>
    <property name="text">
@@ -6523,7 +6506,7 @@ border: 1px solid blue;
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="QCM_GUI_source.qrc">
+    <iconset>
      <normaloff>:/icon/rc/signal_ch2.svg</normaloff>:/icon/rc/signal_ch2.svg</iconset>
    </property>
    <property name="text">
