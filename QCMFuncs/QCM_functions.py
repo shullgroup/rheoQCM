@@ -17,6 +17,28 @@ zq = 8.84e6  # shear acoustic impedance of quartz
 f1 = 5e6  # fundamental resonant frequency
 
 
+def fstar_err_calc(fstar):
+    # calculate the error in delfstar
+    g_err_min = 10 # error floor for gamma
+    f_err_min = 50 # error floor for f
+    err_frac = 3e-2 # error in f or gamma as a fraction of gamma
+    # start by specifying the error input parameters
+    fstar_err = np. zeros(1, dtype=np.complex128)
+    fstar_err = (max(f_err_min, err_frac*real(fstar)) + 1j*
+                 max(g_err_min, err_frac*imag(fstar)))
+    return fstar_err
+
+
+def err_spec():
+    errparms = {}
+    # a more complicated form can eventually be set up, but for now
+    # we use the same form for each harmonic
+    errparms[1] = [50 + 1j*10, 1e-2 + 1j*1e-2]
+    errparms[3] = errparms[1]
+    errparms[5] = errparms[1]
+    return errparms
+
+
 def cosd(phi):  # need to define matlab-like functions that accept degrees
     return np.cos(np.deg2rad(phi))
 
@@ -27,6 +49,14 @@ def sind(phi):  # need to define matlab-like functions that accept degrees
 
 def tand(phi):  # need to define matlab-like functions that accept degrees
     return np.tan(np.deg2rad(phi))
+
+
+def real(x):  # define real part of a number so we don't alays have to add np.
+    return np.real(x)
+
+
+def imag(x):  # as above, for imaginary part
+    return np.imag(x)
 
 
 def sauerbreyf(n, drho):
@@ -50,8 +80,8 @@ def grho3_bulk(delfstar):
 
 
 def phi_bulk(n, delfstar):
-    return -np.degrees(2*np.arctan(np.real(delfstar[n]) /
-                       np.imag(delfstar[n])))
+    return -np.degrees(2*np.arctan(real(delfstar[n]) /
+                       imag(delfstar[n])))
 
 
 def lamrho3_calc(grho3, phi):
@@ -98,25 +128,25 @@ def normdelfstar(n, dlam3, phi):
 
 
 def rhcalc(nh, dlam3, phi):
-    return np.real(normdelfstar(nh[0], dlam3, phi)) / \
-        np.real(normdelfstar(nh[1], dlam3, phi))
+    return real(normdelfstar(nh[0], dlam3, phi)) / \
+        real(normdelfstar(nh[1], dlam3, phi))
 
 
 def rh_from_delfstar(nh, delfstar):
     # nh here is the calc string (i.e., '353')
     n1 = int(nh[0])
     n2 = int(nh[1])
-    return (n2/n1)*np.real(delfstar[n1])/np.real(delfstar[n2])
+    return (n2/n1)*real(delfstar[n1])/real(delfstar[n2])
 
 
 def rdcalc(nh, dlam3, phi):
-    return -np.imag(normdelfstar(nh[2], dlam3, phi)) / \
-        np.real(normdelfstar(nh[2], dlam3, phi))
+    return -imag(normdelfstar(nh[2], dlam3, phi)) / \
+        real(normdelfstar(nh[2], dlam3, phi))
 
 
 def rd_from_delfstar(n, delfstar):
     # dissipation ratio calculated for the relevant harmonic
-    return -np.imag(delfstar[n])/np.real(delfstar[n])
+    return -imag(delfstar[n])/real(delfstar[n])
 
 
 def solve_onelayer(soln_input):
@@ -129,8 +159,8 @@ def solve_onelayer(soln_input):
     delfstar = soln_input['delfstar']
 
     # first pass at solution comes from rh and rd
-    rd_exp = -np.imag(delfstar[n3])/np.real(delfstar[n3])
-    rh_exp = (n2/n1)*np.real(delfstar[n1])/np.real(delfstar[n2])
+    rd_exp = -imag(delfstar[n3])/real(delfstar[n3])
+    rh_exp = (n2/n1)*real(delfstar[n1])/real(delfstar[n2])
 
     if 'prop_guess' in soln_input:
         soln1_guess = guess_from_props(soln_input['prop_guess'])
@@ -149,8 +179,8 @@ def solve_onelayer(soln_input):
 
     dlam3 = soln1['x'][0]
     phi = soln1['x'][1]
-    drho = (sauerbreym(n1, np.real(delfstar[n1])) /
-            np.real(normdelfstar(n1, dlam3, phi)))
+    drho = (sauerbreym(n1, real(delfstar[n1])) /
+            real(normdelfstar(n1, dlam3, phi)))
     grho3 = grho_from_dlam(3, drho, dlam3, phi)
 
     # we solve it again to get the Jacobian with respect to our actual
@@ -158,12 +188,12 @@ def solve_onelayer(soln_input):
     x0 = np.array([drho, grho3, phi])
 
     def ftosolve2(x):
-        return ([np.real(delfstar[n1]) -
-                np.real(delfstarcalc_onelayer(n1, x[0], x[1], x[2])),
-                np.real(delfstar[n2]) -
-                np.real(delfstarcalc_onelayer(n2, x[0], x[1], x[2])),
-                np.imag(delfstar[n3]) -
-                np.imag(delfstarcalc_onelayer(n3, x[0], x[1], x[2]))])
+        return ([real(delfstar[n1]) -
+                real(delfstarcalc_onelayer(n1, x[0], x[1], x[2])),
+                real(delfstar[n2]) -
+                real(delfstarcalc_onelayer(n2, x[0], x[1], x[2])),
+                imag(delfstar[n3]) -
+                imag(delfstarcalc_onelayer(n3, x[0], x[1], x[2]))])
 
     soln2 = least_squares(ftosolve2, x0)
     drho = soln2['x'][0]
@@ -182,7 +212,26 @@ def solve_onelayer(soln_input):
 
     soln_output = {'drho': drho, 'grho3': grho3, 'phi': phi, 'dlam3': dlam3,
                    'delfstar_calc': delfstar_calc, 'rh': rh, 'rd': rd}
+    
+    # now calculate the error in the solution
+    # start by putting the input uncertainties into a 3 element vector
+    delfstar_err = np.zeros(3)
+    delfstar_err[0] = real(soln_input['delfstar_err'][n1])
+    delfstar_err[1] = real(soln_input['delfstar_err'][n2])
+    delfstar_err[2] = imag(soln_input['delfstar_err'][n3])
+    
+    # use these uncertainties along with the Jacobian from the solution
+    # to determine the uncertainties in the measured parameters
+    jac = soln2['jac']
+    jac_inv = np.linalg.inv(jac)
+    err = {}
+    err_names=['drho', 'grho3', 'phi']
+    for k in [0, 1, 2]:
+        err[err_names[k]] = ((jac_inv[k, 0]*delfstar_err[0])**2 + 
+                            (jac_inv[k, 1]*delfstar_err[1])**2 +
+                            (jac_inv[k, 2]*delfstar_err[2])**2)**0.5
 
+    soln_output['err'] = err
     return soln_output
 
 
@@ -211,15 +260,8 @@ def QCManalyze(sample, parms):
 
     imagetype = parms.get('imagetype', 'svg')
 
-       # define uncertainties in freqency, dissipation
-    err = {}
-    err['f1'] = [50, 3e-3]
-    err['f3'] = [50, 3e-3]
-    err['f5'] = [50, 3e-3]
-
-    err['g1'] = [10, 3e-3]
-    err['g3'] = [10, 3e-3]
-    err['g5'] = [10, 3e-3]
+    # define uncertainties in freqency, dissipation
+    errparms = err_spec()
 
     # set the color dictionary for the different harmonics
     colors = {1: [1, 0, 0], 3: [0, 0.5, 0], 5: [0, 0, 1]}
@@ -246,13 +288,21 @@ def QCManalyze(sample, parms):
     # pick the points that we want to analyze and add them to the plots
     for dict in [bare, film]:
         dict['idx'] = pickpoints(Temp, nx, dict)
+        dict['fstar_err'] = {}
         idx = dict['idx']
         for n in nhplot:
-            t = dict['t'][idx]
-            f = dict['f'][n][idx]/n
-            g = dict['g'][n][idx]
-            (dict['f_ax'].plot(t, f, 'x', color=colors[n], label='n='+str(n)))
-            (dict['g_ax'].plot(t, g, 'x', color=colors[n], label='n='+str(n)))
+            dict['fstar_err'][n] = np.zeros(dict['n_all'], dtype=np.complex128)
+            for i in idx:
+                dict['fstar_err'][n][i] = fstar_err_calc(dict['fstar'][n][i])
+                t = dict['t'][i]
+                f = real(dict['fstar'][n][i])/n
+                g = imag(dict['fstar'][n][i])
+                f_err = real(dict['fstar_err'][n][i])/n
+                g_err = imag(dict['fstar_err'][n][i])
+                dict['f_ax'].errorbar(t, f, yerr=f_err, color=colors[n],
+                                      label='n='+str(n), marker='x')
+                dict['g_ax'].errorbar(t, g, yerr=g_err, color=colors[n],
+                                       label='n='+str(n), marker='x')
 
     # adjust nhcalc to account to only include calculations for for which
     # the data exist
@@ -264,13 +314,16 @@ def QCManalyze(sample, parms):
 
     # now calculate the frequency and dissipation shifts
     delfstar = {}
+    delfstar_err = {}
     for i in np.arange(nx):
         idxb = bare['idx'][i]
         idxf = film['idx'][i]
         delfstar[i] = {}
+        delfstar_err[i] ={}
         for n in nhplot:
-            delfstar[i][n] = (film['f'][n][idxf] - bare['f'][n][idxb] + 1j *
-                              (film['g'][n][idxf] - bare['g'][n][idxb]))
+            delfstar[i][n] = (film['fstar'][n][idxf] - 
+                              bare['fstar'][n][idxb])
+            delfstar_err[i][n] = fstar_err_calc(film['fstar'][n][idxf])
 
     # set up the property axes
     propfig = make_prop_axes(sample)
@@ -285,7 +338,7 @@ def QCManalyze(sample, parms):
         xdata = Temp
 
     # now do all of the calculations and plot the data
-    soln_input = {'err': err, 'nhplot': nhplot}
+    soln_input = {'nhplot': nhplot}
     results = {}
 
     # now we set calculation and plot all of the desired solutions
@@ -293,7 +346,8 @@ def QCManalyze(sample, parms):
         results[nh] = {'drho': np.zeros(nx), 'grho3': np.zeros(nx),
                        'phi': np.zeros(nx), 'dlam3': np.zeros(nx),
                        'lamrho3': np.zeros(nx), 'rd': {}, 'rh': {},
-                       'delfstar_calc': {}}
+                       'delfstar_calc': {}, 'drho_err': np.zeros(nx),
+                       'grho3_err': np.zeros(nx), 'phi_err': np.zeros(nx)}
         for n in nhplot:
             results[nh]['delfstar_calc'][n] = (np.zeros(nx,
                                                dtype=np.complex128))
@@ -305,12 +359,17 @@ def QCManalyze(sample, parms):
             # obtain the solution for the properties
             soln_input['nh'] = nh
             soln_input['delfstar'] = delfstar[i]
+            soln_input['delfstar_err'] = delfstar_err[i]
             soln = solve_onelayer(soln_input)
 
             results[nh]['drho'][i] = soln['drho']
             results[nh]['grho3'][i] = soln['grho3']
             results[nh]['phi'][i] = soln['phi']
             results[nh]['dlam3'][i] = soln['dlam3']
+            results[nh]['drho_err'][i] = soln['err']['drho']
+            results[nh]['grho3_err'][i] = soln['err']['grho3']
+            results[nh]['phi_err'][i] = soln['err']['phi']
+
             for n in nhplot:
                 results[nh]['delfstar_calc'][n][i] = (
                  soln['delfstar_calc'][n])
@@ -320,9 +379,9 @@ def QCManalyze(sample, parms):
             # add actual values of delf, delg for each harmonic to the
             # solution check figure
             for n in nhplot:
-                checkfig[nh]['delf_ax'].plot(xdata[i], np.real(delfstar[i][n])
+                checkfig[nh]['delf_ax'].plot(xdata[i], real(delfstar[i][n])
                                              / n, '+', color=colors[n])
-                checkfig[nh]['delg_ax'].plot(xdata[i], np.imag(delfstar[i][n]),
+                checkfig[nh]['delg_ax'].plot(xdata[i], imag(delfstar[i][n]),
                                              '+', color=colors[n])
             # add experimental rh, rd to solution check figure
             checkfig[nh]['rh_ax'].plot(xdata[i], rh_from_delfstar(nh,
@@ -341,10 +400,10 @@ def QCManalyze(sample, parms):
         # add calculated delf and delg to solution check figures
         for n in nhplot:
             (checkfig[nh]['delf_ax'].plot(xdata,
-             np.real(results[nh]['delfstar_calc'][n]) / n, '-',
+             real(results[nh]['delfstar_calc'][n]) / n, '-',
              color=colors[n], label='n='+str(n)))
             (checkfig[nh]['delg_ax'].plot(xdata,
-             np.imag(results[nh]['delfstar_calc'][n]), '-', color=colors[n],
+             imag(results[nh]['delfstar_calc'][n]), '-', color=colors[n],
              label='n='+str(n)))
 
         # add legen to the solution check figures
@@ -360,10 +419,16 @@ def QCManalyze(sample, parms):
         drho = 1000*results[nh]['drho']
         grho3 = results[nh]['grho3']/1000
         phi = results[nh]['phi']
+        drho_err = 1000*results[nh]['drho_err']
+        grho3_err = results[nh]['grho3_err']/1000
+        phi_err = results[nh]['phi_err']
         
-        propfig['drho_ax'].plot(xdata, drho, marker=markers[nh], label=nh)
-        propfig['grho_ax'].plot(xdata, grho3, marker=markers[nh], label=nh)
-        propfig['phi_ax'].plot(xdata, phi, marker=markers[nh], label=nh)
+        propfig['drho_ax'].errorbar(xdata, drho, yerr=drho_err,
+                                    marker=markers[nh], label=nh)
+        propfig['grho_ax'].errorbar(xdata, grho3, yerr=grho3_err,
+                                    marker=markers[nh], label=nh)
+        propfig['phi_ax'].errorbar(xdata, phi, yerr=phi_err,
+                                    marker=markers[nh], label=nh)
         output_data = np.stack((xdata, drho, grho3, phi), axis=-1)
         np.savetxt(base_fig_name+'_'+nh+'.txt', output_data, 
                    delimiter=',', header='xdata, drho, grho, phi')
@@ -474,12 +539,10 @@ def process_raw(sample, data_type):
 
     # extract frequency information
     dict['t'] = freq[:, 0]
-    dict['f'] = {}
-    dict['g'] = {}
+    dict['fstar'] = {}
 
     for n in nhplot:        
-        dict['f'][n] = freq[:, n] - sample['freqref'][n]
-        dict['g'][n] = freq[:, n+1]
+        dict['fstar'][n] = freq[:, n] +1j*freq[:, n+1] - sample['freqref'][n]
 
     #  find all the time points between specified by timerange
     #  if the min and max values for the time range are equal, we use
@@ -494,7 +557,7 @@ def process_raw(sample, data_type):
     dict['n_exist'] = np.array([]).astype(int)
 
     for n in nhplot:
-        if not all(np.isnan(dict['f'][n])):
+        if not all(np.isnan(dict['fstar'][n])):
             dict['n_exist'] = np.append(dict['n_exist'], n)
             
     # make the figure with its axis
@@ -516,8 +579,8 @@ def process_raw(sample, data_type):
     # plot the raw data
     for n in nhplot:
         t = dict['t'][dict['idx_all']]
-        f = dict['f'][n][dict['idx_all']]/n
-        g = dict['g'][n][dict['idx_all']]
+        f = real(dict['fstar'][n][dict['idx_all']])/n
+        g = imag(dict['fstar'][n][dict['idx_all']])
         (dict['f_ax'].plot(t, f, color=colors[n], label='n='+str(n)))
         (dict['g_ax'].plot(t, g, color=colors[n], label='n='+str(n)))
 
@@ -561,8 +624,8 @@ def make_check_axes(sample, nh):
 def bulk_guess(delfstar):
     # get the bulk solution for grho and phi
     grho3 = (np.pi*zq*abs(delfstar[3])/f1) ** 2
-    phi = -np.degrees(2*np.arctan(np.real(delfstar[3]) /
-                      np.imag(delfstar[3])))
+    phi = -np.degrees(2*np.arctan(real(delfstar[3]) /
+                      imag(delfstar[3])))
 
     # calculate rho*lambda
     lamrho3 = np.sqrt(grho3)/(3*f1*cosd(phi/2))
