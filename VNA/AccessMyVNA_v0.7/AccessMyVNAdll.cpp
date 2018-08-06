@@ -1,11 +1,14 @@
 // AccessMyVNAdll.cpp : Defines the initialization routines for the DLL.
 //
-
 #include "stdafx.h"
 #include <complex>
 #include "AccessMyVNAdll.h"
 #include "process.h"
 #include "comutil.h"
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+
 #define _WIN32_DCOM 
 
 #ifdef _DEBUG
@@ -651,9 +654,15 @@ __declspec(dllexport) int _stdcall MyVNASetFequencies(double f1, double f2, int 
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////
 // Get results
-
-__declspec(dllexport) int _stdcall MyVNAGetScanData(int nStart, int nEnd, int nWhata, int nWhatb, double *pDataA, double *pDataB )
+//__declspec(dllexport) int _stdcall MyVNAGetScanData(int nStart, int nEnd, int nWhata, int nWhatb, double *pDataA, double *pDataB )
+__declspec(dllexport) int _stdcall MyVNAGetScanData(int nStart, int nEnd, int nWhata, int nWhatb)
 {
+	char buff[200];//set max number of characters in path
+	_fullpath(buff, "", 200);//extract current directory
+	std::string rel_path1(buff)
+	std::string scandata_csv = "\\scandata.csv";
+	std::string fullpath_scandata_csv = rel_path1.append(scandata_csv);
+
 	AFX_MANAGE_STATE(AfxGetStaticModuleState());
 	int errcode = 1;
 	int count = nEnd-nStart+1;
@@ -685,14 +694,23 @@ __declspec(dllexport) int _stdcall MyVNAGetScanData(int nStart, int nEnd, int nW
 
 	if( errcode == 0 )
 	{
+		ofstream fout;
+		fout.open(fullpath_scandata_csv);
+		//copy(dG1, dG1 + datapoints, ostream_iterator<double>(f21, "\n"));
+
 		double * pDataAtemp = (double *)A.parray->pvData;
 		double * pDataBtemp = (double *)B.parray->pvData;
 		if( nWhata >= -1 )
 			for( int i=0; i<count; i++)
-				pDataA[i] = pDataAtemp[i];
+				fout << pDataAtemp[i] << "," << std::endl;
+				//pDataA[i] = pDataAtemp[i];
+		fout << "\n";
 		if( nWhatb >= -1 )
 			for( int i=0; i<count; i++)
-				pDataB[i] = pDataBtemp[i];
+				fout << pDataBtemp[i] << "," << std::endl;
+				//pDataB[i] = pDataBtemp[i];
+		
+		fout.close();
 	}
 	if (pBArray != NULL )
 		SafeArrayDestroy( pBArray );

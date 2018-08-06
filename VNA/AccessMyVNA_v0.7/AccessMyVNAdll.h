@@ -179,7 +179,8 @@ __declspec(dllexport) int _stdcall MyVNAShowWindow(int nValue);
 // VARIANT a and b must encapsulate safearrays of doubles of sufficient size for the output and be zero indexed
 // even if one or other ( a or b ) are not in use - i.e. DISPLAY_NOTHING is used for it, then an suitable
 // variant must be provided still
-__declspec(dllexport) int _stdcall MyVNAGetScanData(int nStart, int nEnd, int nWhata, int nWhatb, double *pDataA, double *pDataB );
+__declspec(dllexport) int _stdcall MyVNAGetScanData(int nStart, int nEnd, int nWhata, int nWhatb);
+//__declspec(dllexport) int _stdcall MyVNAGetScanData(int nStart, int nEnd, int nWhata, int nWhatb, double *pDataA, double *pDataB );
 // flags for nWhat in GetScanData
 // the first is a dummy - used for nWhata or nWHatb to cause no data to be retrieved for that 
 // case ( a or b) hence to retrieve just one parameter set in a call, set nWhatA or nWhatB to the
