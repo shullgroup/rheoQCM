@@ -1118,8 +1118,11 @@ class QCMApp(QMainWindow):
         ## connect axes event
         self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
 
+        # set xlabel
+        self.mpl_set_faxis(axG)
+
         # update 
-        self.ui.lineEdit_spectra_fit_span.setText(str((f[-1]-f[0] / 1000))) # in kHz
+        self.ui.lineEdit_spectra_fit_span.setText(MathModules.num2str(((f[-1]-f[0]) / 1000), precision=5)) # in kHz
 
     def spectra_fit_axesevent_disconnect(self, event):
         print('disconnect')
@@ -1143,6 +1146,38 @@ class QCMApp(QMainWindow):
         mpl.ax[0].cidx = mpl.ax[0].callbacks.connect('xlim_changed', fun)
         mpl.ax[0].cidy = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('ylim_changed', fun)
     
+    def mpl_set_faxis(self, ax):
+        '''
+        set freq axis tack as: [-1/2*span, 1/2*span] and
+        freq axis label as: f (+cnter Hz)
+        '''
+
+        # get xlim
+        xlim = ax.get_xlim()
+        print(xlim)
+        center = (xlim[0] + xlim[1]) / 2
+        span = xlim[1] - xlim[0]
+
+        # # get ticks
+        # locs = ax.get_xticks()
+        # labels = np.array(locs) - center
+        # # set ticks
+        # ax.set_xticklabels([str(l) for l in labels])
+
+        # use offset
+        # ax.ticklabel_format(useOffset=center, axis='x')
+        
+        # manually set
+        ax.set_xticks([xlim[0], center, xlim[1]])
+        ax.set_xticklabels([str(-span * 0.5), '0', str(span * 0.5)])
+        # set xlabel
+        ax.set_xlabel('f (+{} Hz)'.format(center))
+
+
+
+
+
+
     def on_clicked_set_temp_sensor(self, checked):
         # below only runs when accvna is available
         if self.accvna: # add not for testing code    

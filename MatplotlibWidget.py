@@ -53,7 +53,7 @@ class AxesLockY(Axes):
     name = 'AxeslockY'
     def drag_pan(self, button, key, x, y):
         Axes.drag_pan(self, button, key, 'x', y) # pretend key=='x
-        
+
 register_projection(AxesLockY)
 
 class MatplotlibWidget(QWidget):
@@ -326,6 +326,10 @@ class MatplotlibWidget(QWidget):
         # set label of ax[1]
         self.set_ax(self.ax[0], xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
         self.set_ax(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
+
+        # self.ax[0].xaxis.set_major_locator(plt.AutoLocator())
+        # self.ax[0].xaxis.set_major_locator(plt.LinearLocator())
+        # self.ax[0].xaxis.set_major_locator(plt.MaxNLocator(3))
 
         self.ax[0].margins(x=0)
         self.ax[1].margins(x=0)

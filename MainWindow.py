@@ -3158,7 +3158,7 @@ class Ui_MainWindow(object):
         self.groupBox_spectra.setTitle(_translate("MainWindow", "Spectra"))
         self.label_18.setText(_translate("MainWindow", "Show: "))
         self.radioButton_spectra_showGp.setText(_translate("MainWindow", "Gp"))
-        self.radioButton_spectra_showBp.setText(_translate("MainWindow", "W/ Bp"))
+        self.radioButton_spectra_showBp.setText(_translate("MainWindow", "Gp+Bp"))
         self.radioButton_spectra_showpolar.setText(_translate("MainWindow", "Polar plot"))
         self.checkBox_spectra_shoechi.setText(_translate("MainWindow", "Χsq "))
         self.label_10.setText(_translate("MainWindow", "Select item or row/column headers to plot"))

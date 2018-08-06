@@ -4537,7 +4537,7 @@ border-image: url(:/button/rc/plus_p.svg);
               <item>
                <widget class="QRadioButton" name="radioButton_spectra_showBp">
                 <property name="text">
-                 <string>W/ Bp</string>
+                 <string>Gp+Bp</string>
                 </property>
                 <property name="checked">
                  <bool>false</bool>
