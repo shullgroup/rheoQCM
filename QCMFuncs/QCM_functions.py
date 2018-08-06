@@ -250,9 +250,6 @@ def QCManalyze(sample, parms):
 
     imagetype = parms.get('imagetype', 'svg')
 
-    # define uncertainties in freqency, dissipation
-    errparms = err_spec()
-
     # set the color dictionary for the different harmonics
     colors = {1: [1, 0, 0], 3: [0, 0.5, 0], 5: [0, 0, 1]}
 
