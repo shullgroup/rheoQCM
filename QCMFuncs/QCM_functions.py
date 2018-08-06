@@ -228,7 +228,7 @@ def solve_onelayer(soln_input):
 def QCManalyze(sample, parms):
     # read in the optional inputs, assigning default values if not assigned
     nhplot = sample.get('nhplot', [1, 3, 5])
-    firstline = sample.get('firstline', 0)
+    # firstline = sample.get('firstline', 0)
     sample['xlabel'] = sample.get('xlabel',  't (min.)')
     Temp = np.array(sample.get('Temp', [22]))
 
