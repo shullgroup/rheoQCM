@@ -153,7 +153,10 @@ def solve_onelayer(soln_input):
     rh_exp = (n2/n1)*real(delfstar[n1])/real(delfstar[n2])
 
     if 'prop_guess' in soln_input:
-        soln1_guess = guess_from_props(soln_input['prop_guess'])
+        drho = soln_input['propguess']['drho']
+        grho3 = soln_input['propguess']['grho3']
+        phi = soln_input['propguess']['phi']
+        soln1_guess = guess_from_props(drho, grho3, phi)
     elif rd_exp > 0.5:
         soln1_guess = bulk_guess(delfstar)
     else:
@@ -228,7 +231,7 @@ def solve_onelayer(soln_input):
 def QCManalyze(sample, parms):
     # read in the optional inputs, assigning default values if not assigned
     nhplot = sample.get('nhplot', [1, 3, 5])
-    firstline = sample.get('firstline', 0)
+    # firstline = sample.get('firstline', 0)
     sample['xlabel'] = sample.get('xlabel',  't (min.)')
     Temp = np.array(sample.get('Temp', [22]))
 
@@ -249,9 +252,6 @@ def QCManalyze(sample, parms):
             os.mkdir('figures')
 
     imagetype = parms.get('imagetype', 'svg')
-
-    # define uncertainties in freqency, dissipation
-    errparms = err_spec()
 
     # set the color dictionary for the different harmonics
     colors = {1: [1, 0, 0], 3: [0, 0.5, 0], 5: [0, 0, 1]}
