@@ -153,7 +153,10 @@ def solve_onelayer(soln_input):
     rh_exp = (n2/n1)*real(delfstar[n1])/real(delfstar[n2])
 
     if 'prop_guess' in soln_input:
-        soln1_guess = guess_from_props(soln_input['prop_guess'])
+        drho = soln_input['propguess']['drho']
+        grho3 = soln_input['propguess']['grho3']
+        phi = soln_input['propguess']['phi']
+        soln1_guess = guess_from_props(drho, grho3, phi)
     elif rd_exp > 0.5:
         soln1_guess = bulk_guess(delfstar)
     else:
