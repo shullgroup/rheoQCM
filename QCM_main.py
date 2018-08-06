@@ -24,9 +24,12 @@ from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
 from modules import UIModules, MathModules
 
+from MatplotlibWidget import MatplotlibWidget
+
+
 if UIModules.system_check() == 'win32': # windows
     try:
-        from modules.AccessMyVNA_dump import AccessMyVNA
+        from modules.AccessMyVNA_dummy import AccessMyVNA
         print(AccessMyVNA)
         # test if MyVNA program is available
         with AccessMyVNA() as accvna:
@@ -35,8 +38,9 @@ if UIModules.system_check() == 'win32': # windows
     except Exception as e: # no myVNA connected. Analysis only
         print('Failed to import AccessMyVNA module!')
         print(e)
-
-from MatplotlibWidget import MatplotlibWidget
+else: # linux or MacOS
+    # for test only
+    from modules.AccessMyVNA_dummy import AccessMyVNA
 
 class PeakTracker:
     def __init__(self):
@@ -85,7 +89,7 @@ class QCMApp(QMainWindow):
                 pass
 
         else: # other system, data analysis only
-            pass
+            self.accvna = AccessMyVNA() # for test only
         print(self.accvna)
         self.main()
         self.load_settings()
@@ -320,7 +324,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_tempmodule.activated.connect(self.update_widget)
 
         # add comBox_tempdevice to treeWidget_settings_settings_hardware
-        if self.accvna:
+        if self.accvna and self.system == 'win32':
             self.create_combobox(
                 'comBox_tempdevice',
                 tempDevices.dict_available_devs(settings_init['devices_dict']),  
@@ -719,13 +723,16 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit, 
             axtype='sp_fit',
-            showtoolbar=('Back', 'Forward', 'Zoom')
+            showtoolbar=('Back', 'Forward', 'Pan', 'Zoom')
             ) #TODO add 'Pan' and figure out how to identify mouse is draging 
         # self.ui.mpl_spectra_fit.update_figure()
         self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
         # connect signal
-        self.ui.mpl_spectra_fit.ax[0].cid = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('xlim_changed', self.on_fit_lims_change)
-
+        self.ui.mpl_spectra_fit.ax[0].cidx = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('xlim_changed', self.on_fit_lims_change)
+        self.ui.mpl_spectra_fit.ax[0].cidy = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('ylim_changed', self.on_fit_lims_change)
+        self.ui.mpl_spectra_fit.canvas.mpl_connect('button_press_event', self.spectra_fit_axesevent_disconnect)
+        self.ui.mpl_spectra_fit.canvas.mpl_connect('button_release_event', self.spectra_fit_axesevent_connect)
+            
         # add figure mpl_countour1 into frame_spectra_mechanics_contour1
         self.ui.mpl_countour1 = MatplotlibWidget(
             parent=self.ui.frame_spectra_mechanics_contour1, 
@@ -1039,36 +1046,103 @@ class QCMApp(QMainWindow):
             accvna.set_steps_freq()
             ret, f, G, B = accvna.single_scan()
 
-        # f = G = B = range(10)
+        ## disconnect axes event
+        self.mpl_disconnect_cid(self.ui.mpl_spectra_fit)        
         self.ui.mpl_spectra_fit.update_data(ls=['lG'], xdata=[f], ydata=[G])
         self.ui.mpl_spectra_fit.update_data(ls=['lB'], xdata=[f], ydata=[B])
+        ## connect axes event
+        self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
 
         self.ui.mpl_spectra_fit_polar.update_data(ls=['l'], xdata=[G], ydata=[B])
 
     def on_fit_lims_change(self, axes):
-        ax1 = self.ui.mpl_spectra_fit.ax[0]
-        ax2 = self.ui.mpl_spectra_fit.ax[1]
+        print('on lim changed')
+        axG = self.ui.mpl_spectra_fit.ax[0]
+        axB = self.ui.mpl_spectra_fit.ax[1]
+        axP = self.ui.mpl_spectra_fit_polar.ax[0]
 
-        # print('g', ax1.get_contains())
-        # print('r', ax1.contains('button_release_event'))
-        # print('p', ax1.contains('button_press_event'))
+        # print('g', axG.get_contains())
+        # print('r', axG.contains('button_release_event'))
+        # print('p', axG.contains('button_press_event'))
 
-        # data lims [xlim_min, xlim_max]
-        dlims = MathModules.datarange(self.ui.mpl_spectra_fit.l['lG'][0].get_xdata())
+        # data lims [min, max]
+        dflims = MathModules.datarange(self.ui.mpl_spectra_fit.l['lB'][0].get_xdata())
+        dGlims = MathModules.datarange(self.ui.mpl_spectra_fit.l['lG'][0].get_ydata())
+        dBlims = MathModules.datarange(self.ui.mpl_spectra_fit.l['lB'][0].get_ydata())
         # get axes lims
-        xlims = ax1.get_xlim()
+        flims = axG.get_xlim()
+        flims = list(flims)
+        print('get_navigate_mode()', axG.get_navigate_mode())
+        # print(flims[1]-flims[0])
+        print('flims', flims)
+        print(dflims)
+        # print(dflims[1]-dflims[0])
+        
+        print(axG.get_navigate_mode())
+        if axG.get_navigate_mode() == 'PAN': # pan
+            # set a new x range: combine span of dflims and flims
+            flims[0] = min([flims[0], dflims[0]])
+            flims[1] = max([flims[1], dflims[1]])
+        elif axG.get_navigate_mode() == 'ZOOM': # zoom
+            pass
+        else: # axG.get_navigate_mode() == 'None'
+            pass
+        print('flims', flims)
 
-        # ax1.autoscale(axis='y')
-        # ax2.autoscale(axis='y')
-        # axes.autoscale(axis='y')
-        if dlims != xlims:
-            self.ui.mpl_spectra_fit.ax[0].callbacks.disconnect(self.ui.mpl_spectra_fit.ax[0].cid)
-            ax1.autoscale(axis='y')
-            ax2.autoscale(axis='y')
-            # axes.autoscale(axis='y')
-            # ax1.set_xlim(4e6, 6e6)
-            self.ui.mpl_spectra_fit.ax[0].cid = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('xlim_changed', self.on_fit_lims_change)
+        # accvna setup frequency
+        self.accvna.SetFequencies(f1=flims[0], f2=flims[1], nFlags=1)
+        ret, f, G, B = self.accvna.single_scan()
+        
+        ### reset x,y lim
+        ## disconnect axes event
+        self.mpl_disconnect_cid(self.ui.mpl_spectra_fit)
 
+        # axG.autoscale(axis='y')
+        # axB.autoscale(axis='y')
+
+        # mpl_spectra_fit 
+        # clear lines
+        self.ui.mpl_spectra_fit.clr_alldata()
+        # plot data
+        self.ui.mpl_spectra_fit.update_data(ls=['lG', 'lB'], xdata=[f, f], ydata=[G, B])
+
+        # mpl_spectra_fit_polar
+        # clear lines
+        self.ui.mpl_spectra_fit_polar.clr_alldata()
+        # plot data
+        self.ui.mpl_spectra_fit_polar.update_data(ls=['l'], xdata=[G], ydata=[B])
+        axG.set_xlim(f[0], f[-1])
+        axG.set_ylim(min(G), max(G))
+        axB.set_ylim(min(B), max(B))
+
+        ## connect axes event
+        self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
+
+        # update 
+        self.ui.lineEdit_spectra_fit_span.setText(str((f[-1]-f[0] / 1000))) # in kHz
+
+    def spectra_fit_axesevent_disconnect(self, event):
+        print('disconnect')
+        self.mpl_disconnect_cid(self.ui.mpl_spectra_fit)
+
+    def spectra_fit_axesevent_connect(self, event):
+        print('connect')
+        self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
+        # since pan changes xlim before button up, change ylim a little to trigger ylim_changed
+        ax = self.ui.mpl_spectra_fit.ax[0]
+        print('cn', ax.get_navigate_mode())
+        if ax.get_navigate_mode() == 'PAN':
+            ylim = ax.get_ylim()
+            ax.set_ylim(ylim[0], ylim[1] * 1.01)
+
+    def mpl_disconnect_cid(self, mpl):
+        mpl.ax[0].callbacks.disconnect(mpl.ax[0].cidx)
+        mpl.ax[0].callbacks.disconnect(mpl.ax[0].cidy)
+
+    def mpl_connect_cid(self, mpl, fun):
+        mpl.ax[0].cidx = mpl.ax[0].callbacks.connect('xlim_changed', fun)
+        mpl.ax[0].cidy = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('ylim_changed', fun)
+    
     def on_clicked_set_temp_sensor(self, checked):
         # below only runs when accvna is available
         if self.accvna: # add not for testing code    

@@ -1,80 +1,6 @@
 
-import os
-import signal
 import numpy as np
-from ctypes import *
-# from ctypes import windll, WinDLL, wintypes, WINFUNCTYPE, POINTER, c_int, c_double, byref, Array, cast, get_last_error, WinError
-from ctypes.wintypes import HWND, LONG, BOOL, LPARAM, LPDWORD, DWORD, LPWSTR
-# from comtypes.safearray import safearray_as_ndarray
-
-import numpy.ctypeslib as clib
-import sys, struct, time
-
-import win32ui
-import win32process
-
-import ctypes
-
-###### dump data
 import pandas as pd
-
-
-try: # run from main
-    from modules.retrying import retry
-except: # run by itself
-    from retrying import retry
-
-print(sys.version)
-print(struct.calcsize('P') * 8)
-
-
-# constant
-WM_USER = 0x0400                 # WM_USER   0x0400
-WM_COMMAND = 0x0111                # WM_COMMAND 0x0111
-MESSAGE_SCAN_ENDED = WM_USER + 0x1234  # MESSAGE_SCAN_ENDED (WM_USER+0x1234)
-# retry decorator
-wait_fixed = 10
-stop_max_attempt_number = 10
-stop_max_delay=10000
-
-# window name
-win_name = u'myVNA - Reflection mode "myVNA" [Embedded] '
-# win_name = 'AccessMyVNA'
-
-
-#region functions
-
-def get_hWnd(win_name=win_name):
-    try:
-        hWnd = win32ui.FindWindow(None, win_name).GetSafeHwnd()
-        pid = win32process.GetWindowThreadProcessId(hWnd)[1]
-    except:
-        hWnd = None
-    print('hWnd', hWnd, '"' + win_name + '"') 
-    return hWnd
-
-    # hWnd = win32ui.GetMainFrame.GetSafeHwnd
-
-def get_pid(hWnd):
-    if not hWnd:
-        print('PID did not find!')
-        pid = None        
-    else:
-        pid = win32process.GetWindowThreadProcessId(hWnd)[1]
-
-    return pid
-
-def close_win():
-    # close myVNA initiated by AccessMyVNA
-    hWnd = get_hWnd()
-    print('hWnd', hWnd)
-    pid = get_pid(hWnd)
-    print('pid', pid)
-    if pid:
-        os.kill(pid, signal.SIGTERM)
-
-#endregion
-
 
 class AccessMyVNA():
     '''
@@ -82,8 +8,8 @@ class AccessMyVNA():
     '''
     def __init__(self):
         super(AccessMyVNA, self).__init__()
-        self.scandata_a = []
-        self.scandata_b = []
+        self.f1 = None
+        self.f2 = None
 
     # use __enter__ __exit__ for with or use try finally
     def __enter__(self):
@@ -98,12 +24,10 @@ class AccessMyVNA():
 
     def Init(self):
         # close vna window
-        close_win()
         return 0
 
     def Close(self):
-        ret = 0
-        pass
+        return 0
         
     def ShowWindow(self, nValue=1):
         '''
@@ -129,7 +53,6 @@ class AccessMyVNA():
         return ret, nAverage
         
 
-    @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
     def GetDoubleArray(self, nWhat=0, nIndex=0, nArraySize=9):
         '''
         Get frequency nWhat = GET_SCAN_FREQ_DATA 0
@@ -139,7 +62,7 @@ class AccessMyVNA():
         elif nWhat == 5:
             ndResult = [1, 2]
         rt = 0
-        return rt, ndRes
+        return rt, ndResult
 
     def SetDoubleArray(self, nWhat=0, nIndex=0, nArraySize=9, nData=[]):
         '''
@@ -186,6 +109,8 @@ class AccessMyVNA():
         '''
         nFlags: 1 = start / stop
         '''
+        self.f1 = f1
+        self.f2 = f2
         ret = 0
         return ret, f1, f2
     
@@ -196,11 +121,17 @@ class AccessMyVNA():
             df = pd.read_csv('data.scv')
         except:
             df = pd.read_csv('./modules/data.csv', header=1)
+        df.columns = ['f', 'G', 'B']
+        if self.f1 and self.f2:
+            df = df.loc[lambda df: (df.f>=self.f1) & (df.f<=self.f2), :]
+        # print(df.head(2))
         data = df.values
+            
         f = data[:, 0]
         G = data[:, 1]
         B = data[:, 2]
-        
+
+
         def assigndata(n):
             if n == -1:
                 return f
@@ -226,7 +157,6 @@ class AccessMyVNA():
         self.SingleScan()
         self.Autoscale()
         # wait for some time
-        time.sleep(0.5)
         ret, nSteps = self.GetScanSteps()
         ret, f, _ = self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=-2)
         # time.sleep(1)

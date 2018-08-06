@@ -307,15 +307,21 @@ class MatplotlibWidget(QWidget):
             [], [], 
             color='k'
         ) # B fit
-        self.l['lf'] = self.ax[1].scatter(
+        self.l['lf'] = self.ax[1].plot(
             [], [],
             marker='x',
+            linestyle='none',
             color='k'
         ) # f: G peak
         self.l['lg'] = self.ax[1].plot(
             [], [],
             color='k'
         ) # g: gamma (fwhm)
+
+        self.l['lsp'] = self.ax[1].plot(
+            [], [],
+            color='k'
+        ) # peak freq span
 
         # set label of ax[1]
         self.set_ax(self.ax[0], xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
@@ -348,6 +354,11 @@ class MatplotlibWidget(QWidget):
             [], [], 
             color='k'
         ) # fit
+
+        self.l['lfitsp'] = self.ax[0].plot(
+            [], [], 
+            color='k'
+        ) # fit in span range
 
         # set label of ax[1]
         self.set_ax(self.ax[0], xlabel=r'$G_P$ (mS)',ylabel=r'$B_P$ (mS)')
@@ -553,10 +564,19 @@ class MatplotlibWidget(QWidget):
             axs.add(self.l[l][0].axes)
 
         for ax in axs:
+            print(ax)
             ax.relim()
             ax.autoscale_view(True,True,True)
         self.canvas.draw()
 
+    def clr_alldata(self):
+        ''' 
+        just clear all lines in .l
+        '''
+        for key in self.l:
+            self.l[key][0].set_xdata([])
+            self.l[key][0].set_ydata([])
+        self.canvas.draw()
 
     def new_data(self, xdata=[], ydata=[], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         ''' 
