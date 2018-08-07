@@ -24,7 +24,7 @@ def sample_dict():
         'filmtrange': [0, 1000],
         'Temp': [30, 60, 80, 90, 100, 110, 120, 130, 140],  
         'nhplot': [1, 3, 5],
-        'nhcalc': {[3, 5, 5]}
+        'nhcalc': ['355']
         }
 
     samplename = 'PS_192k'
@@ -37,7 +37,7 @@ def sample_dict():
         'filmtrange': [0, 1000],
         'Temp': [30, 60, 80, 90, 100, 110, 120, 130, 140, 150],  
         'nhplot': [3, 5],
-        'nhcalc': {[3, 5, 5]}
+        'nhcalc': ['355']
         }
 
     return sample
