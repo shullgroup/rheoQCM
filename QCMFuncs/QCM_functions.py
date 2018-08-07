@@ -476,7 +476,7 @@ def pickpoints(Temp, nx, dict):
         # make the correct figure active
         plt.figure(dict['rawfigname'])
         print('click on plot to pick ', str(nx), 'points')
-        pts = plt.ginput(nx)
+        pts = plt.ginput(nx, timeout=0)
         pts = np.array(pts)[:, 0]
         for n in np.arange(nx):
             idx_out = np.append(idx_out, (np.abs(pts[n] - t_in)).argmin())
