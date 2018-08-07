@@ -432,7 +432,9 @@ def QCManalyze(sample, parms):
     propfig['figure'].tight_layout()
     propfig['figure'].savefig(base_fig_name+'_prop.'+imagetype)
 
-    print('done with ', base_fig_name)
+    print('done with ', base_fig_name, 'close plots with ctrl+w')
+
+    plt.show()
 
 
 def idx_in_range(t, t_range):
