@@ -47,8 +47,8 @@ class PeakTracker:
         self.f0 = None
         self.gamma0 = None
         self.freq = None
-        self.conductance = None
-        self.susceptance = None
+        self.G = None # conductance
+        self.B = None # susceptance
         self.refit_flag = 0
         self.refit_counter = 1
 
@@ -1039,9 +1039,33 @@ class QCMApp(QMainWindow):
         # reset slider to 1
         self.ui.horizontalSlider_spectra_fit_spanctrl.setValue(0)
 
+
+    def span_check(self, harm, f1, f2):
+        '''
+        check if lower limit 'f1' and upper limit 'f2' in base freq +/- BW of harmonic 'harm'
+        if out of the limit, return the part in the range
+        and show alert in statusbar
+        '''
+        # get base freq
+        fbase = self.settings['comboBox_base_frequency'] * 1e6 # in Hz
+        # get BW
+        BW = self.settings['comboBox_bandwidth'] * 1e6 # in Hz
+        bf1, bf2 = (fbase - BW) * harm, (fbase + BW) * harm
+
+        # check f1, and f2
+        if f1 < bf1: # f1 out of limt
+            f1 = bf1
+            #TODO update statusbar 'lower bond out of limit and reseted. (You can increase the bandwidth in settings)'
+        elif f2 > bf2: # f2 out of limt
+            f2 = bf2
+            #TODO update statusbar 'upper bond out of limit and reseted. (You can increase the bandwidth in settings)'
+
+        return f1, f2
+
+
     def on_clicked_pushButton_spectra_fit_refresh(self):
         print('accvna', self.accvna)
-        #TODO get parameters from current setup: harm_tab
+        #TODOO get parameters from current setup: harm_tab
         with self.accvna as accvna:
             accvna.set_steps_freq()
             ret, f, G, B = accvna.single_scan()
@@ -1054,6 +1078,9 @@ class QCMApp(QMainWindow):
         self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
 
         self.ui.mpl_spectra_fit_polar.update_data(ls=['l'], xdata=[G], ydata=[B])
+        
+        # update lineedit_fit_span
+        self.update_lineedit_fit_span(f)
 
     def on_fit_lims_change(self, axes):
         print('on lim changed')
@@ -1066,31 +1093,28 @@ class QCMApp(QMainWindow):
         # print('p', axG.contains('button_press_event'))
 
         # data lims [min, max]
-        dflims = MathModules.datarange(self.ui.mpl_spectra_fit.l['lB'][0].get_xdata())
-        dGlims = MathModules.datarange(self.ui.mpl_spectra_fit.l['lG'][0].get_ydata())
-        dBlims = MathModules.datarange(self.ui.mpl_spectra_fit.l['lB'][0].get_ydata())
+        dflim1, dflim2 = MathModules.datarange(self.ui.mpl_spectra_fit.l['lB'][0].get_xdata())
         # get axes lims
-        flims = axG.get_xlim()
-        flims = list(flims)
+        flim1, flim2 = axG.get_xlim()
+        # check lim with BW
+        flim1, flim2 = self.span_check(harm=self.peak_tracker.harmonic_tab, f1=flim1, f2=flim2)
         print('get_navigate_mode()', axG.get_navigate_mode())
-        # print(flims[1]-flims[0])
-        print('flims', flims)
-        print(dflims)
-        # print(dflims[1]-dflims[0])
+        print('flims', flim1, flim2)
+        print(dflim1, dflim2)
         
         print(axG.get_navigate_mode())
         if axG.get_navigate_mode() == 'PAN': # pan
             # set a new x range: combine span of dflims and flims
-            flims[0] = min([flims[0], dflims[0]])
-            flims[1] = max([flims[1], dflims[1]])
+            flim1 = min([flim1, dflim1])
+            flim2 = max([flim2, dflim2])
         elif axG.get_navigate_mode() == 'ZOOM': # zoom
             pass
         else: # axG.get_navigate_mode() == 'None'
             pass
-        print('flims', flims)
+        print('flim', flim1, flim2)
 
         # accvna setup frequency
-        self.accvna.SetFequencies(f1=flims[0], f2=flims[1], nFlags=1)
+        self.accvna.SetFequencies(f1=flim1, f2=flim2, nFlags=1)
         ret, f, G, B = self.accvna.single_scan()
         
         ### reset x,y lim
@@ -1119,10 +1143,21 @@ class QCMApp(QMainWindow):
         self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
 
         # set xlabel
-        self.mpl_set_faxis(axG)
+        # self.mpl_set_faxis(axG)
+
+        # update lineEdit_spectra_fit_span
+        self.update_lineedit_fit_span(f)
+
+    def update_lineedit_fit_span(self, f):
+        ''' 
+        update lineEdit_spectra_fit_span text 
+        input
+        f: list like data in Hz
+        '''
+        span = max(f) - min(f)
 
         # update 
-        self.ui.lineEdit_spectra_fit_span.setText(MathModules.num2str(((f[-1]-f[0]) / 1000), precision=5)) # in kHz
+        self.ui.lineEdit_spectra_fit_span.setText(MathModules.num2str((span / 1000), precision=5)) # in kHz
 
     def spectra_fit_axesevent_disconnect(self, event):
         print('disconnect')
@@ -1151,7 +1186,6 @@ class QCMApp(QMainWindow):
         set freq axis tack as: [-1/2*span, 1/2*span] and
         freq axis label as: f (+cnter Hz)
         '''
-
         # get xlim
         xlim = ax.get_xlim()
         print(xlim)
@@ -1169,9 +1203,10 @@ class QCMApp(QMainWindow):
         
         # manually set
         ax.set_xticks([xlim[0], center, xlim[1]])
-        ax.set_xticklabels([str(-span * 0.5), '0', str(span * 0.5)])
+        #TODO following line makes the x coordinates fail
+        # ax.set_xticklabels([str(-span * 0.5), '0', str(span * 0.5)])
         # set xlabel
-        ax.set_xlabel('f (+{} Hz)'.format(center))
+        # ax.set_xlabel('f (+{} Hz)'.format(center))
 
 
 
@@ -1658,12 +1693,12 @@ class QCMApp(QMainWindow):
                         np.append(rawdata, row[0])
                 num_pts = self.settings['tab_settings_settings_harm' + str(harmonic)][num_datapoints]
                 if len(rawdata) == num_pts*2:
-                    self.peak_tracker.conductance = 1e3 * rawdata[:num_pts+1]
-                    self.peak_tracker.susceptance = 1e3 * rawdata[num_pts:]
+                    self.Peak_tracker.G = 1e3 * rawdata[:num_pts+1]
+                    self.peak_tracker.B = 1e3 * rawdata[num_pts:]
                     self.peak_tracker.freq = np.arange(start1,end1-(end1-start1)/num_pts+1,(end1-start1)/num_pts)
                     flag = 1
                     print('Status: Scan successful.')
-        # TODO refit loaded raw spectra data
+        #TODO refit loaded raw spectra data
         else:
             pass
 
