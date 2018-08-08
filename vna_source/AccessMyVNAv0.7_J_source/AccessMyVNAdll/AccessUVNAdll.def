@@ -1,0 +1,6 @@
+; AccessUVNAdll.def : Declares the module parameters for the DLL.
+
+LIBRARY      "AccessUVNAdll"
+
+EXPORTS
+    ; Explicit exports can go here

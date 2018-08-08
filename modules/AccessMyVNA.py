@@ -568,7 +568,7 @@ class AccessMyVNA():
     '''
     #endregion
 
-    @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
+    #@retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
     def GetDoubleArray(self, nWhat=0, nIndex=0, nArraySize=9):
         '''
         Get frequency nWhat = GET_SCAN_FREQ_DATA 0
@@ -886,17 +886,17 @@ if __name__ == '__main__':
     # ret, f, G, B = accvna.single_scan()
 
     with AccessMyVNA() as accvna:
-        # ret, nResult = accvna.GetDoubleArray()
+        ret, nResult = accvna.GetDoubleArray()
         # print('nR', nResult)
-        i = 0
-        while i <= 100:
-            print('i: ', i)
-            ret, nData = accvna.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=[1, 2])
+        # i = 0
+        # while i <= 100:
+        #    print('i: ', i)
+        #ret, nData = accvna.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=[1, 2])
             # print('nD', nData)
-            time.sleep(0.01)
-            ret, nResult = accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
-            i += 1
-        # ret, f, G = accvna.GetScanData(nStart=0, nEnd=10-1, nWhata=-1, nWhatb=15)
+        #time.sleep(0.01)
+        #ret, nResult = accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
+            #i += 1
+       # ret, f, G = accvna.GetScanData(nStart=0, nEnd=10-1, nWhata=-1, nWhatb=15)
         # ret, f, G = accvna.single_scan()
         # ret = accvna.SingleScan()
         print(ret)
