@@ -442,7 +442,7 @@ def QCManalyze(sample, parms):
     propfig['figure'].tight_layout()
     propfig['figure'].savefig(base_fig_name+'_prop.'+imagetype)
 
-    print('done with ', base_fig_name, 'close plots with ctrl+w')
+    print('done with ', base_fig_name, 'click on plots to close them and continue')
 
     propfig['figure'].canvas.mpl_connect('button_press_event', close_on_click)
     film['rawfig'].canvas.mpl_connect('button_press_event', close_on_click)
