@@ -346,6 +346,7 @@ int MyVNAGetDoubleArrayHelper(TCHAR * pString, int nWhat, int nIndex, int nArray
 	if (errcode == 0)
 		for (int i = 0; i< nArraySize; i++)
 			pnResult[i] = ((double *)pArray->pvData)[i];
+	//pArray = NULL;
 	if (pArray != NULL)
 		SafeArrayDestroy(pArray);
 	return errcode;
@@ -694,7 +695,6 @@ __declspec(dllexport) int _stdcall MyVNAGetScanData(int nStart, int nEnd, int nW
 		if (theApp.m_autoMyVNAObject->m_lpDispatch->GetIDsOfNames(IID_NULL, &szMember, 1, LOCALE_SYSTEM_DEFAULT, &dispid) == S_OK)
 		{
 			theApp.m_autoMyVNAObject->InvokeHelper(dispid, DISPATCH_METHOD, VT_I4, &errcode, parms, nStart, nEnd, nWhata, nWhatb, &A, &B);
-			errcode = 0;
 		}
 	}
 
@@ -710,27 +710,10 @@ __declspec(dllexport) int _stdcall MyVNAGetScanData(int nStart, int nEnd, int nW
 				pDataB[i] = pDataBtemp[i];
 	}
 
-	pBArray = NULL;
-	pAArray = NULL;
-
-	if (pBArray != NULL)
-	{
-		try {
-			SafeArrayDestroy(pBArray);
-		}
-		catch (...) {
-			cout << "ERROR: Cannot destroy B";
-		}
-	}
-	if (pAArray != NULL)
-	{
-		try {
-			SafeArrayDestroy(pAArray);
-		}
-		catch (...) {
-			cout << "ERROR: Cannot destroy A";
-		}
-	}
+	if (B.parray != NULL)
+		SafeArrayDestroy(B.parray);
+	if (A.parray != NULL)
+		SafeArrayDestroy(A.parray);
 
 	return errcode;
 }

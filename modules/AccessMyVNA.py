@@ -568,7 +568,7 @@ class AccessMyVNA():
     '''
     #endregion
 
-    @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
+    # @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
     def GetDoubleArray(self, nWhat=0, nIndex=0, nArraySize=9):
         '''
         Get frequency nWhat = GET_SCAN_FREQ_DATA 0
