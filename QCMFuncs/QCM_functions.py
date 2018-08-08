@@ -16,6 +16,13 @@ from functools import reduce
 zq = 8.84e6  # shear acoustic impedance of quartz
 f1 = 5e6  # fundamental resonant frequency
 
+def close_on_click(event):
+    # used so plots close when you click on them
+    global openplots
+    plt.close()
+    openplots = openplots - 1
+    return
+
 
 def fstar_err_calc(fstar):
     # calculate the error in delfstar
@@ -229,6 +236,7 @@ def solve_onelayer(soln_input):
 
 
 def QCManalyze(sample, parms):
+    global openplots
     # read in the optional inputs, assigning default values if not assigned
     nhplot = sample.get('nhplot', [1, 3, 5])
     # firstline = sample.get('firstline', 0)
@@ -320,6 +328,8 @@ def QCManalyze(sample, parms):
     checkfig = {}
     for nh in sample['nhcalc']:
         checkfig[nh] = make_check_axes(sample, nh)
+        checkfig[nh]['figure'].canvas.mpl_connect('button_press_event', 
+                                                  close_on_click)
 
     # set the appropriate value for xdata
     if Temp.shape[0] == 1:
@@ -396,7 +406,7 @@ def QCManalyze(sample, parms):
              imag(results[nh]['delfstar_calc'][n]), '-', color=colors[n],
              label='n='+str(n)))
 
-        # add legen to the solution check figures
+        # add legend to the solution check figures
         checkfig[nh]['delf_ax'].legend()
         checkfig[nh]['delg_ax'].legend()
 
@@ -432,9 +442,15 @@ def QCManalyze(sample, parms):
     propfig['figure'].tight_layout()
     propfig['figure'].savefig(base_fig_name+'_prop.'+imagetype)
 
-    print('done with ', base_fig_name, 'close plots with ctrl+w')
+    print('done with ', base_fig_name, 'click on plots to close them and continue')
 
-    plt.show()
+    propfig['figure'].canvas.mpl_connect('button_press_event', close_on_click)
+    film['rawfig'].canvas.mpl_connect('button_press_event', close_on_click)
+    bare['rawfig'].canvas.mpl_connect('button_press_event', close_on_click)
+    
+    openplots = 3 + len(checkfig)
+    while openplots>0:
+        plt.pause(1)
 
 
 def idx_in_range(t, t_range):
@@ -476,7 +492,7 @@ def pickpoints(Temp, nx, dict):
         # make the correct figure active
         plt.figure(dict['rawfigname'])
         print('click on plot to pick ', str(nx), 'points')
-        pts = plt.ginput(nx)
+        pts = plt.ginput(nx, timeout=0)
         pts = np.array(pts)[:, 0]
         for n in np.arange(nx):
             idx_out = np.append(idx_out, (np.abs(pts[n] - t_in)).argmin())

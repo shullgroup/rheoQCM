@@ -22,7 +22,7 @@ To install everything you need from this repository, run the following command f
 git clone https://github.com/zhczq/QCM_py
 ```
 
-If you just need the updated analysis software (which currently the only software that actually works) you'll want to download QCM_functions.py
+If you just need the updated analysis software (which currently the only software that actually works) everything you really need is in QCMFuncs/QCM_functions.py.  In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py.  You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
 
 ## Using the Analysis Program
 
