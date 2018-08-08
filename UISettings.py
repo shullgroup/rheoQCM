@@ -74,7 +74,7 @@ settings_init = {
 
     },
 
-    # comboBox_fit_method
+    # comboBox_span_method
     'span_mehtod_choose': {
         'gmax':   'Gmax',
         'dev':    'Derivative',
@@ -84,7 +84,7 @@ settings_init = {
     },
 
     # track_method
-    'track_mehtod_choose': {
+    'span_track_choose': {
         'free':      'Free',
         'fixspan':   'Fix span',
         'fixcenter': 'Fix center',
@@ -224,6 +224,10 @@ settings_default = {
     'checkBox_showpolar': False,
     'comboBox_fitfactor': '6',
 
+    # default crystal settings
+    'comboBox_base_frequency': 5,
+    'comboBox_bandwidth': 0.1,
+
     # default frequency ranges for each harmonic
     'freq_range': {
         1: [4, 6],
@@ -242,8 +246,8 @@ settings_default = {
         'lineEdit_scan_harmpoints': 400,
         
         # default span settings
-        'comboBox_fit_method': 'gmax',
-        'comboBox_track_method': 'fixspan',
+        'comboBox_span_method': 'gmax',
+        'comboBox_span_track': 'fixspan',
         
         # default fit settings
         'comboBox_harmfitfactor': 6,
@@ -259,8 +263,8 @@ settings_default = {
         'lineEdit_scan_harmpoints': 400,
         
         # default span settings
-        'comboBox_fit_method': 'gmax',
-        'comboBox_track_method': 'fixspan',
+        'comboBox_span_method': 'gmax',
+        'comboBox_span_track': 'fixspan',
         
         # default fit settings
         'comboBox_harmfitfactor': 6,
@@ -276,8 +280,8 @@ settings_default = {
         'lineEdit_scan_harmpoints': 400,
         
         # default span settings
-        'comboBox_fit_method': 'gmax',
-        'comboBox_track_method': 'fixspan',
+        'comboBox_span_method': 'gmax',
+        'comboBox_span_track': 'fixspan',
         
         # default fit settings
         'comboBox_harmfitfactor': 6,
@@ -293,8 +297,8 @@ settings_default = {
         'lineEdit_scan_harmpoints': 400,
         
         # default span settings
-        'comboBox_fit_method': 'gmax',
-        'comboBox_track_method': 'fixspan',
+        'comboBox_span_method': 'gmax',
+        'comboBox_span_track': 'fixspan',
         
         # default fit settings
         'comboBox_harmfitfactor': 6,
@@ -310,8 +314,8 @@ settings_default = {
         'lineEdit_scan_harmpoints': 400,
         
         # default span settings
-        'comboBox_fit_method': 'gmax',
-        'comboBox_track_method': 'fixspan',
+        'comboBox_span_method': 'gmax',
+        'comboBox_span_track': 'fixspan',
         
         # default fit settings
         'comboBox_harmfitfactor': 6,
@@ -328,8 +332,8 @@ settings_default = {
         'lineEdit_scan_harmpoints': 400,
         
         # default span settings
-        'comboBox_fit_method': 'gmax',
-        'comboBox_track_method': 'fixspan',
+        'comboBox_span_method': 'gmax',
+        'comboBox_span_track': 'fixspan',
         
         # default fit settings
         'comboBox_harmfitfactor': 6,

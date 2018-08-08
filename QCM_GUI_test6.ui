@@ -860,6 +860,13 @@ background-color: red;
                    </property>
                   </widget>
                  </item>
+                 <item>
+                  <widget class="QLabel" name="label_temp_devthrmcpl">
+                   <property name="text">
+                    <string>Device/Thermocouple</string>
+                   </property>
+                  </widget>
+                 </item>
                 </layout>
                </widget>
               </item>
@@ -909,38 +916,6 @@ background-color: red;
                  <property name="spacing">
                   <number>2</number>
                  </property>
-                 <item row="4" column="0">
-                  <widget class="QCheckBox" name="checkBox_showchi">
-                   <property name="enabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="text">
-                    <string>Show Χsq parameter</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="0">
-                  <widget class="QCheckBox" name="checkBox_showpolar">
-                   <property name="enabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="text">
-                    <string>Show Polar plot</string>
-                   </property>
-                  </widget>
-                 </item>
                  <item row="0" column="0">
                   <widget class="QCheckBox" name="checkBox_dynamicfit">
                    <property name="sizePolicy">
@@ -950,14 +925,17 @@ background-color: red;
                     </sizepolicy>
                    </property>
                    <property name="text">
-                    <string>Dynamic Fit</string>
+                    <string>Dynamic Fit (Harmonics can be set separately.)</string>
                    </property>
                    <property name="checked">
                     <bool>true</bool>
                    </property>
+                   <property name="tristate">
+                    <bool>false</bool>
+                   </property>
                   </widget>
                  </item>
-                 <item row="0" column="1">
+                 <item row="1" column="0">
                   <layout class="QHBoxLayout" name="horizontalLayout_7">
                    <item>
                     <widget class="QLabel" name="label_4">
@@ -997,39 +975,20 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
-                   <item>
-                    <spacer name="horizontalSpacer_3">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>40</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                    </spacer>
-                   </item>
                   </layout>
                  </item>
-                 <item row="2" column="0">
-                  <widget class="QCheckBox" name="checkBox_showsusceptance">
-                   <property name="enabled">
-                    <bool>false</bool>
+                 <item row="1" column="1">
+                  <spacer name="horizontalSpacer_3">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
                    </property>
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
                    </property>
-                   <property name="text">
-                    <string>Show Susceptance (Bp)</string>
-                   </property>
-                   <property name="checked">
-                    <bool>false</bool>
-                   </property>
-                  </widget>
+                  </spacer>
                  </item>
                 </layout>
                </widget>
@@ -1266,7 +1225,7 @@ background-color: red;
                     <enum>QTabWidget::Rounded</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>2</number>
+                    <number>3</number>
                    </property>
                    <property name="iconSize">
                     <size>
@@ -1441,7 +1400,7 @@ background-color: red;
                     <bool>true</bool>
                    </property>
                    <property name="indentation">
-                    <number>16</number>
+                    <number>6</number>
                    </property>
                    <property name="rootIsDecorated">
                     <bool>true</bool>
@@ -1623,7 +1582,7 @@ background-color: red;
                     <bool>true</bool>
                    </property>
                    <property name="indentation">
-                    <number>16</number>
+                    <number>6</number>
                    </property>
                    <property name="rootIsDecorated">
                     <bool>true</bool>
@@ -1763,7 +1722,7 @@ background-color: red;
                     <bool>true</bool>
                    </property>
                    <property name="indentation">
-                    <number>16</number>
+                    <number>6</number>
                    </property>
                    <attribute name="headerVisible">
                     <bool>false</bool>
@@ -1833,22 +1792,71 @@ background-color: red;
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_scan_harmstart"/>
+               <widget class="QLineEdit" name="lineEdit_scan_harmstart">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_scan_harmend"/>
+               <widget class="QLineEdit" name="lineEdit_scan_harmend">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_scan_harmpoints"/>
+               <widget class="QLineEdit" name="lineEdit_scan_harmpoints">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_peaks_maxnum"/>
+               <widget class="QCheckBox" name="checkBox_harmfit">
+                <property name="text">
+                 <string>Dynamic fit</string>
+                </property>
+               </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_peaks_threshold"/>
+               <widget class="QLineEdit" name="lineEdit_peaks_maxnum">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_peaks_prominence"/>
+               <widget class="QLineEdit" name="lineEdit_peaks_threshold">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_peaks_prominence">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </widget>
               </item>
               <item>
                <widget class="QCheckBox" name="checkBox_settings_temp_sensor">
@@ -6860,7 +6868,6 @@ border: 1px solid blue;
   <tabstop>pushButton_appenddata</tabstop>
   <tabstop>lineEdit_reftime</tabstop>
   <tabstop>checkBox_dynamicfit</tabstop>
-  <tabstop>checkBox_showchi</tabstop>
   <tabstop>lineEdit_datafilestr</tabstop>
   <tabstop>pushButton_gotofolder</tabstop>
  </tabstops>
@@ -6911,8 +6918,8 @@ border: 1px solid blue;
      <y>670</y>
     </hint>
     <hint type="destinationlabel">
-     <x>656</x>
-     <y>701</y>
+     <x>405</x>
+     <y>282</y>
     </hint>
    </hints>
   </connection>
@@ -6927,8 +6934,8 @@ border: 1px solid blue;
      <y>670</y>
     </hint>
     <hint type="destinationlabel">
-     <x>656</x>
-     <y>941</y>
+     <x>405</x>
+     <y>287</y>
     </hint>
    </hints>
   </connection>
@@ -6971,8 +6978,8 @@ border: 1px solid blue;
    <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>153</x>
-     <y>480</y>
+     <x>161</x>
+     <y>756</y>
     </hint>
     <hint type="destinationlabel">
      <x>154</x>
@@ -6991,8 +6998,8 @@ border: 1px solid blue;
      <y>520</y>
     </hint>
     <hint type="destinationlabel">
-     <x>153</x>
-     <y>480</y>
+     <x>161</x>
+     <y>756</y>
     </hint>
    </hints>
   </connection>

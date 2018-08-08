@@ -100,20 +100,6 @@ class QCMApp(QMainWindow):
 #region ###### initiate UI #################################
 
 #region main UI 
-        # set window title
-        #self.setWindowTitle(settings_init['window_title'])
-        # set window size
-        #self.resize(*settings_init['window_size'])
-        # set delault displaying of tab_settings
-        #self.ui.tabWidget_settings.setCurrentIndex(0)
-        # set delault displaying of stackedWidget_spectra
-        #self.ui.stackedWidget_spectra.setCurrentIndex(0)
-        # set delault displaying of stackedWidget_data
-        #self.ui.stackedWidget_data.setCurrentIndex(0)
-
-        # set delault displaying of harmonics
-        #self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
-
         # link tabWidget_settings and stackedWidget_spectra and stackedWidget_data
         self.ui.tabWidget_settings.currentChanged.connect(self.link_tab_page)
 
@@ -214,15 +200,6 @@ class QCMApp(QMainWindow):
         # set pushButton_appenddata
         self.ui.pushButton_appenddata.clicked.connect(self.on_triggered_load_data)
 
-        # set signals to update lineEdit_start settings
-        self.ui.lineEdit_startf1.textChanged[str].connect(self.update_widget)
-        self.ui.lineEdit_startf1.textEdited[str].connect(self.update_widget)
-        self.ui.lineEdit_startf3.textChanged[str].connect(self.update_widget)
-        self.ui.lineEdit_startf5.textChanged[str].connect(self.update_widget)
-        self.ui.lineEdit_startf7.textChanged[str].connect(self.update_widget)
-        self.ui.lineEdit_startf9.textChanged[str].connect(self.update_widget)
-        self.ui.lineEdit_startf11.textChanged[str].connect(self.update_widget)
-
         # set signals to update lineEdit_end settings
         self.ui.lineEdit_endf1.textChanged[str].connect(self.update_widget)
         self.ui.lineEdit_endf3.textChanged[str].connect(self.update_widget)
@@ -305,19 +282,27 @@ class QCMApp(QMainWindow):
             100,
         )
 
-        # comboBox_fit_method
+        # move checkBox_harmfit
+        self.move_to_col2(
+            self.ui.checkBox_harmfit,
+            self.ui.treeWidget_settings_settings_harmtree,
+            'Fit',
+            100,
+        )
+
+        # comboBox_span_method
         self.create_combobox(
-            'comboBox_fit_method', 
+            'comboBox_span_method', 
             settings_init['span_mehtod_choose'], 
             100, 
             'Method', 
             self.ui.treeWidget_settings_settings_harmtree
         )
 
-        # add track_method
+        # add span track_method
         self.create_combobox(
-            'comboBox_track_method', 
-            settings_init['track_mehtod_choose'], 
+            'comboBox_span_track', 
+            settings_init['span_track_choose'], 
             100, 
             'Tracking', 
             self.ui.treeWidget_settings_settings_harmtree
@@ -515,13 +500,14 @@ class QCMApp(QMainWindow):
             )
 
         # set signals to update scan and crystal settings_settings
-        self.ui.tabWidget_settings_settings_harm.currentChanged.connect(self.update_harmonic_tab)
+        self.ui.lineEdit_scan_harmstart.textEdited.connect(self.on_textedited_harm_freq)
+        self.ui.lineEdit_scan_harmend.textEdited.connect(self.on_textedited_harm_freq)
         self.ui.comboBox_base_frequency.activated.connect(self.update_base_freq)
         self.ui.comboBox_bandwidth.activated.connect(self.update_bandwidth)
 
         # set signals to update span settings_settings
-        self.ui.comboBox_fit_method.activated.connect(self.update_fitmethod)
-        self.ui.comboBox_track_method.activated.connect(self.update_trackmethod)
+        self.ui.comboBox_span_method.activated.connect(self.update_spanmethod)
+        self.ui.comboBox_span_track.activated.connect(self.update_spantrack)
 
         self.ui.comboBox_harmfitfactor.activated.connect(self.update_harmfitfactor)
 
@@ -542,12 +528,6 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_yscale.activated.connect(self.update_yscale)
         self.ui.checkBox_settings_settings_linktime.stateChanged.connect(self.update_widget)
         
-        # set default values
-        self.ui.comboBox_base_frequency.setCurrentIndex(0)
-        self.ui.comboBox_bandwidth.setCurrentIndex(4)
-        self.statusbar_f0bw_update()
-        self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
- 
 #endregion
 
 
@@ -1126,7 +1106,7 @@ class QCMApp(QMainWindow):
         and show alert in statusbar
         '''
         # get freq_range
-        bf1, bf2 = np.array(self.settings['freq_range'][harm]) * 1e6 # in Hz
+        bf1, bf2 = np.array(self.settings['freq_range'][harm]) # in Hz
         # check f1, and f2
         if f1 and (f1 < bf1 or f1 >= bf2): # f1 out of limt
             f1 = bf1
@@ -1137,7 +1117,7 @@ class QCMApp(QMainWindow):
         if f1 >= f2:
             f2 = bf2
 
-        return f1, f2
+        return [f1, f2]
 
 
     def on_clicked_pushButton_spectra_fit_refresh(self):
@@ -1419,13 +1399,10 @@ class QCMApp(QMainWindow):
     
     def update_widget(self, signal):
         # if the sender of the signal isA QLineEdit object, update QLineEdit vals in dict
-        print('update')
+        print('update', signal)
         if isinstance(self.sender(), QLineEdit):
                 try:
-                    if 'lineEdit_startf' in self.sender().objectName() or 'lineEdit_endf' in self.sender().objectName():
-                        self.settings[self.sender().objectName()] = float(signal)*1e6
-                    else:
-                        self.settings[self.sender().objectName()] = float(signal)
+                    self.settings[self.sender().objectName()] = float(signal)
                 except:
                     self.settings[self.sender().objectName()] = 0
         # if the sender of the signal isA QCheckBox object, update QCheckBox vals in dict
@@ -1441,43 +1418,38 @@ class QCMApp(QMainWindow):
             except: # if w/o userData, use the text
                 value = self.sender().itemText(signal)
             self.settings[self.sender().objectName()] = value
-        #print(self.sender().objectName(), self.settings[self.sender().objectName()])
-    #def update_dynamicfit(self):
-    #    self.settings['checkBox_dynamicfit'] = not self.settings['checkBox_dynamicfit']
-
-    #def update_showsusceptance(self):
-    #    self.settings['checkBox_showsusceptance'] = not self.settings['checkBox_showsusceptance']
-
-    #def update_showchi(self):
-    #    self.settings['checkBox_showchi'] = not self.settings['checkBox_showchi']
-
-    #def update_showpolarplot(self):
-    #    self.settings['checkBox_showpolar'] = not self.settings['checkBox_showpolar']
 
     def update_harmonic_tab(self):
         #print("update_harmonic_tab was called")
+        harm = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
         self.peak_tracker.harmonic_tab = \
         self.settings['tabWidget_settings_settings_harm'] = \
-            2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
+            harm
         
         self.update_frequencies()
 
-        #self.update_guichecks(self.ui.checkBox_settings_temp_sensor, 'checkBox_settings_temp_sensor')
-        #self.update_guichecks(self.ui.checkBox_settings_settings_linktime, 'checkBox_settings_settings_linktime')
+        # update lineEdit_scan_harmpoints
+        self.ui.lineEdit_scan_harmpoints.setText(
+            str(self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_scan_harmpoints'])
+        )
+        self.load_comboBox(self.ui.comboBox_span_method, 'span_mehtod_choose', parent='tab_settings_settings_harm' + str(harm))
+        self.load_comboBox(self.ui.comboBox_span_track, 'span_track_choose', parent='tab_settings_settings_harm' + str(harm)) 
+        self.load_comboBox(self.ui.comboBox_harmfitfactor, 'fit_factor_choose', parent='tab_settings_settings_harm' + str(harm))
 
-        self.update_guicombos(self.ui.comboBox_fit_method, 'comboBox_fit_method', 'span_mehtod_choose')
-        self.update_guicombos(self.ui.comboBox_track_method, 'comboBox_track_method', 'track_mehtod_choose')
-        self.update_guicombos(self.ui.comboBox_harmfitfactor, 'comboBox_harmfitfactor', 'fit_factor_choose')
-        #self.update_guicombos(self.ui.comboBox_sample_channel, 'comboBox_sample_channel', 'sample_channel_choose')
-        #self.update_guicombos(self.ui.comboBox_ref_channel, 'comboBox_ref_channel', 'ref_channel_choose')
-        #self.update_guicombos(self.ui.comboBox_thrmcpltype, 'comboBox_thrmcpltype', 'thrmcpl_choose')
-        #self.update_guicombos(self.ui.comboBox_timeunit, 'comboBox_timeunit', 'time_unit_choose')
-        #self.update_guicombos(self.ui.comboBox_tempunit, 'comboBox_tempunit', 'temp_unit_choose')
-        #self.update_guicombos(self.ui.comboBox_timescale, 'comboBox_timescale', 'time_scale_choose')
-        #self.update_guicombos(self.ui.comboBox_yscale, 'comboBox_yscale', 'gamma_scale_choose')
-        
-        #self.update_guicombos(self.ui.comboBox_bandwidth, 'comboBox_bandwidth', 'bandwidth_choose')
-        #self.update_guicombos(self.ui.comboBox_base_frequency, 'comboBox_base_frequency', 'base_frequency_choose')
+        # update lineEdit_peaks_maxnum
+        self.ui.lineEdit_peaks_maxnum.setText(
+            str(self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_peaks_maxnum'])
+        )
+ 
+        # update lineEdit_peaks_threshold
+        self.ui.lineEdit_peaks_threshold.setText(
+            str(self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_peaks_threshold'])
+        )
+
+        # update lineEdit_peaks_prominence
+        self.ui.lineEdit_peaks_prominence.setText(
+            str(self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_peaks_prominence'])
+        )
 
     def update_base_freq(self, base_freq_index):
         fbase = self.ui.comboBox_base_frequency.itemData(base_freq_index) # in MHz
@@ -1486,6 +1458,8 @@ class QCMApp(QMainWindow):
         self.statusbar_f0bw_update()
         # update freq_range
         self.update_freq_range()
+        # check freq_span
+        self.check_freq_span()
         # update freqrency display
         self.update_frequencies()
 
@@ -1496,10 +1470,10 @@ class QCMApp(QMainWindow):
         self.statusbar_f0bw_update()
         # update freq_range
         self.update_freq_range()
+        # check freq_span
+        self.check_freq_span()
         # update freqrency display
         self.update_frequencies()
-        print(self.settings['lineEdit_startf1'])
-        print(self.settings['tab_settings_settings_harm1'])
 
     def statusbar_f0bw_update(self):
         fbase = self.settings['comboBox_base_frequency']
@@ -1509,55 +1483,75 @@ class QCMApp(QMainWindow):
 
     def update_freq_range(self):
         '''
-        update settings['freq_range']
+        update settings['freq_range'] (freq range allowed for scan)
         '''
-        fbase = self.settings['comboBox_base_frequency'] # in MHz
-        BW = self.settings['comboBox_bandwidth'] # in MHz
+        fbase = self.settings['comboBox_base_frequency'] * 1e6 # in Hz
+        BW = self.settings['comboBox_bandwidth'] * 1e6 # in Hz
         for i in range(1, settings_init['max_harmonic']+2, 2):
             self.settings['freq_range'][i] = [i*fbase-BW, i*fbase+BW]
         print(self.settings['freq_range'])
+
+    def check_freq_span(self):
+        '''
+        check if settings['freq_span'] (freq span for each harmonic) values in the allowed range self.settings['freq_range']
+        '''
+        try: 
+            self.settings['freq_span'] # check if self.settings['freq_span'] exist
+            for i in range(1, settings_init['max_harmonic']+2, 2):
+                self.settings['freq_span'][i] = self.span_check(i, self.settings['freq_span'][i][0], self.settings['freq_span'][i][1])
+        except: # if self.settings['freq_span'] does not exist
+            try: # check if self.settings['freq_range'] exist
+                self.settings['freq_span'] = self.settings['freq_range']
+            except: # if self.settings['freq_range'] does not exist
+                self.update_freq_range() # initiate self.settings['freq_range']
+                self.settings['freq_span'] = self.settings['freq_range']
+        print('f_sp', self.settings['freq_span'])
 
     def update_frequencies(self):
         
         # update lineEdit_startf<n> & lineEdit_endf<n>
         for i in range(1, settings_init['max_harmonic']+2, 2):
             # check f1 (start), f2 (end)
-            f1, f2 = self.span_check(i, f1=self.settings['lineEdit_startf' + str(i)], f2=self.settings['lineEdit_endf' + str(i)]) 
-            print(f1, f2)
-            getattr(self.ui, 'lineEdit_startf' +str(i)).setText(MathModules.num2str(f1*1e-6, precision=12)) # display as MHz
-            getattr(self.ui, 'lineEdit_endf' +str(i)).setText(MathModules.num2str(f2*1e-6, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(MathModules.num2str(self.settings['freq_span'][i][0]*1e-6, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(MathModules.num2str(self.settings['freq_span'][i][1]*1e-6, precision=12)) # display as MHz
             
         # update start/end in treeWidget_settings_settings_harmtree
             harm = self.settings['tabWidget_settings_settings_harm']
-            tree_settings = self.ui.treeWidget_settings_settings_harmtree
             # Set Start
-            self.find_text_item(tree_settings, 'Start').setText(
-                1,
-                MathModules.num2str(self.settings['lineEdit_startf' + str(harm)]*1e-6, precision=12)
+            self.ui.lineEdit_scan_harmstart.setText(
+                MathModules.num2str(self.settings['freq_span'][harm][0]*1e-6, precision=12)
             )
             # set End
-            self.find_text_item(tree_settings, 'End').setText(
-                1,
-                MathModules.num2str(self.settings['lineEdit_endf' +str(harm)]*1e-6, precision=12)
+            self.ui.lineEdit_scan_harmend.setText(
+                MathModules.num2str(self.settings['freq_span'][harm][1]*1e-6, precision=12)
             )
-        return
-        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['start_freq'] = self.peak_tracker.harmonic_tab * self.settings['comboBox_base_frequency'] - self.settings['comboBox_bandwidth']
-        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['end_freq'] = self.peak_tracker.harmonic_tab * self.settings['comboBox_base_frequency'] + self.settings['comboBox_bandwidth']
-        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['start_freq']))
-        self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['end_freq']))
+
+    def on_textedited_harm_freq(self):
+        '''
+        update frequency when lineEdit_scan_harmstart or  lineEdit_scan_harmend edited
+        '''
+        harmstart = float(self.ui.lineEdit_scan_harmstart.text())
+        harmend = float(self.ui.lineEdit_scan_harmend.text())
+        harm=self.settings['tabWidget_settings_settings_harm']
+        f1, f2 = self.span_check(harm=harm, f1=harmstart, f2=harmend)
+        print(f1, f2)
+        self.settings['freq_span'][harm] = [f1, f2]
+        print(self.settings['freq_span'])
+        self.check_freq_span()
+        self.update_frequencies()
 
     def set_default_freqs(self):
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
             getattr(self.ui, 'lineEdit_startf' + str(i)).setText(str(self.settings['lineEdit_startf' + str(i)]))
             getattr(self.ui, 'lineEdit_endf' + str(i)).setText(str(self.settings['lineEdit_endf' + str(i)]))
 
-    def update_fitmethod(self, fitmethod_index):
-        value = self.ui.comboBox_fit_method.itemData(fitmethod_index)
-        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_fit_method'] = value
+    def update_spanmethod(self, fitmethod_index):
+        value = self.ui.comboBox_span_method.itemData(fitmethod_index)
+        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_span_method'] = value
 
-    def update_trackmethod(self, trackmethod_index):
-        value = self.ui.comboBox_track_method.itemData(trackmethod_index)
-        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_track_method'] = value
+    def update_spantrack(self, trackmethod_index):
+        value = self.ui.comboBox_span_track.itemData(trackmethod_index)
+        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_span_track'] = value
 
     def update_harmfitfactor(self, harmfitfactor_index):
         value = self.ui.comboBox_harmfitfactor.itemData(harmfitfactor_index)
@@ -1601,11 +1595,18 @@ class QCMApp(QMainWindow):
     #def update_linktime(self):
     #    self.settings['checkBox_settings_settings_linktime'] = not self.settings['checkBox_settings_settings_linktime']
 
-    def update_guicombos(self, comboBox, name_in_settings, init_dict):
-        for key, val in settings_init[init_dict].items():
-            if key == self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)][name_in_settings]:
-                comboBox.setCurrentIndex(comboBox.findData(key))
-                break
+    def load_comboBox(self, comboBox, choose_dict, parent=None):
+        comboBoxName = comboBox.objectName()
+        for key, val in settings_init[choose_dict].items():
+            if not parent: # not embeded in subdict
+                if key == self.settings[comboBoxName]:
+                    comboBox.setCurrentIndex(comboBox.findData(key))
+                    break
+            else:
+                if key == self.settings[parent][comboBoxName]:
+                    comboBox.setCurrentIndex(comboBox.findData(key))
+                    break
+                
 
     def update_guichecks(self, checkBox, name_in_settings):
         print("update_guichecks was called")
@@ -1618,65 +1619,83 @@ class QCMApp(QMainWindow):
             f.write(line)
 
     def load_settings(self):
+        '''
+        setup the UI with the value from self.settings
+        '''
+
+        # load default crystal settings 
+
+        # create self.settings['freq_range']. 
+        # this has to be initated before any 
+        self.update_freq_range()
+        # update self.settings['freq_span']
+        self.check_freq_span()
+
+
+        ## set default appearence
         # set window title
         self.setWindowTitle(settings_init['window_title'])
         # set window size
         self.resize(*settings_init['window_size'])
-        # set delault displaying of tab_settings
+        # set deflault displaying of tab_settings
         self.ui.tabWidget_settings.setCurrentIndex(0)
-        # set delault displaying of stackedWidget_spetratop
+        # set deflault displaying of stackedWidget_spetratop
         self.ui.stackedWidget_spetratop.setCurrentIndex(0)
-        # set delault displaying of stackedWidget_spectra
+        # set deflault displaying of stackedWidget_spectra
         self.ui.stackedWidget_spectra.setCurrentIndex(0)
-        # set delault displaying of stackedWidget_data
+        # set deflault displaying of stackedWidget_data
         self.ui.stackedWidget_data.setCurrentIndex(0)
+        # set deflault displaying of tabWidget_settings_settings_harm
+        self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
+        # set opened harmonic tab
+        self.peak_tracker.harmonic_tab = self.settings['tabWidget_settings_settings_harm'] = 1 #TODO
 
-        # load default start and end frequencies for lineEdit harmonics
-        for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
-            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(MathModules.num2str(self.settings['lineEdit_startf' + str(i)]*1e-6, precision=12)) # display as MHz
-            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(MathModules.num2str(self.settings['lineEdit_endf' + str(i)]*1e-6, precision=12)) # display as MHz
+        ## following data is read from self.settings
+
+        # load default start and end frequencies fo
+        # r lineEdit harmonics
+
         # load default record interval
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         # load default spectra refresh resolution
         self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
         # load default fitting and display options
         self.ui.checkBox_dynamicfit.setChecked(self.settings['checkBox_dynamicfit'])
-        #self.ui.checkBox_showsusceptance.setChecked(self.settings['checkBox_showsusceptance'])
-        #self.ui.checkBox_showchi.setChecked(self.settings['checkBox_showchi'])
-        #self.ui.checkBox_showpolar.setChecked(self.settings['checkBox_showpolar'])
 
-        def load_comboBox(comboBox, comboBoxName, choose_dict):
-            for key, val in settings_init[choose_dict].items():
-                if key == self.settings[comboBoxName]:
-                    comboBox.setCurrentIndex(comboBox.findData(key))
-                    break
+        # load this first to create self.settings['freq_range'] & self.settings['freq_span']
+        self.load_comboBox(self.ui.comboBox_base_frequency, 'base_frequency_choose')
+        self.load_comboBox(self.ui.comboBox_bandwidth, 'bandwidth_choose')
+        # create self.settings['freq_range']. 
+        # this has to be initated before any 
+        self.update_freq_range()
+        # update self.settings['freq_span']
+        self.check_freq_span()
+        # update frequencies display
+        self.update_frequencies()
 
         # load default fit factor range
-        load_comboBox(self.ui.comboBox_fitfactor, 'comboBox_fitfactor', 'fit_factor_choose')
+        self.load_comboBox(self.ui.comboBox_fitfactor, 'fit_factor_choose')
 
         # load default VNA settings
-        load_comboBox(self.ui.comboBox_sample_channel, 'comboBox_sample_channel', 'sample_channel_choose')
-        load_comboBox(self.ui.comboBox_ref_channel, 'comboBox_ref_channel', 'ref_channel_choose')
-        # load default crystal settings
-        load_comboBox(self.ui.comboBox_base_frequency, 'comboBox_base_frequency', 'base_frequency_choose')
-        load_comboBox(self.ui.comboBox_bandwidth, 'comboBox_bandwidth', 'bandwidth_choose')
-        # load default temperature settings
-        self.ui.comboBox_settings_mechanics_selectmodel.setCurrentIndex\
-        (self.ui.comboBox_settings_mechanics_selectmodel.findText(self.settings['comboBox_settings_mechanics_selectmodel']))
-        self.ui.checkBox_settings_temp_sensor.setChecked(self.settings['checkBox_settings_temp_sensor'])
-        load_comboBox(self.ui.comboBox_thrmcpltype, 'comboBox_thrmcpltype', 'thrmcpl_choose')
-        # load default plots settings
-        load_comboBox(self.ui.comboBox_timeunit, 'comboBox_timeunit', 'time_unit_choose')
-        load_comboBox(self.ui.comboBox_tempunit, 'comboBox_tempunit', 'temp_unit_choose')
-        load_comboBox(self.ui.comboBox_timescale, 'comboBox_timescale', 'time_scale_choose')
-        load_comboBox(self.ui.comboBox_yscale, 'comboBox_yscale', 'y_scale_choose')
-        self.ui.checkBox_settings_settings_linktime.setChecked(self.settings['checkBox_settings_settings_linktime'])
-
-        # set opened harmonic tab
-        self.peak_tracker.harmonic_tab = 1
-        # set tab displayed to harm 1
-        self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
+        self.load_comboBox(self.ui.comboBox_sample_channel, 'sample_channel_choose')
+        self.load_comboBox(self.ui.comboBox_ref_channel, 'ref_channel_choose')
+        
+        # set treeWidget_settings_settings_harmtree display
         self.update_harmonic_tab()
+
+        # load default temperature settings
+        self.load_comboBox(self.ui.comboBox_settings_mechanics_selectmodel, 'thrmcpl_choose')
+
+        self.ui.checkBox_settings_temp_sensor.setChecked(self.settings['checkBox_settings_temp_sensor'])
+
+        self.load_comboBox(self.ui.comboBox_thrmcpltype, 'thrmcpl_choose')
+        # load default plots settings
+        self.load_comboBox(self.ui.comboBox_timeunit, 'time_unit_choose')
+        self.load_comboBox(self.ui.comboBox_tempunit, 'temp_unit_choose')
+        self.load_comboBox(self.ui.comboBox_timescale, 'time_scale_choose')
+        self.load_comboBox(self.ui.comboBox_yscale, 'y_scale_choose')
+
+        self.ui.checkBox_settings_settings_linktime.setChecked(self.settings['checkBox_settings_settings_linktime'])
 
         # set default displaying of spectra show options
         self.ui.radioButton_spectra_showBp.setChecked(self.settings['radioButton_spectra_showBp'])
@@ -1684,32 +1703,11 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_spectra_shoechi.setChecked(self.settings['checkBox_spectra_shoechi'])
 
         # set default displaying of plot 1 options
-        for key, val in settings_init['data_plt_choose'].items():
-            if key == self.settings['comboBox_plt1_choice']:
-                self.ui.comboBox_plt1_choice.setCurrentIndex(self.ui.comboBox_plt1_choice.findData(key))
-                break
-        self.ui.checkBox_plt1_h1.setChecked(self.settings['checkBox_plt1_h1'])
-        self.ui.checkBox_plt1_h3.setChecked(self.settings['checkBox_plt1_h3'])
-        self.ui.checkBox_plt1_h5.setChecked(self.settings['checkBox_plt1_h5'])
-        self.ui.checkBox_plt1_h7.setChecked(self.settings['checkBox_plt1_h7'])
-        self.ui.checkBox_plt1_h9.setChecked(self.settings['checkBox_plt1_h9'])
-        self.ui.checkBox_plt1_h11.setChecked(self.settings['checkBox_plt1_h11'])
-        self.ui.radioButton_plt1_samp.setChecked(self.settings['radioButton_plt1_samp'])
-        self.ui.radioButton_plt1_ref.setChecked(self.settings['radioButton_plt1_ref'])
+        self.load_comboBox(self.ui.comboBox_plt1_choice, 'data_plt_choose')
 
         # set default displaying of plot 2 options
-        for key, val in settings_init['data_plt_choose'].items():
-            if key == self.settings['comboBox_plt2_choice']:
-                self.ui.comboBox_plt2_choice.setCurrentIndex(self.ui.comboBox_plt2_choice.findData(key))
-                break
-        self.ui.checkBox_plt2_h1.setChecked(self.settings['checkBox_plt2_h1'])
-        self.ui.checkBox_plt2_h3.setChecked(self.settings['checkBox_plt2_h3'])
-        self.ui.checkBox_plt2_h5.setChecked(self.settings['checkBox_plt2_h5'])
-        self.ui.checkBox_plt2_h7.setChecked(self.settings['checkBox_plt2_h7'])
-        self.ui.checkBox_plt2_h9.setChecked(self.settings['checkBox_plt2_h9'])
-        self.ui.checkBox_plt2_h11.setChecked(self.settings['checkBox_plt2_h11'])
-        self.ui.radioButton_plt2_samp.setChecked(self.settings['radioButton_plt2_samp'])
-        self.ui.radioButton_plt2_ref.setChecked(self.settings['radioButton_plt2_ref'])
+        self.load_comboBox(self.ui.comboBox_plt2_choice, 'data_plt_choose')
+
 
     def check_freq_range(self, harmonic, min_range, max_range):
         startname = 'lineEdit_startf' + str(harmonic)
@@ -1744,7 +1742,7 @@ class QCMApp(QMainWindow):
         self.peak_tracker.gamma0 = G_parameters[1]
 
         # determine the structure field that should be used to extract out the initial-guessing method
-        if self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_fit_method'] == 'bmax':
+        if self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_span_method'] == 'bmax':
             resonance = susceptance
         else:
             resonance = conductance
@@ -1756,7 +1754,7 @@ class QCMApp(QMainWindow):
         halfg = (Gmax-np.amin(resonance))/2 + np.amin(resonance) 
         halfg_freq = np.absolute(freq[np.where(np.abs(halfg-resonance)==np.min(np.abs(halfg-resonance)))[0][0]])
         # extract the peak tracking conditions
-        track_method = self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_track_method'] 
+        track_method = self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_span_track'] 
         if track_method == 'fixspan':
             current_span = (float(self.settings['lineEdit_endf' + str(harmonic)]) - \
             # get the current span of the data in Hz
