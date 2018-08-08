@@ -162,7 +162,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -287,7 +287,11 @@ background-color: red;
                     <number>0</number>
                    </property>
                    <item row="5" column="1">
-                    <widget class="QLineEdit" name="lineEdit_startf9"/>
+                    <widget class="QLineEdit" name="lineEdit_startf9">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                    <item row="6" column="0">
                     <widget class="QCheckBox" name="checkBox_harm11">
@@ -322,13 +326,25 @@ background-color: red;
                     </widget>
                    </item>
                    <item row="6" column="1">
-                    <widget class="QLineEdit" name="lineEdit_startf11"/>
+                    <widget class="QLineEdit" name="lineEdit_startf11">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                    <item row="5" column="2">
-                    <widget class="QLineEdit" name="lineEdit_endf9"/>
+                    <widget class="QLineEdit" name="lineEdit_endf9">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                    <item row="6" column="2">
-                    <widget class="QLineEdit" name="lineEdit_endf11"/>
+                    <widget class="QLineEdit" name="lineEdit_endf11">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                    <item row="5" column="3">
                     <widget class="QPushButton" name="pushButton_cntr9">
@@ -360,7 +376,11 @@ background-color: red;
                     </widget>
                    </item>
                    <item row="1" column="1">
-                    <widget class="QLineEdit" name="lineEdit_startf1"/>
+                    <widget class="QLineEdit" name="lineEdit_startf1">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                    <item row="1" column="3">
                     <widget class="QPushButton" name="pushButton_cntr1">
@@ -385,7 +405,11 @@ background-color: red;
                     </widget>
                    </item>
                    <item row="2" column="1">
-                    <widget class="QLineEdit" name="lineEdit_startf3"/>
+                    <widget class="QLineEdit" name="lineEdit_startf3">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                    <item row="3" column="0">
                     <widget class="QCheckBox" name="checkBox_harm5">
@@ -414,10 +438,18 @@ background-color: red;
                     </widget>
                    </item>
                    <item row="3" column="1">
-                    <widget class="QLineEdit" name="lineEdit_startf5"/>
+                    <widget class="QLineEdit" name="lineEdit_startf5">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                    <item row="3" column="2">
-                    <widget class="QLineEdit" name="lineEdit_endf5"/>
+                    <widget class="QLineEdit" name="lineEdit_endf5">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                    <item row="3" column="3">
                     <widget class="QPushButton" name="pushButton_cntr5">
@@ -452,13 +484,25 @@ background-color: red;
                     </widget>
                    </item>
                    <item row="1" column="2">
-                    <widget class="QLineEdit" name="lineEdit_endf1"/>
+                    <widget class="QLineEdit" name="lineEdit_endf1">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                    <item row="4" column="1">
-                    <widget class="QLineEdit" name="lineEdit_startf7"/>
+                    <widget class="QLineEdit" name="lineEdit_startf7">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                    <item row="4" column="2">
-                    <widget class="QLineEdit" name="lineEdit_endf7"/>
+                    <widget class="QLineEdit" name="lineEdit_endf7">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                    <item row="2" column="3">
                     <widget class="QPushButton" name="pushButton_cntr3">
@@ -512,7 +556,11 @@ background-color: red;
                     </widget>
                    </item>
                    <item row="2" column="2">
-                    <widget class="QLineEdit" name="lineEdit_endf3"/>
+                    <widget class="QLineEdit" name="lineEdit_endf3">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
                    </item>
                    <item row="0" column="2">
                     <widget class="QLabel" name="label_settings_control_label2">
@@ -1218,7 +1266,7 @@ background-color: red;
                     <enum>QTabWidget::Rounded</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>3</number>
+                    <number>2</number>
                    </property>
                    <property name="iconSize">
                     <size>
@@ -1435,10 +1483,7 @@ background-color: red;
                       <string>Start</string>
                      </property>
                      <property name="text">
-                      <string>4.9</string>
-                     </property>
-                     <property name="flags">
-                      <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+                      <string/>
                      </property>
                     </item>
                     <item>
@@ -1446,10 +1491,7 @@ background-color: red;
                       <string>End</string>
                      </property>
                      <property name="text">
-                      <string>5.1</string>
-                     </property>
-                     <property name="flags">
-                      <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+                      <string/>
                      </property>
                     </item>
                     <item>
@@ -1457,10 +1499,7 @@ background-color: red;
                       <string>Points</string>
                      </property>
                      <property name="text">
-                      <string>200</string>
-                     </property>
-                     <property name="flags">
-                      <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+                      <string/>
                      </property>
                     </item>
                    </item>
@@ -1474,9 +1513,6 @@ background-color: red;
                      </property>
                      <property name="text">
                       <string/>
-                     </property>
-                     <property name="flags">
-                      <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
                      </property>
                     </item>
                     <item>
@@ -1501,13 +1537,10 @@ background-color: red;
                     </property>
                     <item>
                      <property name="text">
-                      <string>max #</string>
+                      <string>Max #</string>
                      </property>
                      <property name="text">
-                      <string>1</string>
-                     </property>
-                     <property name="flags">
-                      <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+                      <string/>
                      </property>
                     </item>
                     <item>
@@ -1515,21 +1548,15 @@ background-color: red;
                       <string>Threshold</string>
                      </property>
                      <property name="text">
-                      <string>0.2</string>
-                     </property>
-                     <property name="flags">
-                      <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+                      <string/>
                      </property>
                     </item>
                     <item>
                      <property name="text">
-                      <string>prominence</string>
+                      <string>Prominence</string>
                      </property>
                      <property name="text">
-                      <string>0.005</string>
-                     </property>
-                     <property name="flags">
-                      <set>ItemIsSelectable|ItemIsEditable|ItemIsDragEnabled|ItemIsUserCheckable|ItemIsEnabled</set>
+                      <string/>
                      </property>
                     </item>
                    </item>
@@ -1806,9 +1833,27 @@ background-color: red;
                </widget>
               </item>
               <item>
+               <widget class="QLineEdit" name="lineEdit_scan_harmstart"/>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_scan_harmend"/>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_scan_harmpoints"/>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_peaks_maxnum"/>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_peaks_threshold"/>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_peaks_prominence"/>
+              </item>
+              <item>
                <widget class="QCheckBox" name="checkBox_settings_temp_sensor">
                 <property name="text">
-                 <string/>
+                 <string>Record temperature</string>
                 </property>
                </widget>
               </item>
@@ -1822,19 +1867,19 @@ background-color: red;
               <item>
                <widget class="QLabel" name="label_status_f0BW">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>50</width>
+                  <width>16777215</width>
                   <height>16777215</height>
                  </size>
                 </property>
                 <property name="text">
-                 <string>f0/BW</string>
+                 <string>f0/BW...</string>
                 </property>
                </widget>
               </item>

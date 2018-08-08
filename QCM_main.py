@@ -69,9 +69,9 @@ class QCMApp(QMainWindow):
   
         # define instrument state variables
         self.accvna = None 
+        self.tempsensor = None # class for temp sensor
         self.idle = True # if test is running
         self.reading = False # if myVNA is scanning and reading data
-        self.tempsensor = None # class for temp sensor
         
         # check system
         self.system = UIModules.system_check()
@@ -181,6 +181,14 @@ class QCMApp(QMainWindow):
 
 
 #region settings_control
+        # set lineEdit_startf<n> & lineEdit_endf<n> background
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            getattr(self.ui, 'lineEdit_startf' + str(i)).setStyleSheet(
+                "QLineEdit { background: transparent; }"
+            )
+            getattr(self.ui, 'lineEdit_endf' + str(i)).setStyleSheet(
+                "QLineEdit { background: transparent; }"
+            )
 
         # set pushButton_resetreftime
         self.ui.pushButton_resetreftime.clicked.connect(self.reset_reftime)
@@ -208,6 +216,7 @@ class QCMApp(QMainWindow):
 
         # set signals to update lineEdit_start settings
         self.ui.lineEdit_startf1.textChanged[str].connect(self.update_widget)
+        self.ui.lineEdit_startf1.textEdited[str].connect(self.update_widget)
         self.ui.lineEdit_startf3.textChanged[str].connect(self.update_widget)
         self.ui.lineEdit_startf5.textChanged[str].connect(self.update_widget)
         self.ui.lineEdit_startf7.textChanged[str].connect(self.update_widget)
@@ -247,6 +256,55 @@ class QCMApp(QMainWindow):
 
 #region settings_settings
         ### add combobox into treewidget
+
+        # move lineEdit_scan_harmstart
+        self.move_to_col2(
+            self.ui.lineEdit_scan_harmstart,
+            self.ui.treeWidget_settings_settings_harmtree,
+            'Start',
+            100,
+        )
+
+        # move lineEdit_scan_harmend
+        self.move_to_col2(
+            self.ui.lineEdit_scan_harmend,
+            self.ui.treeWidget_settings_settings_harmtree,
+            'End',
+            100,
+        )
+
+        # move lineEdit_scan_harmpoints
+        self.move_to_col2(
+            self.ui.lineEdit_scan_harmpoints,
+            self.ui.treeWidget_settings_settings_harmtree,
+            'Points',
+            100,
+        )
+
+        # move lineEdit_peaks_maxnum
+        self.move_to_col2(
+            self.ui.lineEdit_peaks_maxnum,
+            self.ui.treeWidget_settings_settings_harmtree,
+            'Max #',
+            100,
+        )
+
+        # move lineEdit_peaks_threshold
+        self.move_to_col2(
+            self.ui.lineEdit_peaks_threshold,
+            self.ui.treeWidget_settings_settings_harmtree,
+            'Threshold',
+            100,
+        )
+
+        # move lineEdit_peaks_prominence
+        self.move_to_col2(
+            self.ui.lineEdit_peaks_prominence,
+            self.ui.treeWidget_settings_settings_harmtree,
+            'Prominence',
+            100,
+        )
+
         # comboBox_fit_method
         self.create_combobox(
             'comboBox_fit_method', 
@@ -382,8 +440,8 @@ class QCMApp(QMainWindow):
 
         # insert gamma scale
         self.create_combobox(
-            'comboBox_gammascale', 
-            settings_init['gamma_scale_choose'], 
+            'comboBox_yscale', 
+            settings_init['y_scale_choose'], 
             100, 
             'Γ Scale', 
             self.ui.treeWidget_settings_settings_plots
@@ -481,12 +539,13 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_timeunit.activated.connect(self.update_timeunit)
         self.ui.comboBox_tempunit.activated.connect(self.update_tempunit)
         self.ui.comboBox_timescale.activated.connect(self.update_timescale)
-        self.ui.comboBox_gammascale.activated.connect(self.update_gammascale)
+        self.ui.comboBox_yscale.activated.connect(self.update_yscale)
         self.ui.checkBox_settings_settings_linktime.stateChanged.connect(self.update_widget)
         
         # set default values
         self.ui.comboBox_base_frequency.setCurrentIndex(0)
         self.ui.comboBox_bandwidth.setCurrentIndex(4)
+        self.statusbar_f0bw_update()
         self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
  
 #endregion
@@ -837,13 +896,24 @@ class QCMApp(QMainWindow):
         if width: # set width of obj
             obj.setMaximumWidth(width)
         # find item with row_text
-        item = parent.findItems(row_text, Qt.MatchExactly | Qt.MatchRecursive, 0)
+        item = self.find_text_item(parent, row_text)
+        # insert the combobox in to the 2nd column of row_text
+        parent.setItemWidget(item, 1, obj)        
+
+    def find_text_item(self, parent, text):
+        '''
+        find item with 'text' in widgets e.g.: treeWidget, tableWidget
+        return a item
+        Make sure the text is unique in the widget
+        if not, return None
+        '''
+        item = parent.findItems(text, Qt.MatchExactly | Qt.MatchRecursive, 0)
         if len(item) == 1:
             item = item[0]
         else:
-            return
-        # insert the combobox in to the 2nd column of row_text
-        parent.setItemWidget(item, 1, obj)        
+            item = None
+        return item
+        
 
     def set_frame_layout(self, widget):
         '''set a dense layout for frame with a single widget'''
@@ -878,12 +948,21 @@ class QCMApp(QMainWindow):
         #convert to flot
         try:
             record_interval = float(record_interval)
+            if record_interval <= 0: # illegal value
+                raise ZeroDivisionError
         except:
-            record_interval = 0
+            record_interval = settings_init['lineEdit_recordinterval']
+            self.ui.lineEdit_recordinterval.setText(record_interval)
+            self.settings['lineEdit_recordinterval'] = record_interval
         try:
             refresh_resolution = float(refresh_resolution)
+            if refresh_resolution <= 0: # illegal value
+                raise ZeroDivisionError
         except:
-            refresh_resolution = 0
+            refresh_resolution = settings_init['lineEdit_refreshresolution']
+            self.ui.lineEdit_refreshresolution.setText(refresh_resolution)
+            self.settings['lineEdit_refreshresolution'] = refresh_resolution
+            
         # set lineEdit_scaninterval
         # self.ui.lineEdit_scaninterval.setText(f'{record_interval * refresh_resolution}  s')
         self.settings['lineEdit_recordinterval'] = float(record_interval)
@@ -1040,25 +1119,23 @@ class QCMApp(QMainWindow):
         self.ui.horizontalSlider_spectra_fit_spanctrl.setValue(0)
 
 
-    def span_check(self, harm, f1, f2):
+    def span_check(self, harm, f1=None, f2=None):
         '''
-        check if lower limit 'f1' and upper limit 'f2' in base freq +/- BW of harmonic 'harm'
+        check if lower limit ('f1' in Hz) and upper limit ('f2' in Hz) in base freq +/- BW of harmonic 'harm'
         if out of the limit, return the part in the range
         and show alert in statusbar
         '''
-        # get base freq
-        fbase = self.settings['comboBox_base_frequency'] * 1e6 # in Hz
-        # get BW
-        BW = self.settings['comboBox_bandwidth'] * 1e6 # in Hz
-        bf1, bf2 = (fbase - BW) * harm, (fbase + BW) * harm
-
+        # get freq_range
+        bf1, bf2 = np.array(self.settings['freq_range'][harm]) * 1e6 # in Hz
         # check f1, and f2
-        if f1 < bf1: # f1 out of limt
+        if f1 and (f1 < bf1 or f1 >= bf2): # f1 out of limt
             f1 = bf1
             #TODO update statusbar 'lower bond out of limit and reseted. (You can increase the bandwidth in settings)'
-        elif f2 > bf2: # f2 out of limt
+        if f2 and (f2 > bf2 or f2 <= bf1): # f2 out of limt
             f2 = bf2
             #TODO update statusbar 'upper bond out of limit and reseted. (You can increase the bandwidth in settings)'
+        if f1 >= f2:
+            f2 = bf2
 
         return f1, f2
 
@@ -1066,6 +1143,12 @@ class QCMApp(QMainWindow):
     def on_clicked_pushButton_spectra_fit_refresh(self):
         print('accvna', self.accvna)
         #TODOO get parameters from current setup: harm_tab
+        if self.idle == False: # test is running
+            # get params from tabWidget_settings_settings_harm & treeWidget_settings_settings_harmtree
+            pass
+
+            # check lim with BW
+            # flim1, flim2 = self.span_check(harm=self.settings['tabWidget_settings_settings_harm'], f1=flim1, f2=flim2)
         with self.accvna as accvna:
             accvna.set_steps_freq()
             ret, f, G, B = accvna.single_scan()
@@ -1097,20 +1180,20 @@ class QCMApp(QMainWindow):
         # get axes lims
         flim1, flim2 = axG.get_xlim()
         # check lim with BW
-        flim1, flim2 = self.span_check(harm=self.peak_tracker.harmonic_tab, f1=flim1, f2=flim2)
+        flim1, flim2 = self.span_check(harm=self.settings['tabWidget_settings_settings_harm'], f1=flim1, f2=flim2)
         print('get_navigate_mode()', axG.get_navigate_mode())
         print('flims', flim1, flim2)
         print(dflim1, dflim2)
         
         print(axG.get_navigate_mode())
-        if axG.get_navigate_mode() == 'PAN': # pan
-            # set a new x range: combine span of dflims and flims
-            flim1 = min([flim1, dflim1])
-            flim2 = max([flim2, dflim2])
-        elif axG.get_navigate_mode() == 'ZOOM': # zoom
-            pass
-        else: # axG.get_navigate_mode() == 'None'
-            pass
+        # if axG.get_navigate_mode() == 'PAN': # pan
+        #     # set a new x range: combine span of dflims and flims
+        #     flim1 = min([flim1, dflim1])
+        #     flim2 = max([flim2, dflim2])
+        # elif axG.get_navigate_mode() == 'ZOOM': # zoom
+        #     pass
+        # else: # axG.get_navigate_mode() == 'None'
+        #     pass
         print('flim', flim1, flim2)
 
         # accvna setup frequency
@@ -1143,7 +1226,7 @@ class QCMApp(QMainWindow):
         self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
 
         # set xlabel
-        # self.mpl_set_faxis(axG)
+        self.mpl_set_faxis(axG)
 
         # update lineEdit_spectra_fit_span
         self.update_lineedit_fit_span(f)
@@ -1333,8 +1416,10 @@ class QCMApp(QMainWindow):
             stwgt.setCurrentIndex((current_index + diret) % count) # increase or decrease index by diret
     
     # update widget values in settings dict, only works with elements out of settings_settings
+    
     def update_widget(self, signal):
         # if the sender of the signal isA QLineEdit object, update QLineEdit vals in dict
+        print('update')
         if isinstance(self.sender(), QLineEdit):
                 try:
                     if 'lineEdit_startf' in self.sender().objectName() or 'lineEdit_endf' in self.sender().objectName():
@@ -1371,7 +1456,10 @@ class QCMApp(QMainWindow):
 
     def update_harmonic_tab(self):
         #print("update_harmonic_tab was called")
-        self.peak_tracker.harmonic_tab = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
+        self.peak_tracker.harmonic_tab = \
+        self.settings['tabWidget_settings_settings_harm'] = \
+            2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
+        
         self.update_frequencies()
 
         #self.update_guichecks(self.ui.checkBox_settings_temp_sensor, 'checkBox_settings_temp_sensor')
@@ -1386,22 +1474,73 @@ class QCMApp(QMainWindow):
         #self.update_guicombos(self.ui.comboBox_timeunit, 'comboBox_timeunit', 'time_unit_choose')
         #self.update_guicombos(self.ui.comboBox_tempunit, 'comboBox_tempunit', 'temp_unit_choose')
         #self.update_guicombos(self.ui.comboBox_timescale, 'comboBox_timescale', 'time_scale_choose')
-        #self.update_guicombos(self.ui.comboBox_gammascale, 'comboBox_gammascale', 'gamma_scale_choose')
+        #self.update_guicombos(self.ui.comboBox_yscale, 'comboBox_yscale', 'gamma_scale_choose')
         
         #self.update_guicombos(self.ui.comboBox_bandwidth, 'comboBox_bandwidth', 'bandwidth_choose')
         #self.update_guicombos(self.ui.comboBox_base_frequency, 'comboBox_base_frequency', 'base_frequency_choose')
 
     def update_base_freq(self, base_freq_index):
-        value = self.ui.comboBox_base_frequency.itemData(base_freq_index)
-        self.settings['comboBox_base_frequency'] = value
+        fbase = self.ui.comboBox_base_frequency.itemData(base_freq_index) # in MHz
+        self.settings['comboBox_base_frequency'] = fbase
+        # update statusbar
+        self.statusbar_f0bw_update()
+        # update freq_range
+        self.update_freq_range()
+        # update freqrency display
         self.update_frequencies()
 
     def update_bandwidth(self, bandwidth_index):
-        value = self.ui.comboBox_bandwidth.itemData(bandwidth_index)
-        self.settings['comboBox_bandwidth'] = value
+        BW = self.ui.comboBox_bandwidth.itemData(bandwidth_index) # in MHz
+        self.settings['comboBox_bandwidth'] = BW
+        # update statusbar
+        self.statusbar_f0bw_update()
+        # update freq_range
+        self.update_freq_range()
+        # update freqrency display
         self.update_frequencies()
+        print(self.settings['lineEdit_startf1'])
+        print(self.settings['tab_settings_settings_harm1'])
+
+    def statusbar_f0bw_update(self):
+        fbase = self.settings['comboBox_base_frequency']
+        BW = self.settings['comboBox_bandwidth']
+        self.ui.label_status_f0BW.setText('{}\u00B1{} MHz'.format(fbase, BW))
+        self.ui.label_status_f0BW.setToolTip('base frequency = {} MHz; band width = {} MHz'.format(fbase, BW))
+
+    def update_freq_range(self):
+        '''
+        update settings['freq_range']
+        '''
+        fbase = self.settings['comboBox_base_frequency'] # in MHz
+        BW = self.settings['comboBox_bandwidth'] # in MHz
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            self.settings['freq_range'][i] = [i*fbase-BW, i*fbase+BW]
+        print(self.settings['freq_range'])
 
     def update_frequencies(self):
+        
+        # update lineEdit_startf<n> & lineEdit_endf<n>
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            # check f1 (start), f2 (end)
+            f1, f2 = self.span_check(i, f1=self.settings['lineEdit_startf' + str(i)], f2=self.settings['lineEdit_endf' + str(i)]) 
+            print(f1, f2)
+            getattr(self.ui, 'lineEdit_startf' +str(i)).setText(MathModules.num2str(f1*1e-6, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_endf' +str(i)).setText(MathModules.num2str(f2*1e-6, precision=12)) # display as MHz
+            
+        # update start/end in treeWidget_settings_settings_harmtree
+            harm = self.settings['tabWidget_settings_settings_harm']
+            tree_settings = self.ui.treeWidget_settings_settings_harmtree
+            # Set Start
+            self.find_text_item(tree_settings, 'Start').setText(
+                1,
+                MathModules.num2str(self.settings['lineEdit_startf' + str(harm)]*1e-6, precision=12)
+            )
+            # set End
+            self.find_text_item(tree_settings, 'End').setText(
+                1,
+                MathModules.num2str(self.settings['lineEdit_endf' +str(harm)]*1e-6, precision=12)
+            )
+        return
         self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['start_freq'] = self.peak_tracker.harmonic_tab * self.settings['comboBox_base_frequency'] - self.settings['comboBox_bandwidth']
         self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['end_freq'] = self.peak_tracker.harmonic_tab * self.settings['comboBox_base_frequency'] + self.settings['comboBox_bandwidth']
         self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['start_freq']))
@@ -1455,9 +1594,9 @@ class QCMApp(QMainWindow):
         value = self.ui.comboBox_timescale.itemData(timescale_index)
         self.settings['comboBox_timescale'] = value
 
-    def update_gammascale(self, gammascale_index):
-        value = self.ui.comboBox_gammascale.itemData(gammascale_index)
-        self.settings['comboBox_gammascale'] = value
+    def update_yscale(self, yscale_index):
+        value = self.ui.comboBox_yscale.itemData(yscale_index)
+        self.settings['comboBox_yscale'] = value
 
     #def update_linktime(self):
     #    self.settings['checkBox_settings_settings_linktime'] = not self.settings['checkBox_settings_settings_linktime']
@@ -1530,7 +1669,7 @@ class QCMApp(QMainWindow):
         load_comboBox(self.ui.comboBox_timeunit, 'comboBox_timeunit', 'time_unit_choose')
         load_comboBox(self.ui.comboBox_tempunit, 'comboBox_tempunit', 'temp_unit_choose')
         load_comboBox(self.ui.comboBox_timescale, 'comboBox_timescale', 'time_scale_choose')
-        load_comboBox(self.ui.comboBox_gammascale, 'comboBox_gammascale', 'gamma_scale_choose')
+        load_comboBox(self.ui.comboBox_yscale, 'comboBox_yscale', 'y_scale_choose')
         self.ui.checkBox_settings_settings_linktime.setChecked(self.settings['checkBox_settings_settings_linktime'])
 
         # set opened harmonic tab
@@ -1578,27 +1717,27 @@ class QCMApp(QMainWindow):
         # check start frequency range
         if float(self.settings[startname]) <= min_range or float(self.settings[startname]) >= max_range:
             print('ERROR')
-            self.settings[startname] = float(min_range) + 0.9
+            self.settings[startname] = float(min_range)
         if float(self.settings[startname]) >= float(self.settings[endname]):
             if float(self.settings[startname]) == float(self.settings[endname]):
                 print('The start frequency cannot be the same as the end frequency!')
-                self.settings[startname] = min_range + 0.9
-                self.settings[endname] = max_range - 0.9
+                self.settings[startname] = min_range
+                # self.settings[endname] = max_range
             else:
                 print('The start frequency is greater than the end frequency!')
-                self.settings[startname] = min_range + 0.9
+                self.settings[startname] = min_range
         # check end frequency range
         if float(self.settings[endname]) <= min_range or float(self.settings[endname]) >= max_range:
             print('ERROR')
-            self.settings[endname] = max_range - 0.9
+            self.settings[endname] = max_range
         if float(self.settings[endname]) <= float(self.settings[startname]):
             print('ERROR: The end frequency is less than the start frequency!')
             if float(self.settings[startname]) == max_range:
                 print('The start frequency cannot be the same as the end frequency!')
-                self.settings[startname] = min_range + 0.9
-                self.settings[endname] = max_range - 0.9
+                self.settings[startname] = min_range
+                # self.settings[endname] = max_range - 0.9
             else:
-                self.settings[endname] = max_range - 0.9
+                self.settings[endname] = max_range
 
     def smart_peak_tracker(self, harmonic, freq, conductance, susceptance, G_parameters):
         self.peak_tracker.f0 = G_parameters[0]
