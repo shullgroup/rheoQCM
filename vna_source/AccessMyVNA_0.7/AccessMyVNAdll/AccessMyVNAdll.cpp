@@ -315,6 +315,7 @@ int MyVNAGetDoubleArrayHelper(TCHAR * pString, int nWhat, int nIndex, int nArray
 {
 
 	int errcode = 1;
+
 	DISPID dispid;
 	OLECHAR FAR* szMember = T2OLE((LPTSTR)pString);
 
@@ -343,12 +344,23 @@ int MyVNAGetDoubleArrayHelper(TCHAR * pString, int nWhat, int nIndex, int nArray
 	{
 		errcode = -1;
 	}
-	if (errcode == 0)
-		for (int i = 0; i< nArraySize; i++)
-			pnResult[i] = ((double *)pArray->pvData)[i];
-	//pArray = NULL;
-	if (pArray != NULL)
-		SafeArrayDestroy(pArray);
+
+	HRESULT hr;
+	hr = SafeArrayLock(nData.parray);
+	if (errcode == 0 && SUCCEEDED(hr))
+	{
+		DOUBLE* pData = static_cast<DOUBLE*>(nData.parray->pvData);
+		for (int i = 0; i < nArraySize; i++) {
+			//pnResult[i] = ((double *)pArray->pvData)[i];
+			pnResult[i] = pData[i];
+		}
+	}
+	SafeArrayUnlock(nData.parray);
+	SafeArrayDestroy(nData.parray);
+	//if (nData.parray != NULL)
+	//	cout << "inside";
+	//	SafeArrayDestroy(nData.parray);
+	//	cout << "rip";
 	return errcode;
 }
 
@@ -390,8 +402,8 @@ int MyVNASetDoubleArrayHelper(TCHAR * pString, int nWhat, int nIndex, int nArray
 	{
 		errcode = -1;
 	}
-	if (pArray != NULL)
-		SafeArrayDestroy(pArray);
+	if (nData.parray != NULL)
+		SafeArrayDestroy(nData.parray);
 	return errcode;
 }
 
