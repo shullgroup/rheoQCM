@@ -199,6 +199,7 @@ settings_init = {
 
 settings_default = {
 #### default settings control ####
+    'comboBox_settings_control_scanmode': 'startstop',
     # default harmonics 
     'harmonics_check': [1, 3, 5],
 
@@ -218,12 +219,15 @@ settings_default = {
     'lineEdit_scaninterval': 5,
 
     # default fitting and display options
+    'checkBox_control_rectemp': False,
     'checkBox_dynamicfit': True,
-    'checkBox_showsusceptance': False,
-    'checkBox_showchi': False,
-    'checkBox_showpolar': False,
     'comboBox_fitfactor': '6',
+    #'checkBox_showsusceptance': False,
+    #'checkBox_showchi': False,
+    #'checkBox_showpolar': False,
 
+
+    'tabWidget_settings_settings_harm': 1,
     # default crystal settings
     'comboBox_base_frequency': 5,
     'comboBox_bandwidth': 0.1,
@@ -399,3 +403,8 @@ settings_default = {
     'radioButton_plt2_ref': False
 }
 
+thing = [0, 1, 2, 3]
+a = thing
+thing[0] = 10
+print(a)
+print(thing)

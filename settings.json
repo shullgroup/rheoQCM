@@ -12,12 +12,13 @@
     "checkBox_harm9": false,
     "checkBox_harm11": false,
     "lineEdit_reftime": 0,
-    "lineEdit_recordinterval": 2,
-    "lineEdit_refreshresolution": 1,
-    "lineEdit_scaninterval": 2,
-    "checkBox_control_rectemp": false,
+    "lineEdit_recordinterval": 5.0,
+    "lineEdit_refreshresolution": 1.0,
+    "lineEdit_scaninterval": 5.0,
+    "checkBox_control_rectemp": true,
     "checkBox_dynamicfit": true,
     "comboBox_fitfactor": "6",
+    "tabWidget_settings_settings_harm": 1,
     "comboBox_base_frequency": 5,
     "comboBox_bandwidth": 0.1,
     "freq_range": {
@@ -51,9 +52,9 @@
         "lineEdit_scan_harmend": 5.1,
         "lineEdit_scan_harmpoints": 400,
         "comboBox_span_method": "gmax",
-        "comboBox_span_track": "fixspan",
-        "checkBox_harmfit": false,
-        "comboBox_harmfitfactor": "6",
+        "comboBox_span_track": "auto",
+        "checkBox_harmfit": true,
+        "comboBox_harmfitfactor": 6,
         "lineEdit_peaks_maxnum": 1.0,
         "lineEdit_peaks_threshold": 0.2,
         "lineEdit_peaks_prominence": 0.005
@@ -177,12 +178,5 @@
             54900000.0,
             55100000.0
         ]
-    },
-    "tabWidget_settings_settings_harm": 1,
-    "lineEdit_endf1": 5.1,
-    "lineEdit_endf3": 15.1,
-    "lineEdit_endf5": 25.1,
-    "lineEdit_endf7": 35.1,
-    "lineEdit_endf9": 45.1,
-    "lineEdit_endf11": 55.1
+    }
 }
