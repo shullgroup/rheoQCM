@@ -250,10 +250,11 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         
         # default fit settings
+        'checkBox_harmfit': True,
         'comboBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.05,
+        'lineEdit_peaks_prominence': 0.005,
     },
 
     'tab_settings_settings_harm3': {
@@ -267,10 +268,11 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         
         # default fit settings
+        'checkBox_harmfit': True,
         'comboBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.05,
+        'lineEdit_peaks_prominence': 0.005,
     },
 
     'tab_settings_settings_harm5': {
@@ -284,10 +286,11 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         
         # default fit settings
+        'checkBox_harmfit': True,
         'comboBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.05,
+        'lineEdit_peaks_prominence': 0.005,
     },
 
     'tab_settings_settings_harm7': {
@@ -301,10 +304,11 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         
         # default fit settings
+        'checkBox_harmfit': True,
         'comboBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.05,
+        'lineEdit_peaks_prominence': 0.005,
     },
 
     'tab_settings_settings_harm9': {
@@ -318,10 +322,11 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         
         # default fit settings
+        'checkBox_harmfit': True,
         'comboBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.05,
+        'lineEdit_peaks_prominence': 0.005,
 
     },
 
@@ -336,10 +341,11 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         
         # default fit settings
+        'checkBox_harmfit': True,
         'comboBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.05,
+        'lineEdit_peaks_prominence': 0.005,
     },
 
     ### default hardware settings ###
@@ -361,7 +367,7 @@ settings_default = {
     'comboBox_tempunit': 'C',
     'comboBox_timescale': 'linear',
     'comboBox_yscale': 'linear',
-    'checkBox_settings_settings_linktime': False,
+    'checkBox_linktime': False,
 
     ### default plot selections ###
     # default selections for spectra show

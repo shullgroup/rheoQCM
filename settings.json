@@ -110,7 +110,7 @@
     "comboBox_tempunit": "C",
     "comboBox_timescale": "linear",
     "comboBox_gammascale": "linear",
-    "checkBox_settings_settings_linktime": false,
+    "checkBox_linktime": false,
     "radioButton_spectra_showBp": false,
     "radioButton_spectra_showpolar": false,
     "checkBox_spectra_shoechi": false,

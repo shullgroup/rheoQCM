@@ -401,7 +401,7 @@ defined above
 |-|----|----|----|----|
 | |currentIndexChanged()|  |`updatesettings_timeunit`|save selection to `self.settings` and resfresh figures in stackedWidget_data|
 
-###### checkBox_settings_settings_linktime
+###### checkBox_linktime
 
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
