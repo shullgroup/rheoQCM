@@ -510,9 +510,9 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_span_track.activated.connect(self.update_harmwidget)
         self.ui.checkBox_harmfit.clicked['bool'].connect(self.update_harmwidget)
         self.ui.comboBox_harmfitfactor.activated.connect(self.update_harmwidget)
-        self.ui.lineEdit_peaks_maxnum.editingFinished.connect(self.update_harmwidget)
-        self.ui.lineEdit_peaks_threshold.editingFinished.connect(self.update_harmwidget)
-        self.ui.lineEdit_peaks_prominence.editingFinished.connect(self.update_harmwidget)
+        self.ui.lineEdit_peaks_maxnum.textChanged[str].connect(self.update_harmwidget)
+        self.ui.lineEdit_peaks_threshold.textChanged[str].connect(self.update_harmwidget)
+        self.ui.lineEdit_peaks_prominence.textChanged[str].connect(self.update_harmwidget)
 
         # set signals to update hardware settings_settings
         self.ui.comboBox_sample_channel.activated.connect(self.update_samplechannel)
@@ -1401,7 +1401,7 @@ class QCMApp(QMainWindow):
     # update widget values in settings dict, only works with elements out of settings_settings
     
     def update_widget(self, signal):
-        #  of the signal isA QLineEdit object, update QLineEdit vals in dict
+        #  if the signal isA QLineEdit object, update QLineEdit vals in dict
         print('update', signal)
         if isinstance(self.sender(), QLineEdit):
                 try:
@@ -1427,7 +1427,7 @@ class QCMApp(QMainWindow):
         update widgets in treeWidget_settings_settings_harmtree
         except lineEdit_harmstart & lineEdit_harmend
         '''
-        #  of the signal isA QLineEdit object, update QLineEdit vals in dict
+        #  if the signal isA QLineEdit object, update QLineEdit vals in dict
         print('update', signal)
         harm = self.settings['tabWidget_settings_settings_harm']
         tabwidget_name = 'tab_settings_settings_harm' + str(harm)
