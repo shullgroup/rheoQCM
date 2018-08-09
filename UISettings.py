@@ -47,7 +47,7 @@ settings_init = {
     ]),
 
     # scan mode
-    'scan_mode': {
+    'display_choose': {
         'startstop':  'Start/Stop',
         'centerspan': 'Center/Span',
     },
@@ -211,8 +211,10 @@ settings_default = {
     'checkBox_harm9': False,
     'checkBox_harm11': False,
 
+    # default frequency display mode
+    'comboBox_settings_control_dispmode': 'startstop',
     # default time settings
-    'lineEdit_reftime': 0,
+    'lineEdit_reftime': None,
     
     'lineEdit_recordinterval': 5,
     'lineEdit_refreshresolution': 1,
@@ -233,14 +235,9 @@ settings_default = {
     'comboBox_bandwidth': 0.1,
 
     # default frequency ranges for each harmonic
-    'freq_range': {
-        1: [4, 6],
-        3: [14, 16],
-        5: [24, 26],
-        7: [34, 36],
-        9: [44, 46],
-        11: [54, 56]
-    },
+    'freq_range': {},
+    # default frequency span for each harmonic
+    'freq_span': {},
 
     #### default settings settings ####
     'tab_settings_settings_harm1': {

@@ -256,12 +256,12 @@ background-color: red;
                       <string>Scan mode </string>
                      </property>
                      <property name="buddy">
-                      <cstring>comboBox_settings_control_scanmode</cstring>
+                      <cstring>comboBox_settings_control_dispmode</cstring>
                      </property>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QComboBox" name="comboBox_settings_control_scanmode"/>
+                    <widget class="QComboBox" name="comboBox_settings_control_dispmode"/>
                    </item>
                    <item>
                     <spacer name="horizontalSpacer_23">
