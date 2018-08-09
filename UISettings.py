@@ -85,7 +85,7 @@ settings_init = {
 
     # track_method
     'span_track_choose': {
-        'free':      'Free',
+        'auto':      'Auto',
         'fixspan':   'Fix span',
         'fixcenter': 'Fix center',
         'fixcntspn':  'Fix center/span',
@@ -213,9 +213,9 @@ settings_default = {
     # default time settings
     'lineEdit_reftime': 0,
     
-    'lineEdit_recordinterval': 2,
+    'lineEdit_recordinterval': 5,
     'lineEdit_refreshresolution': 1,
-    'lineEdit_scaninterval': 2,
+    'lineEdit_scaninterval': 5,
 
     # default fitting and display options
     'checkBox_dynamicfit': True,
@@ -247,7 +247,7 @@ settings_default = {
         
         # default span settings
         'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_span_track': 'auto',
         
         # default fit settings
         'checkBox_harmfit': True,
