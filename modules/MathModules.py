@@ -62,3 +62,8 @@ def findpeaks(array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf,
     elif output.lower() == 'values':
         return values
 
+def converter_startstop_to_centerspan(f1, f2):
+    '''convert start/stop (f1/f2) to center/span (fc/fs)'''
+    fc = (f1 + f2) / 2
+    fs = f2 - f1
+    return fc, fs

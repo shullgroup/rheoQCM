@@ -163,7 +163,7 @@ settings = {
 
 ### tab_settings_control
 
-#### comboBox_settings_control_scanmode
+#### comboBox_settings_control_dispmode
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |currentIndexChanged()|label_settings_control_label1  |`switch_scanmode`|switch label between "Start (MHz)" and Center (MHz)|

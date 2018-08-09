@@ -183,10 +183,11 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_recordinterval.editingFinished.connect(self.set_lineEdit_scaninterval)
         self.ui.lineEdit_refreshresolution.editingFinished.connect(self.set_lineEdit_scaninterval)
 
-        # add value to the comboBox_settings_control_scanmode
-        for key, val in settings_init['scan_mode'].items():
-            self.ui.comboBox_settings_control_scanmode.addItem(val, key)
-
+        # add value to the comboBox_settings_control_dispmode
+        for key, val in settings_init['display_choose'].items():
+            self.ui.comboBox_settings_control_dispmode.addItem(val, key)
+        self.ui.comboBox_settings_control_dispmode.activated.connect(self.update_widget)
+        self.ui.comboBox_settings_control_dispmode.activated.connect(self. update_freq_display_mode)
         # add value to the comboBox_fitfactor
         for key, val in settings_init['fit_factor_choose'].items():
             self.ui.comboBox_fitfactor.addItem(val, key)
@@ -200,14 +201,6 @@ class QCMApp(QMainWindow):
         # set pushButton_appenddata
         self.ui.pushButton_appenddata.clicked.connect(self.on_triggered_load_data)
 
-        # set signals to update lineEdit_end settings
-        self.ui.lineEdit_endf1.textChanged[str].connect(self.update_widget)
-        self.ui.lineEdit_endf3.textChanged[str].connect(self.update_widget)
-        self.ui.lineEdit_endf5.textChanged[str].connect(self.update_widget)
-        self.ui.lineEdit_endf7.textChanged[str].connect(self.update_widget)
-        self.ui.lineEdit_endf9.textChanged[str].connect(self.update_widget)
-        self.ui.lineEdit_endf11.textChanged[str].connect(self.update_widget)
-
         # set lineEdit_scaninterval background
         self.ui.lineEdit_scaninterval.setStyleSheet(
             "QLineEdit { background: transparent; }"
@@ -215,14 +208,13 @@ class QCMApp(QMainWindow):
 
         # set signals to update fitting and display settings
         self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_widget)
-        #self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_widget)
-        #self.ui.checkBox_showchi.stateChanged.connect(self.update_widget)
-        #self.ui.checkBox_showpolar.stateChanged.connect(self.update_widget)
+
         self.ui.comboBox_fitfactor.activated.connect(self.update_widget)
 
         # set signals to update spectra show display options
+        self.ui.radioButton_spectra_showGp.toggled.connect(self.update_widget)
         self.ui.radioButton_spectra_showBp.toggled.connect(self.update_widget)
-        #self.ui.radioButton_spectra_showpolar.toggled.connect(self.update_widget)
+        self.ui.radioButton_spectra_showpolar.toggled.connect(self.update_widget)
         self.ui.checkBox_spectra_shoechi.toggled.connect(self.update_widget)
 
         # set signals to checkBox_control_rectemp
@@ -505,8 +497,8 @@ class QCMApp(QMainWindow):
         # set signals of widgets in tabWidget_settings_settings_harm
         self.ui.lineEdit_scan_harmstart.editingFinished.connect(self.on_editingfinished_harm_freq)
         self.ui.lineEdit_scan_harmend.editingFinished.connect(self.on_editingfinished_harm_freq)
-        self.ui.comboBox_base_frequency.activated.connect(self.update_base_freq)
-        self.ui.comboBox_bandwidth.activated.connect(self.update_bandwidth)
+        self.ui.comboBox_base_frequency.currentIndexChanged.connect(self.update_base_freq)
+        self.ui.comboBox_bandwidth.currentIndexChanged.connect(self.update_bandwidth)
 
         # set signals to update span settings_settings
         self.ui.comboBox_span_method.activated.connect(self.update_harmwidget)
@@ -1487,28 +1479,25 @@ class QCMApp(QMainWindow):
         )
 
     def update_base_freq(self, base_freq_index):
-        fbase = self.ui.comboBox_base_frequency.itemData(base_freq_index) # in MHz
-        self.settings['comboBox_base_frequency'] = fbase
-        # update statusbar
-        self.statusbar_f0bw_update()
+        self.settings['comboBox_base_frequency'] = self.ui.comboBox_base_frequency.itemData(base_freq_index) # in MHz
         # update freq_range
         self.update_freq_range()
         # check freq_span
         self.check_freq_span()
         # update freqrency display
         self.update_frequencies()
+        # update statusbar
+        self.statusbar_f0bw_update()
 
     def update_bandwidth(self, bandwidth_index):
-        BW = self.ui.comboBox_bandwidth.itemData(bandwidth_index) # in MHz
-        self.settings['comboBox_bandwidth'] = BW
-        # update statusbar
-        self.statusbar_f0bw_update()
+        self.settings['comboBox_bandwidth'] = self.ui.comboBox_bandwidth.itemData(bandwidth_index) # in MHz
         # update freq_range
-        self.update_freq_range()
         # check freq_span
         self.check_freq_span()
         # update freqrency display
         self.update_frequencies()
+        # update statusbar
+        self.statusbar_f0bw_update()
 
     def statusbar_f0bw_update(self):
         fbase = self.settings['comboBox_base_frequency']
@@ -1522,9 +1511,10 @@ class QCMApp(QMainWindow):
         '''
         fbase = self.settings['comboBox_base_frequency'] * 1e6 # in Hz
         BW = self.settings['comboBox_bandwidth'] * 1e6 # in Hz
+        freq_range = {}
         for i in range(1, settings_init['max_harmonic']+2, 2):
-            self.settings['freq_range'][i] = [i*fbase-BW, i*fbase+BW]
-        print(self.settings['freq_range'])
+            freq_range[i] = [i*fbase-BW, i*fbase+BW]
+        self.settings['freq_range'] = freq_range
 
     def check_freq_span(self):
         '''
@@ -1532,34 +1522,59 @@ class QCMApp(QMainWindow):
         '''
         try: 
             self.settings['freq_span'] # check if self.settings['freq_span'] exist
+            freq_span = {}
             for i in range(1, settings_init['max_harmonic']+2, 2):
-                self.settings['freq_span'][i] = self.span_check(i, self.settings['freq_span'][i][0], self.settings['freq_span'][i][1])
+                freq_span[i] = self.span_check(i, self.settings['freq_span'][i][0], self.settings['freq_span'][i][1])
+            self.settings['freq_span'] = freq_span
         except: # if self.settings['freq_span'] does not exist
             try: # check if self.settings['freq_range'] exist
                 self.settings['freq_span'] = self.settings['freq_range']
             except: # if self.settings['freq_range'] does not exist
                 self.update_freq_range() # initiate self.settings['freq_range']
                 self.settings['freq_span'] = self.settings['freq_range']
-        print('f_sp', self.settings['freq_span'])
 
     def update_frequencies(self):
         
+        # get display mode (startstop or centerspan)
+        disp_mode = self.settings['comboBox_settings_control_dispmode']
+
         # update lineEdit_startf<n> & lineEdit_endf<n>
         for i in range(1, settings_init['max_harmonic']+2, 2):
-            # check f1 (start), f2 (end)
-            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(MathModules.num2str(self.settings['freq_span'][i][0]*1e-6, precision=12)) # display as MHz
-            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(MathModules.num2str(self.settings['freq_span'][i][1]*1e-6, precision=12)) # display as MHz
+            f1 = self.settings['freq_span'][i][0]*1e-6 # in MHz
+            f2 = self.settings['freq_span'][i][1]*1e-6 # in MHz
+            if disp_mode == 'centerspan':
+                # convert f1, f2 from start/stop to center/span
+                f1, f2 = MathModules.converter_startstop_to_centerspan(f1, f2)
+            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(MathModules.num2str(f1, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(MathModules.num2str(f2, precision=12)) # display as MHz
             
         # update start/end in treeWidget_settings_settings_harmtree
-            harm = self.settings['tabWidget_settings_settings_harm']
-            # Set Start
-            self.ui.lineEdit_scan_harmstart.setText(
-                MathModules.num2str(self.settings['freq_span'][harm][0]*1e-6, precision=12)
-            )
-            # set End
-            self.ui.lineEdit_scan_harmend.setText(
-                MathModules.num2str(self.settings['freq_span'][harm][1]*1e-6, precision=12)
-            )
+        harm = self.settings['tabWidget_settings_settings_harm']
+        # Set Start
+        self.ui.lineEdit_scan_harmstart.setText(
+            MathModules.num2str(self.settings['freq_span'][harm][0]*1e-6, precision=12)
+        )
+        # set End
+        self.ui.lineEdit_scan_harmend.setText(
+            MathModules.num2str(self.settings['freq_span'][harm][1]*1e-6, precision=12)
+        )
+
+    def update_freq_display_mode(self, signal):
+        ''' update frequency dispaly in settings_control '''
+        print(signal)
+        disp_mode = self.settings['comboBox_settings_control_dispmode']
+        # disp_mode = self.ui.comboBox_settings_control_dispmode.itemData(signal)
+
+        # set label_settings_control_label1 & label_settings_control_label2
+        if disp_mode == 'startstop':
+            self.ui.label_settings_control_label1.setText('Start (MHz)')
+            self.ui.label_settings_control_label2.setText('End (MHz)')
+        elif disp_mode == 'centerspan':
+            self.ui.label_settings_control_label1.setText('Center (MHz)')
+            self.ui.label_settings_control_label2.setText('Span (MHz)')
+        
+        self.update_frequencies()
+            
 
     def on_editingfinished_harm_freq(self):
         '''
@@ -1716,10 +1731,9 @@ class QCMApp(QMainWindow):
         self.peak_tracker.harmonic_tab = self.settings['tabWidget_settings_settings_harm'] = 1 #TODO
 
         ## following data is read from self.settings
-
-        # load default start and end frequencies fo
-        # r lineEdit harmonics
-
+        # load display_mode
+        self.load_comboBox(self.ui.comboBox_settings_control_dispmode, 'display_choose')
+        
         # load default record interval
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         # load default spectra refresh resolution
@@ -1730,6 +1744,9 @@ class QCMApp(QMainWindow):
         # load this first to create self.settings['freq_range'] & self.settings['freq_span']
         self.load_comboBox(self.ui.comboBox_base_frequency, 'base_frequency_choose')
         self.load_comboBox(self.ui.comboBox_bandwidth, 'bandwidth_choose')
+        # update statusbar
+        self.statusbar_f0bw_update()
+
         # create self.settings['freq_range']. 
         # this has to be initated before any 
         self.update_freq_range()
