@@ -368,15 +368,18 @@ class QCMApp(QMainWindow):
 
         # add comBox_tempdevice to treeWidget_settings_settings_hardware
         if self.accvna and self.system == 'win32':
+            self.settings['tempdevs_choose'] = \
+            tempdevs_choose = \
+            tempDevices.dict_available_devs(settings_init['devices_dict'])
             self.create_combobox(
                 'comBox_tempdevice',
-                tempDevices.dict_available_devs(settings_init['devices_dict']),  
+                tempdevs_choose,  
                 100,
                 'Device',
                 self.ui.treeWidget_settings_settings_hardware, 
             )
             self.settings['comBox_tempdevice'] = self.ui.comBox_tempdevice.itemData(self.ui.comBox_tempdevice.currentIndex())
-            self.ui.comBox_tempdevice.activated.connect(self.update_widget)
+            self.ui.comBox_tempdevice.activated.connect(self.update_tempdevice)
         else: # accvna is not available
             self.create_combobox(
                 'comBox_tempdevice',
@@ -522,6 +525,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_mechanics_selectmodel.activated[str].connect(self.update_module)
         # self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
         self.ui.checkBox_settings_temp_sensor.clicked['bool'].connect(self.on_clicked_set_temp_sensor)
+        self.ui.comboBox_thrmcpltype.activated.connect(self.update_tempdevice)
         self.ui.comboBox_thrmcpltype.activated.connect(self.update_thrmcpltype)
 
         # set signals to update plots settings_settings
@@ -1605,9 +1609,32 @@ class QCMApp(QMainWindow):
         print("update_tempsensor was called")
         self.settings['checkBox_settings_temp_sensor'] = not self.settings['checkBox_settings_temp_sensor']
 
+
+    def update_tempdevice(self, tempdevice_index):
+        value = self.ui.comBox_tempdevice.itemData(tempdevice_index)
+        self.settings['comBox_tempdevice'] = value
+        # update display on label_temp_devthrmcpl
+        self.set_label_temp_devthrmcpl()
+
     def update_thrmcpltype(self, thrmcpltype_index):
         value = self.ui.comboBox_thrmcpltype.itemData(thrmcpltype_index)
         self.settings['comboBox_thrmcpltype'] = value
+        # update display on label_temp_devthrmcpl
+        self.set_label_temp_devthrmcpl()
+
+    def set_label_temp_devthrmcpl(self):
+        '''
+        display current selection of temp_sensor & thrmcpl
+        in label_temp_devthrmcpl
+        '''
+        print(self.settings['comBox_tempdevice'], self.settings['comboBox_thrmcpltype'])
+        self.ui.label_temp_devthrmcpl.setText(
+            'Dev/Thermocouple: {}/{}'.format(
+                self.settings['comBox_tempdevice'], 
+                self.settings['comboBox_thrmcpltype']
+            )
+        )
+
 
     def update_timeunit(self, timeunit_index):
         value = self.ui.comboBox_timeunit.itemData(timeunit_index)
@@ -1726,7 +1753,14 @@ class QCMApp(QMainWindow):
 
         self.ui.checkBox_settings_temp_sensor.setChecked(self.settings['checkBox_settings_temp_sensor'])
 
+        try:
+            self.load_comboBox(self.ui.comBox_tempdevice, 'tempdevs_choose')
+        except:
+            pass
         self.load_comboBox(self.ui.comboBox_thrmcpltype, 'thrmcpl_choose')
+        # update display on label_temp_devthrmcpl
+        self.set_label_temp_devthrmcpl() # this should be after temp_sensor & thrmcpl 
+
         # load default plots settings
         self.load_comboBox(self.ui.comboBox_timeunit, 'time_unit_choose')
         self.load_comboBox(self.ui.comboBox_tempunit, 'temp_unit_choose')
