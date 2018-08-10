@@ -1,13 +1,13 @@
-# files used to build documentation pdf
+# files used to build documentation pdf, along with data files
+QCMFuncs/figures
 doc/figures
-doc/MSEcore.bst
-doc/QCM.bib
-doc/QCMnotes.lyx
 doc/QCMnotes.lyx~
 
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
+
+data
 
 # Folder config file
 Desktop.ini
@@ -56,7 +56,6 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
-<<<<<<< HEAD
 
 # vs code Folder
 .vscode/
@@ -167,3 +166,5 @@ venv.bak/
 # folder for temporary test Files
 test/
 pyqt_gui_compile.bat
+QCMFuncs/Qifeng_sampledefs.py
+QCMFuncs/Qigeng_runfile.py
