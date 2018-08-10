@@ -1,11 +1,6 @@
 # files used to build documentation pdf
-<<<<<<< HEAD
 doc/figures
 doc/QCMnotes.lyx~
-=======
-*~
-QCMFuncs/figures
->>>>>>> 3ff7f79509b4209a45dc39279a635bf22d14818b
 
 # Windows image file caches
 Thumbs.db
