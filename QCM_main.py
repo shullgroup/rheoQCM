@@ -207,6 +207,7 @@ class QCMApp(QMainWindow):
         )
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         # set signals to update harm check states
         self.ui.checkBox_harm1.clicked['bool'].connect(self.update_widget)
         self.ui.checkBox_harm3.clicked['bool'].connect(self.update_widget)
@@ -224,6 +225,9 @@ class QCMApp(QMainWindow):
         #self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_widget)
         #self.ui.checkBox_showchi.stateChanged.connect(self.update_widget)
         #self.ui.checkBox_showpolar.stateChanged.connect(self.update_widget)
+=======
+        # set signals to update fitting and display settings
+>>>>>>> 72d945c31684e2a04590b31b92c9776e4e517cb3
 =======
         # set signals to update fitting and display settings
 >>>>>>> 72d945c31684e2a04590b31b92c9776e4e517cb3
@@ -1752,6 +1756,7 @@ class QCMApp(QMainWindow):
 
         ## following data is read from self.settings
 <<<<<<< HEAD
+<<<<<<< HEAD
 
         # load default harm check states
         self.ui.checkBox_harm1.setChecked(self.settings['checkBox_harm1'])
@@ -1776,6 +1781,8 @@ class QCMApp(QMainWindow):
         #(str(self.settings['tab_settings_settings_harm'+str(self.peak_tracker.harmonic_tab)]['lineEdit_scan_harmend']))
 
 
+=======
+>>>>>>> 72d945c31684e2a04590b31b92c9776e4e517cb3
 =======
 >>>>>>> 72d945c31684e2a04590b31b92c9776e4e517cb3
         # load display_mode
