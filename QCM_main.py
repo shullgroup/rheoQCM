@@ -206,28 +206,9 @@ class QCMApp(QMainWindow):
             "QLineEdit { background: transparent; }"
         )
 
-        # set signals to update harm check states
-        self.ui.checkBox_harm1.clicked['bool'].connect(self.update_widget)
-        self.ui.checkBox_harm3.clicked['bool'].connect(self.update_widget)
-        self.ui.checkBox_harm5.clicked['bool'].connect(self.update_widget)
-        self.ui.checkBox_harm7.clicked['bool'].connect(self.update_widget)
-        self.ui.checkBox_harm9.clicked['bool'].connect(self.update_widget)
-        self.ui.checkBox_harm11.clicked['bool'].connect(self.update_widget)
-
-        # set signals to update scan mode
-        self.ui.comboBox_settings_control_scanmode.activated.connect(self.update_widget)
-
         # set signals to update fitting and display settings
-<<<<<<< HEAD
-        self.ui.checkBox_control_rectemp.clicked['bool'].connect(self.update_widget)
-        self.ui.checkBox_dynamicfit.clicked['bool'].connect(self.update_widget)
-        #self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_widget)
-        #self.ui.checkBox_showchi.stateChanged.connect(self.update_widget)
-        #self.ui.checkBox_showpolar.stateChanged.connect(self.update_widget)
-=======
         self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_widget)
 
->>>>>>> f654b29b4aa15e6c2897395207e81398cbea6fae
         self.ui.comboBox_fitfactor.activated.connect(self.update_widget)
 
         # set signals to update spectra show display options
@@ -523,11 +504,10 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_span_method.activated.connect(self.update_harmwidget)
         self.ui.comboBox_span_track.activated.connect(self.update_harmwidget)
         self.ui.checkBox_harmfit.clicked['bool'].connect(self.update_harmwidget)
-        #self.ui.checkBox_harmfit.stateChanged.connect(self.update_harmwidget)
         self.ui.comboBox_harmfitfactor.activated.connect(self.update_harmwidget)
-        self.ui.lineEdit_peaks_maxnum.textChanged[str].connect(self.update_harmwidget)
-        self.ui.lineEdit_peaks_threshold.textChanged[str].connect(self.update_harmwidget)
-        self.ui.lineEdit_peaks_prominence.textChanged[str].connect(self.update_harmwidget)
+        self.ui.lineEdit_peaks_maxnum.editingFinished.connect(self.update_harmwidget)
+        self.ui.lineEdit_peaks_threshold.editingFinished.connect(self.update_harmwidget)
+        self.ui.lineEdit_peaks_prominence.editingFinished.connect(self.update_harmwidget)
 
         # set signals to update hardware settings_settings
         self.ui.comboBox_sample_channel.activated.connect(self.update_samplechannel)
@@ -1296,9 +1276,8 @@ class QCMApp(QMainWindow):
 
 
     def on_clicked_set_temp_sensor(self, checked):
-        #if UIModules.systemcheck
         # below only runs when accvna is available
-        if self.accvna and UIModules.system_check() == 'win32': # add not for testing code    
+        if self.accvna: # add not for testing code    
             if checked: # checkbox is checked
                 # if not self.tempsensor: # tempModule is not initialized 
                 # get all tempsensor settings 
@@ -1418,7 +1397,7 @@ class QCMApp(QMainWindow):
     # update widget values in settings dict, only works with elements out of settings_settings
     
     def update_widget(self, signal):
-        #  if the signal isA QLineEdit object, update QLineEdit vals in dict
+        #  of the signal isA QLineEdit object, update QLineEdit vals in dict
         print('update', signal)
         if isinstance(self.sender(), QLineEdit):
                 try:
@@ -1427,7 +1406,7 @@ class QCMApp(QMainWindow):
                     self.settings[self.sender().objectName()] = 0
         # if the sender of the signal isA QCheckBox object, update QCheckBox vals in dict
         elif isinstance(self.sender(), QCheckBox):
-            self.settings[self.sender().objectName()] = signal
+            self.settings[self.sender().objectName()] = not self.settings[self.sender().objectName()]
         # if the sender of the signal isA QRadioButton object, update QRadioButton vals in dict
         elif isinstance(self.sender(), QRadioButton):
             self.settings[self.sender().objectName()] = not self.settings[self.sender().objectName()]
@@ -1444,9 +1423,9 @@ class QCMApp(QMainWindow):
         update widgets in treeWidget_settings_settings_harmtree
         except lineEdit_harmstart & lineEdit_harmend
         '''
-        #  if the signal isA QLineEdit object, update QLineEdit vals in dict
+        #  of the signal isA QLineEdit object, update QLineEdit vals in dict
         print('update', signal)
-        harm = self.peak_tracker.harmonic_tab
+        harm = self.settings['tabWidget_settings_settings_harm']
         tabwidget_name = 'tab_settings_settings_harm' + str(harm)
         if isinstance(self.sender(), QLineEdit):
                 try:
@@ -1456,8 +1435,6 @@ class QCMApp(QMainWindow):
         # if the sender of the signal isA QCheckBox object, update QCheckBox vals in dict
         elif isinstance(self.sender(), QCheckBox):
             self.settings[tabwidget_name][self.sender().objectName()] = signal
-            print(self.sender().objectName())
-            print(signal)
         # if the sender of the signal isA QRadioButton object, update QRadioButton vals in dict
         elif isinstance(self.sender(), QRadioButton):
             self.settings[tabwidget_name][self.sender().objectName()] = not self.settings[tabwidget_name][self.sender().objectName()]
@@ -1500,8 +1477,6 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_peaks_prominence.setText(
             str(self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_peaks_prominence'])
         )
-
-        self.ui.checkBox_harmfit.setChecked(self.settings['tab_settings_settings_harm' + str(harm)]['checkBox_harmfit'])
 
     def update_base_freq(self, base_freq_index):
         self.settings['comboBox_base_frequency'] = self.ui.comboBox_base_frequency.itemData(base_freq_index) # in MHz
@@ -1753,50 +1728,19 @@ class QCMApp(QMainWindow):
         # set deflault displaying of tabWidget_settings_settings_harm
         self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
         # set opened harmonic tab
-        self.peak_tracker.harmonic_tab = self.settings['tabWidget_settings_settings_harm'] = 1
+        self.peak_tracker.harmonic_tab = self.settings['tabWidget_settings_settings_harm'] = 1 #TODO
 
         ## following data is read from self.settings
-<<<<<<< HEAD
-
-        # load default harm check states
-        self.ui.checkBox_harm1.setChecked(self.settings['checkBox_harm1'])
-        self.ui.checkBox_harm3.setChecked(self.settings['checkBox_harm3'])
-        self.ui.checkBox_harm5.setChecked(self.settings['checkBox_harm5'])
-        self.ui.checkBox_harm7.setChecked(self.settings['checkBox_harm7'])
-        self.ui.checkBox_harm9.setChecked(self.settings['checkBox_harm9'])
-        self.ui.checkBox_harm11.setChecked(self.settings['checkBox_harm11'])
-
-        self.ui.checkBox_tree_harm1.setChecked(self.settings['checkBox_harm1'])
-        self.ui.checkBox_tree_harm3.setChecked(self.settings['checkBox_harm3'])
-        self.ui.checkBox_tree_harm5.setChecked(self.settings['checkBox_harm5'])
-        self.ui.checkBox_tree_harm7.setChecked(self.settings['checkBox_harm7'])
-        self.ui.checkBox_tree_harm9.setChecked(self.settings['checkBox_harm9'])
-        self.ui.checkBox_tree_harm11.setChecked(self.settings['checkBox_harm11'])
-
-        # load default start and end frequencies
-        #self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['start_freq']))
-        #self.ui.lineEdit_scan_harmstart.setText \
-        #(str(self.settings['tab_settings_settings_harm'+str(self.peak_tracker.harmonic_tab)]['lineEdit_scan_harmstart']))
-        #self.ui.lineEdit_scan_harmend.setText \
-        #(str(self.settings['tab_settings_settings_harm'+str(self.peak_tracker.harmonic_tab)]['lineEdit_scan_harmend']))
-
-
-=======
         # load display_mode
         self.load_comboBox(self.ui.comboBox_settings_control_dispmode, 'display_choose')
         
->>>>>>> f654b29b4aa15e6c2897395207e81398cbea6fae
         # load default record interval
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         # load default spectra refresh resolution
         self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
-        
-        # load default rec temp options
-        self.ui.checkBox_control_rectemp.setChecked(self.settings['checkBox_control_rectemp'])
-        
         # load default fitting and display options
         self.ui.checkBox_dynamicfit.setChecked(self.settings['checkBox_dynamicfit'])
-        
+
         # load this first to create self.settings['freq_range'] & self.settings['freq_span']
         self.load_comboBox(self.ui.comboBox_base_frequency, 'base_frequency_choose')
         self.load_comboBox(self.ui.comboBox_bandwidth, 'bandwidth_choose')
@@ -1811,8 +1755,6 @@ class QCMApp(QMainWindow):
         # update frequencies display
         self.update_frequencies()
 
-        # load default harm fitting
-        self.ui.checkBox_harmfit.setChecked(self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['checkBox_harmfit'])
         # load default fit factor range
         self.load_comboBox(self.ui.comboBox_fitfactor, 'fit_factor_choose')
 
