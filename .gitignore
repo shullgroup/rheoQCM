@@ -1,10 +1,13 @@
-# files used to build documentation pdf
+# files used to build documentation pdf, along with data files
+QCMFuncs/figures
 doc/figures
 doc/QCMnotes.lyx~
 
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
+
+data
 
 # Folder config file
 Desktop.ini
