@@ -206,31 +206,6 @@ class QCMApp(QMainWindow):
             "QLineEdit { background: transparent; }"
         )
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-        # set signals to update harm check states
-        self.ui.checkBox_harm1.clicked['bool'].connect(self.update_widget)
-        self.ui.checkBox_harm3.clicked['bool'].connect(self.update_widget)
-        self.ui.checkBox_harm5.clicked['bool'].connect(self.update_widget)
-        self.ui.checkBox_harm7.clicked['bool'].connect(self.update_widget)
-        self.ui.checkBox_harm9.clicked['bool'].connect(self.update_widget)
-        self.ui.checkBox_harm11.clicked['bool'].connect(self.update_widget)
-
-        # set signals to update scan mode
-        #self.ui.comboBox_settings_control_scanmode.activated.connect(self.update_widget)
-
-        # set signals to update fitting and display settings
-        self.ui.checkBox_control_rectemp.clicked['bool'].connect(self.update_widget)
-        self.ui.checkBox_dynamicfit.clicked['bool'].connect(self.update_widget)
-        #self.ui.checkBox_showsusceptance.stateChanged.connect(self.update_widget)
-        #self.ui.checkBox_showchi.stateChanged.connect(self.update_widget)
-        #self.ui.checkBox_showpolar.stateChanged.connect(self.update_widget)
-=======
-        # set signals to update fitting and display settings
->>>>>>> 72d945c31684e2a04590b31b92c9776e4e517cb3
-=======
-        # set signals to update fitting and display settings
->>>>>>> 72d945c31684e2a04590b31b92c9776e4e517cb3
         self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_widget)
         self.ui.comboBox_fitfactor.activated.connect(self.update_widget)
         self.ui.checkBox_dynamicfitbyharm.clicked['bool'].connect(self.update_widget)
@@ -1756,36 +1731,6 @@ class QCMApp(QMainWindow):
         self.peak_tracker.harmonic_tab = self.settings['tabWidget_settings_settings_harm'] = 1 #TODO
 
         ## following data is read from self.settings
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-        # load default harm check states
-        self.ui.checkBox_harm1.setChecked(self.settings['checkBox_harm1'])
-        self.ui.checkBox_harm3.setChecked(self.settings['checkBox_harm3'])
-        self.ui.checkBox_harm5.setChecked(self.settings['checkBox_harm5'])
-        self.ui.checkBox_harm7.setChecked(self.settings['checkBox_harm7'])
-        self.ui.checkBox_harm9.setChecked(self.settings['checkBox_harm9'])
-        self.ui.checkBox_harm11.setChecked(self.settings['checkBox_harm11'])
-
-        self.ui.checkBox_tree_harm1.setChecked(self.settings['checkBox_harm1'])
-        self.ui.checkBox_tree_harm3.setChecked(self.settings['checkBox_harm3'])
-        self.ui.checkBox_tree_harm5.setChecked(self.settings['checkBox_harm5'])
-        self.ui.checkBox_tree_harm7.setChecked(self.settings['checkBox_harm7'])
-        self.ui.checkBox_tree_harm9.setChecked(self.settings['checkBox_harm9'])
-        self.ui.checkBox_tree_harm11.setChecked(self.settings['checkBox_harm11'])
-
-        # load default start and end frequencies
-        #self.ui.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(1, str(self.settings['tab_settings_settings_harm' + str(self.harmonic_tab)]['start_freq']))
-        #self.ui.lineEdit_scan_harmstart.setText \
-        #(str(self.settings['tab_settings_settings_harm'+str(self.peak_tracker.harmonic_tab)]['lineEdit_scan_harmstart']))
-        #self.ui.lineEdit_scan_harmend.setText \
-        #(str(self.settings['tab_settings_settings_harm'+str(self.peak_tracker.harmonic_tab)]['lineEdit_scan_harmend']))
-
-
-=======
->>>>>>> 72d945c31684e2a04590b31b92c9776e4e517cb3
-=======
->>>>>>> 72d945c31684e2a04590b31b92c9776e4e517cb3
         # load display_mode
         self.load_comboBox(self.ui.comboBox_settings_control_dispmode, 'display_choose')
         
