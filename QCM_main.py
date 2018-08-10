@@ -208,8 +208,9 @@ class QCMApp(QMainWindow):
 
         # set signals to update fitting and display settings
         self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_widget)
-
         self.ui.comboBox_fitfactor.activated.connect(self.update_widget)
+        self.ui.checkBox_dynamicfitbyharm.clicked['bool'].connect(self.update_widget)
+        self.ui.checkBox_fitfactorbyharm.clicked['bool'].connect(self.update_widget)
 
         # set signals to update spectra show display options
         self.ui.radioButton_spectra_showGp.toggled.connect(self.update_widget)
@@ -1437,7 +1438,7 @@ class QCMApp(QMainWindow):
             self.settings[tabwidget_name][self.sender().objectName()] = signal
         # if the sender of the signal isA QRadioButton object, update QRadioButton vals in dict
         elif isinstance(self.sender(), QRadioButton):
-            self.settings[tabwidget_name][self.sender().objectName()] = not self.settings[tabwidget_name][self.sender().objectName()]
+            self.settings[tabwidget_name][self.sender().objectName()] = signal
         # if the sender of the signal isA QComboBox object, udpate QComboBox vals in dict
         elif isinstance(self.sender(), QComboBox):
             try: # if w/ userData, use userData
@@ -1740,6 +1741,12 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
         # load default fitting and display options
         self.ui.checkBox_dynamicfit.setChecked(self.settings['checkBox_dynamicfit'])
+        # load default fit factor range
+        self.load_comboBox(self.ui.comboBox_fitfactor, 'fit_factor_choose')
+        # load default dynamicfitbyharm
+        self.ui.checkBox_dynamicfitbyharm.setChecked(self.settings['checkBox_dynamicfitbyharm'])
+        # load default fitfactorbyharm
+        self.ui.checkBox_fitfactorbyharm.setChecked(self.settings['checkBox_fitfactorbyharm'])
 
         # load this first to create self.settings['freq_range'] & self.settings['freq_span']
         self.load_comboBox(self.ui.comboBox_base_frequency, 'base_frequency_choose')
@@ -1754,9 +1761,6 @@ class QCMApp(QMainWindow):
         self.check_freq_span()
         # update frequencies display
         self.update_frequencies()
-
-        # load default fit factor range
-        self.load_comboBox(self.ui.comboBox_fitfactor, 'fit_factor_choose')
 
         # load default VNA settings
         self.load_comboBox(self.ui.comboBox_sample_channel, 'sample_channel_choose')
