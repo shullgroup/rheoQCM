@@ -56,7 +56,7 @@ class PeakTracker:
 
 class QCMApp(QMainWindow):
     '''
-    The settings of the app is stored in a dict
+    The settings of the app is stored in a dict by widget names
     '''
     def __init__(self):
         super(QCMApp, self).__init__()
@@ -505,9 +505,9 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_span_track.activated.connect(self.update_harmwidget)
         self.ui.checkBox_harmfit.clicked['bool'].connect(self.update_harmwidget)
         self.ui.comboBox_harmfitfactor.activated.connect(self.update_harmwidget)
-        self.ui.lineEdit_peaks_maxnum.editingFinished.connect(self.update_harmwidget)
-        self.ui.lineEdit_peaks_threshold.editingFinished.connect(self.update_harmwidget)
-        self.ui.lineEdit_peaks_prominence.editingFinished.connect(self.update_harmwidget)
+        self.ui.lineEdit_peaks_maxnum.textEdited.connect(self.update_harmwidget)
+        self.ui.lineEdit_peaks_threshold.textEdited.connect(self.update_harmwidget)
+        self.ui.lineEdit_peaks_prominence.textEdited.connect(self.update_harmwidget)
 
         # set signals to update hardware settings_settings
         self.ui.comboBox_sample_channel.activated.connect(self.update_samplechannel)
@@ -1109,7 +1109,7 @@ class QCMApp(QMainWindow):
         # check f1, and f2
         if f1 and (f1 < bf1 or f1 >= bf2): # f1 out of limt
             f1 = bf1
-            #TODO update statusbar 'lower bond out of limit and reseted. (You can increase the bandwidth in settings)'
+            #TODO update statusbar 'lower bound out of limit and reseted. (You can increase the bandwidth in settings)'
         if f2 and (f2 > bf2 or f2 <= bf1): # f2 out of limt
             f2 = bf2
             #TODO update statusbar 'upper bond out of limit and reseted. (You can increase the bandwidth in settings)'
@@ -1802,6 +1802,7 @@ class QCMApp(QMainWindow):
 
 
     def check_freq_range(self, harmonic, min_range, max_range):
+        #NOTUSING
         startname = 'lineEdit_startf' + str(harmonic)
         endname = 'lineEdit_endf' + str(harmonic)
         # check start frequency range
@@ -1838,7 +1839,7 @@ class QCMApp(QMainWindow):
             resonance = susceptance
         else:
             resonance = conductance
-        index = findpeaks(resonance, output='indices', sortstr='descend')
+        index = MathModules.findpeaks(resonance, output='indices', sortstr='descend')
         peak_f = freq[index[0]]
         # determine the estimated associated conductance (or susceptance) value at the resonance peak
         Gmax = resonance[index[0]] 
@@ -1848,41 +1849,37 @@ class QCMApp(QMainWindow):
         # extract the peak tracking conditions
         track_method = self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_span_track'] 
         if track_method == 'fixspan':
-            current_span = (float(self.settings['lineEdit_endf' + str(harmonic)]) - \
             # get the current span of the data in Hz
-            float(self.settings['lineEdit_startf' + str(harmonic)]))
-            if np.absolute(np.mean(np.array([freq[0],freq[len(freq)-1]]))-peak_f) > 0.1 * current_span:
+            current_span = self.settings['freq_span'][harmonic][1] - self.settings['freq_span'][harmonic][0]
+            if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-peak_f) > 0.1 * current_span:
                 # new start and end frequencies in Hz
                 new_xlim=np.array([peak_f-0.5*current_span,peak_f+0.5*current_span])
-                self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0]
-                self.settings['lineEdit_endf' + str(harmonic)] = new_xlim[1]
+                self.settingssettings['freq_span'][harmonic] = new_xlim
         elif track_method == 'fixcenter':
             # get current start and end frequencies of the data in Hz
-            current_xlim = np.array([float(self.settings['lineEdit_startf' + str(harmonic)]),float(self.settings['lineEdit_endf' + str(harmonic)])])
+            current_xlim = np.array(elf.settings['freq_span'][harmonic])
             # get the current center of the data in Hz
-            current_center = (float(self.se5ttings['lineEdit_startf' + str(harmonic)]) + float(self.settings['lineEdit_endf' + str(harmonic)]))/2 
+            current_center = (self.settings['freq_span'][harmonic][1] + self.settings['freq_span'][harmonic][0])/2 
             # find the starting and ending frequency of only the peak in Hz
             peak_xlim = np.array([peak_f-halfg_freq*3, peak_f+halfg_freq*3]) 
             if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*halfg_freq, current_center + 3*halfg_freq])))) > 3e3:
                 # set new start and end freq based on the location of the peak in Hz
                 new_xlim = np.array(current_center-3*halfg_freq, current_center+3*halfg_freq)
-                # set new start freq in Hz
-                self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0]
-                # set new end freq in Hz
-                self.settings['lineEdit_endf' + str(harmonic)] = new_xlim[1]
-        elif track_method == 'fixrange':
+                # set new start/end freq in Hz
+                self.settingssettings['freq_span'][harmonic] = new_xlim
+        elif track_method == 'auto':
             # adjust window if neither span or center is fixed (default)
-            current_xlim = np.array([float(self.settings['lineEdit_startf' + str(harmonic)]),float(self.settings['lineEdit_endf' + str(harmonic)])])
+            current_xlim = np.array(elf.settings['freq_span'][harmonic])
             # get the current span of the data in Hz
-            current_span = float(self.settings['lineEdit_endf' + str(harmonic)]) - float(self.settings['lineEdit_startf' + str(harmonic)])
+            current_span = self.settings['freq_span'][harmonic][1] - self.settings['freq_span'][harmonic][0]
             if(np.mean(current_xlim)-peak_f) > 1*current_span/12:
                 new_xlim = current_xlim-current_span/15  # new start and end frequencies in Hz
-                self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0] # set new start freq in Hz
-                self.settings['lineEdit_endf' + str(harmonic)] = new_xlim[1] # set new end freq in Hz
+                # set new span
+                self.settingssettings['freq_span'][harmonic] = new_xlim
             elif (np.mean(current_xlim)-peak_f) < -1*current_span/12:
                 new_xlim = current_xlim+current_span/15  # new start and end frequencies in Hz
-                self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0] # set new start freq in Hz
-                self.settings['lineEdit_endf' + str(harmonic)] = new_xlim[1] # set new end freq in Hz
+                # set new span
+                self.settingssettings['freq_span'][harmonic] = new_xlim
             else:
                 thresh1=.05*current_span + current_xlim[0] # Threshold frequency in Hz
                 thresh2=.03*current_span # Threshold frequency span in Hz
@@ -1890,21 +1887,27 @@ class QCMApp(QMainWindow):
                 if LB_peak-thresh1 > halfg_freq*8: # if peak is too thin, zoom into the peak
                     new_xlim[0]=(current_xlim[0] + thresh2) # Hz
                     new_xlim[1]=(current_xlim[1] - thresh2) # Hz
-                    self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0] # set new start freq in Hz
-                    self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[1] # set new end freq in Hz
+                    # set new span
+                    self.settingssettings['freq_span'][harmonic] = new_xlim
                 elif thresh1-LB_peak > -halfg_freq*5: # if the peak is too fat, zoom out of the peak
                     new_xlim[0]=current_xlim[0]-thresh2 # Hz
                     new_xlim[1]=current_xlim[1]+thresh2 # Hz
-                    self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[0] # set new start freq in Hz
-                    self.settings['lineEdit_startf' + str(harmonic)] = new_xlim[1] # set new end freq in Hz
+                    # set new span
+                    self.settingssettings['freq_span'][harmonic] = new_xlim
+        elif track_method == 'fixcntspn':
+            # bothe span and cent are fixed
+            # no changes
+            pass
         elif track_method == 'usrdef': #run custom tracking algorithm
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
             pass
-        self.check_freq_range(harmonic, self.settings['freq_range'][harmonic][0], self.settings['freq_range'][harmonic][1])
+
+        self.check_freq_span()
     
     def read_scan(self, harmonic):
+        #NOTUSING
         # read in live data scans
         if self.peak_tracker.refit_flag == 0:
             flag = 0

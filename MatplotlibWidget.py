@@ -604,8 +604,8 @@ class MatplotlibWidget(QWidget):
 
         self.ax[0].autoscale()
 
-def press_zoomX(self, event):
+def press_zoomX(obj, event):
     event.key = 'x'
     print('event',event)
-    NavigationToolbar2QT.press_zoom(self, event)
+    NavigationToolbar2QT.press_zoom(obj, event)
     print('zoomed on x')
