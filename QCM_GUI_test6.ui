@@ -286,6 +286,23 @@ background-color: red;
                    <property name="verticalSpacing">
                     <number>0</number>
                    </property>
+                   <item row="0" column="1">
+                    <widget class="QLabel" name="label_settings_control_label1">
+                     <property name="text">
+                      <string>Start (MHz)</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="2">
+                    <widget class="QLineEdit" name="lineEdit_endf9">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
                    <item row="5" column="1">
                     <widget class="QLineEdit" name="lineEdit_startf9">
                      <property name="readOnly">
@@ -293,8 +310,15 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
-                   <item row="6" column="0">
-                    <widget class="QCheckBox" name="checkBox_harm11">
+                   <item row="6" column="2">
+                    <widget class="QLineEdit" name="lineEdit_endf11">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QCheckBox" name="checkBox_harm1">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                        <horstretch>0</horstretch>
@@ -302,14 +326,46 @@ background-color: red;
                       </sizepolicy>
                      </property>
                      <property name="text">
-                      <string>11</string>
+                      <string>1</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="6" column="3">
-                    <widget class="QPushButton" name="pushButton_cntr11">
+                   <item row="2" column="0">
+                    <widget class="QCheckBox" name="checkBox_harm3">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>3</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="3">
+                    <widget class="QPushButton" name="pushButton_cntr5">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>30</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>cntr</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="3">
+                    <widget class="QPushButton" name="pushButton_cntr7">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -327,56 +383,6 @@ background-color: red;
                    </item>
                    <item row="6" column="1">
                     <widget class="QLineEdit" name="lineEdit_startf11">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="5" column="2">
-                    <widget class="QLineEdit" name="lineEdit_endf9">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="6" column="2">
-                    <widget class="QLineEdit" name="lineEdit_endf11">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="5" column="3">
-                    <widget class="QPushButton" name="pushButton_cntr9">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>30</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="text">
-                      <string>cntr</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="1">
-                    <widget class="QLabel" name="label_settings_control_label1">
-                     <property name="text">
-                      <string>Start (MHz)</string>
-                     </property>
-                     <property name="alignment">
-                      <set>Qt::AlignCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="1">
-                    <widget class="QLineEdit" name="lineEdit_startf1">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
@@ -404,106 +410,6 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="1">
-                    <widget class="QLineEdit" name="lineEdit_startf3">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="0">
-                    <widget class="QCheckBox" name="checkBox_harm5">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="text">
-                      <string>5</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="0">
-                    <widget class="QCheckBox" name="checkBox_harm1">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="text">
-                      <string>1</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="1">
-                    <widget class="QLineEdit" name="lineEdit_startf5">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="2">
-                    <widget class="QLineEdit" name="lineEdit_endf5">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="3">
-                    <widget class="QPushButton" name="pushButton_cntr5">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>30</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="text">
-                      <string>cntr</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="4" column="0">
-                    <widget class="QCheckBox" name="checkBox_harm7">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="text">
-                      <string>7</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="2">
-                    <widget class="QLineEdit" name="lineEdit_endf1">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="4" column="1">
-                    <widget class="QLineEdit" name="lineEdit_startf7">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="4" column="2">
-                    <widget class="QLineEdit" name="lineEdit_endf7">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
                    <item row="2" column="3">
                     <widget class="QPushButton" name="pushButton_cntr3">
                      <property name="sizePolicy">
@@ -523,8 +429,27 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="0">
-                    <widget class="QCheckBox" name="checkBox_harm3">
+                   <item row="6" column="3">
+                    <widget class="QPushButton" name="pushButton_cntr11">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>30</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="text">
+                      <string>cntr</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QCheckBox" name="checkBox_harm5">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                        <horstretch>0</horstretch>
@@ -532,12 +457,19 @@ background-color: red;
                       </sizepolicy>
                      </property>
                      <property name="text">
-                      <string>3</string>
+                      <string>5</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="3">
-                    <widget class="QPushButton" name="pushButton_cntr7">
+                   <item row="4" column="1">
+                    <widget class="QLineEdit" name="lineEdit_startf7">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="3">
+                    <widget class="QPushButton" name="pushButton_cntr9">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                        <horstretch>0</horstretch>
@@ -555,8 +487,42 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
+                   <item row="1" column="1">
+                    <widget class="QLineEdit" name="lineEdit_startf1">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QCheckBox" name="checkBox_harm7">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>7</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="2">
+                    <widget class="QLineEdit" name="lineEdit_endf7">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
                    <item row="2" column="2">
                     <widget class="QLineEdit" name="lineEdit_endf3">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="2">
+                    <widget class="QLineEdit" name="lineEdit_endf1">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
@@ -582,6 +548,40 @@ background-color: red;
                      </property>
                      <property name="text">
                       <string>9</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="2" column="1">
+                    <widget class="QLineEdit" name="lineEdit_startf3">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1">
+                    <widget class="QLineEdit" name="lineEdit_startf5">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="2">
+                    <widget class="QLineEdit" name="lineEdit_endf5">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="6" column="0">
+                    <widget class="QCheckBox" name="checkBox_harm11">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>11</string>
                      </property>
                     </widget>
                    </item>
@@ -852,19 +852,19 @@ background-color: red;
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_45">
                  <property name="spacing">
-                  <number>0</number>
+                  <number>2</number>
                  </property>
                  <property name="leftMargin">
-                  <number>0</number>
+                  <number>2</number>
                  </property>
                  <property name="topMargin">
-                  <number>0</number>
+                  <number>2</number>
                  </property>
                  <property name="rightMargin">
-                  <number>0</number>
+                  <number>2</number>
                  </property>
                  <property name="bottomMargin">
-                  <number>0</number>
+                  <number>2</number>
                  </property>
                  <item>
                   <widget class="QCheckBox" name="checkBox_control_rectemp">
@@ -885,7 +885,7 @@ background-color: red;
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
-                       <width>10</width>
+                       <width>13</width>
                        <height>20</height>
                       </size>
                      </property>
@@ -951,20 +951,15 @@ background-color: red;
                  </property>
                  <item row="0" column="0">
                   <widget class="QCheckBox" name="checkBox_dynamicfit">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
                    <property name="text">
-                    <string>Dynamic Fit (Harmonics can be set separately.)</string>
+                    <string>Dynamicfit</string>
                    </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                   <property name="tristate">
-                    <bool>false</bool>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QCheckBox" name="checkBox_dynamicfitbyharm">
+                   <property name="text">
+                    <string>Set by harmonic</string>
                    </property>
                   </widget>
                  </item>
@@ -1008,20 +1003,14 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
-                   <item>
-                    <spacer name="horizontalSpacer_3">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>40</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                    </spacer>
-                   </item>
                   </layout>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QCheckBox" name="checkBox_fitfactorbyharm">
+                   <property name="text">
+                    <string>Set by harmonic</string>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -6905,7 +6894,6 @@ border: 1px solid blue;
   <tabstop>pushButton_newdata</tabstop>
   <tabstop>pushButton_appenddata</tabstop>
   <tabstop>lineEdit_reftime</tabstop>
-  <tabstop>checkBox_dynamicfit</tabstop>
   <tabstop>lineEdit_datafilestr</tabstop>
   <tabstop>pushButton_gotofolder</tabstop>
  </tabstops>
