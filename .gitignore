@@ -166,5 +166,4 @@ venv.bak/
 # folder for temporary test Files
 test/
 pyqt_gui_compile.bat
-QCMFuncs/Qifeng_sampledefs.py
-QCMFuncs/Qigeng_runfile.py
+
