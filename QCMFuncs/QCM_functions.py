@@ -11,16 +11,24 @@ import matplotlib.pyplot as plt
 import os
 import hdf5storage
 from pathlib import Path
-from functools import reduce
+import pdb
 
 zq = 8.84e6  # shear acoustic impedance of quartz
 f1 = 5e6  # fundamental resonant frequency
+openplots = 4
 
 def close_on_click(event):
     # used so plots close when you click on them
     global openplots
     plt.close()
     openplots = openplots - 1
+    return
+
+
+def bring_to_front(event):
+    # used so plots close when you click on them
+    fig = gcf()
+    fig.canvas.manager.window.raise_()
     return
 
 
@@ -169,8 +177,8 @@ def solve_onelayer(soln_input):
     else:
         soln1_guess = thinfilm_guess(delfstar)
 
-    lb = [0, 0]  # lower bounds on dlam3 and phi
-    ub = [5, 90]  # upper bonds on dlam3 and phi
+    lb = np.array([0, 0])  # lower bounds on dlam3 and phi
+    ub = np.array([5, 90])  # upper bonds on dlam3 and phi
 
     def ftosolve(x):
         return [rhcalc(nh, x[0], x[1])-rh_exp, rdcalc(nh, x[0], x[1])-rd_exp]
@@ -186,6 +194,9 @@ def solve_onelayer(soln_input):
     # we solve it again to get the Jacobian with respect to our actual
     # input variables - this is helpfulf for the error analysis
     x0 = np.array([drho, grho3, phi])
+    
+    lb = np.array([0, 1e7, 0])  # lower bounds drho, grho3, phi
+    ub = np.array([1e-2, 1e13, 90])  # upper bounds drho, grho3, phi
 
     def ftosolve2(x):
         return ([real(delfstar[n1]) -
@@ -194,13 +205,38 @@ def solve_onelayer(soln_input):
                 real(delfstarcalc_onelayer(n2, x[0], x[1], x[2])),
                 imag(delfstar[n3]) -
                 imag(delfstarcalc_onelayer(n3, x[0], x[1], x[2]))])
+    
+    # put the input uncertainties into a 3 element vector
+    delfstar_err = np.zeros(3)
+    delfstar_err[0] = real(soln_input['delfstar_err'][n1])
+    delfstar_err[1] = real(soln_input['delfstar_err'][n2])
+    delfstar_err[2] = imag(soln_input['delfstar_err'][n3])
+    
+    # initialize the uncertainties
+    err = {}
+    err_names=['drho', 'grho3', 'phi']
 
-    soln2 = least_squares(ftosolve2, x0)
-    drho = soln2['x'][0]
-    grho3 = soln2['x'][1]
-    phi = soln2['x'][2]
-    dlam3 = d_lamcalc(3, drho, grho3, phi)
-
+    # recalculate solution to give the uncertainty, if solution is viable
+    if np.all(lb<x0) and np.all(x0<ub):
+        soln2 = least_squares(ftosolve2, x0, bounds=(lb, ub))
+        drho = soln2['x'][0]
+        grho3 = soln2['x'][1]
+        phi = soln2['x'][2]
+        dlam3 = d_lamcalc(3, drho, grho3, phi)
+        jac = soln2['jac']
+        jac_inv = np.linalg.inv(jac)
+        for k in [0, 1, 2]:
+            err[err_names[k]] = ((jac_inv[k, 0]*delfstar_err[0])**2 + 
+                                (jac_inv[k, 1]*delfstar_err[1])**2 +
+                                (jac_inv[k, 2]*delfstar_err[2])**2)**0.5
+    else:
+        drho = np.nan
+        grho3 = np.nan
+        phi = np.nan
+        dlam3 = np.nan
+        for k in [0, 1, 2]:
+            err[err_names[k]] = np.nan
+           
     # now back calculate delfstar, rh and rdfrom the solution
     delfstar_calc = {}
     rh = {}
@@ -213,24 +249,6 @@ def solve_onelayer(soln_input):
     soln_output = {'drho': drho, 'grho3': grho3, 'phi': phi, 'dlam3': dlam3,
                    'delfstar_calc': delfstar_calc, 'rh': rh, 'rd': rd}
     
-    # now calculate the error in the solution
-    # start by putting the input uncertainties into a 3 element vector
-    delfstar_err = np.zeros(3)
-    delfstar_err[0] = real(soln_input['delfstar_err'][n1])
-    delfstar_err[1] = real(soln_input['delfstar_err'][n2])
-    delfstar_err[2] = imag(soln_input['delfstar_err'][n3])
-    
-    # use these uncertainties along with the Jacobian from the solution
-    # to determine the uncertainties in the measured parameters
-    jac = soln2['jac']
-    jac_inv = np.linalg.inv(jac)
-    err = {}
-    err_names=['drho', 'grho3', 'phi']
-    for k in [0, 1, 2]:
-        err[err_names[k]] = ((jac_inv[k, 0]*delfstar_err[0])**2 + 
-                            (jac_inv[k, 1]*delfstar_err[1])**2 +
-                            (jac_inv[k, 2]*delfstar_err[2])**2)**0.5
-
     soln_output['err'] = err
     return soln_output
 
@@ -279,7 +297,7 @@ def QCManalyze(sample, parms):
     # if there is only one temperature, than we use time as the x axis, using
     # up to ten user-selected points
     if Temp.shape[0] == 1:
-        nx = min(10, film['n_all'], bare['n_all'])
+        nx = min(20, film['n_in_range'])
     else:
         nx = Temp.shape[0]
     
@@ -313,14 +331,26 @@ def QCManalyze(sample, parms):
     # now calculate the frequency and dissipation shifts
     delfstar = {}
     delfstar_err = {}
+    film['fstar_ref']={}
+    
+    # if the number of temperatures is 1, we use the average of the 
+    # bare temperature readings
+    for n in nhplot:
+        film['fstar_ref'][n] = np.zeros(film['n_all'])
+        if Temp.shape[0] == 1:
+            film['fstar_ref'][n][film['idx']] = (np.average(bare['fstar'][n]) * 
+                                                 np.ones(nx))
+        else:
+            film['fstar_ref'][n][film['idx']] = bare['fstar'][n][bare['idx']]
+    
     for i in np.arange(nx):
         idxb = bare['idx'][i]
         idxf = film['idx'][i]
         delfstar[i] = {}
         delfstar_err[i] ={}
         for n in nhplot:
-            delfstar[i][n] = (film['fstar'][n][idxf] - 
-                              bare['fstar'][n][idxb])
+            
+            delfstar[i][n] = (film['fstar'][n][idxf] - bare['fstar'][n][idxb])
             delfstar_err[i][n] = fstar_err_calc(film['fstar'][n][idxf])
 
     # set up the property axes
@@ -328,7 +358,7 @@ def QCManalyze(sample, parms):
     checkfig = {}
     for nh in sample['nhcalc']:
         checkfig[nh] = make_check_axes(sample, nh)
-        checkfig[nh]['figure'].canvas.mpl_connect('button_press_event', 
+        checkfig[nh]['figure'].canvas.mpl_connect('key_press_event', 
                                                   close_on_click)
 
     # set the appropriate value for xdata
@@ -441,19 +471,24 @@ def QCManalyze(sample, parms):
     # tidy up the raw data and property figures
     propfig['figure'].tight_layout()
     propfig['figure'].savefig(base_fig_name+'_prop.'+imagetype)
-
-    print('done with ', base_fig_name, 'click on plots to close them and continue')
-
-    propfig['figure'].canvas.mpl_connect('button_press_event', close_on_click)
-    film['rawfig'].canvas.mpl_connect('button_press_event', close_on_click)
-    bare['rawfig'].canvas.mpl_connect('button_press_event', close_on_click)
     
+    #pdb.set_trace()   
+    print('done with ', base_fig_name, 'press any key to close plots and continue')
+
+    propfig['figure'].canvas.mpl_connect('key_press_event', close_on_click)
+    film['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
+    bare['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
+    propfig['figure'].canvas.mpl_connect('button_press_event', bring_to_front)
+    film['rawfig'].canvas.mpl_connect('button_press_event', bring_to_front)
+    bare['rawfig'].canvas.mpl_connect('button_press_event', bring_to_front)
+
+        
     openplots = 3 + len(checkfig)
     while openplots>0:
         plt.pause(1)
 
 
-def idx_in_range(t, t_range):
+def find_idx_in_range(t, t_range):
     if t_range[0] == t_range[1]:
         idx = np.arange(t.shape[0]).astype(int)
     else:
@@ -477,7 +512,7 @@ def nhcalc_in_nhplot(nhcalc_in, nhplot):
 
 def pickpoints(Temp, nx, dict):
     t_in = dict['t']
-    idx_in = dict['idx_all']
+    idx_in = dict['idx_in_range']
     idx_file = dict['idx_file']
     idx_out = np.array([], dtype=int)
     if Temp.shape[0] == 1:
@@ -504,9 +539,10 @@ def pickpoints(Temp, nx, dict):
 
 def make_prop_axes(sample):
     # set up the property plot
-    if plt.fignum_exists('prop'):
-        plt.close('prop')
-    fig = plt.figure('prop', figsize=(9, 3))
+    propfigname = 'prop_'+sample['samplename']
+    if plt.fignum_exists(propfigname):
+        plt.close(propfigname)
+    fig = plt.figure(propfigname, figsize=(9, 3))
     drho_ax = fig.add_subplot(131)
     drho_ax.set_xlabel(sample['xlabel'])
     drho_ax.set_ylabel(r'$d\rho\: (g/m^2)$')
@@ -552,14 +588,15 @@ def process_raw(sample, data_type):
 
     for n in nhplot:        
         dict['fstar'][n] = freq[:, n] +1j*freq[:, n+1] - sample['freqref'][n]
+        
+    # figure out how man total points we have
+    dict['n_all'] = dict['t'].shape[0]
 
     #  find all the time points between specified by timerange
     #  if the min and max values for the time range are equal, we use
     #    all the points
-    dict['idx_all'] = idx_in_range(dict['t'], trange)
-
-    # figure out how man total points we have
-    dict['n_all'] = dict['idx_all'].shape[0]
+    dict['idx_in_range'] = find_idx_in_range(dict['t'], trange)
+    dict['n_in_range'] = dict['idx_in_range'].shape[0]
 
     # rewrite nhplot to account for the fact that data may not exist for all
     # of the harmonics
@@ -570,7 +607,7 @@ def process_raw(sample, data_type):
             dict['n_exist'] = np.append(dict['n_exist'], n)
             
     # make the figure with its axis
-    rawfigname = 'raw_'+data_type
+    rawfigname = 'raw_'+data_type+'_'+sample['samplename']
     if plt.fignum_exists(rawfigname):
         plt.close(rawfigname)
     dict['rawfig'] = plt.figure(rawfigname)
@@ -587,9 +624,9 @@ def process_raw(sample, data_type):
     
     # plot the raw data
     for n in nhplot:
-        t = dict['t'][dict['idx_all']]
-        f = real(dict['fstar'][n][dict['idx_all']])/n
-        g = imag(dict['fstar'][n][dict['idx_all']])
+        t = dict['t'][dict['idx_in_range']]
+        f = real(dict['fstar'][n][dict['idx_in_range']])/n
+        g = imag(dict['fstar'][n][dict['idx_in_range']])
         (dict['f_ax'].plot(t, f, color=colors[n], label='n='+str(n)))
         (dict['g_ax'].plot(t, g, color=colors[n], label='n='+str(n)))
 
@@ -607,7 +644,7 @@ def make_check_axes(sample, nh):
     if plt.fignum_exists(nh + 'solution check'):
         plt.close(nh + 'solution check')
     #  compare actual annd recaulated frequency and dissipation shifts.
-    fig = plt.figure(nh + 'solution check')
+    fig = plt.figure(nh + '_solution check_'+sample['samplename'])
     delf_ax = fig.add_subplot(221)
     delf_ax.set_xlabel(sample['xlabel'])
     delf_ax.set_ylabel(r'$\Delta f/n$ (Hz)')
