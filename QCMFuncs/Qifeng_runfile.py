@@ -35,7 +35,7 @@ jj
 #%% 1:1 good
 QCManalyze(sample['DGEBA-Jeffamine230_RT_3'], parms)
 j
-#%% 2:1 thick
+#%% 2:1 thickj
 QCManalyze(sample['DGEBA-Jeffamine230_RT_4'], parms)
 
 #%% 2:1 good

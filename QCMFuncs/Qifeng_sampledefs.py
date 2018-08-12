@@ -90,7 +90,7 @@ def sample_dict():
     'barefile': 'bare_air',
     'filmfile': 'DGEBA-Jeffamine230_RT_3',
     'firstline': 1,
-    # 'filmtrange': [1, 10],
+    'filmtrange': [500, 10000],
     'nhcalc': ['355'],
     'nhplot': [3, 5]
     }
