@@ -723,6 +723,12 @@ background-color: red;
                    </item>
                    <item>
                     <widget class="QDateTimeEdit" name="dateTimeEdit_reftime">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
                      <property name="wrapping">
                       <bool>false</bool>
                      </property>
@@ -736,16 +742,16 @@ background-color: red;
                       <bool>false</bool>
                      </property>
                      <property name="currentSection">
-                      <enum>QDateTimeEdit::MinuteSection</enum>
+                      <enum>QDateTimeEdit::YearSection</enum>
                      </property>
                      <property name="displayFormat">
-                      <string>yyyy-mm-dd hh:mm:ss</string>
+                      <string>yyyy-MM-dd hh:mm:ss.ss</string>
                      </property>
                      <property name="calendarPopup">
                       <bool>false</bool>
                      </property>
                      <property name="currentSectionIndex">
-                      <number>1</number>
+                      <number>0</number>
                      </property>
                     </widget>
                    </item>
@@ -968,16 +974,16 @@ background-color: red;
                  <item row="0" column="1">
                   <widget class="QCheckBox" name="checkBox_dynamicfitbyharm">
                    <property name="text">
-                    <string>Set by harmonic</string>
+                    <string>Fit set by harmonic</string>
                    </property>
                   </widget>
                  </item>
                  <item row="1" column="0">
-                  <layout class="QHBoxLayout" name="horizontalLayout_7">
+                  <layout class="QHBoxLayout" name="horizontalLayout_fitfactor">
                    <item>
-                    <widget class="QLabel" name="label_4">
+                    <widget class="QLabel" name="label_fitfactor">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -1012,12 +1018,25 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
+                   <item>
+                    <spacer name="horizontalSpacer_3">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
                   </layout>
                  </item>
                  <item row="1" column="1">
                   <widget class="QCheckBox" name="checkBox_fitfactorbyharm">
                    <property name="text">
-                    <string>Set by harmonic</string>
+                    <string>Factor set by harmonic</string>
                    </property>
                   </widget>
                  </item>
@@ -4801,7 +4820,7 @@ border: 1px solid blue;
            </size>
           </property>
           <property name="currentIndex">
-           <number>2</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="page_spectra_show">
            <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -5093,7 +5112,7 @@ border: 1px solid blue;
                        <number>1</number>
                       </property>
                       <property name="pageStep">
-                       <number>40</number>
+                       <number>5</number>
                       </property>
                       <property name="orientation">
                        <enum>Qt::Horizontal</enum>
@@ -5580,7 +5599,7 @@ p, li { white-space: pre-wrap; }
                    <bool>true</bool>
                   </property>
                   <attribute name="horizontalHeaderVisible">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </attribute>
                   <attribute name="horizontalHeaderCascadingSectionResizes">
                    <bool>true</bool>
@@ -6952,8 +6971,8 @@ border: 1px solid blue;
      <y>670</y>
     </hint>
     <hint type="destinationlabel">
-     <x>405</x>
-     <y>282</y>
+     <x>656</x>
+     <y>695</y>
     </hint>
    </hints>
   </connection>
@@ -6968,8 +6987,8 @@ border: 1px solid blue;
      <y>670</y>
     </hint>
     <hint type="destinationlabel">
-     <x>405</x>
-     <y>287</y>
+     <x>656</x>
+     <y>941</y>
     </hint>
    </hints>
   </connection>
@@ -7012,8 +7031,8 @@ border: 1px solid blue;
    <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>161</x>
-     <y>756</y>
+     <x>169</x>
+     <y>605</y>
     </hint>
     <hint type="destinationlabel">
      <x>154</x>
@@ -7032,8 +7051,8 @@ border: 1px solid blue;
      <y>520</y>
     </hint>
     <hint type="destinationlabel">
-     <x>161</x>
-     <y>756</y>
+     <x>169</x>
+     <y>605</y>
     </hint>
    </hints>
   </connection>
