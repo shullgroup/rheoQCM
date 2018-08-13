@@ -190,7 +190,7 @@ start a `single_scan` and plot the data in mpl_spectra_fit
 
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
-| |clicked()|lineEdit_reftime |`reset_reftime`|set current time as ref. time, save it to `self.settings` and `self.samp` and show it in lineEdit_reftime|
+| |clicked()|dateTimeEdit_reftime |`reset_reftime`|set current time as ref. time, save it to `self.settings` and `self.samp` and show it in dateTimeEdit_reftime|
 
 #### lineEdit_recordinterval
 | | signal|receiver|slot|note|
@@ -251,16 +251,16 @@ save values of those three to `self.settings`
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |clicked()|lineEdit_datafilestr|`on_triggered_new_data`|show the new file path|
-| |clicked()|lineEdit_reftime|`on_triggered_new_data`|readOnly(False), show current time as ref time|
+| |clicked()|dateTimeEdit_reftime|`on_triggered_new_data`|readOnly(False), show current time as ref time|
 | |clicked()|pushButton_resetreftime|`on_triggered_new_data`|setEnabled(True)|
 
 `on_triggered_new_data`  
 > if fileName:
 >> show the new file path in lineEdit_datafilestr  
 rest ref time `reset_reftime`  
-set lineEdit_reftime eadOnly(False)  
+set dateTimeEdit_reftime eadOnly(False)  
 set pushButton_resetreftime enabled  
-save lineEdit_reftime to `self.settings`  
+save dateTimeEdit_reftime to `self.settings`  
 save filename to `self.fileName`  
 
 #### pushButton_appenddata
@@ -268,14 +268,14 @@ save filename to `self.fileName`
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |clicked()|lineEdit_datafilestr|`on_triggered_load_data`|show the appended file path|
-| |clicked()|lineEdit_reftime|`on_triggered_new_data`|readOnly(True), show time in fileName|
+| |clicked()|dateTimeEdit_reftime|`on_triggered_new_data`|readOnly(True), show time in fileName|
 | |clicked()|pushButton_resetreftime|`on_triggered_new_data`|setEnabled(False)|
 
 `on_triggered_new_data`  
 > if fileName:
 >> show the appended file path in lineEdit_datafilestr  
 rest ref time `reset_reftime`  
-set lineEdit_reftime eadOnly(True)  
+set dateTimeEdit_reftime eadOnly(True)  
 set pushButton_resetreftime setEnabled(False)  
 load settings in fileName to `self.settings`  
 save filename to `self.fileName`  

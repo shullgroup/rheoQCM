@@ -213,7 +213,7 @@ settings_default = {
     # default frequency display mode
     'comboBox_settings_control_dispmode': 'startstop',
     # default time settings
-    'lineEdit_reftime': None,
+    'dateTimeEdit_reftime': None,
     
     'lineEdit_recordinterval': 5,
     'lineEdit_refreshresolution': 1,
