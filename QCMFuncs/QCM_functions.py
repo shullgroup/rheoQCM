@@ -5,6 +5,7 @@ Created on Thu Jan  4 09:19:59 2018
 
 @author: ken
 """
+
 import numpy as np
 from scipy.optimize import least_squares
 import matplotlib.pyplot as plt
@@ -22,13 +23,6 @@ def close_on_click(event):
     global openplots
     plt.close()
     openplots = openplots - 1
-    return
-
-
-def bring_to_front(event):
-    # used so plots close when you click on them
-    fig = gcf()
-    fig.canvas.manager.window.raise_()
     return
 
 
@@ -354,7 +348,7 @@ def QCManalyze(sample, parms):
             delfstar_err[i][n] = fstar_err_calc(film['fstar'][n][idxf])
 
     # set up the property axes
-    propfig = make_prop_axes(sample)
+    propfig = make_prop_axes('prop_'+sample['samplename'], sample['xlabel'])
     checkfig = {}
     for nh in sample['nhcalc']:
         checkfig[nh] = make_check_axes(sample, nh)
@@ -461,7 +455,7 @@ def QCManalyze(sample, parms):
                                     marker=markers[nh], label=nh)
         output_data = np.stack((xdata, drho, grho3, phi), axis=-1)
         np.savetxt(base_fig_name+'_'+nh+'.txt', output_data, 
-                   delimiter=',', header='xdata, drho, grho, phi')
+                   delimiter=',', header='xdata,drho,grho,phi', comments='')
 
     # add legends to the property figure
     propfig['drho_ax'].legend()
@@ -472,16 +466,11 @@ def QCManalyze(sample, parms):
     propfig['figure'].tight_layout()
     propfig['figure'].savefig(base_fig_name+'_prop.'+imagetype)
     
-    #pdb.set_trace()   
     print('done with ', base_fig_name, 'press any key to close plots and continue')
 
     propfig['figure'].canvas.mpl_connect('key_press_event', close_on_click)
     film['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
     bare['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
-    propfig['figure'].canvas.mpl_connect('button_press_event', bring_to_front)
-    film['rawfig'].canvas.mpl_connect('button_press_event', bring_to_front)
-    bare['rawfig'].canvas.mpl_connect('button_press_event', bring_to_front)
-
         
     openplots = 3 + len(checkfig)
     while openplots>0:
@@ -537,28 +526,42 @@ def pickpoints(Temp, nx, dict):
     return idx_out
 
 
-def make_prop_axes(sample):
+def make_prop_axes(propfigname, xlabel):
     # set up the property plot
-    propfigname = 'prop_'+sample['samplename']
     if plt.fignum_exists(propfigname):
         plt.close(propfigname)
     fig = plt.figure(propfigname, figsize=(9, 3))
     drho_ax = fig.add_subplot(131)
-    drho_ax.set_xlabel(sample['xlabel'])
+    drho_ax.set_xlabel(xlabel)
     drho_ax.set_ylabel(r'$d\rho\: (g/m^2)$')
 
     grho_ax = fig.add_subplot(132)
-    grho_ax.set_xlabel(sample['xlabel'])
+    grho_ax.set_xlabel(xlabel)
     grho_ax.set_ylabel(r'$|G_3^*|\rho \: (Pa \cdot g/cm^3)$')
 
     phi_ax = fig.add_subplot(133)
-    phi_ax.set_xlabel(sample['xlabel'])
+    phi_ax.set_xlabel(xlabel)
     phi_ax.set_ylabel(r'$\phi$ (deg.)')
 
     fig.tight_layout()
 
     return {'figure': fig, 'drho_ax': drho_ax, 'grho_ax': grho_ax,
             'phi_ax': phi_ax}
+    
+    
+def make_vgp_axes(propfigname):
+    # set up the property plot
+    if plt.fignum_exists(propfigname):
+        plt.close(propfigname)
+    fig = plt.figure(propfigname, figsize=(3, 3))
+    vgp_ax = fig.add_subplot(111)
+    vgp_ax.set_xlabel((r'$|G_3^*|\rho \: (Pa \cdot g/cm^3)$'))
+    vgp_ax.set_ylabel(r'$\phi$ (deg.)')
+
+    fig.tight_layout()
+
+    return {'figure': fig, 'vgp_ax':vgp_ax}
+
 
 
 def process_raw(sample, data_type):
