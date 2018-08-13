@@ -2519,7 +2519,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_24.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1114, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1114, 21))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -2819,7 +2819,7 @@ class Ui_MainWindow(object):
         self.lineEdit_recordinterval.setText(_translate("MainWindow", "2"))
         self.label_3.setText(_translate("MainWindow", "<html><head/><body><p>Record interval (s)<span style=\" vertical-align:super;\">a</span></p></body></html>"))
         self.label_2.setText(_translate("MainWindow", "Reference time"))
-        self.dateTimeEdit_reftime.setDisplayFormat(_translate("MainWindow", "yyyy-mm-dd HH:MM:ss"))
+        self.dateTimeEdit_reftime.setDisplayFormat(_translate("MainWindow", "yyyy-mm-dd hh:mm:ss"))
         self.pushButton_resetreftime.setText(_translate("MainWindow", "Rest"))
         self.label.setText(_translate("MainWindow", "<html><head/><body><p>Spectra refresh resolution<span style=\" vertical-align:super;\">b</span></p></body></html>"))
         self.label_8.setText(_translate("MainWindow", "Scan interval (s) = a / b  "))
@@ -3183,8 +3183,8 @@ class Ui_MainWindow(object):
         self.textBrowser_spectra_fit_result.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\'; font-size:8.25pt;\"><br /></p></body></html>"))
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.pushButton_spectra_mechanics_clear.setText(_translate("MainWindow", "Clear"))
         self.toolButton_spectra_mechanics_plotrows.setText(_translate("MainWindow", "Plot"))
         item = self.tableWidget_spectra_mechanics_table.verticalHeaderItem(0)
