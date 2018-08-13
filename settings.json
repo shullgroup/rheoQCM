@@ -11,7 +11,7 @@
     "checkBox_harm7": false,
     "checkBox_harm9": false,
     "checkBox_harm11": false,
-    "lineEdit_reftime": 0,
+    "dateTimeEdit_reftime": 0,
     "lineEdit_recordinterval": 5.0,
     "lineEdit_refreshresolution": 1.0,
     "lineEdit_scaninterval": 5.0,

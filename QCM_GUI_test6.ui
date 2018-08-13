@@ -719,24 +719,33 @@ background-color: red;
                      <property name="text">
                       <string>Reference time</string>
                      </property>
-                     <property name="buddy">
-                      <cstring>lineEdit_reftime</cstring>
-                     </property>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLineEdit" name="lineEdit_reftime">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
+                    <widget class="QDateTimeEdit" name="dateTimeEdit_reftime">
+                     <property name="wrapping">
+                      <bool>false</bool>
                      </property>
-                     <property name="text">
-                      <string>Y-m-d H:M:S</string>
+                     <property name="readOnly">
+                      <bool>false</bool>
                      </property>
-                     <property name="alignment">
-                      <set>Qt::AlignCenter</set>
+                     <property name="buttonSymbols">
+                      <enum>QAbstractSpinBox::UpDownArrows</enum>
+                     </property>
+                     <property name="accelerated">
+                      <bool>false</bool>
+                     </property>
+                     <property name="currentSection">
+                      <enum>QDateTimeEdit::MinuteSection</enum>
+                     </property>
+                     <property name="displayFormat">
+                      <string>yyyy-mm-dd hh:mm:ss</string>
+                     </property>
+                     <property name="calendarPopup">
+                      <bool>false</bool>
+                     </property>
+                     <property name="currentSectionIndex">
+                      <number>1</number>
                      </property>
                     </widget>
                    </item>
@@ -6893,7 +6902,6 @@ border: 1px solid blue;
   <tabstop>lineEdit_refreshresolution</tabstop>
   <tabstop>pushButton_newdata</tabstop>
   <tabstop>pushButton_appenddata</tabstop>
-  <tabstop>lineEdit_reftime</tabstop>
   <tabstop>lineEdit_datafilestr</tabstop>
   <tabstop>pushButton_gotofolder</tabstop>
  </tabstops>

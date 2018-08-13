@@ -16,7 +16,7 @@ from PyQt5.QtCore import pyqtSlot, Qt, QEvent
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton, QMenu
 )
-from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent
+from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QIntValidator, QDoubleValidator, QRegExpValidator
 # from PyQt5.uic import loadUi
 
 # packages
@@ -510,8 +510,10 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_peaks_prominence.textEdited.connect(self.update_harmwidget)
 
         # set signals to update hardware settings_settings
-        self.ui.comboBox_sample_channel.activated.connect(self.update_samplechannel)
-        self.ui.comboBox_ref_channel.activated.connect(self.update_refchannel)
+        self.ui.comboBox_sample_channel.activated.connect(self.update_widget)
+        self.ui.comboBox_sample_channel.activated.connect(self.update_vnachannel)
+        self.ui.comboBox_ref_channel.activated.connect(self.update_widget)
+        self.ui.comboBox_ref_channel.activated.connect(self.update_vnachannel)
 
         # set signals to update temperature settings_settings
         self.ui.comboBox_settings_mechanics_selectmodel.activated[str].connect(self.update_module)
@@ -913,11 +915,11 @@ class QCMApp(QMainWindow):
 
     # @pyqtSlot()
     def reset_reftime(self):
-        ''' set time in lineEdit_reftime '''
+        ''' set time in dateTimeEdit_reftime '''
         current_time = datetime.datetime.now()
-        self.ui.lineEdit_reftime.setText(current_time.strftime('%Y-%m-%d %H:%M:%S'))
+        self.ui.dateTimeEdit_reftime.setText(current_time.strftime('%Y-%m-%d %H:%M:%S'))
         # update reftime in settings dict
-        self.settings['lineEdit_reftime'] = current_time.strftime('%Y-%m-%d %H:%M:%S')
+        self.settings['dateTimeEdit_reftime'] = current_time.strftime('%Y-%m-%d %H:%M:%S')
 
     # @pyqtSlot()
     def set_lineEdit_scaninterval(self):
@@ -986,10 +988,10 @@ class QCMApp(QMainWindow):
         if fileName:
             # change the displayed file directory in lineEdit_datafilestr
             self.ui.lineEdit_datafilestr.setText(fileName)
-            # reset lineEdit_reftime
+            # reset dateTimeEdit_reftime
             self.reset_reftime()
-            # set lineEdit_reftime editabled and enable pushButton_resetreftime
-            self.ui.lineEdit_reftime.setReadOnly(False)
+            # set dateTimeEdit_reftime editabled and enable pushButton_resetreftime
+            self.ui.dateTimeEdit_reftime.setReadOnly(False)
             self.ui.pushButton_resetreftime.setEnabled(True)
             self.fileName = fileName
 
@@ -998,10 +1000,10 @@ class QCMApp(QMainWindow):
         if fileName:
             # change the displayed file directory in lineEdit_datafilestr
             self.ui.lineEdit_datafilestr.setText(self.fileName)
-            # set lineEdit_reftime
-            # set lineEdit_reftime read only and disable pushButton_resetreftime
-            self.ui.lineEdit_reftime.setReadOnly(True)
-            # ??  set reftime in fileName to lineEdit_reftime
+            # set dateTimeEdit_reftime
+            # set dateTimeEdit_reftime read only and disable pushButton_resetreftime
+            self.ui.dateTimeEdit_reftime.setReadOnly(True)
+            # ??  set reftime in fileName to dateTimeEdit_reftime
 
             self.ui.pushButton_resetreftime.setEnabled(False)
             self.fileName = fileName
@@ -1609,11 +1611,29 @@ class QCMApp(QMainWindow):
         value = self.ui.comboBox_harmfitfactor.itemData(harmfitfactor_index)
         self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_harmfitfactor'] = value
 
-    def update_samplechannel(self, samplechannel_index):
+    def update_vnachannel(self, samplechannel_index):
+        '''
+        update vna channels (sample and reference)
+        if ref == sample: sample = 'none'
+        '''
+        sample_channel = self.settings['comboBox_sample_channel']
+        ref_channel = self.settings['comboBox_ref_channel']
+        print(sample_channel)
+        print(ref_channel)
+        print(ref_channel == sample_channel)
+        if ref_channel == sample_channel:
+            # make sure sample and ref channels are not the same
+            ref_channel = 'none' # set ref_channel to none
+            #TODO update in statusbar
+        self.settings['comboBox_sample_channel'] = sample_channel
+        self.settings['comboBox_ref_channel'] = ref_channel
+        # load_comboBox has to be used after the value saved in self.settings
+        self.load_comboBox(self.ui.comboBox_ref_channel, 'ref_channel_choose')
+
+        return
         value = self.ui.comboBox_sample_channel.itemData(samplechannel_index)
         self.settings['comboBox_sample_channel'] = value
 
-    def update_refchannel(self, refchannel_index):
         value = self.ui.comboBox_ref_channel.itemData(refchannel_index)
         self.settings['comboBox_ref_channel'] = value
 
