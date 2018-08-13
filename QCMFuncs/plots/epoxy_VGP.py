@@ -15,16 +15,13 @@ propfig = make_prop_axes('props', 't (min.)')
 vgpfig = make_vgp_axes('vgp')
 
 def prop_plot_from_csv(figure, csvfile, plotstr, legendtext):
-
-    data = pd.read_csv(csvfile)
-    
-    drho_ax.plot(data['xdata'].values, data['drho'].values, '+b', 
+    data = pd.read_csv(csvfile)    
+    figure['drho_ax'].plot(data['xdata'].values, data['drho'].values, '+b', 
                 label=legendtext)
-    
-    grho_ax.plot(data['xdata'].values, data['grho'].values, '+b', 
+   
+    figure['grho_ax'].plot(data['xdata'].values, data['grho'].values, '+b', 
                 label=legendtext)
-    
-    phi_ax.plot(data['xdata'].values, data['phi'].values, '+b', 
+    figure['phi_ax'].plot(data['xdata'].values, data['phi'].values, '+b', 
                 label=legendtext)
    
 data1file = '../figures/DGEBA-Jeffamine230_RT_3_355.txt'
