@@ -16,6 +16,14 @@
 
 ### saveFileDialog(self, title, path='', filetype=settings_init['default_datafiletype'])
 
+### on_dateTimeChanged_dateTimeEdit_reftime
+
+get time in dateTimeEdit_reftime and save it to self.settings  
+
+### update_vnachannel
+
+update vna channels (sample and reference) if ref == sample: sample = 'none'  
+
 ### on_triggered_new_data(self)
 
 ### on_triggered_load_data(self)

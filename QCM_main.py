@@ -32,8 +32,8 @@ if UIModules.system_check() == 'win32': # windows
         from modules.AccessMyVNA_dummy import AccessMyVNA
         print(AccessMyVNA)
         # test if MyVNA program is available
-        with AccessMyVNA() as accvna:
-            if accvna.Init() == 0: # connection with myVNA is available
+        with AccessMyVNA() as vna:
+            if vna.Init() == 0: # connection with myVNA is available
                 from modules import tempDevices
     except Exception as e: # no myVNA connected. Analysis only
         print('Failed to import AccessMyVNA module!')
@@ -68,10 +68,10 @@ class QCMApp(QMainWindow):
         self.peak_tracker = PeakTracker()
   
         # define instrument state variables
-        self.accvna = None 
+        self.vna = None # vna class
         self.tempsensor = None # class for temp sensor
         self.idle = True # if test is running
-        self.reading = False # if myVNA is scanning and reading data
+        self.reading = False # if myVNA/tempsensor is scanning and reading data
         
         # check system
         self.system = UIModules.system_check()
@@ -80,17 +80,17 @@ class QCMApp(QMainWindow):
         if self.system == 'win32': # windows
             try:
                 # test if MyVNA program is available
-                with AccessMyVNA() as accvna:
-                    if accvna.Init() == 0: # is available
-                        self.accvna = AccessMyVNA() # save class AccessMyVNA to accvna
+                with AccessMyVNA() as vna:
+                    if vna.Init() == 0: # is available
+                        self.vna = AccessMyVNA() # save class AccessMyVNA to vna
                     else: # not available
                         pass
             except:
                 pass
 
         else: # other system, data analysis only
-            self.accvna = AccessMyVNA() # for test only
-        print(self.accvna)
+            self.vna = AccessMyVNA() # for test only
+        print(self.vna)
         self.main()
         self.load_settings()
 
@@ -176,6 +176,8 @@ class QCMApp(QMainWindow):
                 "QLineEdit { background: transparent; }"
             )
 
+        # dateTimeEdit_reftime on dateTimeChanged
+        self.ui.dateTimeEdit_reftime.dateTimeChanged.connect(self.on_dateTimeChanged_dateTimeEdit_reftime)
         # set pushButton_resetreftime
         self.ui.pushButton_resetreftime.clicked.connect(self.reset_reftime)
 
@@ -219,6 +221,12 @@ class QCMApp(QMainWindow):
 
         # set signals to checkBox_control_rectemp
         self.ui.checkBox_control_rectemp.clicked['bool'].connect(self.on_clicked_set_temp_sensor)
+
+        # set checkBox_dynamicfitbyharm
+        self.ui.checkBox_dynamicfitbyharm.clicked['bool'].connect(self.on_clicked_checkBox_dynamicfitbyharm)
+
+        # set checkBox_fitfactorbyharm
+        self.ui.checkBox_fitfactorbyharm.clicked['bool'].connect(self.on_clicked_checkBox_fitfactorbyharm)
 
 #endregion
 
@@ -358,29 +366,29 @@ class QCMApp(QMainWindow):
         self.settings['comboBox_tempmodule'] = self.ui.comboBox_tempmodule.itemData(self.ui.comboBox_tempmodule.currentIndex())
         self.ui.comboBox_tempmodule.activated.connect(self.update_widget)
 
-        # add comBox_tempdevice to treeWidget_settings_settings_hardware
-        if self.accvna and self.system == 'win32':
+        # add comboBox_tempdevice to treeWidget_settings_settings_hardware
+        if self.vna and self.system == 'win32':
             self.settings['tempdevs_choose'] = \
             tempdevs_choose = \
             tempDevices.dict_available_devs(settings_init['devices_dict'])
             self.create_combobox(
-                'comBox_tempdevice',
+                'comboBox_tempdevice',
                 tempdevs_choose,  
                 100,
                 'Device',
                 self.ui.treeWidget_settings_settings_hardware, 
             )
-            self.settings['comBox_tempdevice'] = self.ui.comBox_tempdevice.itemData(self.ui.comBox_tempdevice.currentIndex())
-            self.ui.comBox_tempdevice.activated.connect(self.update_tempdevice)
-        else: # accvna is not available
+            self.settings['comboBox_tempdevice'] = self.ui.comboBox_tempdevice.itemData(self.ui.comboBox_tempdevice.currentIndex())
+            self.ui.comboBox_tempdevice.activated.connect(self.update_tempdevice)
+        else: # vna is not available
             self.create_combobox(
-                'comBox_tempdevice',
+                'comboBox_tempdevice',
                 [],  # an empty list
                 100,
                 'Device',
                 self.ui.treeWidget_settings_settings_hardware, 
             )
-            self.settings['comBox_tempdevice'] = None # set to None 
+            self.settings['comboBox_tempdevice'] = None # set to None 
 
         # insert thrmcpl type
         self.create_combobox(
@@ -390,6 +398,15 @@ class QCMApp(QMainWindow):
             'Thrmcpl Type', 
             self.ui.treeWidget_settings_settings_hardware
         )
+
+        if not self.settings['comboBox_tempdevice']: # vna or tempdevice are not availabel
+            # set temp related widgets unavailable
+            self.ui.checkBox_control_rectemp.SetEnabled(False)
+            self.ui.checkBox_settings_temp_sensor.SetEnabled(False)
+            self.ui.comboBox_tempmodule.SetEnabled(False)
+            self.ui.comboBox_tempdevice.SetEnabled(False)
+            self.ui.comboBox_thrmcpltype.SetEnabled(False)
+
 
         # insert time_unit
         self.create_combobox(
@@ -575,6 +592,7 @@ class QCMApp(QMainWindow):
 
         self.ui.horizontalSlider_spectra_fit_spanctrl.valueChanged.connect(self.on_changed_slider_spanctrl)
         self.ui.horizontalSlider_spectra_fit_spanctrl.sliderReleased.connect(self.on_released_slider_spanctrl)
+        self.ui.horizontalSlider_spectra_fit_spanctrl.actionTriggered .connect(self.on_acctiontriggered_slider_spanctrl)
 
         # pushButton_spectra_fit_refresh
         self.ui.pushButton_spectra_fit_refresh.clicked.connect(self.on_clicked_pushButton_spectra_fit_refresh)
@@ -916,11 +934,20 @@ class QCMApp(QMainWindow):
     # @pyqtSlot()
     def reset_reftime(self):
         ''' set time in dateTimeEdit_reftime '''
+        # use qt use python deal with datetime. But show the time with QdatetimeEdit
         current_time = datetime.datetime.now()
-        self.ui.dateTimeEdit_reftime.setText(current_time.strftime('%Y-%m-%d %H:%M:%S'))
+        self.ui.dateTimeEdit_reftime.setDateTime(current_time)
         # update reftime in settings dict
-        self.settings['dateTimeEdit_reftime'] = current_time.strftime('%Y-%m-%d %H:%M:%S')
-
+        self.settings['dateTimeEdit_reftime'] = current_time
+        print(self.settings['dateTimeEdit_reftime'])
+    
+    def on_dateTimeChanged_dateTimeEdit_reftime(self, datetime):
+        '''
+        get time in dateTimeEdit_reftime and save it to self.settings
+        '''
+        self.settings['dateTimeEdit_reftime'] = datetime.toPyDateTime()
+        print(self.settings['dateTimeEdit_reftime'])
+        
     # @pyqtSlot()
     def set_lineEdit_scaninterval(self):
         # get text
@@ -1067,6 +1094,15 @@ class QCMApp(QMainWindow):
         # reset MainWindow
         pass
 
+    def on_acctiontriggered_slider_spanctrl(self, value):
+        '''
+        disable the actions other than mouse dragging
+        '''
+        # print(value)
+        if value < 7: # mous dragging == 7
+            # reset slider to 1
+            self.ui.horizontalSlider_spectra_fit_spanctrl.setValue(0)
+
     def on_changed_slider_spanctrl(self):
         # get slider value
         n = 10 ** (self.ui.horizontalSlider_spectra_fit_spanctrl.value() / 10)
@@ -1090,6 +1126,7 @@ class QCMApp(QMainWindow):
         else:
             n = 1/min(settings_init['span_ctrl_steps'], key=lambda x:abs(x-1/n))
 
+        print(n)
         # set span
 
         # start a single scan
@@ -1122,7 +1159,7 @@ class QCMApp(QMainWindow):
 
 
     def on_clicked_pushButton_spectra_fit_refresh(self):
-        print('accvna', self.accvna)
+        print('vna', self.vna)
         #TODOO get parameters from current setup: harm_tab
         if self.idle == False: # test is running
             # get params from tabWidget_settings_settings_harm & treeWidget_settings_settings_harmtree
@@ -1130,14 +1167,15 @@ class QCMApp(QMainWindow):
 
             # check lim with BW
             # flim1, flim2 = self.span_check(harm=self.settings['tabWidget_settings_settings_harm'], f1=flim1, f2=flim2)
-        with self.accvna as accvna:
-            accvna.set_steps_freq()
-            ret, f, G, B = accvna.single_scan()
+        with self.vna as vna:
+            vna.set_steps_freq()
+            ret, f, G, B = vna.single_scan()
 
         ## disconnect axes event
         self.mpl_disconnect_cid(self.ui.mpl_spectra_fit)        
         self.ui.mpl_spectra_fit.update_data(ls=['lG'], xdata=[f], ydata=[G])
         self.ui.mpl_spectra_fit.update_data(ls=['lB'], xdata=[f], ydata=[B])
+
         ## connect axes event
         self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
 
@@ -1177,9 +1215,9 @@ class QCMApp(QMainWindow):
         #     pass
         print('flim', flim1, flim2)
 
-        # accvna setup frequency
-        self.accvna.SetFequencies(f1=flim1, f2=flim2, nFlags=1)
-        ret, f, G, B = self.accvna.single_scan()
+        # vna setup frequency
+        self.vna.SetFequencies(f1=flim1, f2=flim2, nFlags=1)
+        ret, f, G, B = self.vna.single_scan()
         
         ### reset x,y lim
         ## disconnect axes event
@@ -1278,15 +1316,15 @@ class QCMApp(QMainWindow):
 
 
     def on_clicked_set_temp_sensor(self, checked):
-        # below only runs when accvna is available
-        if self.accvna: # add not for testing code    
+        # below only runs when vna is available
+        if self.vna: # add not for testing code    
             if checked: # checkbox is checked
                 # if not self.tempsensor: # tempModule is not initialized 
                 # get all tempsensor settings 
                 tempmodule_name = self.settings['comboBox_tempmodule'] # get temp module
 
                 thrmcpltype = self.settings['comboBox_thrmcpltype'] # get thermocouple type
-                tempdevice = tempDevices.device_info(self.settings['comBox_tempdevice']) #get temp device info
+                tempdevice = tempDevices.device_info(self.settings['comboBox_tempdevice']) #get temp device info
 
                 # check senor availability
                 package_str = settings_init['tempmodules_path'][2:].replace('/', '.') + tempmodule_name
@@ -1317,7 +1355,7 @@ class QCMApp(QMainWindow):
                     self.statusbar_temp_update()
                     # disable items to keep the setting
                     self.ui.comboBox_tempmodule.setEnabled(False)
-                    self.ui.comBox_tempdevice.setEnabled(False)
+                    self.ui.comboBox_tempdevice.setEnabled(False)
                     self.ui.comboBox_thrmcpltype.setEnabled(False)
 
                 except Exception as e: # failed to get temperature from sensor
@@ -1336,7 +1374,7 @@ class QCMApp(QMainWindow):
                 
                 # enable items to keep the setting
                 self.ui.comboBox_tempmodule.setEnabled(True)
-                self.ui.comBox_tempdevice.setEnabled(True)
+                self.ui.comboBox_tempdevice.setEnabled(True)
                 self.ui.comboBox_thrmcpltype.setEnabled(True)
 
                 # reset self.tempsensor
@@ -1380,7 +1418,13 @@ class QCMApp(QMainWindow):
         elif unit == 'F': # convert to F
             return data * 9 / 5 + 32
         
-
+    def on_clicked_checkBox_dynamicfitbyharm(self, value):
+        self.ui.checkBox_dynamicfit.setEnabled(not value)
+    
+    def on_clicked_checkBox_fitfactorbyharm(self, value):
+        self.ui.comboBox_fitfactor.setEnabled(not value)
+        self.ui.label_fitfactor.setEnabled(not value)
+        
     def set_stackedwidget_index(self, stwgt, idx=[], diret=[]):
         '''
         chenge the index of stwgt to given idx (if not []) 
@@ -1646,8 +1690,8 @@ class QCMApp(QMainWindow):
 
 
     def update_tempdevice(self, tempdevice_index):
-        value = self.ui.comBox_tempdevice.itemData(tempdevice_index)
-        self.settings['comBox_tempdevice'] = value
+        value = self.ui.comboBox_tempdevice.itemData(tempdevice_index)
+        self.settings['comboBox_tempdevice'] = value
         # update display on label_temp_devthrmcpl
         self.set_label_temp_devthrmcpl()
 
@@ -1662,10 +1706,10 @@ class QCMApp(QMainWindow):
         display current selection of temp_sensor & thrmcpl
         in label_temp_devthrmcpl
         '''
-        print(self.settings['comBox_tempdevice'], self.settings['comboBox_thrmcpltype'])
+        print(self.settings['comboBox_tempdevice'], self.settings['comboBox_thrmcpltype'])
         self.ui.label_temp_devthrmcpl.setText(
             'Dev/Thermocouple: {}/{}'.format(
-                self.settings['comBox_tempdevice'], 
+                self.settings['comboBox_tempdevice'], 
                 self.settings['comboBox_thrmcpltype']
             )
         )
@@ -1794,7 +1838,7 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_settings_temp_sensor.setChecked(self.settings['checkBox_settings_temp_sensor'])
 
         try:
-            self.load_comboBox(self.ui.comBox_tempdevice, 'tempdevs_choose')
+            self.load_comboBox(self.ui.comboBox_tempdevice, 'tempdevs_choose')
         except:
             pass
         self.load_comboBox(self.ui.comboBox_thrmcpltype, 'thrmcpl_choose')

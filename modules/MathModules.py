@@ -67,3 +67,9 @@ def converter_startstop_to_centerspan(f1, f2):
     fc = (f1 + f2) / 2
     fs = f2 - f1
     return [fc, fs]
+
+def converter_centerspan_to_startstop(fc, fs):
+    '''convert center/span (fc/fs) to start/stop (f1/f2)'''
+    f1 = fc - fs / 2
+    f2 = fc + fs / 2
+    return [f1, f2]

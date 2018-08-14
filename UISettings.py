@@ -57,6 +57,8 @@ settings_init = {
         'none':   'none',
         'df_t':   u'\u0394' + 'f - time',
         'dfn_t':  u'\u0394' + 'f/n - time',
+        'mdf_t':  '-' + u'\u0394' + 'f - time',
+        'mdfn_t': '-' + u'\u0394' + 'f/n - time',
         'dg_t':   u'\u0394\u0393' + ' - time',
         'dgn_t':  u'\u0394\u0393' + '/n - time',
         'f_t':    'f - time',
