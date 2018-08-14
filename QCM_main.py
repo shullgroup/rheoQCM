@@ -17,7 +17,6 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton, QMenu
 )
 from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QIntValidator, QDoubleValidator, QRegExpValidator
-# from PyQt5.uic import loadUi
 
 # packages
 from MainWindow import Ui_MainWindow
@@ -45,14 +44,35 @@ else: # linux or MacOS
 class PeakTracker:
     def __init__(self):
         self.f0 = None
-        self.gamma0 = None
-        self.freq = None
+        self.g0 = None
+        self.f = None
         self.G = None # conductance
         self.B = None # susceptance
         self.refit_flag = 0
         self.refit_counter = 1
 
-        self.harmonic_tab = 1
+        self.harm = 1
+
+class DataStruct:
+    def __init__(self):
+        self.samp = None # artribute to save data of sample
+        self.ref = None # artribute to save data of reference
+        self.samp_settings = {
+            'fstar0': None,     # f0
+            't0': None,         # reference time
+            'tshift': 0,        # reference time shift
+            'ref': None,        # reference type
+            'raw_file': None    # raw_file information (for searching raw file if needed in the future)
+        } # artribute to save f, t, reference define
+        self.calc = None # artribute to save the results of mechanics calculation
+
+class RawStruct:
+    def __init__(self):
+        self.samp = None # artribute to save data of sample
+        self.ref = None # artribute to save data of reference
+        self.settings = None # artribute to UI settings
+        self.ver = {}
+
 
 class QCMApp(QMainWindow):
     '''
@@ -64,7 +84,7 @@ class QCMApp(QMainWindow):
         self.ui.setupUi(self)
         self.fileName = ''
         self.fileFlag = False
-        self.settings = settings_default
+        self.settings = settings_default # import default settings. It will be initalized latter
         self.peak_tracker = PeakTracker()
   
         # define instrument state variables
@@ -72,6 +92,13 @@ class QCMApp(QMainWindow):
         self.tempsensor = None # class for temp sensor
         self.idle = True # if test is running
         self.reading = False # if myVNA/tempsensor is scanning and reading data
+        self.UITab = 0 # 0: Control; 1: Settings;, 2: Data; 3: Mechanics
+        self.settings_harm = 1 # active harmonic in Settings Tab
+        self.data_harm = 1 # active harmonic in Data Tab
+
+        #### initialize the artributes for data saving
+        self.data = DataStruct()
+        self.raw = RawStruct()
         
         # check system
         self.system = UIModules.system_check()
@@ -96,7 +123,6 @@ class QCMApp(QMainWindow):
 
 
     def main(self):
- # loadUi('QCM_GUI_test4.ui', self) # read .ui file directly. You still need to compile the .qrc file
 #region ###### initiate UI #################################
 
 #region main UI 
@@ -112,6 +138,9 @@ class QCMApp(QMainWindow):
         for i in range(1, settings_init['max_harmonic']+2, 2):
             # set to visable which is default. nothing to do
 
+            # set all frame_sp<n> hided
+            getattr(self.ui, 'frame_sp' +str(i)).setVisible(False)
+
             # add checkbox to tabWidget_ham for harmonic selection
             setattr(self.ui, 'checkBox_tree_harm' + str(i), QCheckBox())
             self.ui.tabWidget_settings_settings_harm.tabBar().setTabButton(
@@ -124,20 +153,21 @@ class QCMApp(QMainWindow):
             )
 
             # set signal
-            getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(
+            getattr(self.ui, 'checkBox_tree_harm' + str(i)).toggled['bool'].connect(
                 getattr(self.ui, 'checkBox_harm' + str(i)).setChecked
             )
-            getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(
+            getattr(self.ui, 'checkBox_harm' + str(i)).toggled['bool'].connect(
                 getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked
             )
-            getattr(self.ui, 'checkBox_tree_harm' + str(i)).clicked['bool'].connect(
-                getattr(self.ui, 'frame_sp' +str(i)).setVisible
-            )
-            getattr(self.ui, 'checkBox_harm' + str(i)).clicked['bool'].connect(
+            # getattr(self.ui, 'checkBox_tree_harm' + str(i)).toggled['bool'].connect(
+            #     getattr(self.ui, 'frame_sp' +str(i)).setVisible
+            # )
+            getattr(self.ui, 'checkBox_harm' + str(i)).toggled['bool'].connect(
                 getattr(self.ui, 'frame_sp' +str(i)).setVisible
             )
 
-
+        # hid reference related widgets 
+        self.setvisible_refwidgets(False)
         # set comboBox_plt1_choice, comboBox_plt2_choice
         # dict for the comboboxes
         for key, val in settings_init['data_plt_choose'].items():
@@ -173,6 +203,12 @@ class QCMApp(QMainWindow):
                 "QLineEdit { background: transparent; }"
             )
             getattr(self.ui, 'lineEdit_endf' + str(i)).setStyleSheet(
+                "QLineEdit { background: transparent; }"
+            )
+            getattr(self.ui, 'lineEdit_startf' + str(i) + '_r').setStyleSheet(
+                "QLineEdit { background: transparent; }"
+            )
+            getattr(self.ui, 'lineEdit_endf' + str(i) + '_r').setStyleSheet(
                 "QLineEdit { background: transparent; }"
             )
 
@@ -232,6 +268,12 @@ class QCMApp(QMainWindow):
 
 
 #region settings_settings
+
+        # hide raido buttons radioButton_settings_settings_harmchnsamp
+        self.ui.radioButton_settings_settings_harmchnsamp.setVisible(False)
+        # hide raido buttons radioButton_settings_settings_harmchnref
+        self.ui.radioButton_settings_settings_harmchnref.setVisible(False)
+
         ### add combobox into treewidget
         self.ui.tabWidget_settings_settings_harm.currentChanged.connect(self.update_harmonic_tab)
         # move lineEdit_scan_harmstart
@@ -532,8 +574,6 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_ref_channel.activated.connect(self.update_widget)
         self.ui.comboBox_ref_channel.activated.connect(self.update_vnachannel)
 
-        # set signals to update temperature settings_settings
-        self.ui.comboBox_settings_mechanics_selectmodel.activated[str].connect(self.update_module)
         # self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
         self.ui.checkBox_settings_temp_sensor.clicked['bool'].connect(self.on_clicked_set_temp_sensor)
         self.ui.comboBox_thrmcpltype.activated.connect(self.update_tempdevice)
@@ -828,26 +868,26 @@ class QCMApp(QMainWindow):
 
 #region ###### set UI value ###############################
 
-        for i in range(1, settings_init['max_harmonic']+2, 2):
-            if i in self.settings['harmonics_check']: # in the default range 
-                # settings/control/Harmonics
-                getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(True)
-                getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(True)
+        # for i in range(1, settings_init['max_harmonic']+2, 2):
+        #     if i in self.settings['harmonics_check']: # in the default range 
+        #         # settings/control/Harmonics
+        #         getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(True)
+        #         getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(True)
 
-            else: # out of the default range
-                getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(False)
-                getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(False)
-                # hide spectra/sp
-                getattr(self.ui, 'frame_sp' + str(i)).setVisible(False)
+        #     else: # out of the default range
+        #         getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(False)
+        #         getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(False)
+        #         # hide spectra/sp
+        #         getattr(self.ui, 'frame_sp' + str(i)).setVisible(False)
 
 
-        self.ui.comboBox_plt1_choice.setCurrentIndex(2)
-        self.ui.comboBox_plt2_choice.setCurrentIndex(3)
+        # self.ui.comboBox_plt1_choice.setCurrentIndex(2)
+        # self.ui.comboBox_plt2_choice.setCurrentIndex(3)
 
         # set time interval
-        self.ui.lineEdit_scaninterval.setText(str(self.settings['lineEdit_scaninterval']))
-        self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
-        self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
+        # self.ui.lineEdit_scaninterval.setText(str(self.settings['lineEdit_scaninterval']))
+        # self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
+        # self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
 
 #endregion
 
@@ -1161,12 +1201,15 @@ class QCMApp(QMainWindow):
     def on_clicked_pushButton_spectra_fit_refresh(self):
         print('vna', self.vna)
         #TODOO get parameters from current setup: harm_tab
-        if self.idle == False: # test is running
-            # get params from tabWidget_settings_settings_harm & treeWidget_settings_settings_harmtree
+        if self.idle == True or (self.idle == False and self.reading == False) : # test is not running or is running but not reading 
+            # get harmonic from self.settings_harm
+            harm = self.settings_harm
+
+
             pass
 
             # check lim with BW
-            # flim1, flim2 = self.span_check(harm=self.settings['tabWidget_settings_settings_harm'], f1=flim1, f2=flim2)
+            # flim1, flim2 = self.span_check(harm=self.settings_harm, f1=flim1, f2=flim2)
         with self.vna as vna:
             vna.set_steps_freq()
             ret, f, G, B = vna.single_scan()
@@ -1199,7 +1242,7 @@ class QCMApp(QMainWindow):
         # get axes lims
         flim1, flim2 = axG.get_xlim()
         # check lim with BW
-        flim1, flim2 = self.span_check(harm=self.settings['tabWidget_settings_settings_harm'], f1=flim1, f2=flim2)
+        flim1, flim2 = self.span_check(harm=self.settings_harm, f1=flim1, f2=flim2)
         print('get_navigate_mode()', axG.get_navigate_mode())
         print('flims', flim1, flim2)
         print(dflim1, dflim2)
@@ -1471,7 +1514,7 @@ class QCMApp(QMainWindow):
         '''
         #  of the signal isA QLineEdit object, update QLineEdit vals in dict
         print('update', signal)
-        harm = self.settings['tabWidget_settings_settings_harm']
+        harm = self.settings_harm
         tabwidget_name = 'tab_settings_settings_harm' + str(harm)
         if isinstance(self.sender(), QLineEdit):
                 try:
@@ -1495,9 +1538,7 @@ class QCMApp(QMainWindow):
     def update_harmonic_tab(self):
         #print("update_harmonic_tab was called")
         harm = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
-        self.peak_tracker.harmonic_tab = \
-        self.settings['tabWidget_settings_settings_harm'] = \
-            harm
+        self.settings_harm = harm
         
         self.update_frequencies()
 
@@ -1595,7 +1636,8 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'lineEdit_endf' + str(i)).setText(MathModules.num2str(f2, precision=12)) # display as MHz
             
         # update start/end in treeWidget_settings_settings_harmtree
-        harm = self.settings['tabWidget_settings_settings_harm']
+        harm = self.settings_harm
+        print(harm)
         # Set Start
         self.ui.lineEdit_scan_harmstart.setText(
             MathModules.num2str(self.settings['freq_span'][harm][0]*1e-6, precision=12)
@@ -1629,7 +1671,7 @@ class QCMApp(QMainWindow):
         print(self.sender().objectName())
         harmstart = float(self.ui.lineEdit_scan_harmstart.text()) * 1e6 # in Hz
         harmend = float(self.ui.lineEdit_scan_harmend.text()) * 1e6 # in Hz
-        harm=self.settings['tabWidget_settings_settings_harm']
+        harm=self.settings_harm
         print(harm, harmstart, harmend)
         f1, f2 = self.span_check(harm=harm, f1=harmstart, f2=harmend)
         print(f1, f2)
@@ -1639,23 +1681,43 @@ class QCMApp(QMainWindow):
         self.update_frequencies()
 
     def set_default_freqs(self):
+        #NOTUSING
         for i in range(1, int(settings_init['max_harmonic'] + 2), 2):
             getattr(self.ui, 'lineEdit_startf' + str(i)).setText(str(self.settings['lineEdit_startf' + str(i)]))
             getattr(self.ui, 'lineEdit_endf' + str(i)).setText(str(self.settings['lineEdit_endf' + str(i)]))
 
     def update_spanmethod(self, fitmethod_index):
+        #NOTUSING
         value = self.ui.comboBox_span_method.itemData(fitmethod_index)
-        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_span_method'] = value
+        self.settings['tab_settings_settings_harm' + str(self.settings_harm)]['comboBox_span_method'] = value
 
     def update_spantrack(self, trackmethod_index):
+        #NOTUSING
         value = self.ui.comboBox_span_track.itemData(trackmethod_index)
-        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_span_track'] = value
+        self.settings['tab_settings_settings_harm' + str(self.settings_harm)]['comboBox_span_track'] = value
 
     def update_harmfitfactor(self, harmfitfactor_index):
+        #NOTUSING
         value = self.ui.comboBox_harmfitfactor.itemData(harmfitfactor_index)
-        self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)]['comboBox_harmfitfactor'] = value
+        self.settings['tab_settings_settings_harm' + str(self.settings_harm)]['comboBox_harmfitfactor'] = value
 
-    def update_vnachannel(self, samplechannel_index):
+    def setvisible_refwidgets(self, value=False):
+        '''
+        set the visibility of reference related widget
+        '''
+        self.ui.label_settings_control_1s.setVisible(value)
+        self.ui.label_settings_control_1r.setVisible(value)
+        self.ui.label_settings_control_2s.setVisible(value)
+        self.ui.label_settings_control_2r.setVisible(value)
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            getattr(self.ui, 'lineEdit_startf' + str(i) + '_r').setVisible(value)
+            getattr(self.ui, 'lineEdit_endf' + str(i) + '_r').setVisible(value)
+        self.ui.radioButton_settings_settings_harmchnsamp.setVisible(value)
+        self.ui.radioButton_settings_settings_harmchnref.setVisible(value)
+
+
+
+    def update_vnachannel(self, index):
         '''
         update vna channels (sample and reference)
         if ref == sample: sample = 'none'
@@ -1673,16 +1735,8 @@ class QCMApp(QMainWindow):
         self.settings['comboBox_ref_channel'] = ref_channel
         # load_comboBox has to be used after the value saved in self.settings
         self.load_comboBox(self.ui.comboBox_ref_channel, 'ref_channel_choose')
-
-        return
-        value = self.ui.comboBox_sample_channel.itemData(samplechannel_index)
-        self.settings['comboBox_sample_channel'] = value
-
-        value = self.ui.comboBox_ref_channel.itemData(refchannel_index)
-        self.settings['comboBox_ref_channel'] = value
-
-    def update_module(self, module_text):
-        self.settings['comboBox_settings_mechanics_selectmodel'] = module_text
+        # set visibility of reference related widgets
+        self.setvisible_refwidgets(ref_channel != 'none')
 
     def update_tempsensor(self):
         print("update_tempsensor was called")
@@ -1753,11 +1807,13 @@ class QCMApp(QMainWindow):
                 
 
     def update_guichecks(self, checkBox, name_in_settings):
+        #NOTUSING
         print("update_guichecks was called")
-        checkBox.setChecked(self.settings['tab_settings_settings_harm' + str(self.peak_tracker.harmonic_tab)][name_in_settings])
+        checkBox.setChecked(self.settings['tab_settings_settings_harm' + str(self.settings_harm)][name_in_settings])
         
     # debug func
     def log_update(self):
+        #NOTUSING
         with open('settings.json', 'w') as f:
             line = json.dumps(dict(self.settings), indent=4) + "\n"
             f.write(line)
@@ -1791,12 +1847,19 @@ class QCMApp(QMainWindow):
         self.ui.stackedWidget_data.setCurrentIndex(0)
         # set deflault displaying of tabWidget_settings_settings_harm
         self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
-        # set opened harmonic tab
-        self.peak_tracker.harmonic_tab = self.settings['tabWidget_settings_settings_harm'] = 1 #TODO
+        # set actived harmonic tab
+        # self.settings_harm = 1 #TODO
 
         ## following data is read from self.settings
         # load display_mode
         self.load_comboBox(self.ui.comboBox_settings_control_dispmode, 'display_choose')
+
+        # load harm state
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            # settings/control/Harmonics
+            getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(self.settings['checkBox_harm' + str(i)])
+            getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(self.settings['checkBox_harm' + str(i)])
+
         
         # load default record interval
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
@@ -1896,7 +1959,7 @@ class QCMApp(QMainWindow):
 
     def smart_peak_tracker(self, harmonic, freq, conductance, susceptance, G_parameters):
         self.peak_tracker.f0 = G_parameters[0]
-        self.peak_tracker.gamma0 = G_parameters[1]
+        self.peak_tracker.g0 = G_parameters[1]
 
         # determine the structure field that should be used to extract out the initial-guessing method
         if self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_span_method'] == 'bmax':
@@ -1991,7 +2054,7 @@ class QCMApp(QMainWindow):
                 if len(rawdata) == num_pts*2:
                     self.Peak_tracker.G = 1e3 * rawdata[:num_pts+1]
                     self.peak_tracker.B = 1e3 * rawdata[num_pts:]
-                    self.peak_tracker.freq = np.arange(start1,end1-(end1-start1)/num_pts+1,(end1-start1)/num_pts)
+                    self.peak_tracker.f = np.arange(start1,end1-(end1-start1)/num_pts+1,(end1-start1)/num_pts)
                     flag = 1
                     print('Status: Scan successful.')
         #TODO refit loaded raw spectra data

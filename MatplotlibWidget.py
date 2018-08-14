@@ -211,27 +211,27 @@ class MatplotlibWidget(QWidget):
             markerfacecolor='none', 
             color=color[1]
         ) # B
-        self.l['lGpre'] = self.ax[0].plot(
-            [], [], 
-            marker='.', 
-            linestyle='none',
-            markerfacecolor='none', 
-            color='gray'
-        ) # previous G
-        self.l['lBpre'] = self.ax[1].plot(
-            [], [], 
-            marker='.', 
-            linestyle='none',
-            markerfacecolor='none', 
-            color='gray'
-        ) # previous B
-        self.l['lPpre'] = self.ax[1].plot(
-            [], [], 
-            marker='.', 
-            linestyle='none',
-            markerfacecolor='none', 
-            color='gray'
-        ) # previous polar
+        # self.l['lGpre'] = self.ax[0].plot(
+        #     [], [], 
+        #     marker='.', 
+        #     linestyle='none',
+        #     markerfacecolor='none', 
+        #     color='gray'
+        # ) # previous G
+        # self.l['lBpre'] = self.ax[1].plot(
+        #     [], [], 
+        #     marker='.', 
+        #     linestyle='none',
+        #     markerfacecolor='none', 
+        #     color='gray'
+        # ) # previous B
+        # self.l['lPpre'] = self.ax[1].plot(
+        #     [], [], 
+        #     marker='.', 
+        #     linestyle='none',
+        #     markerfacecolor='none', 
+        #     color='gray'
+        # ) # previous polar
         self.l['lGfit'] = self.ax[0].plot(
             [], [], 
             color='k'
@@ -414,7 +414,7 @@ class MatplotlibWidget(QWidget):
         dlam_lim = settings_init['contour']['dlam_lim']
         x = np.linspace(phi_lim[0], phi_lim[1], num=num)
         y = np.linspace(dlam_lim[0], dlam_lim[1], num=num)
-        X, Y = np.meshgrid(x, y)
+        X, Y = np.meshgrid(y, x)
         Z = np.ones(X.shape)
         self.l['C'] = self.ax[0].contourf(
             X, Y, Z, levels, # X, Y, Z, N

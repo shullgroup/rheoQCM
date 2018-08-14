@@ -201,8 +201,7 @@ settings_init = {
 
 settings_default = {
 #### default settings control ####
-    # default harmonics 
-    'harmonics_check': [1, 3, 5],
+
 
     # default checkbox harm states
     'checkBox_harm1': True,

@@ -164,10 +164,10 @@ class AccessMyVNA():
         # self.Close()
         return ret, f, G, B
     
-    def change_settings(self, refChn=1, nMode=0, nSteps=400, nAverage=1):
+    def change_settings(self, reflectChn=1, nMode=0, nSteps=400, nAverage=1):
         # ret =           self.Init()
         ret1, nMode =    self.Setinstrmode(nMode)
-        ret2, nData =    self.setADCChannel(refChn)
+        ret2, nData =    self.setADCChannel(reflectChn)
         ret3, nSteps =   self.SetScanSteps(nSteps)
         ret4, nAverage = self.SetScanAverage(nAverage)
         # ret =           self.Close()
@@ -179,12 +179,12 @@ class AccessMyVNA():
         ret2, f1, f2 = self.SetFequencies(f1, f2, nFlags=1)
         return ret1 + ret2
 
-    def setADCChannel(self, refChn):
+    def setADCChannel(self, reflectChn):
         # switch ADV channel for test
-        # nData = [transChn, refChn]
-        if refChn == 1:
+        # nData = [transChn, reflectChn]
+        if reflectChn == 1:
             nData = np.array([2, 1])
-        elif refChn == 2:
+        elif reflectChn == 2:
             nData = np.array([1, 2])
 
         ret, nData = self.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=nData)
