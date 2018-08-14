@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import os
 import hdf5storage
 from pathlib import Path
+import pandas as pd
 import pdb
 
 zq = 8.84e6  # shear acoustic impedance of quartz
@@ -563,6 +564,21 @@ def make_vgp_axes(propfigname):
     return {'figure': fig, 'vgp_ax':vgp_ax}
 
 
+def prop_plot_from_csv(figure, csvfile, plotstr, legendtext):
+    data = pd.read_csv(csvfile)    
+    figure['drho_ax'].plot(data['xdata'].values, data['drho'].values, plotstr, 
+                label=legendtext)   
+    figure['grho_ax'].plot(data['xdata'].values, data['grho'].values, plotstr, 
+                label=legendtext)
+    figure['phi_ax'].plot(data['xdata'].values, data['phi'].values, plotstr, 
+                label=legendtext)
+
+
+def vgp_plot_from_csv(figure, csvfile, plotstr, legendtext):
+    data = pd.read_csv(csvfile)    
+    figure['vgp_ax'].semilogx(data['grho'].values, data['phi'].values, plotstr, 
+                label=legendtext)
+   
 
 def process_raw(sample, data_type):
     colors = {1: [1, 0, 0], 3: [0, 0.5, 0], 5: [0, 0, 1]}
