@@ -442,10 +442,15 @@ class MatplotlibWidget(QWidget):
             loc='upper center', 
             bbox_to_anchor=(0.5, 1),
             borderaxespad=0.,
+            borderpad=0.,
             ncol=int((settings_init['max_harmonic']+1)/2), 
-            frameon=False, facecolor='none')
+            frameon=False, 
+            facecolor='none',
+            labelspacing=0.0, 
+            columnspacing=0.5
+        )
         self.canvas.draw()
-
+        
         # set label of ax[1]
         self.set_ax(self.ax[0], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
 

@@ -162,7 +162,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>0</number>
+             <number>2</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -559,7 +559,7 @@ background-color: red;
                    <item>
                     <widget class="QLabel" name="label_9">
                      <property name="text">
-                      <string>Scan mode </string>
+                      <string>Display mode </string>
                      </property>
                      <property name="buddy">
                       <cstring>comboBox_settings_control_dispmode</cstring>
@@ -3468,7 +3468,7 @@ border: none;
                 <property name="sizeHint" stdset="0">
                  <size>
                   <width>20</width>
-                  <height>40</height>
+                  <height>0</height>
                  </size>
                 </property>
                </spacer>

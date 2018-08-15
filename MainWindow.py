@@ -2835,7 +2835,7 @@ class Ui_MainWindow(object):
         self.label_settings_control_label2.setText(_translate("MainWindow", "End (MHz)"))
         self.label_settings_control_label1_r.setText(_translate("MainWindow", "Start (MHz)"))
         self.label_settings_control_label2_r.setText(_translate("MainWindow", "End (MHz)"))
-        self.label_9.setText(_translate("MainWindow", "Scan mode "))
+        self.label_9.setText(_translate("MainWindow", "Display mode "))
         self.label_settings_control_samp.setText(_translate("MainWindow", "Samp."))
         self.label_settings_control_ref.setText(_translate("MainWindow", "Ref."))
         self.groupBox_settingstime.setTitle(_translate("MainWindow", "Time"))

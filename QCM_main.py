@@ -1202,11 +1202,36 @@ class QCMApp(QMainWindow):
 
         return [f1, f2]
 
+    def get_spectraTab_mode(self):
+        '''
+        get the current UI condition from artributes
+        '''
+        mode = None,   # None/center/refit
+        if self.idle == True: # no test is running
+            if self.UITab == 1: # setting
+                mode = 'center'
+            elif self.UITab == 2: # Data
+                mode = 'refit'
+        else: # test is running
+            if self.reading == True: # vna and/or temperature sensor is reading data
+                if self.UITab == 2: # Data
+                    mode  = 'refit'
+                else:
+                    mode  = None
+            else: # is waiting for next reading
+                if self.UITab == 1: # setting
+                    mode = 'center'
+                elif self.UITab == 2: # Data
+                    mode = 'refit'
+        return mode
+
 
     def on_clicked_pushButton_spectra_fit_refresh(self):
         print('vna', self.vna)
         #TODOO get parameters from current setup: harm_tab
+        # get mode
         if self.idle == True or (self.idle == False and self.reading == False) : # test is not running or is running but not reading 
+
             # get harmonic from self.settings_harm
             harm = self.settings_harm
 
@@ -1650,8 +1675,7 @@ class QCMApp(QMainWindow):
                 self.update_freq_range() # initiate self.settings['freq_range']
                 self.settings['freq_span'] = self.settings['freq_range']
                 self.settings['freq_span_r'] = self.settings['freq_range']
-        print('a', self.settings['freq_span'])
-        print('b', self.settings['freq_span_r'])
+
     def update_frequencies(self):
         
         # get display mode (startstop or centerspan)
@@ -1767,9 +1791,7 @@ class QCMApp(QMainWindow):
         '''
         sample_channel = self.settings['comboBox_sample_channel']
         ref_channel = self.settings['comboBox_ref_channel']
-        print(sample_channel)
-        print(ref_channel)
-        print(ref_channel == sample_channel)
+
         if ref_channel == sample_channel:
             # make sure sample and ref channels are not the same
             ref_channel = 'none' # set ref_channel to none
