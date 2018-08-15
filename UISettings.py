@@ -176,6 +176,7 @@ settings_init = {
         'file': 'Other file',
     },
 
+    # steps ofr span control slider
     'span_ctrl_steps': [1, 2, 5, 10, 20, 50, 100],
 
 
@@ -230,22 +231,99 @@ settings_default = {
     'comboBox_base_frequency': 5,
     'comboBox_bandwidth': 0.1,
 
+    #NOTUSING
+    'harm_set':{
+        'freq_range': {
+
+        },
+        'freq_span': {
+
+        },
+        'points': {
+            1:  400, 
+            3:  400, 
+            5:  400, 
+            7:  400, 
+            9:  400, 
+            11: 400, 
+        },
+        'span_method': {
+            1:  'gmax', 
+            3:  'gmax', 
+            5:  'gmax', 
+            7:  'gmax', 
+            9:  'gmax', 
+            11: 'gmax', 
+        },
+        'span_track': {
+            1:  'auto', 
+            3:  'auto', 
+            5:  'auto', 
+            7:  'auto', 
+            9:  'auto', 
+            11: 'auto', 
+        },
+        'harmfit': {
+            1:  True, 
+            3:  True, 
+            5:  True, 
+            7:  True, 
+            9:  True, 
+            11: True, 
+        },
+        'harmfitfactor': {
+            1:  6, 
+            3:  6, 
+            5:  6, 
+            7:  6, 
+            9:  6, 
+            11: 6, 
+
+        },
+        'peaks_maxnum': {
+            1:  1, 
+            3:  1, 
+            5:  1, 
+            7:  1, 
+            9:  1, 
+            11: 1, 
+
+        },
+        'peaks_threshold': {
+            1:  0.2, 
+            3:  0.2, 
+            5:  0.2, 
+            7:  0.2, 
+            9:  0.2, 
+            11: 0.2, 
+        },
+        'peaks_prominence': {
+            1:  0.005, 
+            3:  0.005, 
+            5:  0.005, 
+            7:  0.005, 
+            9:  0.005, 
+            11: 0.005, 
+        },
+    },
+
     # default frequency ranges for each harmonic
     'freq_range': {},
     # default frequency span for each harmonic
     'freq_span': {},
 
+    # default frequency ranges for each harmonic of reference channel
+    'freq_range_r': {},
+    # default frequency span for each harmonic of reference channel
+    'freq_span_r': {},
+
     #### default settings settings ####
     'tab_settings_settings_harm1': {
         # default scan settings
-        'lineEdit_scan_harmstart': 4.9,
-        'lineEdit_scan_harmend': 5.1,
         'lineEdit_scan_harmpoints': 400,
-        
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'auto',
-        
         # default fit settings
         'checkBox_harmfit': True,
         'comboBox_harmfitfactor': 6,
@@ -256,14 +334,10 @@ settings_default = {
 
     'tab_settings_settings_harm3': {
         # default scan settings
-        'lineEdit_scan_harmstart': 4.9,
-        'lineEdit_scan_harmend': 5.1,
         'lineEdit_scan_harmpoints': 400,
-        
         # default span settings
         'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
-        
+        'comboBox_span_track': 'fixspan',   
         # default fit settings
         'checkBox_harmfit': True,
         'comboBox_harmfitfactor': 6,
@@ -274,14 +348,10 @@ settings_default = {
 
     'tab_settings_settings_harm5': {
         # default scan settings
-        'lineEdit_scan_harmstart': 4.9,
-        'lineEdit_scan_harmend': 5.1,
         'lineEdit_scan_harmpoints': 400,
-        
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',
-        
         # default fit settings
         'checkBox_harmfit': True,
         'comboBox_harmfitfactor': 6,
@@ -292,14 +362,10 @@ settings_default = {
 
     'tab_settings_settings_harm7': {
         # default scan settings
-        'lineEdit_scan_harmstart': 4.9,
-        'lineEdit_scan_harmend': 5.1,
         'lineEdit_scan_harmpoints': 400,
-        
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',
-        
         # default fit settings
         'checkBox_harmfit': True,
         'comboBox_harmfitfactor': 6,
@@ -310,33 +376,108 @@ settings_default = {
 
     'tab_settings_settings_harm9': {
         # default scan settings
-        'lineEdit_scan_harmstart': 4.9,
-        'lineEdit_scan_harmend': 5.1,
         'lineEdit_scan_harmpoints': 400,
-        
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',
-        
         # default fit settings
         'checkBox_harmfit': True,
         'comboBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
         'lineEdit_peaks_prominence': 0.005,
-
     },
 
     'tab_settings_settings_harm11': {
         # default scan settings
-        'lineEdit_scan_harmstart': 4.9,
-        'lineEdit_scan_harmend': 5.1,
         'lineEdit_scan_harmpoints': 400,
-        
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',
-        
+        # default fit settings
+        'checkBox_harmfit': True,
+        'comboBox_harmfitfactor': 6,
+        'lineEdit_peaks_maxnum': 1, 
+        'lineEdit_peaks_threshold': 0.2,
+        'lineEdit_peaks_prominence': 0.005,
+    },
+    # for reference channel
+    'tab_settings_settings_harm1_r': {
+        # default scan settings
+        'lineEdit_scan_harmpoints': 400,
+        # default span settings
+        'comboBox_span_method': 'gmax',
+        'comboBox_span_track': 'auto',
+        # default fit settings
+        'checkBox_harmfit': True,
+        'comboBox_harmfitfactor': 6,
+        'lineEdit_peaks_maxnum': 1, 
+        'lineEdit_peaks_threshold': 0.2,
+        'lineEdit_peaks_prominence': 0.005,
+    },
+
+    'tab_settings_settings_harm3_r': {
+        # default scan settings
+        'lineEdit_scan_harmpoints': 400,
+        # default span settings
+        'comboBox_span_method': 'gmax',
+        'comboBox_span_track': 'fixspan',   
+        # default fit settings
+        'checkBox_harmfit': True,
+        'comboBox_harmfitfactor': 6,
+        'lineEdit_peaks_maxnum': 1, 
+        'lineEdit_peaks_threshold': 0.2,
+        'lineEdit_peaks_prominence': 0.005,
+    },
+
+    'tab_settings_settings_harm5_r': {
+        # default scan settings
+        'lineEdit_scan_harmpoints': 400,
+        # default span settings
+        'comboBox_span_method': 'gmax',
+        'comboBox_span_track': 'fixspan',
+        # default fit settings
+        'checkBox_harmfit': True,
+        'comboBox_harmfitfactor': 6,
+        'lineEdit_peaks_maxnum': 1, 
+        'lineEdit_peaks_threshold': 0.2,
+        'lineEdit_peaks_prominence': 0.005,
+    },
+
+    'tab_settings_settings_harm7_r': {
+        # default scan settings
+        'lineEdit_scan_harmpoints': 400,
+        # default span settings
+        'comboBox_span_method': 'gmax',
+        'comboBox_span_track': 'fixspan',
+        # default fit settings
+        'checkBox_harmfit': True,
+        'comboBox_harmfitfactor': 6,
+        'lineEdit_peaks_maxnum': 1, 
+        'lineEdit_peaks_threshold': 0.2,
+        'lineEdit_peaks_prominence': 0.005,
+    },
+
+    'tab_settings_settings_harm9_r': {
+        # default scan settings
+        'lineEdit_scan_harmpoints': 400,
+        # default span settings
+        'comboBox_span_method': 'gmax',
+        'comboBox_span_track': 'fixspan',
+        # default fit settings
+        'checkBox_harmfit': True,
+        'comboBox_harmfitfactor': 6,
+        'lineEdit_peaks_maxnum': 1, 
+        'lineEdit_peaks_threshold': 0.2,
+        'lineEdit_peaks_prominence': 0.005,
+    },
+
+    'tab_settings_settings_harm11_r': {
+        # default scan settings
+        'lineEdit_scan_harmpoints': 400,
+        # default span settings
+        'comboBox_span_method': 'gmax',
+        'comboBox_span_track': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
         'comboBox_harmfitfactor': 6,

@@ -95,7 +95,7 @@ class QCMApp(QMainWindow):
         self.UITab = 0 # 0: Control; 1: Settings;, 2: Data; 3: Mechanics
         self.settings_harm = 1 # active harmonic in Settings Tab
         self.data_harm = 1 # active harmonic in Data Tab
-
+        self.active_chn = 'samp' # active channel 'samp' or 'ref'
         #### initialize the artributes for data saving
         self.data = DataStruct()
         self.raw = RawStruct()
@@ -197,7 +197,7 @@ class QCMApp(QMainWindow):
 
 
 #region settings_control
-        # set lineEdit_startf<n> & lineEdit_endf<n> background
+        # set lineEdit_startf<n> & lineEdit_endf<n> & lineEdit_startf<n>_r & lineEdit_endf<n>_r background
         for i in range(1, settings_init['max_harmonic']+2, 2):
             getattr(self.ui, 'lineEdit_startf' + str(i)).setStyleSheet(
                 "QLineEdit { background: transparent; }"
@@ -273,6 +273,10 @@ class QCMApp(QMainWindow):
         self.ui.radioButton_settings_settings_harmchnsamp.setVisible(False)
         # hide raido buttons radioButton_settings_settings_harmchnref
         self.ui.radioButton_settings_settings_harmchnref.setVisible(False)
+
+        # set signal
+        self.ui.radioButton_settings_settings_harmchnsamp.toggled.connect(self.update_active_chn)
+        self.ui.radioButton_settings_settings_harmchnref.toggled.connect(self.update_active_chn)
 
         ### add combobox into treewidget
         self.ui.tabWidget_settings_settings_harm.currentChanged.connect(self.update_harmonic_tab)
@@ -560,6 +564,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_bandwidth.currentIndexChanged.connect(self.update_bandwidth)
 
         # set signals to update span settings_settings
+        self.ui.lineEdit_scan_harmpoints.textEdited.connect(self.update_harmwidget)
         self.ui.comboBox_span_method.activated.connect(self.update_harmwidget)
         self.ui.comboBox_span_track.activated.connect(self.update_harmwidget)
         self.ui.checkBox_harmfit.clicked['bool'].connect(self.update_harmwidget)
@@ -1515,7 +1520,12 @@ class QCMApp(QMainWindow):
         #  of the signal isA QLineEdit object, update QLineEdit vals in dict
         print('update', signal)
         harm = self.settings_harm
-        tabwidget_name = 'tab_settings_settings_harm' + str(harm)
+        # choose the parent by self.active_chn
+        if self.active_chn == 'samp':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm)
+        elif self.active_chn == 'ref':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm) + '_r'
+
         if isinstance(self.sender(), QLineEdit):
                 try:
                     self.settings[tabwidget_name][self.sender().objectName()] = float(signal)
@@ -1535,34 +1545,48 @@ class QCMApp(QMainWindow):
                 value = self.sender().itemText(signal)
             self.settings[tabwidget_name][self.sender().objectName()] = value
 
+    def update_active_chn(self):
+        if self.sender().objectName() == 'radioButton_settings_settings_harmchnsamp':
+            self.active_chn = 'samp'
+        elif self.sender().objectName() == 'radioButton_settings_settings_harmchnref':
+            self.active_chn = 'ref'
+        
+        # update treeWidget_settings_settings_harmtree
+        self.update_harmonic_tab()
+
     def update_harmonic_tab(self):
         #print("update_harmonic_tab was called")
         harm = 2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1
         self.settings_harm = harm
         
         self.update_frequencies()
+        # choose the parent by self.active_chn
+        if self.active_chn == 'samp':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm)
+        elif self.active_chn == 'ref':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm) + '_r'
 
         # update lineEdit_scan_harmpoints
         self.ui.lineEdit_scan_harmpoints.setText(
-            str(self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_scan_harmpoints'])
+            str(self.settings[tabwidget_name]['lineEdit_scan_harmpoints'])
         )
-        self.load_comboBox(self.ui.comboBox_span_method, 'span_mehtod_choose', parent='tab_settings_settings_harm' + str(harm))
-        self.load_comboBox(self.ui.comboBox_span_track, 'span_track_choose', parent='tab_settings_settings_harm' + str(harm)) 
-        self.load_comboBox(self.ui.comboBox_harmfitfactor, 'fit_factor_choose', parent='tab_settings_settings_harm' + str(harm))
+        self.load_comboBox(self.ui.comboBox_span_method, 'span_mehtod_choose', parent=tabwidget_name)
+        self.load_comboBox(self.ui.comboBox_span_track, 'span_track_choose', parent=tabwidget_name) 
+        self.load_comboBox(self.ui.comboBox_harmfitfactor, 'fit_factor_choose', parent=tabwidget_name)
 
         # update lineEdit_peaks_maxnum
         self.ui.lineEdit_peaks_maxnum.setText(
-            str(self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_peaks_maxnum'])
+            str(self.settings[tabwidget_name]['lineEdit_peaks_maxnum'])
         )
  
         # update lineEdit_peaks_threshold
         self.ui.lineEdit_peaks_threshold.setText(
-            str(self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_peaks_threshold'])
+            str(self.settings[tabwidget_name]['lineEdit_peaks_threshold'])
         )
 
         # update lineEdit_peaks_prominence
         self.ui.lineEdit_peaks_prominence.setText(
-            str(self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_peaks_prominence'])
+            str(self.settings[tabwidget_name]['lineEdit_peaks_prominence'])
         )
 
     def update_base_freq(self, base_freq_index):
@@ -1608,43 +1632,57 @@ class QCMApp(QMainWindow):
         check if settings['freq_span'] (freq span for each harmonic) values in the allowed range self.settings['freq_range']
         '''
         try: 
-            self.settings['freq_span'] # check if self.settings['freq_span'] exist
+            # check if self.settings['freq_span'] exist
+            self.settings['freq_span'] 
+            self.settings['freq_span_r'] 
             freq_span = {}
+            freq_span_r = {}
             for i in range(1, settings_init['max_harmonic']+2, 2):
                 freq_span[i] = self.span_check(i, self.settings['freq_span'][i][0], self.settings['freq_span'][i][1])
+                freq_span_r[i] = self.span_check(i, self.settings['freq_span_r'][i][0], self.settings['freq_span_r'][i][1])
             self.settings['freq_span'] = freq_span
+            self.settings['freq_span_r'] = freq_span_r
         except: # if self.settings['freq_span'] does not exist
             try: # check if self.settings['freq_range'] exist
                 self.settings['freq_span'] = self.settings['freq_range']
+                self.settings['freq_span_r'] = self.settings['freq_range']
             except: # if self.settings['freq_range'] does not exist
                 self.update_freq_range() # initiate self.settings['freq_range']
                 self.settings['freq_span'] = self.settings['freq_range']
-
+                self.settings['freq_span_r'] = self.settings['freq_range']
+        print('a', self.settings['freq_span'])
+        print('b', self.settings['freq_span_r'])
     def update_frequencies(self):
         
         # get display mode (startstop or centerspan)
         disp_mode = self.settings['comboBox_settings_control_dispmode']
-
         # update lineEdit_startf<n> & lineEdit_endf<n>
         for i in range(1, settings_init['max_harmonic']+2, 2):
-            f1 = self.settings['freq_span'][i][0]*1e-6 # in MHz
-            f2 = self.settings['freq_span'][i][1]*1e-6 # in MHz
+            f1, f2 = self.settings['freq_span'][i][0]*1e-6, self.settings['freq_span'][i][1]*1e-6 # in MHz
+            f1r, f2r = self.settings['freq_span_r'][i][0]*1e-6, self.settings['freq_span_r'][i][1]*1e-6 # in MHz
             if disp_mode == 'centerspan':
                 # convert f1, f2 from start/stop to center/span
                 f1, f2 = MathModules.converter_startstop_to_centerspan(f1, f2)
+                f1r, f2r = MathModules.converter_startstop_to_centerspan(f1r, f2r)
             getattr(self.ui, 'lineEdit_startf' + str(i)).setText(MathModules.num2str(f1, precision=12)) # display as MHz
             getattr(self.ui, 'lineEdit_endf' + str(i)).setText(MathModules.num2str(f2, precision=12)) # display as MHz
-            
+            getattr(self.ui, 'lineEdit_startf' + str(i) + '_r').setText(MathModules.num2str(f1r, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_endf' + str(i) + '_r').setText(MathModules.num2str(f2r, precision=12)) # display as MHz
+                
         # update start/end in treeWidget_settings_settings_harmtree
         harm = self.settings_harm
         print(harm)
+        if self.active_chn == 'samp':
+            span_name = 'freq_span'
+        elif self.active_chn == 'ref':
+            span_name = 'freq_span_r'
         # Set Start
         self.ui.lineEdit_scan_harmstart.setText(
-            MathModules.num2str(self.settings['freq_span'][harm][0]*1e-6, precision=12)
+            MathModules.num2str(self.settings[span_name][harm][0]*1e-6, precision=12)
         )
         # set End
         self.ui.lineEdit_scan_harmend.setText(
-            MathModules.num2str(self.settings['freq_span'][harm][1]*1e-6, precision=12)
+            MathModules.num2str(self.settings[span_name][harm][1]*1e-6, precision=12)
         )
 
     def update_freq_display_mode(self, signal):
@@ -1675,7 +1713,11 @@ class QCMApp(QMainWindow):
         print(harm, harmstart, harmend)
         f1, f2 = self.span_check(harm=harm, f1=harmstart, f2=harmend)
         print(f1, f2)
-        self.settings['freq_span'][harm] = [f1, f2]
+        if self.active_chn == 'samp':
+            span_name = 'freq_span'
+        elif self.active_chn == 'ref':
+            span_name = 'freq_span_r'
+        self.settings[span_name][harm] = [f1, f2]
         # self.settings['freq_span'][harm] = [harmstart, harmend] # in Hz
         # self.check_freq_span()
         self.update_frequencies()
@@ -1705,10 +1747,11 @@ class QCMApp(QMainWindow):
         '''
         set the visibility of reference related widget
         '''
-        self.ui.label_settings_control_1s.setVisible(value)
-        self.ui.label_settings_control_1r.setVisible(value)
-        self.ui.label_settings_control_2s.setVisible(value)
-        self.ui.label_settings_control_2r.setVisible(value)
+        # self.ui.widget_settings_control_sf.setVisible(value)
+        self.ui.label_settings_control_samp.setVisible(value)
+        self.ui.label_settings_control_ref.setVisible(value)
+        self.ui.label_settings_control_label1_r.setVisible(value)
+        self.ui.label_settings_control_label2_r.setVisible(value)
         for i in range(1, settings_init['max_harmonic']+2, 2):
             getattr(self.ui, 'lineEdit_startf' + str(i) + '_r').setVisible(value)
             getattr(self.ui, 'lineEdit_endf' + str(i) + '_r').setVisible(value)
@@ -1831,7 +1874,6 @@ class QCMApp(QMainWindow):
         # update self.settings['freq_span']
         self.check_freq_span()
 
-
         ## set default appearence
         # set window title
         self.setWindowTitle(settings_init['window_title'])
@@ -1849,6 +1891,8 @@ class QCMApp(QMainWindow):
         self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
         # set actived harmonic tab
         # self.settings_harm = 1 #TODO
+        # set active_chn
+        self.ui.radioButton_settings_settings_harmchnsamp.setChecked(True)
 
         ## following data is read from self.settings
         # load display_mode
@@ -1865,6 +1909,9 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         # load default spectra refresh resolution
         self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
+        # update lineEdit_scaninterval
+        self.set_lineEdit_scaninterval()
+
         # load default fitting and display options
         self.ui.checkBox_dynamicfit.setChecked(self.settings['checkBox_dynamicfit'])
         # load default fit factor range
