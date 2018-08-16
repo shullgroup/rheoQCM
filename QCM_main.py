@@ -53,6 +53,32 @@ class PeakTracker:
 
         self.harm = 1
 
+class VNATracker:
+    def __init__(self):
+        self.f1 = None      # current start frequency in Hz (float)
+        self.f2 = None      # current end frequency in Hz (float)
+        self.steps = None   # current number of steps (int)
+        self.chn = None     # current reflection ADC channel (1 or 2)
+        self.avg = None     # average of scans (int)
+        self.speed = None   # vna speed set up (int?)
+        self.instrmode = None # instrument mode (int)
+        
+        self.setflg = {} # if vna needs to reset (set with reset selections)
+        self.setflg.update(self.__dict__)
+    
+    def reset_check(self, **kwargs):
+        for key, val in kwargs:
+            print(key, val)
+            if getattr(self, key) != val: # if self.<key> changed
+                setattr(self, key, val) # save val to class
+            self.setflg.add(key) # add reset selection to set
+        return self.resetflg
+
+    def reset_flag(self):
+        ''' set to vna doesn't neet rest '''
+        self.setflg = set()
+
+
 class DataStruct:
     def __init__(self):
         self.samp = None # artribute to save data of sample
@@ -86,6 +112,7 @@ class QCMApp(QMainWindow):
         self.fileFlag = False
         self.settings = settings_default # import default settings. It will be initalized latter
         self.peak_tracker = PeakTracker()
+        self.vna_tracker = VNATracker()
   
         # define instrument state variables
         self.vna = None # vna class
@@ -95,7 +122,7 @@ class QCMApp(QMainWindow):
         self.UITab = 0 # 0: Control; 1: Settings;, 2: Data; 3: Mechanics
         self.settings_harm = 1 # active harmonic in Settings Tab
         self.data_harm = 1 # active harmonic in Data Tab
-        self.active_chn = 'samp' # active channel 'samp' or 'ref'
+        self.active_chn = {'name': 'samp', 'chn': 1} # active channel 'samp' or 'ref'
         #### initialize the artributes for data saving
         self.data = DataStruct()
         self.raw = RawStruct()
@@ -296,11 +323,11 @@ class QCMApp(QMainWindow):
             100,
         )
 
-        # move lineEdit_scan_harmpoints
+        # move lineEdit_scan_harmsteps
         self.move_to_col2(
-            self.ui.lineEdit_scan_harmpoints,
+            self.ui.lineEdit_scan_harmsteps,
             self.ui.treeWidget_settings_settings_harmtree,
-            'Points',
+            'Steps',
             100,
         )
 
@@ -447,11 +474,11 @@ class QCMApp(QMainWindow):
 
         if not self.settings['comboBox_tempdevice']: # vna or tempdevice are not availabel
             # set temp related widgets unavailable
-            self.ui.checkBox_control_rectemp.SetEnabled(False)
-            self.ui.checkBox_settings_temp_sensor.SetEnabled(False)
-            self.ui.comboBox_tempmodule.SetEnabled(False)
-            self.ui.comboBox_tempdevice.SetEnabled(False)
-            self.ui.comboBox_thrmcpltype.SetEnabled(False)
+            self.ui.checkBox_control_rectemp.setEnabled(False)
+            self.ui.checkBox_settings_temp_sensor.setEnabled(False)
+            self.ui.comboBox_tempmodule.setEnabled(False)
+            self.ui.comboBox_tempdevice.setEnabled(False)
+            self.ui.comboBox_thrmcpltype.setEnabled(False)
 
 
         # insert time_unit
@@ -564,7 +591,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_bandwidth.currentIndexChanged.connect(self.update_bandwidth)
 
         # set signals to update span settings_settings
-        self.ui.lineEdit_scan_harmpoints.textEdited.connect(self.update_harmwidget)
+        self.ui.lineEdit_scan_harmsteps.textEdited.connect(self.update_harmwidget)
         self.ui.comboBox_span_method.activated.connect(self.update_harmwidget)
         self.ui.comboBox_span_track.activated.connect(self.update_harmwidget)
         self.ui.checkBox_harmfit.clicked['bool'].connect(self.update_harmwidget)
@@ -1204,7 +1231,8 @@ class QCMApp(QMainWindow):
 
     def get_spectraTab_mode(self):
         '''
-        get the current UI condition from artributes
+        get the current UI condition from artributes and 
+        set the mode for spectra_fit
         '''
         mode = None,   # None/center/refit
         if self.idle == True: # no test is running
@@ -1212,6 +1240,8 @@ class QCMApp(QMainWindow):
                 mode = 'center'
             elif self.UITab == 2: # Data
                 mode = 'refit'
+            else:
+                mode = None
         else: # test is running
             if self.reading == True: # vna and/or temperature sensor is reading data
                 if self.UITab == 2: # Data
@@ -1223,6 +1253,8 @@ class QCMApp(QMainWindow):
                     mode = 'center'
                 elif self.UITab == 2: # Data
                     mode = 'refit'
+                else:
+                    mode = None
         return mode
 
 
@@ -1230,18 +1262,19 @@ class QCMApp(QMainWindow):
         print('vna', self.vna)
         #TODOO get parameters from current setup: harm_tab
         # get mode
-        if self.idle == True or (self.idle == False and self.reading == False) : # test is not running or is running but not reading 
-
+        if self.get_spectraTab_mode() == 'center': # for peak centering
             # get harmonic from self.settings_harm
             harm = self.settings_harm
+            # get f1, f2
+            f1, f2 = self.settings['freq_span'][harm]
+            steps = self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_scan_harmsteps']
+            chn = self.active_chn['chn']
 
+            # get the vna reset flag
+            setflg = self.vna_tracker.reset_check(f1=f1, f2=f2, steps=steps, chn=chn)
 
-            pass
-
-            # check lim with BW
-            # flim1, flim2 = self.span_check(harm=self.settings_harm, f1=flim1, f2=flim2)
         with self.vna as vna:
-            vna.set_steps_freq()
+            vna.set(setflg)
             ret, f, G, B = vna.single_scan()
 
         ## disconnect axes event
@@ -1546,9 +1579,9 @@ class QCMApp(QMainWindow):
         print('update', signal)
         harm = self.settings_harm
         # choose the parent by self.active_chn
-        if self.active_chn == 'samp':
+        if self.active_chn['name'] == 'samp':
             tabwidget_name = 'tab_settings_settings_harm' + str(harm)
-        elif self.active_chn == 'ref':
+        elif self.active_chn['name'] == 'ref':
             tabwidget_name = 'tab_settings_settings_harm' + str(harm) + '_r'
 
         if isinstance(self.sender(), QLineEdit):
@@ -1572,9 +1605,15 @@ class QCMApp(QMainWindow):
 
     def update_active_chn(self):
         if self.sender().objectName() == 'radioButton_settings_settings_harmchnsamp':
-            self.active_chn = 'samp'
+            self.active_chn = {
+                'name': 'samp', 
+                'chn': self.settings['comboBox_sample_channel']
+            }
         elif self.sender().objectName() == 'radioButton_settings_settings_harmchnref':
-            self.active_chn = 'ref'
+            self.active_chn = {
+                'name': 'ref', 
+                'chn': self.settings['comboBox_ref_channel']
+            }
         
         # update treeWidget_settings_settings_harmtree
         self.update_harmonic_tab()
@@ -1586,14 +1625,14 @@ class QCMApp(QMainWindow):
         
         self.update_frequencies()
         # choose the parent by self.active_chn
-        if self.active_chn == 'samp':
+        if self.active_chn['name'] == 'samp':
             tabwidget_name = 'tab_settings_settings_harm' + str(harm)
-        elif self.active_chn == 'ref':
+        elif self.active_chn['name'] == 'ref':
             tabwidget_name = 'tab_settings_settings_harm' + str(harm) + '_r'
 
-        # update lineEdit_scan_harmpoints
-        self.ui.lineEdit_scan_harmpoints.setText(
-            str(self.settings[tabwidget_name]['lineEdit_scan_harmpoints'])
+        # update lineEdit_scan_harmsteps
+        self.ui.lineEdit_scan_harmsteps.setText(
+            str(self.settings[tabwidget_name]['lineEdit_scan_harmsteps'])
         )
         self.load_comboBox(self.ui.comboBox_span_method, 'span_mehtod_choose', parent=tabwidget_name)
         self.load_comboBox(self.ui.comboBox_span_track, 'span_track_choose', parent=tabwidget_name) 
@@ -1696,9 +1735,9 @@ class QCMApp(QMainWindow):
         # update start/end in treeWidget_settings_settings_harmtree
         harm = self.settings_harm
         print(harm)
-        if self.active_chn == 'samp':
+        if self.active_chn['name'] == 'samp':
             span_name = 'freq_span'
-        elif self.active_chn == 'ref':
+        elif self.active_chn['name'] == 'ref':
             span_name = 'freq_span_r'
         # Set Start
         self.ui.lineEdit_scan_harmstart.setText(
@@ -1737,9 +1776,9 @@ class QCMApp(QMainWindow):
         print(harm, harmstart, harmend)
         f1, f2 = self.span_check(harm=harm, f1=harmstart, f2=harmend)
         print(f1, f2)
-        if self.active_chn == 'samp':
+        if self.active_chn['name'] == 'samp':
             span_name = 'freq_span'
-        elif self.active_chn == 'ref':
+        elif self.active_chn['name'] == 'ref':
             span_name = 'freq_span_r'
         self.settings[span_name][harm] = [f1, f2]
         # self.settings['freq_span'][harm] = [harmstart, harmend] # in Hz

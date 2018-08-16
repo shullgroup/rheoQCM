@@ -812,6 +812,15 @@ class AccessMyVNA():
         ret, nData = self.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=nData)
         return ret, nData
 
+    def set(setflg):
+        '''
+        set MyVNA by setflg (set)
+        setflg: {'f1', 'f2', 'steps', 'chn', 'avg', 'speed', ...}
+        '''
+        for flg, val in setflg:
+            passv
+
+
 # get_hWnd()
 
 # exit(0)

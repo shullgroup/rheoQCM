@@ -741,10 +741,10 @@ class Ui_MainWindow(object):
         self.lineEdit_scan_harmend.setMaximumSize(QtCore.QSize(16777215, 18))
         self.lineEdit_scan_harmend.setObjectName("lineEdit_scan_harmend")
         self.verticalLayout_14.addWidget(self.lineEdit_scan_harmend)
-        self.lineEdit_scan_harmpoints = QtWidgets.QLineEdit(self.tab_settings_settings)
-        self.lineEdit_scan_harmpoints.setMaximumSize(QtCore.QSize(16777215, 18))
-        self.lineEdit_scan_harmpoints.setObjectName("lineEdit_scan_harmpoints")
-        self.verticalLayout_14.addWidget(self.lineEdit_scan_harmpoints)
+        self.lineEdit_scan_harmsteps = QtWidgets.QLineEdit(self.tab_settings_settings)
+        self.lineEdit_scan_harmsteps.setMaximumSize(QtCore.QSize(16777215, 18))
+        self.lineEdit_scan_harmsteps.setObjectName("lineEdit_scan_harmsteps")
+        self.verticalLayout_14.addWidget(self.lineEdit_scan_harmsteps)
         self.checkBox_harmfit = QtWidgets.QCheckBox(self.tab_settings_settings)
         self.checkBox_harmfit.setText("")
         self.checkBox_harmfit.setObjectName("checkBox_harmfit")
@@ -1279,7 +1279,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_36.addLayout(self.verticalLayout_51)
         self.verticalLayout_42.addLayout(self.horizontalLayout_36)
         self.verticalLayout_52.addWidget(self.groupBox)
-        spacerItem19 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem19 = QtWidgets.QSpacerItem(20, 0, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_52.addItem(spacerItem19)
         self.tabWidget_settings.addTab(self.tab_settings_data, "")
         self.tab_settings_mechanics = QtWidgets.QWidget()
@@ -2545,7 +2545,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_24.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1114, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1114, 22))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -2880,7 +2880,7 @@ class Ui_MainWindow(object):
         self.treeWidget_settings_settings_harmtree.topLevelItem(0).setText(0, _translate("MainWindow", "Scan"))
         self.treeWidget_settings_settings_harmtree.topLevelItem(0).child(0).setText(0, _translate("MainWindow", "Start"))
         self.treeWidget_settings_settings_harmtree.topLevelItem(0).child(1).setText(0, _translate("MainWindow", "End"))
-        self.treeWidget_settings_settings_harmtree.topLevelItem(0).child(2).setText(0, _translate("MainWindow", "Points"))
+        self.treeWidget_settings_settings_harmtree.topLevelItem(0).child(2).setText(0, _translate("MainWindow", "Steps"))
         self.treeWidget_settings_settings_harmtree.topLevelItem(1).setText(0, _translate("MainWindow", "Span"))
         self.treeWidget_settings_settings_harmtree.topLevelItem(1).child(0).setText(0, _translate("MainWindow", "Method"))
         self.treeWidget_settings_settings_harmtree.topLevelItem(1).child(1).setText(0, _translate("MainWindow", "Tracking"))
@@ -3203,8 +3203,8 @@ class Ui_MainWindow(object):
         self.textBrowser_spectra_fit_result.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
+"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\'; font-size:8.25pt;\"><br /></p></body></html>"))
         self.pushButton_spectra_mechanics_clear.setText(_translate("MainWindow", "Clear"))
         self.toolButton_spectra_mechanics_plotrows.setText(_translate("MainWindow", "Plot"))
         item = self.tableWidget_spectra_mechanics_table.verticalHeaderItem(0)

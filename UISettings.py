@@ -97,15 +97,15 @@ settings_init = {
     # sample_channel
     'sample_channel_choose': {
     # key: number; val: for display in combobox
-        '1': 'ADC 1',
-        '2': 'ADC 2'
+        1: 'ADC 1',
+        2: 'ADC 2'
     },
 
     'ref_channel_choose': {
     # key: number; val: for display in combobox
         'none': '--',
-        '1': 'ADC 1',
-        '2': 'ADC 2'
+        1: 'ADC 1',
+        2: 'ADC 2'
     },
 
     'thrmcpl_choose': {
@@ -239,7 +239,7 @@ settings_default = {
         'freq_span': {
 
         },
-        'points': {
+        'steps': {
             1:  400, 
             3:  400, 
             5:  400, 
@@ -320,7 +320,7 @@ settings_default = {
     #### default settings settings ####
     'tab_settings_settings_harm1': {
         # default scan settings
-        'lineEdit_scan_harmpoints': 400,
+        'lineEdit_scan_harmsteps': 400,
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'auto',
@@ -334,7 +334,7 @@ settings_default = {
 
     'tab_settings_settings_harm3': {
         # default scan settings
-        'lineEdit_scan_harmpoints': 400,
+        'lineEdit_scan_harmsteps': 400,
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',   
@@ -348,7 +348,7 @@ settings_default = {
 
     'tab_settings_settings_harm5': {
         # default scan settings
-        'lineEdit_scan_harmpoints': 400,
+        'lineEdit_scan_harmsteps': 400,
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',
@@ -362,7 +362,7 @@ settings_default = {
 
     'tab_settings_settings_harm7': {
         # default scan settings
-        'lineEdit_scan_harmpoints': 400,
+        'lineEdit_scan_harmsteps': 400,
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',
@@ -376,7 +376,7 @@ settings_default = {
 
     'tab_settings_settings_harm9': {
         # default scan settings
-        'lineEdit_scan_harmpoints': 400,
+        'lineEdit_scan_harmsteps': 400,
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',
@@ -390,7 +390,7 @@ settings_default = {
 
     'tab_settings_settings_harm11': {
         # default scan settings
-        'lineEdit_scan_harmpoints': 400,
+        'lineEdit_scan_harmsteps': 400,
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',
@@ -404,7 +404,7 @@ settings_default = {
     # for reference channel
     'tab_settings_settings_harm1_r': {
         # default scan settings
-        'lineEdit_scan_harmpoints': 400,
+        'lineEdit_scan_harmsteps': 400,
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'auto',
@@ -418,7 +418,7 @@ settings_default = {
 
     'tab_settings_settings_harm3_r': {
         # default scan settings
-        'lineEdit_scan_harmpoints': 400,
+        'lineEdit_scan_harmsteps': 400,
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',   
@@ -432,7 +432,7 @@ settings_default = {
 
     'tab_settings_settings_harm5_r': {
         # default scan settings
-        'lineEdit_scan_harmpoints': 400,
+        'lineEdit_scan_harmsteps': 400,
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',
@@ -446,7 +446,7 @@ settings_default = {
 
     'tab_settings_settings_harm7_r': {
         # default scan settings
-        'lineEdit_scan_harmpoints': 400,
+        'lineEdit_scan_harmsteps': 400,
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',
@@ -460,7 +460,7 @@ settings_default = {
 
     'tab_settings_settings_harm9_r': {
         # default scan settings
-        'lineEdit_scan_harmpoints': 400,
+        'lineEdit_scan_harmsteps': 400,
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',
@@ -474,7 +474,7 @@ settings_default = {
 
     'tab_settings_settings_harm11_r': {
         # default scan settings
-        'lineEdit_scan_harmpoints': 400,
+        'lineEdit_scan_harmsteps': 400,
         # default span settings
         'comboBox_span_method': 'gmax',
         'comboBox_span_track': 'fixspan',
@@ -488,7 +488,7 @@ settings_default = {
 
     ### default hardware settings ###
     # default VNA settings
-    'comboBox_sample_channel': '1',
+    'comboBox_sample_channel': 1,
     'comboBox_ref_channel': 'none',
 
     # default crystal settings
