@@ -335,6 +335,7 @@ class MatplotlibWidget(QWidget):
         self.ax[1].margins(x=0)
         self.ax[0].margins(y=.05)
         self.ax[1].margins(y=.05)
+        # self.ax[1].sharex = self.ax[0]
 
         # self.ax[0].autoscale()
         # self.ax[1].autoscale()
@@ -573,7 +574,6 @@ class MatplotlibWidget(QWidget):
             axs.add(self.l[l][0].axes)
 
         for ax in axs:
-            print(ax)
             ax.relim()
             ax.autoscale_view(True,True,True)
         self.canvas.draw()

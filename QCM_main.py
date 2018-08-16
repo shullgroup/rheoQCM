@@ -14,7 +14,7 @@ import scipy.signal
 import types
 from PyQt5.QtCore import pyqtSlot, Qt, QEvent
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton, QMenu
+    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton, QMenu, QMessageBox
 )
 from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QIntValidator, QDoubleValidator, QRegExpValidator
 
@@ -27,16 +27,22 @@ from MatplotlibWidget import MatplotlibWidget
 
 
 if UIModules.system_check() == 'win32': # windows
-    try:
-        from modules.AccessMyVNA_dummy import AccessMyVNA
-        print(AccessMyVNA)
-        # test if MyVNA program is available
-        with AccessMyVNA() as vna:
-            if vna.Init() == 0: # connection with myVNA is available
-                from modules import tempDevices
-    except Exception as e: # no myVNA connected. Analysis only
-        print('Failed to import AccessMyVNA module!')
-        print(e)
+    import struct
+    if struct.calcsize('P') * 8 == 32: # 32-bit version Python
+        try:
+            # from modules.AccessMyVNA_dummy import AccessMyVNA
+            from modules.AccessMyVNA_np import AccessMyVNA
+            print(AccessMyVNA)
+            # test if MyVNA program is available
+            with AccessMyVNA() as vna:
+                if vna.Init() == 0: # connection with myVNA is available
+                    from modules import tempDevices
+        except Exception as e: # no myVNA connected. Analysis only
+            print('Failed to import AccessMyVNA module!')
+            print(e)
+    else: # 64-bit version Python which doesn't work with AccessMyVNA
+        # A 32-bit server may help 64-bit Python work with 32-bit dll
+        print('Current version of VNA does not work with 64-bit Python!')
 else: # linux or MacOS
     # for test only
     from modules.AccessMyVNA_dummy import AccessMyVNA
@@ -55,24 +61,25 @@ class PeakTracker:
 
 class VNATracker:
     def __init__(self):
-        self.f1 = None      # current start frequency in Hz (float)
-        self.f2 = None      # current end frequency in Hz (float)
+        self.f = None       # current end frequency span in Hz ([float, float])
         self.steps = None   # current number of steps (int)
         self.chn = None     # current reflection ADC channel (1 or 2)
         self.avg = None     # average of scans (int)
-        self.speed = None   # vna speed set up (int?)
-        self.instrmode = None # instrument mode (int)
+        self.speed = None   # vna speed set up (int 1 to 10)
+        self.instrmode = 0  # instrument mode (0: reflection)
         
         self.setflg = {} # if vna needs to reset (set with reset selections)
         self.setflg.update(self.__dict__)
+        self.setflg.pop('setflg', None)
+        # print(self.setflg)
     
     def reset_check(self, **kwargs):
-        for key, val in kwargs:
+        for key, val in kwargs.items():
             print(key, val)
             if getattr(self, key) != val: # if self.<key> changed
                 setattr(self, key, val) # save val to class
-            self.setflg.add(key) # add reset selection to set
-        return self.resetflg
+            self.setflg[key] = val # add set key and value to setflg
+        return self.setflg
 
     def reset_flag(self):
         ''' set to vna doesn't neet rest '''
@@ -513,7 +520,7 @@ class QCMApp(QMainWindow):
             'comboBox_yscale', 
             settings_init['y_scale_choose'], 
             100, 
-            'Γ Scale', 
+            'Y Scale', 
             self.ui.treeWidget_settings_settings_plots
         )
 
@@ -668,6 +675,7 @@ class QCMApp(QMainWindow):
 
         # pushButton_spectra_fit_refresh
         self.ui.pushButton_spectra_fit_refresh.clicked.connect(self.on_clicked_pushButton_spectra_fit_refresh)
+        self.ui.pushButton_spectra_fit_showall.clicked.connect(self.on_clicked_pushButton_spectra_fit_showall)
 
 #endregion
 
@@ -846,7 +854,6 @@ class QCMApp(QMainWindow):
             parent=self.ui.frame_spectra_fit_polar, 
             axtype='sp_polar'
             )
-        # self.ui.mpl_spectra_fit.update_figure()
         self.ui.frame_spectra_fit_polar.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit_polar))
 
         # add figure mpl_spectra_fit into frame_spactra_fit
@@ -854,13 +861,15 @@ class QCMApp(QMainWindow):
             parent=self.ui.frame_spectra_fit, 
             axtype='sp_fit',
             showtoolbar=('Back', 'Forward', 'Pan', 'Zoom')
-            ) #TODO add 'Pan' and figure out how to identify mouse is draging 
-        # self.ui.mpl_spectra_fit.update_figure()
+            ) 
         self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
         # connect signal
         self.ui.mpl_spectra_fit.ax[0].cidx = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('xlim_changed', self.on_fit_lims_change)
         self.ui.mpl_spectra_fit.ax[0].cidy = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('ylim_changed', self.on_fit_lims_change)
+        
+        # disconnect signal while dragging
         self.ui.mpl_spectra_fit.canvas.mpl_connect('button_press_event', self.spectra_fit_axesevent_disconnect)
+        # reconnect signal after dragging (mouse release)
         self.ui.mpl_spectra_fit.canvas.mpl_connect('button_release_event', self.spectra_fit_axesevent_connect)
             
         # add figure mpl_countour1 into frame_spectra_mechanics_contour1
@@ -927,6 +936,7 @@ class QCMApp(QMainWindow):
 #region #########  functions ##############
 
     def link_tab_page(self, tab_idx):
+        self.UITab = tab_idx
         if tab_idx in [0, 2]: # link settings_control to spectra_show and data_data
             self.ui.stackedWidget_spectra.setCurrentIndex(0)
             self.ui.stackedWidget_data.setCurrentIndex(0)
@@ -1009,9 +1019,9 @@ class QCMApp(QMainWindow):
         # use qt use python deal with datetime. But show the time with QdatetimeEdit
         current_time = datetime.datetime.now()
         self.ui.dateTimeEdit_reftime.setDateTime(current_time)
-        # update reftime in settings dict
-        self.settings['dateTimeEdit_reftime'] = current_time
-        print(self.settings['dateTimeEdit_reftime'])
+        # # update reftime in settings dict
+        # self.settings['dateTimeEdit_reftime'] = current_time
+        # print(self.settings['dateTimeEdit_reftime'])
     
     def on_dateTimeChanged_dateTimeEdit_reftime(self, datetime):
         '''
@@ -1198,12 +1208,31 @@ class QCMApp(QMainWindow):
         else:
             n = 1/min(settings_init['span_ctrl_steps'], key=lambda x:abs(x-1/n))
 
-        print(n)
-        # set span
+        # get f1, f2
+        # f1, f2 = self.ui.mpl_spectra_fit.ax[0].get_xlim()
+        f1, f2 = self.settings['freq_span'][self.settings_harm]
+        # convert start/end (f1/f2) to center/span (fc/fs)
+        fc, fs = MathModules.converter_startstop_to_centerspan(f1, f2)
+        # multiply fs
+        fs = fs * n
+        # fc/fs back to f1/f2
+        f1, f2 = MathModules.converter_centerspan_to_startstop(fc, fs)
 
-        # start a single scan
+        # set lineEdit_scan_harmstart & lineEdit_scan_harmend
+        self.ui.lineEdit_scan_harmstart.setText(str(f1*1e-6)) # in MHz
+        self.ui.lineEdit_scan_harmend.setText(str(f2*1e-6)) # in MHz
 
-        # set span text
+        # reset xlim to active on_fit_lims_change
+        self.ui.mpl_spectra_fit.ax[0].set_xlim(f1, f2)
+
+        # # update limit of active harmonic
+        # self.on_editingfinished_harm_freq()
+        
+        # # get new data
+        # f, G, B = self.sepectra_fit_get_data()
+        
+        # # plot
+        # self.tab_spectra_fit_update_mpls(f, G, B)
 
         # reset slider to 1
         self.ui.horizontalSlider_spectra_fit_spanctrl.setValue(0)
@@ -1257,104 +1286,130 @@ class QCMApp(QMainWindow):
                     mode = None
         return mode
 
-
-    def on_clicked_pushButton_spectra_fit_refresh(self):
-        print('vna', self.vna)
-        #TODOO get parameters from current setup: harm_tab
-        # get mode
+    def sepectra_fit_get_data(self):
+        ''' 
+        get data fro mpl_spectra_fit by spectraTab_mode and 
+        return f, G, B
+        '''
+        f = None
+        G = None
+        B = None
         if self.get_spectraTab_mode() == 'center': # for peak centering
             # get harmonic from self.settings_harm
             harm = self.settings_harm
             # get f1, f2
-            f1, f2 = self.settings['freq_span'][harm]
+            freq_span = self.settings['freq_span'][harm]
             steps = self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_scan_harmsteps']
             chn = self.active_chn['chn']
 
             # get the vna reset flag
-            setflg = self.vna_tracker.reset_check(f1=f1, f2=f2, steps=steps, chn=chn)
+            setflg = self.vna_tracker.reset_check(f=freq_span, steps=steps, chn=chn)
+            print(setflg)
 
-        with self.vna as vna:
-            vna.set(setflg)
-            ret, f, G, B = vna.single_scan()
+            with self.vna as vna:
+                ret = vna.set_vna(setflg)
+                if ret == 0:
+                    ret, f, G, B = vna.single_scan()
+                    return f, G, B
+                else:
+                    print('There is an error while setting VNA!')
+        elif self.get_spectraTab_mode() == 'refit': # for refitting
+            #TODO getting data from selected index
+            pass
+        else:
+            print('Change Tab to Settings or Data to active the function.')
+        
+        return f, G, B
 
+    def tab_spectra_fit_update_mpls(self, f, G, B):
+        ''' update mpl_spectra_fit and mpl_spectra_fit_polar '''
         ## disconnect axes event
-        self.mpl_disconnect_cid(self.ui.mpl_spectra_fit)        
+        self.mpl_disconnect_cid(self.ui.mpl_spectra_fit) 
+               
         self.ui.mpl_spectra_fit.update_data(ls=['lG'], xdata=[f], ydata=[G])
         self.ui.mpl_spectra_fit.update_data(ls=['lB'], xdata=[f], ydata=[B])
+
+        # constrain xlim
+        self.ui.mpl_spectra_fit.ax[0].set_xlim(f[0], f[-1])
+        self.ui.mpl_spectra_fit.ax[1].set_xlim(f[0], f[-1])
+        self.ui.mpl_spectra_fit.ax[0].set_ylim(min(G)-0.05*(max(G)-min(G)), max(G)+0.05*(max(G)-min(G)))
+        self.ui.mpl_spectra_fit.ax[1].set_ylim(min(B)-0.05*(max(B)-min(B)), max(B)+0.05*(max(B)-min(B)))
 
         ## connect axes event
         self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
 
+        self.ui.mpl_spectra_fit.canvas.draw()
+
         self.ui.mpl_spectra_fit_polar.update_data(ls=['l'], xdata=[G], ydata=[B])
         
+        # set xlabel
+        self.mpl_set_faxis(self.ui.mpl_spectra_fit.ax[0])
+
         # update lineedit_fit_span
         self.update_lineedit_fit_span(f)
+
+
+    def on_clicked_pushButton_spectra_fit_refresh(self):
+        print('vna', self.vna)
+        # get data
+        f, G, B = self.sepectra_fit_get_data()
+
+        # update raw
+        self.tab_spectra_fit_update_mpls(f, G, B)
+
+
+    def on_clicked_pushButton_spectra_fit_showall(self):
+        ''' show whole range of current harmonic'''
+        # get harmonic
+        harm = self.settings_harm
+        # set freq_span[harm] to the maximum range (freq_range[harm])
+        self.settings['freq_span'][harm] == self.settings['freq_range'][harm]
+        # get data
+        f, G, B = self.sepectra_fit_get_data()
+        # updata data
+        self.tab_spectra_fit_update_mpls(f, G, B)      
 
     def on_fit_lims_change(self, axes):
         print('on lim changed')
         axG = self.ui.mpl_spectra_fit.ax[0]
-        axB = self.ui.mpl_spectra_fit.ax[1]
-        axP = self.ui.mpl_spectra_fit_polar.ax[0]
 
         # print('g', axG.get_contains())
         # print('r', axG.contains('button_release_event'))
         # print('p', axG.contains('button_press_event'))
 
         # data lims [min, max]
-        dflim1, dflim2 = MathModules.datarange(self.ui.mpl_spectra_fit.l['lB'][0].get_xdata())
+        # df1, df2 = MathModules.datarange(self.ui.mpl_spectra_fit.l['lB'][0].get_xdata())
         # get axes lims
-        flim1, flim2 = axG.get_xlim()
+        f1, f2 = axG.get_xlim()
         # check lim with BW
-        flim1, flim2 = self.span_check(harm=self.settings_harm, f1=flim1, f2=flim2)
+        f1, f2 = self.span_check(harm=self.settings_harm, f1=f1, f2=f2)
         print('get_navigate_mode()', axG.get_navigate_mode())
-        print('flims', flim1, flim2)
-        print(dflim1, dflim2)
+        print('flims', f1, f2)
+        # print(df1, df2)
         
         print(axG.get_navigate_mode())
         # if axG.get_navigate_mode() == 'PAN': # pan
         #     # set a new x range: combine span of dflims and flims
-        #     flim1 = min([flim1, dflim1])
-        #     flim2 = max([flim2, dflim2])
+        #     f1 = min([f1, df1])
+        #     f2 = max([f2, df2])
         # elif axG.get_navigate_mode() == 'ZOOM': # zoom
         #     pass
         # else: # axG.get_navigate_mode() == 'None'
         #     pass
-        print('flim', flim1, flim2)
+        print('f12', f1, f2)
 
-        # vna setup frequency
-        self.vna.SetFequencies(f1=flim1, f2=flim2, nFlags=1)
-        ret, f, G, B = self.vna.single_scan()
+        # set lineEdit_scan_harmstart & lineEdit_scan_harmend
+        self.ui.lineEdit_scan_harmstart.setText(str(f1*1e-6)) # in MHz
+        self.ui.lineEdit_scan_harmend.setText(str(f2*1e-6)) # in MHz
+
+        # update limit of active harmonic
+        self.on_editingfinished_harm_freq()
+
+        # get new data
+        f, G, B = self.sepectra_fit_get_data()
         
-        ### reset x,y lim
-        ## disconnect axes event
-        self.mpl_disconnect_cid(self.ui.mpl_spectra_fit)
-
-        # axG.autoscale(axis='y')
-        # axB.autoscale(axis='y')
-
-        # mpl_spectra_fit 
-        # clear lines
-        self.ui.mpl_spectra_fit.clr_alldata()
-        # plot data
-        self.ui.mpl_spectra_fit.update_data(ls=['lG', 'lB'], xdata=[f, f], ydata=[G, B])
-
-        # mpl_spectra_fit_polar
-        # clear lines
-        self.ui.mpl_spectra_fit_polar.clr_alldata()
-        # plot data
-        self.ui.mpl_spectra_fit_polar.update_data(ls=['l'], xdata=[G], ydata=[B])
-        axG.set_xlim(f[0], f[-1])
-        axG.set_ylim(min(G), max(G))
-        axB.set_ylim(min(B), max(B))
-
-        ## connect axes event
-        self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
-
-        # set xlabel
-        self.mpl_set_faxis(axG)
-
-        # update lineEdit_spectra_fit_span
-        self.update_lineedit_fit_span(f)
+        # plot
+        self.tab_spectra_fit_update_mpls(f, G, B)
 
     def update_lineedit_fit_span(self, f):
         ''' 
@@ -1655,6 +1710,7 @@ class QCMApp(QMainWindow):
 
     def update_base_freq(self, base_freq_index):
         self.settings['comboBox_base_frequency'] = self.ui.comboBox_base_frequency.itemData(base_freq_index) # in MHz
+        print(self.settings['comboBox_base_frequency'])
         # update freq_range
         self.update_freq_range()
         # check freq_span
@@ -1666,7 +1722,9 @@ class QCMApp(QMainWindow):
 
     def update_bandwidth(self, bandwidth_index):
         self.settings['comboBox_bandwidth'] = self.ui.comboBox_bandwidth.itemData(bandwidth_index) # in MHz
+        print(self.settings['comboBox_bandwidth'])
         # update freq_range
+        self.update_freq_range()
         # check freq_span
         self.check_freq_span()
         # update freqrency display
@@ -1690,6 +1748,7 @@ class QCMApp(QMainWindow):
         for i in range(1, settings_init['max_harmonic']+2, 2):
             freq_range[i] = [i*fbase-BW, i*fbase+BW]
         self.settings['freq_range'] = freq_range
+        print(self.settings['freq_range'])
 
     def check_freq_span(self):
         '''
@@ -1769,7 +1828,7 @@ class QCMApp(QMainWindow):
         '''
         update frequency when lineEdit_scan_harmstart or  lineEdit_scan_harmend edited
         '''
-        print(self.sender().objectName())
+        # print(self.sender().objectName())
         harmstart = float(self.ui.lineEdit_scan_harmstart.text()) * 1e6 # in Hz
         harmend = float(self.ui.lineEdit_scan_harmend.text()) * 1e6 # in Hz
         harm=self.settings_harm

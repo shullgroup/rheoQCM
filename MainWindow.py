@@ -2545,7 +2545,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_24.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1114, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1114, 21))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -2794,7 +2794,7 @@ class Ui_MainWindow(object):
         self.label_5.setBuddy(self.lineEdit_spectra_fit_span)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget_settings.setCurrentIndex(0)
+        self.tabWidget_settings.setCurrentIndex(1)
         self.tabWidget_settings_settings_harm.setCurrentIndex(3)
         self.tabWidget_settings_data_settingsharm.setCurrentIndex(5)
         self.tabWidget_settings_data_markindex.setCurrentIndex(0)
@@ -2916,7 +2916,7 @@ class Ui_MainWindow(object):
         self.treeWidget_settings_settings_plots.topLevelItem(0).child(0).setText(0, _translate("MainWindow", "Time Unit"))
         self.treeWidget_settings_settings_plots.topLevelItem(0).child(1).setText(0, _translate("MainWindow", "Temp. Unit"))
         self.treeWidget_settings_settings_plots.topLevelItem(0).child(2).setText(0, _translate("MainWindow", "Time Scale"))
-        self.treeWidget_settings_settings_plots.topLevelItem(0).child(3).setText(0, _translate("MainWindow", "Γ Scale"))
+        self.treeWidget_settings_settings_plots.topLevelItem(0).child(3).setText(0, _translate("MainWindow", "Y Scale"))
         self.treeWidget_settings_settings_plots.topLevelItem(0).child(4).setText(0, _translate("MainWindow", "Link Time"))
         self.treeWidget_settings_settings_plots.setSortingEnabled(__sortingEnabled)
         self.pushButton_settings_harm_cntr.setText(_translate("MainWindow", "cntr"))
@@ -3203,8 +3203,8 @@ class Ui_MainWindow(object):
         self.textBrowser_spectra_fit_result.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\'; font-size:8.25pt;\"><br /></p></body></html>"))
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.pushButton_spectra_mechanics_clear.setText(_translate("MainWindow", "Clear"))
         self.toolButton_spectra_mechanics_plotrows.setText(_translate("MainWindow", "Plot"))
         item = self.tableWidget_spectra_mechanics_table.verticalHeaderItem(0)
