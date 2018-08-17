@@ -339,7 +339,6 @@ def analyze(sample, parms):
             film['fstar_ref'][n][film['idx']] = bare['fstar'][n][bare['idx']]
     
     for i in np.arange(nx):
-        idxb = bare['idx'][i]
         idxf = film['idx'][i]
         delfstar[i] = {}
         delfstar_err[i] ={}
