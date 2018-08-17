@@ -335,6 +335,7 @@ class MatplotlibWidget(QWidget):
         self.ax[1].margins(x=0)
         self.ax[0].margins(y=.05)
         self.ax[1].margins(y=.05)
+        # self.ax[1].sharex = self.ax[0]
 
         # self.ax[0].autoscale()
         # self.ax[1].autoscale()
@@ -442,10 +443,15 @@ class MatplotlibWidget(QWidget):
             loc='upper center', 
             bbox_to_anchor=(0.5, 1),
             borderaxespad=0.,
+            borderpad=0.,
             ncol=int((settings_init['max_harmonic']+1)/2), 
-            frameon=False, facecolor='none')
+            frameon=False, 
+            facecolor='none',
+            labelspacing=0.0, 
+            columnspacing=0.5
+        )
         self.canvas.draw()
-
+        
         # set label of ax[1]
         self.set_ax(self.ax[0], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
 
@@ -568,7 +574,6 @@ class MatplotlibWidget(QWidget):
             axs.add(self.l[l][0].axes)
 
         for ax in axs:
-            print(ax)
             ax.relim()
             ax.autoscale_view(True,True,True)
         self.canvas.draw()

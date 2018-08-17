@@ -801,16 +801,60 @@ class AccessMyVNA():
         ret, nSteps =   self.SetScanSteps(nSteps)
         self.SetFequencies(f1, f2, nFlags=1)
 
-    def setADCChannel(self, refChn):
+    def setADCChannel(self, reflectchn=1):
         # switch ADV channel for test
-        # nData = [transChn, refChn]
-        if refChn == 1:
+        # nData = [transChn, reflectchn]
+        if reflectchn == 1:
             nData = np.array([2, 1])
-        elif refChn == 2:
+        elif reflectchn == 2:
             nData = np.array([1, 2])
 
         ret, nData = self.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=nData)
         return ret, nData
+
+    def set_vna(self, setflg):
+        '''
+        set MyVNA by setflg (dict)
+        setflg: {'f1', 'f2', 'steps', 'chn', 'avg', 'speed', ...}
+        '''
+        for flg, val in setflg.items():
+            if val: # val != None
+                if flg == 'f': # set frequency
+                    ret, f1, f2 = self.SetFequencies(f1=val[0], f2=val[1], nFlags=1)
+                elif flg == 'steps': # set scan steps
+                    ret, nSteps =   self.SetScanSteps(nSteps=val)
+                elif flg == 'chn': # set scan channel
+                    ret, nData = self.setADCChannel(reflectchn=val)
+                elif flg == 'avg': # set scan average
+                    ret, nAverage = self.SetScanAverage(nAverage=val)
+                elif flg == 'instrmode': # set instrument mode
+                    ret, nMode = self.Setinstrmode(nMode=0)
+                elif flg == 'speed': # set scan speed
+                    # we don't neet to change it through python now
+                    pass
+                else:
+                    # add more above else
+                    pass
+                
+                if ret != 0: # error found during setting vna  
+                    return ret
+            else: # val == None
+                # don't need change the default
+                pass
+        
+        return 0
+
+    def get_freq_span(self):
+        ''' get frequency span from vna setup '''
+        ret, ndResult = self.GetDoubleArray(nWhat=0, nIndex=0, nArraySize=9)
+        return ret, ndResult[0:1]
+
+
+
+
+            
+            
+
 
 # get_hWnd()
 
@@ -830,7 +874,11 @@ if __name__ == '__main__':
         ret, nMode = accvna.Getinstrmode()
         ret, nMode = accvna.Setdisplaymode()
         ret, nMode = accvna.Getdisplaymode()
+        t0 = time.time()
         ret, nMode = accvna.SingleScan()
+        t1 = time.time()
+        print(t1-t0)
+        exit(0)
         ret, nMode = accvna.EqCctRefine()
         ret = accvna.SetFequencies()
         # for i in range(100):

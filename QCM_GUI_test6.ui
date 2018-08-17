@@ -240,7 +240,7 @@ background-color: red;
                    <property name="spacing">
                     <number>0</number>
                    </property>
-                   <item row="2" column="0">
+                   <item row="4" column="0">
                     <widget class="QCheckBox" name="checkBox_harm1">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -253,28 +253,14 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
-                   <item row="6" column="1">
+                   <item row="8" column="1">
                     <widget class="QLineEdit" name="lineEdit_startf9">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
-                   <item row="6" column="4">
-                    <widget class="QLineEdit" name="lineEdit_endf9">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="7" column="4">
-                    <widget class="QLineEdit" name="lineEdit_endf11">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="0">
+                   <item row="5" column="0">
                     <widget class="QCheckBox" name="checkBox_harm3">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -287,7 +273,7 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="0">
+                   <item row="6" column="0">
                     <widget class="QCheckBox" name="checkBox_harm5">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -300,28 +286,21 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="1">
+                   <item row="4" column="1">
                     <widget class="QLineEdit" name="lineEdit_startf1">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="4">
-                    <widget class="QLineEdit" name="lineEdit_endf3">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="5" column="1">
+                   <item row="7" column="1">
                     <widget class="QLineEdit" name="lineEdit_startf7">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
-                   <item row="6" column="0">
+                   <item row="8" column="0">
                     <widget class="QCheckBox" name="checkBox_harm9">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -334,14 +313,14 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="1">
+                   <item row="5" column="1">
                     <widget class="QLineEdit" name="lineEdit_startf3">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
-                   <item row="5" column="0">
+                   <item row="7" column="0">
                     <widget class="QCheckBox" name="checkBox_harm7">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -354,21 +333,14 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
-                   <item row="5" column="4">
-                    <widget class="QLineEdit" name="lineEdit_endf7">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="4" column="1">
+                   <item row="6" column="1">
                     <widget class="QLineEdit" name="lineEdit_startf5">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
-                   <item row="7" column="0">
+                   <item row="9" column="0">
                     <widget class="QCheckBox" name="checkBox_harm11">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -381,28 +353,31 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="4">
-                    <widget class="QLineEdit" name="lineEdit_endf5">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="2" column="4">
-                    <widget class="QLineEdit" name="lineEdit_endf1">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="7" column="1">
+                   <item row="9" column="1">
                     <widget class="QLineEdit" name="lineEdit_startf11">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
-                   <item row="2" column="3">
+                   <item row="1" column="1">
+                    <widget class="QLabel" name="label_settings_control_label1">
+                     <property name="text">
+                      <string>Start (MHz)</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="2">
+                    <widget class="QLineEdit" name="lineEdit_endf1">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="4">
                     <spacer name="horizontalSpacer_28">
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>
@@ -418,49 +393,63 @@ background-color: red;
                      </property>
                     </spacer>
                    </item>
-                   <item row="7" column="2">
-                    <widget class="QLineEdit" name="lineEdit_startf11_r">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="2" column="2">
-                    <widget class="QLineEdit" name="lineEdit_startf1_r">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="3" column="5">
+                   <item row="5" column="7">
                     <widget class="QLineEdit" name="lineEdit_endf3_r">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
-                   <item row="4" column="2">
-                    <widget class="QLineEdit" name="lineEdit_startf5_r">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="5" column="2">
-                    <widget class="QLineEdit" name="lineEdit_startf7_r">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="2" column="5">
+                   <item row="4" column="7">
                     <widget class="QLineEdit" name="lineEdit_endf1_r">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
-                   <item row="3" column="2">
+                   <item row="6" column="7">
+                    <widget class="QLineEdit" name="lineEdit_endf5_r">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="8" column="7">
+                    <widget class="QLineEdit" name="lineEdit_endf9_r">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="9" column="7">
+                    <widget class="QLineEdit" name="lineEdit_endf11_r">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="7" column="7">
+                    <widget class="QLineEdit" name="lineEdit_endf7_r">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="5">
+                    <widget class="QLineEdit" name="lineEdit_startf1_r">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="2">
+                    <widget class="QLineEdit" name="lineEdit_endf3">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="5" column="5">
                     <widget class="QLineEdit" name="lineEdit_startf3_r">
                      <property name="readOnly">
                       <bool>true</bool>
@@ -468,112 +457,62 @@ background-color: red;
                     </widget>
                    </item>
                    <item row="6" column="2">
-                    <widget class="QLineEdit" name="lineEdit_startf9_r">
-                     <property name="readOnly">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="4" column="5">
-                    <widget class="QLineEdit" name="lineEdit_endf5_r">
+                    <widget class="QLineEdit" name="lineEdit_endf5">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
                    <item row="6" column="5">
-                    <widget class="QLineEdit" name="lineEdit_endf9_r">
+                    <widget class="QLineEdit" name="lineEdit_startf5_r">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="7" column="2">
+                    <widget class="QLineEdit" name="lineEdit_endf7">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
                    <item row="7" column="5">
-                    <widget class="QLineEdit" name="lineEdit_endf11_r">
+                    <widget class="QLineEdit" name="lineEdit_startf7_r">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
-                   <item row="5" column="5">
-                    <widget class="QLineEdit" name="lineEdit_endf7_r">
+                   <item row="8" column="2">
+                    <widget class="QLineEdit" name="lineEdit_endf9">
                      <property name="readOnly">
                       <bool>true</bool>
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="1">
-                    <widget class="QLabel" name="label_settings_control_1s">
-                     <property name="text">
-                      <string>Samp.</string>
+                   <item row="8" column="5">
+                    <widget class="QLineEdit" name="lineEdit_startf9_r">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="9" column="2">
+                    <widget class="QLineEdit" name="lineEdit_endf11">
+                     <property name="readOnly">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="9" column="5">
+                    <widget class="QLineEdit" name="lineEdit_startf11_r">
+                     <property name="readOnly">
+                      <bool>true</bool>
                      </property>
                     </widget>
                    </item>
                    <item row="1" column="2">
-                    <widget class="QLabel" name="label_settings_control_1r">
-                     <property name="text">
-                      <string>Ref.</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="4">
-                    <widget class="QLabel" name="label_settings_control_2s">
-                     <property name="text">
-                      <string>Samp.</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="5">
-                    <widget class="QLabel" name="label_settings_control_2r">
-                     <property name="text">
-                      <string>Ref.</string>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </item>
-                 <item row="1" column="0">
-                  <layout class="QHBoxLayout" name="horizontalLayout_7">
-                   <item>
-                    <spacer name="horizontalSpacer_29">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                     <property name="sizeType">
-                      <enum>QSizePolicy::Fixed</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>38</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                    </spacer>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="label_settings_control_label1">
-                     <property name="text">
-                      <string>Start (MHz)</string>
-                     </property>
-                     <property name="alignment">
-                      <set>Qt::AlignCenter</set>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <spacer name="horizontalSpacer_31">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>40</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                    </spacer>
-                   </item>
-                   <item>
                     <widget class="QLabel" name="label_settings_control_label2">
                      <property name="text">
                       <string>End (MHz)</string>
@@ -583,18 +522,19 @@ background-color: red;
                      </property>
                     </widget>
                    </item>
-                   <item>
-                    <spacer name="horizontalSpacer_30">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
+                   <item row="1" column="5">
+                    <widget class="QLabel" name="label_settings_control_label1_r">
+                     <property name="text">
+                      <string>Start (MHz)</string>
                      </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>40</width>
-                       <height>20</height>
-                      </size>
+                    </widget>
+                   </item>
+                   <item row="1" column="7">
+                    <widget class="QLabel" name="label_settings_control_label2_r">
+                     <property name="text">
+                      <string>End (MHz)</string>
                      </property>
-                    </spacer>
+                    </widget>
                    </item>
                   </layout>
                  </item>
@@ -619,7 +559,7 @@ background-color: red;
                    <item>
                     <widget class="QLabel" name="label_9">
                      <property name="text">
-                      <string>Scan mode </string>
+                      <string>Display mode </string>
                      </property>
                      <property name="buddy">
                       <cstring>comboBox_settings_control_dispmode</cstring>
@@ -641,6 +581,33 @@ background-color: red;
                       </size>
                      </property>
                     </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                 <item row="1" column="0">
+                  <layout class="QHBoxLayout" name="horizontalLayout_settings_control_sampref">
+                   <property name="spacing">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QLabel" name="label_settings_control_samp">
+                     <property name="text">
+                      <string>Samp.</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="label_settings_control_ref">
+                     <property name="text">
+                      <string>Ref.</string>
+                     </property>
+                     <property name="alignment">
+                      <set>Qt::AlignCenter</set>
+                     </property>
+                    </widget>
                    </item>
                   </layout>
                  </item>
@@ -1589,7 +1556,7 @@ background-color: red;
                     </item>
                     <item>
                      <property name="text">
-                      <string>Points</string>
+                      <string>Steps</string>
                      </property>
                      <property name="text">
                       <string/>
@@ -1898,7 +1865,7 @@ background-color: red;
                     </item>
                     <item>
                      <property name="text">
-                      <string>Γ Scale</string>
+                      <string>Y Scale</string>
                      </property>
                     </item>
                     <item>
@@ -1946,7 +1913,7 @@ background-color: red;
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_scan_harmpoints">
+               <widget class="QLineEdit" name="lineEdit_scan_harmsteps">
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
@@ -3501,7 +3468,7 @@ border: none;
                 <property name="sizeHint" stdset="0">
                  <size>
                   <width>20</width>
-                  <height>40</height>
+                  <height>0</height>
                  </size>
                 </property>
                </spacer>
@@ -7086,7 +7053,7 @@ border: 1px solid blue;
    <hints>
     <hint type="sourcelabel">
      <x>169</x>
-     <y>605</y>
+     <y>624</y>
     </hint>
     <hint type="destinationlabel">
      <x>154</x>
@@ -7106,7 +7073,7 @@ border: 1px solid blue;
     </hint>
     <hint type="destinationlabel">
      <x>169</x>
-     <y>605</y>
+     <y>624</y>
     </hint>
    </hints>
   </connection>
