@@ -248,7 +248,7 @@ def solve_onelayer(soln_input):
     return soln_output
 
 
-def QCManalyze(sample, parms):
+def analyze(sample, parms):
     global openplots
     # read in the optional inputs, assigning default values if not assigned
     nhplot = sample.get('nhplot', [1, 3, 5])
@@ -343,9 +343,8 @@ def QCManalyze(sample, parms):
         idxf = film['idx'][i]
         delfstar[i] = {}
         delfstar_err[i] ={}
-        for n in nhplot:
-            
-            delfstar[i][n] = (film['fstar'][n][idxf] - bare['fstar'][n][idxb])
+        for n in nhplot: 
+            delfstar[i][n] = (film['fstar'][n][idxf] - film['fstar_ref'][n][idxf])
             delfstar_err[i][n] = fstar_err_calc(film['fstar'][n][idxf])
 
     # set up the property axes
@@ -685,6 +684,78 @@ def make_check_axes(sample, nh):
     return {'figure': fig, 'delf_ax': delf_ax, 'delg_ax': delg_ax,
             'rh_ax': rh_ax, 'rd_ax': rd_ax}
 
+
+def plot_spectra(fig_dict, sample, idx_vals):
+    if not 'fig' in fig_dict:
+        print('making new figure')   
+        fig = plt.figure('spectra', figsize=(9, 9))
+        G_ax = {}  # conductance plots
+        B_ax = {}  # susceptance plots
+        Nyquist_ax = {}  # Nyquist plot
+        plot_num = 1
+
+        for n in [1, 3, 5]:
+            # set up the different axis
+            G_ax[n] = fig.add_subplot(3,3, (n+1)/2)
+            G_ax[n].set_xlabel('$f$ (Hz)')
+            G_ax[n].set_ylabel('$G$ (S)')
+            B_ax[n] = fig.add_subplot(3,3, 3+(n+1)/2)
+            B_ax[n].set_xlabel('$f$ (Hz)')
+            B_ax[n].set_ylabel('$B$ (S)')
+            Nyquist_ax[n] = fig.add_subplot(3,3, 6+(n+1)/2)
+            Nyquist_ax[n].set_xlabel('$B$ (S)')
+            Nyquist_ax[n].set_ylabel('$G$ (S)')          
+        fig.tight_layout()
+        
+    else:
+        fig = fig_dict['fig']
+        G_ax = fig_dict['G_ax']
+        B_ax = fig_dict['B_ax']
+        Nyquist_ax = fig_dict['Nyquist_ax']
+        plot_num = fig_dict['plot_num']+1
+    
+    # define dictionaries for the relevant axes
+    # the following command controls the way the offsets are handled
+    # 4 is the default, but 2 seems to work better here
+    plt.rcParams['axes.formatter.offset_threshold'] = 2
+    
+       # read the data
+    spectra_file = sample['datadir'] + sample['filmfile'] + '_raw_spectras.mat'
+    spectra = hdf5storage.loadmat(spectra_file)
+
+    for n in [1, 3, 5]:
+        for idx in idx_vals:
+            # read the data
+            # this is for version 'e' of Josh's program, where the columns are
+            # frequency, exp. G, B, fit G,B and residuals for G, B
+            f = spectra['raw_spectra_'+str(n)][idx][3][:, 0]
+            G_exp = spectra['raw_spectra_'+str(n)][idx][3][:, 1]
+            B_exp = spectra['raw_spectra_'+str(n)][idx][3][:, 2]
+            G_fit= spectra['raw_spectra_'+str(n)][idx][3][:, 3]
+            B_fit = spectra['raw_spectra_'+str(n)][idx][3][:, 4]
+            G_res = spectra['raw_spectra_'+str(n)][idx][3][:, 5]
+            B_res = spectra['raw_spectra_'+str(n)][idx][3][:, 6]
+    
+            # now make the plots
+            G_ax[n].plot(f, G_exp, 'b-')
+            B_ax[n].plot(f, B_exp, 'b-')
+            Nyquist_ax[n].plot(G_exp, B_exp, 'b-')
+            G_ax[n].plot(f, G_fit, 'r-')
+            B_ax[n].plot(f, B_fit, 'r-')
+            G_ax[n].plot(f, G_res, 'g-')
+            B_ax[n].plot(f, B_res, 'g-')
+        
+        # add label to plots
+        text_y = spectra['raw_spectra_'+str(n)][idx_vals[0]][3][:, 1].max()
+        max_idx = spectra['raw_spectra_'+str(n)][idx_vals[0]][3][:, 1].argmax()
+        text_x = spectra['raw_spectra_'+str(n)][idx_vals[0]][3][max_idx, 0]
+        G_ax[n].text(text_x, text_y, str(plot_num), horizontalalignment='center')
+
+
+    return  {'fig': fig, 'G_ax': G_ax, 'B_ax': B_ax,
+            'Nyquist_ax': Nyquist_ax, 'plot_num': plot_num}
+
+        
 
 def bulk_guess(delfstar):
     # get the bulk solution for grho and phi
