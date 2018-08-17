@@ -8,6 +8,12 @@ Created on Fri Jun  8 01:23:49 2018
 """
 
 # %%
+import sys
+import os
+print(sys.path)
+print('current directory is', os.getcwd())
+
+# %%
 import matplotlib.pyplot as plt
 import QCM_functions as qcm
 from PS_sampledefs import sample_dict 
