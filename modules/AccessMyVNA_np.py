@@ -540,6 +540,7 @@ class AccessMyVNA():
     # use __enter__ __exit__ for with or use try finally
     def __enter__(self):
         self.Init()
+        self.ShowWindow(1) # mininmize window (may not work)
         print('in')
         return self
 
@@ -865,7 +866,7 @@ if __name__ == '__main__':
     # ret, f, G, B = accvna.single_scan()
 
     with AccessMyVNA() as accvna:
-        ret = accvna.ShowWindow(0)
+        ret = accvna.ShowWindow(1)
         ret, nSteps = accvna.SetScanSteps()
         ret, nSteps = accvna.GetScanSteps() 
         ret, nAverage = accvna.SetScanAverage()
