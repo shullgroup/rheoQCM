@@ -641,8 +641,8 @@ class AccessMyVNA():
         # ret = _MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, c_void_p(nResult))
         ######### end pointer ##########
 
-        print(nRes_ptr)
-        print(nRes_ptr.contents)
+        # print(nRes_ptr)
+        # print(nRes_ptr.contents)
         ndRes = nResult[:] 
         del nResult
 
@@ -738,7 +738,7 @@ class AccessMyVNA():
         print('MyVNAGetScanData')
         nSteps = nEnd - nStart + 1
         # nSteps = nSteps * 2
-        print('nSteps=', nSteps)
+        # print('nSteps=', nSteps)
 
 
         data_a = np.zeros(nSteps, dtype=np.float, order='C')
@@ -806,9 +806,9 @@ class AccessMyVNA():
         # switch ADV channel for test
         # nData = [transChn, reflectchn]
         if reflectchn == 1:
-            nData = np.array([2, 1])
+            nData = np.array([2., 1.])
         elif reflectchn == 2:
-            nData = np.array([1, 2])
+            nData = np.array([1., 2.])
 
         ret, nData = self.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=nData)
         return ret, nData
@@ -823,7 +823,7 @@ class AccessMyVNA():
                 if flg == 'f': # set frequency
                     ret, f1, f2 = self.SetFequencies(f1=val[0], f2=val[1], nFlags=1)
                 elif flg == 'steps': # set scan steps
-                    ret, nSteps =   self.SetScanSteps(nSteps=val)
+                    ret, nSteps = self.SetScanSteps(nSteps=val)
                 elif flg == 'chn': # set scan channel
                     ret, nData = self.setADCChannel(reflectchn=val)
                 elif flg == 'avg': # set scan average
@@ -867,6 +867,13 @@ if __name__ == '__main__':
 
     with AccessMyVNA() as accvna:
         ret = accvna.ShowWindow(1)
+        accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
+        accvna.setADCChannel(reflectchn=1)
+        accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
+        exit(1)
+        accvna.setADCChannel(reflectchn=2)
+        accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
+        exit(0)
         ret, nSteps = accvna.SetScanSteps()
         ret, nSteps = accvna.GetScanSteps() 
         ret, nAverage = accvna.SetScanAverage()
@@ -879,7 +886,7 @@ if __name__ == '__main__':
         ret, nMode = accvna.SingleScan()
         t1 = time.time()
         print(t1-t0)
-        exit(0)
+        # exit(0)
         ret, nMode = accvna.EqCctRefine()
         ret = accvna.SetFequencies()
         # for i in range(100):
