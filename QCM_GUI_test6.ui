@@ -162,7 +162,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1015,30 +1015,18 @@ background-color: red;
                      <property name="text">
                       <string>Fit factor range</string>
                      </property>
-                     <property name="buddy">
-                      <cstring>comboBox_fitfactor</cstring>
-                     </property>
                     </widget>
                    </item>
                    <item>
-                    <widget class="QComboBox" name="comboBox_fitfactor">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
+                    <widget class="QSpinBox" name="spinBox_fitfactor">
+                     <property name="minimum">
+                      <number>1</number>
                      </property>
-                     <property name="minimumSize">
-                      <size>
-                       <width>0</width>
-                       <height>0</height>
-                      </size>
+                     <property name="maximum">
+                      <number>10</number>
                      </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>16777215</width>
-                       <height>16777215</height>
-                      </size>
+                     <property name="value">
+                      <number>6</number>
                      </property>
                     </widget>
                    </item>
@@ -1326,7 +1314,7 @@ background-color: red;
                     <enum>QTabWidget::Rounded</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>3</number>
+                    <number>5</number>
                    </property>
                    <property name="iconSize">
                     <size>
@@ -1926,6 +1914,19 @@ background-color: red;
                <widget class="QCheckBox" name="checkBox_harmfit">
                 <property name="text">
                  <string/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSpinBox" name="spinBox_harmfitfactor">
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="maximum">
+                 <number>10</number>
+                </property>
+                <property name="value">
+                 <number>6</number>
                 </property>
                </widget>
               </item>
