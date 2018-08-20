@@ -38,7 +38,7 @@ def find_dataroot(owner):
         dataroots =['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
                     'Research-Wang/CHiMaD/QCM_sample/data/', 
                     r'C:\Users\ShullGroup\Documents\User Data\WQF\GoogleDriveSync'+
-                    r'\Research-Wang\CHiMaD\QCM_sample\data\\']
+                    r'\Research-Wang\CHiMaD\QCM_sample\data']
     elif owner == 'taghon':
         dataroots =['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
                     'Research-Taghon/QCM/merefiles/data/']
@@ -311,7 +311,6 @@ def analyze(sample, parms):
 
         base_fig_name = os.path.join(base_fig_path, sample['samplename'])
 
-    print(base_fig_name)
     imagetype = parms.get('imagetype', 'svg')
 
     # set the color dictionary for the different harmonics
@@ -504,7 +503,6 @@ def analyze(sample, parms):
     # tidy up the raw data and property figures
     propfig['figure'].tight_layout()
     propfig['figure'].savefig(base_fig_name+'_prop.'+imagetype)
-    print('fig_full', base_fig_name+'_prop.'+imagetype)
     print('done with ', base_fig_name, 'press any key to close plots and continue')
 
     propfig['figure'].canvas.mpl_connect('key_press_event', close_on_click)
@@ -625,17 +623,14 @@ def process_raw(sample, data_type):
     nhplot = sample.get('nhplot', [1, 3, 5])
     trange = sample.get(data_type+'trange', [0, 0])
     dict = {}
-    dict['file'] = sample['dataroot']+sample['datadir'] + sample[data_type+'file'] + '.mat'
+    dict['file'] = os.path.join(sample['dataroot'], sample['datadir'], sample[data_type+'file'] + '.mat')
     dict['data'] = hdf5storage.loadmat(dict['file'])
-    dict['idx_file'] = Path(sample['dataroot']+sample['datadir']+sample[data_type+
-                            'file']+'_film_idx.txt')
+    dict['idx_file'] = os.path.join(sample['dataroot'], sample['datadir'], sample[data_type+'file']+'_film_idx.txt')
 
     # extract the frequency data from the appropriate file
     freq = dict['data']['abs_freq'][firstline:, 0:7]
-
     # get rid of all the rows that don't have any data
     freq = freq[~np.isnan(freq[:, 1:]).all(axis=1)]
-
     # reference frequencies are the first data points for the bare crystal data
     sample['freqref'] = sample.get('freqref', freq[0, :])
 
