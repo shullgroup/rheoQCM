@@ -31,21 +31,21 @@ def find_dataroot(owner):
     # if none of the possibilities exist, we return 'none' 
     if owner == 'schmitt':
         dataroots = ['/home/ken/k-shull@u.northwestern.edu/'+
-                     'Group_Members/Research-Schmitt/data/Schmitt']
+                     'Group_Members/Research-Schmitt/data/Schmitt/']
     elif owner == 'qifeng':
         dataroots =['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
-                    'Research-Wang/CHiMaD/QCM_sample/data/Qifeng', 
+                    'Research-Wang/CHiMaD/QCM_sample/data/', 
                     r'C:\Users\ShullGroup\Documents\User Data\WQF\GoogleDriveSync'+
-                    r'\Research-Wang\CHiMaD\QCM_sample\data']
+                    r'\Research-Wang\CHiMaD\QCM_sample\data\\']
     elif owner == 'taghon':
         dataroots =['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
-                    'Research-Taghon/QCM/merefiles/data']
-
+                    'Research-Taghon/QCM/merefiles/data/']
 
     for directory in dataroots:
         if os.path.exists(directory):
             return directory
-
+    
+    print('can\'t find root data directory')
     return 'none'
 
 
@@ -274,7 +274,7 @@ def solve_onelayer(soln_input):
 def analyze(sample, parms):
     global openplots
     # add the appropriate file root to the data path
-    sample['root'] = parms['root']
+    sample['dataroot'] = parms['dataroot']
     # read in the optional inputs, assigning default values if not assigned
     nhplot = sample.get('nhplot', [1, 3, 5])
     # firstline = sample.get('firstline', 0)
@@ -291,7 +291,7 @@ def analyze(sample, parms):
 
     # specify the location for the output figure files
     if figlocation == 'datadir':
-        base_fig_name = parms['root']+sample['datadir']+sample['filmfile']
+        base_fig_name = parms['dataroot']+sample['datadir']+sample['filmfile']
     else:
         base_fig_name = 'figures/'+sample['samplename']
         if not os.path.exists('figures'):
@@ -610,9 +610,9 @@ def process_raw(sample, data_type):
     nhplot = sample.get('nhplot', [1, 3, 5])
     trange = sample.get(data_type+'trange', [0, 0])
     dict = {}
-    dict['file'] = sample['root']+sample['datadir'] + sample[data_type+'file'] + '.mat'
+    dict['file'] = sample['dataroot']+sample['datadir'] + sample[data_type+'file'] + '.mat'
     dict['data'] = hdf5storage.loadmat(dict['file'])
-    dict['idx_file'] = Path(sample['root']+sample['datadir']+sample[data_type+
+    dict['idx_file'] = Path(sample['dataroot']+sample['datadir']+sample[data_type+
                             'file']+'_film_idx.txt')
 
     # extract the frequency data from the appropriate file
