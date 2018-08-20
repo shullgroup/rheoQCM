@@ -41,7 +41,7 @@ def find_dataroot(owner):
 
 
     for directory in dataroots:
-        if os.path.exists(item):
+        if os.path.exists(directory):
             return directory
 
     return 'none'

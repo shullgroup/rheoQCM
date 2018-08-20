@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from Qifeng_sampledefs import sample_dict
 import QCM_functions as qcm
 parms = {}  # parameters to pass to qcm.analyze
-parms['dataroot'] = qcm.find_dataroot(dataroots['qifeng'])
+parms['dataroot'] = qcm.find_dataroot('qifeng')
 
 sample = sample_dict()  # read sample dictionary
 
