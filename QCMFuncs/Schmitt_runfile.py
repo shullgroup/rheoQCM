@@ -21,12 +21,13 @@ sample = sample_dict()  # read sample dictionary
 parms['imagetype'] = 'pdf'  # default is 'svg'
 parms['dataroot'] = qcm.find_dataroot('schmitt')
 
+
+# %% plot spectra
 spectrafig = qcm.plot_spectra({}, sample['PMMA_75k_S08_TiO2_6day_2'], np.arange(20))
 qcm.plot_spectra(spectrafig, sample['PMMA_75k_S08_TiO2_8day'], np.arange(20))
 #qcm.plot_spectra(spectrafig, sample['PMMA_75k_S08_TiO2_7day'], [1])
 # %%  75k PMMA sample from Meredith
 qcm.analyze(sample['PMMA_75k_T01'], parms)
-
 # %%  75k PMMA sample from Tom
 qcm.analyze(sample['PMMA_75k_S04_postanneal'], parms)
 # %% 75 k PMMA sample Tom Post Annealing
