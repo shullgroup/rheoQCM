@@ -13,8 +13,7 @@ def sample_dict():
     'datadir': '20180502/',
     'barefile': 'cryt_2_bare_air',
     'filmfile': 'cryt_2_BCB_air',
-    # 'firstline': 50,
-    # 'filmtrange': [4000, 5000],
+    'filmtrange': [1000, 10000],
     'nhcalc': ['355', '353'],
     'nhplot': [1, 3, 5]
     }
@@ -25,7 +24,6 @@ def sample_dict():
     'datadir': '20180502/',
     'barefile': 'cryt_2_bare_LN2',
     'filmfile': 'cryt_2_BCB_LN2',
-    # 'firstline': 50,
     # 'filmtrange': [4000, 5000],
     'nhcalc': ['355', '353'],
     'nhplot': [1, 3, 5]
@@ -37,7 +35,6 @@ def sample_dict():
     'datadir': '20180502/',
     'barefile': 'cryt_2_bare_air',
     'filmfile': 'DGEBA-cryt_2_BCB_air_after_LN2',
-    # 'firstline': 50,
     # 'filmtrange': [4000, 5000],
     'nhcalc': ['355', '353'],
     'nhplot': [1, 3, 5]
