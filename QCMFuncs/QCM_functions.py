@@ -293,12 +293,25 @@ def analyze(sample, parms):
 
     # specify the location for the output figure files
     if figlocation == 'datadir':
-        base_fig_name = parms['dataroot']+sample['datadir']+sample['filmfile']
+        base_fig_name = os.path.join(parms['dataroot'], sample['datadir'], sample['filmfile'])
     else:
-        base_fig_name = 'figures/'+sample['samplename']
-        if not os.path.exists('figures'):
-            os.mkdir('figures')
+        # check in which folder we are running 
+        cwd = os.getcwd()
+        basename = os.path.basename(cwd) # name of current folder
+        if basename == 'QCMFuncs': # running in QCMFuncs
+            base_fig_path = os.path.join(cwd, 'figures')
+        else: # running out of QCMFuns. Probably in QCM_py
+            if 'QCMFuncs' in os.listdir(): # QCMFuncs is a subfolder
+                 base_fig_path = os.path.join(cwd, 'QCMFuncs', 'figures')
+            else: # QCMFuncs is not a subfolder
+                base_fig_path = os.path.join(cwd, 'figures') # save in figures/ directly
 
+        if not os.path.exists(base_fig_path):
+            os.mkdir(base_fig_path)
+
+        base_fig_name = os.path.join(base_fig_path, sample['samplename'])
+
+    print(base_fig_name)
     imagetype = parms.get('imagetype', 'svg')
 
     # set the color dictionary for the different harmonics
@@ -491,7 +504,7 @@ def analyze(sample, parms):
     # tidy up the raw data and property figures
     propfig['figure'].tight_layout()
     propfig['figure'].savefig(base_fig_name+'_prop.'+imagetype)
-    
+    print('fig_full', base_fig_name+'_prop.'+imagetype)
     print('done with ', base_fig_name, 'press any key to close plots and continue')
 
     propfig['figure'].canvas.mpl_connect('key_press_event', close_on_click)
@@ -746,7 +759,7 @@ def plot_spectra(fig_dict, sample, idx_vals):
     plt.rcParams['axes.formatter.offset_threshold'] = 2
     
        # read the data
-    spectra_file = sample['datadir'] + sample['filmfile'] + '_raw_spectras.mat'
+    spectra_file = os.path.join(sample['datadir'], sample['filmfile'] + '_raw_spectras.mat')
     spectra = hdf5storage.loadmat(spectra_file)
 
     for n in [1, 3, 5]:
