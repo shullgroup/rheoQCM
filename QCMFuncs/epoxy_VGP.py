@@ -15,9 +15,9 @@ propfig = qcm.make_prop_axes('props', 't (min.)')
 vgpfig = qcm.make_vgp_axes('vgp')
 
 # define text files for plotting
-data1file = '../figures/DGEBA-Jeffamine230_RT_3_355.txt'
+data1file = 'figures/DGEBA-Jeffamine230_RT_3_355.txt'
 legend1text = '1:1expoxy:amine'
-data2file = '../figures/DGEBA-Jeffamine230_RT_5_355.txt'
+data2file = 'figures/DGEBA-Jeffamine230_RT_5_355.txt'
 legend2text = '2:1epoxy:amine'
 
 # add the data to the texts
