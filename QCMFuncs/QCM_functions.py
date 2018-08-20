@@ -40,7 +40,7 @@ def find_dataroot(owner):
                     'Research-Taghon/QCM/merefiles/data']
 
 
-    for directory in dataroots
+    for directory in dataroots:
         if os.path.exists(item):
             return directory
 
