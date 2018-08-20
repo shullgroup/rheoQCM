@@ -612,8 +612,8 @@ def process_raw(sample, data_type):
     dict = {}
     dict['file'] = sample['root']+sample['datadir'] + sample[data_type+'file'] + '.mat'
     dict['data'] = hdf5storage.loadmat(dict['file'])
-    dict['idx_file'] = Path(sample['root'+sample['datadir']+sample[data_type+'file']+
-                            '_film_idx.txt')
+    dict['idx_file'] = Path(sample['root']+sample['datadir']+sample[data_type+
+                            'file']+'_film_idx.txt')
 
     # extract the frequency data from the appropriate file
     freq = dict['data']['abs_freq'][firstline:, 0:7]
