@@ -19,7 +19,6 @@ except ImportError: # in case running Jupyter in the QCM_py folder
 try:
     import QCM_functions as qcm
 except ImportError: # in case running Jupyter in the QCM_py folder
-    print(e) # show error in case is from coding
     import QCMFuncs.QCM_functions as qcm
 
 parms = {}  # parameters to pass to qcm.analyze
