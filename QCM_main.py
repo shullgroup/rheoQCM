@@ -14,7 +14,7 @@ import scipy.signal
 import types
 from PyQt5.QtCore import pyqtSlot, Qt, QEvent
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QRadioButton, QMenu, QMessageBox
+    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QRadioButton, QMenu, QMessageBox
 )
 from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QIntValidator, QDoubleValidator, QRegExpValidator
 
@@ -260,9 +260,6 @@ class QCMApp(QMainWindow):
             self.ui.comboBox_settings_control_dispmode.addItem(val, key)
         self.ui.comboBox_settings_control_dispmode.activated.connect(self.update_widget)
         self.ui.comboBox_settings_control_dispmode.activated.connect(self. update_freq_display_mode)
-        # add value to the comboBox_fitfactor
-        for key, val in settings_init['fit_factor_choose'].items():
-            self.ui.comboBox_fitfactor.addItem(val, key)
 
         # set pushButton_gotofolder
         self.ui.pushButton_gotofolder.clicked.connect(self.on_clicked_pushButton_gotofolder)
@@ -279,7 +276,7 @@ class QCMApp(QMainWindow):
         )
 
         self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_widget)
-        self.ui.comboBox_fitfactor.activated.connect(self.update_widget)
+        self.ui.spinBox_fitfactor.valueChanged.connect(self.update_widget)
         self.ui.checkBox_dynamicfitbyharm.clicked['bool'].connect(self.update_widget)
         self.ui.checkBox_fitfactorbyharm.clicked['bool'].connect(self.update_widget)
 
@@ -370,6 +367,14 @@ class QCMApp(QMainWindow):
             100,
         )
 
+        # move spinBox_harmfitfactor
+        self.move_to_col2(
+            self.ui.spinBox_harmfitfactor,
+            self.ui.treeWidget_settings_settings_harmtree,
+            'Factor',
+            100,
+        )
+
         # comboBox_span_method
         self.create_combobox(
             'comboBox_span_method', 
@@ -388,14 +393,6 @@ class QCMApp(QMainWindow):
             self.ui.treeWidget_settings_settings_harmtree
         )
 
-        # add fit factor
-        self.create_combobox(
-            'comboBox_harmfitfactor', 
-            settings_init['fit_factor_choose'], 
-            100, 
-            'Factor', 
-            self.ui.treeWidget_settings_settings_harmtree
-        )
 
         # insert sample_channel
         self.create_combobox(
@@ -602,7 +599,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_span_method.activated.connect(self.update_harmwidget)
         self.ui.comboBox_span_track.activated.connect(self.update_harmwidget)
         self.ui.checkBox_harmfit.clicked['bool'].connect(self.update_harmwidget)
-        self.ui.comboBox_harmfitfactor.activated.connect(self.update_harmwidget)
+        self.ui.spinBox_harmfitfactor.valueChanged.connect(self.update_harmwidget)
         self.ui.lineEdit_peaks_maxnum.textEdited.connect(self.update_harmwidget)
         self.ui.lineEdit_peaks_threshold.textEdited.connect(self.update_harmwidget)
         self.ui.lineEdit_peaks_prominence.textEdited.connect(self.update_harmwidget)
@@ -610,8 +607,10 @@ class QCMApp(QMainWindow):
         # set signals to update hardware settings_settings
         self.ui.comboBox_sample_channel.activated.connect(self.update_widget)
         self.ui.comboBox_sample_channel.activated.connect(self.update_vnachannel)
+        self.ui.comboBox_sample_channel.activated.connect(self.update_active_chn)
         self.ui.comboBox_ref_channel.activated.connect(self.update_widget)
         self.ui.comboBox_ref_channel.activated.connect(self.update_vnachannel)
+        self.ui.comboBox_ref_channel.activated.connect(self.update_active_chn)
 
         # self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
         self.ui.checkBox_settings_temp_sensor.clicked['bool'].connect(self.on_clicked_set_temp_sensor)
@@ -1583,7 +1582,7 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_dynamicfit.setEnabled(not value)
     
     def on_clicked_checkBox_fitfactorbyharm(self, value):
-        self.ui.comboBox_fitfactor.setEnabled(not value)
+        self.ui.spinBox_fitfactor.setEnabled(not value)
         self.ui.label_fitfactor.setEnabled(not value)
         
     def set_stackedwidget_index(self, stwgt, idx=[], diret=[]):
@@ -1624,6 +1623,9 @@ class QCMApp(QMainWindow):
             except: # if w/o userData, use the text
                 value = self.sender().itemText(signal)
             self.settings[self.sender().objectName()] = value
+        # if the sender of the signal isA QSpinBox object, udpate QComboBox vals in dict
+        elif isinstance(self.sender(), QSpinBox):
+            self.settings[self.sender().objectName()] = signal
 
     def update_harmwidget(self, signal):
         '''
@@ -1657,19 +1659,30 @@ class QCMApp(QMainWindow):
             except: # if w/o userData, use the text
                 value = self.sender().itemText(signal)
             self.settings[tabwidget_name][self.sender().objectName()] = value
+        # if the sender of the signal isA QSpinBox object, udpate QComboBox vals in dict
+        elif isinstance(self.sender(), QSpinBox):
+            self.settings[tabwidget_name][self.sender().objectName()] = signal
 
     def update_active_chn(self):
-        if self.sender().objectName() == 'radioButton_settings_settings_harmchnsamp':
+        if self.sender().objectName() == 'radioButton_settings_settings_harmchnsamp': # switched to samp
             self.active_chn = {
                 'name': 'samp', 
                 'chn': self.settings['comboBox_sample_channel']
             }
-        elif self.sender().objectName() == 'radioButton_settings_settings_harmchnref':
+        elif self.sender().objectName() == 'radioButton_settings_settings_harmchnref': # switched to ref
             self.active_chn = {
                 'name': 'ref', 
                 'chn': self.settings['comboBox_ref_channel']
             }
-        
+        elif self.sender().objectName() == 'comboBox_ref_channel' or 'comboBox_sample_channel': # define of samp/ref channel(s) changed
+            # reset corrresponding ADC
+            print(self.settings['comboBox_sample_channel'])
+            print(self.settings['comboBox_ref_channel'])
+            if self.active_chn['name'] == 'samp':
+                self.active_chn['chn'] = self.settings['comboBox_sample_channel']
+            elif self.active_chn['name'] == 'ref':
+                self.active_chn['chn'] = self.settings['comboBox_ref_channel']
+            print(self.active_chn)
         # update treeWidget_settings_settings_harmtree
         self.update_harmonic_tab()
 
@@ -1691,7 +1704,11 @@ class QCMApp(QMainWindow):
         )
         self.load_comboBox(self.ui.comboBox_span_method, 'span_mehtod_choose', parent=tabwidget_name)
         self.load_comboBox(self.ui.comboBox_span_track, 'span_track_choose', parent=tabwidget_name) 
-        self.load_comboBox(self.ui.comboBox_harmfitfactor, 'fit_factor_choose', parent=tabwidget_name)
+        
+        # update spinBox_harmfitfactor
+        self.ui.spinBox_harmfitfactor.setValue(
+            self.settings[tabwidget_name]['spinBox_harmfitfactor']
+        )
 
         # update lineEdit_peaks_maxnum
         self.ui.lineEdit_peaks_maxnum.setText(
@@ -1862,7 +1879,7 @@ class QCMApp(QMainWindow):
 
     def update_harmfitfactor(self, harmfitfactor_index):
         #NOTUSING
-        value = self.ui.comboBox_harmfitfactor.itemData(harmfitfactor_index)
+
         self.settings['tab_settings_settings_harm' + str(self.settings_harm)]['comboBox_harmfitfactor'] = value
 
     def setvisible_refwidgets(self, value=False):
@@ -2035,7 +2052,7 @@ class QCMApp(QMainWindow):
         # load default fitting and display options
         self.ui.checkBox_dynamicfit.setChecked(self.settings['checkBox_dynamicfit'])
         # load default fit factor range
-        self.load_comboBox(self.ui.comboBox_fitfactor, 'fit_factor_choose')
+        self.ui.spinBox_fitfactor.setValue(self.settings['spinBox_fitfactor'])
         # load default dynamicfitbyharm
         self.ui.checkBox_dynamicfitbyharm.setChecked(self.settings['checkBox_dynamicfitbyharm'])
         # load default fitfactorbyharm

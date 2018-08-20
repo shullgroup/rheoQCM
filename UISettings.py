@@ -66,15 +66,7 @@ settings_init = {
         'temp_t': 'temp. - time'
     },
 
-    # comboBox_fitfactor
-    'fit_factor_choose': {
-        '6':   '6',
-        '5':   '5',
-        '4':   '4',
-        '3':   '3',
-        '2':   '2',
-
-    },
+    # spinBox_fitfactor
 
     # comboBox_span_method
     'span_mehtod_choose': {
@@ -223,7 +215,7 @@ settings_default = {
 
     # default fitting and display options
     'checkBox_dynamicfit': True,
-    'comboBox_fitfactor': '6',
+    'spinBox_fitfactor': 6,
     'checkBox_dynamicfitbyharm': False,
     'checkBox_fitfactorbyharm': False,
 
@@ -326,7 +318,7 @@ settings_default = {
         'comboBox_span_track': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
-        'comboBox_harmfitfactor': 6,
+        'spinBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
         'lineEdit_peaks_prominence': 0.005,
@@ -340,7 +332,7 @@ settings_default = {
         'comboBox_span_track': 'fixspan',   
         # default fit settings
         'checkBox_harmfit': True,
-        'comboBox_harmfitfactor': 6,
+        'spinBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
         'lineEdit_peaks_prominence': 0.005,
@@ -354,7 +346,7 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
-        'comboBox_harmfitfactor': 6,
+        'spinBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
         'lineEdit_peaks_prominence': 0.005,
@@ -368,7 +360,7 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
-        'comboBox_harmfitfactor': 6,
+        'spinBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
         'lineEdit_peaks_prominence': 0.005,
@@ -382,7 +374,7 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
-        'comboBox_harmfitfactor': 6,
+        'spinBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
         'lineEdit_peaks_prominence': 0.005,
@@ -396,7 +388,7 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
-        'comboBox_harmfitfactor': 6,
+        'spinBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
         'lineEdit_peaks_prominence': 0.005,
@@ -410,7 +402,7 @@ settings_default = {
         'comboBox_span_track': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
-        'comboBox_harmfitfactor': 6,
+        'spinBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
         'lineEdit_peaks_prominence': 0.005,
@@ -424,7 +416,7 @@ settings_default = {
         'comboBox_span_track': 'fixspan',   
         # default fit settings
         'checkBox_harmfit': True,
-        'comboBox_harmfitfactor': 6,
+        'spinBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
         'lineEdit_peaks_prominence': 0.005,
@@ -438,7 +430,7 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
-        'comboBox_harmfitfactor': 6,
+        'spinBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
         'lineEdit_peaks_prominence': 0.005,
@@ -452,7 +444,7 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
-        'comboBox_harmfitfactor': 6,
+        'spinBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
         'lineEdit_peaks_prominence': 0.005,
@@ -466,7 +458,7 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
-        'comboBox_harmfitfactor': 6,
+        'spinBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
         'lineEdit_peaks_prominence': 0.005,
@@ -480,7 +472,7 @@ settings_default = {
         'comboBox_span_track': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
-        'comboBox_harmfitfactor': 6,
+        'spinBox_harmfitfactor': 6,
         'lineEdit_peaks_maxnum': 1, 
         'lineEdit_peaks_threshold': 0.2,
         'lineEdit_peaks_prominence': 0.005,
