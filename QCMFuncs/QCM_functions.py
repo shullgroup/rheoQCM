@@ -34,9 +34,9 @@ def find_dataroot(owner):
                      'Group_Members/Research-Schmitt/data/Schmitt']
     elif owner == 'qifeng':
         dataroots =['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
-                    'Research-Wang/CHiMaD/QCM_sample/data/Qifeng',
-                    'C:\Users\ShullGroup\Documents\User Data\WQF\GoogleDriveSync'+
-                    '\Research-Wang\CHiMaD\QCM_sample\data']
+                    'Research-Wang/CHiMaD/QCM_sample/data/Qifeng', 
+                    r'C:\Users\ShullGroup\Documents\User Data\WQF\GoogleDriveSync'+
+                    r'\Research-Wang\CHiMaD\QCM_sample\data']
     elif owner == 'taghon':
         dataroots =['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
                     'Research-Taghon/QCM/merefiles/data']
