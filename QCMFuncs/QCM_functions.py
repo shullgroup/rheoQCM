@@ -20,11 +20,32 @@ f1 = 5e6  # fundamental resonant frequency
 openplots = 4
 
 def close_on_click(event):
-    # used so plots close when you click on them
+    # used so plots close in response to a some event
     global openplots
     plt.close()
     openplots = openplots - 1
     return
+
+def find_dataroot(owner):
+    # returns root data directory as first potential option from an input list
+    # if none of the possibilities exist, we return 'none' 
+    if owner == 'schmitt':
+        dataroots = ['/home/ken/k-shull@u.northwestern.edu/'+
+                     'Group_Members/Research-Schmitt/data/Schmitt']
+    elif owner == 'qifeng':
+        dataroots =['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
+                    'Research-Wang/CHiMaD/QCM_sample/data/Qifeng']
+    elif owner == 'taghon':
+        dataroots =['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
+                    'Research-Taghon/QCM/merefiles/data']
+
+
+    for directory in dataroots
+        if os.path.exists(item):
+            return directory
+
+    return 'none'
+
 
 
 def fstar_err_calc(fstar):
