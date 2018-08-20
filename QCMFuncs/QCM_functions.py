@@ -31,7 +31,9 @@ def find_dataroot(owner):
     # if none of the possibilities exist, we return 'none' 
     if owner == 'schmitt':
         dataroots = ['/home/ken/k-shull@u.northwestern.edu/'+
-                     'Group_Members/Research-Schmitt/data/Schmitt/']
+                     'Group_Members/Research-Schmitt/data/Schmitt/',
+                     '/Volumes/GoogleDrive/My Drive/Research-Schmitt/'+
+                     'data/Schmitt']
     elif owner == 'qifeng':
         dataroots =['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
                     'Research-Wang/CHiMaD/QCM_sample/data/', 
@@ -45,7 +47,7 @@ def find_dataroot(owner):
         if os.path.exists(directory):
             return directory
     
-    print('can\'t find root data directory')
+    print('cannot find root data directory')
     return 'none'
 
 
