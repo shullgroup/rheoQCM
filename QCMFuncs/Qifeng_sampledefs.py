@@ -40,7 +40,7 @@ def sample_dict():
     'nhplot': [1, 3, 5]
     }
 
-    #  20180629
+    # %%  20180629
     samplename = 'DGEBA-Jeffamine2000_RT'
     sample[samplename] = {
     'samplename': 'DGEBA-Jeffamine2000_RT',
@@ -53,7 +53,7 @@ def sample_dict():
     'nhplot': [1, 3, 5]
     }
 
-    #  20180711
+    # %%  20180711
     samplename = 'DGEBA-Jeffamine230_RT'
     sample[samplename] = {
     'samplename': 'DGEBA-Jeffamine230_RT',
