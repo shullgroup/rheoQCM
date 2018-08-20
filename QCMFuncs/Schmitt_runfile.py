@@ -12,13 +12,14 @@ import matplotlib.pyplot as plt
 import QCM_functions as qcm
 import numpy as np
 # change PS_sampledefs to correct file as appropriate
-from PMMA_sampledefs import sample_dict 
+from Schmitt_sampledefs import sample_dict 
 
 parms = {}  # parameters to pass to qcm.analyze
 sample = sample_dict()  # read sample dictionary
 
 # specify any non-default parameters
 parms['imagetype'] = 'pdf'  # default is 'svg'
+parms['dataroot'] = qcm.find_dataroot('schmitt')
 
 spectrafig = qcm.plot_spectra({}, sample['PMMA_75k_S08_TiO2_6day_2'], np.arange(20))
 qcm.plot_spectra(spectrafig, sample['PMMA_75k_S08_TiO2_8day'], np.arange(20))
