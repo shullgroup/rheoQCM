@@ -32,8 +32,8 @@ def find_dataroot(owner):
     if owner == 'schmitt':
         dataroots = ['/home/ken/k-shull@u.northwestern.edu/'+
                      'Group_Members/Research-Schmitt/data/Schmitt/',
-                     '/Volumes/GoogleDrive/My Drive/Research-Schmitt/'+
-                     'data/Schmitt']
+                     r'/Volumes/GoogleDrive/My Drive/Research-Schmitt/'+
+                     r'data/Schmitt']
     elif owner == 'qifeng':
         dataroots =['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
                     'Research-Wang/CHiMaD/QCM_sample/data/', 
