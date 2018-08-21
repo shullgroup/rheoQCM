@@ -285,20 +285,20 @@ class MatplotlibWidget(QWidget):
             markerfacecolor='none', 
             color=color[1]
         ) # B
-        self.l['lGpre'] = self.ax[0].plot(
-            [], [], 
-            marker='.', 
-            linestyle='none',
-            markerfacecolor='none', 
-            color='gray'
-        ) # previous G
-        self.l['lBpre'] = self.ax[1].plot(
-            [], [], 
-            marker='.', 
-            linestyle='none',
-            markerfacecolor='none', 
-            color='gray'
-        ) # previous B
+        # self.l['lGpre'] = self.ax[0].plot(
+        #     [], [], 
+        #     marker='.', 
+        #     linestyle='none',
+        #     markerfacecolor='none', 
+        #     color='gray'
+        # ) # previous G
+        # self.l['lBpre'] = self.ax[1].plot(
+        #     [], [], 
+        #     marker='.', 
+        #     linestyle='none',
+        #     markerfacecolor='none', 
+        #     color='gray'
+        # ) # previous B
         self.l['lGfit'] = self.ax[0].plot(
             [], [], 
             color='k'
@@ -563,12 +563,16 @@ class MatplotlibWidget(QWidget):
         else:
             pass
 
-    def update_data(self, ls=[], xdata=[], ydata=[]):
+    def update_data(self, *args):
         ''' 
-        update data of given ld (list of string)
+        update data of given in args (tuple)
+        arg = (l, x, y)
+            l: string of line name
+            x: x data
+            y: y data
         '''
         axs = set() # initialize a empty set
-        for l, x, y in zip(ls, xdata, ydata):
+        for l, x, y in args:
             self.l[l][0].set_xdata(x)
             self.l[l][0].set_ydata(y)
             axs.add(self.l[l][0].axes)
@@ -577,6 +581,19 @@ class MatplotlibWidget(QWidget):
             ax.relim()
             ax.autoscale_view(True,True,True)
         self.canvas.draw()
+
+    def get_data(self, ls=[]):
+        '''
+        get data of given ls (lis of string)
+        return a list of data with (x, y)
+        '''
+        data = []
+        for l in ls:
+            xdata = self.l[l][0].get_xdata()
+            ydata = self.l[l][0].get_ydata()
+            data.append((xdata, ydata))
+        return data
+
 
     def clr_alldata(self):
         ''' 

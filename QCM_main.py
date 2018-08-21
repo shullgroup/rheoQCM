@@ -675,6 +675,7 @@ class QCMApp(QMainWindow):
         # pushButton_spectra_fit_refresh
         self.ui.pushButton_spectra_fit_refresh.clicked.connect(self.on_clicked_pushButton_spectra_fit_refresh)
         self.ui.pushButton_spectra_fit_showall.clicked.connect(self.on_clicked_pushButton_spectra_fit_showall)
+        self.ui.pushButton_spectra_fit_fit.clicked.connect(self.on_clicked_pushButton_spectra_fit_fit)
 
 #endregion
 
@@ -1325,8 +1326,8 @@ class QCMApp(QMainWindow):
         ## disconnect axes event
         self.mpl_disconnect_cid(self.ui.mpl_spectra_fit) 
                
-        self.ui.mpl_spectra_fit.update_data(ls=['lG'], xdata=[f], ydata=[G])
-        self.ui.mpl_spectra_fit.update_data(ls=['lB'], xdata=[f], ydata=[B])
+        self.ui.mpl_spectra_fit.update_data(('lG', f, G))
+        self.ui.mpl_spectra_fit.update_data(('lB', f, B))
 
         # constrain xlim
         self.ui.mpl_spectra_fit.ax[0].set_xlim(f[0], f[-1])
@@ -1339,7 +1340,7 @@ class QCMApp(QMainWindow):
 
         self.ui.mpl_spectra_fit.canvas.draw()
 
-        self.ui.mpl_spectra_fit_polar.update_data(ls=['l'], xdata=[G], ydata=[B])
+        self.ui.mpl_spectra_fit_polar.update_data(('l', G, B))
         
         # set xlabel
         self.mpl_set_faxis(self.ui.mpl_spectra_fit.ax[0])
@@ -1469,6 +1470,15 @@ class QCMApp(QMainWindow):
         # ax.set_xticklabels([str(-span * 0.5), '0', str(span * 0.5)])
         # set xlabel
         # ax.set_xlabel('f (+{} Hz)'.format(center))
+
+    def on_clicked_pushButton_spectra_fit_fit(self):
+        '''
+        fit Gp, Bp data shown in mpl_spectra_fit ('lG' and 'lB')
+        '''
+        # get data in tuple (x, y)
+        data_lG, data_lB = self.ui.mpl_spectra_fit.get_data(ls=['lG', 'lB'])
+
+
 
 
 
