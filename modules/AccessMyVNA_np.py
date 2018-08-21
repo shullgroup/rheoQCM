@@ -787,7 +787,7 @@ class AccessMyVNA():
         # time.sleep(1)
         ret, f, B = self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=16)
         # self.Close()
-        return ret, f, G, B
+        return ret, f, G * 1e3, B * 1e3 # f in Hz; G & B in mS
     
     def change_settings(self, refChn=1, nMode=0, nSteps=400, nAverage=1):
         # ret =           self.Init()
