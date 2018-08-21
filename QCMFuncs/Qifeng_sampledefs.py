@@ -48,7 +48,7 @@ def sample_dict():
     'barefile': 'bare_air',
     'filmfile': 'DGEBA-Jeffamine2000_RT',
     'firstline': 50,
-    # 'filmtrange': [4000, 5000],
+    'filmtrange': [0, 1000],
     'nhcalc': ['355', '353'],
     'nhplot': [1, 3, 5]
     }
@@ -139,7 +139,7 @@ def sample_dict():
     'barefile': 'bare_air',
     'filmfile': 'DGEBA-Jeffamine2000_RT_3',
     'firstline': 1,
-    # 'filmtrange': [1, 10],
+    'filmtrange': [100, 1000],
     'nhcalc': ['355', '353'],
     'nhplot': [1, 3, 5]
     }
@@ -165,9 +165,9 @@ def sample_dict():
     'barefile': 'bare_air',
     'filmfile': 'DGEBA-Jeffamine2000_RT_4',
     'firstline': 1,
-    # 'filmtrange': [1, 10],
-    'nhcalc': ['355', '353'],
-    'nhplot': [1, 3, 5]
+    'filmtrange': [0, 1000],
+    'nhcalc': ['355'],
+    'nhplot': [3, 5]
     }
 
     return sample
