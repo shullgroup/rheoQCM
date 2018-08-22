@@ -195,7 +195,7 @@ def solve_onelayer(soln_input):
     elif rd_exp > 0.5:
         soln1_guess = bulk_guess(delfstar)
     else:
-        soln1_guess = thinfilm_guess(delfstar)
+        soln1_guess = thinfilm_guess(delfstar)thinfilm_guess(delfstar)
 
     lb = np.array([0, 0])  # lower bounds on dlam3 and phi
     ub = np.array([5, 90])  # upper bonds on dlam3 and phi

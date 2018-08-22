@@ -831,7 +831,7 @@ class AccessMyVNA():
                 elif flg == 'instrmode': # set instrument mode
                     ret, nMode = self.Setinstrmode(nMode=0)
                 elif flg == 'speed': # set scan speed
-                    # we don't neet to change it through python now
+                    # we don't need to change it through python now
                     pass
                 else:
                     # add more above else

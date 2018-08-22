@@ -2,14 +2,14 @@
 class for fitting of G and B
 '''
 import numpy as np
-from lmfit import Model, Minimizer, minimize, Parameters, fit_report, printfuncs
-from lmfit.models import ConstantModel
+from scipy.optimize import leastsq
+
 
 class GBFitting:
     def __init__(self):
         # self.gmodel = Model(self.fun_G)
         # self.bmodel = Model(self.fun_B)
-        self.gmodel, self.bmodel, self.gpars, self.bpars = make_model_pars(n=1)
+        self.gmodel, self.bmodel, self.gpars, self.bpars = make_model(n=1)
 
 
 
@@ -25,31 +25,7 @@ def fun_B(x, amp, cen, wid, phi):
     '''
     return amp * (4 * wid**2 * x**2 * np.sin(phi) + 2 * wid * x * np.cos(phi) * (cen**2 - x**2)) / (4 * wid**2 * x**2 + (cen**2 -x**2)**2)
 
-def make_gmod(n):
-    '''
-    make complex model of G (w/o params) for multiple (n) peaks
-    input:
-    n:    number of peaks
-    '''
-    gmod = ConstantModel(prefix='g_')
-    for i in np.arange(1, n+1):
-        gmod_i = Model(fun_G, prefix='p'+str(i)+'_')
-        gmod += gmod_i
-    return gmod
-
-def make_bmod(n):
-    '''
-    make complex model of B (w/o params) for multiple (n) peaks
-    input:
-    n:    number of peaks
-    '''
-    bmod = ConstantModel(prefix='g_')
-    for i in np.arange(1, n+1):
-        bmod_i = Model(fun_G, prefix='p'+str(i)+'_')
-        bmod += bmod_i
-    return bmod
-
-def make_model_pars(n=1):
+def make_model(n=1):
     '''
     make complex model for multiple peaks
     input:
@@ -81,16 +57,13 @@ def make_model_pars(n=1):
 
 def res_GB(params, f=None, G=None, B=None):
     '''
-    residual of both G and B
+    function of residual of both G and B
     '''
-    # eps = 100
     residual_G = G - gmod.eval(params, x=f)
     residual_B = B - bmod.eval(params, x=f)
-    # residual_G = residual_G / eps
-    # residual_B = residual_B / eps
     return np.concatenate((residual_G, residual_B))
 
-def set_params(f, G, B, n=1):
+def set_params(f, G, B, n):
     ''' set the parameters for fitting '''
 
     params = Parameters()
@@ -134,17 +107,17 @@ def set_params(f, G, B, n=1):
     )
     return params
 
-def minimize_GB(residual, f, G, B, n=1):
+def minimize_GB(residual, f, G, B, n):
     '''
     use leasesq to fit
     '''
-    # we creat a new set of params (gpars and dpars set in make_model_pars() are for the case if we want to use them seperately)
+    # we creat a new set of params (gpars and dpars set in make_model() are for the case if we want to use them seperately)
     # refine params with data
     params = set_params(f, G, B, n)
     # minimize with leastsq
     # mini = Minimizer(residual, params, fcn_args=(f, G, B))
     # result = mini.leastsq(xtol=1.e-10, ftol=1.e-10)
-    result = minimize(residual, params, method='leastsq', args=(f, G, B), xtol=1.e-18, ftol=1.e-18)
+    result = minimize(residual, params, method='leastsq', args=(f, G, B), xtol=1.e-10, ftol=1.e-10)
 
     print(fit_report(result)) 
     printfuncs.report_fit(result.params)
@@ -174,9 +147,10 @@ if __name__ == '__main__':
     accvna = AccessMyVNA()
     _, f, G = accvna.GetScanData(nWhata=-1, nWhatb=15)
     _, _, B = accvna.GetScanData(nWhata=-1, nWhatb=16)
-    # G = G * 1e3
-    # B = B * 1e3
+    # G = G * 1e9
+    # B = B * 1e9
     params = set_params(f, G, B, 1)
+    gmod.eval(params, x=f)
 
     result = minimize_GB(res_GB, f, G, B, 1)
 
