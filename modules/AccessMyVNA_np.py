@@ -34,7 +34,9 @@ stop_max_attempt_number = 100
 stop_max_delay = 10000
 
 # window name
-win_name = u'myVNA - Reflection mode "myVNA" [Embedded] '
+win_names = [
+    u'myVNA - Reflection mode "myVNA" [Embedded] ',  # there is a space at the end
+    u'myVNA - Reflection mode "myVNA"']
 # win_name = 'AccessMyVNA'
 
 # dll path
@@ -57,10 +59,10 @@ def _check_zero(result, func, args):
             raise WinError(err)
     return args
 
-def get_hWnd(win_name=win_name):
+def get_hWnd(win_name=win_names[0]):
     try:
         hWnd = win32ui.FindWindow(None, win_name).GetSafeHwnd()
-        pid = win32process.GetWindowThreadProcessId(hWnd)[1]
+        # pid = win32process.GetWindowThreadProcessId(hWnd)[1]
     except:
         hWnd = None
     print('hWnd', hWnd, '"' + win_name + '"') 
@@ -79,12 +81,13 @@ def get_pid(hWnd):
 
 def close_win():
     # close myVNA initiated by AccessMyVNA
-    hWnd = get_hWnd()
-    print('hWnd', hWnd)
-    pid = get_pid(hWnd)
-    print('pid', pid)
-    if pid:
-        os.kill(pid, signal.SIGTERM)
+    for win_name in win_names:
+        hWnd = get_hWnd(win_name)
+        print('hWnd', hWnd)
+        pid = get_pid(hWnd)
+        print('pid', pid)
+        if pid:
+            os.kill(pid, signal.SIGTERM)
 
 # make function prototypes 
 def wfunc(name, dll, result, *args):
