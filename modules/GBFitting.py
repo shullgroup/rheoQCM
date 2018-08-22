@@ -9,7 +9,7 @@ class GBFitting:
     def __init__(self):
         # self.gmodel = Model(self.fun_G)
         # self.bmodel = Model(self.fun_B)
-        self.gmodel, self.bmodel, self.gpars, self.bpars = make_model_pars(n=1)
+        self.gmodel, self.bmodel, self.gpars, self.bpars = make_models_pars(n=1)
 
 
 
@@ -45,11 +45,29 @@ def make_bmod(n):
     '''
     bmod = ConstantModel(prefix='g_')
     for i in np.arange(1, n+1):
-        bmod_i = Model(fun_G, prefix='p'+str(i)+'_')
+        bmod_i = Model(fun_B, prefix='p'+str(i)+'_')
         bmod += bmod_i
     return bmod
 
-def make_model_pars(n=1):
+def make_models(n=1):
+    '''
+    make complex model for multiple peaks
+    input:
+    n:    number of peaks
+    '''
+    gmod = ConstantModel(prefix='g_')
+    bmod = ConstantModel(prefix='b_')
+
+    for i in np.arange(1, n+1):
+        # gmod and bmod sharing the same varible so use the same prefix
+        gmod_i = Model(fun_G, prefix='p'+str(i)+'_')
+        bmod_i = Model(fun_B, prefix='p'+str(i)+'_')
+        gmod += gmod_i
+        bmod += bmod_i
+    
+    return gmod, bmod
+
+def make_models_pars(n=1):
     '''
     make complex model for multiple peaks
     input:
@@ -79,16 +97,23 @@ def make_model_pars(n=1):
     
     return gmod, bmod, gpars, bpars
 
-def res_GB(params, f=None, G=None, B=None):
+def res_GB(params, f, G, B, **kwargs):
     '''
     residual of both G and B
     '''
+    eps = kwargs.get('eps', None)
+    n = kwargs.get('n', 1)
     # eps = 100
+    # eps = (G - np.min(G))
+    # eps = pow((G - np.min(G)*1.001), 1/2)
+    gmod, bmod = make_models(n)
     residual_G = G - gmod.eval(params, x=f)
     residual_B = B - bmod.eval(params, x=f)
-    # residual_G = residual_G / eps
-    # residual_B = residual_B / eps
-    return np.concatenate((residual_G, residual_B))
+
+    if eps is None:
+        return np.concatenate((residual_G, residual_B))
+    else:
+        return np.concatenate((residual_G * eps, residual_B * eps))
 
 def set_params(f, G, B, n=1):
     ''' set the parameters for fitting '''
@@ -134,26 +159,31 @@ def set_params(f, G, B, n=1):
     )
     return params
 
-def minimize_GB(residual, f, G, B, n=1):
+def minimize_GB(f, G, B, n=1, cen_guess=None, wid_guess=None, factor=None):
     '''
     use leasesq to fit
     '''
-    # we creat a new set of params (gpars and dpars set in make_model_pars() are for the case if we want to use them seperately)
-    # refine params with data
+   
+    # set data for fitting
+    if not None in [cen_guess, wid_guess, factor]:
+        condition = np.where((f >= cen_guess - wid_guess * factor) & (f <= cen_guess + wid_guess * factor))
+        f, G, B = f[condition], G[condition], B[condition]
+
+    # eps = None
+    eps = pow((G - np.min(G)*1.001), 1/2) # residual weight
+     
+    # set params with data
     params = set_params(f, G, B, n)
+    
     # minimize with leastsq
     # mini = Minimizer(residual, params, fcn_args=(f, G, B))
     # result = mini.leastsq(xtol=1.e-10, ftol=1.e-10)
-    result = minimize(residual, params, method='leastsq', args=(f, G, B), xtol=1.e-18, ftol=1.e-18)
+    result = minimize(res_GB, params, method='leastsq', args=(f, G, B), kws={'eps': eps, 'n': n}, xtol=1.e-18, ftol=1.e-18)
 
     print(fit_report(result)) 
-    printfuncs.report_fit(result.params)
-    result.params.pretty_print()
-    print('chisqr', result.chisqr)
-    print('redchi', result.redchi)
-    print('nfev', result.nfev)
     print('success', result.success)
     print('message', result.message)
+    print('lmdif_message', result.lmdif_message)
     return result
 
 if __name__ == '__main__':
@@ -163,29 +193,47 @@ if __name__ == '__main__':
     except:
         from Modules.AccessMyVNA_dummy import AccessMyVNA 
 
-    gbfitting = GBFitting()
-    # print(gbfitting.gmodel.param_names)
-    # print(gbfitting.bmodel.param_names)
-    # print(gbfitting.gpars)
-    # print(gbfitting.bpars)
+    # gbfitting = GBFitting()
+    # # print(gbfitting.gmodel.param_names)
+    # # print(gbfitting.bmodel.param_names)
+    # # print(gbfitting.gpars)
+    # # print(gbfitting.bpars)
 
-    gmod = gbfitting.gmodel
-    bmod = gbfitting.bmodel
+    # gmod = gbfitting.gmodel
+    # bmod = gbfitting.bmodel
     accvna = AccessMyVNA()
     _, f, G = accvna.GetScanData(nWhata=-1, nWhatb=15)
     _, _, B = accvna.GetScanData(nWhata=-1, nWhatb=16)
     # G = G * 1e3
     # B = B * 1e3
-    params = set_params(f, G, B, 1)
 
-    result = minimize_GB(res_GB, f, G, B, 1)
+    n = 1
 
-    fig = plt.figure()
+    result = minimize_GB(f, G, B, n, )
+    params = set_params(f, G, B, n)
+    result = minimize(res_GB, params, method='leastsq', args=(f, G, B), kws={'eps': pow((G - np.min(G)*1.001), 1/2), 'n': n}, xtol=1.e-10, ftol=1.e-10)
+
+    print(fit_report(result)) 
+    print('success', result.success)
+    print('message', result.message)
+    print('lmdif_message', result.lmdif_message)
+    print('params', result.params.get('p1_cen').value)
+    print('params', result.params.get('p1_cen').stderr)
+    print('params', result.params.valuesdict())
+    exit(0)
+    gmod, bmod = make_models(n)
+
+    plt.figure()
     plt.plot(f, G, 'bo')
     plt.plot(f, gmod.eval(result.params, x=f), 'k--')
     plt.twinx()
     plt.plot(f, B, 'go')
     plt.plot(f, bmod.eval(result.params, x=f), 'k--')
+
+    plt.figure()
+    plt.plot(G, B, 'bo')
+    plt.plot(gmod.eval(result.params, x=f), bmod.eval(result.params, x=f), 'k--')
+
     plt.show()
     exit(0)
 

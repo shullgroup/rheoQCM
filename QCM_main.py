@@ -21,7 +21,7 @@ from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QIntValidator, QDoubleValid
 # packages
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
-from modules import UIModules, MathModules
+from modules import UIModules, MathModules, GBFitting
 
 from MatplotlibWidget import MatplotlibWidget
 
@@ -48,16 +48,25 @@ else: # linux or MacOS
     from modules.AccessMyVNA_dummy import AccessMyVNA
 
 class PeakTracker:
+    _harmtrack_init = {
+        'cen': None,
+        'wid': None,
+        'amp': None,
+        'phi': None,
+        'f'  : None,
+        'G'  : None,
+        'B'  : None,
+    }
+
     def __init__(self):
-        self.f0 = None
-        self.g0 = None
-        self.f = None
-        self.G = None # conductance
-        self.B = None # susceptance
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            setattr(self, 'harm'+str(i), self._harmtrack_init)
         self.refit_flag = 0
         self.refit_counter = 1
-
         self.harm = 1
+
+    def update(self, harm, data):
+        pass
 
 class VNATracker:
     def __init__(self):
@@ -69,11 +78,11 @@ class VNATracker:
         self.instrmode = 0  # instrument mode (0: reflection)
         
         self.setflg = {} # if vna needs to reset (set with reset selections)
-        self.setflg.update(self.__dict__)
-        self.setflg.pop('setflg', None)
+        self.setflg.update(self.__dict__) # get all attributes in a dict
+        self.setflg.pop('setflg', None) # remove setflg itself
         # print(self.setflg)
     
-    def reset_check(self, **kwargs):
+    def set_check(self, **kwargs):
         for key, val in kwargs.items():
             print(key, val)
             if getattr(self, key) != val: # if self.<key> changed
@@ -88,22 +97,22 @@ class VNATracker:
 
 class DataStruct:
     def __init__(self):
-        self.samp = None # artribute to save data of sample
-        self.ref = None # artribute to save data of reference
+        self.samp = None # attribute to save data of sample
+        self.ref = None # attribute to save data of reference
         self.samp_settings = {
             'fstar0': None,     # f0
             't0': None,         # reference time
             'tshift': 0,        # reference time shift
             'ref': None,        # reference type
             'raw_file': None    # raw_file information (for searching raw file if needed in the future)
-        } # artribute to save f, t, reference define
-        self.calc = None # artribute to save the results of mechanics calculation
+        } # attribute to save f, t, reference define
+        self.calc = None # attribute to save the results of mechanics calculation
 
 class RawStruct:
     def __init__(self):
-        self.samp = None # artribute to save data of sample
-        self.ref = None # artribute to save data of reference
-        self.settings = None # artribute to UI settings
+        self.samp = None # attribute to save data of sample
+        self.ref = None # attribute to save data of reference
+        self.settings = None # attribute to UI settings
         self.ver = {}
 
 
@@ -126,11 +135,13 @@ class QCMApp(QMainWindow):
         self.tempsensor = None # class for temp sensor
         self.idle = True # if test is running
         self.reading = False # if myVNA/tempsensor is scanning and reading data
+        self.writing = False # if UI is saving data
+
         self.UITab = 0 # 0: Control; 1: Settings;, 2: Data; 3: Mechanics
         self.settings_harm = 1 # active harmonic in Settings Tab
         self.data_harm = 1 # active harmonic in Data Tab
         self.active_chn = {'name': 'samp', 'chn': 1} # active channel 'samp' or 'ref'
-        #### initialize the artributes for data saving
+        #### initialize the attributes for data saving
         self.data = DataStruct()
         self.raw = RawStruct()
         
@@ -506,7 +517,7 @@ class QCMApp(QMainWindow):
         # insert time scale
         self.create_combobox(
             'comboBox_timescale', 
-            settings_init['time_scale_choose'], 
+            settings_init['scale_choose'], 
             100, 
             'Time Scale', 
             self.ui.treeWidget_settings_settings_plots
@@ -515,7 +526,7 @@ class QCMApp(QMainWindow):
         # insert gamma scale
         self.create_combobox(
             'comboBox_yscale', 
-            settings_init['y_scale_choose'], 
+            settings_init['scale_choose'], 
             100, 
             'Y Scale', 
             self.ui.treeWidget_settings_settings_plots
@@ -1260,7 +1271,7 @@ class QCMApp(QMainWindow):
 
     def get_spectraTab_mode(self):
         '''
-        get the current UI condition from artributes and 
+        get the current UI condition from attributes and 
         set the mode for spectra_fit
         '''
         mode = None,   # None/center/refit
@@ -1299,11 +1310,11 @@ class QCMApp(QMainWindow):
             harm = self.settings_harm
             # get f1, f2
             freq_span = self.settings['freq_span'][harm]
-            steps = self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_scan_harmsteps']
+            steps = int(self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_scan_harmsteps'])
             chn = self.active_chn['chn']
 
             # get the vna reset flag
-            setflg = self.vna_tracker.reset_check(f=freq_span, steps=steps, chn=chn)
+            setflg = self.vna_tracker.set_check(f=freq_span, steps=steps, chn=chn)
             print(setflg)
 
             with self.vna as vna:
@@ -1477,7 +1488,14 @@ class QCMApp(QMainWindow):
         '''
         # get data in tuple (x, y)
         data_lG, data_lB = self.ui.mpl_spectra_fit.get_data(ls=['lG', 'lB'])
+        print(data_lG)
+        print(data_lB)
 
+        factor = self.get_harmdata('spinBox_harmfitfactor')
+
+        # get guessed value of cen and wid
+
+        result = GBFitting.minimize_GB(data_lG[0], data_lG[1], data_lB[1], n=1,)
 
 
 
@@ -1734,6 +1752,25 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_peaks_prominence.setText(
             str(self.settings[tabwidget_name]['lineEdit_peaks_prominence'])
         )
+
+    def get_harmdata(self, objname):
+        '''
+        get data with given objname in 
+        treeWidget_settings_settings_harmtree
+        except lineEdit_harmstart & lineEdit_harmend
+        '''
+        harm = self.settings_harm
+        # choose the parent by self.active_chn
+        if self.active_chn['name'] == 'samp':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm)
+        elif self.active_chn['name'] == 'ref':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm) + '_r'
+        try:
+            return self.settings[tabwidget_name][objname]
+        except:
+            print(objname, 'is not found!')
+            return None
+
 
     def update_base_freq(self, base_freq_index):
         self.settings['comboBox_base_frequency'] = self.ui.comboBox_base_frequency.itemData(base_freq_index) # in MHz
@@ -2105,8 +2142,8 @@ class QCMApp(QMainWindow):
         # load default plots settings
         self.load_comboBox(self.ui.comboBox_timeunit, 'time_unit_choose')
         self.load_comboBox(self.ui.comboBox_tempunit, 'temp_unit_choose')
-        self.load_comboBox(self.ui.comboBox_timescale, 'time_scale_choose')
-        self.load_comboBox(self.ui.comboBox_yscale, 'y_scale_choose')
+        self.load_comboBox(self.ui.comboBox_timescale, 'scale_choose')
+        self.load_comboBox(self.ui.comboBox_yscale, 'scale_choose')
 
         self.ui.checkBox_linktime.setChecked(self.settings['checkBox_linktime'])
 
