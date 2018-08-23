@@ -220,7 +220,7 @@ if __name__ == '__main__':
     print('params', result.params.get('p1_cen').value)
     print('params', result.params.get('p1_cen').stderr)
     print('params', result.params.valuesdict())
-    exit(0)
+    # exit(0)
     gmod, bmod = make_models(n)
 
     plt.figure()

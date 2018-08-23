@@ -70,7 +70,7 @@ class PeakTracker:
 
 class VNATracker:
     def __init__(self):
-        self.f = None       # current end frequency span in Hz ([float, float])
+        self.f =None       # current end frequency span in Hz (ndarray([float, float])
         self.steps = None   # current number of steps (int)
         self.chn = None     # current reflection ADC channel (1 or 2)
         self.avg = None     # average of scans (int)
@@ -85,9 +85,17 @@ class VNATracker:
     def set_check(self, **kwargs):
         for key, val in kwargs.items():
             print(key, val)
+            print(type(val))
+            if isinstance(val, np.ndarray): # self.f 
+                val = val.tolist()
+                # if not np.array_equal(val, getattr(self, key)): # if self.<key> changed
+                #     setattr(self, key, val) # save val to class
+                # self.setflg[key] = val # add set key and value to setflg
+            # else:
             if getattr(self, key) != val: # if self.<key> changed
                 setattr(self, key, val) # save val to class
             self.setflg[key] = val # add set key and value to setflg
+
         return self.setflg
 
     def reset_flag(self):
@@ -1258,7 +1266,7 @@ class QCMApp(QMainWindow):
         if harm is None:
             harm = self.settings_harm
         # get freq_range
-        bf1, bf2 = np.array(self.settings['freq_range'][harm]) # in Hz
+        bf1, bf2 = self.settings['freq_range'][harm] # in Hz
         # check f1, and f2
         if f1 and (f1 < bf1 or f1 >= bf2): # f1 out of limt
             f1 = bf1
@@ -1269,7 +1277,7 @@ class QCMApp(QMainWindow):
         if f1 and f2 and (f1 >= f2):
             f2 = bf2
 
-        return [f1, f2]
+        return np.array([f1, f2])
 
     def get_spectraTab_mode(self):
         '''
@@ -1816,7 +1824,7 @@ class QCMApp(QMainWindow):
         BW = self.settings['comboBox_bandwidth'] * 1e6 # in Hz
         freq_range = {}
         for i in range(1, settings_init['max_harmonic']+2, 2):
-            freq_range[i] = [i*fbase-BW, i*fbase+BW]
+            freq_range[i] = np.array([i*fbase-BW, i*fbase+BW])
         self.settings['freq_range'] = freq_range
         print(self.settings['freq_range'])
 
@@ -1839,7 +1847,7 @@ class QCMApp(QMainWindow):
         '''
         set freq_span of given harm and chn
         if harm and chn not given, use self.settings
-        span: list of [f1, f2]
+        span: ndarray of [f1, f2]
         '''
         if harm is None:
             harm = self.settings_harm
@@ -1933,7 +1941,7 @@ class QCMApp(QMainWindow):
         print(harm, harmstart, harmend)
         f1, f2 = self.span_check(harm=harm, f1=harmstart, f2=harmend)
         print(f1, f2)
-        self.set_freq_span([f1, f2])
+        self.set_freq_span(np.array([f1, f2]))
         # self.settings['freq_span'][harm] = [harmstart, harmend] # in Hz
         # self.check_freq_spans()
         self.update_frequencies()
@@ -2218,12 +2226,15 @@ class QCMApp(QMainWindow):
             else:
                 self.settings[endname] = max_range
 
-    def smart_peak_tracker(self, harmonic, freq, conductance, susceptance, G_parameters):
+    def smart_peak_tracker(self, harmonic=None, freq=None, conductance=None, susceptance=None, G_parameters=None):
         self.peak_tracker.f0 = G_parameters[0]
         self.peak_tracker.g0 = G_parameters[1]
 
+        track_condition = self.get_harmdata('comboBox_tracking_condition', harmonic) 
+        track_method = self.get_harmdata('comboBox_tracking_method', harmonic)
+        chn = self.active_chn['name']
         # determine the structure field that should be used to extract out the initial-guessing method
-        if self.get_harmdata('comboBox_tracking_method', harmonic) == 'bmax':
+        if track_method == 'bmax':
             resonance = susceptance
         else:
             resonance = conductance
@@ -2234,65 +2245,51 @@ class QCMApp(QMainWindow):
         # determine the estimated half-max conductance (or susceptance) of the resonance peak
         halfg = (Gmax-np.amin(resonance))/2 + np.amin(resonance) 
         halfg_freq = np.absolute(freq[np.where(np.abs(halfg-resonance)==np.min(np.abs(halfg-resonance)))[0][0]])
-        # extract the peak tracking conditions
-        track_method = self.get_harmdata('comboBox_tracking_condition', harmonic) 
-        if track_method == 'fixspan':
-            # get the current span of the data in Hz
-            current_span = self.settings['freq_span'][harmonic][1] - self.settings['freq_span'][harmonic][0]
+        current_xlim = self.get_freq_span(harm=harmonic, chn=chn)
+        # get the current center and current span of the data in Hz
+        current_center, current_span = MathModulues.converter_startstop_to_centerspan(current_xlim[0], current_xlim[1])
+        # find the starting and ending frequency of only the peak in Hz
+        if track_condition == 'fixspan':
             if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-peak_f) > 0.1 * current_span:
                 # new start and end frequencies in Hz
                 new_xlim=np.array([peak_f-0.5*current_span,peak_f+0.5*current_span])
-                self.settings['freq_span'][harmonic] = new_xlim
-        elif track_method == 'fixcenter':
-            # get current start and end frequencies of the data in Hz
-            current_xlim = np.array(self.settings['freq_span'][harmonic])
-            # get the current center of the data in Hz
-            current_center = (self.settings['freq_span'][harmonic][1] + self.settings['freq_span'][harmonic][0])/2 
-            # find the starting and ending frequency of only the peak in Hz
-            peak_xlim = np.array([peak_f-halfg_freq*3, peak_f+halfg_freq*3]) 
+        elif track_condition == 'fixcenter':
+            # peak_xlim = np.array([peak_f-halfg_freq*3, peak_f+halfg_freq*3])
             if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*halfg_freq, current_center + 3*halfg_freq])))) > 3e3:
+                #TODO above should equal to abs(sp - 6 * halfg_freq) > 3e3
                 # set new start and end freq based on the location of the peak in Hz
                 new_xlim = np.array(current_center-3*halfg_freq, current_center+3*halfg_freq)
-                # set new start/end freq in Hz
-                self.settingssettings['freq_span'][harmonic] = new_xlim
-        elif track_method == 'auto':
+
+        elif track_condition == 'auto':
             # adjust window if neither span or center is fixed (default)
-            current_xlim = np.array(elf.settings['freq_span'][harmonic])
-            # get the current span of the data in Hz
-            current_span = self.settings['freq_span'][harmonic][1] - self.settings['freq_span'][harmonic][0]
             if(np.mean(current_xlim)-peak_f) > 1*current_span/12:
-                new_xlim = current_xlim-current_span/15  # new start and end frequencies in Hz
-                # set new span
-                self.settingssettings['freq_span'][harmonic] = new_xlim
+                new_xlim = current_xlim - current_span / 15  # new start and end frequencies in Hz
             elif (np.mean(current_xlim)-peak_f) < -1*current_span/12:
-                new_xlim = current_xlim+current_span/15  # new start and end frequencies in Hz
-                # set new span
-                self.settingssettings['freq_span'][harmonic] = new_xlim
+                new_xlim = current_xlim + current_span / 15  # new start and end frequencies in Hz
             else:
-                thresh1=.05*current_span + current_xlim[0] # Threshold frequency in Hz
-                thresh2=.03*current_span # Threshold frequency span in Hz
-                LB_peak=peak_f-halfg_freq*3 # lower bound of the resonance peak
-                if LB_peak-thresh1 > halfg_freq*8: # if peak is too thin, zoom into the peak
-                    new_xlim[0]=(current_xlim[0] + thresh2) # Hz
-                    new_xlim[1]=(current_xlim[1] - thresh2) # Hz
-                    # set new span
-                    self.settings['freq_span'][harmonic] = new_xlim
-                elif thresh1-LB_peak > -halfg_freq*5: # if the peak is too fat, zoom out of the peak
-                    new_xlim[0]=current_xlim[0]-thresh2 # Hz
-                    new_xlim[1]=current_xlim[1]+thresh2 # Hz
-                    # set new span
-                    self.settings['freq_span'][harmonic] = new_xlim
-        elif track_method == 'fixcntspn':
+                thresh1 = .05 * current_span + current_xlim[0] # Threshold frequency in Hz
+                thresh2 = .03 * current_span # Threshold frequency span in Hz
+                LB_peak = peak_f - halfg_freq * 3 # lower bound of the resonance peak
+                if LB_peak - thresh1 > halfg_freq * 8: # if peak is too thin, zoom into the peak
+                    new_xlim[0] = (current_xlim[0] + thresh2) # Hz
+                    new_xlim[1] = (current_xlim[1] - thresh2) # Hz
+                elif thresh1 - LB_peak > -halfg_freq*5: # if the peak is too fat, zoom out of the peak
+                    new_xlim[0] = current_xlim[0] - thresh2 # Hz
+                    new_xlim[1] = current_xlim[1] + thresh2 # Hz
+        elif track_condition == 'fixcntspn':
             # bothe span and cent are fixed
             # no changes
-            pass
-        elif track_method == 'usrdef': #run custom tracking algorithm
+            return
+        elif track_condition == 'usrdef': #run custom tracking algorithm
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
-            pass
+            return
 
+        # set new start/end freq in Hz
+        self.set_freq_span(new_xlim, harm= harmonic, chn=chn)
         self.check_freq_spans()
+        self.update_frequencies()
     
     def read_scan(self, harmonic):
         #NOTUSING
