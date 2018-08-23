@@ -104,8 +104,8 @@ def res_GB(params, f, G, B, **kwargs):
     eps = kwargs.get('eps', None)
     n = kwargs.get('n', 1)
     # eps = 100
-    # eps = (G - np.min(G))
-    # eps = pow((G - np.min(G)*1.001), 1/2)
+    # eps = (G - np.amin(G))
+    # eps = pow((G - np.amin(G)*1.001), 1/2)
     gmod, bmod = make_models(n)
     residual_G = G - gmod.eval(params, x=f)
     residual_B = B - bmod.eval(params, x=f)
@@ -122,21 +122,21 @@ def set_params(f, G, B, n=1):
     for i in np.arange(1, n+1):
         params.add(
             'p'+str(i)+'_amp',              # amplitude (G)
-            value=np.max(G) - np.min(G),    # init: peak height
+            value=np.amax(G) - np.amin(G),    # init: peak height
             min=0,                          # lb
             max=np.inf,                     # ub
         )
         params.add(
             'p'+str(i)+'_cen',              # center 
             value=np.mean(f),               # init: average f
-            min=np.min(f),                  # lb: assume peak is in the range of f
-            max=np.max(f),                  # ub: assume peak is in the range of f
+            min=np.amin(f),                  # lb: assume peak is in the range of f
+            max=np.amax(f),                  # ub: assume peak is in the range of f
         )
         params.add(
             'p'+str(i)+'_wid',                  # width (fwhm)
-            value=(np.max(f) - np.min(f)) / 2,  # init: half range
+            value=(np.amax(f) - np.amin(f)) / 2,  # init: half range
             min=1,                              # lb
-            max=np.max(f) - np.min(f),          # ub: assume peak is in the range of f
+            max=np.amax(f) - np.amin(f),          # ub: assume peak is in the range of f
         )
         params.add(
             'p'+str(i)+'_phi',              # phase shift
@@ -147,15 +147,15 @@ def set_params(f, G, B, n=1):
       
     params.add(
         'g_c',              # initialize G_offset
-        value=np.min(G),    # init G_offset = mean(G)
+        value=np.amin(G),    # init G_offset = mean(G)
         # min=-np.inf,        # lb
-        # max=np.max(G)/2,    # ub
+        # max=np.amax(G)/2,    # ub
     )        
     params.add(
         'b_c',              # initialize B_offset
         value=np.mean(B),   # init B_offset = mean(B)
-        # min=np.min(B)/2,    # lb
-        # max=np.min(B)/2,    # ub
+        # min=np.amin(B)/2,    # lb
+        # max=np.amin(B)/2,    # ub
     )
     return params
 
@@ -170,7 +170,7 @@ def minimize_GB(f, G, B, n=1, cen_guess=None, wid_guess=None, factor=None):
         f, G, B = f[condition], G[condition], B[condition]
 
     # eps = None
-    eps = pow((G - np.min(G)*1.001), 1/2) # residual weight
+    eps = pow((G - np.amin(G)*1.001), 1/2) # residual weight
      
     # set params with data
     params = set_params(f, G, B, n)
@@ -211,7 +211,7 @@ if __name__ == '__main__':
 
     result = minimize_GB(f, G, B, n, )
     params = set_params(f, G, B, n)
-    result = minimize(res_GB, params, method='leastsq', args=(f, G, B), kws={'eps': pow((G - np.min(G)*1.001), 1/2), 'n': n}, xtol=1.e-10, ftol=1.e-10)
+    result = minimize(res_GB, params, method='leastsq', args=(f, G, B), kws={'eps': pow((G - np.amin(G)*1.001), 1/2), 'n': n}, xtol=1.e-10, ftol=1.e-10)
 
     print(fit_report(result)) 
     print('success', result.success)

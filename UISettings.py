@@ -72,7 +72,7 @@ settings_init = {
 
     # spinBox_fitfactor
 
-    # comboBox_span_method
+    # comboBox_tracking_method
     'span_mehtod_choose': OrderedDict([
         ('gmax',   'Gmax'),
         ('dev',    'Derivative'),
@@ -311,8 +311,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'auto',
+        'comboBox_tracking_method': 'gmax',
+        'comboBox_tracking_condition': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -325,8 +325,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',   
+        'comboBox_tracking_method': 'gmax',
+        'comboBox_tracking_condition': 'fixspan',   
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -339,8 +339,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'gmax',
+        'comboBox_tracking_condition': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -353,8 +353,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'gmax',
+        'comboBox_tracking_condition': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -367,8 +367,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'gmax',
+        'comboBox_tracking_condition': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -381,8 +381,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'gmax',
+        'comboBox_tracking_condition': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -395,8 +395,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'auto',
+        'comboBox_tracking_method': 'gmax',
+        'comboBox_tracking_condition': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -409,8 +409,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',   
+        'comboBox_tracking_method': 'gmax',
+        'comboBox_tracking_condition': 'fixspan',   
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -423,8 +423,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'gmax',
+        'comboBox_tracking_condition': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -437,8 +437,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'gmax',
+        'comboBox_tracking_condition': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -451,8 +451,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'gmax',
+        'comboBox_tracking_condition': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -465,8 +465,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'gmax',
+        'comboBox_tracking_condition': 'fixspan',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,

@@ -25,6 +25,9 @@ def num2str(A,precision=None):
 
 def findpeaks(array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf, 
             threshold=0, minpeakdistance=0, widthreference=None, minpeakwidth=0, maxpeakwidth=np.inf):
+    '''
+    output: 'indices' or 'values'
+    '''
     indices = np.array([]).astype('int64')
     values = np.array([]).astype('float64')
     data = np.atleast_1d(array).astype('float64')
