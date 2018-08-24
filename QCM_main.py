@@ -56,6 +56,7 @@ class PeakTracker:
         'f'  : None,
         'G'  : None,
         'B'  : None,
+
     }
 
     def __init__(self):
@@ -2238,42 +2239,42 @@ class QCMApp(QMainWindow):
             resonance = susceptance
         else:
             resonance = conductance
-        index = MathModules.findpeaks(resonance, output='indices', sortstr='descend')
-        peak_f = freq[index[0]]
+        index = GBFitting.findpeaks(resonance, output='indices', sortstr='descend')
+        cen = freq[index[0]] # peak center
         # determine the estimated associated conductance (or susceptance) value at the resonance peak
         Gmax = resonance[index[0]] 
         # determine the estimated half-max conductance (or susceptance) of the resonance peak
-        halfg = (Gmax-np.amin(resonance))/2 + np.amin(resonance) 
-        halfg_freq = np.absolute(freq[np.where(np.abs(halfg-resonance)==np.min(np.abs(halfg-resonance)))[0][0]])
+        half_amp = (Gmax-np.amin(resonance))/2 + np.amin(resonance) 
+        half_wid = np.absolute(freq[np.where(np.abs(half_amp-resonance)==np.min(np.abs(half_amp-resonance)))[0][0]] -  cen)
         current_xlim = self.get_freq_span(harm=harmonic, chn=chn)
         # get the current center and current span of the data in Hz
-        current_center, current_span = MathModulues.converter_startstop_to_centerspan(current_xlim[0], current_xlim[1])
+        current_center, current_span = MathModules.converter_startstop_to_centerspan(current_xlim[0], current_xlim[1])
         # find the starting and ending frequency of only the peak in Hz
         if track_condition == 'fixspan':
-            if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-peak_f) > 0.1 * current_span:
+            if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > 0.1 * current_span:
                 # new start and end frequencies in Hz
-                new_xlim=np.array([peak_f-0.5*current_span,peak_f+0.5*current_span])
+                new_xlim=np.array([cen-0.5*current_span,cen+0.5*current_span])
         elif track_condition == 'fixcenter':
-            # peak_xlim = np.array([peak_f-halfg_freq*3, peak_f+halfg_freq*3])
-            if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*halfg_freq, current_center + 3*halfg_freq])))) > 3e3:
-                #TODO above should equal to abs(sp - 6 * halfg_freq) > 3e3
+            # peak_xlim = np.array([cen-half_wid*3, cen+half_wid*3])
+            if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*half_wid, current_center + 3*half_wid])))) > 3e3:
+                #TODO above should equal to abs(sp - 6 * half_wid) > 3e3
                 # set new start and end freq based on the location of the peak in Hz
-                new_xlim = np.array(current_center-3*halfg_freq, current_center+3*halfg_freq)
+                new_xlim = np.array(current_center-3*half_wid, current_center+3*half_wid)
 
         elif track_condition == 'auto':
             # adjust window if neither span or center is fixed (default)
-            if(np.mean(current_xlim)-peak_f) > 1*current_span/12:
+            if(np.mean(current_xlim)-cen) > 1*current_span/12:
                 new_xlim = current_xlim - current_span / 15  # new start and end frequencies in Hz
-            elif (np.mean(current_xlim)-peak_f) < -1*current_span/12:
+            elif (np.mean(current_xlim)-cen) < -1*current_span/12:
                 new_xlim = current_xlim + current_span / 15  # new start and end frequencies in Hz
             else:
                 thresh1 = .05 * current_span + current_xlim[0] # Threshold frequency in Hz
                 thresh2 = .03 * current_span # Threshold frequency span in Hz
-                LB_peak = peak_f - halfg_freq * 3 # lower bound of the resonance peak
-                if LB_peak - thresh1 > halfg_freq * 8: # if peak is too thin, zoom into the peak
+                LB_peak = cen - half_wid * 3 # lower bound of the resonance peak
+                if LB_peak - thresh1 > half_wid * 8: # if peak is too thin, zoom into the peak
                     new_xlim[0] = (current_xlim[0] + thresh2) # Hz
                     new_xlim[1] = (current_xlim[1] - thresh2) # Hz
-                elif thresh1 - LB_peak > -halfg_freq*5: # if the peak is too fat, zoom out of the peak
+                elif thresh1 - LB_peak > -half_wid*5: # if the peak is too fat, zoom out of the peak
                     new_xlim[0] = current_xlim[0] - thresh2 # Hz
                     new_xlim[1] = current_xlim[1] + thresh2 # Hz
         elif track_condition == 'fixcntspn':
