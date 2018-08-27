@@ -30,6 +30,12 @@ sample = sample_dict()  # read sample dictionary
 parms['imagetype'] = 'pdf'  # default is 'svg'
 
 ######### run samples below ##########
+#%% 2:1 20180824
+# qcm.analyze(sample['DGEBA-PACM_RT_2'], parms)
+
+#%% 2:1 20180823
+qcm.analyze(sample['DGEBA-PACM_RT'], parms)
+exit(0)
 #%% 2:1 
 qcm.analyze(sample['DGEBA-Jeffamine400_RT_3'], parms)
 
