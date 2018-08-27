@@ -9,7 +9,7 @@ from scipy.signal import find_peaks
 # from UISettings import settings_init
 
 # initiate the parameters (for test)
-distance = 1e3  # in Hz 
+distance = (1e3, 1e4)  # in Hz 
 width = 10 # in Hz
 
 
@@ -65,9 +65,11 @@ def findpeaks(array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf,
 
 def findpeaks_py(array, output=None, sortstr=None, threshold=None, prominence=None):
     '''
-
+    advantage of find_peaks function of scipy is
+    the peaks can be constrained by more properties 
+    such as: width, distance etc..
     '''
-    indeces, prop = find_peaks(
+    peaks, _ = find_peaks(
         array, 
         threshold=threshold, 
         distance=distance, 
@@ -75,25 +77,32 @@ def findpeaks_py(array, output=None, sortstr=None, threshold=None, prominence=No
         width=width,
     )
 
-    indices_copy = np.copy(indices)
+    indices = np.copy(peaks)
+    values = array[indices]
+    heights = np.array([])
+    prominences = np.array([])
+    widths = np.array([])
     if sortstr:
         if sortstr.lower() == 'ascend':
             order = np.argsort(values)
-            values = np.sort(values)
-            for i in range(order.size):
-                indices[i] = indices_copy[order[i]]
+            # values = np.sort(values)
         elif sortstr.lower() == 'descend':
             order = np.argsort(-values)
             values = -np.sort(-values)
-            for i in range(order.size):
-                indices[i] = indices_copy[order[i]]
 
+        for i in range(order.size):
+            indices[i] = indices[order[i]]
+            heights[i] = prop['peak_heights'][order[i]]
+            prominences[i] = prop['peak_prominences'][order[i]]
+            widths[i] = prop['width_heights'][order[i]]
+    
     if output.lower() == 'indices':
         return indices
     elif output.lower() == 'values':
         return values
+    return indices, heights, prominences, widths
 
-def guess_peak_factors(freq, cen_index, resonance):
+def guess_peak_factors(cen_index, freq, resonance):
     ''' 
     guess the factors of a peak.
     input:
@@ -141,12 +150,13 @@ def params_guess(f, G, B, n, n_policy='max', method='gmax'):
     phi = 0
     peak_guess = {}
 
-    # indeces = findpeaks(resonance, output='indices', sortstr='descend')
+    # indices = findpeaks(resonance, output='indices', sortstr='descend')
+    indices, heights, prominences, widths = findpeaks_py(resonance, output='indices', sortstr='descend')
     
-    if not indeces:
-        return 
+    if not indices:
+        return n, peak_guess
     
-    amp, _, half_wid = guess_peak_factors(f, indeces[0], G) # factors of highest peak
+    amp, _, half_wid = guess_peak_factors(indices[0], f, G) # factors of highest peak
     
     if method == 'dev':
         # guess phase angle if derivatave method used
@@ -158,17 +168,27 @@ def params_guess(f, G, B, n, n_policy='max', method='gmax'):
 
 
     # check 
-    if n > len(indeces) and n.lower() != 'forced':
-        n = len(indeces) # change n to detected number of peaks
+    if n > len(indices):
+        if n_policy.lower() != 'forced':
+            n = len(indices) # change n to detected number of peaks
+        # else: # n_policy.lower() == 'forced'
+        #     for i in range(n-len(indices)):
+        #         indices = indices.append(np.nan)
     
-    
-    for i, idx in enumerate(indeces):
-        peak_guess[i] = {
-            'amp': amp, 
-            'cen': x[idx], 
-            'wid': half_wid, 
-            'phi': phi
-        }
+    for i in np.arrange(n):
+        if i+1 <= len(indices):
+            peak_guess[i] = {
+                'amp': amp, 
+                'cen': x[idx], 
+                'wid': half_wid, 
+                'phi': phi
+            }
+        else: # for forced number
+            peak_guess[i] = {
+                'amp': amp, 
+                'cen': x[idx], 
+                'wid': half_wid, 
+                'phi': phi
 
     return n, peak_guess
 
@@ -304,17 +324,24 @@ def set_params(f, G, B, n=1, peak_guess=None):
     ''' set the parameters for fitting '''
 
     params = Parameters()
+
+    # rough guess
+    amp_rough = np.amax(G) - np.amin(G)
+    cen_rough = np.mean(f)
+    wid_rough = (np.amax(f) - np.amin(f)) / 6
+    phi_rough = 0
+
     for i in np.arange(n):
         if peak_guess is None: 
-            amp = np.amax(G) - np.amin(G)
-            cen = np.mean(f)
-            wid = (np.amax(f) - np.amin(f)) / 6
-            phi = 0
+            amp = amp_rough
+            cen = cen_rough
+            wid = wid_rough
+            phi = phi_rough
         else:
-            amp = peak_guess[i]['amp']
-            cen = peak_guess[i]['cen']
-            wid = peak_guess[i]['wid']
-            phi = peak_guess[i]['phi']
+            amp = peak_guess[i].get('amp', amp_rough)
+            cen = peak_guess[i].get('cen', cen_rough)
+            wid = peak_guess[i].get('wid', wid_rough)
+            phi = peak_guess[i].get('phi', phi_rough)
 
         params.add(
             'p'+str(i)+'_amp',      # amplitude (G)
