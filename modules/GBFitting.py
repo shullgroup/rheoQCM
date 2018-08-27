@@ -78,22 +78,49 @@ def find_peak_factors(freq, cen_index, resonance):
     return amp, cen, half_wid
 
 ########### initial values guess functions ###
-def G_guess(f, G, B, n):
+def params_guess(f, G, B, n, n_policy='max', method='gmax'):
     '''
-    guess initial values based on max condutance
+    guess initial values based on given method
+    if method == 'bmax': use max susceptance
+    'gmax': use max conductance
+    'derivative': use modulus
+    n_policy: 'max' or 'forced'
     '''
+    # determine the structure field that should be used to extract out the initial-guessing method
+    if method == 'bmax': # use max susceptance
+        resonance = B
+        x = f
+    elif method == 'dev': # use derivative
+        resonance = np.sqrt(np.diff(G)**2 + np.diff(B)**2) # use modulus
+        x = f[:-1] + np.diff(f) # change f size and shift
+    elif method == 'prev': # use previous value
+        # this conditin should not go to this function
+        return
+    else:
+        resonance = G
+        x = f
+
     phi = 0
-    offset = np.amin(G)
 
     indeces = findpeaks(resonance, output='indices', sortstr='descend')
     amp, _, half_wid = find_peak_factors(f, indeces[0], G) # factors of highest peak
+    
+    if method == 'dev':
+        # guess phase angle if derivatave method used
+        phi = np.arcsin(G[0] / np.sqrt(G[0]**2 + B[0]**2))
 
-    if n > len(indeces):
-        n = len(indeces)
+    #TODO check found peeks
+
+    #TODO use other method to guess if failed
+
+
+    # check 
+    if n > len(indeces) and n.lower() != 'forced':
+        n = len(indeces) # change n to detected number of peeks
     
     peek_guess = {}
     for i, idx in enumerate(indeces):
-        peek_guess[i] = {'amp': amp, 'cen': f[idx], 'wid': half_wid, 'phi': phi, 'offset': offset}
+        peek_guess[i] = {'amp': amp, 'cen': x[idx], 'wid': half_wid, 'phi': phi}
 
     return n, peek_guess
 
@@ -117,7 +144,7 @@ def make_gmod(n):
     n:    number of peaks
     '''
     gmod = ConstantModel(prefix='g_')
-    for i in np.arange(1, n+1):
+    for i in np.arange(n):
         gmod_i = Model(fun_G, prefix='p'+str(i)+'_', name='g'+str(i))
         gmod += gmod_i
     return gmod
@@ -129,7 +156,7 @@ def make_bmod(n):
     n:    number of peaks
     '''
     bmod = ConstantModel(prefix='g_')
-    for i in np.arange(1, n+1):
+    for i in np.arange(n):
         bmod_i = Model(fun_B, prefix='p'+str(i)+'_', name='b'+str(i))
         bmod += bmod_i
     return bmod
@@ -143,7 +170,7 @@ def make_gbmodel(n=1):
     gmod = ConstantModel(prefix='g_')
     bmod = ConstantModel(prefix='b_')
 
-    for i in np.arange(1, n+1):
+    for i in np.arange(n):
         # gmod and bmod sharing the same varible so use the same prefix
         gmod_i = Model(fun_G, prefix='p'+str(i)+'_', name='g'+str(i))
         bmod_i = Model(fun_B, prefix='p'+str(i)+'_', name='b'+str(i))
@@ -166,7 +193,7 @@ def make_models(n=1):
     gc = ConstantModel(prefix='g_')
     bc = ConstantModel(prefix='b_')
 
-    for i in np.arange(1, n+1):
+    for i in np.arange(n):
         # gmod and bmod sharing the same varible so use the same prefix
         gmod_i = Model(fun_G, prefix='p'+str(i)+'_', name='g'+str(i)) + gc
         bmod_i = Model(fun_B, prefix='p'+str(i)+'_', name='b'+str(i)) + bc
@@ -225,34 +252,45 @@ def res_GB(params, f, G, B, **kwargs):
     else:
         return np.concatenate((residual_G * eps, residual_B * eps))
 
-def set_params(f, G, B, n=1):
+def set_params(f, G, B, n=1, peek_guess=None):
     ''' set the parameters for fitting '''
 
     params = Parameters()
-    for i in np.arange(1, n+1):
+    for i in np.arange(n):
+        if peek_guess is None: 
+            amp = np.amax(G) - np.amin(G)
+            cen = np.mean(f)
+            wid = (np.amax(f) - np.amin(f)) / 6
+            phi = 0
+        else:
+            amp = peek_guess[i]['amp']
+            cen = peek_guess[i]['cen']
+            wid = peek_guess[i]['wid']
+            phi = peek_guess[i]['phi']
+
         params.add(
-            'p'+str(i)+'_amp',              # amplitude (G)
-            value=np.amax(G) - np.amin(G),    # init: peak height
-            min=0,                          # lb
-            max=np.inf,                     # ub
+            'p'+str(i)+'_amp',      # amplitude (G)
+            value=amp,              # init: peak height
+            min=0,                  # lb
+            max=np.inf,             # ub
         )
         params.add(
-            'p'+str(i)+'_cen',              # center 
-            value=np.mean(f),               # init: average f
-            min=np.amin(f),                  # lb: assume peak is in the range of f
-            max=np.amax(f),                  # ub: assume peak is in the range of f
+            'p'+str(i)+'_cen',      # center 
+            value=cen,              # init: average f
+            min=np.amin(f),         # lb: assume peak is in the range of f
+            max=np.amax(f),         # ub: assume peak is in the range of f
         )
         params.add(
-            'p'+str(i)+'_wid',                  # width (fwhm)
-            value=(np.amax(f) - np.amin(f)) / 2,  # init: half range
-            min=1,                              # lb
-            max=np.amax(f) - np.amin(f),          # ub: assume peak is in the range of f
+            'p'+str(i)+'_wid',                 # width (fwhm)
+            value=wid,                         # init: half range
+            min=1,                             # lb
+            max=(np.amax(f) - np.amin(f)) * 2, # ub: assume peak is in the range of f
         )
         params.add(
-            'p'+str(i)+'_phi',              # phase shift
-            value=0,                        # init value: peak height
-            min=-np.pi / 2,                 # lb
-            max=np.pi / 2,                  # ub
+            'p'+str(i)+'_phi',       # phase shift
+            value=phi,               # init value: peak height
+            min=-np.pi / 2,          # lb
+            max=np.pi / 2,           # ub
         )
       
     params.add(
@@ -285,7 +323,7 @@ def minimize_GB(f, G, B, n=1, cen_guess=None, wid_guess=None, factor=None):
     # set the models
     gmod, bmod = make_gbmodel(n)
     # set params with data
-    params = set_params(f, G, B, n)
+    params = set_params(f, G, B, n=n)
     
     # minimize with leastsq
     # mini = Minimizer(residual, params, fcn_args=(f, G, B))
@@ -360,14 +398,16 @@ if __name__ == '__main__':
             plt.plot(gmods[i].eval(result.params, x=f), bmods[i].eval(result.params, x=f))
 
     plt.figure()
-    Y = np.sqrt(G**2 + B**2)
-    Y_fit = np.sqrt(gmod.eval(result.params, x=f)**2 + bmod.eval(result.params, x=f)**2)
-    plt.plot(f, Y, 'bo')
-    plt.plot(f, Y_fit, 'k--')
+    Y = np.sqrt(np.diff(G)**2 + np.diff(B)**2)
+    Y_fit = np.sqrt(np.diff(gmod.eval(result.params, x=f))**2 + np.diff(bmod.eval(result.params, x=f))**2)
+    print(len(f[0:-1]), len(np.diff(f)))
+    df = f[0:-1] + np.diff(f)
+    plt.plot(df, Y, 'bo')
+    plt.plot(df, Y_fit, 'k--')
     if n > 1:
         for i in range(n):
-            Y_fit = np.sqrt(gmods[i].eval(result.params, x=f)**2 + bmods[i].eval(params, x=f)**2)
-            plt.plot(f, Y)
+            Y_fit = np.sqrt(np.diff(gmods[i].eval(result.params, x=f))**2 + np.diff(bmods[i].eval(params, x=f))**2)
+            plt.plot(df, Y)
 
     plt.show()
     exit(0)
