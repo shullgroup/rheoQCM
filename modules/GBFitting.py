@@ -4,6 +4,14 @@ class for fitting of G and B
 import numpy as np
 from lmfit import Model, Minimizer, minimize, Parameters, fit_report, printfuncs
 from lmfit.models import ConstantModel
+from scipy.signal import find_peaks 
+
+# from UISettings import settings_init
+
+# initiate the parameters (for test)
+distance = 1e3  # in Hz 
+width = 10 # in Hz
+
 
 class GBFitting:
     def __init__(self):
@@ -55,9 +63,39 @@ def findpeaks(array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf,
     elif output.lower() == 'values':
         return values
 
-def find_peak_factors(freq, cen_index, resonance):
+def findpeaks_py(array, output=None, sortstr=None, threshold=None, prominence=None):
+    '''
+
+    '''
+    indeces, prop = find_peaks(
+        array, 
+        threshold=threshold, 
+        distance=distance, 
+        prominence=prominence,
+        width=width,
+    )
+
+    indices_copy = np.copy(indices)
+    if sortstr:
+        if sortstr.lower() == 'ascend':
+            order = np.argsort(values)
+            values = np.sort(values)
+            for i in range(order.size):
+                indices[i] = indices_copy[order[i]]
+        elif sortstr.lower() == 'descend':
+            order = np.argsort(-values)
+            values = -np.sort(-values)
+            for i in range(order.size):
+                indices[i] = indices_copy[order[i]]
+
+    if output.lower() == 'indices':
+        return indices
+    elif output.lower() == 'values':
+        return values
+
+def guess_peak_factors(freq, cen_index, resonance):
     ''' 
-    find the factors of a peak.
+    guess the factors of a peak.
     input:
         freq: frequency
         cen_index: index of center of the peak
@@ -101,28 +139,38 @@ def params_guess(f, G, B, n, n_policy='max', method='gmax'):
         x = f
 
     phi = 0
+    peak_guess = {}
 
-    indeces = findpeaks(resonance, output='indices', sortstr='descend')
-    amp, _, half_wid = find_peak_factors(f, indeces[0], G) # factors of highest peak
+    # indeces = findpeaks(resonance, output='indices', sortstr='descend')
+    
+    if not indeces:
+        return 
+    
+    amp, _, half_wid = guess_peak_factors(f, indeces[0], G) # factors of highest peak
     
     if method == 'dev':
         # guess phase angle if derivatave method used
         phi = np.arcsin(G[0] / np.sqrt(G[0]**2 + B[0]**2))
 
-    #TODO check found peeks
+    #TODO check found peaks
 
     #TODO use other method to guess if failed
 
 
     # check 
     if n > len(indeces) and n.lower() != 'forced':
-        n = len(indeces) # change n to detected number of peeks
+        n = len(indeces) # change n to detected number of peaks
     
-    peek_guess = {}
+    
     for i, idx in enumerate(indeces):
-        peek_guess[i] = {'amp': amp, 'cen': x[idx], 'wid': half_wid, 'phi': phi}
+        peak_guess[i] = {
+            'amp': amp, 
+            'cen': x[idx], 
+            'wid': half_wid, 
+            'phi': phi
+        }
 
-    return n, peek_guess
+    return n, peak_guess
 
 ########### fitting functions ################
 def fun_G(x, amp, cen, wid, phi):
@@ -252,21 +300,21 @@ def res_GB(params, f, G, B, **kwargs):
     else:
         return np.concatenate((residual_G * eps, residual_B * eps))
 
-def set_params(f, G, B, n=1, peek_guess=None):
+def set_params(f, G, B, n=1, peak_guess=None):
     ''' set the parameters for fitting '''
 
     params = Parameters()
     for i in np.arange(n):
-        if peek_guess is None: 
+        if peak_guess is None: 
             amp = np.amax(G) - np.amin(G)
             cen = np.mean(f)
             wid = (np.amax(f) - np.amin(f)) / 6
             phi = 0
         else:
-            amp = peek_guess[i]['amp']
-            cen = peek_guess[i]['cen']
-            wid = peek_guess[i]['wid']
-            phi = peek_guess[i]['phi']
+            amp = peak_guess[i]['amp']
+            cen = peak_guess[i]['cen']
+            wid = peak_guess[i]['wid']
+            phi = peak_guess[i]['phi']
 
         params.add(
             'p'+str(i)+'_amp',      # amplitude (G)

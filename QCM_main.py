@@ -49,13 +49,14 @@ else: # linux or MacOS
 
 class PeakTracker:
     _harmtrack_init = {
-        'cen': None,
-        'wid': None,
-        'amp': None,
-        'phi': None,
-        'f'  : None,
-        'G'  : None,
-        'B'  : None,
+        'track': None,
+        'cen'  : None,
+        'wid'  : None,
+        'amp'  : None,
+        'phi'  : None,
+        'f'    : None,
+        'G'    : None,
+        'B'    : None,
 
     }
 
@@ -409,7 +410,7 @@ class QCMApp(QMainWindow):
             'comboBox_tracking_condition', 
             settings_init['span_track_choose'], 
             100, 
-            'Tracking', 
+            'Condition', 
             self.ui.treeWidget_settings_settings_harmtree
         )
 
