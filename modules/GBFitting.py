@@ -5,11 +5,12 @@ import numpy as np
 from lmfit import Model, Minimizer, minimize, Parameters, fit_report, printfuncs
 from lmfit.models import ConstantModel
 from scipy.signal import find_peaks 
+from random import randrange
 
 # from UISettings import settings_init
 
 # initiate the parameters (for test)
-distance = (1e3, 1e4)  # in Hz 
+distance = 1e3  # in Hz 
 width = 10 # in Hz
 
 
@@ -65,11 +66,14 @@ def findpeaks(array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf,
 
 def findpeaks_py(array, output=None, sortstr=None, threshold=None, prominence=None):
     '''
+    A wrap up of scipy.signal.find_peaks.
     advantage of find_peaks function of scipy is
     the peaks can be constrained by more properties 
     such as: width, distance etc..
+    output: 'indices' or 'values'. if None, return all (indices, heights, prominences, widths)
+    sortstr: 'ascend' or 'descend' ordering data by peak height
     '''
-    peaks, _ = find_peaks(
+    peaks, props = find_peaks(
         array, 
         threshold=threshold, 
         distance=distance, 
@@ -89,20 +93,24 @@ def findpeaks_py(array, output=None, sortstr=None, threshold=None, prominence=No
         elif sortstr.lower() == 'descend':
             order = np.argsort(-values)
             values = -np.sort(-values)
-
+        print(values)
+        print(peaks)
+        print(order)
+        print(props)
         for i in range(order.size):
             indices[i] = indices[order[i]]
-            heights[i] = prop['peak_heights'][order[i]]
-            prominences[i] = prop['peak_prominences'][order[i]]
-            widths[i] = prop['width_heights'][order[i]]
+            heights = np.append(heights, props['width_heights'][order[i]])
+            prominences = np.append(prominences, props['prominences'][order[i]])
+            widths = np.append(widths, props['widths'][order[i]])
     
-    if output.lower() == 'indices':
-        return indices
-    elif output.lower() == 'values':
-        return values
+    if output:
+        if output.lower() == 'indices':
+            return indices
+        elif output.lower() == 'values':
+            return values
     return indices, heights, prominences, widths
 
-def guess_peak_factors(cen_index, freq, resonance):
+def guess_peak_factors(freq, resonance):
     ''' 
     guess the factors of a peak.
     input:
@@ -115,6 +123,8 @@ def guess_peak_factors(cen_index, freq, resonance):
         half_wid: half-maxium hal-width (HMHW)
     '''
 
+    cen_index = np.argmax(freq) # use max value as peak
+
     cen = freq[cen_index] # peak center
     # determine the estimated associated conductance (or susceptance) value at the resonance peak
     Gmax = resonance[cen_index] 
@@ -125,19 +135,18 @@ def guess_peak_factors(cen_index, freq, resonance):
     return amp, cen, half_wid
 
 ########### initial values guess functions ###
-def params_guess(f, G, B, n, n_policy='max', method='gmax'):
+def params_guess(f, G, B, n, method='gmax', threshold=None, prominence=None):
     '''
     guess initial values based on given method
     if method == 'bmax': use max susceptance
     'gmax': use max conductance
     'derivative': use modulus
-    n_policy: 'max' or 'forced'
     '''
     # determine the structure field that should be used to extract out the initial-guessing method
     if method == 'bmax': # use max susceptance
         resonance = B
         x = f
-    elif method == 'dev': # use derivative
+    elif method == 'derv': # use derivative
         resonance = np.sqrt(np.diff(G)**2 + np.diff(B)**2) # use modulus
         x = f[:-1] + np.diff(f) # change f size and shift
     elif method == 'prev': # use previous value
@@ -151,46 +160,74 @@ def params_guess(f, G, B, n, n_policy='max', method='gmax'):
     peak_guess = {}
 
     # indices = findpeaks(resonance, output='indices', sortstr='descend')
-    indices, heights, prominences, widths = findpeaks_py(resonance, output='indices', sortstr='descend')
+    indices, heights, prominences, widths = findpeaks_py(resonance, sortstr='descend', threshold=None, prominence=None)
     
     if not indices:
         return n, peak_guess
     
-    amp, _, half_wid = guess_peak_factors(indices[0], f, G) # factors of highest peak
+    # amp, _, half_wid = guess_peak_factors(indices[0], f, G) # factors of highest peak
     
-    if method == 'dev':
+    if method == 'derv':
         # guess phase angle if derivatave method used
         phi = np.arcsin(G[0] / np.sqrt(G[0]**2 + B[0]**2))
 
-    #TODO check found peaks
+    # for forced number of peaks (might be added in future) 
+    # if n > len(indices):
+    #     if n_policy.lower() != 'forced':
+    #         n = len(indices) # change n to detected number of peaks
 
-    #TODO use other method to guess if failed
+    for i in np.arange(len(indices)):
+        peak_guess[i] = {
+            'amp': prominences[i],  # or use heights
+            'cen': x[indices[i]], 
+            'wid': widths[i], 
+            'phi': phi
+        }
+        # if i+1 <= len(indices):
+        #     peak_guess[i] = {
+        #         'amp': prominences[i],  # or use heights
+        #         'cen': x[indices[i]], 
+        #         'wid': widths[i], 
+        #         'phi': phi
+        #     }
+        # else: # for forced number (n > len(indices))
+        #     # add some rough guess values
+        #     # use the min values of each variables
+        #     peak_guess[i] = {
+        #         'amp': np.amin(prominences),  # or use heights. 
+        #         'cen': x[randrange(1, len(x) -1, 10)], 
+        #         # devide x range to n parts and randomly choose one. Try to keep the peaks not too close
+        #         'wid': np.amin(widths), 
+        #         'phi': phi
+        #     }
 
+    return len(indices), peak_guess
 
-    # check 
-    if n > len(indices):
-        if n_policy.lower() != 'forced':
-            n = len(indices) # change n to detected number of peaks
-        # else: # n_policy.lower() == 'forced'
-        #     for i in range(n-len(indices)):
-        #         indices = indices.append(np.nan)
+def auto_guess(f, G, B, n, method=None, threshold=None, prominence=None):
+    '''
+    auto guess the peak parameters by using the given 
+    method. If method is not give, choose the method 
+    in a loop in case failed.
+    return guessing method used and peak_guess
+    The loop is defined as 
+    method_list = ['gmax', 'bmax', 'derv']
+    '''
+    method_list = ['gmax', 'bmax', 'derv']
+    if method is not None:
+        n_peaks, peak_guess = params_guess(f, G, B, n, method=method, threshold=None, prominence=None)
+        if peak_guess:
+            return method, n_peaks, peak_guess
     
-    for i in np.arrange(n):
-        if i+1 <= len(indices):
-            peak_guess[i] = {
-                'amp': amp, 
-                'cen': x[idx], 
-                'wid': half_wid, 
-                'phi': phi
-            }
-        else: # for forced number
-            peak_guess[i] = {
-                'amp': amp, 
-                'cen': x[idx], 
-                'wid': half_wid, 
-                'phi': phi
+    # if the method is not given
+    for method in method_list:
+        n_peaks, peak_guess = params_guess(f, G, B, n, method=method, threshold=None, prominence=None)
+        if peak_guess:
+            return method, n_peaks, peak_guess
+    
+    # no peak found return an empty dict
+    return None, None, {} # method, n_peak, peak_guess
 
-    return n, peak_guess
+
 
 ########### fitting functions ################
 def fun_G(x, amp, cen, wid, phi):
@@ -382,24 +419,27 @@ def set_params(f, G, B, n=1, peak_guess=None):
     )
     return params
 
-def minimize_GB(f, G, B, n=1, cen_guess=None, wid_guess=None, factor=None):
+def minimize_GB(f, G, B, n=1, factor=None, method=None, threshold=None, prominence=None):
     '''
     use leasesq to fit
     '''
-   
-    # set data for fitting
-    if not None in [cen_guess, wid_guess, factor]:
-        condition = np.where((f >= cen_guess - wid_guess * factor) & (f <= cen_guess + wid_guess * factor))
-        f, G, B = f[condition], G[condition], B[condition]
-
     # eps = None
     eps = pow((G - np.amin(G)*1.001), 1/2) # residual weight
      
+    # set params with data
+    method, n, peak_guess = auto_guess(f, G, B, n, method=method, threshold=None, prominence=None)
+    params = set_params(f, G, B, n=n, peak_guess=peak_guess)
     # set the models
     gmod, bmod = make_gbmodel(n)
-    # set params with data
-    params = set_params(f, G, B, n=n)
-    
+
+   
+    # set data for fitting
+    if factor is not None:
+        _, cen_guess, half_wid_guess = guess_peak_factors(f, G)
+        condition = np.where((f >= cen_guess - half_wid_guess * factor) & (f <= cen_guess + half_wid_guess * factor))
+        f, G, B = f[condition], G[condition], B[condition]
+
+
     # minimize with leastsq
     # mini = Minimizer(residual, params, fcn_args=(f, G, B))
     # result = mini.leastsq(xtol=1.e-10, ftol=1.e-10)
@@ -442,8 +482,8 @@ if __name__ == '__main__':
     # print('success', result.success)
     # print('message', result.message)
     # print('lmdif_message', result.lmdif_message)
-    print('params', result.params.get('p1_cen').value)
-    print('params', result.params.get('p1_cen').stderr)
+    print('params', result.params.get('p0_cen').value)
+    print('params', result.params.get('p0_cen').stderr)
     print('params', result.params.valuesdict())
     # print(result.params)
     # print(params['p1_amp'].vary)

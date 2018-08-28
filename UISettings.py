@@ -77,7 +77,7 @@ settings_init = {
         ('auto',   'Auto'),
         ('gmax',   'Gmax'),
         ('bmax',   'Bmax'),
-        ('dev',    'Derivative'),
+        ('derv',    'Derivative'),
         ('prev',   'Previous value'),
         ('usrdef', 'User-defined...'),
     ]),
