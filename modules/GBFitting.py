@@ -1,17 +1,39 @@
 '''
-class for fitting of G and B
-'''
+class for peak tracking and fitting '''
 import numpy as np
 from lmfit import Model, Minimizer, minimize, Parameters, fit_report, printfuncs
 from lmfit.models import ConstantModel
 from scipy.signal import find_peaks 
 from random import randrange
 
-# from UISettings import settings_init
+from UISettings import settings_init
 
 # initiate the parameters (for test)
 distance = 1e3  # in Hz 
 width = 10 # in Hz
+
+class PeakTracker:
+    _harmtrack_init = {
+        'track': None,
+        'cen'  : None,
+        'wid'  : None,
+        'amp'  : None,
+        'phi'  : None,
+        'f'    : None,
+        'G'    : None,
+        'B'    : None,
+
+    }
+
+    def __init__(self):
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            setattr(self, 'harm'+str(i), self._harmtrack_init)
+        self.refit_flag = 0
+        self.refit_counter = 1
+        self.harm = 1
+
+    def update(self, harm, data):
+        pass
 
 
 class GBFitting:
@@ -135,7 +157,7 @@ def guess_peak_factors(freq, resonance):
     return amp, cen, half_wid
 
 ########### initial values guess functions ###
-def params_guess(f, G, B, n, method='gmax', threshold=None, prominence=None):
+def params_guess(f, G, B, n, method='gmax', n_policy='max', threshold=None, prominence=None):
     '''
     guess initial values based on given method
     if method == 'bmax': use max susceptance
@@ -172,34 +194,35 @@ def params_guess(f, G, B, n, method='gmax', threshold=None, prominence=None):
         phi = np.arcsin(G[0] / np.sqrt(G[0]**2 + B[0]**2))
 
     # for forced number of peaks (might be added in future) 
-    # if n > len(indices):
-    #     if n_policy.lower() != 'forced':
-    #         n = len(indices) # change n to detected number of peaks
+    if n > len(indices):
+        if n_policy.lower() == 'max':
+            n = len(indices) # change n to detected number of peaks
+        elif n_policy.lower() == 'forced':
+            # n doesn't need to be changed
+            pass
+    elif n < len(indices):
+        # since 'max' and 'forced' both limited the number not exceeding n, n doesn't need to be changed
+        pass
 
-    for i in np.arange(len(indices)):
-        peak_guess[i] = {
-            'amp': prominences[i],  # or use heights
-            'cen': x[indices[i]], 
-            'wid': widths[i], 
-            'phi': phi
-        }
-        # if i+1 <= len(indices):
-        #     peak_guess[i] = {
-        #         'amp': prominences[i],  # or use heights
-        #         'cen': x[indices[i]], 
-        #         'wid': widths[i], 
-        #         'phi': phi
-        #     }
-        # else: # for forced number (n > len(indices))
-        #     # add some rough guess values
-        #     # use the min values of each variables
-        #     peak_guess[i] = {
-        #         'amp': np.amin(prominences),  # or use heights. 
-        #         'cen': x[randrange(1, len(x) -1, 10)], 
-        #         # devide x range to n parts and randomly choose one. Try to keep the peaks not too close
-        #         'wid': np.amin(widths), 
-        #         'phi': phi
-        #     }
+
+    for i in np.arange(n):
+        if i+1 <= len(indices):
+            peak_guess[i] = {
+                'amp': prominences[i],  # or use heights
+                'cen': x[indices[i]], 
+                'wid': widths[i], 
+                'phi': phi
+            }
+        else: # for forced number (n > len(indices))
+            # add some rough guess values
+            # use the min values of each variables
+            peak_guess[i] = {
+                'amp': np.amin(prominences),  # or use heights. 
+                'cen': x[randrange(1, len(x) -1, 10)], 
+                # devide x range to n parts and randomly choose one. Try to keep the peaks not too close
+                'wid': np.amin(widths), 
+                'phi': phi
+            }
 
     return len(indices), peak_guess
 

@@ -33,7 +33,7 @@ parms['imagetype'] = 'pdf'  # default is 'svg'
 #%% 2:1 20180824
 # qcm.analyze(sample['DGEBA-PACM_RT_2'], parms)
 
-#%% 2:1 20180823
+#%% 2:1 20180823 
 qcm.analyze(sample['DGEBA-PACM_RT'], parms)
 exit(0)
 #%% 2:1 
