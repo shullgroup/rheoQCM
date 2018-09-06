@@ -16,7 +16,7 @@ from PyQt5.QtCore import pyqtSlot, Qt, QEvent
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QRadioButton, QMenu, QMessageBox
 )
-from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QIntValidator, QDoubleValidator, QRegExpValidator
+from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, QDoubleValidator, QRegExpValidator
 
 # packages
 from MainWindow import Ui_MainWindow
@@ -608,6 +608,15 @@ class QCMApp(QMainWindow):
             "QTabBar::tab:last:selected { margin-right: 0; width: 40px; }"
             "QTabBar::tab:!selected { margin-top: 2px; }"
             )
+
+        self.ui.lineEdit_recordinterval.setValidator(QDoubleValidator(0, math.inf, 12))
+        self.ui.lineEdit_refreshresolution.setValidator(QIntValidator(0, 2147483647))
+        self.ui.lineEdit_scan_harmstart.setValidator(QDoubleValidator(1, math.inf, 12))
+        self.ui.lineEdit_scan_harmend.setValidator(QDoubleValidator(1, math.inf, 12))
+        self.ui.lineEdit_scan_harmsteps.setValidator(QIntValidator(0, 2147483647))
+        self.ui.lineEdit_peaks_maxnum.setValidator(QIntValidator(0, 2147483647))
+        self.ui.lineEdit_peaks_threshold.setValidator(QDoubleValidator(0, math.inf, 12))
+        self.ui.lineEdit_peaks_prominence.setValidator(QDoubleValidator(0, math.inf, 12))
 
         # set signals of widgets in tabWidget_settings_settings_harm
         self.ui.lineEdit_scan_harmstart.editingFinished.connect(self.on_editingfinished_harm_freq)
@@ -2128,7 +2137,7 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(self.settings['checkBox_harm' + str(i)])
             getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(self.settings['checkBox_harm' + str(i)])
 
-        
+
         # load default record interval
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         # load default spectra refresh resolution
