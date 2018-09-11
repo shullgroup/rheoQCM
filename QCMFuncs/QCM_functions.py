@@ -26,6 +26,7 @@ def close_on_click(event):
     openplots = openplots - 1
     return
 
+
 def find_dataroot(owner):
     # returns root data directory as first potential option from an input list
     # if none of the possibilities exist, we return 'none' 
@@ -42,6 +43,9 @@ def find_dataroot(owner):
     elif owner == 'taghon':
         dataroots =['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
                     'Research-Taghon/QCM/merefiles/data/']
+    elif owner == 'depolo':
+        dataroots =['/home/ken/k-shull@u.northwestern.edu/'+
+                     'Group_Members/Research-Depolo/data/']
 
     for directory in dataroots:
         if os.path.exists(directory):
@@ -49,7 +53,6 @@ def find_dataroot(owner):
     
     print('cannot find root data directory')
     return 'none'
-
 
 
 def fstar_err_calc(fstar):
@@ -153,8 +156,8 @@ def normdelfstar(n, dlam3, phi):
 
 
 def rhcalc(nh, dlam3, phi):
-    return real(normdelfstar(nh[0], dlam3, phi)) / \
-        real(normdelfstar(nh[1], dlam3, phi))
+    return normdelfstar(nh[0], dlam3, phi).real / \
+        normdelfstar(nh[1], dlam3, phi).real
 
 
 def rh_from_delfstar(nh, delfstar):
@@ -273,6 +276,24 @@ def solve_onelayer(soln_input):
     return soln_output
 
 
+def null_solution(nhplot):
+    soln_output = {'drho':np.nan, 'grho3':np.nan, 'phi':np.nan, 'dlam3':np.nan,
+            'err':{'drho':np.nan, 'grho3':np.nan, 'phi': np.nan}}
+    delfstar_calc = {}
+    rh = {}
+    rd = {}
+    for n in nhplot:
+        delfstar_calc[n] = np.nan
+        rd[n] = np.nan
+    rh = np.nan
+    soln_output['rd'] = rd
+    soln_output['rh'] = rh
+    soln_output['delfstar_calc'] = delfstar_calc
+    
+    return soln_output
+
+
+
 def analyze(sample, parms):
     global openplots
     # add the appropriate file root to the data path
@@ -370,8 +391,9 @@ def analyze(sample, parms):
     # if the number of temperatures is 1, we use the average of the 
     # bare temperature readings
     for n in nhplot:
-        film['fstar_ref'][n] = np.zeros(film['n_all'])
+        film['fstar_ref'][n] = np.zeros(film['n_all'], dtype=np.complex128)
         if Temp.shape[0] == 1:
+            bare['fstar'][n] = bare['fstar'][n][~np.isnan(bare['fstar'][n])]
             film['fstar_ref'][n][film['idx']] = (np.average(bare['fstar'][n]) * 
                                                  np.ones(nx))
         else:
@@ -422,7 +444,12 @@ def analyze(sample, parms):
             soln_input['nh'] = nh
             soln_input['delfstar'] = delfstar[i]
             soln_input['delfstar_err'] = delfstar_err[i]
-            soln = solve_onelayer(soln_input)
+            if (np.isnan(delfstar[i][int(nh[0])].real) or 
+                np.isnan(delfstar[i][int(nh[1])].real) or
+                np.isnan(delfstar[i][int(nh[2])].imag)):                
+                soln = null_solution(nhplot)
+            else:
+                soln = solve_onelayer(soln_input)
 
             results[nh]['drho'][i] = soln['drho']
             results[nh]['grho3'][i] = soln['grho3']
@@ -494,6 +521,8 @@ def analyze(sample, parms):
         output_data = np.stack((xdata, drho, grho3, phi), axis=-1)
         np.savetxt(base_fig_name+'_'+nh+'.txt', output_data, 
                    delimiter=',', header='xdata,drho,grho,phi', comments='')
+        
+        # add values of d/lam3 to the film raw data figure
 
     # add legends to the property figure
     propfig['drho_ax'].legend()
@@ -563,10 +592,15 @@ def pickpoints(Temp, nx, dict):
     return idx_out
 
 
+def close_existing_fig(figname):
+    if plt.fignum_exists(figname):
+        plt.close(figname)
+    return
+
+
 def make_prop_axes(propfigname, xlabel):
     # set up the property plot
-    if plt.fignum_exists(propfigname):
-        plt.close(propfigname)
+    close_existing_fig(propfigname)
     fig = plt.figure(propfigname, figsize=(9, 3))
     drho_ax = fig.add_subplot(131)
     drho_ax.set_xlabel(xlabel)
@@ -587,9 +621,7 @@ def make_prop_axes(propfigname, xlabel):
     
     
 def make_vgp_axes(propfigname):
-    # set up the property plot
-    if plt.fignum_exists(propfigname):
-        plt.close(propfigname)
+    close_existing_fig(propfigname)
     fig = plt.figure(propfigname, figsize=(3, 3))
     vgp_ax = fig.add_subplot(111)
     vgp_ax.set_xlabel((r'$|G_3^*|\rho \: (Pa \cdot g/cm^3)$'))
@@ -660,20 +692,31 @@ def process_raw(sample, data_type):
             
     # make the figure with its axis
     rawfigname = 'raw_'+data_type+'_'+sample['samplename']
-    if plt.fignum_exists(rawfigname):
-        plt.close(rawfigname)
-    dict['rawfig'] = plt.figure(rawfigname)
+    close_existing_fig(rawfigname)
+    if data_type == 'bare':
+        numplots=2
+    else:
+        numplots=3
+        
+    dict['rawfig'] = plt.figure(rawfigname, figsize=(numplots*3,3))
 
-    dict['f_ax'] = dict['rawfig'].add_subplot(121)
+    dict['f_ax'] = dict['rawfig'].add_subplot(1,numplots,1)
     dict['f_ax'].set_xlabel('t (min.)')
     dict['f_ax'].set_ylabel(r'$\Delta f_n/n$ (Hz)')
     dict['f_ax'].set_title(data_type)
 
-    dict['g_ax'] = dict['rawfig'].add_subplot(122)
+    dict['g_ax'] = dict['rawfig'].add_subplot(1,numplots,2)
     dict['g_ax'].set_xlabel('t (min.)')
     dict['g_ax'].set_ylabel(r'$\Gamma$ (Hz)')
     dict['g_ax'].set_title(data_type)
     
+    if numplots == 3:
+        dict['dlam3_ax'] = dict['rawfig'].add_subplot(1,numplots,3)
+        dict['dlam3_ax'].set_xlabel('t (min.)')
+        dict['dlam3_ax'].set_ylabel(r'$d/\lambda_3$')
+        dict['dlam3_ax'].set_title(data_type)
+
+
     # plot the raw data
     for n in nhplot:
         t = dict['t'][dict['idx_in_range']]
@@ -693,8 +736,7 @@ def process_raw(sample, data_type):
 
 
 def make_check_axes(sample, nh):
-    if plt.fignum_exists(nh + 'solution check'):
-        plt.close(nh + 'solution check')
+    close_existing_fig(nh + 'solution check')
     #  compare actual annd recaulated frequency and dissipation shifts.
     fig = plt.figure(nh + '_solution check_'+sample['samplename'])
     delf_ax = fig.add_subplot(221)
@@ -788,6 +830,55 @@ def plot_spectra(fig_dict, sample, idx_vals):
 
     return  {'fig': fig, 'G_ax': G_ax, 'B_ax': B_ax,
             'Nyquist_ax': Nyquist_ax, 'plot_num': plot_num}
+    
+    
+def contour(function, parms):
+    # set up the number of points and establisth the great
+    n = parms.get('n', 100)
+    phi = parms.get('phi', np.linspace(0, 90, n))
+    dlam = parms.get('dlam', np.linspace(0, 0.5, n))
+    dlam_i, phi_i = np.meshgrid(dlam, phi)
+    
+    # calculate the z falues and rest things to -1 at dlam=0
+    z = normdelfstar(3, dlam_i, phi_i)
+    z[:,0] = -1
+    
+    # now make the contour plots
+    
+    fig = plt.figure('contour', figsize=(6,3))
+    
+    flevels = np.linspace(-2, 0, 1000)
+    glevels = np.linspace(0, 2, 1000)
+    
+    # start with frequency shift
+    f_ax = fig.add_subplot(121)
+    f_ax.set_xlabel(r'$d/\lambda_n$')
+    f_ax.set_ylabel(r'$\phi$ (deg.)')
+    f_ax.set_title(r'$\Delta f_n/f_{sn}$')
+    f_map = f_ax.contourf(dlam_i, phi_i, z.real, flevels, cmap="gnuplot2",
+                          extend='both')
+    fig.colorbar(f_map, ax=f_ax, ticks = np.linspace(min(flevels),
+                 max(flevels), 6))
+    
+    # we need this to get rid of the lines in the contour plot
+    for c in f_map.collections:
+        c.set_edgecolor("face")
+    
+    # now plot the dissipation
+    g_ax = fig.add_subplot(122)
+    g_ax.set_xlabel(r'$d/\lambda_n$')
+    g_ax.set_ylabel(r'$\phi$ (deg.)')
+    g_ax.set_title(r'$\Delta \Gamma_n/f_{sn}$')
+    g_map = g_ax.contourf(dlam_i, phi_i, z.imag, glevels, cmap="gnuplot2_r",
+                          extend='both')
+    fig.colorbar(g_map, ax=g_ax, ticks = np.linspace(min(glevels),
+                 max(glevels), 6))
+    for c in g_map.collections:
+        c.set_edgecolor("face")
+        
+    fig.tight_layout()
+    
+    return
 
         
 
