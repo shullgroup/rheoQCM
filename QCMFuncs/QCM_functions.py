@@ -46,8 +46,7 @@ def find_dataroot(owner):
     elif owner == 'depolo':
         dataroots =['/home/ken/k-shull@u.northwestern.edu/'+
                      r'Group_Members/Research-Depolo/data/',
-                     r'C:\Users\Gwen dePolo\gwendepolo2023@u.northwestern.edu'+
-                     r'\Research-Depolo\data']
+                     r'C:\Users\Gwen dePolo\gwendepolo2023@u.northwestern.edu\data\'']
 
     for directory in dataroots:
         if os.path.exists(directory):
