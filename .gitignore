@@ -2,7 +2,7 @@
 QCMFuncs/figures
 doc/figures
 doc/QCMnotes.lyx~
-*sampledefs.py
+QCMFuncs/Depolo_sampledefs.py
 
 # Windows image file caches
 Thumbs.db
