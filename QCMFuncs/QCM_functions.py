@@ -524,11 +524,14 @@ def analyze(sample, parms):
                    delimiter=',', header='xdata,drho,grho,phi', comments='')
         
         # add values of d/lam3 to the film raw data figure
-
+        film['dlam3_ax'].plot(xdata, results[nh]['dlam3'],'+', label=nh)
     # add legends to the property figure
     propfig['drho_ax'].legend()
     propfig['grho_ax'].legend()
     propfig['phi_ax'].legend()
+    
+    # add legend to the the dlam3 figure
+    film['dlam3_ax'].legend()
 
     # tidy up the raw data and property figures
     propfig['figure'].tight_layout()
