@@ -34,7 +34,9 @@ stop_max_attempt_number = 100
 stop_max_delay = 10000
 
 # window name
-win_name = u'myVNA - Reflection mode "myVNA" [Embedded] '
+win_names = [
+    u'myVNA - Reflection mode "myVNA" [Embedded] ',  # there is a space at the end
+    u'myVNA - Reflection mode "myVNA"']
 # win_name = 'AccessMyVNA'
 
 # dll path
@@ -57,10 +59,10 @@ def _check_zero(result, func, args):
             raise WinError(err)
     return args
 
-def get_hWnd(win_name=win_name):
+def get_hWnd(win_name=win_names[0]):
     try:
         hWnd = win32ui.FindWindow(None, win_name).GetSafeHwnd()
-        pid = win32process.GetWindowThreadProcessId(hWnd)[1]
+        # pid = win32process.GetWindowThreadProcessId(hWnd)[1]
     except:
         hWnd = None
     print('hWnd', hWnd, '"' + win_name + '"') 
@@ -79,12 +81,13 @@ def get_pid(hWnd):
 
 def close_win():
     # close myVNA initiated by AccessMyVNA
-    hWnd = get_hWnd()
-    print('hWnd', hWnd)
-    pid = get_pid(hWnd)
-    print('pid', pid)
-    if pid:
-        os.kill(pid, signal.SIGTERM)
+    for win_name in win_names:
+        hWnd = get_hWnd(win_name)
+        print('hWnd', hWnd)
+        pid = get_pid(hWnd)
+        print('pid', pid)
+        if pid:
+            os.kill(pid, signal.SIGTERM)
 
 # make function prototypes 
 def wfunc(name, dll, result, *args):
@@ -787,7 +790,7 @@ class AccessMyVNA():
         # time.sleep(1)
         ret, f, B = self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=16)
         # self.Close()
-        return ret, f, G, B
+        return ret, f, G * 1e3, B * 1e3 # f in Hz; G & B in mS
     
     def change_settings(self, refChn=1, nMode=0, nSteps=400, nAverage=1):
         # ret =           self.Init()
@@ -831,7 +834,7 @@ class AccessMyVNA():
                 elif flg == 'instrmode': # set instrument mode
                     ret, nMode = self.Setinstrmode(nMode=0)
                 elif flg == 'speed': # set scan speed
-                    # we don't neet to change it through python now
+                    # we don't need to change it through python now
                     pass
                 else:
                     # add more above else

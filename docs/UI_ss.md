@@ -298,8 +298,8 @@ save filename to `self.fileName`
 
 
 values also inclued:  
-comboBox_span_method  
-comboBox_span_track  
+comboBox_tracking_method  
+comboBox_tracking_condition  
 comboBox_harmfitfactor  
 
 ##### pushButton_settings_harm_cntr

@@ -221,4 +221,31 @@ def sample_dict():
     'nhcalc': ['355', '353'],
     'nhplot': [1, 3, 5]
     }
+
+    #  20180823 2:1 
+    samplename = 'DGEBA-PACM_RT'
+    sample[samplename] = {
+    'samplename': 'DGEBA-PACM_RT',
+    'datadir': '20180823',
+    'barefile': 'bare_air',
+    'filmfile': 'DGEBA-PACM_RT',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    'nhcalc': ['355', '353'],
+    'nhplot': [1, 3, 5]
+    }
+
+    #  20180824 2:1 
+    samplename = 'DGEBA-PACM_RT_2'
+    sample[samplename] = {
+    'samplename': 'DGEBA-PACM_RT_2',
+    'datadir': '20180824',
+    'barefile': 'bare_air',
+    'filmfile': 'DGEBA-PACM_RT_2',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    'nhcalc': ['355', '353'],
+    'nhplot': [1, 3, 5]
+    }
+
     return sample

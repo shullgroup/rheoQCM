@@ -1,8 +1,13 @@
 '''
 Setting factors for GUI
 Change the following factors will change the apperiance of the GUI
-
 '''
+
+# for create ordered dictionary 
+# (dictionary in Python >=3.6 is ordered by default)
+# Use OrderedDict for those dicts need to be shown in order
+from collections import OrderedDict
+
 settings_init = {
     # title to display in the main GUI
     'window_title': 'QCM-R',
@@ -18,7 +23,6 @@ settings_init = {
     
     # add NI sensors into the dict and the code will check if the devices in its keys.
     # the values are the number of samples per test for average
-    # the channel MUST be 'ai0'
     'devices_dict': {
         'USB-TC01': {
             'nsamples': 1,            # number of points for average,
@@ -47,126 +51,120 @@ settings_init = {
     ]),
 
     # scan mode
-    'display_choose': {
-        'startstop':  'Start/Stop',
-        'centerspan': 'Center/Span',
-    },
+    'display_choose': OrderedDict([
+        ('startstop',  'Start/Stop'),
+        ('centerspan', 'Center/Span'),
+    ]),
 
     # choice for plotting data shown in comboBox_plt1_choice & comboBox_plt2_choice
-    'data_plt_choose': {
-        'none':   'none',
-        'df_t':   u'\u0394' + 'f - time',
-        'dfn_t':  u'\u0394' + 'f/n - time',
-        'mdf_t':  '-' + u'\u0394' + 'f - time',
-        'mdfn_t': '-' + u'\u0394' + 'f/n - time',
-        'dg_t':   u'\u0394\u0393' + ' - time',
-        'dgn_t':  u'\u0394\u0393' + '/n - time',
-        'f_t':    'f - time',
-        'g_t':    'g - time',
-        'temp_t': 'temp. - time'
-    },
+    'data_plt_choose': OrderedDict([
+        ('none',   'none'),
+        ('df_t',   u'\u0394' + 'f - time'),
+        ('dfn_t',  u'\u0394' + 'f/n - time'),
+        ('mdf_t',  '-' + u'\u0394' + 'f - time'),
+        ('mdfn_t', '-' + u'\u0394' + 'f/n - time'),
+        ('dg_t',   u'\u0394\u0393' + ' - time'),
+        ('dgn_t',  u'\u0394\u0393' + '/n - time'),
+        ('f_t',    'f - time'),
+        ('g_t',    'g - time'),
+        ('temp_t', 'temp. - time'),
+    ]),
 
     # spinBox_fitfactor
 
-    # comboBox_span_method
-    'span_mehtod_choose': {
-        'gmax':   'Gmax',
-        'dev':    'Derivative',
-        'bmax':   'Bmax',
-        'prev':   'Previous value',
-        'usrdef': 'User-defined...'
-    },
+    # comboBox_tracking_method
+    'span_mehtod_choose': OrderedDict([
+        ('auto',   'Auto'),
+        ('gmax',   'Gmax'),
+        ('bmax',   'Bmax'),
+        ('derv',    'Derivative'),
+        ('prev',   'Previous value'),
+        ('usrdef', 'User-defined...'),
+    ]),
 
     # track_method
-    'span_track_choose': {
-        'auto':      'Auto',
-        'fixspan':   'Fix span',
-        'fixcenter': 'Fix center',
-        'fixcntspn':  'Fix center/span',
-        'usrdef':    'User-defined...'
-    },
+    'span_track_choose': OrderedDict([
+        ('auto',      'Auto'),
+        ('fixspan',   'Fix span'),
+        ('fixcenter', 'Fix center'),
+        ('fixcntspn',  'Fix center/span'),
+        ('usrdef',    'User-defined...'),
+    ]),
 
     # sample_channel
-    'sample_channel_choose': {
+    'sample_channel_choose': OrderedDict([
     # key: number; val: for display in combobox
-        1: 'ADC 1',
-        2: 'ADC 2'
-    },
+        (1, 'ADC 1'),
+        (2, 'ADC 2'),
+    ]),
 
-    'ref_channel_choose': {
+    'ref_channel_choose': OrderedDict([
     # key: number; val: for display in combobox
-        'none': '--',
-        1: 'ADC 1',
-        2: 'ADC 2'
-    },
+        ('none', '--'),
+        (1, 'ADC 1'),
+        (2, 'ADC 2'),
+    ]),
 
-    'thrmcpl_choose': {
+    'thrmcpl_choose': OrderedDict([
     # key: number; val: for display in combobox
-        'J': 'J',
-        'K': 'K',
-        'N': 'N',
-        'R': 'R',
-        'S': 'S',
-        'T': 'T',
-        'B': 'B',
-        'E': 'E',
-    },
+        ('J', 'J'),
+        ('K', 'K'),
+        ('N', 'N'),
+        ('R', 'R'),
+        ('S', 'S'),
+        ('T', 'T'),
+        ('B', 'B'),
+        ('E', 'E'),
+    ]),
 
-    'time_unit_choose': {
+    'time_unit_choose': OrderedDict([
     # key: number; val: for display in combobox
-        's': 's',
-        'm': 'min',
-        'h': 'h',
-        'd': 'day',
-    },
+        ('s', 's'),
+        ('m', 'min'),
+        ('h', 'h'),
+        ('d', 'day'),
+    ]),
 
-    'temp_unit_choose': {
+    'temp_unit_choose': OrderedDict([
     # key: number; val: for display in combobox
-        'C': '°C',
-        'K': 'K',
-        # 'F': '°F',
-    },
+        ('C', '°C'),
+        ('K', 'K'),
+        # 'F', '°F',
+    ]),
 
-    'time_scale_choose': {
+    'scale_choose': OrderedDict([
     # key: number; val: for display in combobox
-        'linear': 'linear',
-        'log': 'log',
-    },
-
-    'y_scale_choose': {
-    # key: number; val: for display in combobox
-        'linear': 'linear',
-        'log': 'log',
-    },
-
+        ('linear', 'linear'),
+        ('log'   , 'log'),
+    ]),
 
     # available base frequency of crystals
     # key: number; val: for display in combobox
-    'base_frequency_choose': {
-        5:  '5 MHz',
-        6:  '6 MHz',
-        9:  '9 MHz',
-        10: '10 MHz',
-    },
+    'base_frequency_choose': OrderedDict([
+        (5 , '5 MHz'),
+        (6 , '6 MHz'),
+        (9 , '9 MHz'),
+        (10, '10 MHz'),
+    ]),
 
     # available bandwidth limitation for each harmonic
     # key: number; val: for display in combobox
-    'bandwidth_choose': {
-        2:  '2 MHz',
-        1:  '1 MHz',
-        0.5:  '0.5 MHz',
-        0.25: '0.25 MHz',
-        0.1: '0.1 MHz',
-    },
+    'bandwidth_choose': OrderedDict([
+        (2,  '2 MHz'),
+        (1,  '1 MHz'),
+        (0.5,  '0.5 MHz'),
+        (0.25, '0.25 MHz'),
+        (0.1, '0.1 MHz'),
+    ]),
 
     # reference type for showing delta f and delta gamma
     # key: number; val: for display in combobox
-    'ref_type_choose': {
-        't0':  'First point',
-        't1t2':  'Selected range',
-        # 'input':  'Input value',
-        'file': 'Other file',
-    },
+    'ref_type_choose': OrderedDict([
+        ('t0',  'First point'),
+        ('t1t2',  'Selected range'),
+        # ('input',  'Input value'),
+        ('file', 'Other file'),
+    ]),
 
     # steps ofr span control slider
     'span_ctrl_steps': [1, 2, 5, 10, 20, 50, 100],
@@ -240,12 +238,12 @@ settings_default = {
             11: 400, 
         },
         'span_method': {
-            1:  'gmax', 
-            3:  'gmax', 
-            5:  'gmax', 
-            7:  'gmax', 
-            9:  'gmax', 
-            11: 'gmax', 
+            1:  'auto', 
+            3:  'auto', 
+            5:  'auto', 
+            7:  'auto', 
+            9:  'auto', 
+            11: 'auto', 
         },
         'span_track': {
             1:  'auto', 
@@ -314,8 +312,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'auto',
+        'comboBox_tracking_method': 'auto',
+        'comboBox_tracking_condition': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -328,8 +326,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',   
+        'comboBox_tracking_method': 'auto',
+        'comboBox_tracking_condition': 'auto',   
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -342,8 +340,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'auto',
+        'comboBox_tracking_condition': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -356,8 +354,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'auto',
+        'comboBox_tracking_condition': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -370,8 +368,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'auto',
+        'comboBox_tracking_condition': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -384,8 +382,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'auto',
+        'comboBox_tracking_condition': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -398,8 +396,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'auto',
+        'comboBox_tracking_method': 'auto',
+        'comboBox_tracking_condition': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -412,8 +410,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',   
+        'comboBox_tracking_method': 'auto',
+        'comboBox_tracking_condition': 'auto',   
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -426,8 +424,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'auto',
+        'comboBox_tracking_condition': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -440,8 +438,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'auto',
+        'comboBox_tracking_condition': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -454,8 +452,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'auto',
+        'comboBox_tracking_condition': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,
@@ -468,8 +466,8 @@ settings_default = {
         # default scan settings
         'lineEdit_scan_harmsteps': 400,
         # default span settings
-        'comboBox_span_method': 'gmax',
-        'comboBox_span_track': 'fixspan',
+        'comboBox_tracking_method': 'auto',
+        'comboBox_tracking_condition': 'auto',
         # default fit settings
         'checkBox_harmfit': True,
         'spinBox_harmfitfactor': 6,

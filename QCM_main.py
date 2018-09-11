@@ -16,12 +16,12 @@ from PyQt5.QtCore import pyqtSlot, Qt, QEvent
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QRadioButton, QMenu, QMessageBox
 )
-from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QIntValidator, QDoubleValidator, QRegExpValidator
+from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, QDoubleValidator, QRegExpValidator
 
 # packages
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
-from modules import UIModules, MathModules
+from modules import UIModules, MathModules, GBFitting
 
 from MatplotlibWidget import MatplotlibWidget
 
@@ -48,20 +48,31 @@ else: # linux or MacOS
     from modules.AccessMyVNA_dummy import AccessMyVNA
 
 class PeakTracker:
+    _harmtrack_init = {
+        'track': None,
+        'cen'  : None,
+        'wid'  : None,
+        'amp'  : None,
+        'phi'  : None,
+        'f'    : None,
+        'G'    : None,
+        'B'    : None,
+
+    }
+
     def __init__(self):
-        self.f0 = None
-        self.g0 = None
-        self.f = None
-        self.G = None # conductance
-        self.B = None # susceptance
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            setattr(self, 'harm'+str(i), self._harmtrack_init)
         self.refit_flag = 0
         self.refit_counter = 1
-
         self.harm = 1
+
+    def update(self, harm, data):
+        pass
 
 class VNATracker:
     def __init__(self):
-        self.f = None       # current end frequency span in Hz ([float, float])
+        self.f =None       # current end frequency span in Hz (ndarray([float, float])
         self.steps = None   # current number of steps (int)
         self.chn = None     # current reflection ADC channel (1 or 2)
         self.avg = None     # average of scans (int)
@@ -69,16 +80,24 @@ class VNATracker:
         self.instrmode = 0  # instrument mode (0: reflection)
         
         self.setflg = {} # if vna needs to reset (set with reset selections)
-        self.setflg.update(self.__dict__)
-        self.setflg.pop('setflg', None)
+        self.setflg.update(self.__dict__) # get all attributes in a dict
+        self.setflg.pop('setflg', None) # remove setflg itself
         # print(self.setflg)
     
-    def reset_check(self, **kwargs):
+    def set_check(self, **kwargs):
         for key, val in kwargs.items():
             print(key, val)
+            print(type(val))
+            if isinstance(val, np.ndarray): # self.f 
+                val = val.tolist()
+                # if not np.array_equal(val, getattr(self, key)): # if self.<key> changed
+                #     setattr(self, key, val) # save val to class
+                # self.setflg[key] = val # add set key and value to setflg
+            # else:
             if getattr(self, key) != val: # if self.<key> changed
                 setattr(self, key, val) # save val to class
             self.setflg[key] = val # add set key and value to setflg
+
         return self.setflg
 
     def reset_flag(self):
@@ -88,22 +107,22 @@ class VNATracker:
 
 class DataStruct:
     def __init__(self):
-        self.samp = None # artribute to save data of sample
-        self.ref = None # artribute to save data of reference
+        self.samp = None # attribute to save data of sample
+        self.ref = None # attribute to save data of reference
         self.samp_settings = {
             'fstar0': None,     # f0
             't0': None,         # reference time
             'tshift': 0,        # reference time shift
             'ref': None,        # reference type
             'raw_file': None    # raw_file information (for searching raw file if needed in the future)
-        } # artribute to save f, t, reference define
-        self.calc = None # artribute to save the results of mechanics calculation
+        } # attribute to save f, t, reference define
+        self.calc = None # attribute to save the results of mechanics calculation
 
 class RawStruct:
     def __init__(self):
-        self.samp = None # artribute to save data of sample
-        self.ref = None # artribute to save data of reference
-        self.settings = None # artribute to UI settings
+        self.samp = None # attribute to save data of sample
+        self.ref = None # attribute to save data of reference
+        self.settings = None # attribute to UI settings
         self.ver = {}
 
 
@@ -126,11 +145,13 @@ class QCMApp(QMainWindow):
         self.tempsensor = None # class for temp sensor
         self.idle = True # if test is running
         self.reading = False # if myVNA/tempsensor is scanning and reading data
+        self.writing = False # if UI is saving data
+
         self.UITab = 0 # 0: Control; 1: Settings;, 2: Data; 3: Mechanics
         self.settings_harm = 1 # active harmonic in Settings Tab
         self.data_harm = 1 # active harmonic in Data Tab
         self.active_chn = {'name': 'samp', 'chn': 1} # active channel 'samp' or 'ref'
-        #### initialize the artributes for data saving
+        #### initialize the attributes for data saving
         self.data = DataStruct()
         self.raw = RawStruct()
         
@@ -375,9 +396,9 @@ class QCMApp(QMainWindow):
             100,
         )
 
-        # comboBox_span_method
+        # comboBox_tracking_method
         self.create_combobox(
-            'comboBox_span_method', 
+            'comboBox_tracking_method', 
             settings_init['span_mehtod_choose'], 
             100, 
             'Method', 
@@ -386,10 +407,10 @@ class QCMApp(QMainWindow):
 
         # add span track_method
         self.create_combobox(
-            'comboBox_span_track', 
+            'comboBox_tracking_condition', 
             settings_init['span_track_choose'], 
             100, 
-            'Tracking', 
+            'Condition', 
             self.ui.treeWidget_settings_settings_harmtree
         )
 
@@ -506,7 +527,7 @@ class QCMApp(QMainWindow):
         # insert time scale
         self.create_combobox(
             'comboBox_timescale', 
-            settings_init['time_scale_choose'], 
+            settings_init['scale_choose'], 
             100, 
             'Time Scale', 
             self.ui.treeWidget_settings_settings_plots
@@ -515,7 +536,7 @@ class QCMApp(QMainWindow):
         # insert gamma scale
         self.create_combobox(
             'comboBox_yscale', 
-            settings_init['y_scale_choose'], 
+            settings_init['scale_choose'], 
             100, 
             'Y Scale', 
             self.ui.treeWidget_settings_settings_plots
@@ -588,6 +609,15 @@ class QCMApp(QMainWindow):
             "QTabBar::tab:!selected { margin-top: 2px; }"
             )
 
+        self.ui.lineEdit_recordinterval.setValidator(QDoubleValidator(0, math.inf, 12))
+        self.ui.lineEdit_refreshresolution.setValidator(QIntValidator(0, 2147483647))
+        self.ui.lineEdit_scan_harmstart.setValidator(QDoubleValidator(1, math.inf, 12))
+        self.ui.lineEdit_scan_harmend.setValidator(QDoubleValidator(1, math.inf, 12))
+        self.ui.lineEdit_scan_harmsteps.setValidator(QIntValidator(0, 2147483647))
+        self.ui.lineEdit_peaks_maxnum.setValidator(QIntValidator(0, 2147483647))
+        self.ui.lineEdit_peaks_threshold.setValidator(QDoubleValidator(0, math.inf, 12))
+        self.ui.lineEdit_peaks_prominence.setValidator(QDoubleValidator(0, math.inf, 12))
+
         # set signals of widgets in tabWidget_settings_settings_harm
         self.ui.lineEdit_scan_harmstart.editingFinished.connect(self.on_editingfinished_harm_freq)
         self.ui.lineEdit_scan_harmend.editingFinished.connect(self.on_editingfinished_harm_freq)
@@ -596,8 +626,8 @@ class QCMApp(QMainWindow):
 
         # set signals to update span settings_settings
         self.ui.lineEdit_scan_harmsteps.textEdited.connect(self.update_harmwidget)
-        self.ui.comboBox_span_method.activated.connect(self.update_harmwidget)
-        self.ui.comboBox_span_track.activated.connect(self.update_harmwidget)
+        self.ui.comboBox_tracking_method.activated.connect(self.update_harmwidget)
+        self.ui.comboBox_tracking_condition.activated.connect(self.update_harmwidget)
         self.ui.checkBox_harmfit.clicked['bool'].connect(self.update_harmwidget)
         self.ui.spinBox_harmfitfactor.valueChanged.connect(self.update_harmwidget)
         self.ui.lineEdit_peaks_maxnum.textEdited.connect(self.update_harmwidget)
@@ -1210,7 +1240,7 @@ class QCMApp(QMainWindow):
 
         # get f1, f2
         # f1, f2 = self.ui.mpl_spectra_fit.ax[0].get_xlim()
-        f1, f2 = self.settings['freq_span'][self.settings_harm]
+        f1, f2 = self.get_freq_span()
         # convert start/end (f1/f2) to center/span (fc/fs)
         fc, fs = MathModules.converter_startstop_to_centerspan(f1, f2)
         # multiply fs
@@ -1238,14 +1268,16 @@ class QCMApp(QMainWindow):
         self.ui.horizontalSlider_spectra_fit_spanctrl.setValue(0)
 
 
-    def span_check(self, harm, f1=None, f2=None):
+    def span_check(self, harm=None, f1=None, f2=None):
         '''
         check if lower limit ('f1' in Hz) and upper limit ('f2' in Hz) in base freq +/- BW of harmonic 'harm'
         if out of the limit, return the part in the range
         and show alert in statusbar
         '''
+        if harm is None:
+            harm = self.settings_harm
         # get freq_range
-        bf1, bf2 = np.array(self.settings['freq_range'][harm]) # in Hz
+        bf1, bf2 = self.settings['freq_range'][harm] # in Hz
         # check f1, and f2
         if f1 and (f1 < bf1 or f1 >= bf2): # f1 out of limt
             f1 = bf1
@@ -1256,11 +1288,11 @@ class QCMApp(QMainWindow):
         if f1 and f2 and (f1 >= f2):
             f2 = bf2
 
-        return [f1, f2]
+        return np.array([f1, f2])
 
     def get_spectraTab_mode(self):
         '''
-        get the current UI condition from artributes and 
+        get the current UI condition from attributes and 
         set the mode for spectra_fit
         '''
         mode = None,   # None/center/refit
@@ -1298,12 +1330,12 @@ class QCMApp(QMainWindow):
             # get harmonic from self.settings_harm
             harm = self.settings_harm
             # get f1, f2
-            freq_span = self.settings['freq_span'][harm]
-            steps = self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_scan_harmsteps']
+            freq_span = self.get_freq_span()
+            steps = int(self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_scan_harmsteps'])
             chn = self.active_chn['chn']
 
             # get the vna reset flag
-            setflg = self.vna_tracker.reset_check(f=freq_span, steps=steps, chn=chn)
+            setflg = self.vna_tracker.set_check(f=freq_span, steps=steps, chn=chn)
             print(setflg)
 
             with self.vna as vna:
@@ -1363,7 +1395,7 @@ class QCMApp(QMainWindow):
         # get harmonic
         harm = self.settings_harm
         # set freq_span[harm] to the maximum range (freq_range[harm])
-        self.settings['freq_span'][harm] == self.settings['freq_range'][harm]
+        self.set_freq_span(self.settings['freq_range'][harm])
         # get data
         f, G, B = self.sepectra_fit_get_data()
         # updata data
@@ -1477,7 +1509,14 @@ class QCMApp(QMainWindow):
         '''
         # get data in tuple (x, y)
         data_lG, data_lB = self.ui.mpl_spectra_fit.get_data(ls=['lG', 'lB'])
+        print(data_lG)
+        print(data_lB)
 
+        factor = self.get_harmdata('spinBox_harmfitfactor')
+
+        # get guessed value of cen and wid
+
+        result = GBFitting.minimize_GB(data_lG[0], data_lG[1], data_lB[1], n=1,)
 
 
 
@@ -1712,8 +1751,8 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_scan_harmsteps.setText(
             str(self.settings[tabwidget_name]['lineEdit_scan_harmsteps'])
         )
-        self.load_comboBox(self.ui.comboBox_span_method, 'span_mehtod_choose', parent=tabwidget_name)
-        self.load_comboBox(self.ui.comboBox_span_track, 'span_track_choose', parent=tabwidget_name) 
+        self.load_comboBox(self.ui.comboBox_tracking_method, 'span_mehtod_choose', parent=tabwidget_name)
+        self.load_comboBox(self.ui.comboBox_tracking_condition, 'span_track_choose', parent=tabwidget_name) 
         
         # update spinBox_harmfitfactor
         self.ui.spinBox_harmfitfactor.setValue(
@@ -1735,13 +1774,36 @@ class QCMApp(QMainWindow):
             str(self.settings[tabwidget_name]['lineEdit_peaks_prominence'])
         )
 
+    def get_harmdata(self, objname, harm=None):
+        '''
+        get data with given objname in 
+        treeWidget_settings_settings_harmtree
+        except lineEdit_harmstart & lineEdit_harmend
+        '''
+        if harm is None: # use harmonic displayed in UI
+            harm = self.settings_harm
+        else: # use given harmonic. It is useful for mpl_sp<n> getting params
+            pass
+        
+        # choose the parent by self.active_chn
+        if self.active_chn['name'] == 'samp':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm)
+        elif self.active_chn['name'] == 'ref':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm) + '_r'
+        try:
+            return self.settings[tabwidget_name][objname]
+        except:
+            print(objname, 'is not found!')
+            return None
+
+
     def update_base_freq(self, base_freq_index):
         self.settings['comboBox_base_frequency'] = self.ui.comboBox_base_frequency.itemData(base_freq_index) # in MHz
         print(self.settings['comboBox_base_frequency'])
         # update freq_range
         self.update_freq_range()
         # check freq_span
-        self.check_freq_span()
+        self.check_freq_spans()
         # update freqrency display
         self.update_frequencies()
         # update statusbar
@@ -1753,7 +1815,7 @@ class QCMApp(QMainWindow):
         # update freq_range
         self.update_freq_range()
         # check freq_span
-        self.check_freq_span()
+        self.check_freq_spans()
         # update freqrency display
         self.update_frequencies()
         # update statusbar
@@ -1773,11 +1835,42 @@ class QCMApp(QMainWindow):
         BW = self.settings['comboBox_bandwidth'] * 1e6 # in Hz
         freq_range = {}
         for i in range(1, settings_init['max_harmonic']+2, 2):
-            freq_range[i] = [i*fbase-BW, i*fbase+BW]
+            freq_range[i] = np.array([i*fbase-BW, i*fbase+BW])
         self.settings['freq_range'] = freq_range
         print(self.settings['freq_range'])
 
-    def check_freq_span(self):
+    def get_freq_span(self, harm=None, chn=None):
+        '''
+        return freq_span of given harm and chn
+        if harm and chn not given, use self.settings
+        '''
+        if harm is None:
+            harm = self.settings_harm
+        if chn is None:
+            chn = self.active_chn['name']
+        if chn == 'samp':
+            span_name = 'freq_span'
+        elif chn == 'ref':
+            span_name = 'freq_span_r'
+        return self.settings[span_name][harm]
+
+    def set_freq_span(self, span, harm=None, chn=None):
+        '''
+        set freq_span of given harm and chn
+        if harm and chn not given, use self.settings
+        span: ndarray of [f1, f2]
+        '''
+        if harm is None:
+            harm = self.settings_harm
+        if chn is None:
+            chn = self.active_chn['name']
+        if chn == 'samp':
+            span_name = 'freq_span'
+        elif chn == 'ref':
+            span_name = 'freq_span_r'
+        self.settings[span_name][harm] = span
+
+    def check_freq_spans(self):
         '''
         check if settings['freq_span'] (freq span for each harmonic) values in the allowed range self.settings['freq_range']
         '''
@@ -1821,17 +1914,14 @@ class QCMApp(QMainWindow):
         # update start/end in treeWidget_settings_settings_harmtree
         harm = self.settings_harm
         print(harm)
-        if self.active_chn['name'] == 'samp':
-            span_name = 'freq_span'
-        elif self.active_chn['name'] == 'ref':
-            span_name = 'freq_span_r'
+        f1, f2 = self.get_freq_span()
         # Set Start
         self.ui.lineEdit_scan_harmstart.setText(
-            MathModules.num2str(self.settings[span_name][harm][0]*1e-6, precision=12)
+            MathModules.num2str(f1*1e-6, precision=12)
         )
         # set End
         self.ui.lineEdit_scan_harmend.setText(
-            MathModules.num2str(self.settings[span_name][harm][1]*1e-6, precision=12)
+            MathModules.num2str(f2*1e-6, precision=12)
         )
 
     def update_freq_display_mode(self, signal):
@@ -1862,13 +1952,9 @@ class QCMApp(QMainWindow):
         print(harm, harmstart, harmend)
         f1, f2 = self.span_check(harm=harm, f1=harmstart, f2=harmend)
         print(f1, f2)
-        if self.active_chn['name'] == 'samp':
-            span_name = 'freq_span'
-        elif self.active_chn['name'] == 'ref':
-            span_name = 'freq_span_r'
-        self.settings[span_name][harm] = [f1, f2]
+        self.set_freq_span(np.array([f1, f2]))
         # self.settings['freq_span'][harm] = [harmstart, harmend] # in Hz
-        # self.check_freq_span()
+        # self.check_freq_spans()
         self.update_frequencies()
 
     def set_default_freqs(self):
@@ -1879,13 +1965,13 @@ class QCMApp(QMainWindow):
 
     def update_spanmethod(self, fitmethod_index):
         #NOTUSING
-        value = self.ui.comboBox_span_method.itemData(fitmethod_index)
-        self.settings['tab_settings_settings_harm' + str(self.settings_harm)]['comboBox_span_method'] = value
+        value = self.ui.comboBox_tracking_method.itemData(fitmethod_index)
+        self.settings['tab_settings_settings_harm' + str(self.settings_harm)]['comboBox_tracking_method'] = value
 
     def update_spantrack(self, trackmethod_index):
         #NOTUSING
-        value = self.ui.comboBox_span_track.itemData(trackmethod_index)
-        self.settings['tab_settings_settings_harm' + str(self.settings_harm)]['comboBox_span_track'] = value
+        value = self.ui.comboBox_tracking_condition.itemData(trackmethod_index)
+        self.settings['tab_settings_settings_harm' + str(self.settings_harm)]['comboBox_tracking_condition'] = value
 
     def update_harmfitfactor(self, harmfitfactor_index):
         #NOTUSING
@@ -2019,7 +2105,7 @@ class QCMApp(QMainWindow):
         # this has to be initated before any 
         self.update_freq_range()
         # update self.settings['freq_span']
-        self.check_freq_span()
+        self.check_freq_spans()
 
         ## set default appearence
         # set window title
@@ -2051,7 +2137,7 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(self.settings['checkBox_harm' + str(i)])
             getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(self.settings['checkBox_harm' + str(i)])
 
-        
+
         # load default record interval
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         # load default spectra refresh resolution
@@ -2078,7 +2164,7 @@ class QCMApp(QMainWindow):
         # this has to be initated before any 
         self.update_freq_range()
         # update self.settings['freq_span']
-        self.check_freq_span()
+        self.check_freq_spans()
         # update frequencies display
         self.update_frequencies()
 
@@ -2105,8 +2191,8 @@ class QCMApp(QMainWindow):
         # load default plots settings
         self.load_comboBox(self.ui.comboBox_timeunit, 'time_unit_choose')
         self.load_comboBox(self.ui.comboBox_tempunit, 'temp_unit_choose')
-        self.load_comboBox(self.ui.comboBox_timescale, 'time_scale_choose')
-        self.load_comboBox(self.ui.comboBox_yscale, 'y_scale_choose')
+        self.load_comboBox(self.ui.comboBox_timescale, 'scale_choose')
+        self.load_comboBox(self.ui.comboBox_yscale, 'scale_choose')
 
         self.ui.checkBox_linktime.setChecked(self.settings['checkBox_linktime'])
 
@@ -2151,81 +2237,70 @@ class QCMApp(QMainWindow):
             else:
                 self.settings[endname] = max_range
 
-    def smart_peak_tracker(self, harmonic, freq, conductance, susceptance, G_parameters):
+    def smart_peak_tracker(self, harmonic=None, freq=None, conductance=None, susceptance=None, G_parameters=None):
         self.peak_tracker.f0 = G_parameters[0]
         self.peak_tracker.g0 = G_parameters[1]
 
+        track_condition = self.get_harmdata('comboBox_tracking_condition', harmonic) 
+        track_method = self.get_harmdata('comboBox_tracking_method', harmonic)
+        chn = self.active_chn['name']
         # determine the structure field that should be used to extract out the initial-guessing method
-        if self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_span_method'] == 'bmax':
+        if track_method == 'bmax':
             resonance = susceptance
         else:
             resonance = conductance
-        index = MathModules.findpeaks(resonance, output='indices', sortstr='descend')
-        peak_f = freq[index[0]]
+        index = GBFitting.findpeaks(resonance, output='indices', sortstr='descend')
+        cen = freq[index[0]] # peak center
         # determine the estimated associated conductance (or susceptance) value at the resonance peak
         Gmax = resonance[index[0]] 
         # determine the estimated half-max conductance (or susceptance) of the resonance peak
-        halfg = (Gmax-np.amin(resonance))/2 + np.amin(resonance) 
-        halfg_freq = np.absolute(freq[np.where(np.abs(halfg-resonance)==np.min(np.abs(halfg-resonance)))[0][0]])
-        # extract the peak tracking conditions
-        track_method = self.settings['tab_settings_settings_harm' + str(harmonic)]['comboBox_span_track'] 
-        if track_method == 'fixspan':
-            # get the current span of the data in Hz
-            current_span = self.settings['freq_span'][harmonic][1] - self.settings['freq_span'][harmonic][0]
-            if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-peak_f) > 0.1 * current_span:
+        half_amp = (Gmax-np.amin(resonance))/2 + np.amin(resonance) 
+        half_wid = np.absolute(freq[np.where(np.abs(half_amp-resonance)==np.min(np.abs(half_amp-resonance)))[0][0]] -  cen)
+        current_xlim = self.get_freq_span(harm=harmonic, chn=chn)
+        # get the current center and current span of the data in Hz
+        current_center, current_span = MathModules.converter_startstop_to_centerspan(current_xlim[0], current_xlim[1])
+        # find the starting and ending frequency of only the peak in Hz
+        if track_condition == 'fixspan':
+            if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > 0.1 * current_span:
                 # new start and end frequencies in Hz
-                new_xlim=np.array([peak_f-0.5*current_span,peak_f+0.5*current_span])
-                self.settingssettings['freq_span'][harmonic] = new_xlim
-        elif track_method == 'fixcenter':
-            # get current start and end frequencies of the data in Hz
-            current_xlim = np.array(elf.settings['freq_span'][harmonic])
-            # get the current center of the data in Hz
-            current_center = (self.settings['freq_span'][harmonic][1] + self.settings['freq_span'][harmonic][0])/2 
-            # find the starting and ending frequency of only the peak in Hz
-            peak_xlim = np.array([peak_f-halfg_freq*3, peak_f+halfg_freq*3]) 
-            if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*halfg_freq, current_center + 3*halfg_freq])))) > 3e3:
+                new_xlim=np.array([cen-0.5*current_span,cen+0.5*current_span])
+        elif track_condition == 'fixcenter':
+            # peak_xlim = np.array([cen-half_wid*3, cen+half_wid*3])
+            if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*half_wid, current_center + 3*half_wid])))) > 3e3:
+                #TODO above should equal to abs(sp - 6 * half_wid) > 3e3
                 # set new start and end freq based on the location of the peak in Hz
-                new_xlim = np.array(current_center-3*halfg_freq, current_center+3*halfg_freq)
-                # set new start/end freq in Hz
-                self.settingssettings['freq_span'][harmonic] = new_xlim
-        elif track_method == 'auto':
+                new_xlim = np.array(current_center-3*half_wid, current_center+3*half_wid)
+
+        elif track_condition == 'auto':
             # adjust window if neither span or center is fixed (default)
-            current_xlim = np.array(elf.settings['freq_span'][harmonic])
-            # get the current span of the data in Hz
-            current_span = self.settings['freq_span'][harmonic][1] - self.settings['freq_span'][harmonic][0]
-            if(np.mean(current_xlim)-peak_f) > 1*current_span/12:
-                new_xlim = current_xlim-current_span/15  # new start and end frequencies in Hz
-                # set new span
-                self.settingssettings['freq_span'][harmonic] = new_xlim
-            elif (np.mean(current_xlim)-peak_f) < -1*current_span/12:
-                new_xlim = current_xlim+current_span/15  # new start and end frequencies in Hz
-                # set new span
-                self.settingssettings['freq_span'][harmonic] = new_xlim
+            if(np.mean(current_xlim)-cen) > 1*current_span/12:
+                new_xlim = current_xlim - current_span / 15  # new start and end frequencies in Hz
+            elif (np.mean(current_xlim)-cen) < -1*current_span/12:
+                new_xlim = current_xlim + current_span / 15  # new start and end frequencies in Hz
             else:
-                thresh1=.05*current_span + current_xlim[0] # Threshold frequency in Hz
-                thresh2=.03*current_span # Threshold frequency span in Hz
-                LB_peak=peak_f-halfg_freq*3 # lower bound of the resonance peak
-                if LB_peak-thresh1 > halfg_freq*8: # if peak is too thin, zoom into the peak
-                    new_xlim[0]=(current_xlim[0] + thresh2) # Hz
-                    new_xlim[1]=(current_xlim[1] - thresh2) # Hz
-                    # set new span
-                    self.settingssettings['freq_span'][harmonic] = new_xlim
-                elif thresh1-LB_peak > -halfg_freq*5: # if the peak is too fat, zoom out of the peak
-                    new_xlim[0]=current_xlim[0]-thresh2 # Hz
-                    new_xlim[1]=current_xlim[1]+thresh2 # Hz
-                    # set new span
-                    self.settingssettings['freq_span'][harmonic] = new_xlim
-        elif track_method == 'fixcntspn':
+                thresh1 = .05 * current_span + current_xlim[0] # Threshold frequency in Hz
+                thresh2 = .03 * current_span # Threshold frequency span in Hz
+                LB_peak = cen - half_wid * 3 # lower bound of the resonance peak
+                if LB_peak - thresh1 > half_wid * 8: # if peak is too thin, zoom into the peak
+                    new_xlim[0] = (current_xlim[0] + thresh2) # Hz
+                    new_xlim[1] = (current_xlim[1] - thresh2) # Hz
+                elif thresh1 - LB_peak > -half_wid*5: # if the peak is too fat, zoom out of the peak
+                    new_xlim[0] = current_xlim[0] - thresh2 # Hz
+                    new_xlim[1] = current_xlim[1] + thresh2 # Hz
+        elif track_condition == 'fixcntspn':
             # bothe span and cent are fixed
             # no changes
-            pass
-        elif track_method == 'usrdef': #run custom tracking algorithm
+            return
+        elif track_condition == 'usrdef': #run custom tracking algorithm
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
-            pass
+            return
 
-        self.check_freq_span()
+        # set new start/end freq in Hz
+        self.set_freq_span(new_xlim, harm= harmonic, chn=chn)
+        self.check_freq_spans()
+        self.update_frequencies()
     
     def read_scan(self, harmonic):
         #NOTUSING
