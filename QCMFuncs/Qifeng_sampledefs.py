@@ -86,10 +86,11 @@ def sample_dict():
     'datadir': '20180724',
     'barefile': 'bare_air',
     'filmfile': 'DGEBA-Jeffamine230_RT_3',
-    'firstline': 1,
-    'filmtrange': [500, 10000],
-    'nhcalc': ['355'],
-    'nhplot': [3, 5]
+    'firstline': 0,
+    # 'filmtrange': [500, 10000],
+    'filmindex':  list(range(0, 130, 5)) +  [140, 145, 149, 150],
+    'nhcalc': ['133', '353', '355'],
+    'nhplot': [1, 3, 5]
     }
 
     #  20180726 2:1 too thick
@@ -113,9 +114,10 @@ def sample_dict():
     'barefile': 'bare_air',
     'filmfile': 'DGEBA-Jeffamine230_RT_5',
     'firstline': 2,
-    'filmtrange': [500, 50000],
-    'nhcalc': ['355'],
-    'nhplot': [3, 5]
+    # 'filmtrange': [500, 50000],
+    'filmindex':  list(range(0, 96, 5)) + [96, 97],
+    'nhcalc': ['133', '353', '355'],
+    'nhplot': [1, 3, 5]
     }
 
     #  20180803 2:1 
@@ -205,6 +207,7 @@ def sample_dict():
     'filmfile': 'DGEBA-Jeffamine400_RT_2',
     'firstline': 1,
     # 'filmtrange': [1, 10],
+    'filmindex':  list(range(0, 90, 5)) + [91, 92],
     'nhcalc': ['355', '353'],
     'nhplot': [1, 3, 5]
     }
@@ -213,35 +216,51 @@ def sample_dict():
     samplename = 'DGEBA-Jeffamine400_RT_3'
     sample[samplename] = {
     'samplename': 'DGEBA-Jeffamine400_RT_3',
-    'datadir': '20180817',
-    'barefile': 'bare_air',
-    'filmfile': 'DGEBA-Jeffamine400_RT_3',
-    'firstline': 0,
+    'datadir':    '20180817',
+    'barefile':   'bare_air',
+    'filmfile':   'DGEBA-Jeffamine400_RT_3',
+    'firstline':  0,
     # 'filmtrange': [1, 10],
-    'nhcalc': ['355', '353'],
-    'nhplot': [1, 3, 5]
+    'filmindex':  list(range(0,31, 5)) + [32, 33, 34] + list(range(35, 100, 5)) + [102, 103],
+    'nhcalc':     ['355', '353'],
+    'nhplot':     [1, 3, 5]
     }
 
     #  20180823 2:1 
     samplename = 'DGEBA-PACM_RT'
     sample[samplename] = {
     'samplename': 'DGEBA-PACM_RT',
-    'datadir': '20180823',
-    'barefile': 'bare_air',
-    'filmfile': 'DGEBA-PACM_RT',
-    'firstline': 0,
+    'datadir':    '20180823',
+    'barefile':   'bare_air',
+    'filmfile':   'DGEBA-PACM_RT',
+    'firstline':  0,
     # 'filmtrange': [1, 10],
-    'nhcalc': ['355', '353'],
-    'nhplot': [1, 3, 5]
+    'filmindex':  list(range(0, 79, 5)) + [78],
+    'nhcalc':     ['355', '353'],
+    'nhplot':     [1, 3, 5]
     }
 
     #  20180824 2:1 
     samplename = 'DGEBA-PACM_RT_2'
     sample[samplename] = {
     'samplename': 'DGEBA-PACM_RT_2',
-    'datadir': '20180824',
+    'datadir':    '20180824',
+    'barefile':   'bare_air',
+    'filmfile':   'DGEBA-PACM_RT_2',
+    'firstline':  0,
+    # 'filmtrange': [1, 10],
+    'filmindex':  list(range(0,51, 5)) + list(range(60, 121, 10)) + [128],
+    'nhcalc':     ['133', '355'],
+    'nhplot':     [1, 3, 5]
+    }
+
+    #  20180828 2:1 
+    samplename = 'DGEBA-Jeffamine2000_RT_5'
+    sample[samplename] = {
+    'samplename': 'DGEBA-Jeffamine2000_RT_5',
+    'datadir': '20180828',
     'barefile': 'bare_air',
-    'filmfile': 'DGEBA-PACM_RT_2',
+    'filmfile': 'DGEBA-Jeffamine2000_RT_5',
     'firstline': 0,
     # 'filmtrange': [1, 10],
     'nhcalc': ['355', '353'],

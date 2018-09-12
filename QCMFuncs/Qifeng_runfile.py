@@ -26,45 +26,53 @@ parms['dataroot'] = qcm.find_dataroot('qifeng')
 parms['figlocation'] = 'datadir' # save data in 
 sample = sample_dict()  # read sample dictionary
 
-# specify any non-default parameters
-parms['imagetype'] = 'pdf'  # default is 'svg'
+# specify any non-default parameters 
+parms['imagetype'] = 'png'  # default is 'svg'
 
 ######### run samples below ##########
-#%% 2:1 20180824
+
+#%% 2:1 20180828 (film dewetted)
+# qcm.analyze(sample['DGEBA-Jeffamine2000_RT_5'], parms)
+
+#%% 2:1 20180824 good but low G
 # qcm.analyze(sample['DGEBA-PACM_RT_2'], parms)
 
-#%% 2:1 20180823 
-qcm.analyze(sample['DGEBA-PACM_RT'], parms)
-exit(0)
-#%% 2:1 
-qcm.analyze(sample['DGEBA-Jeffamine400_RT_3'], parms)
+#%% 2:1 20180823 thick  10 um high phi
+# qcm.analyze(sample['DGEBA-PACM_RT'], parms)
 
-#%% 2:1 
-qcm.analyze(sample['DGEBA-Jeffamine400_RT_2'], parms)
+#%% 2:1 20180817 good
+# qcm.analyze(sample['DGEBA-Jeffamine400_RT_3'], parms)
 
-#%% 2:1 
-qcm.analyze(sample['DGEBA-Jeffamine400_RT'], parms)
+#%% 2:1 20180814 solving error 
+# qcm.analyze(sample['DGEBA-Jeffamine400_RT_2'], parms)
 
-#%% 2:1 
-qcm.analyze(sample['DGEBA-Jeffamine2000_RT_4_2'], parms)
+#%% 2:1 20180813 dewetted
+# qcm.analyze(sample['DGEBA-Jeffamine400_RT'], parms)
 
-#%% 2:1 
-qcm.analyze(sample['DGEBA-Jeffamine2000_RT_4'], parms)
+#%% 2:1 20180810 dewetted after 2 days
+# qcm.analyze(sample['DGEBA-Jeffamine2000_RT_4_2'], parms)
 
-#%% 2:1 
-qcm.analyze(sample['DGEBA-Jeffamine2000_RT_3'], parms)
+#%% 2:1 20180808 dewetted after 2 days
+# qcm.analyze(sample['DGEBA-Jeffamine2000_RT_4'], parms)
 
-#%% 2:1 
-qcm.analyze(sample['DGEBA-Jeffamine2000_RT_2'], parms)
+#%% 2:1 20180807 not uniform due to dewetting
+# qcm.analyze(sample['DGEBA-Jeffamine2000_RT_3'], parms)
 
-#%% 2:1 good
-qcm.analyze(sample['DGEBA-Jeffamine230_RT_5'], parms)
+#%% 2:1 20180806 not uniform 
+# qcm.analyze(sample['DGEBA-Jeffamine2000_RT_3'], parms)
 
-#%% 2:1 thickj
-qcm.analyze(sample['DGEBA-Jeffamine230_RT_4'], parms)
+#%% 2:1 20180803 not uniform
+# qcm.analyze(sample['DGEBA-Jeffamine2000_RT_2'], parms)
+
+#%% 2:1 20180727 good
+# qcm.analyze(sample['DGEBA-Jeffamine230_RT_5'], parms)
+
+#%% 2:1 thick
+# qcm.analyze(sample['DGEBA-Jeffamine230_RT_4'], parms)
 
 #%% 1:1 good
 qcm.analyze(sample['DGEBA-Jeffamine230_RT_3'], parms)
+exit(0)
 
 #%%
 qcm.analyze(sample['DGEBA-Jeffamine230_RT_2'], parms)
