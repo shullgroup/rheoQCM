@@ -26,16 +26,19 @@ parms['dataroot'] = qcm.find_dataroot('qifeng')
 parms['figlocation'] = 'datadir' # save data in 
 sample = sample_dict()  # read sample dictionary
 
-# specify any non-default parameters 
+# specify any non-default parameters  
 parms['imagetype'] = 'png'  # default is 'svg'
 
 ######### run samples below ##########
+
+#%% 2:1 20180914 (film dewetted)
+# qcm.analyze(sample['DGEBA-Jeffamine2000_RT_6'], parms)
 
 #%% 2:1 20180828 (film dewetted)
 # qcm.analyze(sample['DGEBA-Jeffamine2000_RT_5'], parms)
 
 #%% 2:1 20180824 good but low G
-# qcm.analyze(sample['DGEBA-PACM_RT_2'], parms)
+# qcm.analyze(sample['DGEBA-PACM_RT_2'], parms) 
 
 #%% 2:1 20180823 thick  10 um high phi
 # qcm.analyze(sample['DGEBA-PACM_RT'], parms)
@@ -56,7 +59,7 @@ parms['imagetype'] = 'png'  # default is 'svg'
 # qcm.analyze(sample['DGEBA-Jeffamine2000_RT_4'], parms)
 
 #%% 2:1 20180807 not uniform due to dewetting
-# qcm.analyze(sample['DGEBA-Jeffamine2000_RT_3'], parms)
+# qcm.analyze(sample['DGEBA-Jeffamine2000_RT_3_2'], parms)
 
 #%% 2:1 20180806 not uniform 
 # qcm.analyze(sample['DGEBA-Jeffamine2000_RT_3'], parms)
@@ -65,26 +68,25 @@ parms['imagetype'] = 'png'  # default is 'svg'
 # qcm.analyze(sample['DGEBA-Jeffamine2000_RT_2'], parms)
 
 #%% 2:1 20180727 good
-# qcm.analyze(sample['DGEBA-Jeffamine230_RT_5'], parms)
+qcm.analyze(sample['DGEBA-Jeffamine230_RT_5'], parms)
 
 #%% 2:1 thick
 # qcm.analyze(sample['DGEBA-Jeffamine230_RT_4'], parms)
 
-#%% 1:1 good
-qcm.analyze(sample['DGEBA-Jeffamine230_RT_3'], parms)
-exit(0)
+#%% 20180724 1:1 good
+# qcm.analyze(sample['DGEBA-Jeffamine230_RT_3'], parms)
 
 #%%
-qcm.analyze(sample['DGEBA-Jeffamine230_RT_2'], parms)
+# qcm.analyze(sample['DGEBA-Jeffamine230_RT_2'], parms)
 
 #%%
-qcm.analyze(sample['DGEBA-Jeffamine230_RT'], parms)
+# qcm.analyze(sample['DGEBA-Jeffamine230_RT'], parms)
 
 #%%
-qcm.analyze(sample['DGEBA-Jeffamine2000_RT'], parms)
+# qcm.analyze(sample['DGEBA-Jeffamine2000_RT'], parms)
 #%%
-qcm.analyze(sample['cryt_2_BCB_air_after_LN2'], parms)
+# qcm.analyze(sample['cryt_2_BCB_air_after_LN2'], parms)
 #%%
-qcm.analyze(sample['cryt_2_BCB_LN2'], parms)
+# qcm.analyze(sample['cryt_2_BCB_LN2'], parms)
 #%%
-qcm.analyze(sample['cryt_2_BCB_air'], parms)
+# qcm.analyze(sample['cryt_2_BCB_air'], parms)

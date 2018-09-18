@@ -293,27 +293,9 @@ def null_solution(nhplot):
     
     return soln_output
 
-
-
-def analyze(sample, parms):
-    global openplots
-    # add the appropriate file root to the data path
-    sample['dataroot'] = parms['dataroot']
-    # read in the optional inputs, assigning default values if not assigned
-    nhplot = sample.get('nhplot', [1, 3, 5])
-    # firstline = sample.get('firstline', 0)
-    sample['xlabel'] = sample.get('xlabel',  't (min.)')
-    Temp = np.array(sample.get('Temp', [22]))
-
-    # set the appropriate value for xdata
-    if Temp.shape[0] != 1:
-        sample['xlabel'] = r'$T \: (^\circ$C)'
-
-    sample['nhcalc'] = sample.get('nhcalc', ['355'])
-    imagetype = parms.get('imagetype', 'svg')
-    figlocation = parms.get('figlocation', 'figures')
-
+def find_base_fig_name(sample, parms):
     # specify the location for the output figure files
+    figlocation = parms.get('figlocation', 'figures')
     if figlocation == 'datadir':
         base_fig_name = os.path.join(parms['dataroot'], sample['datadir'], sample['filmfile'])
     else:
@@ -334,6 +316,28 @@ def analyze(sample, parms):
         base_fig_name = os.path.join(base_fig_path, sample['samplename'])
 
     print('path', base_fig_name)
+
+    return base_fig_name
+
+def analyze(sample, parms):
+    global openplots
+    # add the appropriate file root to the data path
+    sample['dataroot'] = parms['dataroot']
+    # read in the optional inputs, assigning default values if not assigned
+    nhplot = sample.get('nhplot', [1, 3, 5])
+    # firstline = sample.get('firstline', 0)
+    sample['xlabel'] = sample.get('xlabel',  't (min.)')
+    Temp = np.array(sample.get('Temp', [22]))
+
+    # set the appropriate value for xdata
+    if Temp.shape[0] != 1:
+        sample['xlabel'] = r'$T \: (^\circ$C)'
+
+    sample['nhcalc'] = sample.get('nhcalc', ['355'])
+    imagetype = parms.get('imagetype', 'svg')
+
+    base_fig_name = find_base_fig_name(sample, parms)
+
 
     imagetype = parms.get('imagetype', 'svg')
 
@@ -515,6 +519,13 @@ def analyze(sample, parms):
         checkfig[nh]['delf_ax'].legend()
         checkfig[nh]['delg_ax'].legend()
 
+        if 'xscale' in sample:
+            checkfig[nh]['delf_ax'].set_xscale(sample['xscale'])
+            checkfig[nh]['delg_ax'].set_xscale(sample['xscale'])
+            checkfig[nh]['rh_ax'].set_xscale(sample['xscale'])
+            checkfig[nh]['rd_ax'].set_xscale(sample['xscale'])
+
+
         # tidy up the solution check figure
         checkfig[nh]['figure'].tight_layout()
         checkfig[nh]['figure'].savefig(base_fig_name + '_'+nh +
@@ -544,7 +555,11 @@ def analyze(sample, parms):
     propfig['drho_ax'].legend()
     propfig['grho_ax'].legend()
     propfig['phi_ax'].legend()
-    
+    if 'xscale' in sample:
+        propfig['drho_ax'].set_xscale(sample['xscale'])
+        propfig['grho_ax'].set_xscale(sample['xscale'])
+        propfig['phi_ax'].set_xscale(sample['xscale'])
+
     # add legend to the the dlam3 figure
     film['dlam3_ax'].legend()
 
@@ -644,7 +659,7 @@ def make_prop_axes(propfigname, xlabel):
     phi_ax = fig.add_subplot(133)
     phi_ax.set_xlabel(xlabel)
     phi_ax.set_ylabel(r'$\phi$ (deg.)')
-
+    
     fig.tight_layout()
 
     return {'figure': fig, 'drho_ax': drho_ax, 'grho_ax': grho_ax,
@@ -752,6 +767,12 @@ def process_raw(sample, data_type):
         data_dict['dlam3_ax'].set_xlabel('t (min.)')
         data_dict['dlam3_ax'].set_ylabel(r'$d/\lambda_3$')
         data_dict['dlam3_ax'].set_title(data_type)
+
+    if 'xscale' in sample:
+        data_dict['f_ax'].set_xscale(sample['xscale'])
+        data_dict['g_ax'].set_xscale(sample['xscale'])
+        if numplots == 3:
+            data_dict['dlam3_ax'].set_xscale(sample['xscale'])
 
 
     # plot the raw data
