@@ -610,7 +610,7 @@ literal "true"
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-k_{n}^{*}=\frac{2\pi f_{n}\rho}{Z_{n}^{*}}
+k_{n}^{*}=\frac{2\pi f_{n}\rho}{Z_{n}^{*}}\label{eq:kstar}
 \end{equation}
 
 \end_inset
@@ -729,8 +729,8 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename doc/figures/2layer.svg
-	lyxscale 50
+	filename figures/2layer.svg
+	lyxscale 20
 	width 50text%
 
 \end_inset
@@ -872,7 +872,7 @@ literal "true"
 \color none
 \begin_inset Formula 
 \begin{equation}
-Z_{nm,0}^{*}=iZ_{nm}^{*}\tan(k_{nm}^{*}d_{m})
+Z_{nm,0}^{*}=iZ_{nm}^{*}\tan(k_{nm}^{*}d_{m})\label{eq:film zstar}
 \end{equation}
 
 \end_inset
@@ -1203,7 +1203,7 @@ R_{n\ell}^{*}=\frac{\Delta f_{n\ell}+i\Delta\Gamma_{n\ell}}{\Delta f_{sn}}
 
 \begin_layout Standard
 \begin_inset Note Note
-status collapsed
+status open
 
 \begin_layout Subsection
 Derivation of the two-layer master equation:
@@ -2312,6 +2312,49 @@ We can also get a relationship between
 \[
 d/\lambda_{n}=d\rho nf_{1}\left(\frac{\left|J_{n}^{*}\right|\sin\phi_{n}}{\rho}\right)^{1/2}\frac{\cos\left(\phi_{n}/2\right)}{\left(\sin\phi_{n}\right)^{1/2}}
 \]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The following expression for the load impedance of a film is also useful,
+ which combines Eqs.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:kstar"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:film zstar"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\begin{equation}
+Z_{n,0}^{*}=iZ_{n}^{*}\tan\left(\frac{2\pi nf_{1}\rho d}{Z_{n}^{*}}\right)
+\end{equation}
 
 \end_inset
 

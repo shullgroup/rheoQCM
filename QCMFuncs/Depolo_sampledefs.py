@@ -14,7 +14,7 @@ def sample_dict():
         'filmfile': 'linseed_film',
         
         'nhplot': [3, 5],
-        'nhcalc' : ['353', '355']
+        'nhcalc' : ['353']
         
         }
 

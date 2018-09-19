@@ -100,6 +100,10 @@ def grho(n, grho3, phi):
     return grho3*(n/3) ** (phi/90)
 
 
+def grhostar(n, grho3, phi):
+    return grho(n, grho3, phi)*np.exp(1j*phi)
+
+
 def grho_from_dlam(n, drho, dlam, phi):
     return (drho*n*f1*cosd(phi/2)/dlam) ** 2
 
@@ -122,10 +126,38 @@ def D(n, drho, grho3, phi):
         (grho(n, grho3, phi)) ** 0.5
 
 
+def DfromZ(n, drho, Zstar):
+    return 2*np.pi*n*f1*drho/Zstar
+
+
+def zstarbulk(grhostar):
+    return grhostar ** 0.5
+
+
+def zstarfilm(n, drho, grhostar):
+    return zstarbulk(grhostar)*np.tan(2*np.pi*n*f1*drho/zstarbulk(grhostar)) 
+
+
+def rstar(n, drho, grho3, phi, overlayer):
+    # overlayer is dictionary with drho, grho3 and phi
+    grhostar_1 = grhostar(n, grho3, phi)
+    grhostar_2 = grhostar(n, overlayer['grho3'], overlayer['phi'])
+    zstar_1 = zstarbulk(grhostar_1)
+    zstar_2 = zstarfilm(n, overlayer['drho'], grhostar_2)   
+    return zstar_2/zstar_1
+    
+    
 # calcuated complex frequency shift for single layer
-def delfstarcalc_onelayer(n, drho, grho3, phi):
-    return -sauerbreyf(n, drho)*np.tan(D(n, drho, grho3, phi)) / \
-        D(n, drho, grho3, phi)
+def delfstarcalc(n, drho, grho3, phi, overlayer):
+    r = rstar(n, drho, grho3, phi, overlayer)
+    # overlayer is dictionary with drho, grho3 and phi
+    calc = -(sauerbreyf(n, drho)*np.tan(D(n, drho, grho3, phi)) / \
+           D(n, drho, grho3, phi))*(1-r**2)/(1+1j*r*
+             np.tan(D(n, drho, grho3, phi)))
+    
+    # handle case ehre drho = 0, if it exists
+    calc[np.where(drho==0)]=0
+    return calc
 
 
 # calculated complex frequency shift for bulk layer
@@ -178,8 +210,10 @@ def rd_from_delfstar(n, delfstar):
     return -imag(delfstar[n])/real(delfstar[n])
 
 
-def solve_onelayer(soln_input):
-    # bulk solution to the QCM master equation.
+def solve_general(soln_input):
+    # set up to handle one or two layer cases
+    # overlayer set to air if it doesn't exist in soln_input
+    overlayer = soln_input.get('overlayer', {'drho':0, 'grho3':0, 'phi':0})
     nhplot = soln_input['nhplot']
     nh = soln_input['nh']
     n1 = int(nh[0])
@@ -224,11 +258,11 @@ def solve_onelayer(soln_input):
 
     def ftosolve2(x):
         return ([real(delfstar[n1]) -
-                real(delfstarcalc_onelayer(n1, x[0], x[1], x[2])),
+                real(delfstarcalc(n1, x[0], x[1], x[2], overlayer)),
                 real(delfstar[n2]) -
-                real(delfstarcalc_onelayer(n2, x[0], x[1], x[2])),
+                real(delfstarcalc(n2, x[0], x[1], x[2], overlayer)),
                 imag(delfstar[n3]) -
-                imag(delfstarcalc_onelayer(n3, x[0], x[1], x[2]))])
+                imag(delfstarcalc(n3, x[0], x[1], x[2], overlayer))])
     
     # put the input uncertainties into a 3 element vector
     delfstar_err = np.zeros(3)
@@ -266,7 +300,7 @@ def solve_onelayer(soln_input):
     rh = {}
     rd = {}
     for n in nhplot:
-        delfstar_calc[n] = delfstarcalc_onelayer(n, drho, grho3, phi)
+        delfstar_calc[n] = delfstarcalc(n, drho, grho3, phi, overlayer)
         rd[n] = rd_from_delfstar(n, delfstar_calc)
     rh = rh_from_delfstar(nh, delfstar_calc)
 
@@ -450,7 +484,7 @@ def analyze(sample, parms):
                 np.isnan(delfstar[i][int(nh[2])].imag)):                
                 soln = null_solution(nhplot)
             else:
-                soln = solve_onelayer(soln_input)
+                soln = solve_general(soln_input)
 
             results[nh]['drho'][i] = soln['drho']
             results[nh]['grho3'][i] = soln['grho3']
