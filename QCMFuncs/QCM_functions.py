@@ -100,6 +100,10 @@ def grho(n, grho3, phi):
     return grho3*(n/3) ** (phi/90)
 
 
+def grhostar(n, grho3, phi):
+    return grho(n, grho3, phi)*np.exp(1j*phi)
+
+
 def grho_from_dlam(n, drho, dlam, phi):
     return (drho*n*f1*cosd(phi/2)/dlam) ** 2
 
@@ -122,10 +126,38 @@ def D(n, drho, grho3, phi):
         (grho(n, grho3, phi)) ** 0.5
 
 
+def DfromZ(n, drho, Zstar):
+    return 2*np.pi*n*f1*drho/Zstar
+
+
+def zstarbulk(grhostar):
+    return grhostar ** 0.5
+
+
+def zstarfilm(n, drho, grhostar):
+    return zstarbulk(grhostar)*np.tan(2*np.pi*n*f1*drho/zstarbulk(grhostar)) 
+
+
+def rstar(n, drho, grho3, phi, overlayer):
+    # overlayer is dictionary with drho, grho3 and phi
+    grhostar_1 = grhostar(n, grho3, phi)
+    grhostar_2 = grhostar(n, overlayer['grho3'], overlayer['phi'])
+    zstar_1 = zstarbulk(grhostar_1)
+    zstar_2 = zstarfilm(n, overlayer['drho'], grhostar_2)   
+    return zstar_2/zstar_1
+    
+    
 # calcuated complex frequency shift for single layer
-def delfstarcalc_onelayer(n, drho, grho3, phi):
-    return -sauerbreyf(n, drho)*np.tan(D(n, drho, grho3, phi)) / \
-        D(n, drho, grho3, phi)
+def delfstarcalc(n, drho, grho3, phi, overlayer):
+    r = rstar(n, drho, grho3, phi, overlayer)
+    # overlayer is dictionary with drho, grho3 and phi
+    calc = -(sauerbreyf(n, drho)*np.tan(D(n, drho, grho3, phi)) / \
+           D(n, drho, grho3, phi))*(1-r**2)/(1+1j*r*
+             np.tan(D(n, drho, grho3, phi)))
+    
+    # handle case ehre drho = 0, if it exists
+    calc[np.where(drho==0)]=0
+    return calc
 
 
 # calculated complex frequency shift for bulk layer
@@ -178,8 +210,10 @@ def rd_from_delfstar(n, delfstar):
     return -imag(delfstar[n])/real(delfstar[n])
 
 
-def solve_onelayer(soln_input):
-    # bulk solution to the QCM master equation.
+def solve_general(soln_input):
+    # set up to handle one or two layer cases
+    # overlayer set to air if it doesn't exist in soln_input
+    overlayer = soln_input.get('overlayer', {'drho':0, 'grho3':0, 'phi':0})
     nhplot = soln_input['nhplot']
     nh = soln_input['nh']
     n1 = int(nh[0])
@@ -224,11 +258,11 @@ def solve_onelayer(soln_input):
 
     def ftosolve2(x):
         return ([real(delfstar[n1]) -
-                real(delfstarcalc_onelayer(n1, x[0], x[1], x[2])),
+                real(delfstarcalc(n1, x[0], x[1], x[2], overlayer)),
                 real(delfstar[n2]) -
-                real(delfstarcalc_onelayer(n2, x[0], x[1], x[2])),
+                real(delfstarcalc(n2, x[0], x[1], x[2], overlayer)),
                 imag(delfstar[n3]) -
-                imag(delfstarcalc_onelayer(n3, x[0], x[1], x[2]))])
+                imag(delfstarcalc(n3, x[0], x[1], x[2], overlayer))])
     
     # put the input uncertainties into a 3 element vector
     delfstar_err = np.zeros(3)
@@ -266,7 +300,7 @@ def solve_onelayer(soln_input):
     rh = {}
     rd = {}
     for n in nhplot:
-        delfstar_calc[n] = delfstarcalc_onelayer(n, drho, grho3, phi)
+        delfstar_calc[n] = delfstarcalc(n, drho, grho3, phi, overlayer)
         rd[n] = rd_from_delfstar(n, delfstar_calc)
     rh = rh_from_delfstar(nh, delfstar_calc)
 
@@ -293,27 +327,9 @@ def null_solution(nhplot):
     
     return soln_output
 
-
-
-def analyze(sample, parms):
-    global openplots
-    # add the appropriate file root to the data path
-    sample['dataroot'] = parms['dataroot']
-    # read in the optional inputs, assigning default values if not assigned
-    nhplot = sample.get('nhplot', [1, 3, 5])
-    # firstline = sample.get('firstline', 0)
-    sample['xlabel'] = sample.get('xlabel',  't (min.)')
-    Temp = np.array(sample.get('Temp', [22]))
-
-    # set the appropriate value for xdata
-    if Temp.shape[0] != 1:
-        sample['xlabel'] = r'$T \: (^\circ$C)'
-
-    sample['nhcalc'] = sample.get('nhcalc', ['355'])
-    imagetype = parms.get('imagetype', 'svg')
-    figlocation = parms.get('figlocation', 'figures')
-
+def find_base_fig_name(sample, parms):
     # specify the location for the output figure files
+    figlocation = parms.get('figlocation', 'figures')
     if figlocation == 'datadir':
         base_fig_name = os.path.join(parms['dataroot'], sample['datadir'], sample['filmfile'])
     else:
@@ -332,6 +348,30 @@ def analyze(sample, parms):
             os.mkdir(base_fig_path)
 
         base_fig_name = os.path.join(base_fig_path, sample['samplename'])
+
+    print('path', base_fig_name)
+
+    return base_fig_name
+
+def analyze(sample, parms):
+    global openplots
+    # add the appropriate file root to the data path
+    sample['dataroot'] = parms['dataroot']
+    # read in the optional inputs, assigning default values if not assigned
+    nhplot = sample.get('nhplot', [1, 3, 5])
+    # firstline = sample.get('firstline', 0)
+    sample['xlabel'] = sample.get('xlabel',  't (min.)')
+    Temp = np.array(sample.get('Temp', [22]))
+
+    # set the appropriate value for xdata
+    if Temp.shape[0] != 1:
+        sample['xlabel'] = r'$T \: (^\circ$C)'
+
+    sample['nhcalc'] = sample.get('nhcalc', ['355'])
+    imagetype = parms.get('imagetype', 'svg')
+
+    base_fig_name = find_base_fig_name(sample, parms)
+
 
     imagetype = parms.get('imagetype', 'svg')
 
@@ -353,27 +393,38 @@ def analyze(sample, parms):
     # if there is only one temperature, than we use time as the x axis, using
     # up to ten user-selected points
     if Temp.shape[0] == 1:
-        nx = min(20, film['n_in_range'])
+        if film['filmindex'] is not None:
+            nx = len(film['filmindex'])
+        else:
+            nx = min(20, film['n_in_range'])
     else:
         nx = Temp.shape[0]
-    
+
+    # move getting index out of for loop for getting index from dict
+    if film['filmindex'] is not None:
+        film['idx'] = film['filmindex']
+    else:
+        film['idx'] = pickpoints(Temp, nx, film)
+
+    bare['idx'] = pickpoints(Temp, nx, bare)
+
     # pick the points that we want to analyze and add them to the plots
-    for dict in [bare, film]:
-        dict['idx'] = pickpoints(Temp, nx, dict)
-        dict['fstar_err'] = {}
-        idx = dict['idx']
+    for data_dict in [bare, film]:
+        data_dict['fstar_err'] = {}
+        idx = data_dict['idx']
+        print(idx)
         for n in nhplot:
-            dict['fstar_err'][n] = np.zeros(dict['n_all'], dtype=np.complex128)
+            data_dict['fstar_err'][n] = np.zeros(data_dict['n_all'], dtype=np.complex128)
             for i in idx:
-                dict['fstar_err'][n][i] = fstar_err_calc(dict['fstar'][n][i])
-                t = dict['t'][i]
-                f = real(dict['fstar'][n][i])/n
-                g = imag(dict['fstar'][n][i])
-                f_err = real(dict['fstar_err'][n][i])/n
-                g_err = imag(dict['fstar_err'][n][i])
-                dict['f_ax'].errorbar(t, f, yerr=f_err, color=colors[n],
+                data_dict['fstar_err'][n][i] = fstar_err_calc(data_dict['fstar'][n][i])
+                t = data_dict['t'][i]
+                f = real(data_dict['fstar'][n][i])/n
+                g = imag(data_dict['fstar'][n][i])
+                f_err = real(data_dict['fstar_err'][n][i])/n
+                g_err = imag(data_dict['fstar_err'][n][i])
+                data_dict['f_ax'].errorbar(t, f, yerr=f_err, color=colors[n],
                                       label='n='+str(n), marker='x')
-                dict['g_ax'].errorbar(t, g, yerr=g_err, color=colors[n],
+                data_dict['g_ax'].errorbar(t, g, yerr=g_err, color=colors[n],
                                        label='n='+str(n), marker='x')
 
     # adjust nhcalc to account to only include calculations for for which
@@ -413,8 +464,10 @@ def analyze(sample, parms):
     checkfig = {}
     for nh in sample['nhcalc']:
         checkfig[nh] = make_check_axes(sample, nh)
-        checkfig[nh]['figure'].canvas.mpl_connect('key_press_event', 
-                                                  close_on_click)
+        if not run_from_ipython():
+            # when code is run with IPython don't use the event
+            checkfig[nh]['figure'].canvas.mpl_connect('key_press_event', 
+                                                    close_on_click)
 
     # set the appropriate value for xdata
     if Temp.shape[0] == 1:
@@ -450,7 +503,7 @@ def analyze(sample, parms):
                 np.isnan(delfstar[i][int(nh[2])].imag)):                
                 soln = null_solution(nhplot)
             else:
-                soln = solve_onelayer(soln_input)
+                soln = solve_general(soln_input)
 
             results[nh]['drho'][i] = soln['drho']
             results[nh]['grho3'][i] = soln['grho3']
@@ -500,6 +553,13 @@ def analyze(sample, parms):
         checkfig[nh]['delf_ax'].legend()
         checkfig[nh]['delg_ax'].legend()
 
+        if 'xscale' in sample:
+            checkfig[nh]['delf_ax'].set_xscale(sample['xscale'])
+            checkfig[nh]['delg_ax'].set_xscale(sample['xscale'])
+            checkfig[nh]['rh_ax'].set_xscale(sample['xscale'])
+            checkfig[nh]['rd_ax'].set_xscale(sample['xscale'])
+
+
         # tidy up the solution check figure
         checkfig[nh]['figure'].tight_layout()
         checkfig[nh]['figure'].savefig(base_fig_name + '_'+nh +
@@ -524,32 +584,43 @@ def analyze(sample, parms):
                    delimiter=',', header='xdata,drho,grho,phi', comments='')
         
         # add values of d/lam3 to the film raw data figure
-
+        film['dlam3_ax'].plot(xdata, results[nh]['dlam3'],'+', label=nh)
     # add legends to the property figure
     propfig['drho_ax'].legend()
     propfig['grho_ax'].legend()
     propfig['phi_ax'].legend()
+    if 'xscale' in sample:
+        propfig['drho_ax'].set_xscale(sample['xscale'])
+        propfig['grho_ax'].set_xscale(sample['xscale'])
+        propfig['phi_ax'].set_xscale(sample['xscale'])
+
+    # add legend to the the dlam3 figure
+    film['dlam3_ax'].legend()
 
     # tidy up the raw data and property figures
     propfig['figure'].tight_layout()
     propfig['figure'].savefig(base_fig_name+'_prop.'+imagetype)
     print('done with ', base_fig_name, 'press any key to close plots and continue')
 
-    propfig['figure'].canvas.mpl_connect('key_press_event', close_on_click)
-    film['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
-    bare['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
+    if not run_from_ipython(): 
+        # when code is run with IPython, don't use the event
+        propfig['figure'].canvas.mpl_connect('key_press_event', close_on_click)
+        film['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
+        bare['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
         
     openplots = 3 + len(checkfig)
-    while openplots>0:
-        plt.pause(1)
+    if not run_from_ipython():
+        # when code is run with IPython, don't use key_press_event
+        while openplots>0:
+            plt.pause(1)
 
 
 def find_idx_in_range(t, t_range):
     if t_range[0] == t_range[1]:
         idx = np.arange(t.shape[0]).astype(int)
     else:
-        idx = np.where((t > t_range[0]) &
-                       (t < t_range[1]))[0]
+        idx = np.where((t >= t_range[0]) &
+                       (t <= t_range[1]))[0]
     return idx
 
 
@@ -566,22 +637,30 @@ def nhcalc_in_nhplot(nhcalc_in, nhplot):
     return nhcalc_out
 
 
-def pickpoints(Temp, nx, dict):
-    t_in = dict['t']
-    idx_in = dict['idx_in_range']
-    idx_file = dict['idx_file']
+def pickpoints(Temp, nx, data_dict):
+    t_in = data_dict['t']
+    idx_in = data_dict['idx_in_range']
+    idx_file = data_dict['idx_file']
     idx_out = np.array([], dtype=int)
     if Temp.shape[0] == 1:
-        t = np.linspace(min(t_in[idx_in]), max(t_in[idx_in]), nx)
-        for n in np.arange(nx):
-            idx_out = np.append(idx_out, (np.abs(t[n] - t_in)).argmin())
-        idx_out = np.asarray(idx_out)
+        try:
+            idx_out = np.loadtxt(idx_file, dtype=int)
+            if len(idx_out) > nx:
+                idx_out = idx_out[:nx]
+            elif len(idx_out) < nx:
+                add_idx = np.ones(nx-len(idx_out), dtype=int) * idx_out[-1]
+                idx_out = np.concatenate((idx_out, add_idx))
+        except:
+            t = np.linspace(min(t_in[idx_in]), max(t_in[idx_in]), nx)
+            for n in np.arange(nx):
+                idx_out = np.append(idx_out, (np.abs(t[n] - t_in)).argmin())
+            idx_out = np.asarray(idx_out)
 
-    elif idx_file.is_file():
+    elif idx_file.is_file(): # 'str' object has no attribute 'is_file'
         idx_out = np.loadtxt(idx_file, dtype=int)
     else:
         # make the correct figure active
-        plt.figure(dict['rawfigname'])
+        plt.figure(data_dict['rawfigname'])
         print('click on plot to pick ', str(nx), 'points')
         pts = plt.ginput(nx, timeout=0)
         pts = np.array(pts)[:, 0]
@@ -614,7 +693,7 @@ def make_prop_axes(propfigname, xlabel):
     phi_ax = fig.add_subplot(133)
     phi_ax.set_xlabel(xlabel)
     phi_ax.set_ylabel(r'$\phi$ (deg.)')
-
+    
     fig.tight_layout()
 
     return {'figure': fig, 'drho_ax': drho_ax, 'grho_ax': grho_ax,
@@ -655,41 +734,47 @@ def process_raw(sample, data_type):
     firstline = sample.get('firstline', 0)
     nhplot = sample.get('nhplot', [1, 3, 5])
     trange = sample.get(data_type+'trange', [0, 0])
-    dict = {}
-    dict['file'] = os.path.join(sample['dataroot'], sample['datadir'], sample[data_type+'file'] + '.mat')
-    dict['data'] = hdf5storage.loadmat(dict['file'])
-    dict['idx_file'] = os.path.join(sample['dataroot'], sample['datadir'], sample[data_type+'file']+'_film_idx.txt')
+    data_dict = {} # dict is a native function of Python, I changed it to data_dict for a better practice
+    data_dict['file'] = os.path.join(sample['dataroot'], sample['datadir'], sample[data_type+'file'] + '.mat')
+    data_dict['data'] = hdf5storage.loadmat(data_dict['file'])
+    # get index to plot from *_sampledefs.py
+    if 'filmindex' in sample:
+        data_dict['filmindex'] = np.array(sample['filmindex'], dtype=int)
+    else:
+        data_dict['filmindex'] = None
+    # set key for getting index to plot from txt file
+    data_dict['idx_file'] = os.path.join(sample['dataroot'], sample['datadir'], sample[data_type+'file']+'_film_idx.txt')
 
     # extract the frequency data from the appropriate file
-    freq = dict['data']['abs_freq'][firstline:, 0:7]
+    freq = data_dict['data']['abs_freq'][firstline:, 0:7]
     # get rid of all the rows that don't have any data
     freq = freq[~np.isnan(freq[:, 1:]).all(axis=1)]
     # reference frequencies are the first data points for the bare crystal data
     sample['freqref'] = sample.get('freqref', freq[0, :])
 
     # extract frequency information
-    dict['t'] = freq[:, 0]
-    dict['fstar'] = {}
+    data_dict['t'] = freq[:, 0]
+    data_dict['fstar'] = {}
 
     for n in nhplot:        
-        dict['fstar'][n] = freq[:, n] +1j*freq[:, n+1] - sample['freqref'][n]
+        data_dict['fstar'][n] = freq[:, n] +1j*freq[:, n+1] - sample['freqref'][n]
         
     # figure out how man total points we have
-    dict['n_all'] = dict['t'].shape[0]
+    data_dict['n_all'] = data_dict['t'].shape[0]
 
     #  find all the time points between specified by timerange
     #  if the min and max values for the time range are equal, we use
     #    all the points
-    dict['idx_in_range'] = find_idx_in_range(dict['t'], trange)
-    dict['n_in_range'] = dict['idx_in_range'].shape[0]
+    data_dict['idx_in_range'] = find_idx_in_range(data_dict['t'], trange)
+    data_dict['n_in_range'] = data_dict['idx_in_range'].shape[0]
 
     # rewrite nhplot to account for the fact that data may not exist for all
     # of the harmonics
-    dict['n_exist'] = np.array([]).astype(int)
+    data_dict['n_exist'] = np.array([]).astype(int)
 
     for n in nhplot:
-        if not all(np.isnan(dict['fstar'][n])):
-            dict['n_exist'] = np.append(dict['n_exist'], n)
+        if not all(np.isnan(data_dict['fstar'][n])):
+            data_dict['n_exist'] = np.append(data_dict['n_exist'], n)
             
     # make the figure with its axis
     rawfigname = 'raw_'+data_type+'_'+sample['samplename']
@@ -699,41 +784,47 @@ def process_raw(sample, data_type):
     else:
         numplots=3
         
-    dict['rawfig'] = plt.figure(rawfigname, figsize=(numplots*3,3))
+    data_dict['rawfig'] = plt.figure(rawfigname, figsize=(numplots*3,3))
 
-    dict['f_ax'] = dict['rawfig'].add_subplot(1,numplots,1)
-    dict['f_ax'].set_xlabel('t (min.)')
-    dict['f_ax'].set_ylabel(r'$\Delta f_n/n$ (Hz)')
-    dict['f_ax'].set_title(data_type)
+    data_dict['f_ax'] = data_dict['rawfig'].add_subplot(1,numplots,1)
+    data_dict['f_ax'].set_xlabel('t (min.)')
+    data_dict['f_ax'].set_ylabel(r'$\Delta f_n/n$ (Hz)')
+    data_dict['f_ax'].set_title(data_type)
 
-    dict['g_ax'] = dict['rawfig'].add_subplot(1,numplots,2)
-    dict['g_ax'].set_xlabel('t (min.)')
-    dict['g_ax'].set_ylabel(r'$\Gamma$ (Hz)')
-    dict['g_ax'].set_title(data_type)
+    data_dict['g_ax'] = data_dict['rawfig'].add_subplot(1,numplots,2)
+    data_dict['g_ax'].set_xlabel('t (min.)')
+    data_dict['g_ax'].set_ylabel(r'$\Gamma$ (Hz)')
+    data_dict['g_ax'].set_title(data_type)
     
     if numplots == 3:
-        dict['dlam3_ax'] = dict['rawfig'].add_subplot(1,numplots,3)
-        dict['dlam3_ax'].set_xlabel('t (min.)')
-        dict['dlam3_ax'].set_ylabel(r'$d/\lambda_3$')
-        dict['dlam3_ax'].set_title(data_type)
+        data_dict['dlam3_ax'] = data_dict['rawfig'].add_subplot(1,numplots,3)
+        data_dict['dlam3_ax'].set_xlabel('t (min.)')
+        data_dict['dlam3_ax'].set_ylabel(r'$d/\lambda_3$')
+        data_dict['dlam3_ax'].set_title(data_type)
+
+    if 'xscale' in sample:
+        data_dict['f_ax'].set_xscale(sample['xscale'])
+        data_dict['g_ax'].set_xscale(sample['xscale'])
+        if numplots == 3:
+            data_dict['dlam3_ax'].set_xscale(sample['xscale'])
 
 
     # plot the raw data
     for n in nhplot:
-        t = dict['t'][dict['idx_in_range']]
-        f = real(dict['fstar'][n][dict['idx_in_range']])/n
-        g = imag(dict['fstar'][n][dict['idx_in_range']])
-        (dict['f_ax'].plot(t, f, color=colors[n], label='n='+str(n)))
-        (dict['g_ax'].plot(t, g, color=colors[n], label='n='+str(n)))
-
+        t = data_dict['t'][data_dict['idx_in_range']]
+        f = real(data_dict['fstar'][n][data_dict['idx_in_range']])/n
+        g = imag(data_dict['fstar'][n][data_dict['idx_in_range']])
+        (data_dict['f_ax'].plot(t, f, color=colors[n], label='n='+str(n)))
+        (data_dict['g_ax'].plot(t, g, color=colors[n], label='n='+str(n)))
+        
     # add the legends
-    dict['f_ax'].legend()
-    dict['g_ax'].legend()
+    data_dict['f_ax'].legend()
+    data_dict['g_ax'].legend()
     
-    dict['rawfig'].tight_layout() 
-    dict['rawfigname'] = rawfigname
+    data_dict['rawfig'].tight_layout() 
+    data_dict['rawfigname'] = rawfigname
     
-    return dict
+    return data_dict
 
 
 def make_check_axes(sample, nh):
@@ -840,7 +931,7 @@ def contour(function, parms):
     dlam = parms.get('dlam', np.linspace(0, 0.5, n))
     dlam_i, phi_i = np.meshgrid(dlam, phi)
     
-    # calculate the z falues and rest things to -1 at dlam=0
+    # calculate the z values and reset things to -1 at dlam=0
     z = normdelfstar(3, dlam_i, phi_i)
     z[:,0] = -1
     
@@ -911,4 +1002,11 @@ def thinfilm_guess(delfstar):
     # really a placeholder function until we develop a more creative strategy
     # for estimating the starting point
     return [0.05, 5]
+
+def run_from_ipython():
+    try:
+        __IPYTHON__
+        return True
+    except NameError:
+        return False
 
