@@ -308,174 +308,241 @@ settings_default = {
     'freq_span_r': {},
 
     #### default settings settings ####
-    'tab_settings_settings_harm1': {
-        # default scan settings
-        'lineEdit_scan_harmsteps': 400,
-        # default span settings
-        'comboBox_tracking_method': 'auto',
-        'comboBox_tracking_condition': 'auto',
-        # default fit settings
-        'checkBox_harmfit': True,
-        'spinBox_harmfitfactor': 6,
-        'lineEdit_peaks_maxnum': 1, 
-        'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.005,
-    },
+    # structure: 
+    # {
+        # 'samp':{
+        #     harm:{
 
-    'tab_settings_settings_harm3': {
-        # default scan settings
-        'lineEdit_scan_harmsteps': 400,
-        # default span settings
-        'comboBox_tracking_method': 'auto',
-        'comboBox_tracking_condition': 'auto',   
-        # default fit settings
-        'checkBox_harmfit': True,
-        'spinBox_harmfitfactor': 6,
-        'lineEdit_peaks_maxnum': 1, 
-        'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.005,
-    },
+        #     }
+        # }
+        # 'ref':{
+        #     harm:{
 
-    'tab_settings_settings_harm5': {
-        # default scan settings
-        'lineEdit_scan_harmsteps': 400,
-        # default span settings
-        'comboBox_tracking_method': 'auto',
-        'comboBox_tracking_condition': 'auto',
-        # default fit settings
-        'checkBox_harmfit': True,
-        'spinBox_harmfitfactor': 6,
-        'lineEdit_peaks_maxnum': 1, 
-        'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.005,
-    },
+        #     }
+        # }
+    # }
+    'harmdata': {
+        'samp':{
+            1: {
+                # default scan settings
+                'lineEdit_scan_harmsteps': 400,
+                # default span settings
+                'comboBox_tracking_method': 'auto',
+                'comboBox_tracking_condition': 'auto',
+                # default fit settings
+                'checkBox_harmfit': True,
+                'spinBox_harmfitfactor': 6,
+                'lineEdit_peaks_num': 1, 
+                'radioButton_peaks_num_max': True,
+                'radioButton_peaks_num_fixed': False,
+                'radioButton_peaks_policy_minf': False,
+                'radioButton_peaks_policy_maxamp': True,
+                'lineEdit_peaks_threshold': 0.2,
+                'lineEdit_peaks_prominence': 0.005,
+            },
 
-    'tab_settings_settings_harm7': {
-        # default scan settings
-        'lineEdit_scan_harmsteps': 400,
-        # default span settings
-        'comboBox_tracking_method': 'auto',
-        'comboBox_tracking_condition': 'auto',
-        # default fit settings
-        'checkBox_harmfit': True,
-        'spinBox_harmfitfactor': 6,
-        'lineEdit_peaks_maxnum': 1, 
-        'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.005,
-    },
+            3: {
+                # default scan settings
+                'lineEdit_scan_harmsteps': 400,
+                # default span settings
+                'comboBox_tracking_method': 'auto',
+                'comboBox_tracking_condition': 'auto',   
+                # default fit settings
+                'checkBox_harmfit': True,
+                'spinBox_harmfitfactor': 6,
+                'lineEdit_peaks_num': 1, 
+                'radioButton_peaks_num_max': True,
+                'radioButton_peaks_num_fixed': False,
+                'radioButton_peaks_policy_minf': False,
+                'radioButton_peaks_policy_maxamp': True,
+                'lineEdit_peaks_threshold': 0.2,
+                'lineEdit_peaks_prominence': 0.005,
+            },
 
-    'tab_settings_settings_harm9': {
-        # default scan settings
-        'lineEdit_scan_harmsteps': 400,
-        # default span settings
-        'comboBox_tracking_method': 'auto',
-        'comboBox_tracking_condition': 'auto',
-        # default fit settings
-        'checkBox_harmfit': True,
-        'spinBox_harmfitfactor': 6,
-        'lineEdit_peaks_maxnum': 1, 
-        'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.005,
-    },
+            5: {
+                # default scan settings
+                'lineEdit_scan_harmsteps': 400,
+                # default span settings
+                'comboBox_tracking_method': 'auto',
+                'comboBox_tracking_condition': 'auto',
+                # default fit settings
+                'checkBox_harmfit': True,
+                'spinBox_harmfitfactor': 6,
+                'lineEdit_peaks_num': 1, 
+                'radioButton_peaks_num_max': True,
+                'radioButton_peaks_num_fixed': False,
+                'radioButton_peaks_policy_minf': False,
+                'radioButton_peaks_policy_maxamp': True,
+                'lineEdit_peaks_threshold': 0.2,
+                'lineEdit_peaks_prominence': 0.005,
+            },
 
-    'tab_settings_settings_harm11': {
-        # default scan settings
-        'lineEdit_scan_harmsteps': 400,
-        # default span settings
-        'comboBox_tracking_method': 'auto',
-        'comboBox_tracking_condition': 'auto',
-        # default fit settings
-        'checkBox_harmfit': True,
-        'spinBox_harmfitfactor': 6,
-        'lineEdit_peaks_maxnum': 1, 
-        'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.005,
-    },
-    # for reference channel
-    'tab_settings_settings_harm1_r': {
-        # default scan settings
-        'lineEdit_scan_harmsteps': 400,
-        # default span settings
-        'comboBox_tracking_method': 'auto',
-        'comboBox_tracking_condition': 'auto',
-        # default fit settings
-        'checkBox_harmfit': True,
-        'spinBox_harmfitfactor': 6,
-        'lineEdit_peaks_maxnum': 1, 
-        'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.005,
-    },
+            7: {
+                # default scan settings
+                'lineEdit_scan_harmsteps': 400,
+                # default span settings
+                'comboBox_tracking_method': 'auto',
+                'comboBox_tracking_condition': 'auto',
+                # default fit settings
+                'checkBox_harmfit': True,
+                'spinBox_harmfitfactor': 6,
+                'lineEdit_peaks_num': 1, 
+                'radioButton_peaks_num_max': True,
+                'radioButton_peaks_num_fixed': False,
+                'radioButton_peaks_policy_minf': False,
+                'radioButton_peaks_policy_maxamp': True,
+                'lineEdit_peaks_threshold': 0.2,
+                'lineEdit_peaks_prominence': 0.005,
+            },
 
-    'tab_settings_settings_harm3_r': {
-        # default scan settings
-        'lineEdit_scan_harmsteps': 400,
-        # default span settings
-        'comboBox_tracking_method': 'auto',
-        'comboBox_tracking_condition': 'auto',   
-        # default fit settings
-        'checkBox_harmfit': True,
-        'spinBox_harmfitfactor': 6,
-        'lineEdit_peaks_maxnum': 1, 
-        'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.005,
-    },
+            9: {
+                # default scan settings
+                'lineEdit_scan_harmsteps': 400,
+                # default span settings
+                'comboBox_tracking_method': 'auto',
+                'comboBox_tracking_condition': 'auto',
+                # default fit settings
+                'checkBox_harmfit': True,
+                'spinBox_harmfitfactor': 6,
+                'lineEdit_peaks_num': 1, 
+                'radioButton_peaks_num_max': True,
+                'radioButton_peaks_num_fixed': False,
+                'radioButton_peaks_policy_minf': False,
+                'radioButton_peaks_policy_maxamp': True,
+                'lineEdit_peaks_threshold': 0.2,
+                'lineEdit_peaks_prominence': 0.005,
+            },
 
-    'tab_settings_settings_harm5_r': {
-        # default scan settings
-        'lineEdit_scan_harmsteps': 400,
-        # default span settings
-        'comboBox_tracking_method': 'auto',
-        'comboBox_tracking_condition': 'auto',
-        # default fit settings
-        'checkBox_harmfit': True,
-        'spinBox_harmfitfactor': 6,
-        'lineEdit_peaks_maxnum': 1, 
-        'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.005,
-    },
+            11: {
+                # default scan settings
+                'lineEdit_scan_harmsteps': 400,
+                # default span settings
+                'comboBox_tracking_method': 'auto',
+                'comboBox_tracking_condition': 'auto',
+                # default fit settings
+                'checkBox_harmfit': True,
+                'spinBox_harmfitfactor': 6,
+                'lineEdit_peaks_num': 1, 
+                'radioButton_peaks_num_max': True,
+                'radioButton_peaks_num_fixed': False,
+                'radioButton_peaks_policy_minf': False,
+                'radioButton_peaks_policy_maxamp': True,
+                'lineEdit_peaks_threshold': 0.2,
+                'lineEdit_peaks_prominence': 0.005,
+            },
+        },
 
-    'tab_settings_settings_harm7_r': {
-        # default scan settings
-        'lineEdit_scan_harmsteps': 400,
-        # default span settings
-        'comboBox_tracking_method': 'auto',
-        'comboBox_tracking_condition': 'auto',
-        # default fit settings
-        'checkBox_harmfit': True,
-        'spinBox_harmfitfactor': 6,
-        'lineEdit_peaks_maxnum': 1, 
-        'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.005,
-    },
+        # for reference channel
+        'ref':{
+            1: {
+                # default scan settings
+                'lineEdit_scan_harmsteps': 400,
+                # default span settings
+                'comboBox_tracking_method': 'auto',
+                'comboBox_tracking_condition': 'auto',
+                # default fit settings
+                'checkBox_harmfit': True,
+                'spinBox_harmfitfactor': 6,
+                'lineEdit_peaks_num': 1, 
+                'radioButton_peaks_num_max': True,
+                'radioButton_peaks_num_fixed': False,
+                'radioButton_peaks_policy_minf': False,
+                'radioButton_peaks_policy_maxamp': True,
+                'lineEdit_peaks_threshold': 0.2,
+                'lineEdit_peaks_prominence': 0.005,
+            },
 
-    'tab_settings_settings_harm9_r': {
-        # default scan settings
-        'lineEdit_scan_harmsteps': 400,
-        # default span settings
-        'comboBox_tracking_method': 'auto',
-        'comboBox_tracking_condition': 'auto',
-        # default fit settings
-        'checkBox_harmfit': True,
-        'spinBox_harmfitfactor': 6,
-        'lineEdit_peaks_maxnum': 1, 
-        'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.005,
-    },
+            3: {
+                # default scan settings
+                'lineEdit_scan_harmsteps': 400,
+                # default span settings
+                'comboBox_tracking_method': 'auto',
+                'comboBox_tracking_condition': 'auto',   
+                # default fit settings
+                'checkBox_harmfit': True,
+                'spinBox_harmfitfactor': 6,
+                'lineEdit_peaks_num': 1, 
+                'radioButton_peaks_num_max': True,
+                'radioButton_peaks_num_fixed': False,
+                'radioButton_peaks_policy_minf': False,
+                'radioButton_peaks_policy_maxamp': True,
+                'lineEdit_peaks_threshold': 0.2,
+                'lineEdit_peaks_prominence': 0.005,
+            },
 
-    'tab_settings_settings_harm11_r': {
-        # default scan settings
-        'lineEdit_scan_harmsteps': 400,
-        # default span settings
-        'comboBox_tracking_method': 'auto',
-        'comboBox_tracking_condition': 'auto',
-        # default fit settings
-        'checkBox_harmfit': True,
-        'spinBox_harmfitfactor': 6,
-        'lineEdit_peaks_maxnum': 1, 
-        'lineEdit_peaks_threshold': 0.2,
-        'lineEdit_peaks_prominence': 0.005,
-    },
+            5: {
+                # default scan settings
+                'lineEdit_scan_harmsteps': 400,
+                # default span settings
+                'comboBox_tracking_method': 'auto',
+                'comboBox_tracking_condition': 'auto',
+                # default fit settings
+                'checkBox_harmfit': True,
+                'spinBox_harmfitfactor': 6,
+                'lineEdit_peaks_num': 1, 
+                'radioButton_peaks_num_max': True,
+                'radioButton_peaks_num_fixed': False,
+                'radioButton_peaks_policy_minf': False,
+                'radioButton_peaks_policy_maxamp': True,
+                'lineEdit_peaks_threshold': 0.2,
+                'lineEdit_peaks_prominence': 0.005,
+            },
 
+            7: {
+                # default scan settings
+                'lineEdit_scan_harmsteps': 400,
+                # default span settings
+                'comboBox_tracking_method': 'auto',
+                'comboBox_tracking_condition': 'auto',
+                # default fit settings
+                'checkBox_harmfit': True,
+                'spinBox_harmfitfactor': 6,
+                'lineEdit_peaks_num': 1, 
+                'radioButton_peaks_num_max': True,
+                'radioButton_peaks_num_fixed': False,
+                'radioButton_peaks_policy_minf': False,
+                'radioButton_peaks_policy_maxamp': True,
+                'lineEdit_peaks_threshold': 0.2,
+                'lineEdit_peaks_prominence': 0.005,
+            },
+
+            9: {
+                # default scan settings
+                'lineEdit_scan_harmsteps': 400,
+                # default span settings
+                'comboBox_tracking_method': 'auto',
+                'comboBox_tracking_condition': 'auto',
+                # default fit settings
+                'checkBox_harmfit': True,
+                'spinBox_harmfitfactor': 6,
+                'lineEdit_peaks_num': 1, 
+                'radioButton_peaks_num_max': True,
+                'radioButton_peaks_num_fixed': False,
+                'radioButton_peaks_policy_minf': False,
+                'radioButton_peaks_policy_maxamp': True,
+                'lineEdit_peaks_threshold': 0.2,
+                'lineEdit_peaks_prominence': 0.005,
+            },
+
+            11: {
+                # default scan settings
+                'lineEdit_scan_harmsteps': 400,
+                # default span settings
+                'comboBox_tracking_method': 'auto',
+                'comboBox_tracking_condition': 'auto',
+                # default fit settings
+                'checkBox_harmfit': True,
+                'spinBox_harmfitfactor': 6,
+                'lineEdit_peaks_num': 1, 
+                'radioButton_peaks_num_max': True,
+                'radioButton_peaks_num_fixed': False,
+                'radioButton_peaks_policy_minf': False,
+                'radioButton_peaks_policy_maxamp': True,
+                'lineEdit_peaks_threshold': 0.2,
+                'lineEdit_peaks_prominence': 0.005,
+            },
+        },
+    },
     ### default hardware settings ###
     # default VNA settings
     'comboBox_sample_channel': 1,
