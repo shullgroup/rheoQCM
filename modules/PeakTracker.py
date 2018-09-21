@@ -199,38 +199,74 @@ def set_params(f, G, B, n=1, peak_guess=None):
 
 
 class PeakTracker:
-    _harmtrack_init = {
-        'f'         : None,
-        'G'         : None,
-        'B'         : None,
-        'n'         : None,
-        'span'      : [], # span for next scan
-        'method'    : None,
-        'n_policy'  : None, # max or forced
-        'p_policy'  : None, # highest G or lowest f
-        'threshold' : None,
-        'prominence': None,
-        'cen'       : None,
-        'wid'       : None,
-        'amp'       : None,
-        'phi'       : None,
-        'params'    : None,
-        'result'    : None,
-    }
 
     def __init__(self):
+        self.harminput = {}
+        self.harmoutput = {}
         for i in range(1, settings_init['max_harmonic']+2, 2):
-            setattr(self, 'harm'+str(i), self._harmtrack_init)
-            setattr(self, 'harm'+str(i)+'_r', self._harmtrack_init)
+            self.update_input('samp', i, [], [], [], {})
+            self.update_input('ref', i, [], [], [], {})
+
+            self.update_output('samp', i)
+            self.update_output('ref', i)
+
         self.refit_flag = 0
         self.refit_counter = 1
         self.harm = 1
         self.peak_min_distance = 1e3 # in Hz
         self.peak_min_width = 10 # in Hz
 
-    def update(self, harm, data):
-        pass
+    def update_input(self, chn_name, harm, f, G, B, harmdata):
+        '''
+        harmdata: it should be from the main ui self.settings['harmdata']
+        if empty harmdata, initialize the key to None
+        chn_name: 'samp' or 'ref'
+        harm: int
+        '''
+        harm_dict = harmdata[chn_name][harm]
 
+        self.harminput[chn_name][harm]['f'] = f
+        self.harminput[chn_name][harm]['G'] = G
+        self.harminput[chn_name][harm]['B'] = B
+        self.harminput[chn_name][harm]['steps'] = harm_dict.get('lineEdit_scan_harmsteps', None)
+        self.harminput[chn_name][harm]['method'] = harm_dict.get('comboBox_tracking_method', None)
+        self.harminput[chn_name][harm]['condition'] = harm_dict.get('comboBox_tracking_condition', None)
+        self.harminput[chn_name][harm]['fit'] = harm_dict.get('checkBox_harmfit', None)
+        self.harminput[chn_name][harm]['factor'] = harm_dict.get('spinBox_harmfitfactor', None)
+        self.harminput[chn_name][harm]['n'] = harm_dict.get('lineEdit_peaks_num', None)
+        
+        if harm_dict.get('radioButton_peaks_num_max', None) == True:
+            self.harminput[chn_name][harm]['n_policy'] = 'max'
+        elif harm_dict.get('radioButton_peaks_num_fixed', None) == True:
+            self.harminput[chn_name][harm]['n_policy'] = 'fixed'
+        else: # initialize data
+            self.harminput[chn_name][harm]['n_policy'] = None
+            self.harminput[chn_name][harm]['n_policy'] = None
+        
+        if harm_dict.get('radioButton_peaks_policy_minf', None) == True:
+            self.harminput[chn_name][harm]['p_policy'] = 'minf'
+        elif harm_dict.get('radioButton_peaks_policy_maxamp', None) == True:
+            self.harminput[chn_name][harm]['p_policy'] = 'maxamp'
+        else: # initialize data
+            self.harminput[chn_name][harm]['p_policy'] = None
+            self.harminput[chn_name][harm]['p_policy'] = None
+
+        self.harminput[chn_name][harm]['threshold'] = harm_dict.get('lineEdit_peaks_threshold', None)
+        self.harminput[chn_name][harm]['prominence'] = harm_dict.get('lineEdit_peaks_prominence', None)
+
+    def update_output(self, chn_name, harm, **kwargs):
+        '''
+        kwargs: keys to update
+        chn_name: 'samp' or 'ref'
+        harm: int
+        '''
+        self.harmoutput[chn_name][harm]['span'] = kwargs.get('span', []),       # span for next scan
+        self.harmoutput[chn_name][harm]['cen'] = kwargs.get('cen', None),       # peak center
+        self.harmoutput[chn_name][harm]['wid'] = kwargs.get('wid', None),       # peak width
+        self.harmoutput[chn_name][harm]['amp'] = kwargs.get('amp', None),       # peak amp
+        self.harmoutput[chn_name][harm]['phi'] = kwargs.get('phi', None),       # phase angle
+        self.harmoutput[chn_name][harm]['params'] = kwargs.get('params', None), # parameters input for clculation
+        self.harmoutput[chn_name][harm]['result'] = kwargs.get('result', None), # clculation result
 
     ########### peak finding functions ###########
     def findpeaks(self, array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf, 
@@ -383,15 +419,15 @@ class PeakTracker:
             # guess phase angle if derivatave method used
             phi = np.arcsin(G[0] / np.sqrt(G[0]**2 + B[0]**2))
 
-        # for forced number of peaks (might be added in future) 
+        # for fixed number of peaks (might be added in future) 
         if n > len(indices):
             if n_policy.lower() == 'max':
                 n = len(indices) # change n to detected number of peaks
-            elif n_policy.lower() == 'forced':
+            elif n_policy.lower() == 'fixed':
                 # n doesn't need to be changed
                 pass
         elif n < len(indices):
-            # since 'max' and 'forced' both limited the number not exceeding n, n doesn't need to be changed
+            # since 'max' and 'fixed' both limited the number not exceeding n, n doesn't need to be changed
             pass
 
 
@@ -403,7 +439,7 @@ class PeakTracker:
                     'wid': widths[i], 
                     'phi': phi
                 }
-            else: # for forced number (n > len(indices))
+            else: # for fixed number (n > len(indices))
                 # add some rough guess values
                 # use the min values of each variables
                 peak_guess[i] = {
