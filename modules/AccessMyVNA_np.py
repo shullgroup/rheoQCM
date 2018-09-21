@@ -1215,6 +1215,7 @@ if __name__ == '__main__':
         ret = accvna.ShowWindow(1)
         accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
         accvna.GetIntegerArray(nWhat=5, nIndex=0, nArraySize=4)
+        accvna.SetIntegerArray(nWhat=5, nIndex=0, nArraySize=4, nData=[10, 1, 500, 10])
         exit(0)
         accvna.setADCChannel(reflectchn=1)
         accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
