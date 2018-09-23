@@ -111,6 +111,32 @@ def wfunc(name, dll, result, *args):
     return WINFUNCTYPE(result, *atypes)((name, dll), tuple(aflags))
     # return WINFUNCTYPE(result, *atypes)((name, dll)) #, tuple(aflags))
 
+def get_wait_time(nPoints=200, averages=0, step_delay=0, start_delay=0, buffer=70):
+    dds_load = 90 # us
+    phase_points = [0, 90, 180, 270] # CDS phase points, size of list is what is important
+    delay = 4000 # delay that depends on the PC CPU speed, sweep points, etc. documentation provides no further details
+
+    # ADC conversion timing
+    conversion_delay = 300 # microseconds
+    fqud_pulse = 100 # microseconds
+    clock_delay = 20 # microseconds
+    
+    usb_frame_time = 125 # USB version 0.22
+    
+    # align ADC conversions with USB frames grid
+    # TODO adjust alignment incorporating conversion delays
+    minimum_conversion_time = 500 # umicroseconds
+    conversion_time = conversion_delay + fqud_pulse + clock_delay + step_delay + buffer # microseconds
+    if conversion_time % usb_frame_time != 0:
+        minimum_conversion_time = (conversion_time % usb_frame_time)*conversion_time + usb_frame_time # microseconds
+    
+    conversion_rate = 1/(conversion_time*1e-6) # get the data rate in ADC conversions/sec
+    num_conversions = nPoints * len(phase_points) # get the number of conversions
+    total_time = dds_load * 1e-6 + start_delay * 1e-6 + num_conversions / conversion_rate + delay * 1e-6 # get total time in seconds
+    print(total_time)
+
+    return total_time
+    
 #endregion
 
 #region assign functions
