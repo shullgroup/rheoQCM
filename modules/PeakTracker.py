@@ -212,7 +212,8 @@ class PeakTracker:
 
         self.refit_flag = 0
         self.refit_counter = 1
-        self.harm = 1
+        self.active_harm = None
+        self.active_chn = None
         self.peak_min_distance = 1e3 # in Hz
         self.peak_min_width = 10 # in Hz
 
