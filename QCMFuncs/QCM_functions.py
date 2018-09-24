@@ -137,7 +137,12 @@ def zstarbulk(grhostar):
 
 
 def zstarfilm(n, drho, grhostar):
-    return zstarbulk(grhostar)*np.tan(2*np.pi*n*f1*drho/zstarbulk(grhostar)) 
+    if grhostar == 0:
+        answer = 0
+    else:
+        answer = zstarbulk(grhostar)*np.tan(2*np.pi*n*f1*drho/
+                          zstarbulk(grhostar)) 
+    return answer
 
 
 def rstar(n, drho, grho3, phi, overlayer):
@@ -157,8 +162,8 @@ def delfstarcalc(n, drho, grho3, phi, overlayer):
            D(n, drho, grho3, phi))*(1-r**2)/(1+1j*r*
              np.tan(D(n, drho, grho3, phi)))
     
-    # handle case ehre drho = 0, if it exists
-    calc[np.where(drho==0)]=0
+    # handle case where drho = 0, if it exists
+#    calc[np.where(drho==0)]=0
     return calc
 
 
@@ -660,7 +665,7 @@ def pickpoints(Temp, nx, data_dict):
                 idx_out = np.append(idx_out, (np.abs(t[n] - t_in)).argmin())
             idx_out = np.asarray(idx_out)
 
-    elif idx_file.is_file(): # 'str' object has no attribute 'is_file'
+    elif Path(idx_file).is_file(): 
         idx_out = np.loadtxt(idx_file, dtype=int)
     else:
         # make the correct figure active
