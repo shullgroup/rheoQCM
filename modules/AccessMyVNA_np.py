@@ -111,6 +111,32 @@ def wfunc(name, dll, result, *args):
     return WINFUNCTYPE(result, *atypes)((name, dll), tuple(aflags))
     # return WINFUNCTYPE(result, *atypes)((name, dll)) #, tuple(aflags))
 
+def get_wait_time(nPoints=200, averages=0, step_delay=0, start_delay=0, buffer=70):
+    dds_load = 90 # us
+    phase_points = [0, 90, 180, 270] # CDS phase points, size of list is what is important
+    delay = 4000 # delay that depends on the PC CPU speed, sweep points, etc. documentation provides no further details
+
+    # ADC conversion timing
+    conversion_delay = 300 # microseconds
+    fqud_pulse = 100 # microseconds
+    clock_delay = 20 # microseconds
+    
+    usb_frame_time = 125 # USB version 0.22
+    
+    # align ADC conversions with USB frames grid
+    # TODO adjust alignment incorporating conversion delays
+    minimum_conversion_time = 500 # umicroseconds
+    conversion_time = conversion_delay + fqud_pulse + clock_delay + step_delay + buffer # microseconds
+    if conversion_time % usb_frame_time != 0:
+        minimum_conversion_time = (conversion_time % usb_frame_time)*conversion_time + usb_frame_time # microseconds
+    
+    conversion_rate = 1/(conversion_time*1e-6) # get the data rate in ADC conversions/sec
+    num_conversions = nPoints * len(phase_points) # get the number of conversions
+    total_time = dds_load * 1e-6 + start_delay * 1e-6 + num_conversions / conversion_rate + delay * 1e-6 # get total time in seconds
+    print(total_time)
+
+    return total_time
+    
 #endregion
 
 #region assign functions
@@ -311,6 +337,290 @@ _MyVNASetDoubleArray = wfunc(
     (c_int, (1, 'nArraySize')),
     # (c_void_p, (1, 'pnData')) 
     (POINTER(c_double), (1, 'pnData')) 
+)
+
+##########################################
+# MyVNAGetIntegerArray = vna[8]
+# # // get miscellaneous integer array based data
+# # __declspec(dllexport) int _stdcall MyVNAGetIntegerArray(int nWhat, int nIndex, int nArraySize, int *pnResult)
+# pass
+_MyVNAGetIntegerArray = wfunc(
+    '?MyVNAGetIntegerArray@@YGHHHHPAH@Z', vna, c_int,
+    (c_int, (1, 'nwhat')), 
+    (c_int, (1, 'nIndex')), 
+    (c_int, (1, 'nArraySize')),
+    # (c_void_p, (1, 'npResult')) 
+    (POINTER(c_int), (1, 'npResult')) 
+)
+
+##########################################
+# MyVNASetIntegerArray = vna[25]
+# // set miscellaneous integer array based data
+# __declspec(dllexport) int _stdcall MyVNASetIntegerArray(int nWhat, int nIndex, int nArraySize, int *pnData)
+# // general purpose interface functions used to get or set various things.
+# // Two versions exist, one for integers and one for doubles, with a Get and a Set in each case
+# // The functions need a parameter to say what is to be set/got - see details below, a pointer
+# // to an array of sufficient size for the results and as a safeguard the number of entries
+# // in tht array
+# // OLE equivalents:
+# // int GetIntegerArrayAutomation(LONG nWhat, LONG nIndex, LONG nSize, VARIANT *a);
+# // int SetIntegerArrayAutomation(LONG nWhat, LONG nIndex, LONG nSize, VARIANT *a);
+# __declspec(dllexport) int _stdcall MyVNAGetIntegerArray(int nWhat, int nIndex, int nArraySize, int *pnResult);
+# __declspec(dllexport) int _stdcall MyVNASetIntegerArray(int nWhat, int nIndex, int nArraySize, int *pnData);
+# // options for nWhat parameter in MyVNAGetIntegerArray() and MyVNASetIntegerArray()
+# // all get / set an array of integers
+# // nIndex is required for some but not all options - as indicated below. Set to 0 when not used.
+# //
+# // case 0 - display options - array of 4 integers
+# // nIndex not used- set to 0
+# // data[0] = horizontal divisions in byte 0, vertical divisions in byte 1
+# // data[1] = byte 0 pen width, byte 1 marker size
+# // data[2] = flags as follows
+# //		bit 0 - graticule on
+# //		bit 1 - scan progress bar displayed
+# //		bit 2 - autoscale on display change
+# //		bit 3 - snap to 125 on display change
+# //		bit 4 - snap to 125
+# //		bit 5 - audio cues
+# //		bit 6 - force |disp| on log axes
+# //		bit 7 - auto refine on equivalent circuits
+# //		bit 8 - invert RL display
+# //		bit 9 - display info tips
+# //		bit 10 - label frequency gridlines
+# //		bit 11 - label vertical gridlines
+# //		bit 12 - show scan data
+# //		bit 13 - lock scan to display
+# //      bit 14 - 31 spare
+# // data[3] = more flags. Note these flags are not readable - they will always read as zero in this version
+# // this parameter may be omitted by setting the number of integers to 3 instead of 4.
+# //		bit 0 - log vertical scale if currently in rectangular display mode
+# //		bit 1 - log frequency scale if currently in rectangular display mode
+# //		bit 2 - if set, set the scan to match the current display freqeuncies (make sure scan is not locked to display - see bit 13 above)
+# //		bit 3 - if set, set the display to match the current scan frequencies (make sure scan is not locked to display - see bit 13 above)
+# //		bit 4 - if set lock the frequency axis
+# //		bit 5 - if set lock the left axis
+# //		bit 6 - if set lock the right axis
+# #define GETSET_DISPLAY_OPTIONS 0
+
+# // case 1 - print options - array of 4 integers
+# // nIndex not used- set to 0
+# // data[0] = unused
+# // data[1] = byte 0 pen width, byte 1 marker size
+# // data[2] = flags as follows
+# //		bit 0 - add print notes to clipboard copy
+# //		bit 1 - label markers in printout
+# //		bit 2 - 31 spare
+# // data[3] = spare
+# #define GETSET_PRINT_OPTIONS 1
+
+# // case 2 - get and set screen colours - array of 1 integers
+# // nIndex - which colour to access. 
+# //		0 = Border
+# //		1 = graticule
+# //		0x10 to 0x17 = trace colours 1 to 8
+# //		0x30 to 0x38 = marker colours 1 to 9
+# // data[0] - the colour. This is a DWORD passed as an int
+# // it is a COLORREF, which takes the form 0x00bbggrr
+# // and may be created with the RGB macro.
+# // to set a colour, populate data[0] and data[1] with the appropriate values
+# // to get a colour, populate data[0] with the desired target and the subroutine
+# // will fill in the colour value in data[1]
+# // if the value of data[0] is out of range, the set command has no effect
+# // if it is out of range on a get, the returned colour value will be -1 and the subroutine
+# // will return a non zero value
+# #define GETSET_COLOURS 2
+
+# // case 3 - get or set left axis display parameters
+# // case 4 - get or set right axis display parameters
+# // nIndex not used- set to 0
+# // requires an array of 4 integers
+# // The array contents correstpond to a 128 bit bitmap
+# // where the bits that are set determine which parameters are shown on the axis
+# // The bits correspond to the values shown for Get or Set Scan Data above
+# // with the exception of DISPLAY_FREQ_SCALE
+# // hence for example:
+# // DISPLAY_REFL_CS takes the value of 11 and DISPLAY_REFL_XS takes the value 1
+# // so the bitmap would be (1<<DISPLAY_REFL_XS) + (1<<DISPLAY_REFL_CS)
+# // in other words (1<<11) + (1<<1) or 0x00000000000000000000000000000802
+# // the value is split into four 32 bit unsigned integer values as follows
+# // data[0] - bits 31-0
+# // data[1] - bits 63-32
+# // data[2] = bits 95-64
+# // data[3] - bits 127-96
+# // Given the current definitions the final entry in the above list is DISPLAY_TDR_22_ZS
+# // which takes the value of 66, hence currently bits 67-127 will always be zero.
+# #define GETSETLEFTAXIS 3
+# #define GETSETRIGHTAXIS 4
+
+# // case 5 - get or set hardware delays & adc speed
+# // nIndex not used- set to 0
+# // data[0] - ADC speed
+# // data[1] - ADC step delay
+# // data[2] - sweep start delay
+# // data[3] - phase change delay
+# // the speed is an integer that depends on hardware; 1..10 for the N2PK other values ignored
+# // the time delays are integers in us
+# // the data may be truncated; for example setting the data length to 2 will changeADC speed and step delay only
+# #define GETSETHARDWARESPEEDS 5
+
+# // case 6 - set or get the hardware options
+# // nIndex not used- set to 0
+# // data[0] - CDS mode as defined below
+# // data[1] - flags as defined below
+# // data[2] - system reference
+# // CDS mode. This is an integer structured as follows
+# // bit 0 - if 0, basic mode and rest of this integer has no effect
+# //       - if 1, harmonic suppression mode as defined below
+# // bits 8-15 - harmonic where 0x01 means fundamental, 0x02 is second harmonic 
+# // bits 16-24 - number of samples 0x01 means 1, 0x04 means 4 etc
+# // limitations:
+# // samples must be 0x04, 0x08, 0x10 or 0x32. Other values will cause setting to be ignored
+# // harmonics must be 1,2,3,4 or 5. Other values will be ignored
+# // if harmonics is 2 or 3, sample setting 4 is not available
+# // if harmonics is 4 or 5, sample settings 4 and 8 are not available
+# // example
+# // to select harmonic mode 3 with 16 samples data[0] should be set to 0x00100301
+# // it is acceptable to issue the command with just one integer and change the CDS mode without updating the rest
+# // data[1] - flags
+# // bit 0 - if set load DDS during ADC setting
+# // bit 1 - if set swap detectors on reverse scan
+# // bit 2 - if set power down DDS when idle
+# // it is permitted to set the CDS mode and flags without changing system reference by passing just 2 integers
+# // data[2] - system reference (milli ohms) - must be > 0
+# #define GETSETHARDWAREOPTIONS 6
+
+# // case 7 - set or get marker configuration.
+# // note there are other functions to get the marker value / frequency and marker arithmetic and other settings
+# // nIndex - set to the marker number ( 0..(NUM_MARKERS-1) )
+# // function will use data[0] to determine which marker and will fill in results in array
+# // data[0] - source information
+# // data[1] - mode information
+# // data[2] - target
+# // data[3] - link
+# // data[4] - display flag
+# // the meaning of the above is as follows
+# //
+# // Source is as follows
+# // results if set to invalid settings are undefined.
+# // for example do not set more than 1 of bits 1-3
+# // do not set bits 8-11 out of range
+# // do not set bits 16-23 to invalid value ( 0..66 are valid at moment)
+# // bit 0; 0=>left, 1=>right
+# // bit 1; 1=>scan data
+# // bit 2; 1=>store data
+# // bit 3; 1=>sim data
+# // bit 4-7 spare
+# // bit 11-8; store, sim or cal index (0..15)
+# // bit 15-12 spare
+# // bit 23-16 parameter type ( not all in use - integer 0..255 )
+# // bits 31-24 spare
+# //
+# // mode is as follows:
+# // 0 = tracking
+# // 1 = manual
+# // 2 = linked
+# // 3 = linked; f-
+# // 4 = linked; f+
+# //
+# // target is as follows
+# // 0 = maximum
+# // 1 = minimum
+# // 2 = cross up 1st
+# // 3 = cross down 1st
+# // 4 = cross up 2nd
+# // 5 = cross down 2nd
+# // 6 = cross up 3rd
+# // 7 = cross down 3rd
+# //
+# // link is the other marker number ( 0 .. (NUM_MARKERS-1) )
+# // display flag is 0 to disable/hide and <>0 to enable & display
+# #define GETSETMARKERSETUP 7
+
+# // case 8 - get (not set) various program constants
+# // nIndex = 0 - return the following
+# // data[0] - number of different left/right axis parameters 
+# // data[1] - number of markers
+# // data[2] - number of calculation markers
+# // data[3] - number of stores for traces
+# // data[4] - number of annotations
+# // data[5] - number of separate trace colour
+# // data[6] - number of transverters permitted
+# // data[7] - limit on length of a transverter name
+# // data[8] - number of simulations supported
+# // data[9] - number of simulation structures per simulation supported
+# // data[10] - number of components per simulation
+# #define GETPROGRAMCONSTANTS 8
+
+# // case 9 - get or set equivalent circuit configuration
+# // nIndex not used - set to 0
+# // Note: this function is only supported when equivalent circuit display mode is selected
+# // and unless default options are desired MUST be sent each time the display mode is set to eq cct mode
+# // data[0] - equivalent circuit device type. Set to 0 for crystal motional parameters
+# // data[1] - model - set as follows
+# //			0 = 45 degree phase
+# //			1 = 3dB
+# //			2 = 6 term
+# // data[2] - set data source
+# //			0 = current scan data
+# //			1..number of stores = stored trace data
+# #define GETSETEQCCTCONFIG 9
+
+# // case 10 - get or set simulation configuration
+# // nIndex not used - set to 0
+# // sets overall configuration by determining the type of each block
+# // data[0] is simulation block 1
+# // data[1] is block 1 etc
+# // each one takes values thus
+# // 0 = unused
+# // 1 = simulation
+# // 2 = scan data
+# // 3 = store 1 
+# // 4 = store 2 
+# // etc
+# #define GETSETSIMULATIONCONFIG 10
+
+# // case 11 - trace calculation options
+# // nIndex not used - set to 0
+# // sets options related to trace calculation controls
+# // data[0] are various flags
+# //		bit 0 - if set show network simulation dialog
+# //		bit 1 - if set, set "show simulation data"
+# //		bit 2 - if set show marker measurements dialog
+# //		bit 3 - if set, set "TDR functions"
+# // when read, bits 0 and 2 will always read '0'
+# #define GETSETTRACECALCULATIONOPTIONS 11
+
+# // case 12 - switch and attenuator configuration
+# // nIndex not used - set to 0
+# // sets options related to configuration of switch and attenuator options
+# // data[0] are various flags
+# //		bit 0 - if set set "invert sense" flag for switch 1
+# //		bit 1 - if set set "invert sense" flag for switch 2
+# //		bit 8 - if set set "invert sense" flag for attenuator
+# // data[1] - values 0 to 7 configure the "forward scan" attenuator setting
+# // data[2] - values 0 to 7 configure the "reverse scan" attenuator setting
+# #define GETSETSWITCHATTENUATORCONFIG 12
+
+# // case 13 - switch and attenuator settings
+# // nIndex not used - set to 0
+# // sets options related to configuration of switch and attenuator settings
+# // data[0] are various flags
+# //		bit 0 - if set set "invert sense" flag for switch 1
+# //		bit 1 - if set set "invert sense" flag for switch 2
+# //		bit 8 - if set set enable switch 1 during reverse scan
+# //		bit 9 - if set set enable switch 2 during reverse scan
+# //		bit 16 - if set set enable switch 1 during scan
+# //		bit 17 - if set set enable switch 2 during scan
+# //		bit 24 - if set set enable automatic attenuator setting during scan
+# // data[1] - values 0 to 7 sets the attenuator
+# #define GETSETSWITCHATTENUATORSETTINGS 13
+_MyVNASetIntegerArray = wfunc(
+    '?MyVNASetIntegerArray@@YGHHHHPAH@Z', vna, c_int,
+    (c_int, (1, 'nwhat')), 
+    (c_int, (1, 'nIndex')), 
+    (c_int, (1, 'nArraySize')),
+    # (c_void_p, (1, 'pnData')) 
+    (POINTER(c_int), (1, 'pnData')) 
 )
 
 ##########################################
@@ -535,10 +845,10 @@ class AccessMyVNA():
     '''
     def __init__(self):
         # super(AccessMyVNA, self).__init__()
-        self.scandata_a = []
-        self.scandata_b = []
-        self.narray = []
-        
+        # self.scandata_a = []
+        # self.scandata_b = []
+        # self.narray = []
+       self.vnaset = self._vnaset_int
 
     # use __enter__ __exit__ for with or use try finally
     def __enter__(self):
@@ -551,8 +861,18 @@ class AccessMyVNA():
         print('out1')
         self.Close()
         print('out2')
-        
-    
+
+
+    _vnaset_int = {
+        'instrmode': np.array(0, dtype=int),
+        'displaymode': np.array(0, dtype=int),
+        'nsteps': np.array(0, dtype=int),
+        'scanaverage': np.array(0, dtype=int),
+        'chn': np.array(0, dtype=int), # avtive channel
+        'speed': np.array(0, dtype=int), # speed of vna
+        'f': [], # start & stop frequencies [start, stop]
+    }
+
     def Init(self):
         # close vna window
         close_win()
@@ -637,7 +957,7 @@ class AccessMyVNA():
         print('MyVNAGetDoubleArray')
 
         nResult = np.zeros(nArraySize, dtype=np.float, order='C')
-        self.narray = nResult
+        # self.narray = nResult
 
         nRes_ptr = nResult.ctypes.data_as(POINTER(c_double))
         ret = _MyVNAGetDoubleArray(nWhat, nIndex, nArraySize, nRes_ptr)
@@ -670,6 +990,55 @@ class AccessMyVNA():
         ptr = nData.ctypes.data_as(POINTER(c_double))
         ret = _MyVNASetDoubleArray(nWhat, nIndex, nArraySize, ptr)
         # ret = _MyVNASetDoubleArray(nWhat, nIndex, nArraySize, c_void_p(nData.ctypes.data))
+
+        print(ret, nData)
+        
+        nD = nData
+        rt = ret
+        del nData, ret
+
+        return rt, nD
+
+    @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
+    def GetIntegerArray(self, nWhat=5, nIndex=0, nArraySize=4):
+        '''
+        get hardware setup
+        Get hardware delay & adc speed nWhat = 5
+        '''
+        print('MyVNAGetIntegerArray')
+
+        nResult = np.zeros(nArraySize, dtype=int, order='C')
+        # self.narray = nResult
+
+        nRes_ptr = nResult.ctypes.data_as(POINTER(c_int))
+        ret = _MyVNAGetIntegerArray(nWhat, nIndex, nArraySize, nRes_ptr)
+        ######### end pointer ##########
+
+        # print(nRes_ptr)
+        # print(nRes_ptr.contents)
+        ndRes = nResult[:] 
+        del nResult
+
+        print(ret, ndRes)
+        return ret, ndRes
+
+
+    @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
+    def SetIntegerArray(self, nWhat=5, nIndex=0, nArraySize=4, nData=[]):
+        '''
+        Set frequency nWhat = GET_SCAN_FREQ_DATA 0
+        '''
+        print('MyVNASetIntegerArray')
+        if len(nData) == nArraySize: # check nData size
+            if not isinstance(nData, np.ndarray): # check nData type
+                nData = np.array(nData)
+            nData.astype(int, order='C')
+        # print(nData)
+        # print(nData.ctypes.data)
+
+        # cast the array into a pointer of type c_int:
+        ptr = nData.ctypes.data_as(POINTER(c_int))
+        ret = _MyVNASetIntegerArray(nWhat, nIndex, nArraySize, ptr)
 
         print(ret, nData)
         
@@ -750,8 +1119,8 @@ class AccessMyVNA():
         ptr_a = data_a.ctypes.data_as(POINTER(c_double))
         ptr_b = data_b.ctypes.data_as(POINTER(c_double))
 
-        self.scandata_a.append(ptr_a)
-        self.scandata_b.append(ptr_b)
+        # self.scandata_a.append(ptr_a)
+        # self.scandata_b.append(ptr_b)
 
         ret = _MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, ptr_a, ptr_b)
 
@@ -871,6 +1240,9 @@ if __name__ == '__main__':
     with AccessMyVNA() as accvna:
         ret = accvna.ShowWindow(1)
         accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
+        accvna.GetIntegerArray(nWhat=5, nIndex=0, nArraySize=4)
+        accvna.SetIntegerArray(nWhat=5, nIndex=0, nArraySize=4, nData=[10, 1, 500, 10])
+        exit(0)
         accvna.setADCChannel(reflectchn=1)
         accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
         exit(1)
@@ -967,275 +1339,6 @@ GETSETSWITCHATTENUATORCONFIG        12
 GETSETSWITCHATTENUATORSETTINGS      13
 '''
 #endregion
-def MyVNAGetIntegerArray():
-    MyVNAGetIntegerArray = vna[8]
-    # // get miscellaneous integer array based data
-    # __declspec(dllexport) int _stdcall MyVNAGetIntegerArray(int nWhat, int nIndex, int nArraySize, int *pnResult)
-    pass
-
-def MyVNASetIntegerArray():
-
-    MyVNASetIntegerArray = vna[25]
-    # // set miscellaneous integer array based data
-    # __declspec(dllexport) int _stdcall MyVNASetIntegerArray(int nWhat, int nIndex, int nArraySize, int *pnData)
-    # // general purpose interface functions used to get or set various things.
-    # // Two versions exist, one for integers and one for doubles, with a Get and a Set in each case
-    # // The functions need a parameter to say what is to be set/got - see details below, a pointer
-    # // to an array of sufficient size for the results and as a safeguard the number of entries
-    # // in tht array
-    # // OLE equivalents:
-    # // int GetIntegerArrayAutomation(LONG nWhat, LONG nIndex, LONG nSize, VARIANT *a);
-    # // int SetIntegerArrayAutomation(LONG nWhat, LONG nIndex, LONG nSize, VARIANT *a);
-    # __declspec(dllexport) int _stdcall MyVNAGetIntegerArray(int nWhat, int nIndex, int nArraySize, int *pnResult);
-    # __declspec(dllexport) int _stdcall MyVNASetIntegerArray(int nWhat, int nIndex, int nArraySize, int *pnData);
-    # // options for nWhat parameter in MyVNAGetIntegerArray() and MyVNASetIntegerArray()
-    # // all get / set an array of integers
-    # // nIndex is required for some but not all options - as indicated below. Set to 0 when not used.
-    # //
-    # // case 0 - display options - array of 4 integers
-    # // nIndex not used- set to 0
-    # // data[0] = horizontal divisions in byte 0, vertical divisions in byte 1
-    # // data[1] = byte 0 pen width, byte 1 marker size
-    # // data[2] = flags as follows
-    # //		bit 0 - graticule on
-    # //		bit 1 - scan progress bar displayed
-    # //		bit 2 - autoscale on display change
-    # //		bit 3 - snap to 125 on display change
-    # //		bit 4 - snap to 125
-    # //		bit 5 - audio cues
-    # //		bit 6 - force |disp| on log axes
-    # //		bit 7 - auto refine on equivalent circuits
-    # //		bit 8 - invert RL display
-    # //		bit 9 - display info tips
-    # //		bit 10 - label frequency gridlines
-    # //		bit 11 - label vertical gridlines
-    # //		bit 12 - show scan data
-    # //		bit 13 - lock scan to display
-    # //      bit 14 - 31 spare
-    # // data[3] = more flags. Note these flags are not readable - they will always read as zero in this version
-    # // this parameter may be omitted by setting the number of integers to 3 instead of 4.
-    # //		bit 0 - log vertical scale if currently in rectangular display mode
-    # //		bit 1 - log frequency scale if currently in rectangular display mode
-    # //		bit 2 - if set, set the scan to match the current display freqeuncies (make sure scan is not locked to display - see bit 13 above)
-    # //		bit 3 - if set, set the display to match the current scan frequencies (make sure scan is not locked to display - see bit 13 above)
-    # //		bit 4 - if set lock the frequency axis
-    # //		bit 5 - if set lock the left axis
-    # //		bit 6 - if set lock the right axis
-    # #define GETSET_DISPLAY_OPTIONS 0
-
-    # // case 1 - print options - array of 4 integers
-    # // nIndex not used- set to 0
-    # // data[0] = unused
-    # // data[1] = byte 0 pen width, byte 1 marker size
-    # // data[2] = flags as follows
-    # //		bit 0 - add print notes to clipboard copy
-    # //		bit 1 - label markers in printout
-    # //		bit 2 - 31 spare
-    # // data[3] = spare
-    # #define GETSET_PRINT_OPTIONS 1
-
-    # // case 2 - get and set screen colours - array of 1 integers
-    # // nIndex - which colour to access. 
-    # //		0 = Border
-    # //		1 = graticule
-    # //		0x10 to 0x17 = trace colours 1 to 8
-    # //		0x30 to 0x38 = marker colours 1 to 9
-    # // data[0] - the colour. This is a DWORD passed as an int
-    # // it is a COLORREF, which takes the form 0x00bbggrr
-    # // and may be created with the RGB macro.
-    # // to set a colour, populate data[0] and data[1] with the appropriate values
-    # // to get a colour, populate data[0] with the desired target and the subroutine
-    # // will fill in the colour value in data[1]
-    # // if the value of data[0] is out of range, the set command has no effect
-    # // if it is out of range on a get, the returned colour value will be -1 and the subroutine
-    # // will return a non zero value
-    # #define GETSET_COLOURS 2
-
-    # // case 3 - get or set left axis display parameters
-    # // case 4 - get or set right axis display parameters
-    # // nIndex not used- set to 0
-    # // requires an array of 4 integers
-    # // The array contents correstpond to a 128 bit bitmap
-    # // where the bits that are set determine which parameters are shown on the axis
-    # // The bits correspond to the values shown for Get or Set Scan Data above
-    # // with the exception of DISPLAY_FREQ_SCALE
-    # // hence for example:
-    # // DISPLAY_REFL_CS takes the value of 11 and DISPLAY_REFL_XS takes the value 1
-    # // so the bitmap would be (1<<DISPLAY_REFL_XS) + (1<<DISPLAY_REFL_CS)
-    # // in other words (1<<11) + (1<<1) or 0x00000000000000000000000000000802
-    # // the value is split into four 32 bit unsigned integer values as follows
-    # // data[0] - bits 31-0
-    # // data[1] - bits 63-32
-    # // data[2] = bits 95-64
-    # // data[3] - bits 127-96
-    # // Given the current definitions the final entry in the above list is DISPLAY_TDR_22_ZS
-    # // which takes the value of 66, hence currently bits 67-127 will always be zero.
-    # #define GETSETLEFTAXIS 3
-    # #define GETSETRIGHTAXIS 4
-
-    # // case 5 - get or set hardware delays & adc speed
-    # // nIndex not used- set to 0
-    # // data[0] - ADC speed
-    # // data[1] - ADC step delay
-    # // data[2] - sweep start delay
-    # // data[3] - phase change delay
-    # // the speed is an integer that depends on hardware; 1..10 for the N2PK other values ignored
-    # // the time delays are integers in us
-    # // the data may be truncated; for example setting the data length to 2 will changeADC speed and step delay only
-    # #define GETSETHARDWARESPEEDS 5
-
-    # // case 6 - set or get the hardware options
-    # // nIndex not used- set to 0
-    # // data[0] - CDS mode as defined below
-    # // data[1] - flags as defined below
-    # // data[2] - system reference
-    # // CDS mode. This is an integer structured as follows
-    # // bit 0 - if 0, basic mode and rest of this integer has no effect
-    # //       - if 1, harmonic suppression mode as defined below
-    # // bits 8-15 - harmonic where 0x01 means fundamental, 0x02 is second harmonic 
-    # // bits 16-24 - number of samples 0x01 means 1, 0x04 means 4 etc
-    # // limitations:
-    # // samples must be 0x04, 0x08, 0x10 or 0x32. Other values will cause setting to be ignored
-    # // harmonics must be 1,2,3,4 or 5. Other values will be ignored
-    # // if harmonics is 2 or 3, sample setting 4 is not available
-    # // if harmonics is 4 or 5, sample settings 4 and 8 are not available
-    # // example
-    # // to select harmonic mode 3 with 16 samples data[0] should be set to 0x00100301
-    # // it is acceptable to issue the command with just one integer and change the CDS mode without updating the rest
-    # // data[1] - flags
-    # // bit 0 - if set load DDS during ADC setting
-    # // bit 1 - if set swap detectors on reverse scan
-    # // bit 2 - if set power down DDS when idle
-    # // it is permitted to set the CDS mode and flags without changing system reference by passing just 2 integers
-    # // data[2] - system reference (milli ohms) - must be > 0
-    # #define GETSETHARDWAREOPTIONS 6
-
-    # // case 7 - set or get marker configuration.
-    # // note there are other functions to get the marker value / frequency and marker arithmetic and other settings
-    # // nIndex - set to the marker number ( 0..(NUM_MARKERS-1) )
-    # // function will use data[0] to determine which marker and will fill in results in array
-    # // data[0] - source information
-    # // data[1] - mode information
-    # // data[2] - target
-    # // data[3] - link
-    # // data[4] - display flag
-    # // the meaning of the above is as follows
-    # //
-    # // Source is as follows
-    # // results if set to invalid settings are undefined.
-    # // for example do not set more than 1 of bits 1-3
-    # // do not set bits 8-11 out of range
-    # // do not set bits 16-23 to invalid value ( 0..66 are valid at moment)
-    # // bit 0; 0=>left, 1=>right
-    # // bit 1; 1=>scan data
-    # // bit 2; 1=>store data
-    # // bit 3; 1=>sim data
-    # // bit 4-7 spare
-    # // bit 11-8; store, sim or cal index (0..15)
-    # // bit 15-12 spare
-    # // bit 23-16 parameter type ( not all in use - integer 0..255 )
-    # // bits 31-24 spare
-    # //
-    # // mode is as follows:
-    # // 0 = tracking
-    # // 1 = manual
-    # // 2 = linked
-    # // 3 = linked; f-
-    # // 4 = linked; f+
-    # //
-    # // target is as follows
-    # // 0 = maximum
-    # // 1 = minimum
-    # // 2 = cross up 1st
-    # // 3 = cross down 1st
-    # // 4 = cross up 2nd
-    # // 5 = cross down 2nd
-    # // 6 = cross up 3rd
-    # // 7 = cross down 3rd
-    # //
-    # // link is the other marker number ( 0 .. (NUM_MARKERS-1) )
-    # // display flag is 0 to disable/hide and <>0 to enable & display
-    # #define GETSETMARKERSETUP 7
-
-    # // case 8 - get (not set) various program constants
-    # // nIndex = 0 - return the following
-    # // data[0] - number of different left/right axis parameters 
-    # // data[1] - number of markers
-    # // data[2] - number of calculation markers
-    # // data[3] - number of stores for traces
-    # // data[4] - number of annotations
-    # // data[5] - number of separate trace colour
-    # // data[6] - number of transverters permitted
-    # // data[7] - limit on length of a transverter name
-    # // data[8] - number of simulations supported
-    # // data[9] - number of simulation structures per simulation supported
-    # // data[10] - number of components per simulation
-    # #define GETPROGRAMCONSTANTS 8
-
-    # // case 9 - get or set equivalent circuit configuration
-    # // nIndex not used - set to 0
-    # // Note: this function is only supported when equivalent circuit display mode is selected
-    # // and unless default options are desired MUST be sent each time the display mode is set to eq cct mode
-    # // data[0] - equivalent circuit device type. Set to 0 for crystal motional parameters
-    # // data[1] - model - set as follows
-    # //			0 = 45 degree phase
-    # //			1 = 3dB
-    # //			2 = 6 term
-    # // data[2] - set data source
-    # //			0 = current scan data
-    # //			1..number of stores = stored trace data
-    # #define GETSETEQCCTCONFIG 9
-
-    # // case 10 - get or set simulation configuration
-    # // nIndex not used - set to 0
-    # // sets overall configuration by determining the type of each block
-    # // data[0] is simulation block 1
-    # // data[1] is block 1 etc
-    # // each one takes values thus
-    # // 0 = unused
-    # // 1 = simulation
-    # // 2 = scan data
-    # // 3 = store 1 
-    # // 4 = store 2 
-    # // etc
-    # #define GETSETSIMULATIONCONFIG 10
-
-    # // case 11 - trace calculation options
-    # // nIndex not used - set to 0
-    # // sets options related to trace calculation controls
-    # // data[0] are various flags
-    # //		bit 0 - if set show network simulation dialog
-    # //		bit 1 - if set, set "show simulation data"
-    # //		bit 2 - if set show marker measurements dialog
-    # //		bit 3 - if set, set "TDR functions"
-    # // when read, bits 0 and 2 will always read '0'
-    # #define GETSETTRACECALCULATIONOPTIONS 11
-
-    # // case 12 - switch and attenuator configuration
-    # // nIndex not used - set to 0
-    # // sets options related to configuration of switch and attenuator options
-    # // data[0] are various flags
-    # //		bit 0 - if set set "invert sense" flag for switch 1
-    # //		bit 1 - if set set "invert sense" flag for switch 2
-    # //		bit 8 - if set set "invert sense" flag for attenuator
-    # // data[1] - values 0 to 7 configure the "forward scan" attenuator setting
-    # // data[2] - values 0 to 7 configure the "reverse scan" attenuator setting
-    # #define GETSETSWITCHATTENUATORCONFIG 12
-
-    # // case 13 - switch and attenuator settings
-    # // nIndex not used - set to 0
-    # // sets options related to configuration of switch and attenuator settings
-    # // data[0] are various flags
-    # //		bit 0 - if set set "invert sense" flag for switch 1
-    # //		bit 1 - if set set "invert sense" flag for switch 2
-    # //		bit 8 - if set set enable switch 1 during reverse scan
-    # //		bit 9 - if set set enable switch 2 during reverse scan
-    # //		bit 16 - if set set enable switch 1 during scan
-    # //		bit 17 - if set set enable switch 2 during scan
-    # //		bit 24 - if set set enable automatic attenuator setting during scan
-    # // data[1] - values 0 to 7 sets the attenuator
-    # #define GETSETSWITCHATTENUATORSETTINGS 13
-    
 
 def MyVNAGetString():
     MyVNAGetString = vna[12]

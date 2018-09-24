@@ -769,7 +769,7 @@ background-color: red;
                       <enum>QDateTimeEdit::YearSection</enum>
                      </property>
                      <property name="displayFormat">
-                      <string>yyyy-MM-dd hh:mm:ss.ss</string>
+                      <string>yyyy-MM-dd hh:mm:ss.zzz</string>
                      </property>
                      <property name="calendarPopup">
                       <bool>false</bool>
@@ -1585,10 +1585,15 @@ background-color: red;
                     </property>
                     <item>
                      <property name="text">
-                      <string>Max #</string>
+                      <string>Num.</string>
                      </property>
                      <property name="text">
                       <string/>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Policy</string>
                      </property>
                     </item>
                     <item>
@@ -1931,16 +1936,6 @@ background-color: red;
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_peaks_maxnum">
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>18</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
                <widget class="QLineEdit" name="lineEdit_peaks_threshold">
                 <property name="maximumSize">
                  <size>
@@ -1958,6 +1953,98 @@ background-color: red;
                   <height>18</height>
                  </size>
                 </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_peaks_num">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_7">
+                 <property name="spacing">
+                  <number>2</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_peaks_num">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>18</height>
+                    </size>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="radioButton_peaks_num_max">
+                   <property name="text">
+                    <string>Max</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="radioButton_peaks_num_fixed">
+                   <property name="text">
+                    <string>Fixed</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_peaks_policy">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_29">
+                 <property name="spacing">
+                  <number>2</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QRadioButton" name="radioButton_peaks_policy_minf">
+                   <property name="text">
+                    <string>min freq.</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="radioButton_peaks_policy_maxamp">
+                   <property name="text">
+                    <string>max Amp.</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
               <item>
@@ -5443,15 +5530,15 @@ border: 1px solid blue;
                <property name="maximumSize">
                 <size>
                  <width>16777215</width>
-                 <height>100</height>
+                 <height>50</height>
                 </size>
                </property>
                <property name="html">
                 <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2'; font-size:8.25pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
               </widget>
               <widget class="QWidget" name="layoutWidget">
@@ -6420,15 +6507,15 @@ border: 1px solid blue;
      <x>0</x>
      <y>0</y>
      <width>1114</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionNew_Data"/>
-    <addaction name="actionLoad_Data"/>
+    <addaction name="actionNew_Exp"/>
+    <addaction name="actionLoad_Exp"/>
     <addaction name="actionLoad_Settings"/>
     <addaction name="separator"/>
     <addaction name="actionSave"/>
@@ -6520,8 +6607,8 @@ border: 1px solid blue;
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionNew_Data"/>
-   <addaction name="actionLoad_Data"/>
+   <addaction name="actionNew_Exp"/>
+   <addaction name="actionLoad_Exp"/>
    <addaction name="actionLoad_Settings"/>
    <addaction name="separator"/>
    <addaction name="actionSave"/>
@@ -6533,13 +6620,16 @@ border: 1px solid blue;
    <addaction name="separator"/>
    <addaction name="actionOpen_MyVNA"/>
   </widget>
-  <action name="actionLoad_Data">
+  <action name="actionLoad_Exp">
    <property name="icon">
     <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/load_data.svg</normaloff>:/icon/rc/load_data.svg</iconset>
    </property>
    <property name="text">
-    <string>Load Data</string>
+    <string>Load Exp</string>
+   </property>
+   <property name="toolTip">
+    <string>Load Experiment</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -6836,13 +6926,16 @@ border: 1px solid blue;
     <string>About QCM-r</string>
    </property>
   </action>
-  <action name="actionNew_Data">
+  <action name="actionNew_Exp">
    <property name="icon">
     <iconset resource="QCM_GUI_source.qrc">
      <normaloff>:/icon/rc/new.svg</normaloff>:/icon/rc/new.svg</iconset>
    </property>
    <property name="text">
-    <string>New Data</string>
+    <string>New Exp</string>
+   </property>
+   <property name="toolTip">
+    <string>New Experiment</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
@@ -6993,8 +7086,8 @@ border: 1px solid blue;
      <y>670</y>
     </hint>
     <hint type="destinationlabel">
-     <x>656</x>
-     <y>695</y>
+     <x>406</x>
+     <y>264</y>
     </hint>
    </hints>
   </connection>
@@ -7009,8 +7102,8 @@ border: 1px solid blue;
      <y>670</y>
     </hint>
     <hint type="destinationlabel">
-     <x>656</x>
-     <y>941</y>
+     <x>406</x>
+     <y>264</y>
     </hint>
    </hints>
   </connection>
@@ -7053,12 +7146,12 @@ border: 1px solid blue;
    <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>169</x>
-     <y>624</y>
+     <x>177</x>
+     <y>646</y>
     </hint>
     <hint type="destinationlabel">
-     <x>154</x>
-     <y>520</y>
+     <x>165</x>
+     <y>519</y>
     </hint>
    </hints>
   </connection>
@@ -7069,12 +7162,12 @@ border: 1px solid blue;
    <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>154</x>
-     <y>520</y>
+     <x>165</x>
+     <y>519</y>
     </hint>
     <hint type="destinationlabel">
-     <x>169</x>
-     <y>624</y>
+     <x>177</x>
+     <y>646</y>
     </hint>
    </hints>
   </connection>
