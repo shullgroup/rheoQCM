@@ -87,8 +87,8 @@ settings_init = {
         ('auto',      'Auto'),
         ('fixspan',   'Fix span'),
         ('fixcenter', 'Fix center'),
-        ('fixcntspn',  'Fix center/span'),
-        ('usrdef',    'User-defined...'),
+        ('fixcntspn',  'Fix center&span'),
+        # ('usrdef',    'User-defined...'),
     ]),
 
     # sample_channel
