@@ -1886,11 +1886,8 @@ class QCMApp(QMainWindow):
             harm = self.settings_harm
         if chn is None:
             chn = self.active_chn['name']
-        if chn == 'samp':
-            span_name = 'freq_span'
-        elif chn == 'ref':
-            span_name = 'freq_span_r'
-        return self.settings[span_name][harm]
+
+        return self.settings['freq_span'][chn][harm]
 
     def set_freq_span(self, span, harm=None, chn=None):
         '''
@@ -1902,35 +1899,27 @@ class QCMApp(QMainWindow):
             harm = self.settings_harm
         if chn is None:
             chn = self.active_chn['name']
-        if chn == 'samp':
-            span_name = 'freq_span'
-        elif chn == 'ref':
-            span_name = 'freq_span_r'
-        self.settings[span_name][harm] = span
+
+        self.settings['freq_span'][chn][harm] = span
 
     def check_freq_spans(self):
         '''
         check if settings['freq_span'] (freq span for each harmonic) values in the allowed range self.settings['freq_range']
         '''
-        try: 
-            # check if self.settings['freq_span'] exist
-            self.settings['freq_span'] 
-            self.settings['freq_span_r'] 
-            freq_span = {}
-            freq_span_r = {}
+        if 'freq_span' in self.settings and self.settings['freq_span']:  # if self.settings['freq_span'] exist
+            print('##################\n', self.settings['freq_span'])
+            freq_span = {'samp': {}, 'ref': {}}
             for i in range(1, settings_init['max_harmonic']+2, 2):
-                freq_span[i] = self.span_check(i, self.settings['freq_span'][i][0], self.settings['freq_span'][i][1])
-                freq_span_r[i] = self.span_check(i, self.settings['freq_span_r'][i][0], self.settings['freq_span_r'][i][1])
+                freq_span['samp'][i] = self.span_check(i, *self.settings['freq_span']['samp'][i])
+                freq_span['ref'][i] = self.span_check(i, *self.settings['freq_span']['ref'][i])
+
             self.settings['freq_span'] = freq_span
-            self.settings['freq_span_r'] = freq_span_r
-        except: # if self.settings['freq_span'] does not exist
-            try: # check if self.settings['freq_range'] exist
-                self.settings['freq_span'] = self.settings['freq_range']
-                self.settings['freq_span_r'] = self.settings['freq_range']
-            except: # if self.settings['freq_range'] does not exist
+        else: # if self.settings['freq_span'] does not exist or is empty
+            if 'freq_range' not in self.settings: # check if 
                 self.update_freq_range() # initiate self.settings['freq_range']
-                self.settings['freq_span'] = self.settings['freq_range']
-                self.settings['freq_span_r'] = self.settings['freq_range']
+            # set 'freq_span' == 'freq_range
+            self.settings['freq_span']['samp'] = self.settings['freq_range']
+            self.settings['freq_span']['ref'] = self.settings['freq_range']
 
     def update_frequencies(self):
         
@@ -1938,8 +1927,8 @@ class QCMApp(QMainWindow):
         disp_mode = self.settings['comboBox_settings_control_dispmode']
         # update lineEdit_startf<n> & lineEdit_endf<n>
         for i in range(1, settings_init['max_harmonic']+2, 2):
-            f1, f2 = self.settings['freq_span'][i][0]*1e-6, self.settings['freq_span'][i][1]*1e-6 # in MHz
-            f1r, f2r = self.settings['freq_span_r'][i][0]*1e-6, self.settings['freq_span_r'][i][1]*1e-6 # in MHz
+            f1, f2 = self.settings['freq_span']['samp'][i] * 1e-6 # in MHz
+            f1r, f2r = self.settings['freq_span']['ref'][i] * 1e-6 # in MHz
             if disp_mode == 'centerspan':
                 # convert f1, f2 from start/stop to center/span
                 f1, f2 = MathModules.converter_startstop_to_centerspan(f1, f2)

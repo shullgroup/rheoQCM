@@ -8,6 +8,9 @@ from random import randrange
 
 from UISettings import settings_init
 
+_peak_min_distance = 1e3 # in Hz
+_peak_min_width = 10 # in Hz
+
 def fun_G(x, amp, cen, wid, phi):
     ''' 
     function of relation between frequency (f) and conductance (G) 
@@ -197,6 +200,94 @@ def set_params(f, G, B, n=1, peak_guess=None):
     )
     return params
 
+def findpeaks(array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf, 
+            threshold=0, minpeakdistance=0, widthreference=None, minpeakwidth=0, maxpeakwidth=np.inf):
+    '''
+    output: 'indices' or 'values'
+    sortstr: 'ascend' or 'descend'
+    '''
+    indices = np.array([]).astype('int64')
+    values = np.array([]).astype('float64')
+    data = np.atleast_1d(array).astype('float64')
+    if data.size < 3:
+        return np.array([])
+
+    hnpeaks = 0
+    diffs = data[1:]-data[:-1]
+    for i in range(diffs.size-1):
+        if hnpeaks >= npeaks:
+            break
+        if diffs[i] > 0 and diffs[i+1] < 0:
+            lthreshold = np.absolute(diffs[i])
+            rthreshold = np.absolute(diffs[i+1])
+            if data[i+1] >= minpeakheight and lthreshold >= threshold and rthreshold >= threshold:
+                indices = np.append(indices, i+1)
+                values = np.append(values, data[i+1])
+                hnpeaks = hnpeaks + 1
+
+    indices_copy = np.copy(indices)
+    if sortstr:
+        if sortstr.lower() == 'ascend':
+            order = np.argsort(values)
+            values = np.sort(values)
+            for i in range(order.size):
+                indices[i] = indices_copy[order[i]]
+        elif sortstr.lower() == 'descend':
+            order = np.argsort(-values)
+            values = -np.sort(-values)
+            for i in range(order.size):
+                indices[i] = indices_copy[order[i]]
+
+    if output.lower() == 'indices':
+        return indices
+    elif output.lower() == 'values':
+        return values
+
+def findpeaks_py(array, output=None, sortstr=None, threshold=None, prominence=None, distance=None, width=None):
+    '''
+    A wrap up of scipy.signal.find_peaks.
+    advantage of find_peaks function of scipy is
+    the peaks can be constrained by more properties 
+    such as: width, distance etc..
+    output: 'indices' or 'values'. if None, return all (indices, heights, prominences, widths)
+    sortstr: 'ascend' or 'descend' ordering data by peak height
+    '''
+    peaks, props = find_peaks(
+        array, 
+        threshold=threshold, 
+        distance=distance, 
+        prominence=prominence,
+        width=width,
+    )
+
+    indices = np.copy(peaks)
+    values = array[indices]
+    heights = np.array([])
+    prominences = np.array([])
+    widths = np.array([])
+    if sortstr:
+        if sortstr.lower() == 'ascend':
+            order = np.argsort(values)
+            # values = np.sort(values)
+        elif sortstr.lower() == 'descend':
+            order = np.argsort(-values)
+            values = -np.sort(-values)
+        print(values)
+        print(peaks)
+        print(order)
+        print(props)
+        for i in range(order.size):
+            indices[i] = indices[order[i]]
+            heights = np.append(heights, props['width_heights'][order[i]])
+            prominences = np.append(prominences, props['prominences'][order[i]])
+            widths = np.append(widths, props['widths'][order[i]])
+    
+    if output:
+        if output.lower() == 'indices':
+            return indices
+        elif output.lower() == 'values':
+            return values
+    return indices, heights, prominences, widths
 
 class PeakTracker:
 
@@ -214,8 +305,7 @@ class PeakTracker:
         self.refit_counter = 1
         self.active_harm = None
         self.active_chn = None
-        self.peak_min_distance = 1e3 # in Hz
-        self.peak_min_width = 10 # in Hz
+
 
     def update_input(self, chn_name, harm, f, G, B, harmdata):
         '''
@@ -229,6 +319,7 @@ class PeakTracker:
         self.harminput[chn_name][harm]['f'] = f
         self.harminput[chn_name][harm]['G'] = G
         self.harminput[chn_name][harm]['B'] = B
+        self.harminput[chn_name][harm]['current_span'] =[harm_dict.get('lineEdit_scan_harmstart', None), harm_dict.get('lineEdit_scan_harmend', None)]
         self.harminput[chn_name][harm]['steps'] = harm_dict.get('lineEdit_scan_harmsteps', None)
         self.harminput[chn_name][harm]['method'] = harm_dict.get('comboBox_tracking_method', None)
         self.harminput[chn_name][harm]['condition'] = harm_dict.get('comboBox_tracking_condition', None)
@@ -261,7 +352,7 @@ class PeakTracker:
         chn_name: 'samp' or 'ref'
         harm: int
         '''
-        self.harmoutput[chn_name][harm]['span'] = kwargs.get('span', []),       # span for next scan
+        self.harmoutput[chn_name][harm]['span'] = kwargs.get('span', [None, None]),       # span for next scan
         self.harmoutput[chn_name][harm]['cen'] = kwargs.get('cen', None),       # peak center
         self.harmoutput[chn_name][harm]['wid'] = kwargs.get('wid', None),       # peak width
         self.harmoutput[chn_name][harm]['amp'] = kwargs.get('amp', None),       # peak amp
@@ -270,94 +361,6 @@ class PeakTracker:
         self.harmoutput[chn_name][harm]['result'] = kwargs.get('result', None), # clculation result
 
     ########### peak finding functions ###########
-    def findpeaks(self, array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf, 
-                threshold=0, minpeakdistance=0, widthreference=None, minpeakwidth=0, maxpeakwidth=np.inf):
-        '''
-        output: 'indices' or 'values'
-        sortstr: 'ascend' or 'descend'
-        '''
-        indices = np.array([]).astype('int64')
-        values = np.array([]).astype('float64')
-        data = np.atleast_1d(array).astype('float64')
-        if data.size < 3:
-            return np.array([])
-
-        hnpeaks = 0
-        diffs = data[1:]-data[:-1]
-        for i in range(diffs.size-1):
-            if hnpeaks >= npeaks:
-                break
-            if diffs[i] > 0 and diffs[i+1] < 0:
-                lthreshold = np.absolute(diffs[i])
-                rthreshold = np.absolute(diffs[i+1])
-                if data[i+1] >= minpeakheight and lthreshold >= threshold and rthreshold >= threshold:
-                    indices = np.append(indices, i+1)
-                    values = np.append(values, data[i+1])
-                    hnpeaks = hnpeaks + 1
-
-        indices_copy = np.copy(indices)
-        if sortstr:
-            if sortstr.lower() == 'ascend':
-                order = np.argsort(values)
-                values = np.sort(values)
-                for i in range(order.size):
-                    indices[i] = indices_copy[order[i]]
-            elif sortstr.lower() == 'descend':
-                order = np.argsort(-values)
-                values = -np.sort(-values)
-                for i in range(order.size):
-                    indices[i] = indices_copy[order[i]]
-
-        if output.lower() == 'indices':
-            return indices
-        elif output.lower() == 'values':
-            return values
-
-    def findpeaks_py(self, array, output=None, sortstr=None, threshold=None, prominence=None):
-        '''
-        A wrap up of scipy.signal.find_peaks.
-        advantage of find_peaks function of scipy is
-        the peaks can be constrained by more properties 
-        such as: width, distance etc..
-        output: 'indices' or 'values'. if None, return all (indices, heights, prominences, widths)
-        sortstr: 'ascend' or 'descend' ordering data by peak height
-        '''
-        peaks, props = find_peaks(
-            array, 
-            threshold=threshold, 
-            distance=self.peak_min_distance, 
-            prominence=prominence,
-            width=self.peak_min_width,
-        )
-
-        indices = np.copy(peaks)
-        values = array[indices]
-        heights = np.array([])
-        prominences = np.array([])
-        widths = np.array([])
-        if sortstr:
-            if sortstr.lower() == 'ascend':
-                order = np.argsort(values)
-                # values = np.sort(values)
-            elif sortstr.lower() == 'descend':
-                order = np.argsort(-values)
-                values = -np.sort(-values)
-            print(values)
-            print(peaks)
-            print(order)
-            print(props)
-            for i in range(order.size):
-                indices[i] = indices[order[i]]
-                heights = np.append(heights, props['width_heights'][order[i]])
-                prominences = np.append(prominences, props['prominences'][order[i]])
-                widths = np.append(widths, props['widths'][order[i]])
-        
-        if output:
-            if output.lower() == 'indices':
-                return indices
-            elif output.lower() == 'values':
-                return values
-        return indices, heights, prominences, widths
 
     def guess_peak_factors(self, freq, resonance):
         ''' 
@@ -409,7 +412,7 @@ class PeakTracker:
         peak_guess = {}
 
         # indices = findpeaks(resonance, output='indices', sortstr='descend')
-        indices, heights, prominences, widths = self.findpeaks_py(resonance, sortstr='descend', threshold=None, prominence=None)
+        indices, heights, prominences, widths = findpeaks_py(resonance, sortstr='descend', threshold=None, prominence=None,distance=_peak_min_distance, width=_peak_min_width)
         
         if not indices:
             return n, peak_guess

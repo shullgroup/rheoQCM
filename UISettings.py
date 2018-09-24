@@ -302,11 +302,6 @@ settings_default = {
     # default frequency span for each harmonic
     'freq_span': {},
 
-    # default frequency ranges for each harmonic of reference channel
-    'freq_range_r': {},
-    # default frequency span for each harmonic of reference channel
-    'freq_span_r': {},
-
     #### default settings settings ####
     # structure: 
     # {
