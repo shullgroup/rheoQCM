@@ -21,7 +21,7 @@ from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, 
 # packages
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
-from modules import UIModules, MathModules, GBFitting
+from modules import UIModules, MathModules, GBFitting, PeakTracker
 
 from MatplotlibWidget import MatplotlibWidget
 
@@ -47,28 +47,6 @@ else: # linux or MacOS
     # for test only
     from modules.AccessMyVNA_dummy import AccessMyVNA
 
-class PeakTracker:
-    _harmtrack_init = {
-        'track': None,
-        'cen'  : None,
-        'wid'  : None,
-        'amp'  : None,
-        'phi'  : None,
-        'f'    : None,
-        'G'    : None,
-        'B'    : None,
-
-    }
-
-    def __init__(self):
-        for i in range(1, settings_init['max_harmonic']+2, 2):
-            setattr(self, 'harm'+str(i), self._harmtrack_init)
-        self.refit_flag = 0
-        self.refit_counter = 1
-        self.harm = 1
-
-    def update(self, harm, data):
-        pass
 
 class VNATracker:
     def __init__(self):
@@ -102,7 +80,7 @@ class VNATracker:
 
     def reset_flag(self):
         ''' set to vna doesn't neet rest '''
-        self.setflg = set()
+        self.setflg = {}
 
 
 class DataStruct:
@@ -137,7 +115,7 @@ class QCMApp(QMainWindow):
         self.fileName = ''
         self.fileFlag = False
         self.settings = settings_default # import default settings. It will be initalized latter
-        self.peak_tracker = PeakTracker()
+        self.peak_tracker = PeakTracker.PeakTracker()
         self.vna_tracker = VNATracker()
   
         # define instrument state variables
@@ -149,7 +127,7 @@ class QCMApp(QMainWindow):
 
         self.UITab = 0 # 0: Control; 1: Settings;, 2: Data; 3: Mechanics
         self.settings_harm = 1 # active harmonic in Settings Tab
-        self.data_harm = 1 # active harmonic in Data Tab
+        self.active_harm = 1 # active harmonic in Data Tab
         self.active_chn = {'name': 'samp', 'chn': 1} # active channel 'samp' or 'ref'
         #### initialize the attributes for data saving
         self.data = DataStruct()
@@ -1524,11 +1502,16 @@ class QCMApp(QMainWindow):
         print(data_lG)
         print(data_lB)
 
-        factor = self.get_harmdata('spinBox_harmfitfactor')
+        # factor = self.get_harmdata('spinBox_harmfitfactor')
 
         # get guessed value of cen and wid
 
-        result = GBFitting.minimize_GB(data_lG[0], data_lG[1], data_lB[1], n=1,)
+        ## fitting peak
+        print(self.settings['harmdata'])
+        self.peak_tracker.update_input(self.active_chn, self.active_harm, data_lG[0], data_lG[1], data_lB[1], self.settings['harmdata'])
+
+        val = self.peak_tracker.peka_fit(self.acitve_chn, self.active_harm)
+        print(val)
 
 
 

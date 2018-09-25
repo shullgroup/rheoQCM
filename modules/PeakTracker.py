@@ -7,13 +7,11 @@ from scipy.signal import find_peaks
 from random import randrange
 
 from UISettings import settings_init
-from moduls import MathModules
+from modules import MathModules
+
 
 peak_min_distance = 1e3 # in Hz
 peak_min_width = 10 # in Hz
-
-# eps = None
-eps = pow((G - np.amin(G)*1.001), 1/2) # residual weight
 
 
 def fun_G(x, amp, cen, wid, phi):
@@ -143,7 +141,6 @@ def res_GB(params, f, G, B, **kwargs):
     else:
         return np.concatenate((residual_G * eps, residual_B * eps))
 
-
 def findpeaks(array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf, 
             threshold=0, minpeakdistance=0, widthreference=None, minpeakwidth=0, maxpeakwidth=np.inf):
     '''
@@ -236,8 +233,8 @@ def findpeaks_py(array, output=None, sortstr=None, threshold=None, prominence=No
 class PeakTracker:
 
     def __init__(self):
-        self.harminput = {}
-        self.harmoutput = {}
+        self.harminput = self.init_harmdict()
+        self.harmoutput = self.init_harmdict()
         for i in range(1, settings_init['max_harmonic']+2, 2):
             self.update_input('samp', i, [], [], [], {})
             self.update_input('ref', i, [], [], [], {})
@@ -254,9 +251,21 @@ class PeakTracker:
         self.found_n = None
 
         # ?
-        self.refit_flag = 0
-        self.refit_counter = 1
+        # self.refit_flag = 0
+        # self.refit_counter = 1
 
+    def init_harmdict(self):
+        '''
+        create a dict with for saving input or output data
+        '''
+        harm_dict = {}
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            harm_dict[i] = {}
+        chn_dict = {
+            'samp': harm_dict,
+            'ref' : harm_dict,
+        }
+        return chn_dict
 
     def update_input(self, chn_name, harm, f, G, B, harmdata):
         '''
@@ -265,8 +274,12 @@ class PeakTracker:
         chn_name: 'samp' or 'ref'
         harm: int
         '''
-        harm_dict = harmdata[chn_name][harm]
+        if not harmdata: # harmdata is empty (for initialize)
+            harm_dict = {}
+        else:
+            harm_dict = harmdata[chn_name][harm]
 
+        # setattr(self.harminput, chn_name, setattr())
         self.harminput[chn_name][harm]['f'] = f
         self.harminput[chn_name][harm]['G'] = G
         self.harminput[chn_name][harm]['B'] = B
@@ -303,7 +316,7 @@ class PeakTracker:
         chn_name: 'samp' or 'ref'
         harm: int
         '''
-        if chn_name is None & harm is None:
+        if (chn_name is None) & (harm is None):
             chn_name = self.active_chn
             harm = self.active_harm
 
@@ -342,7 +355,7 @@ class PeakTracker:
             # nothing to do
             try:
                 pre_method = self.harmoutput[chn_name][harm]['method']
-                if pre_method == 'pre':
+                if pre_method == 'prev':
                     pre_method = 'gmax'
             except:
                 pre_method = 'gmax'
@@ -357,7 +370,7 @@ class PeakTracker:
         self.peak_guess = {} # guess values of found peaks
 
     ########### peak tracking function ###########
-    def smart_peak_tracker(self, harm=None, freq=None, conductance=None, susceptance=None, G_parameters=None):
+    def smart_peak_tracker(self):
         '''
         track the peak and give the span for next scan
         NOTE: the returned span may out of span_range defined the the main UI!
@@ -417,7 +430,7 @@ class PeakTracker:
             return
 
         # set new start/end freq in Hz
-        self.harmoutput[chn][harm]['span'] = new_xlim
+        self.update_output(chn, harm, span=new_xlim)
 
     ########### peak finding functions ###########
 
@@ -554,7 +567,7 @@ class PeakTracker:
         elif n_policy == 'fixed':
             n = self.harminput[chn_name][harm]['n']
         self.found_n = n
-        self.harmoutput[chn_name][harm]['found_n'] = n
+        self.update_output(chn_name, harm, found_n=n)
 
         for i in np.arange(n):
             if i+1 <= self.harmoutput[chn_name][harm]['found_n']:
@@ -596,7 +609,7 @@ class PeakTracker:
             else:
                 self.params_guess(method=method)
             if self.found_n:
-                self.harmoutput[self.active_chn][self.active_harm]['method'] = method
+                self.update_output(method=method)
                 break 
 
     def set_params(self):
@@ -659,10 +672,10 @@ class PeakTracker:
             # min=np.amin(B)/2,    # lb
             # max=np.amin(B)/2,    # ub
         )
-        self.harmoutput[self.active_chn][self.active_harm]['params'] = params
+        self.update_output(params=params)
 
     ########### fitting ##########################
-    def minimize_GB(self, f, G, B, n=1, factor=None, method=None, threshold=None, prominence=None):
+    def minimize_GB(self):
         '''
         use leasesq to fit
         '''
@@ -688,15 +701,17 @@ class PeakTracker:
         # minimize with leastsq
         # mini = Minimizer(residual, params, fcn_args=(f, G, B))
         # result = mini.leastsq(xtol=1.e-10, ftol=1.e-10)
+        # eps = None
+        eps = pow((G - np.amin(G)*1.001), 1/2) # residual weight
         result = minimize(res_GB, params, method='leastsq', args=(f, G, B), kws={'gmod': gmod, 'bmod': bmod, 'eps': eps}, xtol=1.e-18, ftol=1.e-18)
 
         print(fit_report(result)) 
         print('success', result.success)
         print('message', result.message)
         print('lmdif_message', result.lmdif_message)
-        self.harmoutput[chn_name][harm]['result'] = result
+        self.update_output(chn_name, harm, result=result)
 
-    def get_values(self, chn_name=None, harm=None):
+    def get_fit_values(self, chn_name=None, harm=None):
         '''
         get values from calculated result
         '''
@@ -730,7 +745,38 @@ class PeakTracker:
         }
 
         # print('params', result.params.valuesdict())
+        return val
 
+    ########### warp up functions ################
+    # MAKE SURE: run self.update_input(chn_name, harm, f, G, B, harmdata) first to import scan data
+    def peak_track(self, chn_name=None, harm=None):
+        '''
+        The whole process of peak tracking
+        return the predicted span
+        '''
+        # change the active chn_name and harm
+        if (chn_name is not None) & (harm is not None):
+            self.active_chn = chn_name
+            self.active_harm = harm
+
+        self.smart_peak_tracker()
+
+        return self.harmoutput[chn_name][harm]['span']
+
+    def peak_fit(self, chn_name=None, harm=None):
+        '''
+        The whole process of peak fitting
+        return the dict of values with std errors
+        '''
+        # change the active chn_name and harm
+        if (chn_name is not None) & (harm is not None):
+            self.active_chn = chn_name
+            self.active_harm = harm
+
+        self.update_input(chn_name, harm, f, G, B, harmdata)
+        self.minimize_GB()
+        
+        return self.get_fit_values()
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
