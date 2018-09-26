@@ -9,9 +9,11 @@ from random import randrange
 from UISettings import settings_init
 from modules import MathModules
 
+# for debugging
+import traceback
 
-peak_min_distance = 1e3 # in Hz
-peak_min_width = 10 # in Hz
+peak_min_distance_Hz = 1e3 # in Hz
+peak_min_width_Hz = 10 # in Hz full width
 
 
 def fun_G(x, amp, cen, wid, phi):
@@ -184,7 +186,7 @@ def findpeaks(array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf,
     elif output.lower() == 'values':
         return values
 
-def findpeaks_py(array, output=None, sortstr=None, threshold=None, prominence=None, distance=None, width=None):
+def findpeaks_py(x, resonance, output=None, sortstr=None, threshold=None, prominence=None, distance=None, width=None):
     '''
     A wrap up of scipy.signal.find_peaks.
     advantage of find_peaks function of scipy is
@@ -193,16 +195,24 @@ def findpeaks_py(array, output=None, sortstr=None, threshold=None, prominence=No
     output: 'indices' or 'values'. if None, return all (indices, heights, prominences, widths)
     sortstr: 'ascend' or 'descend' ordering data by peak height
     '''
+    print(resonance)
+    print(threshold)
+    print(distance)
+    print(prominence)
+    print(width)
     peaks, props = find_peaks(
-        array, 
+        resonance, 
         threshold=threshold, 
-        distance=distance, 
+        distance=distance / (x[1] - x[0]), 
         prominence=prominence,
-        width=width,
+        width=width / (x[1] - x[0]),
     )
 
+    print(peaks)
+    print(props)
+    
     indices = np.copy(peaks)
-    values = array[indices]
+    values = resonance[indices]
     heights = np.array([])
     prominences = np.array([])
     widths = np.array([])
@@ -221,7 +231,7 @@ def findpeaks_py(array, output=None, sortstr=None, threshold=None, prominence=No
             indices[i] = indices[order[i]]
             heights = np.append(heights, props['width_heights'][order[i]])
             prominences = np.append(prominences, props['prominences'][order[i]])
-            widths = np.append(widths, props['widths'][order[i]])
+            widths = np.append(widths, props['widths'][order[i]] * (x[1] - x[0])) # in Hz
     
     if output:
         if output.lower() == 'indices':
@@ -229,6 +239,34 @@ def findpeaks_py(array, output=None, sortstr=None, threshold=None, prominence=No
         elif output.lower() == 'values':
             return values
     return indices, heights, prominences, widths
+
+def guess_peak_factors(freq, resonance):
+    ''' 
+    guess the factors of a peak.
+    input:
+        freq: frequency
+        cen_index: index of center of the peak
+        resonance: G or B or modulus
+    output:
+        amp: amplitude
+        cen: peak center
+        half_wid: half-maxium hal-width (HMHW)
+    '''
+
+    cen_index = np.argmax(freq) # use max value as peak
+
+    cen = freq[cen_index] # peak center
+    # determine the estimated associated conductance (or susceptance) value at the resonance peak
+    Rmax = resonance[cen_index] 
+    amp = Rmax-np.amin(resonance)
+    # determine the estimated half-max conductance (or susceptance) of the resonance peak
+    half_Rmax = amp / 2 + np.amin(resonance)
+    print('Rmax', Rmax)
+    print('amp', amp)
+
+    print('where', np.where(np.abs(half_Rmax-resonance)==np.min(np.abs(half_Rmax-resonance))))
+    half_wid = np.absolute(freq[np.where(np.abs(half_Rmax-resonance)==np.min(np.abs(half_Rmax-resonance)))[0][0]] -  cen)
+    return amp, cen, half_wid
 
 class PeakTracker:
 
@@ -289,7 +327,7 @@ class PeakTracker:
         self.harminput[chn_name][harm]['condition'] = harm_dict.get('comboBox_tracking_condition', None)
         self.harminput[chn_name][harm]['fit'] = harm_dict.get('checkBox_harmfit', None)
         self.harminput[chn_name][harm]['factor'] = harm_dict.get('spinBox_harmfitfactor', None)
-        self.harminput[chn_name][harm]['n'] = harm_dict.get('lineEdit_peaks_num', None)
+        self.harminput[chn_name][harm]['n'] = harm_dict.get('spinBox_peaks_num', None)
         
         if harm_dict.get('radioButton_peaks_num_max', None) == True:
             self.harminput[chn_name][harm]['n_policy'] = 'max'
@@ -320,17 +358,25 @@ class PeakTracker:
             chn_name = self.active_chn
             harm = self.active_harm
 
-        self.harmoutput[chn_name][harm]['span'] = kwargs.get('span', [None, None]),       # span for next scan
-        self.harmoutput[chn_name][harm]['method'] = kwargs.get('method', ''),       # method for next scan
-        self.harmoutput[chn_name][harm]['found_n'] = kwargs.get('found_n', ''),       # condition for next scan
-        self.harmoutput[chn_name][harm]['cen'] = kwargs.get('cen', None),       # peak center
-        self.harmoutput[chn_name][harm]['wid'] = kwargs.get('wid', None),       # peak width
-        self.harmoutput[chn_name][harm]['amp'] = kwargs.get('amp', None),       # peak amp
-        self.harmoutput[chn_name][harm]['phi'] = kwargs.get('phi', None),       # phase angle
-        self.harmoutput[chn_name][harm]['params'] = kwargs.get('params', None), # parameters input for clculation
-        self.harmoutput[chn_name][harm]['result'] = kwargs.get('result', None), # clculation result
+        if kwargs:
+            for key, val in kwargs.items():
+                self.harmoutput[chn_name][harm][key] = val
+        else: # initialize
+            self.harmoutput[chn_name][harm]['span'] = kwargs.get('span', [None, None])       # span for next scan
+            self.harmoutput[chn_name][harm]['method'] = kwargs.get('method', '')       # method for next scan
+            self.harmoutput[chn_name][harm]['found_n'] = kwargs.get('found_n', '')       # condition for next scan
+            # self.harmoutput[chn_name][harm]['cen'] = kwargs.get('cen', None)       # peak center
+            # self.harmoutput[chn_name][harm]['wid'] = kwargs.get('wid', None)       # peak width
+            # self.harmoutput[chn_name][harm]['amp'] = kwargs.get('amp', None)       # peak amp
+            # self.harmoutput[chn_name][harm]['phi'] = kwargs.get('phi', None)       # phase angle
+            self.harmoutput[chn_name][harm]['gmod'] = kwargs.get('gmod', None) # parameters input for clculation
+            self.harmoutput[chn_name][harm]['bmod'] = kwargs.get('bmod', None) # parameters input for clculation
+            self.harmoutput[chn_name][harm]['params'] = kwargs.get('params', None) # parameters input for clculation
+            self.harmoutput[chn_name][harm]['result'] = kwargs.get('result', {}) # clculation result
+        
+        # print('update params', kwargs.get('params'))
 
-    def init_active_val(self, harm=None, chn_name=None, method=None):
+    def init_active_val(self, chn_name=None, harm=None, method=None):
         '''
         update active values by harm, chn_name
         '''
@@ -366,7 +412,7 @@ class PeakTracker:
             self.resonance = self.harminput[chn_name][harm]['G']
             self.x = self.harminput[chn_name][harm]['f']
 
-        self.found_n = None # number of found peaks
+        self.found_n = 0 # number of found peaks
         self.peak_guess = {} # guess values of found peaks
 
     ########### peak tracking function ###########
@@ -386,7 +432,7 @@ class PeakTracker:
         else:
             resonance = self.harminput[chn][harm]['G']
 
-        amp, cen, half_wid = self.guess_peak_factors(freq, resonance)
+        amp, cen, half_wid = guess_peak_factors(freq, resonance)
 
         current_xlim = self.harminput[chn][harm]['current_span']
         # get the current center and current span of the data in Hz
@@ -434,30 +480,6 @@ class PeakTracker:
 
     ########### peak finding functions ###########
 
-    def guess_peak_factors(self, freq, resonance):
-        ''' 
-        guess the factors of a peak.
-        input:
-            freq: frequency
-            cen_index: index of center of the peak
-            resonance: G or B or modulus
-        output:
-            amp: amplitude
-            cen: peak center
-            half_wid: half-maxium hal-width (HMHW)
-        '''
-
-        cen_index = np.argmax(freq) # use max value as peak
-
-        cen = freq[cen_index] # peak center
-        # determine the estimated associated conductance (or susceptance) value at the resonance peak
-        Gmax = resonance[cen_index] 
-        # determine the estimated half-max conductance (or susceptance) of the resonance peak
-        half_Gmax = (Gmax-np.amin(resonance))/2 + np.amin(resonance)
-        amp = Gmax-np.amin(resonance)
-        half_wid = np.absolute(freq[np.where(np.abs(half_Gmax-resonance)==np.min(np.abs(half_Gmax-resonance)))[0][0]] -  cen)
-        return amp, cen, half_wid
-
     ########### initial values guess functions ###
     def params_guess(self, method='gmax'):
         '''
@@ -495,19 +517,19 @@ class PeakTracker:
             sortstr = None # ordering by freq (x)
 
         indices, heights, prominences, widths = findpeaks_py(
+            self.x,
             self.resonance, 
             sortstr=sortstr, 
             threshold=self.harminput[chn_name][harm]['threshold'], 
             prominence=self.harminput[chn_name][harm]['prominence'],
-            distance=peak_min_distance, 
-            width=peak_min_width
+            distance=peak_min_distance_Hz, 
+            width=peak_min_width_Hz
         )
         
-        if not indices:
+        print(indices)
+        if indices.size == 0:
             self.found_n = 0
             return
-        
-        # amp, _, half_wid = guess_peak_factors(indices[0], f, G) # factors of highest peak
         
         if method == 'derv':
             # guess phase angle if derivatave method used
@@ -529,14 +551,16 @@ class PeakTracker:
         elif n_policy == 'fixed':
             n = self.harminput[chn_name][harm]['n']
         self.found_n = n
-        self.harminput[chn_name][harm]['found_n'] = n
-
-        for i in np.arange(n):
+        self.update_output(found_n=n)
+        print(type(self.harminput[chn_name][harm]['n']))
+        print(prominences)
+        for i in range(n):
             if i+1 <= len(indices):
+                print(i)
                 self.peak_guess[i] = {
                     'amp': prominences[i],  # or use heights
                     'cen': self.x[indices[i]], 
-                    'wid': widths[i], 
+                    'wid': widths[i] / 2, # use half width 
                     'phi': phi
                 }
             else: # for fixed number (n > len(indices))
@@ -546,28 +570,34 @@ class PeakTracker:
                     'amp': np.amin(prominences),  # or use heights. 
                     'cen': self.x[randrange(1, len(self.x) -1, 10)], 
                     # devide x range to n parts and randomly choose one. Try to keep the peaks not too close
-                    'wid': np.amin(widths), 
+                    'wid': np.amin(widths) / 2, 
                     'phi': phi
                 }
 
-    def prev_to_guess(self, chn_name=None, harm=None):
+    def prev_guess(self, chn_name=None, harm=None):
         '''
         get previous calculated values and put them into peak_guess
         '''
-        if chn_name is None & harm is None:
+        if (chn_name is None) & (harm is None):
             chn_name = self.active_chn
             harm = self.active_harm
         
-        result = self.harmoutput[chn_name][harm]['result']
+        result = self.harmoutput[chn_name][harm].get('result', None)
+        print(result)
+        if result is None:
+            self.peak_guess = {}
+            return
+
         val = result.params.valuesdict()
 
+        print(self.harmoutput[chn_name][harm]['found_n'])
+        print(self.harminput[chn_name][harm]['n'])
         n_policy = self.harminput[chn_name][harm]['n_policy']
         if n_policy == 'max':
             n = min(self.harmoutput[chn_name][harm]['found_n'], self.harminput[chn_name][harm]['n'])
         elif n_policy == 'fixed':
             n = self.harminput[chn_name][harm]['n']
         self.found_n = n
-        self.update_output(chn_name, harm, found_n=n)
 
         for i in np.arange(n):
             if i+1 <= self.harmoutput[chn_name][harm]['found_n']:
@@ -588,6 +618,8 @@ class PeakTracker:
                     'wid': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['wid'], 
                     'phi': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['phi'],
                 }
+        # update 'found_n in harmoutput
+        self.update_output(chn_name, harm, found_n=n)
 
     def auto_guess(self):
         '''
@@ -604,23 +636,30 @@ class PeakTracker:
             method_list = [self.harminput[self.active_chn][self.active_harm]['method']]
 
         for method in method_list:
+            print(method)
             if method == 'prev':
-                self.prev_to_guess()
+                self.prev_guess()
             else:
                 self.params_guess(method=method)
             if self.found_n:
                 self.update_output(method=method)
                 break 
 
-    def set_params(self):
+    def set_params(self, chn_name=None, harm=None):
         ''' set the parameters for fitting '''
+        if (chn_name is None) & (harm is None):
+            chn_name = self.active_chn
+            harm = self.active_harm
 
         params = Parameters()
 
         # rough guess
-        amp_rough = np.amax(G) - np.amin(G)
-        cen_rough = np.mean(self.harminput[self.active_chn][self.active_harm]['f'])
-        wid_rough = (np.amax(self.harminput[self.active_chn][self.active_harm]['f']) - np.amin(self.harminput[self.active_chn][self.active_harm]['f'])) / 6
+        f = self.harminput[self.active_chn][self.active_harm]['f']
+        G = self.harminput[self.active_chn][self.active_harm]['G']
+        B = self.harminput[self.active_chn][self.active_harm]['B']
+        amp_rough = np.amax(self.resonance) - np.amin(self.resonance)
+        cen_rough = np.mean(f)
+        wid_rough = (np.amax(f) - np.amin(f)) / 6
         phi_rough = 0
 
         for i in np.arange(self.found_n):
@@ -650,27 +689,23 @@ class PeakTracker:
             params.add(
                 'p'+str(i)+'_wid',                 # width (fwhm)
                 value=wid,                         # init: half range
-                min=1,                             # lb
-                max=(np.amax(f) - np.amin(f)) * 2, # ub: assume peak is in the range of f
+                min=peak_min_width_Hz / 2,         # lb in Hz
+                max=(np.amax(f) - np.amin(f)) * 2, # ub in Hz: assume peak is in the range of f
             )
             params.add(
                 'p'+str(i)+'_phi',       # phase shift
                 value=phi,               # init value: peak height
-                min=-np.pi / 2,          # lb
-                max=np.pi / 2,           # ub
+                min=-np.pi / 2,          # lb in rad
+                max=np.pi / 2,           # ub in rad
             )
         
         params.add(
             'g_c',              # initialize G_offset
             value=np.amin(G),    # init G_offset = mean(G)
-            # min=-np.inf,        # lb
-            # max=np.amax(G)/2,    # ub
         )        
         params.add(
             'b_c',              # initialize B_offset
             value=np.mean(B),   # init B_offset = mean(B)
-            # min=np.amin(B)/2,    # lb
-            # max=np.amin(B)/2,    # ub
         )
         self.update_output(params=params)
 
@@ -679,43 +714,65 @@ class PeakTracker:
         '''
         use leasesq to fit
         '''
+        chn_name = self.active_chn
+        harm = self.active_harm
+        factor =self.harminput[chn_name][harm]['factor']
 
         # set params with data
         self.auto_guess()
         self.set_params()
         # set the models
-        gmod, bmod = make_gbmodel(n)
+        gmod, bmod = make_gbmodel(self.found_n)
+        self.update_output(gmod=gmod)
+        self.update_output(bmod=bmod)
 
         # set data for fitting
-        chn_name = self.active_chn
-        harm = self.active_harm
-        factor =self.harminput[chn_name][harm]['fit']
         if factor is not None:
-            _, cen_guess, half_wid_guess = self.guess_peak_factors(self.x, self.resonance)
-            condition = np.where((f >= cen_guess - half_wid_guess * factor) & (f <= cen_guess + half_wid_guess * factor))
+            _, cen_guess, half_wid_guess = guess_peak_factors(self.x, self.resonance)
+            condition = np.where((self.x >= cen_guess - half_wid_guess * factor) & (self.x <= cen_guess + half_wid_guess * factor))
             f, G, B = self.harminput[chn_name][harm]['f'][condition], \
                 self.harminput[chn_name][harm]['G'][condition], \
                 self.harminput[chn_name][harm]['B'][condition]
 
-
+        print('factor\n', factor)
+        print('cen_guess\n', cen_guess)
+        print('half_wid_guess\n', half_wid_guess)
+        print('condition\n', condition)
         # minimize with leastsq
         # mini = Minimizer(residual, params, fcn_args=(f, G, B))
         # result = mini.leastsq(xtol=1.e-10, ftol=1.e-10)
-        # eps = None
-        eps = pow((G - np.amin(G)*1.001), 1/2) # residual weight
-        result = minimize(res_GB, params, method='leastsq', args=(f, G, B), kws={'gmod': gmod, 'bmod': bmod, 'eps': eps}, xtol=1.e-18, ftol=1.e-18)
+        eps = None
+        # eps = pow((G - np.amin(G)*1.001), 1/2) # residual weight
+        # print(f)
+        # print(G)
+        # print(B)
+        print('mm params', self.harmoutput[chn_name][harm]['params'])
+        try:
+            result = minimize(
+                res_GB, 
+                self.harmoutput[chn_name][harm]['params'], 
+                method='leastsq', 
+                args=(f, G, B), 
+                kws={'gmod': gmod, 'bmod': bmod, 'eps': eps}, 
+                xtol=1.e-18, ftol=1.e-18,
+                nan_policy='omit', # ('raise' default, 'propagate', 'omit')
+                )
+            print(fit_report(result)) 
+            print('success', result.success)
+            print('message', result.message)
+            print('lmdif_message', result.lmdif_message)
+        except Exception as err:
+            result = {}
+            traceback.print_tb(err.__traceback__)
+            print(err)
 
-        print(fit_report(result)) 
-        print('success', result.success)
-        print('message', result.message)
-        print('lmdif_message', result.lmdif_message)
         self.update_output(chn_name, harm, result=result)
 
     def get_fit_values(self, chn_name=None, harm=None):
         '''
         get values from calculated result
         '''
-        if chn_name is None & harm is None:
+        if (chn_name is None) & (harm is None):
             chn_name = self.active_chn
             harm = self.active_harm
             
@@ -723,30 +780,46 @@ class PeakTracker:
     
         # get values of the first peak (index = 0, peaks are ordered by p_policy)
         val = {}
-        
-        val['sucess'] = result.success # bool
-        val['chisqr'] = result.chisqr # float
+        if result:
+            val['sucess'] = result.success # bool
+            val['chisqr'] = result.chisqr # float
 
-        val['amp'] = {
-            'value' : result.params.get('p0_amp').value,
-            'stderr': result.params.get('p0_amp').stderr,
-        }
-        val['cen'] = {
-            'value' : result.params.get('p0_cen').value,
-            'stderr': result.params.get('p0_cen').stderr,
-        }
-        val['wid'] = {
-            'value' : result.params.get('p0_wid').value,
-            'stderr': result.params.get('p0_wid').stderr,
-        }
-        val['phi'] = {
-            'value' : result.params.get('p0_phi').value,
-            'stderr': result.params.get('p0_phi').stderr,
-        }
+            val['amp'] = {
+                'value' : result.params.get('p0_amp').value,
+                'stderr': result.params.get('p0_amp').stderr,
+            }
+            val['cen'] = {
+                'value' : result.params.get('p0_cen').value,
+                'stderr': result.params.get('p0_cen').stderr,
+            }
+            val['wid'] = {
+                'value' : result.params.get('p0_wid').value,
+                'stderr': result.params.get('p0_wid').stderr,
+            }
+            val['phi'] = {
+                'value' : result.params.get('p0_phi').value,
+                'stderr': result.params.get('p0_phi').stderr,
+            }
 
-        # print('params', result.params.valuesdict())
+            print('params', result.params.valuesdict())
         return val
 
+    def eval_mod(self, mod_name, chn_name=None, harm=None):
+        '''
+        evaluate gmod or bmod by f
+        return ndarray
+        '''
+        if (chn_name is None) & (harm is None):
+            chn_name = self.active_chn
+            harm = self.active_harm
+        if self.harmoutput[chn_name][harm]['result']:
+            return self.harmoutput[chn_name][harm][mod_name].eval(
+                    self.harmoutput[chn_name][harm]['result'].params, 
+                    x=self.harminput[chn_name][harm]['f']
+                    )
+        else:
+            return np.empty(self.harminput[chn_name][harm]['f'].shape) * np.nan
+            
     ########### warp up functions ################
     # MAKE SURE: run self.update_input(chn_name, harm, f, G, B, harmdata) first to import scan data
     def peak_track(self, chn_name=None, harm=None):
@@ -772,11 +845,12 @@ class PeakTracker:
         if (chn_name is not None) & (harm is not None):
             self.active_chn = chn_name
             self.active_harm = harm
-
-        self.update_input(chn_name, harm, f, G, B, harmdata)
+        
+        self.init_active_val(chn_name=chn_name, harm=harm)
+        
         self.minimize_GB()
         
-        return self.get_fit_values()
+        return self.get_fit_values(chn_name=chn_name, harm=harm), self.eval_mod('gmod', chn_name=chn_name, harm=harm), self.eval_mod('bmod', chn_name=chn_name, harm=harm)
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt

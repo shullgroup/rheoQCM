@@ -55,7 +55,7 @@
         "comboBox_tracking_condition": "auto",
         "checkBox_harmfit": true,
         "comboBox_harmfitfactor": 6,
-        "lineEdit_peaks_num": 1.0,
+        "spinBox_peaks_num": 1.0,
         "lineEdit_peaks_threshold": 0.2,
         "lineEdit_peaks_prominence": 0.005
     },
@@ -67,7 +67,7 @@
         "comboBox_tracking_condition": "fixspan",
         "checkBox_harmfit": true,
         "comboBox_harmfitfactor": 6,
-        "lineEdit_peaks_num": 1,
+        "spinBox_peaks_num": 1,
         "lineEdit_peaks_threshold": 0.2,
         "lineEdit_peaks_prominence": 0.005
     },
@@ -79,7 +79,7 @@
         "comboBox_tracking_condition": "fixspan",
         "checkBox_harmfit": true,
         "comboBox_harmfitfactor": 6,
-        "lineEdit_peaks_num": 1,
+        "spinBox_peaks_num": 1,
         "lineEdit_peaks_threshold": 0.2,
         "lineEdit_peaks_prominence": 0.005
     },
@@ -91,7 +91,7 @@
         "comboBox_tracking_condition": "fixspan",
         "checkBox_harmfit": true,
         "comboBox_harmfitfactor": 6,
-        "lineEdit_peaks_num": 1,
+        "spinBox_peaks_num": 1,
         "lineEdit_peaks_threshold": 0.2,
         "lineEdit_peaks_prominence": 0.005
     },
@@ -103,7 +103,7 @@
         "comboBox_tracking_condition": "fixspan",
         "checkBox_harmfit": true,
         "comboBox_harmfitfactor": 6,
-        "lineEdit_peaks_num": 1,
+        "spinBox_peaks_num": 1,
         "lineEdit_peaks_threshold": 0.2,
         "lineEdit_peaks_prominence": 0.005
     },
@@ -115,7 +115,7 @@
         "comboBox_tracking_condition": "fixspan",
         "checkBox_harmfit": true,
         "comboBox_harmfitfactor": 6,
-        "lineEdit_peaks_num": 1,
+        "spinBox_peaks_num": 1,
         "lineEdit_peaks_threshold": 0.2,
         "lineEdit_peaks_prominence": 0.005
     },

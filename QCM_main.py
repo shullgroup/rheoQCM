@@ -600,7 +600,6 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_scan_harmstart.setValidator(QDoubleValidator(1, math.inf, 12))
         self.ui.lineEdit_scan_harmend.setValidator(QDoubleValidator(1, math.inf, 12))
         self.ui.lineEdit_scan_harmsteps.setValidator(QIntValidator(0, 2147483647))
-        self.ui.lineEdit_peaks_num.setValidator(QIntValidator(0, 2147483647))
         self.ui.lineEdit_peaks_threshold.setValidator(QDoubleValidator(0, math.inf, 12))
         self.ui.lineEdit_peaks_prominence.setValidator(QDoubleValidator(0, math.inf, 12))
 
@@ -616,7 +615,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_tracking_condition.activated.connect(self.update_harmwidget)
         self.ui.checkBox_harmfit.toggled['bool'].connect(self.update_harmwidget)
         self.ui.spinBox_harmfitfactor.valueChanged.connect(self.update_harmwidget)
-        self.ui.lineEdit_peaks_num.textEdited.connect(self.update_harmwidget)
+        self.ui.spinBox_peaks_num.valueChanged.connect(self.update_harmwidget)
         self.ui.lineEdit_peaks_threshold.textEdited.connect(self.update_harmwidget)
         self.ui.lineEdit_peaks_prominence.textEdited.connect(self.update_harmwidget)
         self.ui.radioButton_peaks_num_max.toggled['bool'].connect(self.update_harmwidget)
@@ -1499,19 +1498,20 @@ class QCMApp(QMainWindow):
         '''
         # get data in tuple (x, y)
         data_lG, data_lB = self.ui.mpl_spectra_fit.get_data(ls=['lG', 'lB'])
-        print(data_lG)
-        print(data_lB)
 
         # factor = self.get_harmdata('spinBox_harmfitfactor')
 
         # get guessed value of cen and wid
 
         ## fitting peak
-        print(self.settings['harmdata'])
-        self.peak_tracker.update_input(self.active_chn, self.active_harm, data_lG[0], data_lG[1], data_lB[1], self.settings['harmdata'])
+        self.peak_tracker.update_input(self.active_chn['name'], self.active_harm, data_lG[0], data_lG[1], data_lB[1], self.settings['harmdata'])
 
-        val = self.peak_tracker.peka_fit(self.acitve_chn, self.active_harm)
+        val, fit_G, fit_B  = self.peak_tracker.peak_fit(self.active_chn['name'], self.active_harm)
         print(val)
+
+        # plot fitted data
+        self.ui.mpl_spectra_fit.update_data(('lGfit',data_lG[0], fit_G), ('lBfit',data_lB[0], fit_B))
+        self.ui.mpl_spectra_fit_polar.update_data(('lfit',fit_G, fit_B))
 
 
 
@@ -1749,9 +1749,9 @@ class QCMApp(QMainWindow):
             self.get_harmdata('spinBox_harmfitfactor', harm=harm)
         )
 
-        # update lineEdit_peaks_num
-        self.ui.lineEdit_peaks_num.setText(
-            str(self.get_harmdata('lineEdit_peaks_num', harm=harm))
+        # update spinBox_peaks_num
+        self.ui.spinBox_peaks_num.setValue(
+            int(self.get_harmdata('spinBox_peaks_num', harm=harm))
         )
 
         # update radioButton_peaks_num_max

@@ -567,15 +567,15 @@ class MatplotlibWidget(QWidget):
         ''' 
         update data of given in args (tuple)
         arg = (l, x, y)
-            l: string of line name
-            x: x data
-            y: y data
+            ln: string of line name
+            x : x data
+            y : y data
         '''
         axs = set() # initialize a empty set
-        for l, x, y in args:
-            self.l[l][0].set_xdata(x)
-            self.l[l][0].set_ydata(y)
-            axs.add(self.l[l][0].axes)
+        for ln, x, y in args:
+            self.l[ln][0].set_xdata(x)
+            self.l[ln][0].set_ydata(y)
+            axs.add(self.l[ln][0].axes)
 
         for ax in axs:
             ax.relim()
