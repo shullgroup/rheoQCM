@@ -35,7 +35,7 @@ import numpy as np
 from UISettings import settings_init
 
 # color map for plot
-color = ['tab:blue', 'tab:red']
+color = ['tab:blue', 'tab:red', 'tab:gray']
 
 # rcParams['toolbar'] = 'toolmanager'
 
@@ -65,6 +65,7 @@ class MatplotlibWidget(QWidget):
         self.axtype = axtype
         self.ax = [] # list of axes 
         self.l = {} # all the plot stored in dict
+        self.l['temp'] = [] # for temp lines in list
         self.leg = '' # initiate legend 
 
         # set padding size
@@ -594,17 +595,41 @@ class MatplotlibWidget(QWidget):
             data.append((xdata, ydata))
         return data
 
-
-    def clr_alldata(self):
+    def del_templines(self, ax=None):
         ''' 
-        just clear all lines in .l
+        del all temp lines .l['temp'][:] 
         '''
-        for key in self.l:
-            self.l[key][0].set_xdata([])
-            self.l[key][0].set_ydata([])
+        if ax is None:
+            ax = self.ax[0]
+
+        print(ax.lines)
+        print('len temp', len(self.l['temp']))
+        print('temp', self.l['temp'])
+
+        for lt in self.l['temp']:
+            print('lt', lt)
+            ax.lines.remove(lt[0]) # remove from ax
+            self.l['temp'].remove(lt) # remove from list .l['temp']
+        print(len(self.l['temp']))
+
         self.canvas.draw()
 
-    def new_data(self, xdata=[], ydata=[], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
+    def clr_lines(self, l_list=None):
+        ''' 
+        clear all lines in .l (but not .l['temp'][:]) of key in l_list
+        '''
+        for key in self.l:
+            if  l_list is None: # clear all
+                self.l[key][0].set_xdata([])
+                self.l[key][0].set_ydata([])
+            else:
+                if key in l_list:
+                    self.l[key][0].set_xdata([])
+                    self.l[key][0].set_ydata([])
+
+        self.canvas.draw()
+
+    def new_plt(self, xdata=[], ydata=[], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         ''' 
         plot data of in new plots 
         #TODO need to define xdata, ydata structure
@@ -614,9 +639,7 @@ class MatplotlibWidget(QWidget):
         # set label of ax[1]
         self.set_ax(self.ax[0], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
 
-
-
-        self.l = {}
+        # self.l = {}
         for i, x, y in enumerate(zip(xdata, ydata)):
             self.l[i] = self.ax[0].plot(
                 x, y, 
@@ -625,6 +648,32 @@ class MatplotlibWidget(QWidget):
             ) # l[i]
 
         self.ax[0].autoscale()
+
+    def add_temp_lines(self, ax=None, xlist=[], ylist=[]):
+        '''
+        add line in self.l['temp'][i]
+        all the lines share the same xdata
+        '''
+        for i, (x, y) in enumerate(zip(xlist, ylist)):
+            print('len x: ', len(x))
+            print('len y: ', len(y))
+            print(x)
+            print(y)
+            if ax is None:
+                self.l['temp'].append(plt.plot(
+                    x, y,
+                    linestyle='--',
+                    color=color[-1],
+                    )
+                )
+            else:
+                self.l['temp'].append(ax.plot(
+                    x, y,
+                    linestyle='--',
+                    color=color[-1],
+                    )
+                )
+        self.canvas.draw()
 
 def press_zoomX(obj, event):
     event.key = 'x'

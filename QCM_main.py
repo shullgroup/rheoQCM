@@ -1506,12 +1506,19 @@ class QCMApp(QMainWindow):
         ## fitting peak
         self.peak_tracker.update_input(self.active_chn['name'], self.active_harm, data_lG[0], data_lG[1], data_lB[1], self.settings['harmdata'])
 
-        val, fit_G, fit_B  = self.peak_tracker.peak_fit(self.active_chn['name'], self.active_harm)
+        val, fit_G, fit_B, fit_G_comp, fit_B_comp  = self.peak_tracker.peak_fit(self.active_chn['name'], self.active_harm, components=True)
         print(val)
-
+        # print(fit_G_comp)
         # plot fitted data
         self.ui.mpl_spectra_fit.update_data(('lGfit',data_lG[0], fit_G), ('lBfit',data_lB[0], fit_B))
         self.ui.mpl_spectra_fit_polar.update_data(('lfit',fit_G, fit_B))
+
+        # clear l.['temp'][:]
+        self.ui.mpl_spectra_fit.del_templines()
+        self.ui.mpl_spectra_fit_polar.del_templines()
+        # add devided peaks
+        self.ui.mpl_spectra_fit.add_temp_lines(self.ui.mpl_spectra_fit.ax[0], xlist=[data_lG[0]], ylist=fit_G_comp)
+        self.ui.mpl_spectra_fit_polar.add_temp_lines(self.ui.mpl_spectra_fit_polar.ax[0],xlist=fit_G_comp, ylist=fit_B_comp)
 
 
 

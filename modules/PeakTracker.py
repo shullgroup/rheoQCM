@@ -14,7 +14,8 @@ import traceback
 
 peak_min_distance_Hz = 1e3 # in Hz
 peak_min_width_Hz = 10 # in Hz full width
-
+xtol = 1e-18 
+ftol = 1e-18
 
 def fun_G(x, amp, cen, wid, phi):
     ''' 
@@ -92,6 +93,24 @@ def make_models(n=1):
         bmods.append(bmod_i)
     
     return gmods, bmods
+
+def make_model_n(n=1):
+    '''
+    Since minimizeResult class doesn't have eval_components method, we will make complex models with single peak for evaluation
+    input:
+        n:    the nth peak
+    output:
+        gmod = the nth model of G
+        bmod = the nth model of B
+    '''
+    gc = ConstantModel(prefix='g_')
+    bc = ConstantModel(prefix='b_')
+
+    # gmod and bmod sharing the same varible so use the same prefix
+    gmod = Model(fun_G, prefix='p'+str(i)+'_', name='g'+str(i)) + gc
+    bmod = Model(fun_B, prefix='p'+str(i)+'_', name='b'+str(i)) + bc
+    
+    return gmod, bmod
 
 def make_models_pars(n=1):
     '''
@@ -253,7 +272,7 @@ def guess_peak_factors(freq, resonance):
         half_wid: half-maxium hal-width (HMHW)
     '''
 
-    cen_index = np.argmax(freq) # use max value as peak
+    cen_index = np.argmax(resonance) # use max value as peak
 
     cen = freq[cen_index] # peak center
     # determine the estimated associated conductance (or susceptance) value at the resonance peak
@@ -266,6 +285,7 @@ def guess_peak_factors(freq, resonance):
 
     print('where', np.where(np.abs(half_Rmax-resonance)==np.min(np.abs(half_Rmax-resonance))))
     half_wid = np.absolute(freq[np.where(np.abs(half_Rmax-resonance)==np.min(np.abs(half_Rmax-resonance)))[0][0]] -  cen)
+    print(half_wid)
     return amp, cen, half_wid
 
 class PeakTracker:
@@ -551,7 +571,6 @@ class PeakTracker:
         elif n_policy == 'fixed':
             n = self.harminput[chn_name][harm]['n']
         self.found_n = n
-        self.update_output(found_n=n)
         print(type(self.harminput[chn_name][harm]['n']))
         print(prominences)
         for i in range(n):
@@ -568,11 +587,12 @@ class PeakTracker:
                 # use the min values of each variables
                 self.peak_guess[i] = {
                     'amp': np.amin(prominences),  # or use heights. 
-                    'cen': self.x[randrange(1, len(self.x) -1, 10)], 
+                    'cen': self.x[randrange(int(len(self.x) * 0.3), int(len(self.x) * 0.6), self.found_n)], 
                     # devide x range to n parts and randomly choose one. Try to keep the peaks not too close
                     'wid': np.amin(widths) / 2, 
                     'phi': phi
                 }
+        self.update_output(found_n=n)
 
     def prev_guess(self, chn_name=None, harm=None):
         '''
@@ -613,7 +633,7 @@ class PeakTracker:
                 # use the last values of each variables
                 self.peak_guess[i] = {
                     'amp': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['amp'],  
-                    'cen': self.x[randrange(1, len(self.x) -1, 10)], 
+                    'cen': self.x[randrange(int(len(self.x) * 0.3), int(len(self.x) * 0.6), self.found_n)], 
                     # devide x range to n parts and randomly choose one. Try to keep the peaks not too close
                     'wid': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['wid'], 
                     'phi': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['phi'],
@@ -729,7 +749,7 @@ class PeakTracker:
         # set data for fitting
         if factor is not None:
             _, cen_guess, half_wid_guess = guess_peak_factors(self.x, self.resonance)
-            condition = np.where((self.x >= cen_guess - half_wid_guess * factor) & (self.x <= cen_guess + half_wid_guess * factor))
+            condition, = np.where((self.x >= cen_guess - half_wid_guess * factor) & (self.x <= cen_guess + half_wid_guess * factor))
             f, G, B = self.harminput[chn_name][harm]['f'][condition], \
                 self.harminput[chn_name][harm]['G'][condition], \
                 self.harminput[chn_name][harm]['B'][condition]
@@ -737,7 +757,7 @@ class PeakTracker:
         print('factor\n', factor)
         print('cen_guess\n', cen_guess)
         print('half_wid_guess\n', half_wid_guess)
-        print('condition\n', condition)
+        # print('condition\n', condition)
         # minimize with leastsq
         # mini = Minimizer(residual, params, fcn_args=(f, G, B))
         # result = mini.leastsq(xtol=1.e-10, ftol=1.e-10)
@@ -754,7 +774,7 @@ class PeakTracker:
                 method='leastsq', 
                 args=(f, G, B), 
                 kws={'gmod': gmod, 'bmod': bmod, 'eps': eps}, 
-                xtol=1.e-18, ftol=1.e-18,
+                xtol=xtol, ftol=ftol,
                 nan_policy='omit', # ('raise' default, 'propagate', 'omit')
                 )
             print(fit_report(result)) 
@@ -804,7 +824,7 @@ class PeakTracker:
             print('params', result.params.valuesdict())
         return val
 
-    def eval_mod(self, mod_name, chn_name=None, harm=None):
+    def eval_mod(self, mod_name, chn_name=None, harm=None, components=False):
         '''
         evaluate gmod or bmod by f
         return ndarray
@@ -813,11 +833,40 @@ class PeakTracker:
             chn_name = self.active_chn
             harm = self.active_harm
         if self.harmoutput[chn_name][harm]['result']:
-            return self.harmoutput[chn_name][harm][mod_name].eval(
-                    self.harmoutput[chn_name][harm]['result'].params, 
-                    x=self.harminput[chn_name][harm]['f']
-                    )
-        else:
+            if components is False: # total fitting
+                return self.harmoutput[chn_name][harm][mod_name].eval(
+                        self.harmoutput[chn_name][harm]['result'].params, 
+                        x=self.harminput[chn_name][harm]['f']
+                        )
+            else: # return single peak
+                # make gmod and bmod for all components
+                gmods, bmods = make_models(n=self.harmoutput[chn_name][harm]['found_n'])
+                if mod_name == 'gmod':
+                    g_fit = [] # list of G fit values by peaks
+                    for gmod in gmods:
+                        g_fit.append(
+                            gmod.eval(
+                                self.harmoutput[chn_name][harm]['result'].params, 
+                                x=self.harminput[chn_name][harm]['f'],
+                            )
+                        )
+                    return g_fit
+                elif mod_name == 'bmod':
+                    b_fit = [] # list of B fit values by peaks
+                    for bmod in bmods:
+                        b_fit.append(
+                            bmod.eval(
+                                self.harmoutput[chn_name][harm]['result'].params, 
+                                x=self.harminput[chn_name][harm]['f'],
+                            )
+                        )
+                    return b_fit
+                else: # no mod_name matched
+                    dummy = []
+                    for n in self.harmoutput[chn_name][harm]['found_n']:
+                        dummy.append(np.empty(self.harminput[chn_name][harm]['f'].shape) * np.nan)
+                    return dummy
+        else: # no result found
             return np.empty(self.harminput[chn_name][harm]['f'].shape) * np.nan
             
     ########### warp up functions ################
@@ -836,10 +885,16 @@ class PeakTracker:
 
         return self.harmoutput[chn_name][harm]['span']
 
-    def peak_fit(self, chn_name=None, harm=None):
+    def peak_fit(self, chn_name=None, harm=None, components=False):
         '''
         The whole process of peak fitting
-        return the dict of values with std errors
+        return: 
+            the dict of values with std errors
+            fitted G value
+            fitted B value
+            if components == True:
+                list fitted G values by peaks
+                list fitted B values by peaks
         '''
         # change the active chn_name and harm
         if (chn_name is not None) & (harm is not None):
@@ -850,7 +905,17 @@ class PeakTracker:
         
         self.minimize_GB()
         
-        return self.get_fit_values(chn_name=chn_name, harm=harm), self.eval_mod('gmod', chn_name=chn_name, harm=harm), self.eval_mod('bmod', chn_name=chn_name, harm=harm)
+        if components is None:
+            return self.get_fit_values(chn_name=chn_name, harm=harm), \
+                self.eval_mod('gmod', chn_name=chn_name, harm=harm), \
+                self.eval_mod('bmod', chn_name=chn_name, harm=harm) 
+        elif components is True:
+            return self.get_fit_values(chn_name=chn_name, harm=harm), \
+                self.eval_mod('gmod', chn_name=chn_name, harm=harm), \
+                self.eval_mod('bmod', chn_name=chn_name, harm=harm), \
+                self.eval_mod('gmod', chn_name=chn_name, harm=harm, components=True), \
+                self.eval_mod('bmod', chn_name=chn_name, harm=harm, components=True), \
+            
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
