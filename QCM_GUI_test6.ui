@@ -162,7 +162,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>3</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1314,7 +1314,7 @@ background-color: red;
                     <enum>QTabWidget::Rounded</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>5</number>
+                    <number>3</number>
                    </property>
                    <property name="iconSize">
                     <size>
@@ -2582,7 +2582,7 @@ border: none;
                     <enum>QTabWidget::Rounded</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>5</number>
+                    <number>0</number>
                    </property>
                    <property name="iconSize">
                     <size>
@@ -2602,7 +2602,7 @@ border: none;
                    <property name="tabBarAutoHide">
                     <bool>true</bool>
                    </property>
-                   <widget class="QWidget" name="tab_settings_harm_2">
+                   <widget class="QWidget" name="tab_settings_data_harm_1">
                     <attribute name="title">
                      <string>1</string>
                     </attribute>
@@ -2728,7 +2728,7 @@ border: none;
                      </item>
                     </layout>
                    </widget>
-                   <widget class="QWidget" name="tab_settings_harm_4">
+                   <widget class="QWidget" name="tab_settings_data_harm_3">
                     <attribute name="title">
                      <string>3</string>
                     </attribute>
@@ -2854,7 +2854,7 @@ border: none;
                      </item>
                     </layout>
                    </widget>
-                   <widget class="QWidget" name="tab_settings_harm_6">
+                   <widget class="QWidget" name="tab_settings_data_harm_5">
                     <attribute name="title">
                      <string>5</string>
                     </attribute>
@@ -2980,7 +2980,7 @@ border: none;
                      </item>
                     </layout>
                    </widget>
-                   <widget class="QWidget" name="tab_settings_harm_8">
+                   <widget class="QWidget" name="tab_settings_data_harm_7">
                     <attribute name="title">
                      <string>7</string>
                     </attribute>
@@ -3106,7 +3106,7 @@ border: none;
                      </item>
                     </layout>
                    </widget>
-                   <widget class="QWidget" name="tab_settings_harm_10">
+                   <widget class="QWidget" name="tab_settings_data_harm_9">
                     <attribute name="title">
                      <string>9</string>
                     </attribute>
@@ -3232,7 +3232,7 @@ border: none;
                      </item>
                     </layout>
                    </widget>
-                   <widget class="QWidget" name="tab_settings_harm_12">
+                   <widget class="QWidget" name="tab_settings_data_harm_11">
                     <attribute name="title">
                      <string>11</string>
                     </attribute>

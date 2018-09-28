@@ -1504,21 +1504,31 @@ class QCMApp(QMainWindow):
         # get guessed value of cen and wid
 
         ## fitting peak
-        self.peak_tracker.update_input(self.active_chn['name'], self.active_harm, data_lG[0], data_lG[1], data_lB[1], self.settings['harmdata'])
+        print('main set harm', self.settings_harm)
+        self.peak_tracker.update_input(self.active_chn['name'], self.settings_harm, data_lG[0], data_lG[1], data_lB[1], self.settings['harmdata'])
 
-        val, fit_G, fit_B, fit_G_comp, fit_B_comp  = self.peak_tracker.peak_fit(self.active_chn['name'], self.active_harm, components=True)
-        print(val)
-        # print(fit_G_comp)
+        fit_result = self.peak_tracker.peak_fit(self.active_chn['name'], self.settings_harm, components=True)
+        print(fit_result['v_fit'])
+        # print(fit_result['comp_g'])
         # plot fitted data
-        self.ui.mpl_spectra_fit.update_data(('lGfit',data_lG[0], fit_G), ('lBfit',data_lB[0], fit_B))
-        self.ui.mpl_spectra_fit_polar.update_data(('lfit',fit_G, fit_B))
+        self.ui.mpl_spectra_fit.update_data(('lGfit',data_lG[0], fit_result['fit_g']), ('lBfit',data_lB[0], fit_result['fit_b']))
+        self.ui.mpl_spectra_fit_polar.update_data(('lfit',fit_result['fit_g'], fit_result['fit_b']))
 
         # clear l.['temp'][:]
         self.ui.mpl_spectra_fit.del_templines()
         self.ui.mpl_spectra_fit_polar.del_templines()
         # add devided peaks
-        self.ui.mpl_spectra_fit.add_temp_lines(self.ui.mpl_spectra_fit.ax[0], xlist=[data_lG[0]], ylist=fit_G_comp)
-        self.ui.mpl_spectra_fit_polar.add_temp_lines(self.ui.mpl_spectra_fit_polar.ax[0],xlist=fit_G_comp, ylist=fit_B_comp)
+        self.ui.mpl_spectra_fit.add_temp_lines(self.ui.mpl_spectra_fit.ax[0], xlist=[data_lG[0]] * len(fit_result['comp_g']), ylist=fit_result['comp_g'])
+        self.ui.mpl_spectra_fit_polar.add_temp_lines(self.ui.mpl_spectra_fit_polar.ax[0],xlist=fit_result['comp_g'], ylist=fit_result['comp_b'])
+
+        # update lsp
+        factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=self.active_chn['name'], harm=self.settings_harm)
+        gc_list = [fit_result['v_fit']['g_c']['value']] * 2 # make its len() == 2
+
+        print(factor_span)
+        print(gc_list)
+
+        self.ui.mpl_spectra_fit.update_data(('lsp', factor_span, gc_list))
 
 
 
@@ -2151,6 +2161,21 @@ class QCMApp(QMainWindow):
         self.ui.radioButton_settings_settings_harmchnsamp.setChecked(True)
 
         ## following data is read from self.settings
+        # # hide harmonic related widgets which > max_disp_harmonic & < max_harmonic
+        # for i in range(self.settings['max_disp_harmonic']+2, settings_init['max_harmonic']+2, 2):
+        #     print(i)
+        #     getattr(self.ui, 'checkBox_harm' +str(i)).setVisible(False)
+        #     getattr(self.ui, 'lineEdit_startf' +str(i)).setVisible(False)
+        #     getattr(self.ui, 'lineEdit_endf' +str(i)).setVisible(False)
+        #     getattr(self.ui, 'lineEdit_startf' +str(i) + '_r').setVisible(False)
+        #     getattr(self.ui, 'lineEdit_endf' +str(i) + '_r').setVisible(False)
+        #     getattr(self.ui, 'tab_settings_settings_harm' +str(i)).setVisible(False)
+        #     getattr(self.ui, 'checkBox_plt1_h' +str(i)).setVisible(False)
+        #     getattr(self.ui, 'checkBox_plt2_h' +str(i)).setVisible(False)
+        #     getattr(self.ui, 'tab_settings_data_harm_' +str(i)).setVisible(False)
+        #     # more to be added here
+
+
         # load display_mode
         self.load_comboBox(self.ui.comboBox_settings_control_dispmode, 'display_choose')
 

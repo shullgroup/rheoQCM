@@ -35,7 +35,7 @@ import numpy as np
 from UISettings import settings_init
 
 # color map for plot
-color = ['tab:blue', 'tab:red', 'tab:gray']
+color = ['tab:blue', 'tab:red', 'tab:orange', 'tab:gray']
 
 # rcParams['toolbar'] = 'toolmanager'
 
@@ -241,19 +241,24 @@ class MatplotlibWidget(QWidget):
             [], [], 
             color='k'
         ) # B fit
-        self.l['lf'] = self.ax[1].scatter(
+        self.l['sf'] = self.ax[1].plot(
             [], [],
             marker='x',
+            linestyle='none',
             color='k'
         ) # f: G peak
-        self.l['lg'] = self.ax[1].plot(
-            [], [],
-            color='k'
-        ) # g: gamma (fwhm)
-        self.l['lP'] = self.ax[0].scatter(
+        self.l['sg'] = self.ax[1].plot(
             [], [],
             marker='x',
+            linestyle='none',
             color='k'
+        ) # g: gamma (fwhm)
+        self.l['lP'] = self.ax[0].plot(
+            [], [],
+            marker='.', 
+            linestyle='none',
+            markerfacecolor='none', 
+            color=color[0]
         ) # polar plot
         self.l['lPfit'] = self.ax[0].plot(
             [], [],
@@ -308,20 +313,22 @@ class MatplotlibWidget(QWidget):
             [], [], 
             color='k'
         ) # B fit
-        self.l['lf'] = self.ax[1].plot(
+        self.l['sf'] = self.ax[1].plot(
             [], [],
             marker='x',
             linestyle='none',
             color='k'
         ) # f: G peak
-        self.l['lg'] = self.ax[1].plot(
+        self.l['sg'] = self.ax[1].plot(
             [], [],
+            marker='x',
+            linestyle='none',
             color='k'
         ) # g: gamma (fwhm)
 
-        self.l['lsp'] = self.ax[1].plot(
+        self.l['lsp'] = self.ax[0].plot(
             [], [],
-            color='k'
+            color=color[2]
         ) # peak freq span
 
         # set label of ax[1]
@@ -602,15 +609,14 @@ class MatplotlibWidget(QWidget):
         if ax is None:
             ax = self.ax[0]
 
-        print(ax.lines)
-        print('len temp', len(self.l['temp']))
-        print('temp', self.l['temp'])
+        # print(ax.lines)
+        # print('len temp', len(self.l['temp']))
+        # print('temp', self.l['temp'])
 
         for lt in self.l['temp']:
-            print('lt', lt)
+            # print('lt', lt)
             ax.lines.remove(lt[0]) # remove from ax
             self.l['temp'].remove(lt) # remove from list .l['temp']
-        print(len(self.l['temp']))
 
         self.canvas.draw()
 
@@ -654,11 +660,11 @@ class MatplotlibWidget(QWidget):
         add line in self.l['temp'][i]
         all the lines share the same xdata
         '''
-        for i, (x, y) in enumerate(zip(xlist, ylist)):
+        for (x, y) in zip(xlist, ylist):
             print('len x: ', len(x))
             print('len y: ', len(y))
-            print(x)
-            print(y)
+            # print(x)
+            # print(y)
             if ax is None:
                 self.l['temp'].append(plt.plot(
                     x, y,

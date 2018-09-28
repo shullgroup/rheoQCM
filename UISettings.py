@@ -10,12 +10,12 @@ from collections import OrderedDict
 
 settings_init = {
     # title to display in the main GUI
-    'window_title': 'QCM-R',
+    'window_title': 'QCM Rheology',
 
     # window default size
     'window_size': [1200, 800], # px
 
-    # highest harmonic to display. the maximum value is 11
+    # highest harmonic can be shown in the UI. 
     'max_harmonic': 11, # do not change
     
     # temperature modules path
@@ -192,6 +192,9 @@ settings_init = {
 
 settings_default = {
 #### default settings control ####
+    
+    # # highest harmonic to display MUST <= settings_init['max_harmonic']
+    # 'max_disp_harmonic': 9, 
 
 
     # default checkbox harm states
