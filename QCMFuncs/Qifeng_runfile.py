@@ -31,6 +31,9 @@ parms['imagetype'] = 'png'  # default is 'svg'
 
 ######### run samples below ##########
 
+#%% 2:1 20180917 
+qcm.analyze(sample['DGEBA-Jeffamine2000_RT_7'], parms)
+
 #%% 2:1 20180914 (film dewetted)
 # qcm.analyze(sample['DGEBA-Jeffamine2000_RT_6'], parms)
 
@@ -41,7 +44,7 @@ parms['imagetype'] = 'png'  # default is 'svg'
 # qcm.analyze(sample['DGEBA-PACM_RT_2'], parms) 
 
 #%% 2:1 20180823 thick  10 um high phi
-qcm.analyze(sample['DGEBA-PACM_RT'], parms)
+# qcm.analyze(sample['DGEBA-PACM_RT'], parms)
 
 #%% 2:1 20180817 good
 # qcm.analyze(sample['DGEBA-Jeffamine400_RT_3'], parms)
