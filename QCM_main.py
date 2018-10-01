@@ -42,10 +42,11 @@ if UIModules.system_check() == 'win32': # windows
             print(e)
     else: # 64-bit version Python which doesn't work with AccessMyVNA
         # A 32-bit server may help 64-bit Python work with 32-bit dll
-        print('Current version of VNA does not work with 64-bit Python!')
+        print('Current version of MyVNA does not work with 64-bit Python!\nData analysis only!')
 else: # linux or MacOS
     # for test only
-    from modules.AccessMyVNA_dummy import AccessMyVNA
+    # from modules.AccessMyVNA_dummy import AccessMyVNA
+        print('Current version of MyVNA does not work with MacOS and Linux!\nData analysis only!')
 
 
 class VNATracker:
@@ -149,8 +150,11 @@ class QCMApp(QMainWindow):
                 pass
 
         else: # other system, data analysis only
-            self.vna = AccessMyVNA() # for test only
+            # self.vna = AccessMyVNA() # for test only
+            pass
         print(self.vna)
+
+
         self.main()
         self.load_settings()
 
@@ -706,25 +710,18 @@ class QCMApp(QMainWindow):
 
 
 #region data_data
+        # set signals to update plot 1 & 2 options
+        for i in range(1, self.settings['max_harmonics']+2, 2):
+            getattr(self.ui, 'checkBox_plt1_h' + str(i)).stateChanged.connect(self.update_widget)
+            getattr(self.ui, 'checkBox_plt2_h' + str(i)).stateChanged.connect(self.update_widget)
+
         # set signals to update plot 1 options
         self.ui.comboBox_plt1_choice.activated.connect(self.update_widget)
-        self.ui.checkBox_plt1_h1.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h3.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h5.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h7.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h9.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt1_h11.stateChanged.connect(self.update_widget)
         self.ui.radioButton_plt1_ref.toggled.connect(self.update_widget)
         self.ui.radioButton_plt1_samp.toggled.connect(self.update_widget)
 
         # set signals to update plot 2 options
         self.ui.comboBox_plt2_choice.activated.connect(self.update_widget)
-        self.ui.checkBox_plt2_h1.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h3.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h5.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h7.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h9.stateChanged.connect(self.update_widget)
-        self.ui.checkBox_plt2_h11.stateChanged.connect(self.update_widget)
         self.ui.radioButton_plt2_ref.toggled.connect(self.update_widget)
         self.ui.radioButton_plt2_samp.toggled.connect(self.update_widget)
 
@@ -1027,9 +1024,76 @@ class QCMApp(QMainWindow):
     # @pyqtSlot['bool']
     def on_clicked_pushButton_runstop(self, checked):
         if checked:
+            # check filename avaialbe
+
+            # disable features
+
+            # check active harmonice if no, stop
+
+
+
             self.ui.pushButton_runstop.setText('STOP')
         else:
+            # stop running timer and/or test
+
+            # save data
+
+        # write UI information to file
+
+            # enable features
+
+            # 
             self.ui.pushButton_runstop.setText('START RECORD')
+            self.idle = True
+            return
+
+        ####### below is the recording routine ########
+        self.idle = False
+        # file initiate or get append information
+        # filename format check?
+
+        # if no filename, set a temp file for data saving
+
+        # cmd diary?
+
+        # test scheduler? start/end increasement
+
+        self.reading = True
+        # read time
+
+        # read temp if checked 
+
+        # scan harmonics (1, 3, 5...)
+
+        self.reading = False
+
+        self.writing = True
+        # save scans to file
+
+        self.writing = False
+
+        # plot scans
+
+        # dynamic fit if checked (for checked harmonics)
+
+            # plot fitting
+            
+            # plot data 
+
+        # peak treaking ( if dynamic fitted, use fitted data)
+
+        # write fitting to dataframe
+        # 
+        # display total points collected 
+
+        # wait bar
+
+
+
+
+
+
+
 
 
     # @pyqtSlot()
@@ -1529,6 +1593,31 @@ class QCMApp(QMainWindow):
         print(gc_list)
 
         self.ui.mpl_spectra_fit.update_data(('lsp', factor_span, gc_list))
+
+        # update strk
+        cen_trk_freq = fit_result['v_fit']['cen_trk']['value']
+        cen_trk_G = self.peak_tracker.get_output(key='gmod', chn_name=self.active_chn['name'], harm=self.settings_harm).eval(
+            self.peak_tracker.get_output(key='params', chn_name=self.active_chn['name'], harm=self.settings_harm),
+            x=cen_trk_freq
+        ) 
+
+        print(cen_trk_freq)
+        print(cen_trk_G)
+
+        self.ui.mpl_spectra_fit.update_data(('strk', cen_trk_freq, cen_trk_G))
+
+        # update srec
+        cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
+        cen_rec_G = self.peak_tracker.get_output(key='gmod', chn_name=self.active_chn['name'], harm=self.settings_harm).eval(
+            self.peak_tracker.get_output(key='params', chn_name=self.active_chn['name'], harm=self.settings_harm),
+            x=cen_rec_freq
+        ) 
+
+        print(cen_rec_freq)
+        print(cen_rec_G)
+
+        self.ui.mpl_spectra_fit.update_data(('srec', cen_rec_freq, cen_rec_G))
+
 
 
 

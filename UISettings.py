@@ -16,7 +16,7 @@ settings_init = {
     'window_size': [1200, 800], # px
 
     # highest harmonic can be shown in the UI. 
-    'max_harmonic': 11, # do not change
+    'max_harmonic': 9, # do not change
     
     # temperature modules path
     'tempmodules_path': r'./modules/temp/', 

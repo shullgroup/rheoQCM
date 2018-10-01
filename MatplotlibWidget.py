@@ -241,18 +241,31 @@ class MatplotlibWidget(QWidget):
             [], [], 
             color='k'
         ) # B fit
-        self.l['sf'] = self.ax[1].plot(
+        self.l['strk'] = self.ax[0].plot(
+            [], [],
+            marker='+',
+            linestyle='none',
+            color='r'
+        ) # center of tracking peak
+        self.l['srec'] = self.ax[0].plot(
             [], [],
             marker='x',
             linestyle='none',
-            color='k'
-        ) # f: G peak
-        self.l['sg'] = self.ax[1].plot(
+            color='g'
+        ) # center of recording peak
+
+        self.l['ltollb'] = self.ax[0].plot(
             [], [],
-            marker='x',
-            linestyle='none',
+            linestyle='--',
             color='k'
-        ) # g: gamma (fwhm)
+        ) # tolerance interval lines
+        self.l['ltolub'] = self.ax[0].plot(
+            [], [],
+            linestyle='--',
+            color='k'
+        ) # tolerance interval lines
+
+
         self.l['lP'] = self.ax[0].plot(
             [], [],
             marker='.', 
@@ -313,18 +326,18 @@ class MatplotlibWidget(QWidget):
             [], [], 
             color='k'
         ) # B fit
-        self.l['sf'] = self.ax[1].plot(
+        self.l['strk'] = self.ax[0].plot(
+            [], [],
+            marker='+',
+            linestyle='none',
+            color='r'
+        ) # center of tracking peak
+        self.l['srec'] = self.ax[0].plot(
             [], [],
             marker='x',
             linestyle='none',
-            color='k'
-        ) # f: G peak
-        self.l['sg'] = self.ax[1].plot(
-            [], [],
-            marker='x',
-            linestyle='none',
-            color='k'
-        ) # g: gamma (fwhm)
+            color='g'
+        ) # center of recording peak
 
         self.l['lsp'] = self.ax[0].plot(
             [], [],

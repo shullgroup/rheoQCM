@@ -12,7 +12,7 @@ from modules import MathModules
 # for debugging
 import traceback
 
-peak_min_distance_Hz = 1e2 # in Hz
+peak_min_distance_Hz = 1e3 # in Hz
 peak_min_width_Hz = 10 # in Hz full width
 xtol = 1e-18 
 ftol = 1e-18
@@ -217,15 +217,15 @@ def findpeaks_py(x, resonance, output=None, sortstr=None, threshold=None, promin
     '''
     # print(resonance)
     print(threshold)
-    print(distance)
+    print('f distance', distance / (x[1] - x[0]))
     print(prominence)
-    print(width)
+    print('f width', width / (x[1] - x[0]))
     peaks, props = find_peaks(
         resonance, 
         threshold=threshold, 
-        distance=distance / (x[1] - x[0]), 
+        distance=max(1, distance / (x[1] - x[0])), # make it >= 1
         prominence=prominence,
-        width=width / (x[1] - x[0]),
+        width=max(1, width / (x[1] - x[0])), # make it >= 1
     )
 
     print(peaks)
@@ -243,10 +243,13 @@ def findpeaks_py(x, resonance, output=None, sortstr=None, threshold=None, promin
         elif sortstr.lower() == 'descend':
             order = np.argsort(-values)
             values = -np.sort(-values)
+        else:
+            order = np.argsort(values)
         print(values)
         print(peaks)
         print(order)
         print(props)
+
         for i in range(order.size):
             indices[i] = indices[order[i]]
             heights = np.append(heights, props['width_heights'][order[i]])
@@ -356,14 +359,12 @@ class PeakTracker:
             self.harminput[chn_name][harm]['n_policy'] = 'fixed'
         else: # initialize data
             self.harminput[chn_name][harm]['n_policy'] = None
-            self.harminput[chn_name][harm]['n_policy'] = None
         
         if harm_dict.get('radioButton_peaks_policy_minf', None) == True:
             self.harminput[chn_name][harm]['p_policy'] = 'minf'
         elif harm_dict.get('radioButton_peaks_policy_maxamp', None) == True:
             self.harminput[chn_name][harm]['p_policy'] = 'maxamp'
         else: # initialize data
-            self.harminput[chn_name][harm]['p_policy'] = None
             self.harminput[chn_name][harm]['p_policy'] = None
 
         self.harminput[chn_name][harm]['threshold'] = harm_dict.get('lineEdit_peaks_threshold', None)
@@ -565,11 +566,12 @@ class PeakTracker:
         print('chn_name', chn_name)
         print('harm', harm)
         print('p_policy', p_policy)
-        # indices = findpeaks(resonance, output='indices', sortstr='descend')
+        
+        # ordering by peak height decreasing
         if p_policy == 'maxamp':
             sortstr = 'descend' # ordering by peak height decreasing
         elif p_policy == 'minf':
-            sortstr = None # ordering by freq (x)
+            sortstr = 'descend' # ordering by peak height decreasing
 
         indices, heights, prominences, widths = findpeaks_py(
             self.x,
@@ -608,7 +610,10 @@ class PeakTracker:
             self.found_n = self.harminput[chn_name][harm]['n']
 
         print(type(self.harminput[chn_name][harm]['n']))
+        print(indices)
+        print(heights)
         print(prominences)
+        print(widths)
 
         for i in range(self.found_n):
             if i+1 <= len(indices):
@@ -653,12 +658,14 @@ class PeakTracker:
         print(self.harmoutput[chn_name][harm]['found_n'])
         print(self.harminput[chn_name][harm]['n'])
         n_policy = self.harminput[chn_name][harm]['n_policy']
+
+        # set self.found_n and leave self.harmoutput[chn_name][harm]['found_n'] as the peaks found
         if n_policy == 'max':
             self.found_n = min(self.harmoutput[chn_name][harm]['found_n'], self.harminput[chn_name][harm]['n'])
         elif n_policy == 'fixed':
             self.found_n = self.harminput[chn_name][harm]['n']
 
-        for i in np.arange(n):
+        for i in np.arange(self.found_n):
             if i+1 <= self.harmoutput[chn_name][harm]['found_n']:
                 pre_str = 'p' + str(i) + '_'
                 self.peak_guess[i] = {
@@ -677,8 +684,9 @@ class PeakTracker:
                     'wid': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['wid'], 
                     'phi': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['phi'],
                 }
-        # update 'found_n in harmoutput
+        # now update 'found_n in harmoutput
         self.update_output(chn_name, harm, found_n=self.found_n)
+
 
     def auto_guess(self):
         '''
@@ -724,9 +732,10 @@ class PeakTracker:
         phi_rough = 0
 
         print('prek_guess', self.peak_guess)
-        print(not self.peak_guess)
+
         if self.found_n == 0: # no peak found by find_peak_py
             self.found_n = 1 # force it to at list 1 for fitting
+            self.update_output(found_n=1) # force it to at list 1 for fitting
 
         for i in np.arange(self.found_n):
             if not self.peak_guess: 
@@ -816,8 +825,8 @@ class PeakTracker:
             for i in range(self.found_n): # for loop for each single peak from guessed val
                 # get peak cen and wid
                 cen_i, wid_i = val['p' + str(i) + '_cen'], val['p' + str(i) + '_wid']
-                print(cen_i)
-                print(wid_i)
+                print('cen_i', cen_i)
+                print('wid_i', wid_i)
                 factor_idx.append(np.abs(self.harminput[chn_name][harm]['f'] - (cen_i - wid_i * factor)).argmin()) # add min index 
                 factor_idx.append(np.abs(self.harminput[chn_name][harm]['f'] - (cen_i + wid_i * factor)).argmin()) # add max index 
             max_idx = max(factor_idx)
@@ -871,34 +880,76 @@ class PeakTracker:
         '''
         get values from calculated result
         '''
+
         if (chn_name is None) & (harm is None):
             chn_name = self.active_chn
             harm = self.active_harm
             
+        p_policy = self.harminput[chn_name][harm]['p_policy']
         result = self.harmoutput[chn_name][harm]['result'] 
+        found_n = self.harmoutput[chn_name][harm]['found_n']
     
         # get values of the first peak (index = 0, peaks are ordered by p_policy)
         val = {}
         if result:
-            val['sucess'] = result.success # bool
-            val['chisqr'] = result.chisqr # float
+            # check peak order by amp and cen
+            amp_array = np.array([result.params.get('p' + str(i) + '_amp').value for i in range(found_n)])
+            cen_array = np.array([result.params.get('p' + str(i) + '_cen').value for i in range(found_n)])
 
-            val['amp'] = {
-                'value' : result.params.get('p0_amp').value,
-                'stderr': result.params.get('p0_amp').stderr,
+            print('found_n', found_n)
+            print(result.params)
+            print('params', result.params.valuesdict())
+            print(amp_array)
+            print(cen_array)
+            # get max amp index
+            maxamp_idx = np.argmax(amp_array)
+            # get min cen index
+            mincen_idx = np.argmin(cen_array)
+
+            # since we are always tracking the peak with maxamp
+            p_trk = maxamp_idx
+            # get recording peak key by p_policy
+            if p_policy == 'maxamp':
+                p_rec = maxamp_idx
+            elif p_policy == 'minf':
+                p_rec = mincen_idx
+
+            # values for tracking peak
+            val['amp_trk'] = {
+                'value' : result.params.get('p' + str(p_trk) + '_amp').value,
+                'stderr': result.params.get('p' + str(p_trk) + '_amp').stderr,
             }
-            val['cen'] = {
-                'value' : result.params.get('p0_cen').value,
-                'stderr': result.params.get('p0_cen').stderr,
+            val['cen_trk'] = {
+                'value' : result.params.get('p' + str(p_trk) + '_cen').value,
+                'stderr': result.params.get('p' + str(p_trk) + '_cen').stderr,
             }
-            val['wid'] = {
-                'value' : result.params.get('p0_wid').value,
-                'stderr': result.params.get('p0_wid').stderr,
+            val['wid_trk'] = {
+                'value' : result.params.get('p' + str(p_trk) + '_wid').value,
+                'stderr': result.params.get('p' + str(p_trk) + '_wid').stderr,
             }
-            val['phi'] = {
-                'value' : result.params.get('p0_phi').value,
-                'stderr': result.params.get('p0_phi').stderr,
+            val['phi_trk'] = {
+                'value' : result.params.get('p' + str(p_trk) + '_phi').value,
+                'stderr': result.params.get('p' + str(p_trk) + '_phi').stderr,
             }
+
+            # values for recording peak
+            val['amp_rec'] = {
+                'value' : result.params.get('p' + str(p_rec) + '_amp').value,
+                'stderr': result.params.get('p' + str(p_rec) + '_amp').stderr,
+            }
+            val['cen_rec'] = {
+                'value' : result.params.get('p' + str(p_rec) + '_cen').value,
+                'stderr': result.params.get('p' + str(p_rec) + '_cen').stderr,
+            }
+            val['wid_rec'] = {
+                'value' : result.params.get('p' + str(p_rec) + '_wid').value,
+                'stderr': result.params.get('p' + str(p_rec) + '_wid').stderr,
+            }
+            val['phi_rec'] = {
+                'value' : result.params.get('p' + str(p_rec) + '_phi').value,
+                'stderr': result.params.get('p' + str(p_rec) + '_phi').stderr,
+            }
+
             val['g_c'] = {
                 'value' : result.params.get('g_c').value,
                 'stderr': result.params.get('g_c').stderr,
@@ -907,6 +958,9 @@ class PeakTracker:
                 'value' : result.params.get('b_c').value,
                 'stderr': result.params.get('b_c').stderr,
             }
+
+            val['sucess'] = result.success # bool
+            val['chisqr'] = result.chisqr # float
 
             print('params', result.params.valuesdict())
         return val
