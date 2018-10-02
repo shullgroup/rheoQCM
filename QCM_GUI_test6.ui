@@ -1114,7 +1114,7 @@ background-color: red;
                  <item>
                   <layout class="QHBoxLayout" name="horizontalLayout_6">
                    <item>
-                    <widget class="QPushButton" name="pushButton_newdata">
+                    <widget class="QPushButton" name="pushButton_newfile">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                        <horstretch>0</horstretch>
@@ -1130,7 +1130,7 @@ background-color: red;
                     </widget>
                    </item>
                    <item>
-                    <widget class="QPushButton" name="pushButton_appenddata">
+                    <widget class="QPushButton" name="pushButton_appendfile">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                        <horstretch>0</horstretch>
@@ -6794,8 +6794,8 @@ border: 1px solid blue;
   <tabstop>pushButton_resetreftime</tabstop>
   <tabstop>lineEdit_recordinterval</tabstop>
   <tabstop>lineEdit_refreshresolution</tabstop>
-  <tabstop>pushButton_newdata</tabstop>
-  <tabstop>pushButton_appenddata</tabstop>
+  <tabstop>pushButton_newfile</tabstop>
+  <tabstop>pushButton_appendfile</tabstop>
   <tabstop>lineEdit_datafilestr</tabstop>
   <tabstop>pushButton_gotofolder</tabstop>
  </tabstops>

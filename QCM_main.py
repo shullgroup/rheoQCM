@@ -267,11 +267,11 @@ class QCMApp(QMainWindow):
         # set pushButton_gotofolder
         self.ui.pushButton_gotofolder.clicked.connect(self.on_clicked_pushButton_gotofolder)
 
-        # set pushButton_newdata
-        self.ui.pushButton_newdata.clicked.connect(self.on_triggered_new_exp)
+        # set pushButton_newfile
+        self.ui.pushButton_newfile.clicked.connect(self.on_triggered_new_exp)
 
-        # set pushButton_appenddata
-        self.ui.pushButton_appenddata.clicked.connect(self.on_triggered_load_exp)
+        # set pushButton_appendfile
+        self.ui.pushButton_appendfile.clicked.connect(self.on_triggered_load_exp)
 
         # set lineEdit_scaninterval background
         self.ui.lineEdit_scaninterval.setStyleSheet(
@@ -711,7 +711,7 @@ class QCMApp(QMainWindow):
 
 #region data_data
         # set signals to update plot 1 & 2 options
-        for i in range(1, self.settings['max_harmonics']+2, 2):
+        for i in range(1, settings_init['max_harmonic']+2, 2):
             getattr(self.ui, 'checkBox_plt1_h' + str(i)).stateChanged.connect(self.update_widget)
             getattr(self.ui, 'checkBox_plt2_h' + str(i)).stateChanged.connect(self.update_widget)
 
