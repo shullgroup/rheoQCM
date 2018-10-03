@@ -11,8 +11,8 @@ import json
 import datetime, time
 import numpy as np
 import scipy.signal
-import types
-from PyQt5.QtCore import pyqtSlot, Qt, QEvent
+# import types
+from PyQt5.QtCore import pyqtSlot, Qt, QEvent, QTimer
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QRadioButton, QMenu, QMessageBox
 )
@@ -147,13 +147,18 @@ class QCMApp(QMainWindow):
                     else: # not available
                         pass
             except:
-                pass
+                print('Initiating MyVNA failed!\nMake sure analyser is connected and MyVNA is correctly installed!')
 
         else: # other system, data analysis only
             # self.vna = AccessMyVNA() # for test only
             pass
         print(self.vna)
 
+        if self.vna is None:
+            # initiate a timer for test
+            self.timer = QTimer()
+            self.timer.setSingleShot(True)
+            self.timer.timeout.connect(self.data_collection)
 
         self.main()
         self.load_settings()
@@ -1057,6 +1062,9 @@ class QCMApp(QMainWindow):
         # cmd diary?
 
         # test scheduler? start/end increasement
+
+        # start the timer
+        self.timer.start(1000)
 
         self.reading = True
         # read time
@@ -2466,6 +2474,13 @@ class QCMApp(QMainWindow):
         #TODO refit loaded raw spectra data
         else:
             pass
+    def data_collection(self):
+        '''
+        data collecting routine
+        '''
+        print(datetime.datetime.now())
+
+
 
 #endregion
 
