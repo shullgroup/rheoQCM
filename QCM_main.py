@@ -154,11 +154,20 @@ class QCMApp(QMainWindow):
             pass
         print(self.vna)
 
-        if self.vna is None:
+        if self.vna is not None: # only set the timer when vna is available
             # initiate a timer for test
             self.timer = QTimer()
-            self.timer.setSingleShot(True)
+            # self.timer.setSingleShot(True)
             self.timer.timeout.connect(self.data_collection)
+
+            # initiate a timer for progressbar
+            self.bartimer = QTimer()
+            self.bartimer.timeout.connect(self.update_progressbar)
+
+            # initiate a timer for wait previous scan
+            self.waittimer = QTimer()
+            self.waittimer.setInterval(100) # check status every 0.1 s
+            self.waittimer.timeout.connect(self.waitfor_prescan)
 
         self.main()
         self.load_settings()
@@ -1040,7 +1049,7 @@ class QCMApp(QMainWindow):
             self.ui.pushButton_runstop.setText('STOP')
         else:
             # stop running timer and/or test
-
+            self.timer.stop()
             # save data
 
         # write UI information to file
@@ -1064,8 +1073,8 @@ class QCMApp(QMainWindow):
         # test scheduler? start/end increasement
 
         # start the timer
-        self.timer.start(1000)
-
+        self.timer.start(0)
+        
         self.reading = True
         # read time
 
@@ -2479,6 +2488,34 @@ class QCMApp(QMainWindow):
         data collecting routine
         '''
         print(datetime.datetime.now())
+        # self.timer.setSingleShot(True)
+        t = 3000
+        self.timer.setInterval(t)
+
+        self.bartimer.setInterval(t/10)
+        self.bartimer.start()
+        self.update_progressbar()
+
+    def update_progressbar(self):
+        '''
+        update progressBar_status_interval_time
+        '''
+
+        # read reainingTime from self.timer
+        timer_remain = self.timer.remainingTime()
+        timer_interval = self.timer.interval()
+        print(timer_remain)
+        print(timer_interval)
+        print(min(round((timer_remain / timer_interval) * 100), 100))
+        self.ui.progressBar_status_interval_time.setValue(min(round((timer_remain / timer_interval) * 100), 100)) # make sure is <= 100
+        # self.ui.progressBar_status_interval_time.text('{:.1f} s'.format(timer_remain))
+
+    def waitfor_prescan(self):
+        '''
+        check if previous scan finished
+        wait for it and then start the next one
+        '''
+        pass
 
 
 
