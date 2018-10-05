@@ -24,3 +24,6 @@ parms['dataroot'] = qcm.find_dataroot('depolo')
 
 # %%  Gwen's reasonably thick linseed oil sample
 qcm.analyze(sample['linseed_bulk'], parms)
+
+#%% Gwen's linseed oil with PS ultrathin layer
+qcm.analyze(sample['linseed_PS'], parms)

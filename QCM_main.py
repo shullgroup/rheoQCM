@@ -286,10 +286,10 @@ class QCMApp(QMainWindow):
         self.ui.pushButton_gotofolder.clicked.connect(self.on_clicked_pushButton_gotofolder)
 
         # set pushButton_newdata
-        self.ui.pushButton_newdata.clicked.connect(self.on_triggered_new_exp)
+        self.ui.pushButton_newdata.clicked.connect(self.on_triggered_new_data)
 
         # set pushButton_appenddata
-        self.ui.pushButton_appenddata.clicked.connect(self.on_triggered_load_exp)
+        self.ui.pushButton_appenddata.clicked.connect(self.on_triggered_load_data)
 
         # set lineEdit_scaninterval background
         self.ui.lineEdit_scaninterval.setStyleSheet(
@@ -356,20 +356,12 @@ class QCMApp(QMainWindow):
             100,
         )
 
-        # move frame_peaks_num
+        # move lineEdit_peaks_maxnum
         self.move_to_col2(
-            self.ui.frame_peaks_num,
+            self.ui.lineEdit_peaks_maxnum,
             self.ui.treeWidget_settings_settings_harmtree,
-            'Num.',
-            160,
-        )
-
-        # move frame_peaks_policy
-        self.move_to_col2(
-            self.ui.frame_peaks_policy,
-            self.ui.treeWidget_settings_settings_harmtree,
-            'Policy',
-            160,
+            'Max #',
+            100,
         )
 
         # move lineEdit_peaks_threshold
@@ -622,7 +614,7 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_scan_harmstart.setValidator(QDoubleValidator(1, math.inf, 12))
         self.ui.lineEdit_scan_harmend.setValidator(QDoubleValidator(1, math.inf, 12))
         self.ui.lineEdit_scan_harmsteps.setValidator(QIntValidator(0, 2147483647))
-        self.ui.lineEdit_peaks_num.setValidator(QIntValidator(0, 2147483647))
+        self.ui.lineEdit_peaks_maxnum.setValidator(QIntValidator(0, 2147483647))
         self.ui.lineEdit_peaks_threshold.setValidator(QDoubleValidator(0, math.inf, 12))
         self.ui.lineEdit_peaks_prominence.setValidator(QDoubleValidator(0, math.inf, 12))
 
@@ -636,16 +628,12 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_scan_harmsteps.textEdited.connect(self.update_harmwidget)
         self.ui.comboBox_tracking_method.activated.connect(self.update_harmwidget)
         self.ui.comboBox_tracking_condition.activated.connect(self.update_harmwidget)
-        self.ui.checkBox_harmfit.toggled['bool'].connect(self.update_harmwidget)
+        self.ui.checkBox_harmfit.clicked['bool'].connect(self.update_harmwidget)
         self.ui.spinBox_harmfitfactor.valueChanged.connect(self.update_harmwidget)
-        self.ui.lineEdit_peaks_num.textEdited.connect(self.update_harmwidget)
+        self.ui.lineEdit_peaks_maxnum.textEdited.connect(self.update_harmwidget)
         self.ui.lineEdit_peaks_threshold.textEdited.connect(self.update_harmwidget)
         self.ui.lineEdit_peaks_prominence.textEdited.connect(self.update_harmwidget)
-        self.ui.radioButton_peaks_num_max.toggled['bool'].connect(self.update_harmwidget)
-        self.ui.radioButton_peaks_num_fixed.toggled['bool'].connect(self.update_harmwidget)
-        self.ui.radioButton_peaks_policy_minf.toggled['bool'].connect(self.update_harmwidget)
-        self.ui.radioButton_peaks_policy_maxamp.toggled['bool'].connect(self.update_harmwidget)
-    
+
         # set signals to update hardware settings_settings
         self.ui.comboBox_sample_channel.activated.connect(self.update_widget)
         self.ui.comboBox_sample_channel.activated.connect(self.update_vnachannel)
@@ -837,8 +825,8 @@ class QCMApp(QMainWindow):
 
         # set QAction
         self.ui.actionLoad_Settings.triggered.connect(self.on_triggered_load_settings)
-        self.ui.actionLoad_Exp.triggered.connect(self.on_triggered_load_exp)
-        self.ui.actionNew_Exp.triggered.connect(self.on_triggered_new_exp)
+        self.ui.actionLoad_Data.triggered.connect(self.on_triggered_load_data)
+        self.ui.actionNew_Data.triggered.connect(self.on_triggered_new_data)
         self.ui.actionSave.triggered.connect(self.on_triggered_actionSave)
         self.ui.actionSave_As.triggered.connect(self.on_triggered_actionSave_As)
         self.ui.actionExport.triggered.connect(self.on_triggered_actionExport)
@@ -1134,7 +1122,7 @@ class QCMApp(QMainWindow):
             fileName = ''
         return fileName 
 
-    def on_triggered_new_exp(self):
+    def on_triggered_new_data(self):
         fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
         if fileName:
             # change the displayed file directory in lineEdit_datafilestr
@@ -1146,7 +1134,7 @@ class QCMApp(QMainWindow):
             self.ui.pushButton_resetreftime.setEnabled(True)
             self.fileName = fileName
 
-    def on_triggered_load_exp(self): 
+    def on_triggered_load_data(self): 
         fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
         if fileName:
             # change the displayed file directory in lineEdit_datafilestr
@@ -1343,7 +1331,7 @@ class QCMApp(QMainWindow):
             harm = self.settings_harm
             # get f1, f2
             freq_span = self.get_freq_span()
-            steps = int(self.get_harmdata('lineEdit_scan_harmsteps', harm=harm))
+            steps = int(self.settings['tab_settings_settings_harm' + str(harm)]['lineEdit_scan_harmsteps'])
             chn = self.active_chn['chn']
 
             # get the vna reset flag
@@ -1696,28 +1684,33 @@ class QCMApp(QMainWindow):
         #  of the signal isA QLineEdit object, update QLineEdit vals in dict
         print('update', signal)
         harm = self.settings_harm
+        # choose the parent by self.active_chn
+        if self.active_chn['name'] == 'samp':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm)
+        elif self.active_chn['name'] == 'ref':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm) + '_r'
 
         if isinstance(self.sender(), QLineEdit):
                 try:
-                    self.set_harmdata(self.sender().objectName(), float(signal), harm=harm)
+                    self.settings[tabwidget_name][self.sender().objectName()] = float(signal)
                 except:
-                    self.set_harmdata(self.sender().objectName(), 0, harm=harm)
+                    self.settings[tabwidget_name][self.sender().objectName()] = 0
         # if the sender of the signal isA QCheckBox object, update QCheckBox vals in dict
         elif isinstance(self.sender(), QCheckBox):
-            self.set_harmdata(self.sender().objectName(), signal, harm=harm)
+            self.settings[tabwidget_name][self.sender().objectName()] = signal
         # if the sender of the signal isA QRadioButton object, update QRadioButton vals in dict
         elif isinstance(self.sender(), QRadioButton):
-            self.set_harmdata(self.sender().objectName(), signal, harm=harm)
+            self.settings[tabwidget_name][self.sender().objectName()] = signal
         # if the sender of the signal isA QComboBox object, udpate QComboBox vals in dict
         elif isinstance(self.sender(), QComboBox):
             try: # if w/ userData, use userData
                 value = self.sender().itemData(signal)
             except: # if w/o userData, use the text
                 value = self.sender().itemText(signal)
-            self.set_harmdata(self.sender().objectName(), value, harm=harm)
+            self.settings[tabwidget_name][self.sender().objectName()] = value
         # if the sender of the signal isA QSpinBox object, udpate QComboBox vals in dict
         elif isinstance(self.sender(), QSpinBox):
-            self.set_harmdata(self.sender().objectName(), signal, harm=harm)
+            self.settings[tabwidget_name][self.sender().objectName()] = signal
 
     def update_active_chn(self):
         if self.sender().objectName() == 'radioButton_settings_settings_harmchnsamp': # switched to samp
@@ -1748,58 +1741,37 @@ class QCMApp(QMainWindow):
         self.settings_harm = harm
         
         self.update_frequencies()
+        # choose the parent by self.active_chn
+        if self.active_chn['name'] == 'samp':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm)
+        elif self.active_chn['name'] == 'ref':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm) + '_r'
 
         # update lineEdit_scan_harmsteps
         self.ui.lineEdit_scan_harmsteps.setText(
-            str(self.get_harmdata('lineEdit_scan_harmsteps', harm=harm))
+            str(self.settings[tabwidget_name]['lineEdit_scan_harmsteps'])
         )
-        self.load_comboBox(self.ui.comboBox_tracking_method, 'span_mehtod_choose', harm=harm)
-        self.load_comboBox(self.ui.comboBox_tracking_condition, 'span_track_choose', harm=harm)
+        self.load_comboBox(self.ui.comboBox_tracking_method, 'span_mehtod_choose', parent=tabwidget_name)
+        self.load_comboBox(self.ui.comboBox_tracking_condition, 'span_track_choose', parent=tabwidget_name) 
         
-        # update checkBox_harmfit
-        self.ui.checkBox_harmfit.setChecked(
-            self.get_harmdata('checkBox_harmfit', harm=harm)
-        )
-
         # update spinBox_harmfitfactor
         self.ui.spinBox_harmfitfactor.setValue(
-            self.get_harmdata('spinBox_harmfitfactor', harm=harm)
+            self.settings[tabwidget_name]['spinBox_harmfitfactor']
         )
 
-        # update lineEdit_peaks_num
-        self.ui.lineEdit_peaks_num.setText(
-            str(self.get_harmdata('lineEdit_peaks_num', harm=harm))
+        # update lineEdit_peaks_maxnum
+        self.ui.lineEdit_peaks_maxnum.setText(
+            str(self.settings[tabwidget_name]['lineEdit_peaks_maxnum'])
         )
-
-        # update radioButton_peaks_num_max
-        self.ui.radioButton_peaks_num_max.setChecked(
-            self.get_harmdata('radioButton_peaks_num_max', harm=harm)
-        )
-
-        # update radioButton_peaks_num_fixed
-        self.ui.radioButton_peaks_num_fixed.setChecked(
-            self.get_harmdata('radioButton_peaks_num_fixed', harm=harm)
-        )
-
-        # update radioButton_peaks_policy_minf
-        self.ui.radioButton_peaks_policy_minf.setChecked(
-            self.get_harmdata('radioButton_peaks_policy_minf', harm=harm)
-        )
-
-
-        # update radioButton_peaks_policy_maxamp
-        self.ui.radioButton_peaks_policy_maxamp.setChecked(
-            self.get_harmdata('radioButton_peaks_policy_maxamp', harm=harm)
-        )
-
+ 
         # update lineEdit_peaks_threshold
         self.ui.lineEdit_peaks_threshold.setText(
-            str(self.get_harmdata('lineEdit_peaks_threshold', harm=harm))
+            str(self.settings[tabwidget_name]['lineEdit_peaks_threshold'])
         )
 
         # update lineEdit_peaks_prominence
         self.ui.lineEdit_peaks_prominence.setText(
-            str(self.get_harmdata('lineEdit_peaks_prominence', harm=harm))
+            str(self.settings[tabwidget_name]['lineEdit_peaks_prominence'])
         )
 
     def get_harmdata(self, objname, harm=None):
@@ -1813,27 +1785,17 @@ class QCMApp(QMainWindow):
         else: # use given harmonic. It is useful for mpl_sp<n> getting params
             pass
         
+        # choose the parent by self.active_chn
+        if self.active_chn['name'] == 'samp':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm)
+        elif self.active_chn['name'] == 'ref':
+            tabwidget_name = 'tab_settings_settings_harm' + str(harm) + '_r'
         try:
-            return self.settings['harmdata'][self.active_chn['name']][harm][objname]
+            return self.settings[tabwidget_name][objname]
         except:
             print(objname, 'is not found!')
             return None
 
-    def set_harmdata(self, objname, val, harm=None):
-        '''
-        set data with given objname in 
-        treeWidget_settings_settings_harmtree
-        except lineEdit_harmstart & lineEdit_harmend
-        '''
-        if harm is None: # use harmonic displayed in UI
-            harm = self.settings_harm
-        else: # use given harmonic. It is useful for mpl_sp<n> getting params
-            pass
-        
-        try:
-            self.settings['harmdata'][self.active_chn['name']][harm][objname] = val
-        except:
-            print(objname, 'is not found!')
 
     def update_base_freq(self, base_freq_index):
         self.settings['comboBox_base_frequency'] = self.ui.comboBox_base_frequency.itemData(base_freq_index) # in MHz
@@ -1886,8 +1848,11 @@ class QCMApp(QMainWindow):
             harm = self.settings_harm
         if chn is None:
             chn = self.active_chn['name']
-
-        return self.settings['freq_span'][chn][harm]
+        if chn == 'samp':
+            span_name = 'freq_span'
+        elif chn == 'ref':
+            span_name = 'freq_span_r'
+        return self.settings[span_name][harm]
 
     def set_freq_span(self, span, harm=None, chn=None):
         '''
@@ -1899,27 +1864,35 @@ class QCMApp(QMainWindow):
             harm = self.settings_harm
         if chn is None:
             chn = self.active_chn['name']
-
-        self.settings['freq_span'][chn][harm] = span
+        if chn == 'samp':
+            span_name = 'freq_span'
+        elif chn == 'ref':
+            span_name = 'freq_span_r'
+        self.settings[span_name][harm] = span
 
     def check_freq_spans(self):
         '''
         check if settings['freq_span'] (freq span for each harmonic) values in the allowed range self.settings['freq_range']
         '''
-        if 'freq_span' in self.settings and self.settings['freq_span']:  # if self.settings['freq_span'] exist
-            print('##################\n', self.settings['freq_span'])
-            freq_span = {'samp': {}, 'ref': {}}
+        try: 
+            # check if self.settings['freq_span'] exist
+            self.settings['freq_span'] 
+            self.settings['freq_span_r'] 
+            freq_span = {}
+            freq_span_r = {}
             for i in range(1, settings_init['max_harmonic']+2, 2):
-                freq_span['samp'][i] = self.span_check(i, *self.settings['freq_span']['samp'][i])
-                freq_span['ref'][i] = self.span_check(i, *self.settings['freq_span']['ref'][i])
-
+                freq_span[i] = self.span_check(i, self.settings['freq_span'][i][0], self.settings['freq_span'][i][1])
+                freq_span_r[i] = self.span_check(i, self.settings['freq_span_r'][i][0], self.settings['freq_span_r'][i][1])
             self.settings['freq_span'] = freq_span
-        else: # if self.settings['freq_span'] does not exist or is empty
-            if 'freq_range' not in self.settings: # check if 
+            self.settings['freq_span_r'] = freq_span_r
+        except: # if self.settings['freq_span'] does not exist
+            try: # check if self.settings['freq_range'] exist
+                self.settings['freq_span'] = self.settings['freq_range']
+                self.settings['freq_span_r'] = self.settings['freq_range']
+            except: # if self.settings['freq_range'] does not exist
                 self.update_freq_range() # initiate self.settings['freq_range']
-            # set 'freq_span' == 'freq_range
-            self.settings['freq_span']['samp'] = self.settings['freq_range']
-            self.settings['freq_span']['ref'] = self.settings['freq_range']
+                self.settings['freq_span'] = self.settings['freq_range']
+                self.settings['freq_span_r'] = self.settings['freq_range']
 
     def update_frequencies(self):
         
@@ -1927,8 +1900,8 @@ class QCMApp(QMainWindow):
         disp_mode = self.settings['comboBox_settings_control_dispmode']
         # update lineEdit_startf<n> & lineEdit_endf<n>
         for i in range(1, settings_init['max_harmonic']+2, 2):
-            f1, f2 = self.settings['freq_span']['samp'][i] * 1e-6 # in MHz
-            f1r, f2r = self.settings['freq_span']['ref'][i] * 1e-6 # in MHz
+            f1, f2 = self.settings['freq_span'][i][0]*1e-6, self.settings['freq_span'][i][1]*1e-6 # in MHz
+            f1r, f2r = self.settings['freq_span_r'][i][0]*1e-6, self.settings['freq_span_r'][i][1]*1e-6 # in MHz
             if disp_mode == 'centerspan':
                 # convert f1, f2 from start/stop to center/span
                 f1, f2 = MathModules.converter_startstop_to_centerspan(f1, f2)
@@ -1993,16 +1966,17 @@ class QCMApp(QMainWindow):
     def update_spanmethod(self, fitmethod_index):
         #NOTUSING
         value = self.ui.comboBox_tracking_method.itemData(fitmethod_index)
-        self.set_harmdata('comboBox_tracking_method', value, harm=self.settings_harm)
+        self.settings['tab_settings_settings_harm' + str(self.settings_harm)]['comboBox_tracking_method'] = value
 
     def update_spantrack(self, trackmethod_index):
         #NOTUSING
         value = self.ui.comboBox_tracking_condition.itemData(trackmethod_index)
-        self.set_harmdata('comboBox_tracking_condition', value, harm=self.settings_harm)
+        self.settings['tab_settings_settings_harm' + str(self.settings_harm)]['comboBox_tracking_condition'] = value
 
     def update_harmfitfactor(self, harmfitfactor_index):
         #NOTUSING
-        self.set_harmdata('comboBox_harmfitfactor', value, harm=self.settings_harm)
+
+        self.settings['tab_settings_settings_harm' + str(self.settings_harm)]['comboBox_harmfitfactor'] = value
 
     def setvisible_refwidgets(self, value=False):
         '''
@@ -2095,22 +2069,15 @@ class QCMApp(QMainWindow):
        self.settings['checkBox_linktime'] = not self.settings['checkBox_linktime']
         # TODO update plt1 and plt2
 
-    def load_comboBox(self, comboBox, choose_dict_name, harm=None):
-        '''
-        load combobox value from self.settings 
-        if harm == None
-            set the value of combox from self.settings[comboBox]
-        if harm = int
-            the combobox is in harmwidget
-        '''
+    def load_comboBox(self, comboBox, choose_dict, parent=None):
         comboBoxName = comboBox.objectName()
-        for key in settings_init[choose_dict_name].keys():
-            if harm is None: # not embeded in subdict
+        for key, val in settings_init[choose_dict].items():
+            if not parent: # not embeded in subdict
                 if key == self.settings[comboBoxName]:
                     comboBox.setCurrentIndex(comboBox.findData(key))
                     break
             else:
-                if key == self.get_harmdata(comboBoxName, harm):
+                if key == self.settings[parent][comboBoxName]:
                     comboBox.setCurrentIndex(comboBox.findData(key))
                     break
                 
@@ -2118,7 +2085,7 @@ class QCMApp(QMainWindow):
     def update_guichecks(self, checkBox, name_in_settings):
         #NOTUSING
         print("update_guichecks was called")
-        checkBox.setChecked(self.get_harmdata(name_in_settings, harm=self.settings_harm))
+        checkBox.setChecked(self.settings['tab_settings_settings_harm' + str(self.settings_harm)][name_in_settings])
         
     # debug func
     def log_update(self):
@@ -2352,7 +2319,7 @@ class QCMApp(QMainWindow):
                     reader = csv.DictReader(csvfile)
                     for row in reader:
                         np.append(rawdata, row[0])
-                num_pts = self.get_harmdata('lineEdit_scan_harmsteps', harm=self.settings_harm)
+                num_pts = self.settings['tab_settings_settings_harm' + str(harmonic)][num_datapoints]
                 if len(rawdata) == num_pts*2:
                     self.Peak_tracker.G = 1e3 * rawdata[:num_pts+1]
                     self.peak_tracker.B = 1e3 * rawdata[num_pts:]

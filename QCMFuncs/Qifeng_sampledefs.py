@@ -61,7 +61,7 @@ def sample_dict():
     # 'filmtrange': [1, 10],
     'filmindex':  list(range(0, 79, 5)) + [78],
     'xscale': 'log',
-    'nhcalc':     ['355'],
+    'nhcalc':     ['133', '355', '353'],
     'nhplot':     [1, 3, 5]
     }
 
@@ -76,7 +76,7 @@ def sample_dict():
     # 'filmtrange': [1, 10],
     'filmindex':  list(range(0,31, 5)) + [32, 33, 34] + list(range(35, 100, 5)) + [102, 103],
     'xscale': 'log',
-    'nhcalc':     ['133', '355'],
+    'nhcalc':     ['355'],
     'nhplot':     [1, 3, 5]
     }
 

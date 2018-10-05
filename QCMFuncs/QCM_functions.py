@@ -46,7 +46,9 @@ def find_dataroot(owner):
     elif owner == 'depolo':
         dataroots =['/home/ken/k-shull@u.northwestern.edu/'+
                      r'Group_Members/Research-Depolo/data/',
-                     r'C:\Users\Gwen dePolo\gwendepolo2023@u.northwestern.edu\data\'']
+                     r'C:\Users\Gwen dePolo\gwendepolo2023@u.northwestern.edu\Research-Depolo\data']
+    elif owner == 'sturdy':
+        dataroots =['/home/ken/Mydocs/People/Sturdy/Filled_Galkyd_Paper/data/QCM/']
 
     for directory in dataroots:
         if os.path.exists(directory):
@@ -135,7 +137,12 @@ def zstarbulk(grhostar):
 
 
 def zstarfilm(n, drho, grhostar):
-    return zstarbulk(grhostar)*np.tan(2*np.pi*n*f1*drho/zstarbulk(grhostar)) 
+    if grhostar == 0:
+        answer = 0
+    else:
+        answer = zstarbulk(grhostar)*np.tan(2*np.pi*n*f1*drho/
+                          zstarbulk(grhostar)) 
+    return answer
 
 
 def rstar(n, drho, grho3, phi, overlayer):
@@ -155,8 +162,8 @@ def delfstarcalc(n, drho, grho3, phi, overlayer):
            D(n, drho, grho3, phi))*(1-r**2)/(1+1j*r*
              np.tan(D(n, drho, grho3, phi)))
     
-    # handle case ehre drho = 0, if it exists
-    calc[np.where(drho==0)]=0
+    # handle case where drho = 0, if it exists
+#    calc[np.where(drho==0)]=0
     return calc
 
 
@@ -330,8 +337,9 @@ def null_solution(nhplot):
 def find_base_fig_name(sample, parms):
     # specify the location for the output figure files
     figlocation = parms.get('figlocation', 'figures')
+    datadir = sample.get('datadir', '')
     if figlocation == 'datadir':
-        base_fig_name = os.path.join(parms['dataroot'], sample['datadir'], sample['filmfile'])
+        base_fig_name = os.path.join(parms['dataroot'], datadir, sample['filmfile'])
     else:
         # check in which folder we are running 
         cwd = os.getcwd()
@@ -384,11 +392,12 @@ def analyze(sample, parms):
     # initialize the dictionary we'll use to keep track of the points to plot
     idx = {}
 
-    # plot and process bare crystal data
-    bare = process_raw(sample, 'bare')
-    
     # plot and process the film data
     film = process_raw(sample, 'film')
+
+    # plot and process bare crystal data
+
+    bare = process_raw(sample, 'bare')
     
     # if there is only one temperature, than we use time as the x axis, using
     # up to ten user-selected points
@@ -656,7 +665,7 @@ def pickpoints(Temp, nx, data_dict):
                 idx_out = np.append(idx_out, (np.abs(t[n] - t_in)).argmin())
             idx_out = np.asarray(idx_out)
 
-    elif idx_file.is_file(): # 'str' object has no attribute 'is_file'
+    elif Path(idx_file).is_file(): 
         idx_out = np.loadtxt(idx_file, dtype=int)
     else:
         # make the correct figure active
@@ -684,11 +693,11 @@ def make_prop_axes(propfigname, xlabel):
     fig = plt.figure(propfigname, figsize=(9, 3))
     drho_ax = fig.add_subplot(131)
     drho_ax.set_xlabel(xlabel)
-    drho_ax.set_ylabel(r'$d\rho\: (g/m^2)$')
+    drho_ax.set_ylabel(r'$d\rho$ (g/m$^2$)')
 
     grho_ax = fig.add_subplot(132)
     grho_ax.set_xlabel(xlabel)
-    grho_ax.set_ylabel(r'$|G_3^*|\rho \: (Pa \cdot g/cm^3)$')
+    grho_ax.set_ylabel(r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)')
 
     phi_ax = fig.add_subplot(133)
     phi_ax.set_xlabel(xlabel)
@@ -700,11 +709,11 @@ def make_prop_axes(propfigname, xlabel):
             'phi_ax': phi_ax}
     
     
-def make_vgp_axes(propfigname):
-    close_existing_fig(propfigname)
-    fig = plt.figure(propfigname, figsize=(3, 3))
+def make_vgp_axes(vgpfigname):
+    close_existing_fig(vgpfigname)
+    fig = plt.figure(vgpfigname, figsize=(3, 3))
     vgp_ax = fig.add_subplot(111)
-    vgp_ax.set_xlabel((r'$|G_3^*|\rho \: (Pa \cdot g/cm^3)$'))
+    vgp_ax.set_xlabel((r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)'))
     vgp_ax.set_ylabel(r'$\phi$ (deg.)')
 
     fig.tight_layout()
@@ -734,8 +743,9 @@ def process_raw(sample, data_type):
     firstline = sample.get('firstline', 0)
     nhplot = sample.get('nhplot', [1, 3, 5])
     trange = sample.get(data_type+'trange', [0, 0])
-    data_dict = {} # dict is a native function of Python, I changed it to data_dict for a better practice
-    data_dict['file'] = os.path.join(sample['dataroot'], sample['datadir'], sample[data_type+'file'] + '.mat')
+    datadir = sample.get('datadir', '')
+    data_dict = {} 
+    data_dict['file'] = os.path.join(sample['dataroot'], datadir, sample[data_type+'file'] + '.mat')
     data_dict['data'] = hdf5storage.loadmat(data_dict['file'])
     # get index to plot from *_sampledefs.py
     if 'filmindex' in sample:
@@ -743,7 +753,7 @@ def process_raw(sample, data_type):
     else:
         data_dict['filmindex'] = None
     # set key for getting index to plot from txt file
-    data_dict['idx_file'] = os.path.join(sample['dataroot'], sample['datadir'], sample[data_type+'file']+'_film_idx.txt')
+    data_dict['idx_file'] = os.path.join(sample['dataroot'], datadir, sample[data_type+'file']+'_film_idx.txt')
 
     # extract the frequency data from the appropriate file
     freq = data_dict['data']['abs_freq'][firstline:, 0:7]
@@ -854,6 +864,7 @@ def make_check_axes(sample, nh):
 
 
 def plot_spectra(fig_dict, sample, idx_vals):
+    datadir = sample.get('datadir','')
     if not 'fig' in fig_dict:
         print('making new figure')   
         fig = plt.figure('spectra', figsize=(9, 9))
@@ -888,7 +899,7 @@ def plot_spectra(fig_dict, sample, idx_vals):
     plt.rcParams['axes.formatter.offset_threshold'] = 2
     
        # read the data
-    spectra_file = os.path.join(sample['datadir'], sample['filmfile'] + '_raw_spectras.mat')
+    spectra_file = os.path.join(datadir, sample['filmfile'] + '_raw_spectras.mat')
     spectra = hdf5storage.loadmat(spectra_file)
 
     for n in [1, 3, 5]:
