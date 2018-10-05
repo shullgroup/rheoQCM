@@ -70,7 +70,8 @@ settings_init = {
         ('temp_t', 'temp. - time'),
     ]),
 
-    # spinBox_fitfactor
+    # spinBox_harmfitfactor max value
+    'fitfactor_max': 16, # int
 
     # comboBox_tracking_method
     'span_mehtod_choose': OrderedDict([
@@ -188,6 +189,17 @@ settings_init = {
     'mpl_sp_legfontsize': 5,
     # legend font size for normal figures
     'mpl_legfontsize': 8,
+
+    # progressBar settings
+    # the programe will try to separate the scan_interval to 
+    # steps of 'progressbar_update_steps' to update progressbar.
+    # if the time interval smaller than 'progressbar_min_interval', 
+    # it will update after every 'progressbar_min_interval' time
+    # if the time interval bigger than 'progressbar_max_interval',
+    # it will update after every 'progressbar_max_interval'
+    'progressbar_update_steps': 100, 
+    'progressbar_min_interval': 100, # in ms
+    'progressbar_max_interval': 1000, # in ms
 }
 
 settings_default = {
@@ -203,7 +215,7 @@ settings_default = {
     'checkBox_harm5': True,
     'checkBox_harm7': False,
     'checkBox_harm9': False,
-    'checkBox_harm11': False,
+    # 'checkBox_harm11': False,
 
     # default frequency display mode
     'comboBox_settings_control_dispmode': 'startstop',
@@ -411,23 +423,23 @@ settings_default = {
                 'lineEdit_peaks_prominence': 0.005,
             },
 
-            11: {
-                # default scan settings
-                'lineEdit_scan_harmsteps': 400,
-                # default span settings
-                'comboBox_tracking_method': 'auto',
-                'comboBox_tracking_condition': 'auto',
-                # default fit settings
-                'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 6,
-                'spinBox_peaks_num': 1, 
-                'radioButton_peaks_num_max': True,
-                'radioButton_peaks_num_fixed': False,
-                'radioButton_peaks_policy_minf': False,
-                'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.02,
-                'lineEdit_peaks_prominence': 0.005,
-            },
+            # 11: {
+            #     # default scan settings
+            #     'lineEdit_scan_harmsteps': 400,
+            #     # default span settings
+            #     'comboBox_tracking_method': 'auto',
+            #     'comboBox_tracking_condition': 'auto',
+            #     # default fit settings
+            #     'checkBox_harmfit': True,
+            #     'spinBox_harmfitfactor': 6,
+            #     'spinBox_peaks_num': 1, 
+            #     'radioButton_peaks_num_max': True,
+            #     'radioButton_peaks_num_fixed': False,
+            #     'radioButton_peaks_policy_minf': False,
+            #     'radioButton_peaks_policy_maxamp': True,
+            #     'lineEdit_peaks_threshold': 0.02,
+            #     'lineEdit_peaks_prominence': 0.005,
+            # },
         },
 
         # for reference channel
@@ -522,23 +534,23 @@ settings_default = {
                 'lineEdit_peaks_prominence': 0.005,
             },
 
-            11: {
-                # default scan settings
-                'lineEdit_scan_harmsteps': 400,
-                # default span settings
-                'comboBox_tracking_method': 'auto',
-                'comboBox_tracking_condition': 'auto',
-                # default fit settings
-                'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 6,
-                'spinBox_peaks_num': 1, 
-                'radioButton_peaks_num_max': True,
-                'radioButton_peaks_num_fixed': False,
-                'radioButton_peaks_policy_minf': False,
-                'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.02,
-                'lineEdit_peaks_prominence': 0.005,
-            },
+            # 11: {
+            #     # default scan settings
+            #     'lineEdit_scan_harmsteps': 400,
+            #     # default span settings
+            #     'comboBox_tracking_method': 'auto',
+            #     'comboBox_tracking_condition': 'auto',
+            #     # default fit settings
+            #     'checkBox_harmfit': True,
+            #     'spinBox_harmfitfactor': 6,
+            #     'spinBox_peaks_num': 1, 
+            #     'radioButton_peaks_num_max': True,
+            #     'radioButton_peaks_num_fixed': False,
+            #     'radioButton_peaks_policy_minf': False,
+            #     'radioButton_peaks_policy_maxamp': True,
+            #     'lineEdit_peaks_threshold': 0.02,
+            #     'lineEdit_peaks_prominence': 0.005,
+            # },
         },
     },
     ### default hardware settings ###

@@ -277,6 +277,23 @@ class MatplotlibWidget(QWidget):
             [], [],
             color='k'
         ) # polar plot fit
+        self.l['strk'] = self.ax[0].plot(
+            [], [],
+            marker='+',
+            linestyle='none',
+            color='r'
+        ) # center of tracking peak
+        self.l['srec'] = self.ax[0].plot(
+            [], [],
+            marker='x',
+            linestyle='none',
+            color='g'
+        ) # center of recording peak
+
+        self.l['lsp'] = self.ax[0].plot(
+            [], [],
+            color=color[2]
+        ) # peak freq span
 
         # set label of ax[1]
         self.set_ax(self.ax[0], title=title, xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')

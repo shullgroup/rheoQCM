@@ -297,12 +297,12 @@ class PeakTracker:
     def __init__(self):
         self.harminput = self.init_harmdict()
         self.harmoutput = self.init_harmdict()
-        for i in range(1, settings_init['max_harmonic']+2, 2):
-            self.update_input('samp', i, [], [], [], {})
-            self.update_input('ref', i, [], [], [], {})
+        for harm in range(1, settings_init['max_harmonic']+2, 2):
+            self.update_input('samp',harm , [], [], [], {}, {})
+            self.update_input('ref',harm , [], [], [], {}, {})
 
-            self.update_output('samp', i)
-            self.update_output('ref', i)
+            self.update_output('samp',harm )
+            self.update_output('ref',harm )
 
 
         self.active_harm = None
@@ -329,7 +329,7 @@ class PeakTracker:
         }
         return chn_dict
 
-    def update_input(self, chn_name, harm, f, G, B, harmdata):
+    def update_input(self, chn_name, harm, f, G, B, harmdata, freq_span):
         '''
         harmdata: it should be from the main ui self.settings['harmdata']
         if empty harmdata, initialize the key to None
@@ -342,10 +342,14 @@ class PeakTracker:
             harm_dict = harmdata[chn_name][harm]
 
         # setattr(self.harminput, chn_name, setattr())
+        self.harminput[chn_name][harm]['isfitted'] = False # if the data has been fitted
         self.harminput[chn_name][harm]['f'] = f
         self.harminput[chn_name][harm]['G'] = G
         self.harminput[chn_name][harm]['B'] = B
-        self.harminput[chn_name][harm]['current_span'] =[harm_dict.get('lineEdit_scan_harmstart', None), harm_dict.get('lineEdit_scan_harmend', None)]
+        if not freq_span:
+            self.harminput[chn_name][harm]['current_span'] = [None, None]
+        else:
+            self.harminput[chn_name][harm]['current_span'] = freq_span[chn_name][harm]
         self.harminput[chn_name][harm]['steps'] = harm_dict.get('lineEdit_scan_harmsteps', None)
         self.harminput[chn_name][harm]['method'] = harm_dict.get('comboBox_tracking_method', None)
         self.harminput[chn_name][harm]['condition'] = harm_dict.get('comboBox_tracking_condition', None)
@@ -385,10 +389,10 @@ class PeakTracker:
                 self.harmoutput[chn_name][harm][key] = val
         else: # initialize
             self.harmoutput[chn_name][harm]['span'] = kwargs.get('span', [None, None])       # span for next scan
+            self.harmoutput[chn_name][harm]['cen_trk'] = kwargs.get('cen_trk', None)       # tracking peak center 
             self.harmoutput[chn_name][harm]['factor_span'] = kwargs.get('span', [None, None])       # span of freq used for fitting
             self.harmoutput[chn_name][harm]['method'] = kwargs.get('method', '')       # method for next scan
             self.harmoutput[chn_name][harm]['found_n'] = kwargs.get('found_n', None)       # condition for next scan
-            # self.harmoutput[chn_name][harm]['cen'] = kwargs.get('cen', None)       # peak center
             # self.harmoutput[chn_name][harm]['wid'] = kwargs.get('wid', None)       # peak width
             # self.harmoutput[chn_name][harm]['amp'] = kwargs.get('amp', None)       # peak amp
             # self.harmoutput[chn_name][harm]['phi'] = kwargs.get('phi', None)       # phase angle
@@ -475,22 +479,27 @@ class PeakTracker:
         track the peak and give the span for next scan
         NOTE: the returned span may out of span_range defined the the main UI!
         '''
-        chn = self.active_chn
+        chn_name = self.active_chn
         harm = self.active_harm
-        track_condition = self.harminput[chn][harm]['condition']
-        track_method = self.harminput[chn][harm]['method']
+        track_condition = self.harminput[chn_name][harm]['condition']
+        track_method = self.harminput[chn_name][harm]['method']
         # determine the structure field that should be used to extract out the initial-guessing method
-        freq = self.harminput[chn][harm]['f']
+        freq = self.harminput[chn_name][harm]['f']
         if track_method == 'bmax':
-            resonance = self.harminput[chn][harm]['B']
+            resonance = self.harminput[chn_name][harm]['B']
         else:
-            resonance = self.harminput[chn][harm]['G']
+            resonance = self.harminput[chn_name][harm]['G']
 
-        amp, cen, half_wid = guess_peak_factors(freq, resonance)
-
-        current_xlim = self.harminput[chn][harm]['current_span']
+        if self.get_output('isfitted', chn_name=chn_name, harm=harm): # data has been fitted
+            cen = self.get_fit_values(chn_name=chn_name, harm=harm)['cen_trk']['value']
+            half_wid = self.get_fit_values(chn_name=chn_name, harm=harm)['wid_trk']['value']
+        else:
+            _, cen, half_wid, _ = guess_peak_factors(freq, resonance)
+    
+        print(self.harminput[chn_name][harm])
+        current_xlim = self.harminput[chn_name][harm]['current_span']
         # get the current center and current span of the data in Hz
-        current_center, current_span = MathModules.converter_startstop_to_centerspan(*self.harminput[chn][harm]['current_span'])
+        current_center, current_span = MathModules.converter_startstop_to_centerspan(*self.harminput[chn_name][harm]['current_span'])
         # find the starting and ending frequency of only the peak in Hz
         if track_condition == 'fixspan':
             if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > 0.1 * current_span:
@@ -530,7 +539,8 @@ class PeakTracker:
             return
 
         # set new start/end freq in Hz
-        self.update_output(chn, harm, span=new_xlim)
+        self.update_output(chn_name, harm, span=new_xlim)
+        self.update_output(chn_name, harm, cen_trk=cen)
 
     ########### peak finding functions ###########
 
@@ -1025,7 +1035,7 @@ class PeakTracker:
 
         self.smart_peak_tracker()
 
-        return self.harmoutput[chn_name][harm]['span']
+        return self.harmoutput[chn_name][harm]['span'], self.harmoutput[chn_name][harm]['cen_trk']
 
     def peak_fit(self, chn_name=None, harm=None, components=False):
         '''
@@ -1047,7 +1057,7 @@ class PeakTracker:
         
         self.minimize_GB()
         
-        if components is None:
+        if components is False:
             return {
                 'v_fit': self.get_fit_values(chn_name=chn_name, harm=harm), # fitting factors
                 'fit_g': self.eval_mod('gmod', chn_name=chn_name, harm=harm), # fitted value of G
@@ -1087,8 +1097,8 @@ if __name__ == '__main__':
 
     n = 2
 
-    result = minimize_GB(f, G, B, n, )
-    params = set_params(f, G, B, n)
+    # result = minimize_GB(f, G, B, n, )
+    # params = set_params(f, G, B, n)
     # result = minimize(res_GB, params, method='leastsq', args=(f, G, B), kws={'eps': pow((G - np.amin(G)*1.001), 1/2), 'n': n}, xtol=1.e-10, ftol=1.e-10)
     # eixt(0)
     # print(fit_report(result)) 
