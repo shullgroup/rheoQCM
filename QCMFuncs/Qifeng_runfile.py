@@ -31,6 +31,9 @@ parms['imagetype'] = 'png'  # default is 'svg'
 
 ######### run samples below ##########
 
+#%% 2:1 20180917 
+qcm.analyze(sample['DGEBA-Jeffamine2000_RT_7'], parms)
+
 #%% 2:1 20180914 (film dewetted)
 # qcm.analyze(sample['DGEBA-Jeffamine2000_RT_6'], parms)
 

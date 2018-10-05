@@ -4,7 +4,6 @@ def sample_dict():
     samplename = 'PS_3k_cool'
     sample[samplename] = {
         'samplename': samplename,
-        'datadir': 'data_PS/',
         'barefile': 'Urma_bare_cool',
         'filmfile': 'Wilfred_3k_cool',
         'baretrange': [0, 900],  # default is [0, 0]
@@ -17,7 +16,6 @@ def sample_dict():
     samplename = 'PS_30k'
     sample[samplename] = {
         'samplename': samplename,
-        'datadir': 'data_PS/',    
         'barefile': 'Bare_30k_5',
         'filmfile': 'PS_30k_5',
         'baretrange': [0, 900],
@@ -30,7 +28,6 @@ def sample_dict():
     samplename = 'PS_192k'
     sample[samplename] = {
         'samplename': samplename,
-        'datadir': 'data_PS/',
         'barefile': 'Bare_192k_1',
         'filmfile': 'PS_192k_4',
         'baretrange': [0, 680],

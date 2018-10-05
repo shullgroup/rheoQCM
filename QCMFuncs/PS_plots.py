@@ -23,6 +23,7 @@ sample = sample_dict()  # read sample dictionary
 
 # specify any non-default parameters
 parms['imagetype'] = 'pdf'  # default is 'svg'
+parms['dataroot'] = 'data_PS'
 
 # %%  Temperature dependence for 3k PS sample 
 qcm.analyze(sample['PS_3k_cool'], parms)

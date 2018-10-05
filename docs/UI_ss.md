@@ -12,8 +12,8 @@
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |click()|pushButton_resetreftime                  |setDisabled|keep settings|
-| |       |pushButton_newdata                       |setDisabled|keep settings|
-| |       |pushButton_appenddata                    |setDisabled|keep settings|
+| |       |pushButton_newfile                       |setDisabled|keep settings|
+| |       |pushButton_appendfile                    |setDisabled|keep settings|
 | |       |treeWidget_settings_settings_hardware    |setDisabled|keep settings|
 | |       |stackedWidget_spectra                    |setCurrentIn|view scans  |
 | |       |stackedWidget_data                       |setCurrentIn|view data   |
@@ -246,7 +246,7 @@ save values of those three to `self.settings`
 |-|----|----|----|----|
 | |clicked()| |`on_clicked_pushButton_gotofolder`|open data the folder (lineEdit_datafilestr.text()) in a window|
 
-#### pushButton_newdata  
+#### pushButton_newfile  
 
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
@@ -263,7 +263,7 @@ set pushButton_resetreftime enabled
 save dateTimeEdit_reftime to `self.settings`  
 save filename to `self.fileName`  
 
-#### pushButton_appenddata
+#### pushButton_appendfile
 
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
