@@ -619,6 +619,7 @@ class MatplotlibWidget(QWidget):
             ax.relim()
             ax.autoscale_view(True,True,True)
         self.canvas.draw()
+        # plt.draw()
 
     def get_data(self, ls=[]):
         '''

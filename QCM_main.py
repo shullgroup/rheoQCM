@@ -278,8 +278,8 @@ class QCMApp(QMainWindow):
         # add value to the comboBox_settings_control_dispmode
         for key, val in settings_init['display_choose'].items():
             self.ui.comboBox_settings_control_dispmode.addItem(val, key)
-        self.ui.comboBox_settings_control_dispmode.activated.connect(self.update_widget)
-        self.ui.comboBox_settings_control_dispmode.activated.connect(self. update_freq_display_mode)
+        self.ui.comboBox_settings_control_dispmode.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_settings_control_dispmode.currentIndexChanged.connect(self. update_freq_display_mode)
 
         # set pushButton_gotofolder
         self.ui.pushButton_gotofolder.clicked.connect(self.on_clicked_pushButton_gotofolder)
@@ -320,14 +320,11 @@ class QCMApp(QMainWindow):
 
 #region settings_settings
 
-        # hide raido buttons radioButton_settings_settings_harmchnsamp
-        self.ui.radioButton_settings_settings_harmchnsamp.setVisible(False)
-        # hide raido buttons radioButton_settings_settings_harmchnref
-        self.ui.radioButton_settings_settings_harmchnref.setVisible(False)
+        # hide raido buttons tabWidget_settings_settings_samprefchn
+        self.ui.tabWidget_settings_settings_samprefchn.setVisible(False)
 
         # set signal
-        self.ui.radioButton_settings_settings_harmchnsamp.toggled.connect(self.update_settings_chn)
-        self.ui.radioButton_settings_settings_harmchnref.toggled.connect(self.update_settings_chn)
+        self.ui.tabWidget_settings_settings_samprefchn.currentChanged.connect(self.update_settings_chn)
 
         ### add combobox into treewidget
         self.ui.tabWidget_settings_settings_harm.currentChanged.connect(self.update_harmonic_tab)
@@ -610,22 +607,22 @@ class QCMApp(QMainWindow):
             "QTabWidget {background-color: transparent;}"
             "QTabWidget::tab-bar { left: 5px; /* move to the right by 5px */ }"
             "QTabBar::tab { border: 1px solid #9B9B9B; border-top-left-radius: 1px; border-top-right-radius: 1px;}"
-            "QTabBar::tab { height: 20px; width: 38px; padding: 0px; }" 
+            "QTabBar::tab { height: 20px; width: 42px; padding: 0px; }" 
             "QTabBar::tab:selected, QTabBar::tab:hover { background: white; }"
-            "QTabBar::tab:selected { height: 22px; width: 40px; border-bottom-color: none; }"
+            "QTabBar::tab:selected { height: 22px; width: 44px; border-bottom-color: none; }"
             "QTabBar::tab:selected { margin-left: -2px; margin-right: -2px; }"
             "QTabBar::tab:first:selected { margin-left: 0; width: 40px; }"
             "QTabBar::tab:last:selected { margin-right: 0; width: 40px; }"
             "QTabBar::tab:!selected { margin-top: 2px; }"
             )
 
-        self.ui.lineEdit_recordinterval.setValidator(QDoubleValidator(0, math.inf, 12))
+        self.ui.lineEdit_recordinterval.setValidator(QDoubleValidator(0, math.inf, 6))
         self.ui.lineEdit_refreshresolution.setValidator(QIntValidator(0, 2147483647))
-        self.ui.lineEdit_scan_harmstart.setValidator(QDoubleValidator(1, math.inf, 12))
-        self.ui.lineEdit_scan_harmend.setValidator(QDoubleValidator(1, math.inf, 12))
+        self.ui.lineEdit_scan_harmstart.setValidator(QDoubleValidator(1, math.inf, 6))
+        self.ui.lineEdit_scan_harmend.setValidator(QDoubleValidator(1, math.inf, 6))
         self.ui.lineEdit_scan_harmsteps.setValidator(QIntValidator(0, 2147483647))
-        self.ui.lineEdit_peaks_threshold.setValidator(QDoubleValidator(0, math.inf, 12))
-        self.ui.lineEdit_peaks_prominence.setValidator(QDoubleValidator(0, math.inf, 12))
+        self.ui.lineEdit_peaks_threshold.setValidator(QDoubleValidator(0, math.inf, 6))
+        self.ui.lineEdit_peaks_prominence.setValidator(QDoubleValidator(0, math.inf, 6))
 
         # set signals of widgets in tabWidget_settings_settings_harm
         self.ui.lineEdit_scan_harmstart.editingFinished.connect(self.on_editingfinished_harm_freq)
@@ -1862,16 +1859,19 @@ class QCMApp(QMainWindow):
             self.set_harmdata(self.sender().objectName(), signal, harm=harm)
 
     def update_settings_chn(self):
-        if self.sender().objectName() == 'radioButton_settings_settings_harmchnsamp': # switched to samp
-            self.settings_chn = {
-                'name': 'samp', 
-                'chn': self.settings['comboBox_sample_channel']
-            }
-        elif self.sender().objectName() == 'radioButton_settings_settings_harmchnref': # switched to ref
-            self.settings_chn = {
-                'name': 'ref', 
-                'chn': self.settings['comboBox_ref_channel']
-            }
+
+        if self.sender().objectName() == 'tabWidget_settings_settings_samprefchn': # switched to samp
+            idx = self.ui.tabWidget_settings_settings_samprefchn.currentIndex()
+            if idx == 0: # swith to samp
+                self.settings_chn = {
+                    'name': 'samp', 
+                    'chn': self.settings['comboBox_sample_channel']
+                }
+            elif idx == 1: # switched to ref
+                self.settings_chn = {
+                    'name': 'ref', 
+                    'chn': self.settings['comboBox_ref_channel']
+                }
         elif self.sender().objectName() == 'comboBox_ref_channel' or 'comboBox_sample_channel': # define of samp/ref channel(s) changed
             # reset corrresponding ADC
             print(self.settings['comboBox_sample_channel'])
@@ -2084,10 +2084,10 @@ class QCMApp(QMainWindow):
                 # convert f1, f2 from start/stop to center/span
                 f1, f2 = MathModules.converter_startstop_to_centerspan(f1, f2)
                 f1r, f2r = MathModules.converter_startstop_to_centerspan(f1r, f2r)
-            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(MathModules.num2str(f1, precision=12)) # display as MHz
-            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(MathModules.num2str(f2, precision=12)) # display as MHz
-            getattr(self.ui, 'lineEdit_startf' + str(i) + '_r').setText(MathModules.num2str(f1r, precision=12)) # display as MHz
-            getattr(self.ui, 'lineEdit_endf' + str(i) + '_r').setText(MathModules.num2str(f2r, precision=12)) # display as MHz
+            getattr(self.ui, 'lineEdit_startf' + str(i)).setText(MathModules.num2str(f1, precision=6)) # display as MHz
+            getattr(self.ui, 'lineEdit_endf' + str(i)).setText(MathModules.num2str(f2, precision=6)) # display as MHz
+            getattr(self.ui, 'lineEdit_startf' + str(i) + '_r').setText(MathModules.num2str(f1r, precision=6)) # display as MHz
+            getattr(self.ui, 'lineEdit_endf' + str(i) + '_r').setText(MathModules.num2str(f2r, precision=6)) # display as MHz
                 
         # update start/end in treeWidget_settings_settings_harmtree
         harm = self.settings_harm
@@ -2095,11 +2095,11 @@ class QCMApp(QMainWindow):
         f1, f2 = self.get_freq_span()
         # Set Start
         self.ui.lineEdit_scan_harmstart.setText(
-            MathModules.num2str(f1*1e-6, precision=12)
+            MathModules.num2str(f1*1e-6, precision=6)
         )
         # set End
         self.ui.lineEdit_scan_harmend.setText(
-            MathModules.num2str(f2*1e-6, precision=12)
+            MathModules.num2str(f2*1e-6, precision=6)
         )
 
     def update_freq_display_mode(self, signal):
@@ -2167,8 +2167,7 @@ class QCMApp(QMainWindow):
         for i in range(1, settings_init['max_harmonic']+2, 2):
             getattr(self.ui, 'lineEdit_startf' + str(i) + '_r').setVisible(value)
             getattr(self.ui, 'lineEdit_endf' + str(i) + '_r').setVisible(value)
-        self.ui.radioButton_settings_settings_harmchnsamp.setVisible(value)
-        self.ui.radioButton_settings_settings_harmchnref.setVisible(value)
+        self.ui.tabWidget_settings_settings_samprefchn.setVisible(value)
 
 
 
@@ -2309,7 +2308,7 @@ class QCMApp(QMainWindow):
         # set actived harmonic tab
         # self.settings_harm = 1 #TODO
         # set active_chn
-        self.ui.radioButton_settings_settings_harmchnsamp.setChecked(True)
+        self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
         # set progressbar
         self.updat_progressbar(val=0, text='')
 

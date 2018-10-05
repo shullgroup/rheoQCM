@@ -27,10 +27,7 @@
    <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_24">
-    <property name="spacing">
-     <number>0</number>
-    </property>
+   <layout class="QGridLayout" name="gridLayout_6">
     <property name="leftMargin">
      <number>2</number>
     </property>
@@ -43,7 +40,7 @@
     <property name="bottomMargin">
      <number>0</number>
     </property>
-    <item>
+    <item row="0" column="0">
      <widget class="QSplitter" name="splitter">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
@@ -605,21 +602,21 @@ background-color: red;
                 </property>
                 <layout class="QGridLayout" name="gridLayout_3">
                  <property name="leftMargin">
-                  <number>2</number>
+                  <number>0</number>
                  </property>
                  <property name="topMargin">
-                  <number>2</number>
+                  <number>0</number>
                  </property>
                  <property name="rightMargin">
-                  <number>2</number>
+                  <number>0</number>
                  </property>
                  <property name="bottomMargin">
-                  <number>2</number>
+                  <number>0</number>
                  </property>
                  <property name="spacing">
-                  <number>2</number>
+                  <number>0</number>
                  </property>
-                 <item row="0" column="0" colspan="5">
+                 <item row="0" column="0" colspan="4">
                   <layout class="QHBoxLayout" name="horizontalLayout_8">
                    <property name="spacing">
                     <number>6</number>
@@ -686,140 +683,180 @@ background-color: red;
                    </item>
                   </layout>
                  </item>
-                 <item row="5" column="2">
-                  <widget class="QLineEdit" name="lineEdit_refreshresolution">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
-                   <property name="inputMethodHints">
-                    <set>Qt::ImhDigitsOnly</set>
-                   </property>
-                   <property name="text">
-                    <string>1</string>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="5" column="1">
-                  <widget class="QLabel" name="label">
-                   <property name="text">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Spectra refresh resolution&lt;span style=&quot; vertical-align:super;&quot;&gt;b&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                   </property>
-                   <property name="buddy">
-                    <cstring>lineEdit_refreshresolution</cstring>
-                   </property>
-                  </widget>
-                 </item>
                  <item row="4" column="1">
-                  <widget class="QLabel" name="label_3">
-                   <property name="text">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Record interval (s)&lt;span style=&quot; vertical-align:super;&quot;&gt;a&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                   </property>
-                   <property name="buddy">
-                    <cstring>lineEdit_recordinterval</cstring>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="4" column="4">
-                  <spacer name="horizontalSpacer_6">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                 <item row="4" column="2">
-                  <widget class="QLineEdit" name="lineEdit_recordinterval">
+                  <widget class="QTabWidget" name="tabWidget">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>16777215</height>
-                    </size>
+                   <property name="currentIndex">
+                    <number>0</number>
                    </property>
-                   <property name="inputMethodHints">
-                    <set>Qt::ImhDigitsOnly</set>
-                   </property>
-                   <property name="text">
-                    <string>2</string>
-                   </property>
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
-                   </property>
+                   <widget class="QWidget" name="tab_3">
+                    <attribute name="title">
+                     <string>Fixed Interval</string>
+                    </attribute>
+                    <layout class="QGridLayout" name="gridLayout_4">
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="verticalSpacing">
+                      <number>2</number>
+                     </property>
+                     <item row="0" column="0">
+                      <widget class="QLabel" name="label_3">
+                       <property name="text">
+                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Record interval (s)&lt;span style=&quot; vertical-align:super;&quot;&gt;a&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       </property>
+                       <property name="buddy">
+                        <cstring>lineEdit_recordinterval</cstring>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="1">
+                      <widget class="QLineEdit" name="lineEdit_recordinterval">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <property name="inputMethodHints">
+                        <set>Qt::ImhDigitsOnly</set>
+                       </property>
+                       <property name="text">
+                        <string>2</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="2">
+                      <spacer name="horizontalSpacer_6">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                     <item row="1" column="0">
+                      <widget class="QLabel" name="label">
+                       <property name="text">
+                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Spectra refresh resolution&lt;span style=&quot; vertical-align:super;&quot;&gt;b&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       </property>
+                       <property name="buddy">
+                        <cstring>lineEdit_refreshresolution</cstring>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="1">
+                      <widget class="QLineEdit" name="lineEdit_refreshresolution">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <property name="inputMethodHints">
+                        <set>Qt::ImhDigitsOnly</set>
+                       </property>
+                       <property name="text">
+                        <string>1</string>
+                       </property>
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="2">
+                      <spacer name="horizontalSpacer_4">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                     <item row="2" column="0">
+                      <widget class="QLabel" name="label_8">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="text">
+                        <string>Scan interval (s) = a / b  </string>
+                       </property>
+                       <property name="buddy">
+                        <cstring>lineEdit_scaninterval</cstring>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="1">
+                      <widget class="QLineEdit" name="lineEdit_scaninterval">
+                       <property name="alignment">
+                        <set>Qt::AlignCenter</set>
+                       </property>
+                       <property name="readOnly">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="2">
+                      <spacer name="horizontalSpacer_7">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>19</width>
+                         <height>17</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </widget>
+                   <widget class="QWidget" name="tab_4">
+                    <attribute name="title">
+                     <string>Dynamic Interval</string>
+                    </attribute>
+                   </widget>
                   </widget>
-                 </item>
-                 <item row="6" column="2">
-                  <widget class="QLineEdit" name="lineEdit_scaninterval">
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
-                   </property>
-                   <property name="readOnly">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="6" column="1">
-                  <widget class="QLabel" name="label_8">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="text">
-                    <string>Scan interval (s) = a / b  </string>
-                   </property>
-                   <property name="buddy">
-                    <cstring>lineEdit_scaninterval</cstring>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="5" column="4">
-                  <spacer name="horizontalSpacer_4">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                 <item row="6" column="4">
-                  <spacer name="horizontalSpacer_7">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>22</width>
-                     <height>17</height>
-                    </size>
-                   </property>
-                  </spacer>
                  </item>
                 </layout>
                </widget>
@@ -1229,36 +1266,31 @@ background-color: red;
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QTabWidget" name="tabWidget_settings_settings_samprefchn">
-                   <property name="enabled">
-                    <bool>true</bool>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>21</height>
-                    </size>
-                   </property>
-                   <property name="currentIndex">
-                    <number>1</number>
-                   </property>
-                   <property name="documentMode">
-                    <bool>false</bool>
-                   </property>
-                   <property name="tabBarAutoHide">
-                    <bool>false</bool>
-                   </property>
-                   <widget class="QWidget" name="tab_settings_settings_harmchnsamp">
-                    <attribute name="title">
-                     <string>Sample Channel</string>
-                    </attribute>
-                   </widget>
-                   <widget class="QWidget" name="tab_settings_settings_harmchnref">
-                    <attribute name="title">
-                     <string>Reference Channel</string>
-                    </attribute>
-                   </widget>
-                  </widget>
+                  <layout class="QHBoxLayout" name="horizontalLayout_settings_settings_harmchn">
+                   <item>
+                    <widget class="QRadioButton" name="radioButton_settings_settings_harmchnsamp">
+                     <property name="enabled">
+                      <bool>true</bool>
+                     </property>
+                     <property name="text">
+                      <string>Sample Channel</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QRadioButton" name="tab_settings_settings_harmchnref">
+                     <property name="enabled">
+                      <bool>true</bool>
+                     </property>
+                     <property name="text">
+                      <string>Reference Channel</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
                  </item>
                  <item>
                   <widget class="QTabWidget" name="tabWidget_settings_settings_harm">
@@ -1278,7 +1310,7 @@ background-color: red;
                     <enum>QTabWidget::Rounded</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>4</number>
                    </property>
                    <property name="iconSize">
                     <size>
@@ -6797,8 +6829,6 @@ border: 1px solid blue;
  <tabstops>
   <tabstop>pushButton_runstop</tabstop>
   <tabstop>pushButton_resetreftime</tabstop>
-  <tabstop>lineEdit_recordinterval</tabstop>
-  <tabstop>lineEdit_refreshresolution</tabstop>
   <tabstop>pushButton_newfile</tabstop>
   <tabstop>pushButton_appendfile</tabstop>
   <tabstop>lineEdit_datafilestr</tabstop>

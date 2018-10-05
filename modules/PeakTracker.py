@@ -496,10 +496,13 @@ class PeakTracker:
         else:
             _, cen, half_wid, _ = guess_peak_factors(freq, resonance)
     
-        print(self.harminput[chn_name][harm])
         current_xlim = self.harminput[chn_name][harm]['current_span']
         # get the current center and current span of the data in Hz
         current_center, current_span = MathModules.converter_startstop_to_centerspan(*self.harminput[chn_name][harm]['current_span'])
+        
+        # initiate new_xlim == previous span
+        new_xlim = self.harminput[chn_name][harm]['current_span']
+
         # find the starting and ending frequency of only the peak in Hz
         if track_condition == 'fixspan':
             if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > 0.1 * current_span:
@@ -523,11 +526,9 @@ class PeakTracker:
                 thresh2 = .03 * current_span # Threshold frequency span in Hz
                 LB_peak = cen - half_wid * 3 # lower bound of the resonance peak
                 if LB_peak - thresh1 > half_wid * 8: # if peak is too thin, zoom into the peak
-                    new_xlim[0] = (current_xlim[0] + thresh2) # Hz
-                    new_xlim[1] = (current_xlim[1] - thresh2) # Hz
+                    new_xlim = [(current_xlim[0] + thresh2), (current_xlim[1] - thresh2)] # Hz
                 elif thresh1 - LB_peak > -half_wid*5: # if the peak is too fat, zoom out of the peak
-                    new_xlim[0] = current_xlim[0] - thresh2 # Hz
-                    new_xlim[1] = current_xlim[1] + thresh2 # Hz
+                    new_xlim = [(current_xlim[0] - thresh2), (current_xlim[1] + thresh2)] # Hz
         elif track_condition == 'fixcntspn':
             # bothe span and cent are fixed
             # no changes

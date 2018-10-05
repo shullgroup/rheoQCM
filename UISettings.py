@@ -218,7 +218,7 @@ settings_default = {
     # 'checkBox_harm11': False,
 
     # default frequency display mode
-    'comboBox_settings_control_dispmode': 'startstop',
+    'comboBox_settings_control_dispmode': 'centerspan',
     # default time settings
     'dateTimeEdit_reftime': None,
     
