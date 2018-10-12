@@ -168,3 +168,5 @@ venv.bak/
 test/
 pyqt_gui_compile.bat
 
+QCMFuncs/test.pdf
+QCMFuncs/test.pptx
