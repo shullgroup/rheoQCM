@@ -405,7 +405,7 @@ def analyze(sample, parms):
         if film['filmindex'] is not None:
             nx = len(film['filmindex'])
         else:
-            nx = min(20, film['n_in_range'])
+            nx = min(parms.get['nx',np.inf], film['n_in_range'])
     else:
         nx = Temp.shape[0]
 
