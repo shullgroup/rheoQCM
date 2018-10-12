@@ -16,18 +16,7 @@ def sample_dict():
         'nhplot': [3, 5],
         'nhcalc' : ['353']   
         }
-
-    samplename = 'linseed_PS'
-    sample[samplename] = {
-        'samplename': samplename,
-        'datadir': '',
-        'barefile': 'bare_withPS',
-        'filmfile': 'film_withPS',
-        
-        'nhplot': [3, 5],
-        'nhcalc' : ['353']   
-        }
-    
+   
     # linseed oil on chrome electrode - PEP with THF
     samplename = 'linseed_chrome'
     sample[samplename] = {
@@ -50,7 +39,7 @@ def sample_dict():
         'filmfile': 'film_withPS',
         
         'nhplot': [3, 5],
-        'nhcalc': ['353', '355']
+        'nhcalc': ['353']
         
         }
     return sample
