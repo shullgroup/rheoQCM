@@ -35,7 +35,7 @@ import numpy as np
 from UISettings import settings_init
 
 # color map for plot
-color = ['tab:blue', 'tab:red']
+color = ['tab:blue', 'tab:red', 'tab:orange', 'tab:gray']
 
 # rcParams['toolbar'] = 'toolmanager'
 
@@ -65,6 +65,7 @@ class MatplotlibWidget(QWidget):
         self.axtype = axtype
         self.ax = [] # list of axes 
         self.l = {} # all the plot stored in dict
+        self.l['temp'] = [] # for temp lines in list
         self.leg = '' # initiate legend 
 
         # set padding size
@@ -240,24 +241,59 @@ class MatplotlibWidget(QWidget):
             [], [], 
             color='k'
         ) # B fit
-        self.l['lf'] = self.ax[1].scatter(
+        self.l['strk'] = self.ax[0].plot(
+            [], [],
+            marker='+',
+            linestyle='none',
+            color='r'
+        ) # center of tracking peak
+        self.l['srec'] = self.ax[0].plot(
             [], [],
             marker='x',
-            color='k'
-        ) # f: G peak
-        self.l['lg'] = self.ax[1].plot(
+            linestyle='none',
+            color='g'
+        ) # center of recording peak
+
+        self.l['ltollb'] = self.ax[0].plot(
             [], [],
+            linestyle='--',
             color='k'
-        ) # g: gamma (fwhm)
-        self.l['lP'] = self.ax[0].scatter(
+        ) # tolerance interval lines
+        self.l['ltolub'] = self.ax[0].plot(
             [], [],
-            marker='x',
+            linestyle='--',
             color='k'
+        ) # tolerance interval lines
+
+
+        self.l['lP'] = self.ax[0].plot(
+            [], [],
+            marker='.', 
+            linestyle='none',
+            markerfacecolor='none', 
+            color=color[0]
         ) # polar plot
         self.l['lPfit'] = self.ax[0].plot(
             [], [],
             color='k'
         ) # polar plot fit
+        self.l['strk'] = self.ax[0].plot(
+            [], [],
+            marker='+',
+            linestyle='none',
+            color='r'
+        ) # center of tracking peak
+        self.l['srec'] = self.ax[0].plot(
+            [], [],
+            marker='x',
+            linestyle='none',
+            color='g'
+        ) # center of recording peak
+
+        self.l['lsp'] = self.ax[0].plot(
+            [], [],
+            color=color[2]
+        ) # peak freq span
 
         # set label of ax[1]
         self.set_ax(self.ax[0], title=title, xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
@@ -307,20 +343,22 @@ class MatplotlibWidget(QWidget):
             [], [], 
             color='k'
         ) # B fit
-        self.l['lf'] = self.ax[1].plot(
+        self.l['strk'] = self.ax[0].plot(
+            [], [],
+            marker='+',
+            linestyle='none',
+            color='r'
+        ) # center of tracking peak
+        self.l['srec'] = self.ax[0].plot(
             [], [],
             marker='x',
             linestyle='none',
-            color='k'
-        ) # f: G peak
-        self.l['lg'] = self.ax[1].plot(
-            [], [],
-            color='k'
-        ) # g: gamma (fwhm)
+            color='g'
+        ) # center of recording peak
 
-        self.l['lsp'] = self.ax[1].plot(
+        self.l['lsp'] = self.ax[0].plot(
             [], [],
-            color='k'
+            color=color[2]
         ) # peak freq span
 
         # set label of ax[1]
@@ -567,20 +605,21 @@ class MatplotlibWidget(QWidget):
         ''' 
         update data of given in args (tuple)
         arg = (l, x, y)
-            l: string of line name
-            x: x data
-            y: y data
+            ln: string of line name
+            x : x data
+            y : y data
         '''
         axs = set() # initialize a empty set
-        for l, x, y in args:
-            self.l[l][0].set_xdata(x)
-            self.l[l][0].set_ydata(y)
-            axs.add(self.l[l][0].axes)
+        for ln, x, y in args:
+            self.l[ln][0].set_xdata(x)
+            self.l[ln][0].set_ydata(y)
+            axs.add(self.l[ln][0].axes)
 
         for ax in axs:
             ax.relim()
             ax.autoscale_view(True,True,True)
         self.canvas.draw()
+        # plt.draw()
 
     def get_data(self, ls=[]):
         '''
@@ -594,17 +633,40 @@ class MatplotlibWidget(QWidget):
             data.append((xdata, ydata))
         return data
 
-
-    def clr_alldata(self):
+    def del_templines(self, ax=None):
         ''' 
-        just clear all lines in .l
+        del all temp lines .l['temp'][:] 
         '''
-        for key in self.l:
-            self.l[key][0].set_xdata([])
-            self.l[key][0].set_ydata([])
+        if ax is None:
+            ax = self.ax[0]
+
+        # print(ax.lines)
+        # print('len temp', len(self.l['temp']))
+        # print('temp', self.l['temp'])
+
+        for lt in self.l['temp']:
+            # print('lt', lt)
+            ax.lines.remove(lt[0]) # remove from ax
+            self.l['temp'].remove(lt) # remove from list .l['temp']
+
         self.canvas.draw()
 
-    def new_data(self, xdata=[], ydata=[], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
+    def clr_lines(self, l_list=None):
+        ''' 
+        clear all lines in .l (but not .l['temp'][:]) of key in l_list
+        '''
+        for key in self.l:
+            if  l_list is None: # clear all
+                self.l[key][0].set_xdata([])
+                self.l[key][0].set_ydata([])
+            else:
+                if key in l_list:
+                    self.l[key][0].set_xdata([])
+                    self.l[key][0].set_ydata([])
+
+        self.canvas.draw()
+
+    def new_plt(self, xdata=[], ydata=[], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         ''' 
         plot data of in new plots 
         #TODO need to define xdata, ydata structure
@@ -614,9 +676,7 @@ class MatplotlibWidget(QWidget):
         # set label of ax[1]
         self.set_ax(self.ax[0], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
 
-
-
-        self.l = {}
+        # self.l = {}
         for i, x, y in enumerate(zip(xdata, ydata)):
             self.l[i] = self.ax[0].plot(
                 x, y, 
@@ -625,6 +685,32 @@ class MatplotlibWidget(QWidget):
             ) # l[i]
 
         self.ax[0].autoscale()
+
+    def add_temp_lines(self, ax=None, xlist=[], ylist=[]):
+        '''
+        add line in self.l['temp'][i]
+        all the lines share the same xdata
+        '''
+        for (x, y) in zip(xlist, ylist):
+            print('len x: ', len(x))
+            print('len y: ', len(y))
+            # print(x)
+            # print(y)
+            if ax is None:
+                self.l['temp'].append(plt.plot(
+                    x, y,
+                    linestyle='--',
+                    color=color[-1],
+                    )
+                )
+            else:
+                self.l['temp'].append(ax.plot(
+                    x, y,
+                    linestyle='--',
+                    color=color[-1],
+                    )
+                )
+        self.canvas.draw()
 
 def press_zoomX(obj, event):
     event.key = 'x'

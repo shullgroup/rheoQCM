@@ -6,6 +6,21 @@
 def sample_dict():
     sample = {}  # individual sample dictionaries get added to sample
     
+    # 20180917 2:1 
+    samplename = 'DGEBA-Jeffamine2000_RT_7'
+    sample[samplename] = {
+    'samplename': 'DGEBA-Jeffamine2000_RT_7',
+    'datadir': '20180917',
+    'barefile': 'bare_air',
+    'filmfile': 'DGEBA-Jeffamine2000_RT_7',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(3, 50, 5),
+    'xscale': 'log',
+    'nhcalc': ['133',],
+    'nhplot': [1, 3,]
+    }
+
     # 20180914 2:1 
     samplename = 'DGEBA-Jeffamine2000_RT_6'
     sample[samplename] = {

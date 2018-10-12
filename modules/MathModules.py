@@ -14,6 +14,7 @@ def num2str(A,precision=None):
         elif A.any() and precision:
             for i in range(len(A)):
                 A[i] = format(float(A[i]), '.'+str(precision)+'g')
+                # A[i] = '{:.6g}'.format(float(A[i]))
             return A.astype(str)
     elif isinstance(A, float) or isinstance(A, int):
         if A and not precision:
@@ -21,6 +22,7 @@ def num2str(A,precision=None):
             return A
         elif A and precision:
             A = format(float(A), '.'+str(precision)+'g')
+            # A = '{:.6g}'.format(float(A))
             return A
 
 
