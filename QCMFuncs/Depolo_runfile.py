@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+ate #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Fri Jun  8 01:23:49 2018
@@ -24,3 +24,6 @@ parms['dataroot'] = qcm.find_dataroot('depolo')
 
 # %%  Gwen's reasonably thick linseed oil sample
 qcm.analyze(sample['linseed_bulk'], parms)
+
+# %% sample with PS film
+qcm.analyze(sample['linseed_PS'], parms)

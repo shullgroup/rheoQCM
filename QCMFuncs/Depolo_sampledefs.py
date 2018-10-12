@@ -5,7 +5,7 @@
 def sample_dict():
     sample = {}  # individual sample dictionaries get added to this
 
-    #  PMMA sample - Tom sample 4
+    #  linseed oil sample
     samplename = 'linseed_bulk'
     sample[samplename] = {
         'samplename': samplename,
@@ -14,8 +14,18 @@ def sample_dict():
         'filmfile': 'linseed_film',
         
         'nhplot': [3, 5],
-        'nhcalc' : ['353']
+        'nhcalc' : ['353']   
+        }
+
+    samplename = 'linseed_PS'
+    sample[samplename] = {
+        'samplename': samplename,
+        'datadir': '',
+        'barefile': 'bare_withPS',
+        'filmfile': 'film_withPS',
         
+        'nhplot': [3, 5],
+        'nhcalc' : ['353']   
         }
 
     return sample
