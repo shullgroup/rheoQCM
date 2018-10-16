@@ -12,10 +12,10 @@ from modules import MathModules
 # for debugging
 import traceback
 
-peak_min_distance_Hz = 1e3 # in Hz
-peak_min_width_Hz = 10 # in Hz full width
-xtol = 1e-18 
-ftol = 1e-18
+# peak_min_distance_Hz = 1e3 # in Hz
+# peak_min_width_Hz = 10 # in Hz full width
+# xtol = 1e-18 
+# ftol = 1e-18
 
 def fun_G(x, amp, cen, wid, phi):
     ''' 
@@ -216,6 +216,10 @@ def findpeaks_py(x, resonance, output=None, sortstr=None, threshold=None, promin
     sortstr: 'ascend' or 'descend' ordering data by peak height
     '''
     # print(resonance)
+    if x is None: # for debuging
+        print('findpeaks_py input x is not well assigned!\nx = {}'.format(x))
+        exit(0)
+
     print(threshold)
     print('f distance', distance / (x[1] - x[0]))
     print(prominence)
@@ -298,11 +302,12 @@ class PeakTracker:
         self.harminput = self.init_harmdict()
         self.harmoutput = self.init_harmdict()
         for harm in range(1, settings_init['max_harmonic']+2, 2):
-            self.update_input('samp',harm , [], [], [], {}, {})
-            self.update_input('ref',harm , [], [], [], {}, {})
+            harm = str(harm)
+            self.update_input('samp', harm , [], [], [], {}, {})
+            self.update_input('ref', harm , [], [], [], {}, {})
 
-            self.update_output('samp',harm )
-            self.update_output('ref',harm )
+            self.update_output('samp', harm )
+            self.update_output('ref', harm )
 
 
         self.active_harm = None
@@ -322,7 +327,7 @@ class PeakTracker:
         '''
         harm_dict = {}
         for i in range(1, settings_init['max_harmonic']+2, 2):
-            harm_dict[i] = {}
+            harm_dict[str(i)] = {}
         chn_dict = {
             'samp': harm_dict,
             'ref' : harm_dict,
@@ -590,8 +595,8 @@ class PeakTracker:
             sortstr=sortstr, 
             threshold=self.harminput[chn_name][harm]['threshold'], 
             prominence=self.harminput[chn_name][harm]['prominence'],
-            distance=peak_min_distance_Hz, 
-            width=peak_min_width_Hz
+            distance=settings_init['peak_min_distance_Hz'], 
+            width=settings_init['peak_min_width_Hz']
         )
         
         print('indices', indices)
@@ -775,7 +780,7 @@ class PeakTracker:
             params.add(
                 'p'+str(i)+'_wid',                 # width (fwhm)
                 value=wid,                         # init: half range
-                min=peak_min_width_Hz / 2,         # lb in Hz
+                min= settings_init['peak_min_width_Hz'] / 2,         # lb in Hz
                 max=(np.amax(f) - np.amin(f)) * 2, # ub in Hz: assume peak is in the range of f
             )
             params.add(
@@ -873,7 +878,7 @@ class PeakTracker:
                 method='leastsq', 
                 args=(f, G, B), 
                 kws={'gmod': gmod, 'bmod': bmod, 'eps': eps}, 
-                xtol=xtol, ftol=ftol,
+                xtol=settings_init['xtol'], ftol=settings_init['ftol'],
                 nan_policy='omit', # ('raise' default, 'propagate', 'omit')
                 )
             print(fit_report(result)) 
@@ -1016,7 +1021,7 @@ class PeakTracker:
                     return b_fit
                 else: # no mod_name matched
                     dummy = []
-                    for n in self.get_output(key='found_n', chn_name=chn_name, harm=harm):
+                    for _ in range(self.get_output(key='found_n', chn_name=chn_name, harm=harm)):
                         dummy.append(np.empty(self.harminput[chn_name][harm]['f'].shape) * np.nan)
                     return dummy
         else: # no result found

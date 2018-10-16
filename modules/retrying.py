@@ -13,7 +13,7 @@
 ## See the License for the specific language governing permissions and
 ## limitations under the License.
 
-## Changes:
+## Changes by zhczq:
 ## logger variable was added to add display times tried 
 
 import random

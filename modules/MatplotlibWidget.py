@@ -28,6 +28,7 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.backend_tools import ToolBase, ToolToggleBase
 from matplotlib.projections import register_projection
+import matplotlib.ticker as ticker
 
 import types
 
@@ -46,7 +47,7 @@ color = ['tab:blue', 'tab:red', 'tab:orange', 'tab:gray']
 
 class AxesLockY(Axes): 
     '''
-    cutomized axes with constrained pan/zoom to x only
+    cutomized axes with constrained pan to x only
     '''
     def __init__(self, partent=None):
         super(AxesLockY, self).__init__(partent)
@@ -295,10 +296,16 @@ class MatplotlibWidget(QWidget):
             color=color[2]
         ) # peak freq span
 
+
+        # self.ax[0].xaxis.set_major_locator(plt.AutoLocator())
+        # self.ax[0].xaxis.set_major_locator(plt.LinearLocator())
+        # self.ax[0].xaxis.set_major_locator(plt.MaxNLocator(3))
+
         # set label of ax[1]
         self.set_ax(self.ax[0], title=title, xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
         self.set_ax(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
 
+        self.ax[0].xaxis.set_major_locator(ticker.LinearLocator(3))
 
     def init_sp_fit(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
@@ -365,9 +372,11 @@ class MatplotlibWidget(QWidget):
         self.set_ax(self.ax[0], xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
         self.set_ax(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
 
+        self.ax[0].xaxis.set_major_locator(ticker.LinearLocator(3))
+
         # self.ax[0].xaxis.set_major_locator(plt.AutoLocator())
         # self.ax[0].xaxis.set_major_locator(plt.LinearLocator())
-        self.ax[0].xaxis.set_major_locator(plt.MaxNLocator(3))
+        # self.ax[0].xaxis.set_major_locator(plt.MaxNLocator(3))
 
         self.ax[0].margins(x=0)
         self.ax[1].margins(x=0)
@@ -551,6 +560,7 @@ class MatplotlibWidget(QWidget):
         ax.yaxis.label.set_size(fontsize+1)
         # ax.set_ylabel(fontsize=fontsize+1)
         ax.tick_params(labelsize=fontsize)
+        # ax.xaxis.set_major_locator(ticker.LinearLocator(3))
 
     def resize(self, event):
         # on resize reposition the navigation toolbar to (0,0) of the axes.
@@ -614,12 +624,19 @@ class MatplotlibWidget(QWidget):
             self.l[ln][0].set_xdata(x)
             self.l[ln][0].set_ydata(y)
             axs.add(self.l[ln][0].axes)
+            
+            # ax = self.l[ln][0].axes
+            # axbackground = self.canvas.copy_from_bbox(ax.bbox)
+            # print(ax)
+            # self.canvas.restore_region(axbackground)
+            # ax.draw_artist(self.l[ln][0])
+            # self.canvas.blit(ax.bbox)
 
         for ax in axs:
             ax.relim()
             ax.autoscale_view(True,True,True)
         self.canvas.draw()
-        # plt.draw()
+        self.canvas.flush_events() # flush the GUI events
 
     def get_data(self, ls=[]):
         '''

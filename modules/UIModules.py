@@ -4,6 +4,10 @@ modules for GUI
 
 
 def open_file(path):
+    '''
+    open the folder given by path
+    if path is not given, open active path
+    '''
     import os, subprocess
     platform = system_check()
     if platform == "win32": # windows
@@ -23,7 +27,9 @@ def closest_spanctr_step(l, n):
         return min(l, key=lambda x:abs(x-1/n))
 
 def list_modules(path):
-    # return a dict of available temp modules stored in path
+    ''' 
+    return a dict of available temp modules stored in path 
+    '''
     from os import listdir
     from os.path import isfile
         
@@ -32,5 +38,4 @@ def list_modules(path):
 
 def split_path(path):
     pass
-
 

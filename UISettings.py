@@ -17,47 +17,30 @@ settings_init = {
 
     # highest harmonic can be shown in the UI. 
     'max_harmonic': 9, # do not change
-    
-    # temperature modules path
-    'tempmodules_path': r'./modules/temp/', 
-    
-    # add NI sensors into the dict and the code will check if the devices in its keys.
-    # the values are the number of samples per test for average
-    'devices_dict': {
-        'USB-TC01': {
-            'nsamples': 1,            # number of points for average,
-            'thrmcpl_chan': 'ai0',    # thermocouple channel,
-            'cjc_source': 'BUILT_IN', # channel for cjc,
-        }, 
-        'PCIe-6321': {
-            'nsamples': 100,       # number of points for average,
-            'thrmcpl_chan': 'ai0', # thermocouple channel,
-            'cjc_source': '',      # channel for cjc,
-        }, 
-    },
-    
+        
     # default open/save data file type
     'default_datafiletype': ';;'.join([
-        'Json file (*.json)',
+        # 'Json file (*.json)',
+        'hdf5 file (*.h5)',
     ]),
 
     # export  data file type
     'export_datafiletype': ';;'.join([
         'json file (*.json)',
         'hdf5 file (*.h5)',
-        'Python file (*.py)',
+        # 'Python file (*.py)',
         'Matlab file (*.mat)',
         'csv file (*.csv)',
     ]),
 
     # scan mode
-    'display_choose': OrderedDict([
+    'display_opts': OrderedDict([
         ('startstop',  'Start/Stop'),
         ('centerspan', 'Center/Span'),
     ]),
 
     # choice for plotting data shown in comboBox_plt1_choice & comboBox_plt2_choice
-    'data_plt_choose': OrderedDict([
+    'data_plt_opts': OrderedDict([
         ('none',   'none'),
         ('df_t',   u'\u0394' + 'f - time'),
         ('dfn_t',  u'\u0394' + 'f/n - time'),
@@ -74,7 +57,7 @@ settings_init = {
     'fitfactor_max': 16, # int
 
     # comboBox_tracking_method
-    'span_mehtod_choose': OrderedDict([
+    'span_mehtod_opts': OrderedDict([
         ('auto',   'Auto'),
         ('gmax',   'Gmax'),
         ('bmax',   'Bmax'),
@@ -84,7 +67,7 @@ settings_init = {
     ]),
 
     # track_method
-    'span_track_choose': OrderedDict([
+    'span_track_opts': OrderedDict([
         ('auto',      'Auto'),
         ('fixspan',   'Fix span'),
         ('fixcenter', 'Fix center'),
@@ -93,20 +76,20 @@ settings_init = {
     ]),
 
     # sample_channel
-    'sample_channel_choose': OrderedDict([
-    # key: number; val: for display in combobox
-        (1, 'ADC 1'),
-        (2, 'ADC 2'),
+    'sample_channel_opts': OrderedDict([
+    # key: str(number); val: for display in combobox
+        ('1', 'ADC 1'),
+        ('2', 'ADC 2'),
     ]),
 
-    'ref_channel_choose': OrderedDict([
-    # key: number; val: for display in combobox
+    'ref_channel_opts': OrderedDict([
+    # key: str(number); val: for display in combobox
         ('none', '--'),
-        (1, 'ADC 1'),
-        (2, 'ADC 2'),
+        ('1', 'ADC 1'),
+        ('2', 'ADC 2'),
     ]),
 
-    'thrmcpl_choose': OrderedDict([
+    'thrmcpl_opts': OrderedDict([
     # key: number; val: for display in combobox
         ('J', 'J'),
         ('K', 'K'),
@@ -118,7 +101,7 @@ settings_init = {
         ('E', 'E'),
     ]),
 
-    'time_unit_choose': OrderedDict([
+    'time_unit_opts': OrderedDict([
     # key: number; val: for display in combobox
         ('s', 's'),
         ('m', 'min'),
@@ -126,14 +109,14 @@ settings_init = {
         ('d', 'day'),
     ]),
 
-    'temp_unit_choose': OrderedDict([
+    'temp_unit_opts': OrderedDict([
     # key: number; val: for display in combobox
         ('C', '°C'),
         ('K', 'K'),
         # 'F', '°F',
     ]),
 
-    'scale_choose': OrderedDict([
+    'scale_opts': OrderedDict([
     # key: number; val: for display in combobox
         ('linear', 'linear'),
         ('log'   , 'log'),
@@ -141,26 +124,26 @@ settings_init = {
 
     # available base frequency of crystals
     # key: number; val: for display in combobox
-    'base_frequency_choose': OrderedDict([
-        (5 , '5 MHz'),
-        (6 , '6 MHz'),
-        (9 , '9 MHz'),
-        (10, '10 MHz'),
+    'base_frequency_opts': OrderedDict([
+        ('5' , '5 MHz'),
+        ('6' , '6 MHz'),
+        ('9' , '9 MHz'),
+        ('10', '10 MHz'),
     ]),
 
     # available bandwidth limitation for each harmonic
     # key: number; val: for display in combobox
-    'bandwidth_choose': OrderedDict([
-        (2,  '2 MHz'),
-        (1,  '1 MHz'),
-        (0.5,  '0.5 MHz'),
-        (0.25, '0.25 MHz'),
-        (0.1, '0.1 MHz'),
+    'bandwidth_opts': OrderedDict([
+        ('2',  '2 MHz'),
+        ('1',  '1 MHz'),
+        ('0.5',  '0.5 MHz'),
+        ('0.25', '0.25 MHz'),
+        ('0.1', '0.1 MHz'),
     ]),
 
     # reference type for showing delta f and delta gamma
     # key: number; val: for display in combobox
-    'ref_type_choose': OrderedDict([
+    'ref_type_opts': OrderedDict([
         ('t0',  'First point'),
         ('t1t2',  'Selected range'),
         # ('input',  'Input value'),
@@ -200,6 +183,39 @@ settings_init = {
     'progressbar_update_steps': 100, 
     'progressbar_min_interval': 100, # in ms
     'progressbar_max_interval': 1000, # in ms
+
+    ############ params for temperature modules ###########
+    # temperature modules path
+    'tempmodules_path': r'./modules/temp/', 
+    
+    # add NI sensors into the dict and the code will check if the devices in its keys.
+    # the values are the number of samples per test for average
+    'devices_dict': {
+        'USB-TC01': {
+            'nsamples': 1,            # number of points for average,
+            'thrmcpl_chan': 'ai0',    # thermocouple channel,
+            'cjc_source': 'BUILT_IN', # channel for cjc,
+        }, 
+        'PCIe-6321': {
+            'nsamples': 100,       # number of points for average,
+            'thrmcpl_chan': 'ai0', # thermocouple channel,
+            'cjc_source': '',      # channel for cjc,
+        }, 
+    },
+
+
+    ######## params for PekTracker module #########
+    # minium distance between the peakes to be found in Hz
+    'peak_min_distance_Hz': 1e3, 
+    # minium fwhw fo peaks to be found in HZ
+    'peak_min_width_Hz': 10, 
+    # tolerance for peak fitting 
+    'xtol': 1e-18, 
+    'ftol': 1e-18, 
+
+    ######### params for DataSaver module #########
+    'unsaved_path': r'.\unsaved', 
+
 }
 
 settings_default = {
@@ -231,10 +247,6 @@ settings_default = {
     'spinBox_fitfactor': 6,
     'checkBox_dynamicfitbyharm': False,
     'checkBox_fitfactorbyharm': False,
-
-    # default crystal settings
-    'comboBox_base_frequency': 5,
-    'comboBox_bandwidth': 0.1,
 
     #NOTUSING
     'harm_set':{
@@ -333,7 +345,7 @@ settings_default = {
     # }
     'harmdata': {
         'samp':{
-            1: {
+            '1': {
                 # default scan settings
                 'lineEdit_scan_harmsteps': 400,
                 # default span settings
@@ -347,11 +359,11 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.02,
+                'lineEdit_peaks_threshold': 0.002,
                 'lineEdit_peaks_prominence': 0.005,
             },
 
-            3: {
+            '3': {
                 # default scan settings
                 'lineEdit_scan_harmsteps': 400,
                 # default span settings
@@ -365,11 +377,11 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.02,
+                'lineEdit_peaks_threshold': 0.002,
                 'lineEdit_peaks_prominence': 0.005,
             },
 
-            5: {
+            '5': {
                 # default scan settings
                 'lineEdit_scan_harmsteps': 400,
                 # default span settings
@@ -383,11 +395,11 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.02,
+                'lineEdit_peaks_threshold': 0.002,
                 'lineEdit_peaks_prominence': 0.005,
             },
 
-            7: {
+            '7': {
                 # default scan settings
                 'lineEdit_scan_harmsteps': 400,
                 # default span settings
@@ -401,11 +413,11 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.02,
+                'lineEdit_peaks_threshold': 0.002,
                 'lineEdit_peaks_prominence': 0.005,
             },
 
-            9: {
+            '9': {
                 # default scan settings
                 'lineEdit_scan_harmsteps': 400,
                 # default span settings
@@ -419,7 +431,7 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.02,
+                'lineEdit_peaks_threshold': 0.002,
                 'lineEdit_peaks_prominence': 0.005,
             },
 
@@ -437,14 +449,14 @@ settings_default = {
             #     'radioButton_peaks_num_fixed': False,
             #     'radioButton_peaks_policy_minf': False,
             #     'radioButton_peaks_policy_maxamp': True,
-            #     'lineEdit_peaks_threshold': 0.02,
+            #     'lineEdit_peaks_threshold': 0.002,
             #     'lineEdit_peaks_prominence': 0.005,
             # },
         },
 
         # for reference channel
         'ref':{
-            1: {
+            '1': {
                 # default scan settings
                 'lineEdit_scan_harmsteps': 400,
                 # default span settings
@@ -458,11 +470,11 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.02,
+                'lineEdit_peaks_threshold': 0.002,
                 'lineEdit_peaks_prominence': 0.005,
             },
 
-            3: {
+            '3': {
                 # default scan settings
                 'lineEdit_scan_harmsteps': 400,
                 # default span settings
@@ -476,11 +488,11 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.02,
+                'lineEdit_peaks_threshold': 0.002,
                 'lineEdit_peaks_prominence': 0.005,
             },
 
-            5: {
+            '5': {
                 # default scan settings
                 'lineEdit_scan_harmsteps': 400,
                 # default span settings
@@ -494,11 +506,11 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.02,
+                'lineEdit_peaks_threshold': 0.002,
                 'lineEdit_peaks_prominence': 0.005,
             },
 
-            7: {
+            '7': {
                 # default scan settings
                 'lineEdit_scan_harmsteps': 400,
                 # default span settings
@@ -512,11 +524,11 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.02,
+                'lineEdit_peaks_threshold': 0.002,
                 'lineEdit_peaks_prominence': 0.005,
             },
 
-            9: {
+            '9': {
                 # default scan settings
                 'lineEdit_scan_harmsteps': 400,
                 # default span settings
@@ -530,7 +542,7 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.02,
+                'lineEdit_peaks_threshold': 0.002,
                 'lineEdit_peaks_prominence': 0.005,
             },
 
@@ -548,7 +560,7 @@ settings_default = {
             #     'radioButton_peaks_num_fixed': False,
             #     'radioButton_peaks_policy_minf': False,
             #     'radioButton_peaks_policy_maxamp': True,
-            #     'lineEdit_peaks_threshold': 0.02,
+            #     'lineEdit_peaks_threshold': 0.002,
             #     'lineEdit_peaks_prominence': 0.005,
             # },
         },
