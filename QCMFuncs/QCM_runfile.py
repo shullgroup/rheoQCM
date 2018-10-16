@@ -9,10 +9,10 @@ Created on Fri Jun  8 01:23:49 2018
 
 # %%
 import matplotlib.pyplot as plt
-from QCM_functions import QCManalyze, process_raw
+import QCM_functions as qcm
 from QCM_sampledefs import sample_dict
 
-parms = {}  # parameters to pass to QCManalyze
+parms = {}  # parameters to pass to qcm.analyze
 sample = sample_dict()  # read sample dictionary
 
 # specify any non-default parameters
@@ -20,21 +20,23 @@ parms['imagetype'] = 'pdf'  # default is 'svg'
 
 
 # %%  75k PMMA sample from Meredith
-QCManalyze(sample['PMMA_75k_T01'], parms)
+qcm.analyze(sample['PMMA_75k_T01'], parms)
 plt.show()
 
 # %%plot the bare crystal data from one of David's samples
-dict = process_raw(sample['Bare_xtal'], 'film')
+dict = qcm.process_raw(sample['Bare_xtal'], 'film')
 dict['rawfig'].savefig('figures/refdata.pdf')
 
 # %%Qifeng's epoxy sample for bulk analysis
-QCManalyze(sample['DGEBA-Jeffamine2000_RT'], parms)
+qcm.analyze(sample['DGEBA-Jeffamine2000_RT'], parms)
 
 # %%  75k PMMA sample from Tom
-QCManalyze(sample['PMMA_75k_S04'], parms)
+qcm.analyze(sample['PMMA_75k_S04'], parms)
 
 # %%  75k PMMA sample from Tom
-QCManalyze(sample['PMMA_75k_S05'], parms)
+qcm.analyze(sample['PMMA_75k_S05'], parms)
 
 # %%  Temperature dependence for 3k PS sample
-QCManalyze(sample['PS_3k_cool'], parms)
+qcm.analyze(sample['PS_3k_cool'], parms)
+
+
