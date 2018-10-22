@@ -9,11 +9,46 @@ Change the following factors will change the apperiance of the GUI
 from collections import OrderedDict
 
 settings_init = {
-    # title to display in the main GUI
-    'window_title': 'QCM Rheology',
 
     # window default size
     'window_size': [1200, 800], # px
+
+    # time string format
+    'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
+
+
+    # enable and disable list
+    'pushButton_runstop_enable_list': [
+        # 'treeWidget_settings_settings_hardware',
+        'pushButton_newfile',
+        'pushButton_appendfile',
+    ],
+
+    'pushButton_runstop_disable_list': [
+        # 'treeWidget_settings_settings_hardware',
+        'dateTimeEdit_reftime',
+        'pushButton_resetreftime',
+        'pushButton_newfile',
+        'pushButton_appendfile',
+    ],
+
+    'pushButton_newfile_enable_list':[
+        'dateTimeEdit_reftime',
+        'pushButton_resetreftime',
+    ],
+
+    'pushButton_appendfile_disable_list':[
+        'dateTimeEdit_reftime',
+        'pushButton_resetreftime',
+    ],
+
+    'temp_settings_enable_disable_list': [
+        'comboBox_tempmodule',
+        'comboBox_tempdevice',
+        'comboBox_thrmcpltype',
+    ],
+
+
 
     # highest harmonic can be shown in the UI. 
     'max_harmonic': 9, # do not change
@@ -26,11 +61,13 @@ settings_init = {
 
     # export  data file type
     'export_datafiletype': ';;'.join([
-        'json file (*.json)',
-        'hdf5 file (*.h5)',
-        # 'Python file (*.py)',
-        'Matlab file (*.mat)',
         'csv file (*.csv)',
+        'excel file (*.xlsx)',
+        'json file (*.json)',
+        # 'hdf5 file (*.h5)',
+        # 'Python file (*.py)',
+        # 'Matlab file (*.mat)',
+
     ]),
 
     # scan mode
@@ -39,7 +76,7 @@ settings_init = {
         ('centerspan', 'Center/Span'),
     ]),
 
-    # choice for plotting data shown in comboBox_plt1_choice & comboBox_plt2_choice
+    # choice for plotting data shown in comboBox_plt1_opts & comboBox_plt2_opts
     'data_plt_opts': OrderedDict([
         ('none',   'none'),
         ('df_t',   u'\u0394' + 'f - time'),
@@ -134,11 +171,11 @@ settings_init = {
     # available bandwidth limitation for each harmonic
     # key: number; val: for display in combobox
     'bandwidth_opts': OrderedDict([
-        ('2',  '2 MHz'),
-        ('1',  '1 MHz'),
-        ('0.5',  '0.5 MHz'),
-        ('0.25', '0.25 MHz'),
         ('0.1', '0.1 MHz'),
+        ('0.25', '0.25 MHz'),
+        ('0.5',  '0.5 MHz'),
+        ('1',  '1 MHz'),
+        ('2',  '2 MHz'),
     ]),
 
     # reference type for showing delta f and delta gamma
@@ -190,7 +227,7 @@ settings_init = {
     
     # add NI sensors into the dict and the code will check if the devices in its keys.
     # the values are the number of samples per test for average
-    'devices_dict': {
+    'tempdevices_dict': {
         'USB-TC01': {
             'nsamples': 1,            # number of points for average,
             'thrmcpl_chan': 'ai0',    # thermocouple channel,
@@ -236,7 +273,8 @@ settings_default = {
     # default frequency display mode
     'comboBox_settings_control_dispmode': 'centerspan',
     # default time settings
-    'dateTimeEdit_reftime': None,
+    # NOTE: keep this key commented
+    # 'dateTimeEdit_reftime': '2000-01-01 00:00:00.000',
     
     'lineEdit_recordinterval': 5,
     'lineEdit_refreshresolution': 1,
@@ -580,11 +618,11 @@ settings_default = {
     'comboBox_thrmcpltype': 'J',
 
     # default plots settings
-    'comboBox_timeunit': 's',
+    'comboBox_timeunit': 'min',
     'comboBox_tempunit': 'C',
     'comboBox_timescale': 'linear',
     'comboBox_yscale': 'linear',
-    'checkBox_linktime': False,
+    'checkBox_linktime': True,
 
     ### default plot selections ###
     # default selections for spectra show
@@ -594,7 +632,7 @@ settings_default = {
     'checkBox_spectra_shoechi': False,
 
     # default selections for plot 1 elements
-    'comboBox_plt1_choice': 'dfn_t', 
+    'comboBox_plt1_opts': 'dfn_t', 
     'checkBox_plt1_h1': False,
     'checkBox_plt1_h3': False,
     'checkBox_plt1_h5': False,
@@ -605,7 +643,7 @@ settings_default = {
     'radioButton_plt1_ref': False,
 
     # default selections for plot 2 elements
-    'comboBox_plt2_choice': 'dg_t',
+    'comboBox_plt2_opts': 'dg_t',
     'checkBox_plt2_h1': False,
     'checkBox_plt2_h3': False,
     'checkBox_plt2_h5': False,

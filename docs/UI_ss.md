@@ -41,12 +41,12 @@ plot frame_sp[n]: raw to .l['G'] , .l['B'] , l['P']
 >> harmonic loop: [1, 3, 5, ...]  
 >>> fit data with parameters in `self.settings`  
 plot frame_sp[n]: fit to .l['Gfit'] , .l['Bfit'] , l['Pfit'] .l['lf'], .l['lg']  
-plot data in `frame_plt1`: check `comboBox_plt1_choice` and plot with right data form (func: ?)  
-plot data in `frame_plt2`: check `comboBox_plt2_choice` and plot with right data form (func: ?)
+plot data in `frame_plt1`: check `comboBox_plt1_opts` and plot with right data form (func: ?)  
+plot data in `frame_plt2`: check `comboBox_plt2_opts` and plot with right data form (func: ?)
 save data to `self.data.samp` and append raw scan to `<file name>`  
 `check span` for next scan and save it to `self.settings.`
 >> `if pushButton_runstop.clicked():`  
->>> waite for timer  
+>>> wait for timer  
 >>> start progressBar_status_interval_time counting  
 >>> update label_status_pts
 >>

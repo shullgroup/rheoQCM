@@ -216,7 +216,7 @@ def findpeaks_py(x, resonance, output=None, sortstr=None, threshold=None, promin
     sortstr: 'ascend' or 'descend' ordering data by peak height
     '''
     # print(resonance)
-    if x is None: # for debuging
+    if x is None or len(x) == 1: # for debuging
         print('findpeaks_py input x is not well assigned!\nx = {}'.format(x))
         exit(0)
 
@@ -345,6 +345,12 @@ class PeakTracker:
             harm_dict = {}
         else:
             harm_dict = harmdata[chn_name][harm]
+        
+            print('#### update_input ####')
+            print('chn_name', chn_name, 'harm', harm)
+            print('f[chn][harm]', len(f))
+            print('harmdata[chn][harm]', harm_dict)
+            print(' #####################')
 
         # setattr(self.harminput, chn_name, setattr())
         self.harminput[chn_name][harm]['isfitted'] = False # if the data has been fitted
@@ -461,7 +467,6 @@ class PeakTracker:
             ) # use modulus
             self.x = self.harminput[chn_name][harm]['f'][:-1] + np.diff(self.harminput[chn_name][harm]['f']) # change f size and shift
         elif method == 'prev': # use previous value
-            # nothing to do
             try:
                 pre_method = self.harmoutput[chn_name][harm]['method']
                 if pre_method == 'prev':
@@ -470,7 +475,6 @@ class PeakTracker:
                 pre_method = 'gmax'
             
             self.init_active_val(harm=harm, chn_name=chn_name, method=pre_method)
-            return
         else:
             self.resonance = self.harminput[chn_name][harm]['G']
             self.x = self.harminput[chn_name][harm]['f']
@@ -501,7 +505,7 @@ class PeakTracker:
         else:
             _, cen, half_wid, _ = guess_peak_factors(freq, resonance)
     
-        current_xlim = self.harminput[chn_name][harm]['current_span']
+        current_xlim = np.array(self.harminput[chn_name][harm]['current_span'])
         # get the current center and current span of the data in Hz
         current_center, current_span = MathModules.converter_startstop_to_centerspan(*self.harminput[chn_name][harm]['current_span'])
         
@@ -850,9 +854,6 @@ class PeakTracker:
             # save min_idx and max_idx to 'factor_span'
             self.update_output(chn_name=chn_name, harm=harm, factor_span=[f[min_idx], f[max_idx]])
 
-            # _, cen_guess, half_wid_guess = guess_peak_factors(self.x, self.resonance)
-            # factor_idx, = np.where((self.x >= cen_guess - half_wid_guess * factor) & (self.x <= cen_guess + half_wid_guess * factor))
-
             f, G, B = f[min_idx: max_idx], \
                       G[min_idx: max_idx], \
                       B[min_idx: max_idx]
@@ -1060,7 +1061,9 @@ class PeakTracker:
             self.active_harm = harm
         
         self.init_active_val(chn_name=chn_name, harm=harm)
-        
+        print('chn:', chn_name, 'harm:', harm)
+        print('self.chn:', self.active_chn, 'self.harm:', self.active_harm)
+
         self.minimize_GB()
         
         if components is False:

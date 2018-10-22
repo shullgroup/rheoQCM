@@ -5985,7 +5985,7 @@ border: 1px solid blue;
                       <number>0</number>
                      </property>
                      <item>
-                      <widget class="QComboBox" name="comboBox_plt1_choice">
+                      <widget class="QComboBox" name="comboBox_plt1_opts">
                        <property name="sizePolicy">
                         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                          <horstretch>0</horstretch>
@@ -6163,7 +6163,7 @@ border: 1px solid blue;
                       <number>0</number>
                      </property>
                      <item>
-                      <widget class="QComboBox" name="comboBox_plt2_choice">
+                      <widget class="QComboBox" name="comboBox_plt2_opts">
                        <property name="sizeAdjustPolicy">
                         <enum>QComboBox::AdjustToContents</enum>
                        </property>

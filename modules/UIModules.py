@@ -26,16 +26,24 @@ def closest_spanctr_step(l, n):
     elif n < 1:
         return min(l, key=lambda x:abs(x-1/n))
 
-def list_modules(path):
+def list_modules(module):
     ''' 
     return a dict of available temp modules stored in path 
     '''
-    from os import listdir
-    from os.path import isfile
+    # # from package
+    # from os import listdir
+    # from os.path import isfile
         
-    modules = {f.replace('.py', ''): f.replace('.py', '') for f in listdir(path) if isfile and '__' not in f}
-    return modules
+    # modules = {f.replace('.py', ''): f.replace('.py', '') for f in listdir(path) if isfile and '__' not in f}
+    # return modules
 
+    # from subclass
+    import inspect
+    print(dir(module))
+    subcls_list = inspect.getmembers(module, inspect.isclass)
+
+    return {subcls[0]: subcls[0] for subcls in subcls_list}
+    [m[0] for m in inspect.getmembers(module, inspect.isclass) if m[1].__module__ == 'module']
 def split_path(path):
     pass
 

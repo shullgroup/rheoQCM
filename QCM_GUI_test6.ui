@@ -619,132 +619,23 @@ background-color: red;
                  <property name="spacing">
                   <number>2</number>
                  </property>
-                 <item row="0" column="0" colspan="5">
-                  <layout class="QHBoxLayout" name="horizontalLayout_8">
-                   <property name="spacing">
-                    <number>6</number>
-                   </property>
-                   <item>
-                    <widget class="QLabel" name="label_2">
-                     <property name="text">
-                      <string>Reference time</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QDateTimeEdit" name="dateTimeEdit_reftime">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="wrapping">
-                      <bool>false</bool>
-                     </property>
-                     <property name="readOnly">
-                      <bool>false</bool>
-                     </property>
-                     <property name="buttonSymbols">
-                      <enum>QAbstractSpinBox::UpDownArrows</enum>
-                     </property>
-                     <property name="accelerated">
-                      <bool>false</bool>
-                     </property>
-                     <property name="currentSection">
-                      <enum>QDateTimeEdit::YearSection</enum>
-                     </property>
-                     <property name="displayFormat">
-                      <string>yyyy-MM-dd hh:mm:ss</string>
-                     </property>
-                     <property name="calendarPopup">
-                      <bool>false</bool>
-                     </property>
-                     <property name="currentSectionIndex">
-                      <number>0</number>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="pushButton_resetreftime">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="maximumSize">
-                      <size>
-                       <width>40</width>
-                       <height>16777215</height>
-                      </size>
-                     </property>
-                     <property name="text">
-                      <string>Rest</string>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </item>
-                 <item row="5" column="2">
-                  <widget class="QLineEdit" name="lineEdit_refreshresolution">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
+                 <item row="5" column="1">
+                  <widget class="QLineEdit" name="lineEdit_scaninterval">
                    <property name="maximumSize">
                     <size>
-                     <width>16777215</width>
+                     <width>100</width>
                      <height>16777215</height>
                     </size>
-                   </property>
-                   <property name="inputMethodHints">
-                    <set>Qt::ImhDigitsOnly</set>
-                   </property>
-                   <property name="text">
-                    <string>1</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignCenter</set>
                    </property>
-                  </widget>
-                 </item>
-                 <item row="5" column="1">
-                  <widget class="QLabel" name="label">
-                   <property name="text">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Spectra refresh resolution&lt;span style=&quot; vertical-align:super;&quot;&gt;b&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                   </property>
-                   <property name="buddy">
-                    <cstring>lineEdit_refreshresolution</cstring>
+                   <property name="readOnly">
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>
-                 <item row="4" column="1">
-                  <widget class="QLabel" name="label_3">
-                   <property name="text">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Record interval (s)&lt;span style=&quot; vertical-align:super;&quot;&gt;a&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                   </property>
-                   <property name="buddy">
-                    <cstring>lineEdit_recordinterval</cstring>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="4" column="4">
-                  <spacer name="horizontalSpacer_6">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                 <item row="4" column="2">
+                 <item row="3" column="1">
                   <widget class="QLineEdit" name="lineEdit_recordinterval">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -754,7 +645,7 @@ background-color: red;
                    </property>
                    <property name="maximumSize">
                     <size>
-                     <width>16777215</width>
+                     <width>100</width>
                      <height>16777215</height>
                     </size>
                    </property>
@@ -769,17 +660,20 @@ background-color: red;
                    </property>
                   </widget>
                  </item>
-                 <item row="6" column="2">
-                  <widget class="QLineEdit" name="lineEdit_scaninterval">
-                   <property name="alignment">
-                    <set>Qt::AlignCenter</set>
+                 <item row="4" column="2">
+                  <spacer name="horizontalSpacer_4">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
                    </property>
-                   <property name="readOnly">
-                    <bool>true</bool>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
                    </property>
-                  </widget>
+                  </spacer>
                  </item>
-                 <item row="6" column="1">
+                 <item row="5" column="0">
                   <widget class="QLabel" name="label_8">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -795,20 +689,7 @@ background-color: red;
                    </property>
                   </widget>
                  </item>
-                 <item row="5" column="4">
-                  <spacer name="horizontalSpacer_4">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                 <item row="6" column="4">
+                 <item row="5" column="2">
                   <spacer name="horizontalSpacer_7">
                    <property name="orientation">
                     <enum>Qt::Horizontal</enum>
@@ -820,6 +701,137 @@ background-color: red;
                     </size>
                    </property>
                   </spacer>
+                 </item>
+                 <item row="4" column="0">
+                  <widget class="QLabel" name="label">
+                   <property name="text">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Spectra refresh resolution&lt;span style=&quot; vertical-align:super;&quot;&gt;b&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
+                   <property name="buddy">
+                    <cstring>lineEdit_refreshresolution</cstring>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="2">
+                  <spacer name="horizontalSpacer_6">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item row="4" column="1">
+                  <widget class="QLineEdit" name="lineEdit_refreshresolution">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>100</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="inputMethodHints">
+                    <set>Qt::ImhDigitsOnly</set>
+                   </property>
+                   <property name="text">
+                    <string>1</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="0">
+                  <widget class="QLabel" name="label_3">
+                   <property name="text">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Record interval (s)&lt;span style=&quot; vertical-align:super;&quot;&gt;a&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
+                   <property name="buddy">
+                    <cstring>lineEdit_recordinterval</cstring>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="label_2">
+                   <property name="text">
+                    <string>Reference time</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QDateTimeEdit" name="dateTimeEdit_reftime">
+                   <property name="enabled">
+                    <bool>true</bool>
+                   </property>
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="wrapping">
+                    <bool>false</bool>
+                   </property>
+                   <property name="readOnly">
+                    <bool>false</bool>
+                   </property>
+                   <property name="buttonSymbols">
+                    <enum>QAbstractSpinBox::UpDownArrows</enum>
+                   </property>
+                   <property name="accelerated">
+                    <bool>false</bool>
+                   </property>
+                   <property name="dateTime">
+                    <datetime>
+                     <hour>0</hour>
+                     <minute>0</minute>
+                     <second>0</second>
+                     <year>2000</year>
+                     <month>1</month>
+                     <day>1</day>
+                    </datetime>
+                   </property>
+                   <property name="currentSection">
+                    <enum>QDateTimeEdit::YearSection</enum>
+                   </property>
+                   <property name="displayFormat">
+                    <string>yyyy-MM-dd hh:mm:ss.zzz</string>
+                   </property>
+                   <property name="calendarPopup">
+                    <bool>false</bool>
+                   </property>
+                   <property name="currentSectionIndex">
+                    <number>0</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QPushButton" name="pushButton_resetreftime">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Rest reference time</string>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -1125,7 +1137,7 @@ background-color: red;
                       <string>Choose a new file</string>
                      </property>
                      <property name="text">
-                      <string>New file</string>
+                      <string>New Experiment</string>
                      </property>
                     </widget>
                    </item>
@@ -5953,7 +5965,7 @@ border: 1px solid blue;
                       <number>0</number>
                      </property>
                      <item>
-                      <widget class="QComboBox" name="comboBox_plt1_choice">
+                      <widget class="QComboBox" name="comboBox_plt1_opts">
                        <property name="sizePolicy">
                         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                          <horstretch>0</horstretch>
@@ -6131,7 +6143,7 @@ border: 1px solid blue;
                       <number>0</number>
                      </property>
                      <item>
-                      <widget class="QComboBox" name="comboBox_plt2_choice">
+                      <widget class="QComboBox" name="comboBox_plt2_opts">
                        <property name="sizeAdjustPolicy">
                         <enum>QComboBox::AdjustToContents</enum>
                        </property>
@@ -6291,60 +6303,15 @@ border: 1px solid blue;
     <addaction name="actionClear_All"/>
     <addaction name="actionDelete_Selected"/>
     <addaction name="separator"/>
-    <addaction name="actionReset"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuSetting">
     <property name="title">
      <string>Settings</string>
     </property>
-    <widget class="QMenu" name="menuChannel">
-     <property name="title">
-      <string>Sample Channel</string>
-     </property>
-     <addaction name="actionADC_1"/>
-     <addaction name="actionADC_2"/>
-    </widget>
-    <widget class="QMenu" name="menuReference_Type">
-     <property name="title">
-      <string>Choose Reference Type</string>
-     </property>
-     <addaction name="actionData_File"/>
-     <addaction name="actionSingle_Point"/>
-     <addaction name="separator"/>
-     <addaction name="actionExternal"/>
-    </widget>
-    <widget class="QMenu" name="menuBase_Frequency">
-     <property name="title">
-      <string>Base Frequency</string>
-     </property>
-     <addaction name="action5_MHz"/>
-     <addaction name="action6_MHz"/>
-     <addaction name="action9_MHz"/>
-     <addaction name="action10_MHz"/>
-    </widget>
-    <widget class="QMenu" name="menuHarmonic_Bandwidth">
-     <property name="title">
-      <string>Harmonic Bandwidth</string>
-     </property>
-     <addaction name="actionBW_2_MHz"/>
-     <addaction name="actionBW_1_MHz"/>
-     <addaction name="actionBW_0_5_MHz"/>
-     <addaction name="actionBW_0_25_MHz"/>
-     <addaction name="actionBW_0_1_MHz"/>
-    </widget>
     <addaction name="actionOpen_MyVNA"/>
     <addaction name="separator"/>
-    <addaction name="menuChannel"/>
-    <addaction name="separator"/>
-    <addaction name="menuReference_Type"/>
-    <addaction name="actionSelect_Reference"/>
-    <addaction name="separator"/>
-    <addaction name="actionAdd_Temperature_Data"/>
-    <addaction name="actionSet_Temperature_Sensor"/>
-    <addaction name="separator"/>
-    <addaction name="menuBase_Frequency"/>
-    <addaction name="menuHarmonic_Bandwidth"/>
+    <addaction name="actionReset"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -6377,13 +6344,14 @@ border: 1px solid blue;
    <addaction name="actionLoad_Settings"/>
    <addaction name="separator"/>
    <addaction name="actionSave"/>
-   <addaction name="actionSave_As"/>
    <addaction name="actionExport"/>
    <addaction name="separator"/>
    <addaction name="actionClear_All"/>
    <addaction name="actionDelete_Selected"/>
    <addaction name="separator"/>
+   <addaction name="actionReset"/>
    <addaction name="actionOpen_MyVNA"/>
+   <addaction name="separator"/>
   </widget>
   <action name="actionLoad_Exp">
    <property name="icon">
@@ -6796,7 +6764,6 @@ border: 1px solid blue;
  </widget>
  <tabstops>
   <tabstop>pushButton_runstop</tabstop>
-  <tabstop>pushButton_resetreftime</tabstop>
   <tabstop>lineEdit_recordinterval</tabstop>
   <tabstop>lineEdit_refreshresolution</tabstop>
   <tabstop>pushButton_newfile</tabstop>

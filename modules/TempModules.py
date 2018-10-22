@@ -1,9 +1,13 @@
 import nidaqmx
-from nidaqmx import Task
-import matplotlib.pyplot as plt
-import numpy as np     
+# from nidaqmx import Task
+import numpy as np
 
-class TempSensor():
+# another way to let the main code find the temp class in this file is just put a dict here
+class_list = {
+    'NITempSensor': 'NITempSensor', # name to access / name to display
+}
+
+class NITempSensor():
     def __init__(self, device, device_params, thrmcpl_type):
         '''
         devices (class NI device): 
@@ -84,6 +88,7 @@ class TempSensor():
 
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
     def get_temp(device, ai_channel, thrmpl_type):
         
         nsample = devices_dict.get(device.product_type, [])

@@ -1199,15 +1199,37 @@ class AccessMyVNA():
         for flg, val in setflg.items():
             if val: # val != None
                 if flg == 'f': # set frequency
+                    print(val)
+                    print(len(val))
                     ret, f1, f2 = self.SetFequencies(f1=val[0], f2=val[1], nFlags=1)
+                    if ret != 0:
+                        print(ret)
+                        print('SetFrequencies')
+                        exit(0)
                 elif flg == 'steps': # set scan steps
                     ret, nSteps = self.SetScanSteps(nSteps=val)
+                    if ret != 0:
+                        print(ret)
+                        print('SettScanSteps')
+                        exit(0)
                 elif flg == 'chn': # set scan channel
                     ret, nData = self.setADCChannel(reflectchn=val)
+                    if ret != 0:
+                        print(ret)
+                        print('SetADCChannel')
+                        exit(0)
                 elif flg == 'avg': # set scan average
                     ret, nAverage = self.SetScanAverage(nAverage=val)
+                    if ret != 0:
+                        print(ret)
+                        print('SetScanAverage')
+                        exit(0)
                 elif flg == 'instrmode': # set instrument mode
                     ret, nMode = self.Setinstrmode(nMode=0)
+                    if ret != 0:
+                        print(ret)
+                        print('Setinstrmode')
+                        exit(0)
                 elif flg == 'speed': # set scan speed
                     # we don't need to change it through python now
                     pass
@@ -1242,6 +1264,17 @@ if __name__ == '__main__':
     # accvna = AccessMyVNA()
     # ret = accvna.GetDoubleArray()
     # ret, f, G, B = accvna.single_scan()
+    import inspect
+    import AccessMyVNA
+
+    ml = inspect.getmembers(AccessMyVNA, inspect.isclass)
+    print(ml)
+    for m in ml:
+        print(m)
+        print(m[1].__module__)
+
+    [m[0] for m in inspect.getmembers(AccessMyVNA, inspect.isclass) if m[1].__module__ == 'AccessMyVNA']
+    exit(0)
 
     with AccessMyVNA() as accvna:
         ret = accvna.ShowWindow(1)
