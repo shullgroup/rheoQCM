@@ -106,7 +106,7 @@ class QCMApp(QMainWindow):
 
         self.UITab = 0 # 0: Control; 1: Settings;, 2: Data; 3: Mechanics
         #### initialize the attributes for data saving
-        self.data_saver = DataSaver.DataSaver()
+        self.data_saver = DataSaver.DataSaver(ver=_version.__version__)
         
         self.vna = None # vna class
         self.temp_sensor = None # class for temp sensor
@@ -2753,16 +2753,16 @@ class QCMApp(QMainWindow):
         # return
 
         f, G, B = {}, {}, {}
-        freqs = {} # peak centers
-        gammas = {} # dissipations hwhm 
+        fs = {} # peak centers
+        gs = {} # dissipations hwhm 
         curr_time = {}
         curr_temp = {}
         marks = [0 for _ in harm_list] # 'samp' and 'ref' chn test the same harmonics
         for chn_name in chn_name_list:
             # scan harmonics (1, 3, 5...)
             f[chn_name], G[chn_name], B[chn_name] = {}, {}, {}
-            freqs[chn_name] = []
-            gammas[chn_name] = []
+            fs[chn_name] = []
+            gs[chn_name] = []
             curr_temp[chn_name] = None
 
             self.reading = True
@@ -2840,9 +2840,9 @@ class QCMApp(QMainWindow):
                         x=cen_rec_freq
                     ) 
                     
-                    # save data to freqs and gammas
-                    freqs[chn_name].append(fit_result['v_fit']['cen_rec']['value']) # freqs 
-                    gammas[chn_name].append(fit_result['v_fit']['wid_rec']['value'] * 2) # gammas = 2 * half_width 
+                    # save data to fs and gs
+                    fs[chn_name].append(fit_result['v_fit']['cen_rec']['value']) # fs 
+                    gs[chn_name].append(fit_result['v_fit']['wid_rec']['value'] * 2) # gs = 2 * half_width 
                     print(cen_rec_freq)
                     print(cen_rec_G)
 
@@ -2892,7 +2892,7 @@ class QCMApp(QMainWindow):
         # Save scan data to file fitting data in RAM to file
         if int(self.counter) % int(self.settings['lineEdit_refreshresolution']) == 0: # check if to save by intervals
             self.writing = True
-            self.data_saver.dynamic_save(chn_name_list, harm_list, t=curr_time, temp=curr_temp, f=f, G=G, B=B, freqs=freqs, gammas=gammas, marks=marks)
+            self.data_saver.dynamic_save(chn_name_list, harm_list, t=curr_time, temp=curr_temp, f=f, G=G, B=B, fs=fs, gs=gs, marks=marks)
         
         # increase counter
         self.counter += 1

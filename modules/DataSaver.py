@@ -51,12 +51,12 @@ class DataSaver:
         self.settings  = settings # UI settings of test
         self.exp_ref  = self._make_exp_ref() # experiment reference setup in dict
         self.ver  = ver # version information
-        self._keys = ['samp', 'ref'] # raw data groups
+        self._chn_keys = ['samp', 'ref'] # raw data groups
+        self._ref_keys = {'fs': 'f0', 'gs': 'g0'} # corresponding keys storing the reference
 
     def _make_df(self):
         '''
         initiate an empty df for storing the data by type
-        type: samp, ref
         '''
         # make an empty df
         return pd.DataFrame(columns=[
@@ -64,8 +64,8 @@ class DataSaver:
             't',
             'temp',
             'marks', # list default [0, 0, 0, 0, 0]
-            'freqs',
-            'gamms',
+            'fs',
+            'gs',
         ])
 
     def _make_exp_ref(self):
@@ -76,16 +76,25 @@ class DataSaver:
             't0': None,
             't0_shifted': None,
             'samp':{
-                'f0': [], # list for each harmonic
-                'g0': [], # list for each harmonic
+                'f0': self.nan_harm_list(), # list for each harmonic
+                'g0': self.nan_harm_list(), # list for each harmonic
             },
             'ref':{
-                'f0': [], # list for each harmonic
-                'g0': [], # list for each harmonic
+                'f0': self.nan_harm_list(), # list for each harmonic
+                'g0': self.nan_harm_list(), # list for each harmonic
             },
             # str show the source used as reference
-            'samp_ref': '', # 'samp', 'ref', 'ext', 'none'
-            'ref_ref': '',  # 'samp', 'ref', 'ext', 'none'
+            'samp_ref': ('samp', [0,]),  # default
+            'ref_ref': ('ref', [0,]),    # default
+            
+            # structure: (source, [indices]) 
+            #   source: 'samp', 'ref', 'ext', 'none'
+            #       'samp': use data from samp chan as reference
+            #       'ref': use data from ref chan as reference
+            #       'ext': use data from external file as reference
+            #       'none': no reference
+            #   if len == 1 (e.g.: [0,]), is a single point 
+            #   if [None], reference point by point
         } # experiment reference setup in dict
 
     def init_file(self, path=None):
@@ -100,11 +109,12 @@ class DataSaver:
         # create groups for raw data
         # dt = h5py.special_dtype(vlen=str)
         with h5py.File(self.path, 'w') as fh:
-            g_data = fh.create_group('data')
-            g_raw = fh.create_group('raw')
+            fh.create_group('data')
+            fh.create_group('raw')
         
         # save settings information
         self._save_ver(ver=self.ver)
+        print(self.ver)
 
         self.queue_list = []
 
@@ -137,13 +147,13 @@ class DataSaver:
             self.queue_list = list(fh['raw/samp'].keys())
 
             print(fh['data/samp'][()])
-            for key in self._keys:
+            for key in self._chn_keys:
                 setattr(self, key, pd.read_json(fh['data/' + key][()]).sort_values(by=['queue_id'])) # df for data form samp/ref chn
-                setattr(self, key, pd.read_json(fh['data/' + key + '_ref'][()]).sort_values(by=['queue_id'])) # df for data form samp_ref/ref_ref chn
+                setattr(self, key + '_ref', pd.read_json(fh['data/' + key + '_ref'][()]).sort_values(by=['queue_id'])) # df for data form samp_ref/ref_ref chn
 
             self.raw  = {} # raw data from last queue
 
-    def dynamic_save(self, chn_names, harm_list, t=np.nan, temp=np.nan, f=None, G=None, B=None, freqs=[np.nan], gamms=[np.nan], marks=[0]):
+    def dynamic_save(self, chn_names, harm_list, t=np.nan, temp=np.nan, f=None, G=None, B=None, fs=[np.nan], gs=[np.nan], marks=[0]):
         '''
         save raw data of ONE QUEUE to self.raw and save to h5 file
         NOTE: only update on test a time
@@ -152,8 +162,8 @@ class DataSaver:
         t: dict of str
         temp: float
         f, G, B: dict of ndarray f[chn_name][harm]
-        freqs: dicts of delta freq freqs[chn_name]
-        gamms: dicts of delta gamma gamms[chn_name]
+        fs: dicts of delta freq fs[chn_name]
+        gs: dicts of delta gamma gs[chn_name]
         marks: [0]. by default all will be marked as 0
         '''
 
@@ -172,8 +182,8 @@ class DataSaver:
             # prepare data: change list to the size of harm_list by inserting nan to the empty harm
             for i in range(1, settings_init['max_harmonic']+2, 2):
                 if str(i) not in harm_list: # tested harmonic
-                    freqs[chn_name].insert(int((i-1)/2), np.nan)
-                    gamms[chn_name].insert(int((i-1)/2), np.nan)
+                    fs[chn_name].insert(int((i-1)/2), np.nan)
+                    gs[chn_name].insert(int((i-1)/2), np.nan)
 
             # up self.samp/ref first
             # create a df to append
@@ -182,13 +192,12 @@ class DataSaver:
                 't': [t[chn_name]],
                 'temp': [temp[chn_name]],
                 'marks': [marks], # list default [0, 0, 0, 0, 0]
-                'freqs': [freqs[chn_name]],
-                'gamms': [gamms[chn_name]],
+                'fs': [fs[chn_name]],
+                'gs': [gs[chn_name]],
             })
             # print(data_new)
             setattr(self, chn_name, getattr(self, chn_name).append(data_new, ignore_index=True))
             print(self.samp.tail())
-
 
         # save raw data to file by chn_names
         self._save_raw(chn_names, harm_list, t=t, temp=temp, f=f, G=G, B=B)
@@ -229,7 +238,7 @@ class DataSaver:
         save samp (df), ref (df) to h5 file serializing with json
         '''
         with h5py.File(self.path, 'a') as fh:
-            for key in self._keys:
+            for key in self._chn_keys:
                 print(key)
                 # print(fh['data/' + key])
                 if key in fh['data']:
@@ -238,7 +247,7 @@ class DataSaver:
                 print(json.dumps(getattr(self, key).to_dict()))
                 # fh['data/' + key] = json.dumps(getattr(self, key).to_dict())        
                 fh.create_dataset('data/' + key, data=getattr(self, key).to_json(), dtype=h5py.special_dtype(vlen=str))  
-                fh.create_dataset('data/' + key + '_ref', data=getattr(self, key).to_json(), dtype=h5py.special_dtype(vlen=str))  
+                fh.create_dataset('data/' + key + '_ref', data=getattr(self, key + '_ref').to_json(), dtype=h5py.special_dtype(vlen=str))  
 
                 # , dtype=h5py.special_dtype(vlen=str)
 
@@ -248,7 +257,7 @@ class DataSaver:
         '''
         if not settings:
             settings = self.settings
-        if not settings:
+        if not exp_ref:
             exp_ref = self.exp_ref
         with h5py.File(self.path, 'a') as fh:
             fh['settings'] = json.dumps(settings)
@@ -267,6 +276,8 @@ class DataSaver:
         '''
         return len(self.queue_list)
 
+    def nan_harm_list(self):
+        return [np.nan] * int((settings_init['max_harmonic'] + 1) / 2)
 
 
     ####################################################
@@ -282,7 +293,7 @@ class DataSaver:
         fileName: string of full path with file name
         '''
         # TODO add exp_ref
-        
+
         # get df of samp and ref channel
         df_samp = self.reshape_data_df('samp', mark=False, dropnanrow=True)
         df_ref = self.reshape_data_df('ref', mark=False, dropnanrow=True)
@@ -323,11 +334,11 @@ class DataSaver:
                 # json.dump(data, f)
 
             
-    def reshape_data_df(self, chn_name, mark=False, dropnanrow=True, dropnancolumn=True):
+    def reshape_data_df(self, chn_name, mark=False, dropnanrow=True, dropnancolumn=True, deltaval=False):
         '''
         reshape and tidy data df (samp and ref) for exporting
         '''
-        cols = ['freqs', 'gamms']
+        cols = ['fs', 'gs']
         df = getattr(self, chn_name).copy()
 
         # convert t column to datetime object
@@ -335,8 +346,8 @@ class DataSaver:
         print(df.t)
 
         for col in cols:
-            df = df.assign(**self.get_list_column_to_columns(chn_name, col, mark=mark)) # split columns: freqs and gamms
-            df = df.drop(columns=col) # drop columns: freqs and gamms
+            df = df.assign(**self.get_list_column_to_columns(chn_name, col, mark=mark, deltaval=deltaval)) # split columns: fs and gs
+            df = df.drop(columns=col) # drop columns: fs and gs
 
         print(df.head())
 
@@ -380,8 +391,11 @@ class DataSaver:
         t = pd.to_datetime(t)
         # convert t to delta t in seconds
         if t.shape[0] == 0:
+            print('no data saved!')
             return t
         else:
+            print(self.get_t_ref())
+            print(t)
             t = t -  self.get_t_ref() # delta t to reference (t0)
             t = t.dt.total_seconds() # convert to second
             return t
@@ -409,64 +423,37 @@ class DataSaver:
                 t0 = datetime.datetime.strptime(t0, settings_init['time_str_format'])
         
         return t0
-
-    def calc_fg_ref(self, chn_name, mark=False):
-        '''
-        calculate reference (self.samp_ref, self.ref_ref) of f (f0) and g (g0) and save them in self.exp_ref['f0'] and ['g0']
-        '''
-        if getattr(self, chn_name + '_ref').shape[0] == 0:
-            print('no reference data was selected for {} channel.').format(chn_name)
-        else: # there is reference data saved
-            # calculate f0 and g0 
-            for key, col in zip(['f0', 'g0'], ['freqs', 'gammas']):
-                df = self.get_list_column_to_columns_marked_rows(chn_name + '_ref', col, mark=True, dropnanrow=False)
-
-                self.exp_ref[chn_name][key] = df.mean().values.tolist() 
         
-    def get_fg_ref(self, chn_name, harm=[]):
-        '''
-        get reference of f or g from self.exp_ref
-        chn_name: 'samp' or 'ref'
-        return a dict 
-        {'f0': [f0_1, f0_3, ...], 
-         'g0': [g0_1, g0_3, ...]}
-        '''
-        if not harm: # no harmonic is given
-            return self.exp_ref[chn_name]
-
-    def copy_to_ref(self, df, chn_name):
-        '''
-        copy df to self.[chn_name + '_ref'] as reference
-        df should be from another file, self.samp or self.ref
-        ''' 
-        df = self.reset_marks(df) # remove marks
-        setattr(self, chn_name + '_ref', df)
-
-
-    def get_list_column_to_columns_marked_rows(self, chn_name, col, mark=False, dropnanrow=False):
+    def get_list_column_to_columns_marked_rows(self, chn_name, col, mark=False, dropnanrow=False, deltaval=False):
         '''        
         return rows with marks of df from self.get_list_column_to_columns
         '''
-        cols_df = self.get_list_column_to_columns(chn_name, col, mark=mark)
+        cols_df = self.get_list_column_to_columns(chn_name, col, mark=mark, deltaval=deltaval)
         if dropnanrow == True:
-            return cols_df[self.rows_with_marks()][:]
+            return cols_df[self.rows_with_marks(chn_name)][:]
         else:
             return cols_df
  
-    def get_list_column_to_columns(self, chn_name, col, mark=False):
+    def get_list_column_to_columns(self, chn_name, col, mark=False, deltaval=False):
         '''
-        get a df of marks, freqs or gamms by open the columns with list to colums by harmonics
+        get a df of marks, fs or gs by open the columns with list to colums by harmonics
         chn_name: str of channel name ('sam', 'ref')
-        col: str of column name ('freqs' or gamms')
+        col: str of column name ('fs' or gs')
         return: df with columns = ['1', '3', '5', '7', '9]
         '''
-        
-
-        if mark == False:
-            s = getattr(self, chn_name)[col].copy()
-            return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col[:-1] + str(x * 2 + 1))
+        if deltaval == True:
+            s = self.convert_col_to_delta_val(chn_name, col)
+            if col == 'fs':
+                col = 'delfs'
+            elif col == 'gs':
+                col = 'delgs'
         else:
             s = getattr(self, chn_name)[col].copy()
+
+
+        if mark == False:
+            return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col[:-1] + str(x * 2 + 1))
+        else:
             m = getattr(self, chn_name)['marks'].copy()
             idx = s.index
             # convert s and m to ndarray
@@ -479,6 +466,114 @@ class DataSaver:
             arr_s[arr_s == 0] = np.nan
 
             return pd.DataFrame(data=arr_s, index=idx).rename(columns=lambda x: col[:-1] + str(x * 2 + 1))
+
+    def convert_col_to_delta_val(self, chn_name, col):
+        '''
+        convert fs or gs column to delf or delg
+        and return the series 
+        '''
+        # get a copy
+        col_s = getattr(self, chn_name)[col].copy()
+        if any(self.exp_ref[chn_name][self._ref_keys[col]]): # there is a constant reference exist
+            # get ref
+            ref = self.exp_ref[chn_name][self._ref_keys[col]] # return a ndarray
+            # return 
+            return col_s.apply(lambda x: list(np.array(x, dtype=np.float) - np.array(ref, dtype=np.float)))
+        else: # no reference or no constant reference exist
+            # check col+'_ref'
+            if self.exp_ref[col + '_ref'][1][0] is None: #start index is None, dynamic reference
+                ref_s=getattr(self, self.exp_ref[col + '_ref'][0]).copy()
+
+                # convert series value to ndarray
+                col_arr = np.array(col_s.values.tolist())
+                ref_arr = np.array(ref_s.values.tolist())
+
+                # subtract ref from col elemental wise
+                col_arr = col_arr - ref_arr
+
+                # save it back to col_s
+                col_s.values[:] = list(col_arr)
+                return col_s
+            elif self.exp_ref[col + '_ref'][0] not in ['ext', 'none']: # ref not setted
+                # set the ref
+                self.set_ref_set(chn_name, *self.exp_ref[col + '_ref'])
+
+    def copy_to_ref(self, df, chn_name):
+        '''
+        copy df to self.[chn_name + '_ref'] as reference
+        df should be from another file, self.samp or self.ref
+        ''' 
+        print(df)
+        df = self.reset_marks(df) # remove marks
+        setattr(self, chn_name + '_ref', df)
+
+    def set_ref_set(self, chn_name, source, idx_list=[], df=None):
+        '''
+        set self.exp_ref.<chn_name>_ref value
+        source: str in ['samp', 'ref', 'ext', 'none']
+        '''
+        self.exp_ref[chn_name + '_ref'][0] = source
+        if len(idx_list) > 0: # 
+            self.exp_ref[chn_name + '_ref'][1] = idx_list
+
+            # copy df to ref
+            if source in self._chn_keys and self.exp_ref[chn_name + '_ref'][1][0] is not None: # use data from current test
+                df = getattr(self, chn_name)
+                self.copy_to_ref(df.loc[idx_list], chn_name) # copy to reference data set
+            elif source == 'ext': # data from external file
+                if df is not None:
+                    self.copy_to_ref(df, chn_name) # copy to reference data set
+                else:
+                    print('no dataframe is provided!')
+            else: # source in self._chn_keys and self.exp_ref[chn_name + '_ref'][1][0] is None:
+                # point by point referencing, don't need copy data
+                pass 
+        self.calc_fg_ref(chn_name, mark=True)
+
+    def calc_fg_ref(self, chn_name, mark=True):
+        '''
+        calculate reference of f (f0) and g (g0)  by the set in self.samp_ref, self.ref_ref and save them in self.exp_ref['f0'] and ['g0']
+        '''
+        if self.exp_ref[chn_name + '_ref'][1][0] is None: #start index is None, dynamic reference
+            print('reference element by element! clear self.{}_ref & self.exp_ref.{}'.format(chn_name, chn_name))
+            
+            # clear self.<chn_name>_ref
+            setattr(self, chn_name + '_ref', self._make_df())
+            # clear self.exp_ref.<chn_name>
+            self.exp_ref[chn_name] = {
+                'f0': self.nan_harm_list(), # list for each harmonic
+                'g0': self.nan_harm_list(), # list for each harmonic
+            }
+        else: # there is reference data saved
+            if getattr(self, chn_name + '_ref').shape[0] > 0: # there is reference data saved
+                print('>0')
+                # calculate f0 and g0 
+                for col, key in self._ref_keys.items():
+                    df = self.get_list_column_to_columns_marked_rows(chn_name + '_ref', col, mark=True, dropnanrow=False)
+                    print(getattr(self, chn_name + '_ref')[col])
+                    print(df)
+                    self.exp_ref[chn_name][key] = df.mean().values.tolist() 
+            else:
+                # no data to saved 
+                # clear self.exp_ref.<chn_name>
+                self.exp_ref[chn_name] = {
+                    'f0': self.nan_harm_list(), # list for each harmonic
+                    'g0': self.nan_harm_list(), # list for each harmonic
+                }
+
+        print(self.exp_ref)
+
+    def get_fg_ref(self, chn_name, harm=[]):
+        '''
+        get reference of f or g from self.exp_ref
+        chn_name: 'samp' or 'ref'
+        return a dict 
+        {'f0': [f0_1, f0_3, ...], 
+         'g0': [g0_1, g0_3, ...]}
+        '''
+        if not harm: # no harmonic is given
+            return self.exp_ref[chn_name]
+
 
     def rows_with_marks(self, chan_name):
         '''
@@ -499,7 +594,8 @@ class DataSaver:
         set 1 in list element to 0
         '''
         df_new = df.copy()
-        df_new.marks = df.marks.apply(lambda x: [0 if mark == 1 else mark for mark in x])
+        print(type(df_new))
+        df_new.marks = df_new.marks.apply(lambda x: [0 if mark == 1 else mark for mark in x])
         return df_new
 
 
@@ -519,4 +615,14 @@ class DataSaver:
 
         factors = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}
         return factors[unit] * t
+    
+    def abs_to_del(abs_list, ref_list):
+        '''
+        calculate relative value elemental wisee in two lists by (abs_list - ref_list)
+        this function is used for calculate delf and delg for a single queue
+        '''
+
+        return [abs_val - ref_val for abs_val, ref_val in zip(abs_list, ref_list)]
+
+
 
