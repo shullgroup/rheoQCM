@@ -1,6 +1,7 @@
 dependency
 
-openypyxl
-h5py
+pyqt5
 numpy
 pandas
+openypyxl
+h5py

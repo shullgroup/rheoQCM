@@ -34,11 +34,21 @@ import pandas as pd
 import numpy as np
 import h5py
 import json
+import openpyxl
+import csv
 
-from UISettings import settings_init
+try:
+    from UISettings import settings_init
+except:
+    # this is for using this module outside of UI
+    # make a dict for loading data file
+    settings_init = {
+        'max_harmonic': 9,
+        'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
+    }
 
 class DataSaver:
-    def __init__(self, ver='', settings={}):
+    def __init__(self, ver=''):
         self.path = None
         self.mode = None
         self.queue_list = []
@@ -48,7 +58,6 @@ class DataSaver:
         self.samp_ref = self._make_df() # df for samp chn reference
         self.ref_ref = self._make_df() # df for ref chn reference
         self.raw  = {} # raw data from last queue
-        self.settings  = settings # UI settings of test
         self.exp_ref  = self._make_exp_ref() # experiment reference setup in dict
         self.ver  = ver # version information
         self._chn_keys = ['samp', 'ref'] # raw data groups
@@ -118,14 +127,13 @@ class DataSaver:
 
         self.queue_list = []
 
-    def load_file(self, path=None):
+    def load_file(self, path):
         '''
         load data information from exist hdf5 file
         '''
-        if not path: # if path is not available
-            self.init_file() # create a new file
 
-            return
+
+
         self.path = path
 
         # get data information
@@ -286,7 +294,7 @@ class DataSaver:
     ##  converting data.
     ####################################################
 
-    def data_exporter(self, fileName):
+    def data_exporter(self, fileName, mark=False, dropnanrow=True, dropnancolumn=True):
         '''
         this function export the self.data.samp and ...ref 
         in the ext form
@@ -295,10 +303,20 @@ class DataSaver:
         # TODO add exp_ref
 
         # get df of samp and ref channel
-        df_samp = self.reshape_data_df('samp', mark=False, dropnanrow=True)
-        df_ref = self.reshape_data_df('ref', mark=False, dropnanrow=True)
-        df_samp_ref = self.reshape_data_df('samp_ref', mark=False, dropnanrow=True)
-        df_ref_ref = self.reshape_data_df('ref_ref', mark=False, dropnanrow=True)
+        df_samp = pd.merge(
+            self.reshape_data_df('samp', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn),
+            self.reshape_data_df('samp', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, deltaval=True),
+            on=['queue_id', 't', 'temp']
+        )
+
+        df_ref = pd.merge(
+            self.reshape_data_df('ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn),
+            self.reshape_data_df('ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, deltaval=True),
+            on=['queue_id', 't', 'temp']
+        )
+
+        df_samp_ref = self.reshape_data_df('samp_ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn)
+        df_ref_ref = self.reshape_data_df('ref_ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn)
 
          # get ext
         name, ext = os.path.splitext(fileName)
@@ -310,24 +328,33 @@ class DataSaver:
                 df_ref.to_excel(writer, sheet_name='ref_channel')
                 df_samp_ref.to_excel(writer, sheet_name='sample_reference')
                 df_ref_ref.to_excel(writer, sheet_name='ref_reference')
+                t_ref = {key: self.exp_ref[key] for key in self.exp_ref.keys() if 't0' in key}
+                pd.DataFrame.from_dict(t_ref, orient='index').to_excel(writer, sheet_name='time_reference')
+
 
         elif ext.lower() == '.csv':
             # add chn_name to samp and ref df
             # and append ref to samp
-            df_samp.assign(chn='samp').append(df_ref.assign(chn='ref')).to_csv(fileName)
+            # with open(fileName, 'w') as f:
+            #     csvwriter = csv.writer(f)
+            #     csvwriter.writerow(['Version'] + [self.ver])
+            
+            df_samp.assign(chn='samp').append(df_ref.assign(chn='ref')).append(df_samp_ref.assign(chn='samp_ref')).append(df_ref_ref.assign(chn='ref_ref')).to_csv(fileName, mode='w')
 
         elif ext.lower() == '.json':
             with open(fileName, 'w') as f:
                 ## lines with indent (this will make the file larger)
-                # line = json.dumps({'samp': self.samp.to_dict(), 'ref': self.ref.to_dict()}, indent=4) + "\n"
-                # f.write(line)
+                # lines = json.dumps({'samp': self.samp.to_dict(), 'ref': self.ref.to_dict()}, indent=4) + "\n"
+                # f.write(lines)
 
                 ## without separate by lines (smaller file size, but harder to)
                 json.dump({
-                    'samp': self.samp.to_dict(), 
-                    'ref': self.ref.to_dict(),
-                    'samp_ref': self.samp_ref.to_dict(), 
-                    'ref_ref': self.ref_ref.to_dict(),
+                    'samp': df_samp.to_dict(), 
+                    'ref': df_ref.to_dict(),
+                    'samp_ref': df_samp_ref.to_dict(), 
+                    'ref_ref': df_ref_ref.to_dict(),
+                    'exp_ref': self.exp_ref,
+                    'ver': self.ver,
                     }, 
                     f
                 )
@@ -359,7 +386,9 @@ class DataSaver:
         if dropnanrow == True: # rows with marks only
             # select rows with marks
             df = df[self.rows_with_marks(chn_name)][:]
-            df = df.drop(columns='marks') # drop marks column
+            print(df)
+            if 'marks' in df.columns:
+                df = df.drop(columns='marks') # drop marks column
         else:
             print('there is no marked data.\n no data will be deleted.')
 
@@ -455,17 +484,25 @@ class DataSaver:
             return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col[:-1] + str(x * 2 + 1))
         else:
             m = getattr(self, chn_name)['marks'].copy()
+            print('mmmmm', m)
             idx = s.index
             # convert s and m to ndarray
             arr_s = np.array(s.values.tolist(), dtype=np.float) # the dtype=np.float replace None with np.nan
+            print(arr_s)
             arr_m = np.array(m.values.tolist(), dtype=np.float) # the dtype=np.float replace None with np.nan
-            
-            # replace None with np.nan
-            arr_s = arr_s * arr_m # leave values where only marks == 1
-            # replace unmarked (marks == 0) with np.nan
-            arr_s[arr_s == 0] = np.nan
+            print(arr_m)
+            print(np.any(arr_m == 1))
+            if np.any(arr_m == 1): # there are marks (1)
+                print('there are marks (1) in df')
+                # replace None with np.nan
+                arr_s = arr_s * arr_m # leave values where only marks == 1
+                # replace unmarked (marks == 0) with np.nan
+                arr_s[arr_s == 0] = np.nan
 
-            return pd.DataFrame(data=arr_s, index=idx).rename(columns=lambda x: col[:-1] + str(x * 2 + 1))
+                return pd.DataFrame(data=arr_s, index=idx).rename(columns=lambda x: col[:-1] + str(x * 2 + 1))
+            else: # there is no marks(1)
+                return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col[:-1] + str(x * 2 + 1))
+            
 
     def convert_col_to_delta_val(self, chn_name, col):
         '''
@@ -498,13 +535,21 @@ class DataSaver:
                 # set the ref
                 self.set_ref_set(chn_name, *self.exp_ref[col + '_ref'])
 
-    def copy_to_ref(self, df, chn_name):
+    def copy_to_ref(self, chn_name, df=None):
         '''
         copy df to self.[chn_name + '_ref'] as reference
         df should be from another file, self.samp or self.ref
         ''' 
-        print(df)
-        df = self.reset_marks(df) # remove marks
+        
+        # check self.exp_ref
+        if self.exp_ref['samp_ref'][0] in self._chn_keys: # use test data
+            # reset mark (1 to 0) and copy
+            if df is None:
+                df = getattr(self, self.exp_ref['samp_ref'][0]).copy()
+        else:
+            raise ValueError('df should not be None when {} is reference source.'.fromat(self.exp_ref['samp_ref'][0]))            
+
+        df = self.reset_marks(df, mark_pair=(0, 1)) # mark 1 to 0
         setattr(self, chn_name + '_ref', df)
 
     def set_ref_set(self, chn_name, source, idx_list=[], df=None):
@@ -519,10 +564,10 @@ class DataSaver:
             # copy df to ref
             if source in self._chn_keys and self.exp_ref[chn_name + '_ref'][1][0] is not None: # use data from current test
                 df = getattr(self, chn_name)
-                self.copy_to_ref(df.loc[idx_list], chn_name) # copy to reference data set
+                self.copy_to_ref(chn_name, df.loc[idx_list, :]) # copy to reference data set
             elif source == 'ext': # data from external file
                 if df is not None:
-                    self.copy_to_ref(df, chn_name) # copy to reference data set
+                    self.copy_to_ref(chn_name, df) # copy to reference data set
                 else:
                     print('no dataframe is provided!')
             else: # source in self._chn_keys and self.exp_ref[chn_name + '_ref'][1][0] is None:
@@ -549,7 +594,8 @@ class DataSaver:
                 print('>0')
                 # calculate f0 and g0 
                 for col, key in self._ref_keys.items():
-                    df = self.get_list_column_to_columns_marked_rows(chn_name + '_ref', col, mark=True, dropnanrow=False)
+                    print(chn_name, col, key)
+                    df = self.get_list_column_to_columns_marked_rows(chn_name + '_ref', col, mark=mark, dropnanrow=False, deltaval=False)
                     print(getattr(self, chn_name + '_ref')[col])
                     print(df)
                     self.exp_ref[chn_name][key] = df.mean().values.tolist() 
@@ -588,14 +634,15 @@ class DataSaver:
             print('There is no marked row.\nReturn all')
             return ~marked_rows
 
-    def reset_marks(self, df):
+    def reset_marks(self, df, mark_pair=(0, 1)):
         ''' 
         rest marks column in df. 
         set 1 in list element to 0
         '''
+        new_mark, old_mark = mark_pair
         df_new = df.copy()
         print(type(df_new))
-        df_new.marks = df_new.marks.apply(lambda x: [0 if mark == 1 else mark for mark in x])
+        df_new.marks = df_new.marks.apply(lambda x: [new_mark if mark == old_mark else mark for mark in x])
         return df_new
 
 
@@ -603,7 +650,7 @@ class DataSaver:
 ######## functions for unit convertion #################
 
 
-    def time_s_to_unit(t, unit=None):
+    def time_s_to_unit(self, t, unit=None):
         '''
         convert time from in second to given unit
         input:
@@ -616,7 +663,7 @@ class DataSaver:
         factors = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}
         return factors[unit] * t
     
-    def abs_to_del(abs_list, ref_list):
+    def abs_to_del(self, abs_list, ref_list):
         '''
         calculate relative value elemental wisee in two lists by (abs_list - ref_list)
         this function is used for calculate delf and delg for a single queue
