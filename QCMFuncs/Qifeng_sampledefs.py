@@ -15,7 +15,7 @@ def sample_dict():
     'filmfile': 'DGEBA-Jeffamine2000_RT_7',
     'firstline': 0,
     # 'filmtrange': [1, 10],
-    # 'filmindex': range(3, 50, 5),
+    'filmindex': range(0, 156, 10),
     'xscale': 'log',
     'nhcalc': ['133',],
     'nhplot': [1, 3,]
