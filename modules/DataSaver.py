@@ -37,18 +37,13 @@ import json
 import openpyxl
 import csv
 
-try:
-    from UISettings import settings_init
-except:
-    # this is for using this module outside of UI
-    # make a dict for loading data file
-    settings_init = {
-        'max_harmonic': 9,
-        'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
-    }
 
 class DataSaver:
     def __init__(self, ver=''):
+
+        self.mode = ''  # mode of class 'init': new file; 'load': append/load file
+        self.settings = {}
+        self.settings_init = {}
         self.path = None
         self.mode = None
         self.queue_list = []
@@ -58,10 +53,11 @@ class DataSaver:
         self.samp_ref = self._make_df() # df for samp chn reference
         self.ref_ref = self._make_df() # df for ref chn reference
         self.raw  = {} # raw data from last queue
-        self.exp_ref  = self._make_exp_ref() # experiment reference setup in dict
+        self.exp_ref  = {} # experiment reference setup in dict
         self.ver  = ver # version information
         self._chn_keys = ['samp', 'ref'] # raw data groups
         self._ref_keys = {'fs': 'f0', 'gs': 'g0'} # corresponding keys storing the reference
+        
 
     def _make_df(self):
         '''
@@ -106,14 +102,19 @@ class DataSaver:
             #   if [None], reference point by point
         } # experiment reference setup in dict
 
-    def init_file(self, path=None):
+    def init_file(self, path, settings_init):
         '''
         initiate hdf5 file for data saving
         '''
-        if not path: # save data in the default temp path
-            self.path = os.path.join(settings_init['unsaved_path'], datetime.datetime.now().strftime("%Y%m%d%H%M%S") + '.h5') # use current time as filename
-        else:
-            self.path = path
+        self.mode = 'init'
+        self.path = path
+        # save some keys from settings_init for future data manipulation
+        self.settings_init = {
+            'max_harmonic': settings_init['max_harmonic'],
+            'time_str_format': settings_init['time_str_format'],
+        }
+
+        self.exp_ref = self._make_exp_ref() # use the settings_int values to format referene dict
 
         # create groups for raw data
         # dt = h5py.special_dtype(vlen=str)
@@ -131,9 +132,7 @@ class DataSaver:
         '''
         load data information from exist hdf5 file
         '''
-
-
-
+        self.mode = 'load'
         self.path = path
 
         # get data information
@@ -147,6 +146,7 @@ class DataSaver:
             # get data save to attributes
             
             self.settings = json.loads(fh['settings'][()])
+            self.settings_init = json.loads(fh['settings_init'][()])
             self.exp_ref = json.loads(fh['exp_ref'][()])
             self.ver = fh.attrs['ver']
             print(self.ver)
@@ -181,14 +181,14 @@ class DataSaver:
         else:
             self.queue_list.append(max(self.queue_list) + 1)
 
-        for i in range(1, settings_init['max_harmonic']+2, 2):
+        for i in range(1, self.settings_init['max_harmonic']+2, 2):
             if str(i) not in harm_list: # tested harmonic
                 marks.insert(int((i-1)/2), np.nan)
 
         # append to the form by chn_name
         for chn_name in chn_names:
             # prepare data: change list to the size of harm_list by inserting nan to the empty harm
-            for i in range(1, settings_init['max_harmonic']+2, 2):
+            for i in range(1, self.settings_init['max_harmonic']+2, 2):
                 if str(i) not in harm_list: # tested harmonic
                     fs[chn_name].insert(int((i-1)/2), np.nan)
                     gs[chn_name].insert(int((i-1)/2), np.nan)
@@ -257,19 +257,19 @@ class DataSaver:
                 fh.create_dataset('data/' + key, data=getattr(self, key).to_json(), dtype=h5py.special_dtype(vlen=str))  
                 fh.create_dataset('data/' + key + '_ref', data=getattr(self, key + '_ref').to_json(), dtype=h5py.special_dtype(vlen=str))  
 
-                # , dtype=h5py.special_dtype(vlen=str)
+            # save reference
+            fh['exp_ref'] = json.dumps(self.exp_ref)
 
-    def save_settings(self, settings={}, exp_ref={}):
+    def save_settings(self, settings={}):
         '''
         save settings (dict) to file
         '''
         if not settings:
             settings = self.settings
-        if not exp_ref:
-            exp_ref = self.exp_ref
+
         with h5py.File(self.path, 'a') as fh:
             fh['settings'] = json.dumps(settings)
-            fh['exp_ref'] = json.dumps(exp_ref)
+            fh['settings_init'] = json.dumps(self.settings_init)
 
     def _save_ver(self, ver=''):
         '''
@@ -285,7 +285,7 @@ class DataSaver:
         return len(self.queue_list)
 
     def nan_harm_list(self):
-        return [np.nan] * int((settings_init['max_harmonic'] + 1) / 2)
+        return [np.nan] * int((self.settings_init['max_harmonic'] + 1) / 2)
 
 
     ####################################################
@@ -309,14 +309,16 @@ class DataSaver:
             on=['queue_id', 't', 'temp']
         )
 
-        df_ref = pd.merge(
-            self.reshape_data_df('ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn),
-            self.reshape_data_df('ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, deltaval=True),
-            on=['queue_id', 't', 'temp']
-        )
-
         df_samp_ref = self.reshape_data_df('samp_ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn)
-        df_ref_ref = self.reshape_data_df('ref_ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn)
+
+        if self.ref.shape[0] > 0:
+            df_ref = pd.merge(
+                self.reshape_data_df('ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn),
+                self.reshape_data_df('ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, deltaval=True),
+                on=['queue_id', 't', 'temp']
+            )
+
+            df_ref_ref = self.reshape_data_df('ref_ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn)
 
          # get ext
         name, ext = os.path.splitext(fileName)
@@ -325,10 +327,12 @@ class DataSaver:
         if ext.lower() == '.xlsx':
             with pd.ExcelWriter(fileName) as writer:
                 df_samp.to_excel(writer, sheet_name='samp_channel')
-                df_ref.to_excel(writer, sheet_name='ref_channel')
                 df_samp_ref.to_excel(writer, sheet_name='sample_reference')
-                df_ref_ref.to_excel(writer, sheet_name='ref_reference')
+                if self.ref.shape[0] > 0:
+                    df_ref.to_excel(writer, sheet_name='ref_channel')
+                    df_ref_ref.to_excel(writer, sheet_name='ref_reference')
                 t_ref = {key: self.exp_ref[key] for key in self.exp_ref.keys() if 't0' in key}
+
                 pd.DataFrame.from_dict(t_ref, orient='index').to_excel(writer, sheet_name='time_reference')
 
 
@@ -339,25 +343,39 @@ class DataSaver:
             #     csvwriter = csv.writer(f)
             #     csvwriter.writerow(['Version'] + [self.ver])
             
-            df_samp.assign(chn='samp').append(df_ref.assign(chn='ref')).append(df_samp_ref.assign(chn='samp_ref')).append(df_ref_ref.assign(chn='ref_ref')).to_csv(fileName, mode='w')
+            if self.ref.shape[0] > 0:
+                df_samp.assign(chn='samp').append(df_ref.assign(chn='ref')).append(df_samp_ref.assign(chn='samp_ref')).append(df_ref_ref.assign(chn='ref_ref')).to_csv(fileName, mode='w')
+            else:
+                df_samp.assign(chn='samp').append(df_samp_ref.assign(chn='samp_ref')).to_csv(fileName, mode='w')
 
         elif ext.lower() == '.json':
             with open(fileName, 'w') as f:
                 ## lines with indent (this will make the file larger)
-                # lines = json.dumps({'samp': self.samp.to_dict(), 'ref': self.ref.to_dict()}, indent=4) + "\n"
+                # lines = json.dumps({'samp': self.samp.to_dict(), 'ref': self.ref.to_dict()}, indent=4) + '\n'
                 # f.write(lines)
 
                 ## without separate by lines (smaller file size, but harder to)
-                json.dump({
-                    'samp': df_samp.to_dict(), 
-                    'ref': df_ref.to_dict(),
-                    'samp_ref': df_samp_ref.to_dict(), 
-                    'ref_ref': df_ref_ref.to_dict(),
-                    'exp_ref': self.exp_ref,
-                    'ver': self.ver,
-                    }, 
-                    f
-                )
+                if self.ref.shape[0] > 0:
+                    json.dump({
+                        'samp': df_samp.to_dict(), 
+                        'samp_ref': df_samp_ref.to_dict(), 
+                        'ref': df_ref.to_dict(),
+                        'ref_ref': df_ref_ref.to_dict(),
+                        'exp_ref': self.exp_ref,
+                        'ver': self.ver,
+                        }, 
+                        f
+                    )
+                else:
+                    json.dump({
+                        'samp': df_samp.to_dict(), 
+                        'samp_ref': df_samp_ref.to_dict(), 
+                        'exp_ref': self.exp_ref,
+                        'ver': self.ver,
+                        }, 
+                        f
+                    )
+
                 # json.dump(data, f)
 
             
@@ -436,20 +454,21 @@ class DataSaver:
         # find reference t from dict exp_ref first
         if 't0' in self.exp_ref.keys() and self.exp_ref.get('t0', None): # t0 exist and != None or 0
             if self.exp_ref.get('t0_shifted', None):
-                t0 = datetime.datetime.strptime(self.exp_ref.get('t0_shifted'), settings_init['time_str_format']) # used shifted t0
+                t0 = datetime.datetime.strptime(self.exp_ref.get('t0_shifted'), self.settings_init['time_str_format']) # used shifted t0
             else:
-                t0 = datetime.datetime.strptime(self.exp_ref.get('t0'), settings_init['time_str_format']) # use t0
+                t0 = datetime.datetime.strptime(self.exp_ref.get('t0'), self.settings_init['time_str_format']) # use t0
         else: # no t0 saved in self.exp_ref
             # find t0 in self.settings
             t0 = self.settings.get('dateTimeEdit_reftime', None)
             print('t0', t0)
             if not t0:
                 if self.samp.shape[0]> 0: # use the first queque time
-                    t0 = datetime.datetime.strptime(self.samp['t'][0], settings_init['time_str_format'])
+                    t0 = datetime.datetime.strptime(self.samp['t'][0], self.settings_init['time_str_format'])
                 else:
                     t0 = None
             else:
-                t0 = datetime.datetime.strptime(t0, settings_init['time_str_format'])
+                self.exp_ref['t0'] = t0 # save t0 to exp_ref
+                t0 = datetime.datetime.strptime(t0, self.settings_init['time_str_format'])
         
         return t0
         
@@ -557,23 +576,24 @@ class DataSaver:
         set self.exp_ref.<chn_name>_ref value
         source: str in ['samp', 'ref', 'ext', 'none']
         '''
-        self.exp_ref[chn_name + '_ref'][0] = source
-        if len(idx_list) > 0: # 
-            self.exp_ref[chn_name + '_ref'][1] = idx_list
+        if getattr(self, chn_name).shape[0] > 0: # data is not empty
+            self.exp_ref[chn_name + '_ref'][0] = source
+            if len(idx_list) > 0: # 
+                self.exp_ref[chn_name + '_ref'][1] = idx_list
 
-            # copy df to ref
-            if source in self._chn_keys and self.exp_ref[chn_name + '_ref'][1][0] is not None: # use data from current test
-                df = getattr(self, chn_name)
-                self.copy_to_ref(chn_name, df.loc[idx_list, :]) # copy to reference data set
-            elif source == 'ext': # data from external file
-                if df is not None:
-                    self.copy_to_ref(chn_name, df) # copy to reference data set
-                else:
-                    print('no dataframe is provided!')
-            else: # source in self._chn_keys and self.exp_ref[chn_name + '_ref'][1][0] is None:
-                # point by point referencing, don't need copy data
-                pass 
-        self.calc_fg_ref(chn_name, mark=True)
+                # copy df to ref
+                if source in self._chn_keys and self.exp_ref[chn_name + '_ref'][1][0] is not None: # use data from current test
+                    df = getattr(self, chn_name)
+                    self.copy_to_ref(chn_name, df.loc[idx_list, :]) # copy to reference data set
+                elif source == 'ext': # data from external file
+                    if df is not None:
+                        self.copy_to_ref(chn_name, df) # copy to reference data set
+                    else:
+                        print('no dataframe is provided!')
+                else: # source in self._chn_keys and self.exp_ref[chn_name + '_ref'][1][0] is None:
+                    # point by point referencing, don't need copy data
+                    pass 
+            self.calc_fg_ref(chn_name, mark=True)
 
     def calc_fg_ref(self, chn_name, mark=True):
         '''
@@ -608,6 +628,23 @@ class DataSaver:
                 }
 
         print(self.exp_ref)
+
+    def set_t0(self, t0=None, t0_shifted=None):
+        '''
+        set reference time (t0) to self.exp_ref
+        t0: time string
+        t0_shifted: time string
+        '''
+        if t0 is not None:
+            if self.mode == 'init': # only change t0 when it is a new file ('init')
+                if isinstance(t0, datetime.datetime): # if t0 is datetime obj
+                    t0 = t0.strftime(self.settings_init['time_str_format']) # convert to string
+                self.exp_ref['t0'] = t0
+
+        if to_shifted is not None:
+            if isinstance(to_shifted, datetime.datetime): # if to_shifted is datetime obj
+                to_shifted = to_shifted.strftime(self.settings_init['time_str_format']) # convert to string
+            self.exp_ref['to_shifted'] = to_shifted
 
     def get_fg_ref(self, chn_name, harm=[]):
         '''

@@ -1034,7 +1034,10 @@ class QCMApp(QMainWindow):
                 return
             # check filename if avaialbe
             if self.data_saver.path is None: # no filename
-                self.data_saver.init_file() # save to unsaved folder
+                self.data_saver.init_file(
+                    path=os.path.join(settings_init['unsaved_path'], datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.h5'),
+                    settings_init=settings_init
+                ) # save to unsaved folder
             
 
             # disable features
@@ -1085,7 +1088,7 @@ class QCMApp(QMainWindow):
         # save data
         self.data_saver.save_data()
         # write UI information to file
-        self.data_saver.save_settings(settings=self.settings, exp_ref={}) # TODO add exp_ref
+        self.data_saver.save_settings(settings=self.settings) # TODO add exp_ref
 
         self.counter = 0 # reset counter
         self.fileFlag = True # mark all data is saved
@@ -1190,7 +1193,10 @@ class QCMApp(QMainWindow):
                 'pushButton_newfile_enable_list',
             )
             self.fileName = fileName
-            self.data_saver.init_file(path=self.fileName) # for test
+            t0 = time.time()
+            self.data_saver.init_file(path=self.fileName, settings_init=settings_init) # for test
+            t1 = time.time()
+            print(t1 -t0)
 
     def on_triggered_load_exp(self): 
         fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
@@ -1313,7 +1319,7 @@ class QCMApp(QMainWindow):
         self.load_settings()
 
         if not settings: # reset UI
-            self.data_saver = DataSaver.DataSaver()
+            self.data_saver = DataSaver.DataSaver(ver=_version.__version__)
             # enable widgets
             self.enable_widgets(
                 'pushButton_runstop_disable_list',

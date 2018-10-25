@@ -13,6 +13,9 @@ settings_init = {
     # window default size
     'window_size': [1200, 800], # px
 
+    # highest harmonic can be shown in the UI. 
+    'max_harmonic': 9, # do not change
+    
     # time string format
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
 
@@ -50,8 +53,6 @@ settings_init = {
 
 
 
-    # highest harmonic can be shown in the UI. 
-    'max_harmonic': 9, # do not change
         
     # default open/save data file type
     'default_datafiletype': ';;'.join([
