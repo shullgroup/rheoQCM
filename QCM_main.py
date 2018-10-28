@@ -21,7 +21,7 @@ from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, 
 # packages
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
-from modules import UIModules, MathModules, GBFitting, PeakTracker, DataSaver, TempModules
+from modules import UIModules, MathModules, GBFitting, PeakTracker, DataSaver
 from modules.MatplotlibWidget import MatplotlibWidget
 
 import _version
@@ -38,7 +38,7 @@ if UIModules.system_check() == 'win32': # windows
             # test if MyVNA program is available
             with AccessMyVNA() as vna:
                 if vna.Init() == 0: # connection with myVNA is available
-                    from modules import TempDevices
+                    from modules import TempDevices,TempModules
 
         except Exception as e: # no myVNA connected. Analysis only
             print('Failed to import AccessMyVNA module!')
