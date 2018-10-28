@@ -621,8 +621,9 @@ class MatplotlibWidget(QWidget):
         '''
         axs = set() # initialize a empty set
         for ln, x, y in args:
-            self.l[ln][0].set_xdata(x)
-            self.l[ln][0].set_ydata(y)
+            # self.l[ln][0].set_xdata(x)
+            # self.l[ln][0].set_ydata(y)
+            self.l[ln][0].set_data(x, y)
             axs.add(self.l[ln][0].axes)
             
             # ax = self.l[ln][0].axes
@@ -635,8 +636,12 @@ class MatplotlibWidget(QWidget):
         for ax in axs:
             ax.relim()
             ax.autoscale_view(True,True,True)
-        self.canvas.draw()
-        self.canvas.flush_events() # flush the GUI events
+        # self.canvas.draw()
+        self.canvas.draw_idle()
+        # self.canvas.draw_event()
+        # self.canvas.draw_cursor()
+        # TODP the flush_events() makes the UI blury
+        self.canvas.flush_events() # flush the GUI events 
 
     def get_data(self, ls=[]):
         '''
@@ -645,8 +650,9 @@ class MatplotlibWidget(QWidget):
         '''
         data = []
         for l in ls:
-            xdata = self.l[l][0].get_xdata()
-            ydata = self.l[l][0].get_ydata()
+            # xdata = self.l[l][0].get_xdata()
+            # ydata = self.l[l][0].get_ydata()
+            xdata, ydata = self.l[l][0].get_data()
             data.append((xdata, ydata))
         return data
 
@@ -674,12 +680,14 @@ class MatplotlibWidget(QWidget):
         '''
         for key in self.l:
             if  l_list is None: # clear all
-                self.l[key][0].set_xdata([])
-                self.l[key][0].set_ydata([])
+                # self.l[key][0].set_xdata([])
+                # self.l[key][0].set_ydata([])
+                self.l[key][0].set_data([], [])
             else:
                 if key in l_list:
-                    self.l[key][0].set_xdata([])
-                    self.l[key][0].set_ydata([])
+                    # self.l[key][0].set_xdata([])
+                    # self.l[key][0].set_ydata([])
+                    self.l[key][0].set_data([], [])
 
         self.canvas.draw()
 

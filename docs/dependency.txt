@@ -1,7 +1,15 @@
 dependency
 
 pyqt5
+matplotlib
 numpy
+scipy
 pandas
-openypyxl
+lmfit
+openypyxl or xlsxwriter (may depend on system)
 h5py
+nidaqmx
+win32ui
+win32process
+
+(hdf5storage)

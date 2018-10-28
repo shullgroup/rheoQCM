@@ -142,7 +142,7 @@ def get_wait_time(nPoints=200, averages=0, step_delay=0, start_delay=0, mbuffer=
     print(total_time)
 
     return total_time
-    
+
 #endregion
 
 #region assign functions
@@ -854,8 +854,14 @@ class AccessMyVNA():
         # self.scandata_a = []
         # self.scandata_b = []
         # self.narray = []
-       self.vnaset = self._vnaset_int
-
+        self._nsteps = _GetScanSteps()
+        self._naverage = self.GetScanAverage()
+        self._instrmode = self.Getinstrmode()
+        self._displaymode = np.array(0, dtype=int),
+        self._chn = np.array(0, dtype=int), # avtive channel
+        self._f = [np.nan, np.nan], # start & stop frequencies [start, stop]
+        _, self._speed, self._step_delay, self._start_delay, self._phase_delay = self.get_speed_delays()
+        
     # use __enter__ __exit__ for with or use try finally
     def __enter__(self):
         self.Init()
@@ -873,10 +879,10 @@ class AccessMyVNA():
         'instrmode': np.array(0, dtype=int),
         'displaymode': np.array(0, dtype=int),
         'nsteps': np.array(0, dtype=int),
-        'scanaverage': np.array(0, dtype=int),
+        'naverage': np.array(0, dtype=int),
         'chn': np.array(0, dtype=int), # avtive channel
         'speed': np.array(0, dtype=int), # speed of vna
-        'f': [], # start & stop frequencies [start, stop]
+        'f': [np.nan, np.nan], # start & stop frequencies [start, stop]
     }
 
     def Init(self):
@@ -1159,7 +1165,9 @@ class AccessMyVNA():
         self.SingleScan()
         self.Autoscale()
         # wait for some time
-        time.sleep(1)
+        t0 = time.time()
+        while time.time() < t0 + self._get_wait_time():
+            time.sleep(0.1)
         ret, nSteps = self.GetScanSteps()
         ret, f, G = self.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
         # time.sleep(1)
@@ -1201,31 +1209,31 @@ class AccessMyVNA():
                 if flg == 'f': # set frequency
                     print(val)
                     print(len(val))
-                    ret, f1, f2 = self.SetFequencies(f1=val[0], f2=val[1], nFlags=1)
+                    ret, self._f[0], self._f[1] = self.SetFequencies(f1=val[0], f2=val[1], nFlags=1)
                     if ret != 0:
                         print(ret)
                         print('SetFrequencies')
                         exit(0)
                 elif flg == 'steps': # set scan steps
-                    ret, nSteps = self.SetScanSteps(nSteps=val)
+                    ret, self._nsteps = self.SetScanSteps(nSteps=val)
                     if ret != 0:
                         print(ret)
                         print('SettScanSteps')
                         exit(0)
                 elif flg == 'chn': # set scan channel
-                    ret, nData = self.setADCChannel(reflectchn=val)
+                    ret, self._chn = self.setADCChannel(reflectchn=val)
                     if ret != 0:
                         print(ret)
                         print('SetADCChannel')
                         exit(0)
                 elif flg == 'avg': # set scan average
-                    ret, nAverage = self.SetScanAverage(nAverage=val)
+                    ret, self._naverage = self.SetScanAverage(nAverage=val)
                     if ret != 0:
                         print(ret)
                         print('SetScanAverage')
                         exit(0)
                 elif flg == 'instrmode': # set instrument mode
-                    ret, nMode = self.Setinstrmode(nMode=0)
+                    ret, self._instrmode = self.Setinstrmode(nMode=0)
                     if ret != 0:
                         print(ret)
                         print('Setinstrmode')
@@ -1250,9 +1258,60 @@ class AccessMyVNA():
         ret, ndResult = self.GetDoubleArray(nWhat=0, nIndex=0, nArraySize=9)
         return ret, ndResult[0:1]
 
+    def get_speed_delays(self):
+        ''' get adc_speed and delays'''
+        ret, delays = accvna.GetIntegerArray(nWhat=5, nIndex=0, nArraySize=4)
+        ADC_speed, ADC_step_delay, sweep_start_delay, phase_change_delay = delays
 
+        return ret, ADC_speed, ADC_step_delay, sweep_start_delay, phase_change_delay
 
+    def _get_wait_time(self):
+        
+        '''
+        delta t = npt * phase delay 
+        delta t = npt * step delay 
+        '''
+        nsteps= self._nsteps
+        averages = self._naverage
+        step_delay = self._step_delay
+        start_delay = self._start_delay
+        phase_delay = self._phase_delay
+        mbuffer=70
+        delay=4000
+        dds_load = 90 # microseconds
+        num_phase = 4 #[0, 90, 180, 270] # CDS phase points, size of list is what is important
 
+        # start_delay has a fixed number 960 + extended time
+        start_delay += 960 # plus system start delay
+        # ADC conversion timing
+        conversion_delay = 320  # updates DDS at the end of an ADC conversion
+        fqud_pulse = 0 # 100 # microseconds
+        clock_delay = 0 # 20 # microseconds
+        
+        usb_frame_time = 125 # USB version 0.22
+        
+        # align ADC conversions with USB frames grid
+        # minimum_conversion_time = 500 # microseconds
+        conversion_time = conversion_delay + fqud_pulse + clock_delay + step_delay + mbuffer + 110 + num_phase * phase_delay # microseconds 110 a fied# microseconds
+
+        print(conversion_time)
+        print(1/conversion_time * 1e6)
+
+        if conversion_time % usb_frame_time != 0:
+            conversion_time = (conversion_time // usb_frame_time)*usb_frame_time + usb_frame_time + 320 # microseconds
+        
+        print(conversion_time)
+        print(1/conversion_time * 1e6)
+
+        conversion_rate = 1/(conversion_time*1e-6) # get the data rate in ADC conversions/sec
+        num_conversions = nsteps * num_phase/4 # get the number of conversions
+        print(num_conversions)
+        print(num_conversions / conversion_rate)
+        total_time = dds_load * 1e-6 + start_delay * 1e-6 + num_conversions / conversion_rate + delay * 1e-6 # get total time in seconds
+        print(total_time)
+
+        return total_time
+        
             
             
 
@@ -1264,6 +1323,18 @@ if __name__ == '__main__':
     # accvna = AccessMyVNA()
     # ret = accvna.GetDoubleArray()
     # ret, f, G, B = accvna.single_scan()
+
+    with AccessMyVNA() as accvna:
+        ret = accvna.ShowWindow(1)
+        ret, delays = accvna.GetIntegerArray(nWhat=5, nIndex=0, nArraySize=4)
+
+        ADC_speed, ADC_step_delay, sweep_start_delay, phase_change_delay = delays
+
+    _get_wait_time(nPoints=400, averages=1, step_delay=ADC_step_delay, start_delay=sweep_start_delay, phase_delay=phase_change_delay)
+    _get_wait_time(nPoints=400, averages=1, step_delay=0, start_delay=0, phase_delay=0)
+    
+    accvna.GetIntegerArray(nWhat=6, nIndex=0, nArraySize=4)
+    exit(0)
     import inspect
     import AccessMyVNA
 

@@ -1,10 +1,11 @@
 from modules.DataSaver import DataSaver
-from UISettings import settings_init, settings_default
+# from UISettings import settings_init, settings_default
 
 data_saver = DataSaver()
 
 data_saver.load_file(path=r'.\data\test.h5')
-
+print(data_saver.settings)
+exit(0)
 # print(data_saver.get_t_s('samp'))
 # print(data_saver.get_t_s_marked_rows('samp', dropnanrows=True))
 print(data_saver.get_t_ref())

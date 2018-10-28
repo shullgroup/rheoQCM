@@ -4,7 +4,7 @@ This is the main code of the QCM acquization program
 
 import os
 # import csv
-import importlib
+# import importlib
 import math
 import json
 import datetime, time
@@ -1202,6 +1202,7 @@ class QCMApp(QMainWindow):
         fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
         if fileName:
             # load UI settings
+            self.data_saver.load_file(fileName) # load factors from file to data_saver
             self.on_triggered_actionReset(settings=self.data_saver.settings)
             
             self.disable_widgets(
@@ -1335,11 +1336,17 @@ class QCMApp(QMainWindow):
         '''
         set status bar label_status_pts
         '''
-        self.ui.label_status_pts.setText(str(self.data_saver.get_npts()))
+        # self.ui.label_status_pts.setText(str(self.data_saver.get_npts()))
+        print(str(self.data_saver.get_npts()))
         try:
+            # print(10)
             self.ui.label_status_pts.setText(str(self.data_saver.get_npts()))
+            # print(11)
         except:
+            # print(21)
             self.ui.label_status_pts.setText('pts')
+            # print(22)
+
 
     def enable_widgets(self, *args):
         '''
@@ -2518,8 +2525,14 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(self.settings['checkBox_harm' + str(i)])
 
         # load reference time
-        if 'dateTimeEdit_reftime' in self.settings: # reference time has been defined
+        print(self.settings.keys())
+        if 'dateTimeEdit_reftime' in self.settings.keys(): # reference time has been defined
+            print(self.settings['dateTimeEdit_reftime'])
+            print(type(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], settings_init['time_str_format'])))
+            print(type(datetime.datetime.now()))
+            # exit(0)
             self.ui.dateTimeEdit_reftime.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], settings_init['time_str_format']))
+
         else: # reference time is not defined
             # use current time
             self.reset_reftime()

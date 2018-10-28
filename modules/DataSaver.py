@@ -26,7 +26,6 @@ don't want to extract the data with code
              --...
 '''
 
-# import h5py
 import os
 import datetime
 import time # for test
@@ -333,20 +332,20 @@ class DataSaver:
                     df_ref_ref.to_excel(writer, sheet_name='ref_reference')
                 t_ref = {key: self.exp_ref[key] for key in self.exp_ref.keys() if 't0' in key}
 
-                pd.DataFrame.from_dict(t_ref, orient='index').to_excel(writer, sheet_name='time_reference')
+                pd.DataFrame.from_dict(t_ref, orient='index').to_excel(writer, sheet_name='time_reference', header=False)
 
 
         elif ext.lower() == '.csv':
             # add chn_name to samp and ref df
             # and append ref to samp
-            # with open(fileName, 'w') as f:
-            #     csvwriter = csv.writer(f)
-            #     csvwriter.writerow(['Version'] + [self.ver])
+            with open(fileName, 'w') as f:
+                csvwriter = csv.writer(f)
+                csvwriter.writerow(['Version'] + [self.ver] + [''] + ['t0'] + [self.exp_ref['t0']]+ [''] + ['shifted t0'] + [self.exp_ref['t0_shifted']])
             
             if self.ref.shape[0] > 0:
-                df_samp.assign(chn='samp').append(df_ref.assign(chn='ref')).append(df_samp_ref.assign(chn='samp_ref')).append(df_ref_ref.assign(chn='ref_ref')).to_csv(fileName, mode='w')
+                df_samp.assign(chn='samp').append(df_ref.assign(chn='ref')).append(df_samp_ref.assign(chn='samp_ref')).append(df_ref_ref.assign(chn='ref_ref')).to_csv(fileName, mode='a')
             else:
-                df_samp.assign(chn='samp').append(df_samp_ref.assign(chn='samp_ref')).to_csv(fileName, mode='w')
+                df_samp.assign(chn='samp').append(df_samp_ref.assign(chn='samp_ref')).to_csv(fileName, mode='a')
 
         elif ext.lower() == '.json':
             with open(fileName, 'w') as f:
@@ -446,6 +445,22 @@ class DataSaver:
             t = t -  self.get_t_ref() # delta t to reference (t0)
             t = t.dt.total_seconds() # convert to second
             return t
+
+    def get_temp_c_marked_rows(self, chn_name, dropnanrows=False):
+        '''
+        return rows with marks of df from self.get_temp_c
+        '''
+        if dropnanrows == True:
+            return self.get_temp_c(chn_name)[self.rows_with_marks(chn_name)]
+        else:
+            return self.get_temp_c(chn_name)
+
+    def get_temp_c(self, chn_name):
+        '''
+        get temperature (temp) in sec as pd.series
+        t: pd.series of str
+        '''
+        return getattr(self, chn_name)['temp'].copy()
 
     def get_t_ref(self):
         '''
