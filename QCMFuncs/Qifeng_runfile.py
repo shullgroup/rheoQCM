@@ -31,6 +31,24 @@ parms['imagetype'] = 'png'  # default is 'svg'
 
 ######### run samples below ##########
 
+#%% 2:1 20181029 
+# qcm.analyze(sample['DGEBA-PACM_RT_2_cured'], parms)
+
+#%% 2:1 20181029 
+# qcm.analyze(sample['DGEBA-PACM_RT_cured'], parms)
+
+#%% 2:1 20181029 
+# qcm.analyze(sample['DGEBA-Jeffamine400_RT_3_cured'], parms)
+
+#%% 2:1 20181029 
+# qcm.analyze(sample['DGEBA-Jeffamine400_RT_2_cured'], parms)
+
+#%% 2:1 20181029 
+# qcm.analyze(sample['DGEBA-Jeffamine230_RT_5_cured'], parms)
+
+#%% 2:1 20181029 
+# qcm.analyze(sample['DGEBA-Jeffamine230_RT_3_cured'], parms)
+
 #%% 2:1 20180917 
 qcm.analyze(sample['DGEBA-Jeffamine2000_RT_7'], parms)
 
@@ -38,7 +56,7 @@ qcm.analyze(sample['DGEBA-Jeffamine2000_RT_7'], parms)
 # qcm.analyze(sample['DGEBA-Jeffamine2000_RT_6'], parms)
 
 #%% 2:1 20180828 (film dewetted)
-# qcm.analyze(sample['DGEBA-Jeffamine2000_RT_5'], parms)
+# qcm.analyze(sample['DGEBA-Jeffamine2000_RT_5'], parms) 
 
 #%% 2:1 20180824 good but low G
 # qcm.analyze(sample['DGEBA-PACM_RT_2'], parms) 
