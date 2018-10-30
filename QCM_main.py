@@ -38,7 +38,10 @@ if UIModules.system_check() == 'win32': # windows
             # test if MyVNA program is available
             with AccessMyVNA() as vna:
                 if vna.Init() == 0: # connection with myVNA is available
-                    from modules import TempDevices,TempModules
+                    try:
+                        from modules import TempDevices,TempModules
+                    except Exception as e:
+                        print('Failed to import TempDevices and/or TempModules.\nTemperature functions of the UI will not avaiable!')
 
         except Exception as e: # no myVNA connected. Analysis only
             print('Failed to import AccessMyVNA module!')
@@ -119,7 +122,8 @@ class QCMApp(QMainWindow):
         self.settings_chn = {'name': 'samp', 'chn': '1'} # active channel 'samp' or 'ref' in Settings Tab
         self.active_harm = '1' # active harmonic in Data Tab
         self.active_chn = {'name': 'samp', 'chn': '1'} # active channel 'samp' or 'ref'
-        
+
+
         # check system
         self.system = UIModules.system_check()
         # initialize AccessMyVNA
@@ -132,6 +136,7 @@ class QCMApp(QMainWindow):
                         self.vna = AccessMyVNA() # save class AccessMyVNA to vna
                     else: # not available
                         pass
+                print(vna)
             except:
                 print('Initiating MyVNA failed!\nMake sure analyser is connected and MyVNA is correctly installed!')
 
@@ -447,10 +452,14 @@ class QCMApp(QMainWindow):
         )
 
         # add comBox_tempmodule to treeWidget_settings_settings_hardware
+        try: 
+            temp_class_list = TempModules.class_list # when TempModules is loaded
+        except:
+            temp_class_list = None # no temp module is loaded
         self.create_combobox(
             'comboBox_tempmodule',
             # UIModules.list_modules(TempModules),  
-            TempModules.class_list,  
+            temp_class_list,  
             100,
             'Module',
             self.ui.treeWidget_settings_settings_hardware, 
@@ -1498,22 +1507,13 @@ class QCMApp(QMainWindow):
         if self.get_spectraTab_mode() == 'center': # for peak centering
             # get harmonic from self.settings_harm
             harm = self.settings_harm
-            # get f1, f2
-            freq_span = self.get_freq_span()
-            steps = int(self.get_harmdata('lineEdit_scan_harmsteps', harm=harm))
             chn = self.settings_chn['chn']
+            print(type(chn))
+            chn_name = self.settings_chn['name']
 
-            # get the vna reset flag
-            setflg = self.vna_tracker.set_check(f=freq_span, steps=steps, chn=chn)
-            print(setflg)
+            with self.vna: # use get_vna_data_no_with which doesn't have with statement and could keep the vna attributes
+                f, G, B = self.get_vna_data_no_with(harm=harm, chn_name=chn_name)
 
-            with self.vna as vna:
-                ret = vna.set_vna(setflg)
-                if ret == 0:
-                    ret, f, G, B = vna.single_scan()
-                    return f, G, B
-                else:
-                    print('There is an error while setting VNA!')
         elif self.get_spectraTab_mode() == 'refit': # for refitting
             #TODO getting data from selected index
             pass
@@ -1541,10 +1541,14 @@ class QCMApp(QMainWindow):
         steps = int(self.get_harmdata('lineEdit_scan_harmsteps', harm=harm, chn_name=chn_name))
         setflg = self.vna_tracker.set_check(f=freq_span, steps=steps, chn=self.get_chn_by_name(chn_name))
         print(setflg)
-        with self.vna as vna:
-            ret = vna.set_vna(setflg)
+
+        print(vna)
+        with self.vna:
+            print(vna)
+            print('vna._naverage', self.vna._naverage)
+            ret = self.vna.set_vna(setflg)
             if ret == 0:
-                ret, f, G, B = vna.single_scan()
+                ret, f, G, B = self.vna.single_scan()
                 return f, G, B
             else:
                 print('There is an error while setting VNA!')
