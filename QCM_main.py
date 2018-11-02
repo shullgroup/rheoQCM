@@ -1267,7 +1267,7 @@ class QCMApp(QMainWindow):
 
         if fileName: 
             # load settings from file
-            self.data_saver.load_settings(path=fileName)
+            settings = self.data_saver.load_settings(path=fileName)
 
             # reset default settings
             # replase keys in self.settings with those in settings_default
