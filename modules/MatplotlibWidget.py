@@ -28,12 +28,14 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.backend_tools import ToolBase, ToolToggleBase
 from matplotlib.projections import register_projection
+from matplotlib.widgets import RectangleSelector, SpanSelector
 import matplotlib.ticker as ticker
 
 import types
 
 import numpy as np
 from UISettings import settings_init
+from modules import MathModules
 
 # color map for plot
 color = ['tab:blue', 'tab:red', 'tab:orange', 'tab:gray']
@@ -57,6 +59,24 @@ class AxesLockY(Axes):
 
 register_projection(AxesLockY)
 
+
+class span_button(ToolToggleBase):
+    '''turn on and of '''
+    # In case we want to add a toggle button to the toolbar for active/deactive change span
+    default_keymap = 'G'
+    description = 'Hide by gid'
+
+    def __init__(self, *args, **kwargs):
+        self.span_selector = kwargs.pop('obj')
+        ToolToggleBase.__init__(self, *args, **kwargs)
+
+    def enable(self, *args):
+        self.span_selector.set_active(True)
+
+    def disable(self, *args):
+        self.span_selector.set_active(False)
+
+
 class MatplotlibWidget(QWidget):
 
     def __init__(self, parent=None, axtype='', title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', showtoolbar=True, dpi=100, *args, **kwargs):
@@ -71,7 +91,7 @@ class MatplotlibWidget(QWidget):
 
         # set padding size
         if axtype == 'sp': 
-            self.fig = Figure(tight_layout={'pad': 0.}, dpi=dpi, facecolor='none')
+            self.fig = Figure(tight_layout={'pad': 0.05}, dpi=dpi, facecolor='none')
         else:
             self.fig = Figure(tight_layout={'pad': 0.2}, dpi=dpi, facecolor='none')
         ### set figure background transparsent
@@ -388,6 +408,60 @@ class MatplotlibWidget(QWidget):
         # self.ax[0].autoscale()
         # self.ax[1].autoscale()
 
+        # add span selector
+        self.span_selector_zoomin = SpanSelector(
+            self.ax[0], 
+            self.sp_spanselect_zoomin_callback,
+            direction='horizontal', 
+            useblit=True,
+            button=[1],  # left click
+            minspan=5,
+            span_stays=False,
+            rectprops=dict(facecolor='red', alpha=0.2)
+        )        
+
+        self.span_selector_zoomout = SpanSelector(
+            self.ax[0], 
+            self.sp_spanselect_zoomout_callback,
+            direction='horizontal', 
+            useblit=True,
+            button=[3],  # right
+            minspan=5,
+            span_stays=False,
+            rectprops=dict(facecolor='blue', alpha=0.2)
+        )        
+
+    def sp_spanselect_zoomin_callback(self, xclick, xrelease): 
+        '''
+        callback of span_selector
+        '''
+
+        self.ax[0].set_xlim(xclick, xrelease)
+
+
+    def sp_spanselect_zoomout_callback(self, xclick, xrelease): 
+        '''
+        callback of span_selector
+        '''
+        curr_f1, curr_f2 = self.ax[0].get_xlim()
+        curr_fc, curr_fs = MathModules.converter_startstop_to_centerspan(curr_f1, curr_f2)
+        # selected range
+        sel_fc, sel_fs = MathModules.converter_startstop_to_centerspan(xclick, xrelease)
+        # calculate the new span
+        ratio = curr_fs / sel_fs
+        new_fs = curr_fs * ratio
+        new_fc = curr_fc * (1 + ratio) - sel_fc * ratio
+        # center/span to f1/f2
+        new_f1, new_f2 = MathModules.converter_centerspan_to_startstop(new_fc, new_fs)
+        # print('curr_fs', curr_fs)
+        # print('sel_fs', sel_fs)
+        # print('new_fs', new_fs)
+        # print('curr', curr_f1, curr_f2)
+        # print('new', new_f1, new_f2)
+        # set new xlim
+        self.ax[0].set_xlim(new_f1, new_f2)
+
+        
 
     def init_sp_polar(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
@@ -437,14 +511,53 @@ class MatplotlibWidget(QWidget):
             ) # l
             self.l['lm' + str(i)] = self.ax[0].plot(
                     [], [], 
-                    marker='x', 
-                    color=self.l['l' + str(i)][0].get_color() # set the same color as .l
-                ) # lm
+                    marker='o', 
+                    color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
+                    # linestyle='none',
+                ) # maked points of line
+            self.l['mk' + str(i)] = self.ax[0].plot(
+                    [], [], 
+                    marker='o', 
+                    markeredgecolor=color[0], 
+                    markerfacecolor=color[0],
+                    alpha= 0.5,
+                    linestyle='none',
+                ) # points in rectangle_selector
 
         # set label of ax[1]
         self.set_ax(self.ax[0], xlabel='Time (s)',ylabel=ylabel)
 
         # self.ax[0].autoscale()
+
+        # add rectangle_selector
+        self.rect_selector = RectangleSelector(
+            self.ax[0], 
+            self.data_rectselector_callback,
+            drawtype='box',
+            button=[1], # left
+            useblit=True,
+            minspanx=5,
+            minspany=5,
+            # lineprops=None,
+            rectprops=dict(edgecolor = 'black', facecolor='none', alpha=0.2, fill=False),
+            spancoords='pixels', # default 'data'
+            maxdist=10,
+            marker_props=None,
+            interactive=False, # change rect after drawn
+            state_modifier_keys=None,
+        )  
+
+    def data_rectselector_callback(self, eclick, erelease):
+        '''
+        '''
+        # MouseEvent: xy=(x,y) xydata=(xd, yd) button=1 dblclick=False inaxes=AxesSubplot(0.109741,0.143551;0.879397x0.834499) 
+        print(eclick)
+        print(erelease)
+
+        # find the points in rect
+
+        # mark with self.l['mk<n>']
+
 
 
     def init_contour(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):

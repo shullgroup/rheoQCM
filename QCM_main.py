@@ -858,6 +858,7 @@ class QCMApp(QMainWindow):
         self.ui.actionSave_As.triggered.connect(self.on_triggered_actionSave_As)
         self.ui.actionExport.triggered.connect(self.on_triggered_actionExport)
         self.ui.actionReset.triggered.connect(self.on_triggered_actionReset)
+        self.ui.actionClear_All.triggered.connect(self.on_triggered_actionClear_All)
 
         #endregion
 
@@ -917,7 +918,7 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit, 
             axtype='sp_fit',
-            showtoolbar=('Back', 'Forward', 'Pan', 'Zoom')
+            showtoolbar=False
             ) 
         self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
         # connect signal
@@ -925,9 +926,9 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.ax[0].cidy = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('ylim_changed', self.on_fit_lims_change)
         
         # disconnect signal while dragging
-        self.ui.mpl_spectra_fit.canvas.mpl_connect('button_press_event', self.spectra_fit_axesevent_disconnect)
-        # reconnect signal after dragging (mouse release)
-        self.ui.mpl_spectra_fit.canvas.mpl_connect('button_release_event', self.spectra_fit_axesevent_connect)
+        # self.ui.mpl_spectra_fit.canvas.mpl_connect('button_press_event', self.spectra_fit_axesevent_disconnect)
+        # # reconnect signal after dragging (mouse release)
+        # self.ui.mpl_spectra_fit.canvas.mpl_connect('button_release_event', self.spectra_fit_axesevent_connect)
             
         # add figure mpl_countour1 into frame_spectra_mechanics_contour1
         self.ui.mpl_countour1 = MatplotlibWidget(
@@ -1235,7 +1236,7 @@ class QCMApp(QMainWindow):
             )
             self.fileName = fileName
             t0 = time.time()
-            self.data_saver.init_file(path=self.fileName, settings_init=settings_init, t0=self.settings['dateTimeEdit_reftime']) # for test
+            self.data_saver.init_file(path=self.fileName, settings_init=settings_init, t0=self.settings['dateTimeEdit_reftime']) 
             t1 = time.time()
             print(t1 -t0)
 
@@ -1262,20 +1263,23 @@ class QCMApp(QMainWindow):
 
     # 
     def on_triggered_load_settings(self):
-        self.fileName = self.openFileNameDialog('Choose a file to use its setting') # TODO add path of last opened folder
-        try:
-            # load json file containing formerly saved settings
-            with open(self.fileName, 'r') as f:
-                self.settings = json.load(f)
-            # load settings from file into gui
+        fileName = self.openFileNameDialog('Choose a file to load its settings', path=self.fileName, filetype=settings_init['default_datafiletype']) # TODO add path of last opened folder
+
+        if fileName: 
+            # load settings from file
+            self.data_saver.load_settings(path=fileName)
+
+            # reset default settings
+            # replase keys in self.settings with those in settings_default
+            if not settings:
+                print('File with wrong fromat!')
+                return
+            else:
+                for key, val in settings.items():
+                    self.settings[key] = val
+
+            # reload widgets' setup 
             self.load_settings()
-            # change the displayed file directory in lineEdit_datafilestr
-            self.ui.lineEdit_datafilestr.setText(self.fileName)
-            # indicate that a file has been loadded
-            self.fileFlag = True
-        # pass if action cancelled
-        except:
-            pass
 
     def on_triggered_actionSave(self):
         # save current data to file if file has been opened
@@ -1372,6 +1376,19 @@ class QCMApp(QMainWindow):
 
         # reset  status pts
         self.set_status_pts()
+
+    def on_triggered_actionClear_All(self):
+        '''
+        clear all data
+        '''
+        # re-initiate file
+        self.data_saver.init_file(path=self.fileName, settings_init=settings_init, t0=self.settings['dateTimeEdit_reftime']) 
+        # enable widgets
+        self.enable_widgets(
+            'pushButton_runstop_disable_list',
+            'pushButton_appendfile_disable_list',
+        )        
+
 
     def set_status_pts(self):
         '''
@@ -1717,19 +1734,19 @@ class QCMApp(QMainWindow):
         # update 
         self.ui.lineEdit_spectra_fit_span.setText(MathModules.num2str((span / 1000), precision=5)) # in kHz
 
-    def spectra_fit_axesevent_disconnect(self, event):
-        print('disconnect')
-        self.mpl_disconnect_cid(self.ui.mpl_spectra_fit)
+    # def spectra_fit_axesevent_disconnect(self, event):
+    #     print('disconnect')
+    #     self.mpl_disconnect_cid(self.ui.mpl_spectra_fit)
 
-    def spectra_fit_axesevent_connect(self, event):
-        print('connect')
-        self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
-        # since pan changes xlim before button up, change ylim a little to trigger ylim_changed
-        ax = self.ui.mpl_spectra_fit.ax[0]
-        print('cn', ax.get_navigate_mode())
-        if ax.get_navigate_mode() == 'PAN':
-            ylim = ax.get_ylim()
-            ax.set_ylim(ylim[0], ylim[1] * 1.01)
+    # def spectra_fit_axesevent_connect(self, event):
+    #     print('connect')
+    #     self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
+    #     # since pan changes xlim before button up, change ylim a little to trigger ylim_changed
+    #     ax = self.ui.mpl_spectra_fit.ax[0]
+    #     print('cn', ax.get_navigate_mode())
+    #     if ax.get_navigate_mode() == 'PAN':
+    #         ylim = ax.get_ylim()
+    #         ax.set_ylim(ylim[0], ylim[1] * 1.01)
 
     def mpl_disconnect_cid(self, mpl, axis='xy'):
 

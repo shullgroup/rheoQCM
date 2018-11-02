@@ -163,6 +163,27 @@ class DataSaver:
 
             self.raw  = {} # raw data from last queue
 
+    def load_settings(self, path):
+        '''
+        load settings from h5 file
+        '''
+        try: # try to load settings from file
+            with h5py.File(self.path, 'r') as fh:
+                key_list = list(fh.keys())
+                print(key_list)
+                
+                # check if the file is data file with right format
+                # if all groups/attrs in files
+
+                # get data save to attributes
+                
+                settings = json.loads(fh['settings'][()])
+                ver = fh.attrs['ver']
+            return settings
+        except: # failed to load settings
+            return None
+
+
     def dynamic_save(self, chn_names, harm_list, t=np.nan, temp=np.nan, f=None, G=None, B=None, fs=[np.nan], gs=[np.nan], marks=[0]):
         '''
         save raw data of ONE QUEUE to self.raw and save to h5 file

@@ -162,7 +162,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -551,7 +551,7 @@ background-color: red;
                    <item>
                     <widget class="QLabel" name="label_settings_control_samp">
                      <property name="text">
-                      <string>Samp.</string>
+                      <string>Samp. Scan</string>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>
@@ -561,7 +561,7 @@ background-color: red;
                    <item>
                     <widget class="QLabel" name="label_settings_control_ref">
                      <property name="text">
-                      <string>Ref.</string>
+                      <string>Ref. Scan</string>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>
@@ -1252,7 +1252,7 @@ background-color: red;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <property name="documentMode">
                     <bool>false</bool>

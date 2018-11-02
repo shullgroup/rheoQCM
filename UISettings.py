@@ -51,7 +51,10 @@ settings_init = {
         'comboBox_thrmcpltype',
     ],
 
+    # list for disabled widges for current version
+    'version_disable_list':[
 
+    ],
 
         
     # default open/save data file type
