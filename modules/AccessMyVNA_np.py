@@ -1241,11 +1241,12 @@ class AccessMyVNA():
                         print('SettScanSteps')
                         exit(0)
                 elif flg == 'chn': # set scan channel
-                    ret, self._chn = self.setADCChannel(reflectchn=val)
-                    if ret != 0:
-                        print(ret)
-                        print('SetADCChannel')
-                        exit(0)
+                    if val != 'none':
+                        ret, self._chn = self.setADCChannel(reflectchn=int(val))
+                        if ret != 0:
+                            print(ret)
+                            print('SetADCChannel')
+                            exit(0)
                 elif flg == 'avg': # set scan average
                     ret, self._naverage = self.SetScanAverage(nAverage=val)
                     if ret != 0:

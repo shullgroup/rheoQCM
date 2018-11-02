@@ -1807,7 +1807,7 @@ background-color: red;
                     </item>
                     <item>
                      <property name="text">
-                      <string>Time Scale</string>
+                      <string>X Scale</string>
                      </property>
                     </item>
                     <item>
@@ -2012,7 +2012,7 @@ background-color: red;
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_linktime">
+               <widget class="QCheckBox" name="checkBox_linkx">
                 <property name="text">
                  <string/>
                 </property>

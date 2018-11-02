@@ -2061,7 +2061,7 @@ background-color: red;
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_linktime">
+               <widget class="QCheckBox" name="checkBox_linkx">
                 <property name="text">
                  <string/>
                 </property>

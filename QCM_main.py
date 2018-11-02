@@ -206,8 +206,9 @@ class QCMApp(QMainWindow):
 
             getattr(self.ui, 'checkBox_harm' + str(i)).toggled['bool'].connect(self.update_widget)
 
-        # hid reference related widgets 
-        self.setvisible_refwidgets(False)
+        # show samp & ref related widgets 
+        self.setvisible_samprefwidgets(samp_value=True, ref_value=False)
+
         # set comboBox_plt1_opts, comboBox_plt2_opts
         # dict for the comboboxes
         for key, val in settings_init['data_plt_opts'].items():
@@ -311,10 +312,9 @@ class QCMApp(QMainWindow):
 
         #region settings_settings
 
-        # hide raido buttons tabWidget_settings_settings_samprefchn
-        self.ui.tabWidget_settings_settings_samprefchn.setVisible(False)
 
         # set signal
+        self.ui.tabWidget_settings_settings_samprefchn.currentChanged.connect(self.update_widget)
         self.ui.tabWidget_settings_settings_samprefchn.currentChanged.connect(self.update_settings_chn)
 
         ### add combobox into treewidget
@@ -413,10 +413,10 @@ class QCMApp(QMainWindow):
         )
 
 
-        # insert sample_channel
+        # insert samp_channel
         self.create_combobox(
-            'comboBox_sample_channel', 
-            settings_init['sample_channel_opts'], 
+            'comboBox_samp_channel', 
+            settings_init['vna_channel_opts'], 
             100, 
             'Sample Channel', 
             self.ui.treeWidget_settings_settings_hardware
@@ -425,7 +425,7 @@ class QCMApp(QMainWindow):
         # inser ref_channel
         self.create_combobox(
             'comboBox_ref_channel', 
-            settings_init['ref_channel_opts'], 
+            settings_init['vna_channel_opts'], 
             100, 
             'Ref. Channel', 
             self.ui.treeWidget_settings_settings_hardware
@@ -525,12 +525,12 @@ class QCMApp(QMainWindow):
             self.ui.treeWidget_settings_settings_plots
         )
 
-        # insert time scale
+        # insert X Scale
         self.create_combobox(
-            'comboBox_timescale', 
+            'comboBox_xscale', 
             settings_init['scale_opts'], 
             100, 
-            'Time Scale', 
+            'X Scale', 
             self.ui.treeWidget_settings_settings_plots
         )
 
@@ -543,9 +543,9 @@ class QCMApp(QMainWindow):
             self.ui.treeWidget_settings_settings_plots
         )
 
-        # move checkBox_linktime to treeWidget_settings_settings_plots
+        # move checkBox_linkx to treeWidget_settings_settings_plots
         self.move_to_col2(
-            self.ui.checkBox_linktime, 
+            self.ui.checkBox_linkx, 
             self.ui.treeWidget_settings_settings_plots, 
             'Link Time'
         )
@@ -639,24 +639,38 @@ class QCMApp(QMainWindow):
         self.ui.radioButton_peaks_policy_maxamp.toggled['bool'].connect(self.update_harmwidget)
     
         # set signals to update hardware settings_settings
-        self.ui.comboBox_sample_channel.activated.connect(self.update_widget)
-        self.ui.comboBox_sample_channel.activated.connect(self.update_vnachannel)
-        self.ui.comboBox_sample_channel.activated.connect(self.update_settings_chn)
-        self.ui.comboBox_ref_channel.activated.connect(self.update_widget)
-        self.ui.comboBox_ref_channel.activated.connect(self.update_vnachannel)
-        self.ui.comboBox_ref_channel.activated.connect(self.update_settings_chn)
+        self.ui.comboBox_samp_channel.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_samp_channel.currentIndexChanged.connect(self.update_vnachannel)
+        self.ui.comboBox_samp_channel.currentIndexChanged.connect(self.update_settings_chn)
+        self.ui.comboBox_ref_channel.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_ref_channel.currentIndexChanged.connect(self.update_vnachannel)
+        self.ui.comboBox_ref_channel.currentIndexChanged.connect(self.update_settings_chn)
 
         # self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
-        self.ui.checkBox_settings_temp_sensor.clicked['bool'].connect(self.on_clicked_set_temp_sensor)
-        self.ui.comboBox_thrmcpltype.activated.connect(self.update_tempdevice)
-        self.ui.comboBox_thrmcpltype.activated.connect(self.update_thrmcpltype)
+        self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.on_clicked_set_temp_sensor)
+        self.ui.comboBox_thrmcpltype.currentIndexChanged.connect(self.update_tempdevice)
+        self.ui.comboBox_thrmcpltype.currentIndexChanged.connect(self.update_thrmcpltype)
 
         # set signals to update plots settings_settings
-        self.ui.comboBox_timeunit.activated.connect(self.update_timeunit)
-        self.ui.comboBox_tempunit.activated.connect(self.update_tempunit)
-        self.ui.comboBox_timescale.activated.connect(self.update_timescale)
-        self.ui.comboBox_yscale.activated.connect(self.update_yscale)
-        self.ui.checkBox_linktime.stateChanged.connect(self.update_linktime)
+        self.ui.comboBox_timeunit.currentIndexChanged.connect(self.update_timeunit)
+        self.ui.comboBox_timeunit.currentIndexChanged.connect(self.update_data_axis)
+        self.ui.comboBox_timeunit.currentIndexChanged.connect(self.update_mpl_dataplt)
+
+        self.ui.comboBox_tempunit.currentIndexChanged.connect(self.update_tempunit)
+        self.ui.comboBox_tempunit.currentIndexChanged.connect(self.update_data_axis)
+        self.ui.comboBox_tempunit.currentIndexChanged.connect(self.update_mpl_dataplt)
+
+        self.ui.comboBox_xscale.currentIndexChanged.connect(self.update_timescale)
+        self.ui.comboBox_xscale.currentIndexChanged.connect(self.update_data_axis)
+        self.ui.comboBox_xscale.currentIndexChanged.connect(self.update_mpl_dataplt)
+
+        self.ui.comboBox_yscale.currentIndexChanged.connect(self.update_yscale)
+        self.ui.comboBox_yscale.currentIndexChanged.connect(self.update_data_axis)
+        self.ui.comboBox_yscale.currentIndexChanged.connect(self.update_mpl_dataplt)
+
+        self.ui.checkBox_linkx.stateChanged.connect(self.update_linkx)
+        self.ui.checkBox_linkx.stateChanged.connect(self.update_data_axis)
+        self.ui.checkBox_linkx.stateChanged.connect(self.update_mpl_dataplt)
         
         #endregion
 
@@ -667,6 +681,9 @@ class QCMApp(QMainWindow):
         self.ui.treeWidget_settings_data_settings.setStyleSheet(
             "QTreeWidget { background: transparent; }"
         )
+
+        self.ui.radioButton_settings_data_showall.toggled.connect(self.update_widget)
+        self.ui.radioButton_settings_data_showmarked.toggled.connect(self.update_widget)
 
         # insert refernence type
         self.create_combobox(
@@ -724,17 +741,30 @@ class QCMApp(QMainWindow):
         # set signals to update plot 1 & 2 options
         for i in range(1, settings_init['max_harmonic']+2, 2):
             getattr(self.ui, 'checkBox_plt1_h' + str(i)).stateChanged.connect(self.update_widget)
+            getattr(self.ui, 'checkBox_plt1_h' + str(i)).stateChanged.connect(self.update_mpl_plt1)
+
             getattr(self.ui, 'checkBox_plt2_h' + str(i)).stateChanged.connect(self.update_widget)
+            getattr(self.ui, 'checkBox_plt2_h' + str(i)).stateChanged.connect(self.update_mpl_plt2)
 
         # set signals to update plot 1 options
-        self.ui.comboBox_plt1_opts.activated.connect(self.update_widget)
+        self.ui.comboBox_plt1_opts.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_plt1_opts.currentIndexChanged.connect(self.update_data_axis)
+        self.ui.comboBox_plt1_opts.currentIndexChanged.connect(self.update_mpl_plt1)
+
         self.ui.radioButton_plt1_ref.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt1_ref.toggled.connect(self.update_mpl_plt1)
         self.ui.radioButton_plt1_samp.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt1_samp.toggled.connect(self.update_mpl_plt1)
 
         # set signals to update plot 2 options
-        self.ui.comboBox_plt2_opts.activated.connect(self.update_widget)
+        self.ui.comboBox_plt2_opts.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_plt2_opts.currentIndexChanged.connect(self.update_data_axis)
+        self.ui.comboBox_plt2_opts.currentIndexChanged.connect(self.update_mpl_plt2)
+
         self.ui.radioButton_plt2_ref.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt2_ref.toggled.connect(self.update_mpl_plt2)
         self.ui.radioButton_plt2_samp.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt2_samp.toggled.connect(self.update_mpl_plt2)
 
         #endregion
 
@@ -1045,7 +1075,8 @@ class QCMApp(QMainWindow):
             if self.data_saver.path is None: # no filename
                 self.data_saver.init_file(
                     path=os.path.join(settings_init['unsaved_path'], datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.h5'),
-                    settings_init=settings_init
+                    settings_init=settings_init,
+                    t0=self.settings['dateTimeEdit_reftime']
                 ) # save to unsaved folder
             
 
@@ -1127,6 +1158,7 @@ class QCMApp(QMainWindow):
         '''
         self.settings['dateTimeEdit_reftime'] = self.ui.dateTimeEdit_reftime.dateTime().toPyDateTime().strftime(settings_init['time_str_format'])
         print(self.settings['dateTimeEdit_reftime'])
+        self.data_saver.set_t0(t0=self.settings['dateTimeEdit_reftime'])
         
     # @pyqtSlot()
     def set_lineEdit_scaninterval(self):
@@ -1203,7 +1235,7 @@ class QCMApp(QMainWindow):
             )
             self.fileName = fileName
             t0 = time.time()
-            self.data_saver.init_file(path=self.fileName, settings_init=settings_init) # for test
+            self.data_saver.init_file(path=self.fileName, settings_init=settings_init, t0=self.settings['dateTimeEdit_reftime']) # for test
             t1 = time.time()
             print(t1 -t0)
 
@@ -1699,13 +1731,21 @@ class QCMApp(QMainWindow):
             ylim = ax.get_ylim()
             ax.set_ylim(ylim[0], ylim[1] * 1.01)
 
-    def mpl_disconnect_cid(self, mpl):
-        mpl.ax[0].callbacks.disconnect(mpl.ax[0].cidx)
-        mpl.ax[0].callbacks.disconnect(mpl.ax[0].cidy)
+    def mpl_disconnect_cid(self, mpl, axis='xy'):
 
-    def mpl_connect_cid(self, mpl, fun):
-        mpl.ax[0].cidx = mpl.ax[0].callbacks.connect('xlim_changed', fun)
-        mpl.ax[0].cidy = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('ylim_changed', fun)
+        if 'x' in axis:
+            mpl.ax[0].callbacks.disconnect(mpl.ax[0].cidx)
+        if 'y' in axis:
+            mpl.ax[0].callbacks.disconnect(mpl.ax[0].cidy)
+
+    def mpl_connect_cid(self, mpl, fun, axis='xy'):
+        '''
+
+        '''
+        if 'x' in axis:
+            mpl.ax[0].cidx = mpl.ax[0].callbacks.connect('xlim_changed', fun)
+        if 'y' in axis:
+            mpl.ax[0].cidy = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('ylim_changed', fun)
     
     def mpl_set_faxis(self, ax):
         '''
@@ -1812,12 +1852,12 @@ class QCMApp(QMainWindow):
             return self.settings.get('comboBox_timeunit', 'm')
         elif name == 'comboBox_tempunit':
             return self.settings.get('comboBox_tempunit', 'C')
-        elif name == 'comboBox_timescale':
-            return self.settings.get('comboBox_timescale', 'linear')
+        elif name == 'comboBox_xscale':
+            return self.settings.get('comboBox_xscale', 'linear')
         elif name == 'comboBox_yscale':
             return self.settings.get('comboBox_yscale', 'linear')
-        elif name == 'checkBox_linktime':
-            return self.settings.get('checkBox_linktime', True)
+        elif name == 'checkBox_linkx':
+            return self.settings.get('checkBox_linkx', True)
         else:
             return None
 
@@ -1825,9 +1865,9 @@ class QCMApp(QMainWindow):
         '''
         get option for data plotting
         plt_str: 'plt1' or 'plt2'
-        return itemdata
+        return itemdata splited by '_'
         '''
-        return self.settings.get('comboBox_' + plt_str + '_opts', settings_init['data_plt_opts'].keys()[0]) # use the first one if failed
+        return self.settings.get('comboBox_' + plt_str + '_opts', list(settings_init['data_plt_opts'].keys())[0]).split('_') # use the first one if failed
     
     def get_plt_harms(self, plt_str):
         '''
@@ -1835,7 +1875,7 @@ class QCMApp(QMainWindow):
         plt_str: 'plt1' or 'plt2'
         return list of harmonics in strings
         '''
-        return [str(harm) for harm in range(1, settings_init['max_harmonic']+2, 2) if self.settings['checkBox_' + plt_str + '_h1']]
+        return [str(harm) for harm in range(1, settings_init['max_harmonic']+2, 2) if self.settings.get('checkBox_' + plt_str + '_h' + str(harm), False)]
 
     def get_plt_chnname(self, plt_str):
         '''
@@ -1854,10 +1894,265 @@ class QCMApp(QMainWindow):
         '''
         update mpl_plt1 and mpl_plt2
         '''
+        self.update_mpl_dataplt(plt_str='plt1')
+        self.update_mpl_dataplt(plt_str='plt2')
 
+    def update_mpl_plt1(self):
+        '''
+        update mpl_plt1
+        '''
+        self.update_mpl_dataplt(plt_str='plt1')
 
+    def update_mpl_plt2(self):
+        '''
+        update mpl_plt2
+        '''
+        self.update_mpl_dataplt(plt_str='plt2')
+
+    def update_mpl_dataplt(self, plt_str='none'):
+        '''
+        update mpl_<plt_str> by the UI settings
+        plt_str: str of 'plt1' or 'plt2'
+        '''
+
+        if plt_str != 'plt1' and plt_str != 'plt2': # n is not in the UI
+            # do nothing
+            return
         
+        if not self.data_saver.mode: # no data
+            return
 
+        # get plt opts
+        plt_opt = self.get_plt_opt(plt_str) # split str to [y, x]
+        print('opt', plt_opt)
+        if plt_opt[0] == 'none':
+            # no data need to be plotted
+            return
+        # get checked harmonics
+        plt_harms = self.get_plt_harms(plt_str) 
+        print('plt_harms', plt_harms)
+        if not plt_harms: # no harmonic to plot
+            return
+
+        # get plot channel
+        plt_chnname = self.get_plt_chnname(plt_str)
+        
+        # get timeunit
+        timeuint = self.settings['comboBox_timeunit']
+        # get tempunit
+        tempunit = self.settings['comboBox_tempunit']
+        print(timeuint)
+        print(tempunit)
+
+        # axis scale will be auto changed when comboBox_plt<n>_opts changed. We don't need to get it here
+
+        # from tabWidget_settings
+        if self.settings['radioButton_settings_data_showall']: # show all data
+            mark = False
+        elif self.settings['radioButton_settings_data_showmarked']: # show marked data only
+            mark = True
+
+        # get y data
+        ydata = self.get_data_by_typestr(plt_opt[0], plt_chnname, mark=mark, unit_t=timeuint, unit_temp=tempunit)
+
+        # get x data. normally t
+        xdata = self.get_data_by_typestr(plt_opt[1], plt_chnname, mark=mark, unit_t=timeuint, unit_temp=tempunit)
+
+        print('------xdata--------')
+        print(xdata)
+        print('-------------------')
+        print('------ydata--------')
+        print(ydata)
+        print('-------------------')
+
+        # prepare data for plotting
+        data_list = []
+        for harm in plt_harms: # selected
+            harm = str(harm)
+            # set xdata for harm
+            print(xdata.shape)
+            if len(xdata.shape) == 1: # one column e.g.: tuple (1,)
+                harm_xdata = xdata
+            else: # multiple columns
+                harm_xdata = xdata.filter(like=harm, axis=1)
+            # set ydata for harm
+            if len(ydata.shape) == 1: # one column
+                harm_ydata = ydata
+            else: # multiple columns
+                harm_ydata = ydata.filter(like=harm, axis=1)
+            
+            data_list.append(('l'+harm, harm_xdata, harm_ydata))
+        
+        # update mpl_<plt_str>
+        getattr(self.ui, 'mpl_' + plt_str).update_data(*data_list)
+        
+        # get keys of harms don't want to plot
+        clr_list = ['l'+str(harm) for harm in range(1, settings_init['max_harmonic']+2, 2) if not self.settings.get('checkBox_' + plt_str + '_h' + str(harm), False)] 
+        # clear harmonics don't plot
+        getattr(self.ui, 'mpl_' + plt_str).clr_lines(clr_list)
+
+
+
+    def get_data_by_typestr(self, str, chn_name, mark=False, unit_t=None, unit_temp=None):
+        '''
+        get data of all harmonics from data_saver by given type (str)
+        str: 'df', 'dfn', 'mdf', 'mdfn', 'dg', 'dgn', 'f', 'g', 'temp', 't'
+        return: data
+        '''
+
+        print(str)
+        if 'df' in str: # get delf
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=True, deltaval=True, norm=False)
+        elif 'dg' in str: # get delg
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=True, deltaval=True, norm=False)
+        elif 'dfn' in str: # get delfn
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=True, deltaval=True, norm=True)
+        elif 'dgn' in str: # get delgn
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=True, deltaval=True, norm=True)
+        elif 'f' == str: # get f
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=True, deltaval=False, norm=False)
+        elif 'g' == str: # get g
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=True, deltaval=False, norm=False)
+        elif 't' == str: # get temp
+            data = self.data_saver.get_t_s_marked_rows(chn_name, dropnanrows=False, unit=unit_t)
+        elif 'temp' == str:
+            data = self.data_saver.get_temp_C_marked_rows(chn_name, dropnanrows=False, unit=unit_temp)
+        
+        print('data', data)
+        # for df and dg
+        if 'md' in str: # minus delta value
+            data = self.data_saver.minus_columns(data)
+        return data
+                    
+    def update_data_axis(self, signal):
+
+        sender_name = self.sender().objectName()
+        print(sender_name)
+
+        # check which plot to update
+        if sender_name == 'comboBox_plt1_opts' or sender_name == 'comboBox_plt2_opts':# signal sent from one of the plots
+            plt_str = sender_name.split('_')[1] # plt1 or plt2
+
+            # plot option str in list [y, x]
+            plt_opt = self.get_plt_opt(plt_str)
+            print(plt_opt)
+
+            if 't' in plt_opt: # there is time axis in the plot
+                self.update_time_unit(plt_str, plt_opt)
+            
+            if 'temp' in plt_opt: # htere is temp axis in the plot
+                self.update_temp_unit(plt_str, plt_opt)
+            
+            else: # other type w/o changing the unit
+
+                xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
+                ylabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
+
+                # set x/y labels
+                getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
+                getattr(self.ui, 'mpl_' + plt_str).ax[0].set_ylabel(ylabel)
+
+        if sender_name == 'comboBox_timeunit': # update both axises of mpl_plt1 & mpl_plt2
+            for plt_str in ['plt1', 'plt2']: 
+                # plot option str in list [y, x]
+                plt_opt = self.get_plt_opt(plt_str)
+                if 't' in plt_opt: # there is time axis in the plot
+                    self.update_time_unit(plt_str, plt_opt)
+
+        if sender_name == 'comboBox_tempunit': # update both axises of mpl_plt1 & mpl_plt2
+            for plt_str in ['plt1', 'plt2']: 
+                # plot option str in list [y, x]
+                plt_opt = self.get_plt_opt(plt_str)
+                if 'temp' in plt_opt: # there is temp axis in the plot
+                    self.update_temp_unit(plt_str, plt_opt)
+
+        if sender_name == 'comboBox_xscale': # update both axises of mpl_plt1 & mpl_plt2
+            for plt_str in ['plt1', 'plt2']: 
+                # plot option str in list [y, x]
+                getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xscale(self.sender().itemData(signal))
+
+        if sender_name == 'comboBox_yscale': # update both axises of mpl_plt1 & mpl_plt2
+            for plt_str in ['plt1', 'plt2']: 
+                # plot option str in list [y, x]
+                getattr(self.ui, 'mpl_' + plt_str).ax[0].set_yscale(self.sender().itemData(signal))
+
+        if sender_name == 'checkBox_linkx': # link x axis of mpl_plt1 & mpl_plt2
+            if signal:
+                self.ui.mpl_plt1.ax[0].get_shared_x_axes().join(
+                    self.ui.mpl_plt1.ax[0],
+                    self.ui.mpl_plt2.ax[0]
+                )
+            else:
+                self.ui.mpl_plt1.ax[0].get_shared_x_axes().remove(
+                    self.ui.mpl_plt2.ax[0]
+                )
+
+    # def set_plt2_on_plt1_xlim_change(self):
+    #     # get mpl_plt1 xlims
+    #     xlim = self.ui.mpl_plt1.ax[0].get_xlim()
+    #     # set mpl_plt2 xlim
+    #     self.ui.mpl_plt2.ax[0].set_xlim(xlim)
+
+    # def set_plt1_on_plt2_xlim_change(self):
+    #     # get mpl_plt2 xlims
+    #     xlim = self.ui.mpl_plt2.ax[0].get_xlim()
+    #     # set mpl_plt1 xlim
+    #     self.ui.mpl_plt1.ax[0].set_xlim(xlim)
+
+    def update_time_unit(self, plt_str, plt_opt):
+        '''
+        update time unit in mpl_<plt_str> x/y label
+        plt_str: 'plt1' or 'plt2'
+        plt_opt: list of plot type str [y, x]
+        NOTE: check if time axis in plot_opt before sending to this function
+        '''
+        if 't' not in plt_opt:
+            return
+        idx_t, = [i for i in range(len(plt_opt)) if plt_opt[i] == 't']
+        print(idx_t)
+    
+        timeunit = self.ui.comboBox_timeunit.currentText()
+        print(timeunit)
+        if idx_t == 0: # is y axis
+            ylabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
+            ylabel = ylabel.replace('x', timeunit)
+            getattr(self.ui, 'mpl_' + plt_str).ax[0].set_ylabel(ylabel)
+            print(ylabel)
+        elif idx_t == 1: # is x axis
+            xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
+            xlabel = xlabel.replace('x', timeunit)
+            getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
+            print(xlabel)
+
+    def update_temp_unit(self, plt_str, plt_opt):
+        '''
+        update temp unit in mpl_<plt_str> x/y label
+        plt_str: 'plt1' or 'plt2'
+        plt_opt: list of plot type str [y, x]
+        '''
+        if 'temp' not in plt_opt:
+            return
+        idx_temp, = [i for i in range(len(plt_opt)) if plt_opt[i] == 'temp']
+        print(idx_temp)
+
+        tempunit = self.get_axis_settings('comboBox_tempunit')
+        if tempunit == 'C': 
+            tempunit = '$\degree$C'
+        elif tempunit == 'K': 
+            tempunit = 'K'
+        elif tempunit == 'F': 
+            tempunit = '$\degree$F'
+        print(tempunit)
+        if idx_temp == 0: # is y axis
+            ylabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
+            ylabel = ylabel.replace('x', tempunit)
+            getattr(self.ui, 'mpl_' + plt_str).ax[0].set_ylabel(ylabel)
+            print(ylabel)
+        elif idx_temp == 1: # is x axis
+            xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
+            xlabel = xlabel.replace('x', tempunit)
+            getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
+            print(xlabel)
 
 
 
@@ -1951,18 +2246,19 @@ class QCMApp(QMainWindow):
             self.ui.pushButton_status_temp_sensor.setText('')
             self.ui.pushButton_status_temp_sensor.setToolTip('Temp. sensor is off.')
 
-    def temp_by_unit(self, data):
-        '''
-        data: double or ndarray
-        unit: str. C for celsius, K for Kelvin and F for fahrenheit
-        '''
-        unit = self.settings['comboBox_tempunit']
-        if unit == 'C':
-            return data # temp data is saved as C
-        elif unit == 'K': # convert to K
-            return data + 273.15 
-        elif unit == 'F': # convert to F
-            return data * 9 / 5 + 32
+    # def temp_by_unit(self, data):
+    #     '''
+    #     NOTUSING
+    #     data: double or ndarray
+    #     unit: str. C for celsius, K for Kelvin and F for fahrenheit
+    #     '''
+    #     unit = self.settings['comboBox_tempunit']
+    #     if unit == 'C':
+    #         return data # temp data is saved as C
+    #     elif unit == 'K': # convert to K
+    #         return data + 273.15 
+    #     elif unit == 'F': # convert to F
+    #         return data * 9 / 5 + 32
         
     def on_clicked_checkBox_dynamicfitbyharm(self, value):
         self.ui.checkBox_dynamicfit.setEnabled(not value)
@@ -1990,7 +2286,7 @@ class QCMApp(QMainWindow):
     
     def update_widget(self, signal):
         #  of the signal isA QLineEdit object, update QLineEdit vals in dict
-        print('update', signal)
+        print('update', self.sender().objectName(), signal)
         if isinstance(self.sender(), QLineEdit):
                 try:
                     self.settings[self.sender().objectName()] = float(signal)
@@ -2011,9 +2307,13 @@ class QCMApp(QMainWindow):
             except: # if w/o userData, use the text
                 value = self.sender().itemText(signal)
             self.settings[self.sender().objectName()] = value
+            print(self.settings[self.sender().objectName()])
         # if the sender of the signal isA QSpinBox object, udpate QComboBox vals in dict
         elif isinstance(self.sender(), QSpinBox):
             self.settings[self.sender().objectName()] = signal
+        elif isinstance(self.sender(), QTabWidget):
+            self.settings[self.sender().objectName()] = signal # index
+
 
     def update_harmwidget(self, signal):
         '''
@@ -2053,33 +2353,33 @@ class QCMApp(QMainWindow):
             if idx == 0: # swith to samp
                 self.settings_chn = {
                     'name': 'samp', 
-                    'chn': int(self.settings['comboBox_sample_channel'])
+                    'chn': self.settings['comboBox_samp_channel']
                 }
             elif idx == 1: # switched to ref
                 self.settings_chn = {
                     'name': 'ref', 
-                    'chn': int(self.settings['comboBox_ref_channel'])
+                    'chn': self.settings['comboBox_ref_channel']
                 }
-        elif self.sender().objectName() == 'comboBox_ref_channel' or 'comboBox_sample_channel': # define of samp/ref channel(s) changed
+        elif self.sender().objectName() == 'comboBox_ref_channel' or 'comboBox_samp_channel': # define of samp/ref channel(s) changed
             # reset corrresponding ADC
-            print(self.settings['comboBox_sample_channel'])
+            print(self.settings['comboBox_samp_channel'])
             print(self.settings['comboBox_ref_channel'])
             if self.settings_chn['name'] == 'samp':
-                self.settings_chn['chn'] = int(self.settings['comboBox_sample_channel'])
+                self.settings_chn['chn'] = self.settings['comboBox_samp_channel']
             elif self.settings_chn['name'] == 'ref':
-                self.settings_chn['chn'] = int(self.settings['comboBox_ref_channel'])
+                self.settings_chn['chn'] = self.settings['comboBox_ref_channel']
             print(self.settings_chn)
         # update treeWidget_settings_settings_harmtree
         self.update_harmonic_tab()
 
     def get_chn_by_name(self, name):
         '''
-        get chn (int) by given name (str: 'samp' or 'ref')
+        get chn (str) by given name (str: 'samp' or 'ref')
         '''
         if name == 'samp':
-            return  int(self.settings['comboBox_sample_channel'])
+            return  self.settings['comboBox_samp_channel']
         elif name == 'ref':
-            return  int(self.settings['comboBox_ref_channel'])
+            return  self.settings['comboBox_ref_channel']
 
     def update_harmonic_tab(self):
         #print("update_harmonic_tab was called")
@@ -2340,40 +2640,76 @@ class QCMApp(QMainWindow):
         #NOTUSING
         self.set_harmdata('comboBox_harmfitfactor', value, harm=self.settings_harm)
 
+    def setvisible_samprefwidgets(self, samp_value=True, ref_value=False):
+        '''
+        set the visibility of sample and reference related widget
+        '''
+        print(samp_value)
+        print(ref_value)
+        self.setvisible_sampwidgets(value=samp_value)
+        self.setvisible_refwidgets(value=ref_value)
+        # set tabWidget_settings_settings_samprefchn
+        if samp_value and ref_value: # both samp and ref channels are selected
+            self.ui.tabWidget_settings_settings_samprefchn.setVisible(True)
+            self.ui.tabWidget_settings_settings_samprefchn.setEnabled(True)
+        elif not samp_value and not ref_value: # neither of samp or ref channel is selected
+            self.ui.tabWidget_settings_settings_samprefchn.setVisible(False)
+        else: # one of samp and ref channels is selected
+            self.ui.tabWidget_settings_settings_samprefchn.setVisible(True)
+            self.ui.tabWidget_settings_settings_samprefchn.setEnabled(False)
+            if samp_value:
+                self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
+            else:
+                self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(1)
+
+
+
+
+
+
+
+    def setvisible_sampwidgets(self, value=True):
+        '''
+        set the visibility of sample related widget
+        '''
+        self.ui.label_settings_control_samp.setVisible(value)
+        self.ui.label_settings_control_label1.setVisible(value)
+        self.ui.label_settings_control_label2.setVisible(value)
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            getattr(self.ui, 'lineEdit_startf' + str(i)).setVisible(value)
+            getattr(self.ui, 'lineEdit_endf' + str(i)).setVisible(value)
+        
+
     def setvisible_refwidgets(self, value=False):
         '''
         set the visibility of reference related widget
         '''
-        # self.ui.widget_settings_control_sf.setVisible(value)
-        self.ui.label_settings_control_samp.setVisible(value)
         self.ui.label_settings_control_ref.setVisible(value)
         self.ui.label_settings_control_label1_r.setVisible(value)
         self.ui.label_settings_control_label2_r.setVisible(value)
         for i in range(1, settings_init['max_harmonic']+2, 2):
             getattr(self.ui, 'lineEdit_startf' + str(i) + '_r').setVisible(value)
             getattr(self.ui, 'lineEdit_endf' + str(i) + '_r').setVisible(value)
-        self.ui.tabWidget_settings_settings_samprefchn.setVisible(value)
-
 
 
     def update_vnachannel(self, index):
         '''
         update vna channels (sample and reference)
-        if ref == sample: ref = 'none'
+        if ref == sample: sender = 'none'
         '''
-        sample_channel = self.settings['comboBox_sample_channel']
+        sender_name = self.sender().objectName()
+        print(sender_name)
+        samp_channel = self.settings['comboBox_samp_channel']
         ref_channel = self.settings['comboBox_ref_channel']
 
-        if ref_channel == sample_channel:
+        if ref_channel == samp_channel:
             # make sure sample and ref channels are not the same
-            ref_channel = 'none' # set ref_channel to none
+            self.settings[sender_name] = 'none' # set the sender to 'none'
             #TODO update in statusbar
-        # self.settings['comboBox_sample_channel'] = sample_channel
-        self.settings['comboBox_ref_channel'] = ref_channel
         # load_comboBox has to be used after the value saved in self.settings
-        self.load_comboBox(self.ui.comboBox_ref_channel, 'ref_channel_opts')
-        # set visibility of reference related widgets
-        self.setvisible_refwidgets(ref_channel != 'none')
+        self.load_comboBox(getattr(self.ui, sender_name), 'vna_channel_opts')
+        # set visibility of samp & ref related widgets
+        self.setvisible_samprefwidgets(samp_value=self.settings['comboBox_samp_channel'] != 'none', ref_value=self.settings['comboBox_ref_channel'] != 'none')
 
     def update_tempsensor(self, signal):
         # NOTUSING
@@ -2419,8 +2755,8 @@ class QCMApp(QMainWindow):
         #TODO update plt1 and plt2
 
     def update_timescale(self, timescale_index):
-        value = self.ui.comboBox_timescale.itemData(timescale_index)
-        self.settings['comboBox_timescale'] = value
+        value = self.ui.comboBox_xscale.itemData(timescale_index)
+        self.settings['comboBox_xscale'] = value
         #TODO update plt1 and plt2
 
     def update_yscale(self, yscale_index):
@@ -2428,8 +2764,8 @@ class QCMApp(QMainWindow):
         self.settings['comboBox_yscale'] = value
         #TODO update plt1 and plt2
 
-    def update_linktime(self):
-       self.settings['checkBox_linktime'] = not self.settings['checkBox_linktime']
+    def update_linkx(self):
+       self.settings['checkBox_linkx'] = not self.settings['checkBox_linkx']
         # TODO update plt1 and plt2
 
     def load_comboBox(self, comboBox, choose_dict_name, harm=None):
@@ -2572,8 +2908,8 @@ class QCMApp(QMainWindow):
         self.update_frequencies()
 
         # load default VNA settings
-        self.load_comboBox(self.ui.comboBox_sample_channel, 'sample_channel_opts')
-        self.load_comboBox(self.ui.comboBox_ref_channel, 'ref_channel_opts')
+        self.load_comboBox(self.ui.comboBox_samp_channel, 'vna_channel_opts')
+        self.load_comboBox(self.ui.comboBox_ref_channel, 'vna_channel_opts')
         
         # set treeWidget_settings_settings_harmtree display
         self.update_harmonic_tab()
@@ -2594,10 +2930,10 @@ class QCMApp(QMainWindow):
         # load default plots settings
         self.load_comboBox(self.ui.comboBox_timeunit, 'time_unit_opts')
         self.load_comboBox(self.ui.comboBox_tempunit, 'temp_unit_opts')
-        self.load_comboBox(self.ui.comboBox_timescale, 'scale_opts')
+        self.load_comboBox(self.ui.comboBox_xscale, 'scale_opts')
         self.load_comboBox(self.ui.comboBox_yscale, 'scale_opts')
 
-        self.ui.checkBox_linktime.setChecked(self.settings['checkBox_linktime'])
+        self.ui.checkBox_linkx.setChecked(self.settings['checkBox_linkx'])
 
         # set default displaying of spectra show options
         self.ui.radioButton_spectra_showBp.setChecked(self.settings['radioButton_spectra_showBp'])
@@ -2609,6 +2945,12 @@ class QCMApp(QMainWindow):
 
         # set default displaying of plot 2 options
         self.load_comboBox(self.ui.comboBox_plt2_opts, 'data_plt_opts')
+
+        # set checkBox_plt<1 and 2>_h<harm>
+        for harm in range(1, settings_init['max_harmonic']+2, 2):
+            getattr(self.ui, 'checkBox_plt1_h' + str(harm)).setChecked(self.settings['checkBox_plt1_h' + str(harm)])
+            getattr(self.ui, 'checkBox_plt2_h' + str(harm)).setChecked(self.settings['checkBox_plt1_h' + str(harm)])
+
 
 
     def check_freq_range(self, harmonic, min_range, max_range):
@@ -2766,14 +3108,22 @@ class QCMApp(QMainWindow):
         self.bartimer.start()
 
         ## start to read data
-        if self.settings['comboBox_ref_channel'] == 'none': # reference channel is not recorded
-            chn_name_list = ['samp']
-        else: # reference channel is also recorded
-            chn_name_list = ['samp', 'ref']
+        # set channels to collect data
+        chn_name_list = []
+        print(chn_name_list)
+
+        # only one channel can be 'none'
+        if self.settings['comboBox_samp_channel'] != 'none': # sample channel is not selected
+            chn_name_list.append('samp')
+        if self.settings['comboBox_ref_channel'] != 'none': # reference channel is not selected
+            chn_name_list.append('ref')
 
         harm_list = [str(i) for i in range(1, settings_init['max_harmonic']+2, 2) if self.settings['checkBox_harm' + str(i)]] # get all checked harmonic into a list
+
+        print(self.settings['comboBox_samp_channel'])
+        print(self.settings['comboBox_ref_channel'])
+        print(chn_name_list)
         print(harm_list)
-        # return
 
         f, G, B = {}, {}, {}
         fs = {} # peak centers
@@ -2917,6 +3267,9 @@ class QCMApp(QMainWindow):
             self.writing = True
             self.data_saver.dynamic_save(chn_name_list, harm_list, t=curr_time, temp=curr_temp, f=f, G=G, B=B, fs=fs, gs=gs, marks=marks)
         
+            # plot data
+            self.update_mpl_plt12()
+
         # increase counter
         self.counter += 1
 

@@ -130,6 +130,7 @@ class MatplotlibWidget(QWidget):
         #     # self.fig.tight_layout()
         #     # self.fig.tight_layout(pad=0.5, h_pad=0, w_pad=0, rect=(0, 0, 1, 1))
         self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
     
              
         # self.fig.set_constrained_layout_pads(w_pad=0., h_pad=0., hspace=0., wspace=0.) # for python >= 3.6
@@ -469,6 +470,7 @@ class MatplotlibWidget(QWidget):
         ) # l
         self.l['colorbar'] = plt.colorbar(self.l['C'], ax=self.ax[0]) # lm
         self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
 
         # set label of ax[1]
         self.set_ax(self.ax[0], xlabel=r'$d/\lambda$',ylabel=r'$\Phi$ ($\degree$)')
@@ -498,6 +500,7 @@ class MatplotlibWidget(QWidget):
             columnspacing=0.5
         )
         self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
         
         # set label of ax[1]
         self.set_ax(self.ax[0], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
@@ -636,8 +639,8 @@ class MatplotlibWidget(QWidget):
         for ax in axs:
             ax.relim()
             ax.autoscale_view(True,True,True)
-        # self.canvas.draw()
-        self.canvas.draw_idle()
+        self.canvas.draw()
+        # self.canvas.draw_idle()
         # self.canvas.draw_event()
         # self.canvas.draw_cursor()
         # TODP the flush_events() makes the UI blury
@@ -673,6 +676,7 @@ class MatplotlibWidget(QWidget):
             self.l['temp'].remove(lt) # remove from list .l['temp']
 
         self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
 
     def clr_lines(self, l_list=None):
         ''' 
@@ -690,6 +694,7 @@ class MatplotlibWidget(QWidget):
                     self.l[key][0].set_data([], [])
 
         self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
 
     def new_plt(self, xdata=[], ydata=[], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         ''' 
@@ -736,6 +741,7 @@ class MatplotlibWidget(QWidget):
                     )
                 )
         self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
 
 def press_zoomX(obj, event):
     event.key = 'x'

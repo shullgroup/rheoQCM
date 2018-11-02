@@ -91,6 +91,19 @@ settings_init = {
         ('temp_t', 'temp. - time'),
     ]),
 
+    'data_plt_axis_label': {
+        'df':   r'$\Delta$f (Hz)',
+        'dfn':  r'$\Delta$f/n (Hz)', 
+        'mdf':  r'-$\Delta$f (Hz)', 
+        'mdfn': r'-$\Delta$f/n (Hz)', 
+        'dg':   r'$\Delta\Gamma$ (Hz)',
+        'dgn':  r'$\Delta\Gamma$/n (Hz)',
+        'f':    r'f (Hz)',
+        'g':    r'$\Gamma$ (Hz)',
+        'temp': r'Temp. (x)', # x is going to be replaced by temperature unit
+        't':    r'Time (x)', # x is going to be replaced by time unit
+    },
+
     # spinBox_harmfitfactor max value
     'fitfactor_max': 16, # int
 
@@ -114,18 +127,19 @@ settings_init = {
     ]),
 
     # sample_channel
-    'sample_channel_opts': OrderedDict([
-    # key: str(number); val: for display in combobox
-        ('1', 'ADC 1'),
-        ('2', 'ADC 2'),
-    ]),
-
-    'ref_channel_opts': OrderedDict([
+    'vna_channel_opts': OrderedDict([
     # key: str(number); val: for display in combobox
         ('none', '--'),
         ('1', 'ADC 1'),
         ('2', 'ADC 2'),
     ]),
+
+    # 'vna_channel_opts': OrderedDict([
+    # # key: str(number); val: for display in combobox
+    #     ('none', '--'),
+    #     ('1', 'ADC 1'),
+    #     ('2', 'ADC 2'),
+    # ]),
 
     'thrmcpl_opts': OrderedDict([
     # key: number; val: for display in combobox
@@ -151,7 +165,7 @@ settings_init = {
     # key: number; val: for display in combobox
         ('C', '°C'),
         ('K', 'K'),
-        # 'F', '°F',
+        ('F', '°F'),
     ]),
 
     'scale_opts': OrderedDict([
@@ -610,8 +624,9 @@ settings_default = {
         },
     },
     ### default hardware settings ###
+    # 'tabWidget_settings_settings_samprefchn': 1,
     # default VNA settings
-    'comboBox_sample_channel': 1,
+    'comboBox_samp_channel': '1',
     'comboBox_ref_channel': 'none',
 
     # default crystal settings
@@ -624,11 +639,11 @@ settings_default = {
     'comboBox_thrmcpltype': 'J',
 
     # default plots settings
-    'comboBox_timeunit': 'min',
+    'comboBox_timeunit': 'm',
     'comboBox_tempunit': 'C',
-    'comboBox_timescale': 'linear',
+    'comboBox_xscale': 'linear',
     'comboBox_yscale': 'linear',
-    'checkBox_linktime': True,
+    'checkBox_linkx': True,
 
     ### default plot selections ###
     # default selections for spectra show
@@ -657,6 +672,10 @@ settings_default = {
     'checkBox_plt2_h9': False,
     'checkBox_plt2_h11': False,
     'radioButton_plt2_samp': True,
-    'radioButton_plt2_ref': False
+    'radioButton_plt2_ref': False,
+
+    ### settings_data
+    'radioButton_settings_data_showall': True,
+    'radioButton_settings_data_showmarked': False,
 }
 

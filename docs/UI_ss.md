@@ -316,14 +316,14 @@ get harm from treeWidget_settings_settings_harmtree.currentIndex()
 
 ##### treeWidget_settings_settings_hardware
 
-###### comboBox_sample_channel
+###### comboBox_samp_channel
 
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
 | |currentIndexChanged()|  |`updatesettings_samp_ref_chn`|check sample and reference channel selection and save them to `self.settings`|
 
 `updatesettings_samp_ref_chn`  
-> get comboBox_sample_channel selection  
+> get comboBox_samp_channel selection  
 get comboBox_ref_channel selection  
 if samp == ref:  
 >> set comboBox_ref_channel setCurrentIndex(0) ('--')  
@@ -389,7 +389,7 @@ defined above
 |-|----|----|----|----|
 | |currentIndexChanged()|  |`updatesettings_tempunit`|save selection to `self.settings` and resfresh figures in stackedWidget_data, label_status_temp_sensor|
 
-###### comboBox_timescale
+###### comboBox_xscale
 
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
@@ -401,7 +401,7 @@ defined above
 |-|----|----|----|----|
 | |currentIndexChanged()|  |`updatesettings_timeunit`|save selection to `self.settings` and resfresh figures in stackedWidget_data|
 
-###### checkBox_linktime
+###### checkBox_linkx
 
 | | signal|receiver|slot|note|
 |-|----|----|----|----|
