@@ -18,7 +18,8 @@ ax.change_geometry(2,2,i+1)
 # rcParams['font.size'] = 9
 
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtWidgets import QSizePolicy, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QSizePolicy, QVBoxLayout, QWidget, QPushButton
+from PyQt5.QtGui import QIcon, QPixmap
 
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
@@ -34,13 +35,13 @@ import matplotlib.ticker as ticker
 import types
 
 import numpy as np
+import pandas as pd
+
 from UISettings import settings_init
 from modules import MathModules
 
 # color map for plot
 color = ['tab:blue', 'tab:red', 'tab:orange', 'tab:gray']
-
-# rcParams['toolbar'] = 'toolmanager'
 
 # class NavigationToolbar(NavigationToolbar2QT):
     # set buttons to show in toolbar
@@ -60,14 +61,14 @@ class AxesLockY(Axes):
 register_projection(AxesLockY)
 
 
-class span_button(ToolToggleBase):
+class SelectorSwitch(ToolToggleBase):
     '''turn on and of '''
     # In case we want to add a toggle button to the toolbar for active/deactive change span
-    default_keymap = 'G'
-    description = 'Hide by gid'
+    # default_keymap = 'S'
+    description = 'Turn on and off the data selector'
 
     def __init__(self, *args, **kwargs):
-        self.span_selector = kwargs.pop('obj')
+        self.span_selector = kwargs.pop('selector')
         ToolToggleBase.__init__(self, *args, **kwargs)
 
     def enable(self, *args):
@@ -509,20 +510,22 @@ class MatplotlibWidget(QWidget):
                 marker='o', 
                 markerfacecolor='none', 
             ) # l
+        
+        for i in range(1, int(settings_init['max_harmonic']+2), 2):
             self.l['lm' + str(i)] = self.ax[0].plot(
-                    [], [], 
-                    marker='o', 
-                    color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
-                    # linestyle='none',
-                ) # maked points of line
-            self.l['mk' + str(i)] = self.ax[0].plot(
-                    [], [], 
-                    marker='o', 
-                    markeredgecolor=color[0], 
-                    markerfacecolor=color[0],
-                    alpha= 0.5,
-                    linestyle='none',
-                ) # points in rectangle_selector
+                [], [], 
+                marker='o', 
+                color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
+                # linestyle='none',
+            ) # maked points of line
+            self.l['ls' + str(i)] = self.ax[0].plot(
+                [], [], 
+                marker='o', 
+                markeredgecolor=color[1], 
+                markerfacecolor=color[1],
+                alpha= 0.5,
+                linestyle='none',
+            ) # points in rectangle_selector
 
         # set label of ax[1]
         self.set_ax(self.ax[0], xlabel='Time (s)',ylabel=ylabel)
@@ -546,15 +549,93 @@ class MatplotlibWidget(QWidget):
             interactive=False, # change rect after drawn
             state_modifier_keys=None,
         )  
+        # set if inavtive
+        self.rect_selector.set_active(False)
+
+        # create a toggle button
+        self.pushButton_selectorswitch = QPushButton()
+        self.pushButton_selectorswitch.setText('')
+        self.pushButton_selectorswitch.setCheckable(True)
+        self.pushButton_selectorswitch.setFlat(True)
+        # icon
+        icon_sel = QIcon()
+        icon_sel.addPixmap(QPixmap(':/button/rc/selector.svg'), QIcon.Normal, QIcon.Off)
+        self.pushButton_selectorswitch.setIcon(icon_sel)
+        
+        self.pushButton_selectorswitch.clicked.connect(self.data_rectselector_switch)
+
+        # add it to toolbar
+        self.toolbar.addWidget(self.pushButton_selectorswitch)
+
+
+        # # add selector switch button to toolbar
+        # self.fig.canvas.manager.toolmanager.add_tool('Data Selector', SelectorSwitch, selector=self.rect_selector)
+
+        # # add button to toolbar
+        # self.canvas.manager.toolbar.add_tool('DataSelector', 'zoom_pan', 1)
+
+    def data_rectselector_switch(self, checked):
+        if checked:
+            print(True)
+            self.rect_selector.set_active(True)
+            # print(self.toolbar._active)
+            # print(dir(self.toolbar))
+            # # print(dir(self.toolbar.toggleViewAction))
+            
+            # print(dir(self.toolbar.pan))
+            # print(self.toolbar.zoom)
+            if self.toolbar._active == "PAN":
+                self.toolbar.pan()
+            elif self.toolbar._active == "ZOOM":
+                self.toolbar.zoom()
+        else:
+            self.rect_selector.set_active(False)
+            # reset .l['ls<n>']
+            for i in range(1, int(settings_init['max_harmonic']+2), 2):
+                self.update_data(('ls'+ str(i), [], []))
 
     def data_rectselector_callback(self, eclick, erelease):
         '''
         '''
-        # MouseEvent: xy=(x,y) xydata=(xd, yd) button=1 dblclick=False inaxes=AxesSubplot(0.109741,0.143551;0.879397x0.834499) 
+        # print(dir(eclick))
         print(eclick)
         print(erelease)
-
+        x1, x2 = sorted([eclick.xdata, erelease.xdata]) # x1 < x2
+        y1, y2 = sorted([eclick.ydata, erelease.ydata]) # y1 < y2
+        
+        # # dict for storing the selected indices
+        # sel_idx_dict = {}
+        # list for updating selected data
+        sel_list = []
         # find the points in rect
+        for l_str in ['l', 'lm']: # only one will be not empty
+            for harm in range(1, settings_init['max_harmonic']+2, 2):
+                harm = str(harm)
+                print(harm)
+                # get data from current plotted lines
+                # clear .l['ls<n>']
+                self.clr_lines(l_list=['ls'+harm])
+                
+                print(l_str)
+                # print(self.l[l_str + harm][0].get_data())
+                harm_x, harm_y = self.l[l_str + harm][0].get_data()
+                
+                if isinstance(harm_x, pd.Series): # if data is series (not empty)
+                    sel_bool = harm_x.between(x1, x2) & harm_y.between(y1, y2)
+
+                    # save data for plotting selected data
+                    sel_list.append(('ls'+harm, harm_x[sel_bool], harm_y[sel_bool]))
+
+                    # # save indices for later process
+                    # sel_idx = harm_x[sel_bool].index
+                    # print(sel_idx)
+                    # # update selected indices
+                    # sel_idx_dict[harm] = sel_idx
+        
+        # print(sel_idx_dict)
+        # plot the selected data
+        self.update_data(*sel_list)
+
 
         # mark with self.l['mk<n>']
 

@@ -154,7 +154,8 @@ class DataSaver:
             print(self.ver)
             print(self.exp_ref)
             # get queue_list
-            self.queue_list = list(fh['raw/samp'].keys())
+            # self.queue_list = list(fh['raw/samp'].keys())
+            self.queue_list = [int(s) for s in fh['raw/samp'].keys()]
 
             print(fh['data/samp'][()])
             for key in self._chn_keys:
@@ -202,6 +203,7 @@ class DataSaver:
         if not self.queue_list:
             self.queue_list.append(0)
         else:
+            print(self.queue_list)
             self.queue_list.append(max(self.queue_list) + 1)
 
         for i in range(1, self.settings_init['max_harmonic']+2, 2):
@@ -676,7 +678,7 @@ class DataSaver:
         else:
             raise ValueError('df should not be None when {} is reference source.'.fromat(self.exp_ref['samp_ref'][0]))            
 
-        df = self.reset_marks(df, mark_pair=(0, 1)) # mark 1 to 0
+        df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
         setattr(self, chn_name + '_ref', df)
 
     def set_ref_set(self, chn_name, source, idx_list=[], df=None):
@@ -757,8 +759,8 @@ class DataSaver:
 
         if t0_shifted is not None:
             if isinstance(t0_shifted, datetime.datetime): # if to_shifted is datetime obj
-                to_shifted = to_shifted.strftime(self.settings_init['time_str_format']) # convert to string
-            self.exp_ref['to_shifted'] = to_shifted
+                t0_shifted = t0_shifted.strftime(self.settings_init['time_str_format']) # convert to string
+            self.exp_ref['to_shifted'] = t0_shifted
 
     def get_fg_ref(self, chn_name, harm=[]):
         '''
@@ -785,7 +787,7 @@ class DataSaver:
             print('There is no marked row.\nReturn all')
             return ~marked_rows
 
-    def reset_marks(self, df, mark_pair=(0, 1)):
+    def reset_match_marks(self, df, mark_pair=(0, 1)):
         ''' 
         rest marks column in df. 
         set 1 in list element to 0
@@ -796,9 +798,79 @@ class DataSaver:
         df_new.marks = df_new.marks.apply(lambda x: [new_mark if mark == old_mark else mark for mark in x])
         return df_new
 
+    def mark_data(self, df, idx=[], harm=None, mark_val=1):
+        '''
+        mark data by given information
+        df: data as dataframe
+        idx: list of indices (rows)
+        harm: str of a single harmonic to mark
+        mark_val: int 
+        '''
+        df_new = df.copy()
+        def mark_func(row_marks):
+            new_marks = []
+            for i, mark in enumerate(row_marks):
+                if int(i*2+1) == int(harm) and mark != np.nan and mark is not None:
+                    new_marks.append(mark_val)
+                else:
+                    new_marks.append(mark)
+                return new_marks
 
+        df_new.marks[idx] = df_new.marks[idx].apply(mark_func)
 
-######## functions for unit convertion #################
+        return df_new
+
+    def mark_all_to(self, df, mark_val=1):
+        ''' 
+        rest marks column in df. 
+        mark all to given mark_val e.g.: 0, 1
+        '''
+        df_new = df.copy()
+        df_new.marks = df_new.marks.apply(lambda x: [mark_val if mark != np.nan and mark is not None else mark for mark in x])
+        return df_new
+
+    ###### selector functions ######
+    def selector_mark_all(self, chn_name):
+        '''
+        selector function
+        mark all data in chn_name
+        '''
+        setattr(self, chn_name, self.mark_all_to(getattr(self, chn_name), mark_val=1))
+
+    def selector_unmark_all(self, chn_name):
+        '''
+        selector function
+        unmark all data in chn_name
+        '''
+        setattr(self, chn_name, self.mark_all_to(getattr(self, chn_name), mark_val=0))
+
+    def selector_mark_selpts(self, chn_name, sel_idx_dict):
+        '''
+        selector function
+        mark selected points in chn_name
+        sel_idx_dict = {
+            'harm': [index]
+        }
+        '''
+        df_chn = getattr(self, chn_name)
+        for harm, idx in sel_idx_dict.item():
+            df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=1)
+        setattr(sef, chn_name, df_chn)
+
+    def selector_unmark_selpts(self, chn_name, sel_idx_dict):
+        '''
+        selector function
+        mark selected points in chn_name
+        sel_idx_dict = {
+            'harm': [index]
+        }
+        '''
+        df_chn = getattr(self, chn_name)
+        for harm, idx in sel_idx_dict.item():
+            df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=1)
+        setattr(sef, chn_name, df_chn)
+
+    ######## functions for unit convertion #################
 
 
     def time_s_to_unit(self, t, unit=None):

@@ -9,12 +9,12 @@ import math
 import json
 import datetime, time
 import numpy as np
-# import pandas as pd
+import pandas as pd
 import scipy.signal
 # import types
 from PyQt5.QtCore import pyqtSlot, Qt, QEvent, QTimer, QEventLoop
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QRadioButton, QMenu, QMessageBox
+    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QRadioButton, QMenu, QAction, QMessageBox
 )
 from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, QDoubleValidator, QRegExpValidator
 
@@ -948,17 +948,25 @@ class QCMApp(QMainWindow):
         self.ui.mpl_plt1 = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit, 
             axtype='data',
-            ylabel=r'$\Delta f/n$ (Hz)',
+            # ylabel=r'$\Delta f/n$ (Hz)',
             )
         self.ui.frame_plt1.setLayout(self.set_frame_layout(self.ui.mpl_plt1))
+
 
         # add figure mpl_plt2 into frame_spactra_fit
         self.ui.mpl_plt2 = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit, 
             axtype='data',
-            ylabel=r'$\Delta \Gamma$ (Hz)',
+            # ylabel=r'$\Delta \Gamma$ (Hz)',
             )
         self.ui.frame_plt2.setLayout(self.set_frame_layout(self.ui.mpl_plt2))
+
+        # selector menu
+        self.ui.mpl_plt1.canvas.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.mpl_plt1.canvas.customContextMenuRequested.connect(lambda position, mpl=self.ui.mpl_plt1, plt_str='plt1': self.open_selector_menu(position, mpl, plt_str))
+
+        self.ui.mpl_plt2.canvas.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.mpl_plt2.canvas.customContextMenuRequested.connect(self.open_selector_menu)
 
         #endregion
 
@@ -1389,7 +1397,7 @@ class QCMApp(QMainWindow):
             'pushButton_appendfile_disable_list',
         )        
 
-
+ 
     def set_status_pts(self):
         '''
         set status bar label_status_pts
@@ -1988,15 +1996,17 @@ class QCMApp(QMainWindow):
             harm = str(harm)
             # set xdata for harm
             print(xdata.shape)
-            if len(xdata.shape) == 1: # one column e.g.: tuple (1,)
+            if len(xdata.shape) == 1: # one column e.g.: tuple (1,) is series
                 harm_xdata = xdata
             else: # multiple columns
-                harm_xdata = xdata.filter(like=harm, axis=1)
+                harm_xdata = xdata.filter(like=harm, axis=1).squeeze() # convert to series
             # set ydata for harm
-            if len(ydata.shape) == 1: # one column
+            if len(ydata.shape) == 1: # series
                 harm_ydata = ydata
             else: # multiple columns
-                harm_ydata = ydata.filter(like=harm, axis=1)
+                harm_ydata = ydata.filter(like=harm, axis=1).squeeze() # convert to series
+
+
             
             data_list.append(('l'+harm, harm_xdata, harm_ydata))
         
@@ -2069,12 +2079,16 @@ class QCMApp(QMainWindow):
                 getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
                 getattr(self.ui, 'mpl_' + plt_str).ax[0].set_ylabel(ylabel)
 
+                getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
+
         if sender_name == 'comboBox_timeunit': # update both axises of mpl_plt1 & mpl_plt2
             for plt_str in ['plt1', 'plt2']: 
                 # plot option str in list [y, x]
                 plt_opt = self.get_plt_opt(plt_str)
-                if 't' in plt_opt: # there is time axis in the plot
+                if 't' in plt_opt: # there is time axis in the plot (plt_opt[0] == 't' or plt_opt[1] == 't')
                     self.update_time_unit(plt_str, plt_opt)
+                    getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
+                
 
         if sender_name == 'comboBox_tempunit': # update both axises of mpl_plt1 & mpl_plt2
             for plt_str in ['plt1', 'plt2']: 
@@ -2082,16 +2096,19 @@ class QCMApp(QMainWindow):
                 plt_opt = self.get_plt_opt(plt_str)
                 if 'temp' in plt_opt: # there is temp axis in the plot
                     self.update_temp_unit(plt_str, plt_opt)
+                    getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
 
         if sender_name == 'comboBox_xscale': # update both axises of mpl_plt1 & mpl_plt2
             for plt_str in ['plt1', 'plt2']: 
                 # plot option str in list [y, x]
                 getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xscale(self.sender().itemData(signal))
+                getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
 
         if sender_name == 'comboBox_yscale': # update both axises of mpl_plt1 & mpl_plt2
             for plt_str in ['plt1', 'plt2']: 
                 # plot option str in list [y, x]
                 getattr(self.ui, 'mpl_' + plt_str).ax[0].set_yscale(self.sender().itemData(signal))
+                getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
 
         if sender_name == 'checkBox_linkx': # link x axis of mpl_plt1 & mpl_plt2
             if signal:
@@ -2104,6 +2121,9 @@ class QCMApp(QMainWindow):
                     self.ui.mpl_plt2.ax[0]
                 )
 
+            self.ui.mpl_plt1.canvas.draw()
+            self.ui.mpl_plt2.canvas.draw()
+
     # def set_plt2_on_plt1_xlim_change(self):
     #     # get mpl_plt1 xlims
     #     xlim = self.ui.mpl_plt1.ax[0].get_xlim()
@@ -2115,6 +2135,108 @@ class QCMApp(QMainWindow):
     #     xlim = self.ui.mpl_plt2.ax[0].get_xlim()
     #     # set mpl_plt1 xlim
     #     self.ui.mpl_plt1.ax[0].set_xlim(xlim)
+
+    def open_selector_menu(self,position, mpl, plt_str):
+        '''
+        function to execute the selector custom context menu for selector
+        '''
+        print('customMenu')
+        print(position)
+        print(mpl)
+        print(plt_str)
+        
+        if mpl.pushButton_selectorswitch.isChecked():
+            print('checked')
+
+            # get .l['ls<n>'] data
+            # dict for storing the selected indices
+            sel_idx_dict = {}
+            for harm in range(1, settings_init['max_harmonic']+2, 2):
+                harm = str(harm)
+                print('harm', harm)
+                # print(mpl.get_data(ls=['ls'+harm]))
+                harm_sel_data, = mpl.get_data(ls=['ls'+harm]) # (xdata, ydata)
+                print(harm_sel_data)
+                print(harm_sel_data[0])
+                if isinstance(harm_sel_data[0], pd.Series): # data is not empty
+                    harm_sel_idx = harm_sel_data[0].index # get indices from xdata
+                    print(harm_sel_idx)
+                    sel_idx_dict[harm] = harm_sel_idx
+            # if no selected data return
+            print(sel_idx_dict)
+
+            # get channel name
+            chn_name = self.get_plt_chnname(plt_str)
+
+
+
+            # create contextMenu
+            selmenu = QMenu('selmenu', self)
+
+            menuMark = QMenu('Mark', self)
+            actionMark_all = QAction('Mark all data', self)
+            actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_all(chn_name))
+            actionMark_selpts = QAction('Mark selected points', self)
+            actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_selpts(chn_name, sel_idx_dict))
+            actionMark_selidx = QAction('Mark selected indices', self)
+            actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_selidx(chn_name, sel_idx_dict))
+            actionMark_selharm = QAction('Mark selected harmonics', self)
+            actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_selharm(chn_name, sel_idx_dict))
+
+            menuMark.addAction(actionMark_all)
+            menuMark.addAction(actionMark_selpts)
+            menuMark.addAction(actionMark_selidx)
+            menuMark.addAction(actionMark_selharm)
+
+            menuUnmark = QMenu('Unmark', self)
+            actionUnmark_all = QAction('Unmark all data', self)
+            actionMark_all.triggered.connect(lambda: self.data_saver.selector_unmark_all(chn_name))
+            actionUnmark_selpts = QAction('Unmark selected points', self)
+            actionMark_all.triggered.connect(lambda: self.data_saver.selector_unmark_selpts(chn_name, sel_idx_dict))
+            actionUnmark_selidx = QAction('Unmark selected indices', self)
+            actionMark_all.triggered.connect(lambda: self.data_saver.selector_unmark_selidx(chn_name, sel_idx_dict))
+            actionUnmark_selharm = QAction('Unmark selected harmonics', self)
+            actionMark_all.triggered.connect(lambda: self.data_saver.selector_unmark_selharm(chn_name, sel_idx_dict))
+
+            menuUnmark.addAction(actionUnmark_all)
+            menuUnmark.addAction(actionUnmark_selpts)
+            menuUnmark.addAction(actionUnmark_selidx)
+            menuUnmark.addAction(actionUnmark_selharm)
+
+            menuDel = QMenu('Delete', self)
+            actionDel_all = QAction('Delete all data', self)
+            actionDel_all.triggered.connect(self.on_triggered_actionClear_All)
+            actionDel_selpts = QAction('Delete selected points', self)
+            actionDel_selidx = QAction('Delete selected indices', self)
+            actionDel_selharm = QAction('Delete selected harmonics', self)
+
+            menuDel.addAction(actionDel_all)
+            menuDel.addAction(actionDel_selpts)
+            menuDel.addAction(actionDel_selidx)
+            menuDel.addAction(actionDel_selharm)
+
+            menuRefit = QMenu('Refit', self)
+            actionRefit_all = QAction('Refit all data', self)
+            actionRefit_selpts = QAction('Refit selected points', self)
+            actionRefit_selidx = QAction('Refit selected indices', self)
+            actionRefit_selharm = QAction('Refit selected harmonics', self)
+
+            menuRefit.addAction(actionRefit_all)
+            menuRefit.addAction(actionRefit_selpts)
+            menuRefit.addAction(actionRefit_selidx)
+            menuRefit.addAction(actionRefit_selharm)
+
+            selmenu.addMenu(menuMark)
+            selmenu.addMenu(menuUnmark)
+            selmenu.addMenu(menuDel)
+            selmenu.addMenu(menuRefit)
+            
+            #else, find out the indices and do mark/unmark/delete
+            selmenu.exec_(mpl.canvas.mapToGlobal(position))
+
+        else: 
+            # nothing to do
+            pass
 
     def update_time_unit(self, plt_str, plt_opt):
         '''

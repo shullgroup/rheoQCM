@@ -105,6 +105,7 @@ settings_init = {
         'g':    r'$\Gamma$ (Hz)',
         'temp': r'Temp. (x)', # x is going to be replaced by temperature unit
         't':    r'Time (x)', # x is going to be replaced by time unit
+        'idx':    r'Index', 
     },
 
     # spinBox_harmfitfactor max value
