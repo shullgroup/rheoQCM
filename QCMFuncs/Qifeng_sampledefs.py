@@ -106,7 +106,7 @@ def sample_dict():
     'filmfile': 'DGEBA-Jeffamine2000_RT_7',
     'firstline': 0,
     # 'filmtrange': [1, 10],
-    'filmindex': list(range(0, 156, 10)) + [156, 158, 160],
+    'filmindex': list(range(0, 156, 10)) + [156, 158, 160, 162, 163, 164],
     # 'xscale': 'log',
     'nhcalc': ['133'],
     'nhplot': [1, 3,]
