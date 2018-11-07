@@ -99,6 +99,7 @@ class DataSaver:
             #       'ref': use data from ref chan as reference
             #       'ext': use data from external file as reference
             #       'none': no reference
+            #   indeces:
             #   if len == 1 (e.g.: [0,]), is a single point 
             #   if [None], reference point by point
         } # experiment reference setup in dict
@@ -454,7 +455,7 @@ class DataSaver:
 
         return df
 
-    def get_t_s_marked_rows(self, chn_name, dropnanrows=False, unit=None):
+    def get_t_marked_rows(self, chn_name, dropnanrows=False, unit=None):
         '''
         return rows with marks of df from self.get_t_s
         '''
@@ -487,6 +488,21 @@ class DataSaver:
             t = t -  self.get_t_ref() # delta t to reference (t0)
             t = t.dt.total_seconds() # convert to second
             return t
+
+    def get_queue_id_marked_rows(self, chn_name, dropnanrows=False):
+        '''
+        return rows with marks of df from self.get_queue_id
+        '''
+        if dropnanrows == True:
+            return self.get_queue_id(chn_name)[self.rows_with_marks(chn_name)]
+        else:
+            return self.get_queue_id(chn_name)
+
+    def get_queue_id(self, chn_name):
+        '''
+        get queue indices as pd.series
+        '''
+        return getattr(self, chn_name)['queue_id'].copy()
 
     def get_temp_C_marked_rows(self, chn_name, dropnanrows=False, unit=None):
         '''
@@ -853,9 +869,9 @@ class DataSaver:
         }
         '''
         df_chn = getattr(self, chn_name)
-        for harm, idx in sel_idx_dict.item():
+        for harm, idx in sel_idx_dict.items():
             df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=1)
-        setattr(sef, chn_name, df_chn)
+        setattr(self, chn_name, df_chn)
 
     def selector_unmark_selpts(self, chn_name, sel_idx_dict):
         '''
@@ -866,9 +882,9 @@ class DataSaver:
         }
         '''
         df_chn = getattr(self, chn_name)
-        for harm, idx in sel_idx_dict.item():
+        for harm, idx in sel_idx_dict.items():
             df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=1)
-        setattr(sef, chn_name, df_chn)
+        setattr(self, chn_name, df_chn)
 
     ######## functions for unit convertion #################
 

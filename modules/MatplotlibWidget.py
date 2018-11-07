@@ -41,7 +41,7 @@ from UISettings import settings_init
 from modules import MathModules
 
 # color map for plot
-color = ['tab:blue', 'tab:red', 'tab:orange', 'tab:gray']
+color = ['tab:blue', 'tab:red', 'tab:orange', 'tab:gray', 'tab:yellow']
 
 # class NavigationToolbar(NavigationToolbar2QT):
     # set buttons to show in toolbar
@@ -509,6 +509,8 @@ class MatplotlibWidget(QWidget):
                 [], [], 
                 marker='o', 
                 markerfacecolor='none', 
+                picker=5, # 5 points tolerance
+                label='l'+str(i),
             ) # l
         
         for i in range(1, int(settings_init['max_harmonic']+2), 2):
@@ -517,6 +519,8 @@ class MatplotlibWidget(QWidget):
                 marker='o', 
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
                 # linestyle='none',
+                picker=5, # 5 points tolerance
+                label='lm'+str(i),
             ) # maked points of line
             self.l['ls' + str(i)] = self.ax[0].plot(
                 [], [], 
@@ -525,7 +529,21 @@ class MatplotlibWidget(QWidget):
                 markerfacecolor=color[1],
                 alpha= 0.5,
                 linestyle='none',
+                label='ls'+str(i),
             ) # points in rectangle_selector
+
+        self.l['lp'] = self.ax[0].plot(
+            [], [], 
+            marker='+', 
+            markersize = 12,
+            markeredgecolor=color[1],
+            markeredgewidth=1, 
+            alpha= 1,
+            linestyle='none',
+            label='',
+        ) # points of picker
+        
+        self.cid = None # for storing the cid of pick_event
 
         # set label of ax[1]
         self.set_ax(self.ax[0], xlabel='Time (s)',ylabel=ylabel)
@@ -552,7 +570,7 @@ class MatplotlibWidget(QWidget):
         # set if inavtive
         self.rect_selector.set_active(False)
 
-        # create a toggle button
+        # create a toggle button fro selector
         self.pushButton_selectorswitch = QPushButton()
         self.pushButton_selectorswitch.setText('')
         self.pushButton_selectorswitch.setCheckable(True)
@@ -567,6 +585,20 @@ class MatplotlibWidget(QWidget):
         # add it to toolbar
         self.toolbar.addWidget(self.pushButton_selectorswitch)
 
+        # create a toggle button for picker
+        self.pushButton_pickerswitch = QPushButton()
+        self.pushButton_pickerswitch.setText('')
+        self.pushButton_pickerswitch.setCheckable(True)
+        self.pushButton_pickerswitch.setFlat(True)
+        # icon
+        icon_pk = QIcon()
+        icon_pk.addPixmap(QPixmap(':/button/rc/picker.svg'), QIcon.Normal, QIcon.Off)
+        self.pushButton_pickerswitch.setIcon(icon_pk)
+        
+        self.pushButton_pickerswitch.clicked.connect(self.data_picker_switch)
+
+        # add it to toolbar
+        self.toolbar.addWidget(self.pushButton_pickerswitch)
 
         # # add selector switch button to toolbar
         # self.fig.canvas.manager.toolmanager.add_tool('Data Selector', SelectorSwitch, selector=self.rect_selector)
@@ -577,6 +609,10 @@ class MatplotlibWidget(QWidget):
     def data_rectselector_switch(self, checked):
         if checked:
             print(True)
+            # disable picker
+            self.pushButton_pickerswitch.setChecked(False)
+            self.data_picker_switch(False)
+
             self.rect_selector.set_active(True)
             # print(self.toolbar._active)
             # print(dir(self.toolbar))
@@ -593,7 +629,7 @@ class MatplotlibWidget(QWidget):
             # reset .l['ls<n>']
             for i in range(1, int(settings_init['max_harmonic']+2), 2):
                 self.update_data(('ls'+ str(i), [], []))
-
+            
     def data_rectselector_callback(self, eclick, erelease):
         '''
         '''
@@ -637,7 +673,44 @@ class MatplotlibWidget(QWidget):
         self.update_data(*sel_list)
 
 
-        # mark with self.l['mk<n>']
+    def data_picker_switch(self, checked):
+        '''
+        connect/disconnect picker event to data
+        '''
+        if checked:
+            # disable rectangleselector
+            self.pushButton_selectorswitch.setChecked(False)
+            self.data_rectselector_switch(False)
+
+            self.cid = self.canvas.mpl_connect('pick_event', self.data_onpick_callback)
+        else:
+            self.canvas.mpl_disconnect(self.cid)
+            # clear data .l['lp']
+            self.clr_lines(l_list=['lp'])
+
+    def data_onpick_callback(self, event):
+        '''
+        callback function of mpl_data pick_event
+        '''
+        # print(dir(event))
+        thisline = event.artist
+        x_s = thisline.get_xdata()
+        y_s = thisline.get_ydata()
+        ind = event.ind[0]
+        print(thisline)
+        # print(dir(thisline))
+        print(thisline.get_label())
+        print(x_s.name)
+        print(y_s.name) 
+        print(ind)   
+        # print('onpick1 line:', zip(np.take(xdata, ind), np.take(ydata, ind)))
+
+        # plot
+        print(x_s.iloc[ind], y_s.iloc[ind])
+        self.l['lp'][0].set_data(x_s.iloc[ind], y_s.iloc[ind])
+        self.l['lp'][0].set_label(thisline.get_label() + '_' + str(ind)) # transfer the label of picked line and ind to 'lp'
+        self.canvas.draw()
+
 
 
 

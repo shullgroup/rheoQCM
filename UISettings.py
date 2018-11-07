@@ -80,18 +80,32 @@ settings_init = {
         ('centerspan', 'Center/Span'),
     ]),
 
-    # choice for plotting data shown in comboBox_plt1_opts & comboBox_plt2_opts
+    # choice for plotting data shown in comboBox_plt1_optsy & comboBox_plt2_optsy
+    # 'data_plt_opts': OrderedDict([
+    #     ('none',   'none'),
+    #     ('df_t',   u'\u0394' + 'f - time'),
+    #     ('dfn_t',  u'\u0394' + 'f/n - time'),
+    #     ('mdf_t',  '-' + u'\u0394' + 'f - time'),
+    #     ('mdfn_t', '-' + u'\u0394' + 'f/n - time'),
+    #     ('dg_t',   u'\u0394\u0393' + ' - time'),
+    #     ('dgn_t',  u'\u0394\u0393' + '/n - time'),
+    #     ('f_t',    'f - time'),
+    #     ('g_t',    'g - time'),
+    #     ('temp_t', 'temp. - time'),
+    # ]),
     'data_plt_opts': OrderedDict([
         ('none',   'none'),
-        ('df_t',   u'\u0394' + 'f - time'),
-        ('dfn_t',  u'\u0394' + 'f/n - time'),
-        ('mdf_t',  '-' + u'\u0394' + 'f - time'),
-        ('mdfn_t', '-' + u'\u0394' + 'f/n - time'),
-        ('dg_t',   u'\u0394\u0393' + ' - time'),
-        ('dgn_t',  u'\u0394\u0393' + '/n - time'),
-        ('f_t',    'f - time'),
-        ('g_t',    'g - time'),
-        ('temp_t', 'temp. - time'),
+        ('df',   u'\u0394' + 'f'),
+        ('dfn',  u'\u0394' + 'f/n'),
+        ('mdf',  '-' + u'\u0394' + 'f'),
+        ('mdfn', '-' + u'\u0394' + 'f/n'),
+        ('dg',   u'\u0394\u0393'),
+        ('dgn',  u'\u0394\u0393' + '/n'),
+        ('f',    'f'),
+        ('g',     u'\u0393'),
+        ('temp', 'temp.'),
+        ('t', 'time'),
+        ('idx', 'index'),
     ]),
 
     'data_plt_axis_label': {
@@ -138,12 +152,13 @@ settings_init = {
         ('2', 'ADC 2'),
     ]),
 
-    # 'vna_channel_opts': OrderedDict([
-    # # key: str(number); val: for display in combobox
-    #     ('none', '--'),
-    #     ('1', 'ADC 1'),
-    #     ('2', 'ADC 2'),
-    # ]),
+    'ref_channel_opts': OrderedDict([
+    # key: str(number); val: for display in combobox
+        ('none', 'none'),
+        ('samp', 'samp'),
+        ('ref', 'ref'),
+        ('ext', 'ext'), # always read from the reference channel
+    ]),
 
     'thrmcpl_opts': OrderedDict([
     # key: number; val: for display in combobox
@@ -159,10 +174,10 @@ settings_init = {
 
     'time_unit_opts': OrderedDict([
     # key: number; val: for display in combobox
-        ('s', 's'),
-        ('m', 'min'),
-        ('h', 'h'),
-        ('d', 'day'),
+        ('s', r's'),
+        ('m', r'min'),
+        ('h', r'h'),
+        ('d', r'day'),
     ]),
 
     'temp_unit_opts': OrderedDict([
@@ -657,7 +672,8 @@ settings_default = {
     'checkBox_spectra_shoechi': False,
 
     # default selections for plot 1 elements
-    'comboBox_plt1_opts': 'dfn_t', 
+    'comboBox_plt1_optsy': 'dfn', 
+    'comboBox_plt1_optsx': 't', 
     'checkBox_plt1_h1': False,
     'checkBox_plt1_h3': False,
     'checkBox_plt1_h5': False,
@@ -668,7 +684,8 @@ settings_default = {
     'radioButton_plt1_ref': False,
 
     # default selections for plot 2 elements
-    'comboBox_plt2_opts': 'dg_t',
+    'comboBox_plt2_optsy': 'dg',
+    'comboBox_plt2_optsx': 't',
     'checkBox_plt2_h1': False,
     'checkBox_plt2_h3': False,
     'checkBox_plt2_h5': False,
