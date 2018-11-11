@@ -101,7 +101,7 @@ class DataSaver:
             #       'none': no reference
             #   indeces:
             #   if len == 1 (e.g.: [0,]), is a single point 
-            #   if [None], reference point by point
+            #   if [] or [None], reference point by point
         } # experiment reference setup in dict
 
     def init_file(self, path, settings_init, t0):

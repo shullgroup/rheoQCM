@@ -25,6 +25,8 @@ settings_init = {
         # 'treeWidget_settings_settings_hardware',
         'pushButton_newfile',
         'pushButton_appendfile',
+        'actionNew_Exp',
+        'actionLoad_Exp',
     ],
 
     'pushButton_runstop_disable_list': [
@@ -33,6 +35,8 @@ settings_init = {
         'pushButton_resetreftime',
         'pushButton_newfile',
         'pushButton_appendfile',
+        'actionNew_Exp',
+        'actionLoad_Exp',
     ],
 
     'pushButton_newfile_enable_list':[
@@ -698,5 +702,9 @@ settings_default = {
     ### settings_data
     'radioButton_settings_data_showall': True,
     'radioButton_settings_data_showmarked': False,
+    'comboBox_settings_data_samprefsource': 'samp',
+    'lineEdit_settings_data_samprefidx': 0,
+    'comboBox_settings_data_refrefsource': 'ref',
+    'lineEdit_settings_data_refrefidx': 0,
 }
 

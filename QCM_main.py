@@ -684,6 +684,22 @@ class QCMApp(QMainWindow):
             "QTreeWidget { background: transparent; }"
         )
 
+        # load opts to combox
+        for key, val in settings_init['ref_channel_opts'].items():
+            # userData is setup for geting the plot type
+            # userDat can be access with itemData(index)
+            self.ui.comboBox_settings_data_samprefsource.addItem(val, key)
+            self.ui.comboBox_settings_data_refrefsource.addItem(val, key)
+
+        # move pushButton_settings_data_resetshiftedt0
+        self.move_to_col2(
+            self.ui.pushButton_settings_data_resetshiftedt0,
+            self.ui.treeWidget_settings_data_refs,
+            'Time Shift',
+            100,
+        )
+        self.ui.pushButton_settings_data_resetshiftedt0.clicked.connect(self.reset_shiftedt0)
+
         # move label_settings_data_t0
         self.move_to_col2(
             self.ui.label_settings_data_t0,
@@ -699,6 +715,7 @@ class QCMApp(QMainWindow):
             'Shifted t0',
             # 180,
         )
+        self.ui.dateTimeEdit_settings_data_t0shifted.dateTimeChanged.connect(self.on_dateTimeChanged_dateTimeEdit_t0shifted)
 
         # move frame_settings_data_sampref
         self.move_to_col2(
@@ -707,6 +724,12 @@ class QCMApp(QMainWindow):
             'samp chn.',
             # 100,
         )
+        self.ui.comboBox_settings_data_samprefsource.currentIndexChanged.connect(self.update_widget)
+        self.ui.lineEdit_settings_data_samprefidx.textChanged.connect(self.update_widget)
+
+        # NOTE: following two only emitted when value manually edited
+        self.ui.comboBox_settings_data_samprefsource.activated.connect(self.set_data_saver_sampref)
+        self.ui.lineEdit_settings_data_samprefidx.textEdited.connect(self.set_data_saver_sampref)
 
         # move frame_settings_data_refref
         self.move_to_col2(
@@ -715,13 +738,14 @@ class QCMApp(QMainWindow):
             'ref chn.',
             # 100,
         )
+        self.ui.comboBox_settings_data_refrefsource.currentIndexChanged.connect(self.update_widget)
+        self.ui.lineEdit_settings_data_refrefidx.textChanged.connect(self.update_widget)
 
-        # load opts to combox
-        for key, val in settings_init['ref_channel_opts'].items():
-            # userData is setup for geting the plot type
-            # userDat can be access with itemData(index)
-            self.ui.comboBox_settings_data_samprefsource.addItem(val, key)
-            self.ui.comboBox_settings_data_refrefsource.addItem(val, key)
+        # NOTE: following two only emitted when value manually edited
+        self.ui.comboBox_settings_data_refrefsource.activated.connect(self.set_data_saver_refref)
+        self.ui.lineEdit_settings_data_refrefidx.textEdited.connect(self.set_data_saver_refref)
+
+
 
 
 
@@ -1216,8 +1240,65 @@ class QCMApp(QMainWindow):
         '''
         self.settings['dateTimeEdit_reftime'] = self.ui.dateTimeEdit_reftime.dateTime().toPyDateTime().strftime(settings_init['time_str_format'])
         print(self.settings['dateTimeEdit_reftime'])
+        self.ui.label_settings_data_t0.setText(self.settings['dateTimeEdit_reftime'][:-3]) # [:-3] remove the extra 000 at the end
         self.data_saver.set_t0(t0=self.settings['dateTimeEdit_reftime'])
+
+    def on_dateTimeChanged_dateTimeEdit_t0shifted(self, datetime):
+        '''
+        get time in dateTimeEdit_settings_data_t0shifted 
+        and save it to self.settings and data_saver
+        '''
+        self.settings['dateTimeEdit_settings_data_t0shifted'] = self.ui.dateTimeEdit_settings_data_t0shifted.dateTime().toPyDateTime().strftime(settings_init['time_str_format'])
+        print(self.settings['dateTimeEdit_settings_data_t0shifted'])
         
+        self.data_saver.set_t0(t0_shifted=self.settings['dateTimeEdit_settings_data_t0shifted'])
+
+    def reset_shiftedt0(self):
+        '''
+        reset shiftedt0 to t0
+        '''
+        self.ui.dateTimeEdit_settings_data_t0shifted.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], settings_init['time_str_format']))
+
+    def set_data_saver_sampref(self):
+        '''
+        set the data_saver.exp_ref['samp_ref']
+        '''
+        self.set_data_saver_refsource('samp')
+        
+
+    def set_data_saver_refref(self):
+        '''
+        set the data_saver.exp_ref['ref_ref']
+        '''
+        self.set_data_saver_refsource('ref')
+
+    def set_data_saver_refsource(self, chn_name):
+        '''
+        set the data_saver.exp_ref[chn_name]
+        '''
+        print('set_data_saver_refsource')
+        print('chn_name', chn_name)
+        ref_source = self.settings['comboBox_settings_data_'+ chn_name + 'refsource']
+        ref_idx = self.settings['lineEdit_settings_data_'+ chn_name + 'refidx']
+        print('ref_source', ref_source)
+        print('ref_idx', ref_idx)
+
+        chn_queue_list = list(self.data_saver.get_queue_id(ref_source).tolist()) # list of available index in the target chn
+        # convert ref_idx from str to a list of int
+        ref_idx = UIModules.index_from_str(ref_idx, chn_queue_list)
+        # if the list is [] set it to [0], which mean the first data of the channel
+        if not ref_idx: 
+            ref_idx = [0]
+            getattr(self.ui, 'lineEdit_settings_data_'+ chn_name + 'refidx').setText('0') 
+            self.settings['lineEdit_settings_data_'+ chn_name + 'refidx'] = '0' 
+
+        # save to data_saver
+        self.data_saver.exp_ref[chn_name + '_ref'][0] = ref_source
+        self.data_saver.exp_ref[chn_name + '_ref'][1] = ref_idx
+
+
+
+
     # @pyqtSlot()
     def set_lineEdit_scaninterval(self):
         # get text
@@ -3200,6 +3281,16 @@ class QCMApp(QMainWindow):
         for harm in range(1, settings_init['max_harmonic']+2, 2):
             getattr(self.ui, 'checkBox_plt1_h' + str(harm)).setChecked(self.settings['checkBox_plt1_h' + str(harm)])
             getattr(self.ui, 'checkBox_plt2_h' + str(harm)).setChecked(self.settings['checkBox_plt1_h' + str(harm)])
+
+        # set widgets to display the channel reference setup
+        # the value will be load from data_saver
+        print('ref_channel_opts')
+        print(self.settings['comboBox_settings_data_samprefsource'])
+        self.load_comboBox(self.ui.comboBox_settings_data_samprefsource, 'ref_channel_opts')
+        self.load_comboBox(self.ui.comboBox_settings_data_refrefsource, 'ref_channel_opts')
+        self.ui.lineEdit_settings_data_samprefidx.setText(str(self.settings['lineEdit_settings_data_samprefidx']))
+        self.ui.lineEdit_settings_data_refrefidx.setText(str(self.settings['lineEdit_settings_data_refrefidx']))
+
 
 
 
