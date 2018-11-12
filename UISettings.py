@@ -700,8 +700,8 @@ settings_default = {
     'radioButton_plt2_ref': False,
 
     ### settings_data
-    'radioButton_settings_data_showall': True,
-    'radioButton_settings_data_showmarked': False,
+    'radioButton_data_showall': True,
+    'radioButton_data_showmarked': False,
     'comboBox_settings_data_samprefsource': 'samp',
     'lineEdit_settings_data_samprefidx': 0,
     'comboBox_settings_data_refrefsource': 'ref',

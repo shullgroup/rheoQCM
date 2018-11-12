@@ -42,6 +42,7 @@ class DataSaver:
 
         self.mode = ''  # mode of datasaver 'init': new file; 'load': append/load file
         self.path = None
+        self.saveflg = True # flag to show if modified data has been saved to file
         self.queue_list = []
         self._chn_keys = ['samp', 'ref'] # raw data groups
         self._ref_keys = {'fs': 'f0', 'gs': 'g0'} # corresponding keys storing the reference
@@ -838,7 +839,6 @@ class DataSaver:
 
     def mark_all_to(self, df, mark_val=1):
         ''' 
-        rest marks column in df. 
         mark all to given mark_val e.g.: 0, 1
         '''
         df_new = df.copy()
@@ -846,58 +846,133 @@ class DataSaver:
         return df_new
 
     ###### selector functions ######
-    def selector_mark_all(self, chn_name):
+    def selector_mark_all(self, chn_name, mark_val):
         '''
         selector function
-        mark all data in chn_name
+        mark all data in chn_name to mark_val
         '''
-        setattr(self, chn_name, self.mark_all_to(getattr(self, chn_name), mark_val=1))
+        setattr(self, chn_name, self.mark_all_to(getattr(self, chn_name), mark_val=mark_val))
 
-    def selector_unmark_all(self, chn_name):
+    def selector_mark_selpts(self, chn_name, sel_idx_dict, mark_val):
         '''
         selector function
-        unmark all data in chn_name
-        '''
-        setattr(self, chn_name, self.mark_all_to(getattr(self, chn_name), mark_val=0))
-
-    def selector_mark_selpts(self, chn_name, sel_idx_dict):
-        '''
-        selector function
-        mark selected points in chn_name
+        mark selected points in chn_name to mark_val
         sel_idx_dict = {
             'harm': [index]
         }
         '''
         df_chn = getattr(self, chn_name)
         for harm, idx in sel_idx_dict.items():
-            df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=1)
+            df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=mark_val)
         setattr(self, chn_name, df_chn)
 
-    def selector_unmark_selpts(self, chn_name, sel_idx_dict):
+    def selector_mark_selidx(self, chn_name, sel_idx_dict, mark_val):
         '''
         selector function
-        mark selected points in chn_name
+        mark union of selected points for all harmonics in chn_name to mark_val
+        sel_idx_dict = {
+            'harm': [index]
+        }
+        '''
+        # get union of indices in all selected harmonic
+        idx_set = set()
+        for idx in sel_idx_dict.values():
+            idx_set.union(idx)
+
+        df_chn = getattr(self, chn_name)
+        for harm in sel_idx_dict.keys():
+            df_chn = self.mark_data(df_chn, idx=idx_set, harm=harm, mark_val=mark_val)
+        setattr(self, chn_name, df_chn)
+
+    def selector_mark_selharm(self, chn_name, sel_idx_dict, mark_val):
+        '''
+        selector function
+        mark all data points in harmonics with selected points in chn_name to mark_val
+        sel_idx_dict = {
+            'harm': [index]
+        }
+        '''
+        selharms = sel_idx_dict.keys()
+        df_chn = getattr(self, chn_name)
+        df_chn.marks = df_chn.marks.apply(lambda x: [mark_val if str(i*2+1) in selharms and mark != np.nan and mark is not None else mark for i, mark in enumerate(x)])
+        setattr(self, chn_name, df_chn)
+
+    ##
+    def selector_del_selpts(self, chn_name, sel_idx_dict):
+        '''
+        selector function
+        del selected points in chn_name to mark_val
         sel_idx_dict = {
             'harm': [index]
         }
         '''
         df_chn = getattr(self, chn_name)
+
         for harm, idx in sel_idx_dict.items():
-            df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=0)
+            # set marks to -1
+            df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=-1)
+            # set fs, gs to nan
+            df_chn.fs[idx] = df_chn.fs[idx].apply(lambda x: [np.nan if str(i*2+1) in harm else val for i, val in enumerate(x)]) # set all to nan. May not necessary
+            df_chn.gs[idx] = df_chn.gs[idx].apply(lambda x: [np.nan if str(i*2+1) in harm else val for i, val in enumerate(x)]) # set all to nan. May not necessary
         setattr(self, chn_name, df_chn)
 
-    def selector_mark_selidx(self, chn_name, sel_idx_dict):
+        with h5py.File(self.path, 'a') as fh:
+            for harm, idxs in sel_idx_dict.items():
+                # delete from raw
+                for idx in idxs:
+                    del fh['raw/' + chn_name + '/' + str(idx) + harm]
+
+    def selector_del_selidx(self, chn_name, sel_idx_dict):
         '''
         selector function
-        unmark union of selected points for all harmonics in chn_name
+        del union of selected points for all harmonics in chn_name to mark_val
         sel_idx_dict = {
             'harm': [index]
         }
         '''
+        # get union of indices in all selected harmonic
+        idx_set = set()
+        for idx in sel_idx_dict.values():
+            idx_set.union(idx)
+
         df_chn = getattr(self, chn_name)
-        for harm, idx in sel_idx_dict.items():
-            df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=1)
+        for harm in sel_idx_dict.keys():
+            df_chn = self.mark_data(df_chn, idx=idx_set, harm=harm, mark_val=-1)
+            # set fs, gs to nan
+            df_chn.fs[idx_set] = df_chn.fs[idx_set].apply(lambda x: [np.nan if str(i*2+1) in harm else val for i, val in enumerate(x)]) # set all to nan. May not necessary
+            df_chn.gs[idx_set] = df_chn.gs[idx_set].apply(lambda x: [np.nan if str(i*2+1) in harm else val for i, val in enumerate(x)]) # set all to nan. May not necessary
         setattr(self, chn_name, df_chn)
+
+        with h5py.File(self.path, 'a') as fh:
+            for harm in sel_idx_dict.keys():
+                # delete from raw
+                for idx in idx_set:
+                    del fh['raw/' + chn_name + '/' + str(idx) + harm]
+
+    def selector_del_selharm(self, chn_name, sel_idx_dict):
+        '''
+        selector function
+        del all data points in harmonics with selected points in chn_name to mark_val
+        sel_idx_dict = {
+            'harm': [index]
+        }
+        '''
+        selharms = sel_idx_dict.keys()
+        df_chn = getattr(self, chn_name)
+        df_chn.marks = df_chn.marks.apply(lambda x: [-1 if str(i*2+1) in selharms and mark != np.nan and mark is not None else mark for i, mark in enumerate(x)])
+        
+        # set fs, gs to nan
+        df_chn.fs = df_chn.fs.apply(lambda x: [np.nan if str(i*2+1) in selharms else val for i, val in enumerate(x)]) # set all to nan. May not necessary
+        df_chn.gs = df_chn.gs.apply(lambda x: [np.nan if str(i*2+1) in selharms else val for i, val in enumerate(x)]) # set all to nan. May not necessary
+
+        setattr(self, chn_name, df_chn)
+
+        with h5py.File(self.path, 'a') as fh:
+            for harm in sel_idx_dict.keys():
+                # delete from raw
+                for idx in getattr(self, chn_name).queue_list:
+                    del fh['raw/' + chn_name + '/' + str(idx) + harm]
+
 
     ######## functions for unit convertion #################
 

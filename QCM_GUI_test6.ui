@@ -162,7 +162,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>2</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1290,7 +1290,7 @@ background-color: red;
                     <enum>QTabWidget::Rounded</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>5</number>
+                    <number>4</number>
                    </property>
                    <property name="iconSize">
                     <size>
@@ -1419,11 +1419,6 @@ background-color: red;
                       <number>0</number>
                      </property>
                     </layout>
-                   </widget>
-                   <widget class="QWidget" name="tab_settings_settings_refit">
-                    <attribute name="title">
-                     <string>Refit</string>
-                    </attribute>
                    </widget>
                   </widget>
                  </item>
@@ -5873,7 +5868,7 @@ p, li { white-space: pre-wrap; }
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_15">
             <item>
-             <widget class="QRadioButton" name="radioButton_settings_data_showall">
+             <widget class="QRadioButton" name="radioButton_data_showall">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
@@ -5889,7 +5884,7 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <widget class="QRadioButton" name="radioButton_settings_data_showmarked">
+             <widget class="QRadioButton" name="radioButton_data_showmarked">
               <property name="maximumSize">
                <size>
                 <width>16777215</width>

@@ -747,12 +747,10 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_settings_data_refrefidx.textEdited.connect(self.save_data_saver_refref)
 
 
-
-
-
-
-        self.ui.radioButton_settings_data_showall.toggled.connect(self.update_widget)
-        self.ui.radioButton_settings_data_showmarked.toggled.connect(self.update_widget)
+        self.ui.radioButton_data_showall.toggled.connect(self.update_widget)
+        self.ui.radioButton_data_showall.toggled.connect(self.update_mpl_dataplt)
+        self.ui.radioButton_data_showmarked.toggled.connect(self.update_widget)
+        self.ui.radioButton_data_showmarked.toggled.connect(self.update_mpl_dataplt)
 
         # insert refernence type
         self.create_combobox(
@@ -2103,9 +2101,9 @@ class QCMApp(QMainWindow):
         # axis scale will be auto changed when comboBox_plt<n>_opts changed. We don't need to get it here
 
         # from tabWidget_settings
-        if self.settings['radioButton_settings_data_showall']: # show all data
+        if self.settings['radioButton_data_showall']: # show all data
             mark = False
-        elif self.settings['radioButton_settings_data_showmarked']: # show marked data only
+        elif self.settings['radioButton_data_showmarked']: # show marked data only
             mark = True
 
         # get y data
@@ -2384,13 +2382,13 @@ class QCMApp(QMainWindow):
 
         menuMark = QMenu('Mark', self)
         actionMark_all = QAction('Mark all data', self)
-        actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_all(chn_name))
+        actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_all(chn_name, 1))
         actionMark_selpts = QAction('Mark selected points', self)
-        actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_selpts(chn_name, sel_idx_dict))
+        actionMark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_selpts(chn_name, sel_idx_dict, 1))
         actionMark_selidx = QAction('Mark selected indices', self)
-        actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_selidx(chn_name, sel_idx_dict))
+        actionMark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_selidx(chn_name, sel_idx_dict, 1))
         actionMark_selharm = QAction('Mark selected harmonics', self)
-        actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_selharm(chn_name, sel_idx_dict))
+        actionMark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_selharm(chn_name, sel_idx_dict, 1))
 
         menuMark.addAction(actionMark_all)
         menuMark.addAction(actionMark_selpts)
@@ -2399,13 +2397,13 @@ class QCMApp(QMainWindow):
 
         menuUnmark = QMenu('Unmark', self)
         actionUnmark_all = QAction('Unmark all data', self)
-        actionMark_all.triggered.connect(lambda: self.data_saver.selector_unmark_all(chn_name))
+        actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_all(chn_name, 0))
         actionUnmark_selpts = QAction('Unmark selected points', self)
-        actionMark_all.triggered.connect(lambda: self.data_saver.selector_unmark_selpts(chn_name, sel_idx_dict))
+        actionUnmark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_selpts(chn_name, sel_idx_dict, 0))
         actionUnmark_selidx = QAction('Unmark selected indices', self)
-        actionMark_all.triggered.connect(lambda: self.data_saver.selector_unmark_selidx(chn_name, sel_idx_dict))
+        actionUnmark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_selidx(chn_name, sel_idx_dict, 0))
         actionUnmark_selharm = QAction('Unmark selected harmonics', self)
-        actionMark_all.triggered.connect(lambda: self.data_saver.selector_unmark_selharm(chn_name, sel_idx_dict))
+        actionUnmark_selharm.triggered.connect(lambda: self.data_saver.selector_unmark_selharm(chn_name, sel_idx_dict, 0))
 
         menuUnmark.addAction(actionUnmark_all)
         menuUnmark.addAction(actionUnmark_selpts)
@@ -2416,8 +2414,11 @@ class QCMApp(QMainWindow):
         actionDel_all = QAction('Delete all data', self)
         actionDel_all.triggered.connect(self.on_triggered_actionClear_All)
         actionDel_selpts = QAction('Delete selected points', self)
+        actionDel_selpts.triggered.connect(lambda: self.data_saver.selector_del_selpts(chn_name, sel_idx_dict))
         actionDel_selidx = QAction('Delete selected indices', self)
+        actionDel_selidx.triggered.connect(lambda: self.data_saver.selector_del_selidx(chn_name, sel_idx_dict))
         actionDel_selharm = QAction('Delete selected harmonics', self)
+        actionDel_selharm.triggered.connect(lambda: self.data_saver.selector_del_selharm(chn_name, sel_idx_dict))
 
         menuDel.addAction(actionDel_all)
         menuDel.addAction(actionDel_selpts)
