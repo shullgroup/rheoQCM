@@ -95,7 +95,7 @@ def index_from_str(idx_str, chn_queue_list):
                 idx.extend(new_idx)
         
 
-        return sorted(list(set(idx) & set(queue_list)))
+        return sorted(list(set(idx) & set(chn_queue_list)))
 
     except Exception as err:
         print(err)

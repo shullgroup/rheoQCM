@@ -100,7 +100,7 @@ class QCMApp(QMainWindow):
         self.ui.setupUi(self)
 
         self.fileName = ''
-        self.fileFlag = False # flag for file saving
+        self.fileFlag = True # flag for file saving
         self.settings = settings_default.copy() # import default settings. It will be initalized latter
         self.peak_tracker = PeakTracker.PeakTracker()
         self.vna_tracker = VNATracker()
@@ -728,8 +728,8 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_settings_data_samprefidx.textChanged.connect(self.update_widget)
 
         # NOTE: following two only emitted when value manually edited
-        self.ui.comboBox_settings_data_samprefsource.activated.connect(self.set_data_saver_sampref)
-        self.ui.lineEdit_settings_data_samprefidx.textEdited.connect(self.set_data_saver_sampref)
+        self.ui.comboBox_settings_data_samprefsource.activated.connect(self.save_data_saver_sampref)
+        self.ui.lineEdit_settings_data_samprefidx.textEdited.connect(self.save_data_saver_sampref)
 
         # move frame_settings_data_refref
         self.move_to_col2(
@@ -742,8 +742,8 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_settings_data_refrefidx.textChanged.connect(self.update_widget)
 
         # NOTE: following two only emitted when value manually edited
-        self.ui.comboBox_settings_data_refrefsource.activated.connect(self.set_data_saver_refref)
-        self.ui.lineEdit_settings_data_refrefidx.textEdited.connect(self.set_data_saver_refref)
+        self.ui.comboBox_settings_data_refrefsource.activated.connect(self.save_data_saver_refref)
+        self.ui.lineEdit_settings_data_refrefidx.textEdited.connect(self.save_data_saver_refref)
 
 
 
@@ -1259,24 +1259,24 @@ class QCMApp(QMainWindow):
         '''
         self.ui.dateTimeEdit_settings_data_t0shifted.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], settings_init['time_str_format']))
 
-    def set_data_saver_sampref(self):
+    def save_data_saver_sampref(self):
         '''
         set the data_saver.exp_ref['samp_ref']
         '''
-        self.set_data_saver_refsource('samp')
+        self.save_data_saver_refsource('samp')
         
 
-    def set_data_saver_refref(self):
+    def save_data_saver_refref(self):
         '''
         set the data_saver.exp_ref['ref_ref']
         '''
-        self.set_data_saver_refsource('ref')
+        self.save_data_saver_refsource('ref')
 
-    def set_data_saver_refsource(self, chn_name):
+    def save_data_saver_refsource(self, chn_name):
         '''
         set the data_saver.exp_ref[chn_name]
         '''
-        print('set_data_saver_refsource')
+        print('save_data_saver_refsource')
         print('chn_name', chn_name)
         ref_source = self.settings['comboBox_settings_data_'+ chn_name + 'refsource']
         ref_idx = self.settings['lineEdit_settings_data_'+ chn_name + 'refidx']

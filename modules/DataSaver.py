@@ -883,6 +883,19 @@ class DataSaver:
         '''
         df_chn = getattr(self, chn_name)
         for harm, idx in sel_idx_dict.items():
+            df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=0)
+        setattr(self, chn_name, df_chn)
+
+    def selector_mark_selidx(self, chn_name, sel_idx_dict):
+        '''
+        selector function
+        unmark union of selected points for all harmonics in chn_name
+        sel_idx_dict = {
+            'harm': [index]
+        }
+        '''
+        df_chn = getattr(self, chn_name)
+        for harm, idx in sel_idx_dict.items():
             df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=1)
         setattr(self, chn_name, df_chn)
 
