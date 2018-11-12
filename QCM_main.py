@@ -145,15 +145,16 @@ class QCMApp(QMainWindow):
             pass
         print(self.vna)
 
-        if self.vna is not None: # only set the timer when vna is available
-            # initiate a timer for test
-            self.timer = QTimer()
-            # self.timer.setSingleShot(True)
-            self.timer.timeout.connect(self.data_collection)
+        # does it necessary???
+        # if self.vna is not None: # only set the timer when vna is available
+        # initiate a timer for test
+        self.timer = QTimer()
+        # self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.data_collection)
 
-            # initiate a timer for progressbar
-            self.bartimer = QTimer()
-            self.bartimer.timeout.connect(self.update_progressbar)
+        # initiate a timer for progressbar
+        self.bartimer = QTimer()
+        self.bartimer.timeout.connect(self.update_progressbar)
 
 
         self.main()
