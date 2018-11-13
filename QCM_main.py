@@ -294,7 +294,7 @@ class QCMApp(QMainWindow):
         self.ui.radioButton_spectra_showGp.toggled.connect(self.update_widget)
         self.ui.radioButton_spectra_showBp.toggled.connect(self.update_widget)
         self.ui.radioButton_spectra_showpolar.toggled.connect(self.update_widget)
-        self.ui.checkBox_spectra_shoechi.toggled.connect(self.update_widget)
+        self.ui.checkBox_spectra_showchi.toggled.connect(self.update_widget)
 
         # set signals to checkBox_control_rectemp
         self.ui.checkBox_control_rectemp.clicked['bool'].connect(self.on_clicked_set_temp_sensor)
@@ -747,11 +747,6 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_settings_data_refrefidx.textEdited.connect(self.save_data_saver_refref)
 
 
-        self.ui.radioButton_data_showall.toggled.connect(self.update_widget)
-        self.ui.radioButton_data_showall.toggled.connect(self.update_mpl_dataplt)
-        self.ui.radioButton_data_showmarked.toggled.connect(self.update_widget)
-        self.ui.radioButton_data_showmarked.toggled.connect(self.update_mpl_dataplt)
-
         # insert refernence type
         self.create_combobox(
             'comboBox_ref_type', 
@@ -805,6 +800,12 @@ class QCMApp(QMainWindow):
 
 
         #region data_data
+
+        self.ui.radioButton_data_showall.toggled.connect(self.update_widget)
+        self.ui.radioButton_data_showall.clicked.connect(self.update_mpl_plt12)
+        self.ui.radioButton_data_showmarked.toggled.connect(self.update_widget)
+        self.ui.radioButton_data_showmarked.clicked.connect(self.update_mpl_plt12)
+
         # set signals to update plot 1 & 2 options
         for i in range(1, settings_init['max_harmonic']+2, 2):
             getattr(self.ui, 'checkBox_plt1_h' + str(i)).stateChanged.connect(self.update_widget)
@@ -822,9 +823,9 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_plt1_optsx.currentIndexChanged.connect(self.update_mpl_plt1)
 
         self.ui.radioButton_plt1_ref.toggled.connect(self.update_widget)
-        self.ui.radioButton_plt1_ref.toggled.connect(self.update_mpl_plt1)
+        self.ui.radioButton_plt1_ref.clicked.connect(self.update_mpl_plt1)
         self.ui.radioButton_plt1_samp.toggled.connect(self.update_widget)
-        self.ui.radioButton_plt1_samp.toggled.connect(self.update_mpl_plt1)
+        self.ui.radioButton_plt1_samp.clicked.connect(self.update_mpl_plt1)
 
         # set signals to update plot 2 options
         self.ui.comboBox_plt2_optsy.currentIndexChanged.connect(self.update_widget)
@@ -835,9 +836,9 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_plt2_optsx.currentIndexChanged.connect(self.update_mpl_plt2)
 
         self.ui.radioButton_plt2_ref.toggled.connect(self.update_widget)
-        self.ui.radioButton_plt2_ref.toggled.connect(self.update_mpl_plt2)
+        self.ui.radioButton_plt2_ref.clicked.connect(self.update_mpl_plt2)
         self.ui.radioButton_plt2_samp.toggled.connect(self.update_widget)
-        self.ui.radioButton_plt2_samp.toggled.connect(self.update_mpl_plt2)
+        self.ui.radioButton_plt2_samp.clicked.connect(self.update_mpl_plt2)
 
         #endregion
 
@@ -1421,7 +1422,8 @@ class QCMApp(QMainWindow):
     def on_triggered_actionSave(self):
         # save current data to file if file has been opened
         if self.fileFlag == True:
-            with open(self.fileName, 'w') as f:
+            name, ext = os.path.splitext(self.fileName)
+            with open(name+'.json', 'w') as f:
                 line = json.dumps(dict(self.settings), indent=4) + "\n"
                 f.write(line)
         # save current data to new file otherwise
@@ -2374,7 +2376,8 @@ class QCMApp(QMainWindow):
 
         # get channel name
         chn_name = self.get_plt_chnname(plt_str)
-
+        chn_queue_list = list(self.data_saver.get_queue_id(chn_name).tolist()) # list of available index in the target chn
+        
 
 
         # create contextMenu
@@ -2384,11 +2387,11 @@ class QCMApp(QMainWindow):
         actionMark_all = QAction('Mark all data', self)
         actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_all(chn_name, 1))
         actionMark_selpts = QAction('Mark selected points', self)
-        actionMark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_selpts(chn_name, sel_idx_dict, 1))
+        actionMark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selpts', chn_queue_list), 1))
         actionMark_selidx = QAction('Mark selected indices', self)
-        actionMark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_selidx(chn_name, sel_idx_dict, 1))
+        actionMark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selidx', chn_queue_list), 1))
         actionMark_selharm = QAction('Mark selected harmonics', self)
-        actionMark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_selharm(chn_name, sel_idx_dict, 1))
+        actionMark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selharm', chn_queue_list), 1))
 
         menuMark.addAction(actionMark_all)
         menuMark.addAction(actionMark_selpts)
@@ -2399,11 +2402,11 @@ class QCMApp(QMainWindow):
         actionUnmark_all = QAction('Unmark all data', self)
         actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_all(chn_name, 0))
         actionUnmark_selpts = QAction('Unmark selected points', self)
-        actionUnmark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_selpts(chn_name, sel_idx_dict, 0))
+        actionUnmark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selpts', chn_queue_list), 0))
         actionUnmark_selidx = QAction('Unmark selected indices', self)
-        actionUnmark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_selidx(chn_name, sel_idx_dict, 0))
+        actionUnmark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selidx', chn_queue_list), 0))
         actionUnmark_selharm = QAction('Unmark selected harmonics', self)
-        actionUnmark_selharm.triggered.connect(lambda: self.data_saver.selector_unmark_selharm(chn_name, sel_idx_dict, 0))
+        actionUnmark_selharm.triggered.connect(lambda: self.data_saver.selector_unmark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selharm', chn_queue_list), 0))
 
         menuUnmark.addAction(actionUnmark_all)
         menuUnmark.addAction(actionUnmark_selpts)
@@ -2414,11 +2417,11 @@ class QCMApp(QMainWindow):
         actionDel_all = QAction('Delete all data', self)
         actionDel_all.triggered.connect(self.on_triggered_actionClear_All)
         actionDel_selpts = QAction('Delete selected points', self)
-        actionDel_selpts.triggered.connect(lambda: self.data_saver.selector_del_selpts(chn_name, sel_idx_dict))
+        actionDel_selpts.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selpts', chn_queue_list)))
         actionDel_selidx = QAction('Delete selected indices', self)
-        actionDel_selidx.triggered.connect(lambda: self.data_saver.selector_del_selidx(chn_name, sel_idx_dict))
+        actionDel_selidx.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selidx', chn_queue_list)))
         actionDel_selharm = QAction('Delete selected harmonics', self)
-        actionDel_selharm.triggered.connect(lambda: self.data_saver.selector_del_selharm(chn_name, sel_idx_dict))
+        actionDel_selharm.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selharm', chn_queue_list)))
 
         menuDel.addAction(actionDel_all)
         menuDel.addAction(actionDel_selpts)
@@ -2427,9 +2430,13 @@ class QCMApp(QMainWindow):
 
         menuRefit = QMenu('Refit', self)
         actionRefit_all = QAction('Refit all data', self)
+        actionRefit_all.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'all', chn_queue_list)))
         actionRefit_selpts = QAction('Refit selected points', self)
+        actionRefit_selpts.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selpts', chn_queue_list)))
         actionRefit_selidx = QAction('Refit selected indices', self)
+        actionRefit_selidx.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selidx', chn_queue_list)))
         actionRefit_selharm = QAction('Refit selected harmonics', self)
+        actionRefit_selharm.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selharm', chn_queue_list)))
 
         menuRefit.addAction(actionRefit_all)
         menuRefit.addAction(actionRefit_selpts)
@@ -3170,6 +3177,7 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_datafilestr.setText(self.fileName)
 
 
+
         ## following data is read from self.settings
         # # hide harmonic related widgets which > max_disp_harmonic & < max_harmonic
         # for i in range(self.settings['max_disp_harmonic']+2, settings_init['max_harmonic']+2, 2):
@@ -3269,7 +3277,11 @@ class QCMApp(QMainWindow):
         # set default displaying of spectra show options
         self.ui.radioButton_spectra_showBp.setChecked(self.settings['radioButton_spectra_showBp'])
         self.ui.radioButton_spectra_showpolar.setChecked(self.settings['radioButton_spectra_showpolar'])
-        self.ui.checkBox_spectra_shoechi.setChecked(self.settings['checkBox_spectra_shoechi'])
+        self.ui.checkBox_spectra_showchi.setChecked(self.settings['checkBox_spectra_showchi'])
+
+        # set data radioButton_data_showall
+        self.ui.radioButton_data_showall.setChecked(self.settings['radioButton_data_showall'])
+        self.ui.radioButton_data_showmarked.setChecked(self.settings['radioButton_data_showmarked'])
 
         # set default displaying of plot 1 options
         self.load_comboBox(self.ui.comboBox_plt1_optsy, 'data_plt_opts')
@@ -3636,6 +3648,119 @@ class QCMApp(QMainWindow):
 
         # 
         # wait bar
+
+
+    def data_refit(self, chn_name, sel_idx_dict):
+        '''
+        data refit routine
+        sel_idx_dict = {
+            'harm': [idx]
+        }
+        '''
+        if self.idle == False:
+            print('Data collection is running!')
+            return
+
+        ## start to read data from data saver
+        # set channels to collect data
+
+        print('sel_idx_dict\n', sel_idx_dict)
+        # reform dict
+        sel_harm_dict = UIModules.idx_dict_to_harm_dict(sel_idx_dict)
+        queue_list = sel_harm_dict.keys()
+        print('sel_harm_dict\n', sel_harm_dict)
+
+        for queue_id in queue_list:
+            # initiate data of queue_id
+
+            # scan harmonics (1, 3, 5...)
+            fs = []
+            gs = []
+
+            self.reading = True
+
+            # data reading and plot
+            harm_list = sel_harm_dict[queue_id]
+            for harm in harm_list:
+                # get data
+                f, G, B = self.data_saver.get_raw(chn_name, queue_id, harm)
+                
+                # put f, G, B to peak_tracker for later fitting and/or tracking
+                self.peak_tracker.update_input(chn_name, harm, f, G, B, self.settings['harmdata'], []) # freq_span set to [], since we don't need to track the peak 
+
+                # plot data in sp<harm>
+                if self.settings['radioButton_spectra_showGp']: # checked
+                    getattr(self.ui, 'mpl_sp' + str(harm)).update_data(('lG', f, G))
+                elif self.settings['radioButton_spectra_showBp']: # checked
+                    getattr(self.ui, 'mpl_sp' + str(harm)).update_data(('lG', f, G), ('lB', f, B))
+                elif self.settings['radioButton_spectra_showpolar']: # checked
+                    getattr(self.ui, 'mpl_sp' + str(harm)).update_data(('lP', G, B))
+
+            # set xticks
+            # self.mpl_set_faxis(getattr(self.ui, 'mpl_sp' + str(harm)).ax[0])
+            
+            self.reading = False
+                
+            # fitting 
+            for harm in harm_list:
+                fit_result = self.peak_tracker.peak_fit(chn_name, harm, components=False)
+                print(fit_result)
+                print(fit_result['v_fit'])
+                # print(fit_result['comp_g'])
+
+                # plot fitted data
+                if self.settings['radioButton_spectra_showGp']: # checked
+                    getattr(self.ui, 'mpl_sp' + harm).update_data(('lGfit',f, fit_result['fit_g']))
+                elif self.settings['radioButton_spectra_showBp']: # checked
+                    getattr(self.ui, 'mpl_sp' + harm).update_data(('lGfit',f, fit_result['fit_g']), ('lBfit',f, fit_result['fit_b']))
+                elif self.settings['radioButton_spectra_showpolar']: # checked
+                    getattr(self.ui, 'mpl_sp' + harm).update_data(('lPfit', fit_result['fit_g'], fit_result['fit_b']))
+
+
+                # update lsp
+                factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=chn_name, harm=harm)
+                gc_list = [fit_result['v_fit']['g_c']['value']] * 2 # make its len() == 2
+                bc_list = [fit_result['v_fit']['b_c']['value']] * 2 # make its len() == 2
+
+                print(factor_span)
+                print(gc_list)
+                if self.settings['radioButton_spectra_showGp'] or self.settings['radioButton_spectra_showBp']: # show G or GB
+
+                    getattr(self.ui, 'mpl_sp' + harm).update_data(('lsp', factor_span, gc_list))
+                elif self.settings['radioButton_spectra_showpolar']: # polar plot
+                    idx = np.where(f >= factor_span[0] & f <= factor_span[1])
+
+                    getattr(self.ui, 'mpl_sp' + harm).update_data(('lsp', fit_result['fit_g'][idx], fit_result['fit_b'][idx]))
+
+
+                # update srec
+                cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
+                cen_rec_G = self.peak_tracker.get_output(key='gmod', chn_name=chn_name, harm=harm).eval(
+                    self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
+                    x=cen_rec_freq
+                ) 
+                
+                # save data to fs and gs
+                fs.append(fit_result['v_fit']['cen_rec']['value']) # fs 
+                gs.append(fit_result['v_fit']['wid_rec']['value'] * 2) # gs = 2 * half_width 
+                print(cen_rec_freq)
+                print(cen_rec_G)
+
+                if self.settings['radioButton_spectra_showGp'] or self.settings['radioButton_spectra_showBp']: # show G or GB
+                    getattr(self.ui, 'mpl_sp' + harm).update_data(('srec', cen_rec_freq, cen_rec_G))
+                elif self.settings['radioButton_spectra_showpolar']: # polar plot
+                    cen_rec_B = self.peak_tracker.get_output(key='bmod', chn_name=chn_name, harm=harm).eval(
+                        self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
+                        x=cen_rec_freq
+                    )                        
+
+                    getattr(self.ui, 'mpl_sp' + harm).update_data(('srec', cen_rec_G, cen_rec_B))
+
+            # Save scan data to file fitting data in data_saver 
+            self.data_saver.update_refit_data(chn_name, queue_id, harm_list, fs=fs, gs=gs)
+        
+            # plot data
+            self.update_mpl_plt12()
 
 
     def get_all_checked_harms(self):

@@ -673,7 +673,7 @@ settings_default = {
     'radioButton_spectra_showGp': True,
     'radioButton_spectra_showBp': False,
     'radioButton_spectra_showpolar': False,
-    'checkBox_spectra_shoechi': False,
+    'checkBox_spectra_showchi': False,
 
     # default selections for plot 1 elements
     'comboBox_plt1_optsy': 'dfn', 

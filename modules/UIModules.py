@@ -102,3 +102,59 @@ def index_from_str(idx_str, chn_queue_list):
         return idx
 
 
+def sel_ind_dict(sel_idx_dict, mode, chn_queue_list):
+    '''
+    recalculate the indices in sel_idx_dict (from selector of main UI) by mode
+    sel_idx_dict = {
+        'harm': [index]
+    }
+    mode: 'all', 'selpts', 'selidx', 'selharm'
+    '''
+
+    if mode == 'all':
+        for harm in sel_idx_dict.keys():
+            sel_idx_dict[harm] = list(chn_queue_list)       
+    if mode == 'selpts':
+        pass
+    elif mode == 'selidx':
+        idx_set = set()
+        for idx in sel_idx_dict.values():
+            idx_set |= set(idx)
+        idx = list(idx_set)
+        for harm in sel_idx_dict.keys():
+            sel_idx_dict[harm] = idx
+    elif mode == 'selharm':
+        for harm in sel_idx_dict.keys():
+            sel_idx_dict[harm] = list(chn_queue_list)
+    else:
+        pass
+    return sel_idx_dict
+
+
+def idx_dict_to_harm_dict(sel_idx_dict):
+    '''
+    reform sel_idx_dict 
+    {
+        'harm': [index]
+    }
+    to sel_harm_dict
+    {
+        'index': [harm]
+    }
+    '''
+    # get union of indecies 
+    idx_set = set()
+    for idxs in sel_idx_dict.values():
+        idx_set |= set(idxs)
+    idx_un = list(idx_set)
+    print('idx_un', idx_un)  
+
+    sel_harm_dict = {}
+    for idx in idx_un:
+        sel_harm_dict[idx] = []
+        for harm in sel_idx_dict.keys():
+            if idx in sel_idx_dict[harm]:
+                sel_harm_dict[idx].append(harm)
+        
+    return sel_harm_dict
+   

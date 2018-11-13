@@ -4547,7 +4547,7 @@ border-image: url(:/button/rc/plus_p.svg);
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_spectra_shoechi">
+               <widget class="QCheckBox" name="checkBox_spectra_showchi">
                 <property name="text">
                  <string>Χsq </string>
                 </property>

@@ -186,6 +186,29 @@ class DataSaver:
         except: # failed to load settings
             return None
 
+    def update_refit_data(self, chn_name, queue_id, harm_list, fs=[np.nan], gs=[np.nan]):
+        '''
+        update refitted data of queue_id 
+        chn_name: str. 'samp' of 'ref'
+        harm_list: list of str ['1', '3', '5', '7', '9']
+        fs: list of delta freq with the same lenght to harm_list
+        gs: list of delta gamma with the same lenght to harm_list
+        '''
+
+        # get 
+        fs_all = self.get_queue(chn_name, queue_id, col='fs')
+        gs_all = self.get_queue(chn_name, queue_id, col='gs')
+
+        # append to the form by chn_name
+        # prepare data: change list to the size of harm_list by inserting nan to the empty harm
+        for i, harm in enumerate(harm_list):
+            harm = int(harm)
+            fs_all[int((harm-1)/2)] = fs[i]
+            gs_all[int((harm-1)/2)] = gs[i]
+
+        # update values
+        self.update_queue(chn_name, queue_id, 'fs', fs_all)
+        self.update_queue(chn_name, queue_id, 'gs', gs_all)
 
     def dynamic_save(self, chn_names, harm_list, t=np.nan, temp=np.nan, f=None, G=None, B=None, fs=[np.nan], gs=[np.nan], marks=[0]):
         '''
@@ -324,6 +347,33 @@ class DataSaver:
         return [np.nan] * int((self.settings_init['max_harmonic'] + 1) / 2)
 
 
+    def get_raw(self, chn_name, queue_id, harm):
+        '''
+        return a set of raw data (f, G, B)
+        '''
+        with h5py.File(self.path, 'r') as fh:
+            self.raw = fh['raw/' + chn_name + '/' + str(queue_id) + '/' + harm][()]
+        print(self.raw)
+        return [self.raw[:, 0], self.raw[:, 1], self.raw[:, 2]]
+
+    def get_queue(self, chn_name, queue_id, col=''):
+        '''
+        get data of a queue_id
+        if col == '': return whole row
+        if col == column name: return the column
+        '''
+        df_chn = getattr(self, chn_name).copy()
+        if col == '':
+            return df_chn.loc[queue_id, :]
+        elif col in df_chn.keys(): # col is a column name
+            return df_chn.loc[queue_id, col]
+
+    def update_queue(self, chn_name, queue_id, col, val):
+        '''
+        update col data of a queue_id
+        '''
+        getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col] = val
+        
     ####################################################
     ##              data convert functions            ##
     ##  They can also be used external for accessing, ## 
@@ -825,15 +875,19 @@ class DataSaver:
         '''
         df_new = df.copy()
         def mark_func(row_marks):
+            print(row_marks)
             new_marks = []
             for i, mark in enumerate(row_marks):
-                if int(i*2+1) == int(harm) and mark != np.nan and mark is not None:
+                if str(i*2+1) == harm and mark != np.nan and mark is not None:
                     new_marks.append(mark_val)
                 else:
                     new_marks.append(mark)
                 return new_marks
 
-        df_new.marks[idx] = df_new.marks[idx].apply(mark_func)
+        print(df_new.marks)
+        # df_new.marks.loc[idx].apply(mark_func)
+        df_new.marks.loc[idx] = df_new.marks.loc[idx].apply(lambda x: [mark_val if str(i*2+1) == harm and mark != np.nan and mark is not None else mark for i, mark in enumerate(x)])
+        print(df_new.marks)
 
         return df_new
 
@@ -853,7 +907,7 @@ class DataSaver:
         '''
         setattr(self, chn_name, self.mark_all_to(getattr(self, chn_name), mark_val=mark_val))
 
-    def selector_mark_selpts(self, chn_name, sel_idx_dict, mark_val):
+    def selector_mark_sel(self, chn_name, sel_idx_dict, mark_val):
         '''
         selector function
         mark selected points in chn_name to mark_val
@@ -864,41 +918,10 @@ class DataSaver:
         df_chn = getattr(self, chn_name)
         for harm, idx in sel_idx_dict.items():
             df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=mark_val)
+            # print(df_chn.marks)
         setattr(self, chn_name, df_chn)
 
-    def selector_mark_selidx(self, chn_name, sel_idx_dict, mark_val):
-        '''
-        selector function
-        mark union of selected points for all harmonics in chn_name to mark_val
-        sel_idx_dict = {
-            'harm': [index]
-        }
-        '''
-        # get union of indices in all selected harmonic
-        idx_set = set()
-        for idx in sel_idx_dict.values():
-            idx_set.union(idx)
-
-        df_chn = getattr(self, chn_name)
-        for harm in sel_idx_dict.keys():
-            df_chn = self.mark_data(df_chn, idx=idx_set, harm=harm, mark_val=mark_val)
-        setattr(self, chn_name, df_chn)
-
-    def selector_mark_selharm(self, chn_name, sel_idx_dict, mark_val):
-        '''
-        selector function
-        mark all data points in harmonics with selected points in chn_name to mark_val
-        sel_idx_dict = {
-            'harm': [index]
-        }
-        '''
-        selharms = sel_idx_dict.keys()
-        df_chn = getattr(self, chn_name)
-        df_chn.marks = df_chn.marks.apply(lambda x: [mark_val if str(i*2+1) in selharms and mark != np.nan and mark is not None else mark for i, mark in enumerate(x)])
-        setattr(self, chn_name, df_chn)
-
-    ##
-    def selector_del_selpts(self, chn_name, sel_idx_dict):
+    def selector_del_sel(self, chn_name, sel_idx_dict):
         '''
         selector function
         del selected points in chn_name to mark_val
@@ -920,57 +943,6 @@ class DataSaver:
             for harm, idxs in sel_idx_dict.items():
                 # delete from raw
                 for idx in idxs:
-                    del fh['raw/' + chn_name + '/' + str(idx) + harm]
-
-    def selector_del_selidx(self, chn_name, sel_idx_dict):
-        '''
-        selector function
-        del union of selected points for all harmonics in chn_name to mark_val
-        sel_idx_dict = {
-            'harm': [index]
-        }
-        '''
-        # get union of indices in all selected harmonic
-        idx_set = set()
-        for idx in sel_idx_dict.values():
-            idx_set.union(idx)
-
-        df_chn = getattr(self, chn_name)
-        for harm in sel_idx_dict.keys():
-            df_chn = self.mark_data(df_chn, idx=idx_set, harm=harm, mark_val=-1)
-            # set fs, gs to nan
-            df_chn.fs[idx_set] = df_chn.fs[idx_set].apply(lambda x: [np.nan if str(i*2+1) in harm else val for i, val in enumerate(x)]) # set all to nan. May not necessary
-            df_chn.gs[idx_set] = df_chn.gs[idx_set].apply(lambda x: [np.nan if str(i*2+1) in harm else val for i, val in enumerate(x)]) # set all to nan. May not necessary
-        setattr(self, chn_name, df_chn)
-
-        with h5py.File(self.path, 'a') as fh:
-            for harm in sel_idx_dict.keys():
-                # delete from raw
-                for idx in idx_set:
-                    del fh['raw/' + chn_name + '/' + str(idx) + harm]
-
-    def selector_del_selharm(self, chn_name, sel_idx_dict):
-        '''
-        selector function
-        del all data points in harmonics with selected points in chn_name to mark_val
-        sel_idx_dict = {
-            'harm': [index]
-        }
-        '''
-        selharms = sel_idx_dict.keys()
-        df_chn = getattr(self, chn_name)
-        df_chn.marks = df_chn.marks.apply(lambda x: [-1 if str(i*2+1) in selharms and mark != np.nan and mark is not None else mark for i, mark in enumerate(x)])
-        
-        # set fs, gs to nan
-        df_chn.fs = df_chn.fs.apply(lambda x: [np.nan if str(i*2+1) in selharms else val for i, val in enumerate(x)]) # set all to nan. May not necessary
-        df_chn.gs = df_chn.gs.apply(lambda x: [np.nan if str(i*2+1) in selharms else val for i, val in enumerate(x)]) # set all to nan. May not necessary
-
-        setattr(self, chn_name, df_chn)
-
-        with h5py.File(self.path, 'a') as fh:
-            for harm in sel_idx_dict.keys():
-                # delete from raw
-                for idx in getattr(self, chn_name).queue_list:
                     del fh['raw/' + chn_name + '/' + str(idx) + harm]
 
 
