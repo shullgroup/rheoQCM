@@ -1661,7 +1661,7 @@ class QCMApp(QMainWindow):
         get the current UI condition from attributes and 
         set the mode for spectra_fit
         '''
-        mode = None,   # None/center/refit
+        mode = None   # None/center/refit
         if self.idle == True: # no test is running
             if self.UITab == 1: # setting
                 mode = 'center'
@@ -2400,13 +2400,13 @@ class QCMApp(QMainWindow):
 
         menuUnmark = QMenu('Unmark', self)
         actionUnmark_all = QAction('Unmark all data', self)
-        actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_all(chn_name, 0))
+        actionUnmark_all.triggered.connect(lambda: self.data_saver.selector_mark_all(chn_name, 0))
         actionUnmark_selpts = QAction('Unmark selected points', self)
         actionUnmark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selpts', chn_queue_list), 0))
         actionUnmark_selidx = QAction('Unmark selected indices', self)
         actionUnmark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selidx', chn_queue_list), 0))
         actionUnmark_selharm = QAction('Unmark selected harmonics', self)
-        actionUnmark_selharm.triggered.connect(lambda: self.data_saver.selector_unmark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selharm', chn_queue_list), 0))
+        actionUnmark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selharm', chn_queue_list), 0))
 
         menuUnmark.addAction(actionUnmark_all)
         menuUnmark.addAction(actionUnmark_selpts)
@@ -3684,54 +3684,27 @@ class QCMApp(QMainWindow):
             for harm in harm_list:
                 # get data
                 f, G, B = self.data_saver.get_raw(chn_name, queue_id, harm)
+                print(len(f), len(G), len(B))
                 
                 # put f, G, B to peak_tracker for later fitting and/or tracking
                 self.peak_tracker.update_input(chn_name, harm, f, G, B, self.settings['harmdata'], []) # freq_span set to [], since we don't need to track the peak 
 
-                # plot data in sp<harm>
-                if self.settings['radioButton_spectra_showGp']: # checked
-                    getattr(self.ui, 'mpl_sp' + str(harm)).update_data(('lG', f, G))
-                elif self.settings['radioButton_spectra_showBp']: # checked
-                    getattr(self.ui, 'mpl_sp' + str(harm)).update_data(('lG', f, G), ('lB', f, B))
-                elif self.settings['radioButton_spectra_showpolar']: # checked
-                    getattr(self.ui, 'mpl_sp' + str(harm)).update_data(('lP', G, B))
-
-            # set xticks
-            # self.mpl_set_faxis(getattr(self.ui, 'mpl_sp' + str(harm)).ax[0])
-            
-            self.reading = False
-                
-            # fitting 
-            for harm in harm_list:
+                # fitting
                 fit_result = self.peak_tracker.peak_fit(chn_name, harm, components=False)
                 print(fit_result)
                 print(fit_result['v_fit'])
                 # print(fit_result['comp_g'])
 
-                # plot fitted data
-                if self.settings['radioButton_spectra_showGp']: # checked
-                    getattr(self.ui, 'mpl_sp' + harm).update_data(('lGfit',f, fit_result['fit_g']))
-                elif self.settings['radioButton_spectra_showBp']: # checked
-                    getattr(self.ui, 'mpl_sp' + harm).update_data(('lGfit',f, fit_result['fit_g']), ('lBfit',f, fit_result['fit_b']))
-                elif self.settings['radioButton_spectra_showpolar']: # checked
-                    getattr(self.ui, 'mpl_sp' + harm).update_data(('lPfit', fit_result['fit_g'], fit_result['fit_b']))
-
+                # save data to fs and gs
+                fs.append(fit_result['v_fit']['cen_rec']['value']) # fs 
+                gs.append(fit_result['v_fit']['wid_rec']['value'] * 2) # gs = 2 * half_width 
 
                 # update lsp
                 factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=chn_name, harm=harm)
                 gc_list = [fit_result['v_fit']['g_c']['value']] * 2 # make its len() == 2
                 bc_list = [fit_result['v_fit']['b_c']['value']] * 2 # make its len() == 2
-
                 print(factor_span)
                 print(gc_list)
-                if self.settings['radioButton_spectra_showGp'] or self.settings['radioButton_spectra_showBp']: # show G or GB
-
-                    getattr(self.ui, 'mpl_sp' + harm).update_data(('lsp', factor_span, gc_list))
-                elif self.settings['radioButton_spectra_showpolar']: # polar plot
-                    idx = np.where(f >= factor_span[0] & f <= factor_span[1])
-
-                    getattr(self.ui, 'mpl_sp' + harm).update_data(('lsp', fit_result['fit_g'][idx], fit_result['fit_b'][idx]))
-
 
                 # update srec
                 cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
@@ -3739,28 +3712,50 @@ class QCMApp(QMainWindow):
                     self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
                     x=cen_rec_freq
                 ) 
-                
-                # save data to fs and gs
-                fs.append(fit_result['v_fit']['cen_rec']['value']) # fs 
-                gs.append(fit_result['v_fit']['wid_rec']['value'] * 2) # gs = 2 * half_width 
                 print(cen_rec_freq)
                 print(cen_rec_G)
+                
+                # plot data in sp<harm> and fitting
+                if self.settings['radioButton_spectra_showGp']: # checked
+                    getattr(self.ui, 'mpl_sp' + harm).update_data(
+                        ('lG', f, G), 
+                        ('lGfit',f, fit_result['fit_g']),
+                        ('lsp', factor_span, gc_list),
+                        ('srec', cen_rec_freq, cen_rec_G)
+                    )
+                elif self.settings['radioButton_spectra_showBp']: # checked
+                    getattr(self.ui, 'mpl_sp' + harm).update_data(
+                        ('lG', f, G), 
+                        ('lB', f, B),
+                        ('lGfit',f, fit_result['fit_g']),
+                        ('lBfit',f, fit_result['fit_b']), 
+                        ('lsp', factor_span, gc_list),
+                        ('srec', cen_rec_freq, cen_rec_G),
+                    )
+                elif self.settings['radioButton_spectra_showpolar']: # checked
+                    idx = np.where(f >= factor_span[0] & f <= factor_span[1])
 
-                if self.settings['radioButton_spectra_showGp'] or self.settings['radioButton_spectra_showBp']: # show G or GB
-                    getattr(self.ui, 'mpl_sp' + harm).update_data(('srec', cen_rec_freq, cen_rec_G))
-                elif self.settings['radioButton_spectra_showpolar']: # polar plot
                     cen_rec_B = self.peak_tracker.get_output(key='bmod', chn_name=chn_name, harm=harm).eval(
                         self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
                         x=cen_rec_freq
-                    )                        
+                    )     
 
-                    getattr(self.ui, 'mpl_sp' + harm).update_data(('srec', cen_rec_G, cen_rec_B))
+                    getattr(self.ui, 'mpl_sp' + harm).update_data(('lP', G, B),
+                        ('lPfit', fit_result['fit_g'], fit_result['fit_b']),
+                        ('lsp', fit_result['fit_g'][idx], fit_result['fit_b'][idx]),
+                        ('srec', cen_rec_G, cen_rec_B),
+                    )
+            
+            self.reading = False
 
             # Save scan data to file fitting data in data_saver 
             self.data_saver.update_refit_data(chn_name, queue_id, harm_list, fs=fs, gs=gs)
         
             # plot data
             self.update_mpl_plt12()
+                
+
+
 
 
     def get_all_checked_harms(self):

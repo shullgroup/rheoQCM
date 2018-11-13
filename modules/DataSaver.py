@@ -353,8 +353,8 @@ class DataSaver:
         '''
         with h5py.File(self.path, 'r') as fh:
             self.raw = fh['raw/' + chn_name + '/' + str(queue_id) + '/' + harm][()]
-        print(self.raw)
-        return [self.raw[:, 0], self.raw[:, 1], self.raw[:, 2]]
+        print(type(self.raw))
+        return [self.raw[0, :], self.raw[1, :], self.raw[2, :]]
 
     def get_queue(self, chn_name, queue_id, col=''):
         '''
@@ -372,7 +372,12 @@ class DataSaver:
         '''
         update col data of a queue_id
         '''
-        getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col] = val
+        print(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col])
+        print(val)
+        print(pd.Series([val]))
+        # getattr(self, chn_name).at[getattr(self, chn_name).queue_id == queue_id, [col]] = pd.Series([val])
+        getattr(self, chn_name)[getattr(self, chn_name).queue_id == queue_id][col] = [val]
+        print(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col])
         
     ####################################################
     ##              data convert functions            ##
@@ -897,6 +902,7 @@ class DataSaver:
         '''
         df_new = df.copy()
         df_new.marks = df_new.marks.apply(lambda x: [mark_val if mark != np.nan and mark is not None else mark for mark in x])
+        print(df_new.marks)
         return df_new
 
     ###### selector functions ######
@@ -943,7 +949,9 @@ class DataSaver:
             for harm, idxs in sel_idx_dict.items():
                 # delete from raw
                 for idx in idxs:
-                    del fh['raw/' + chn_name + '/' + str(idx) + harm]
+                    print(fh['raw/' + chn_name + '/' + str(idx) + '/' + harm])
+                    print(fh['raw/' + chn_name + '/' + str(idx) + '/' + harm])
+                    del fh['raw/' + chn_name + '/' + str(idx) + '/' + harm]
 
 
     ######## functions for unit convertion #################

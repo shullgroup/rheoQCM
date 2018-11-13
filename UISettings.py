@@ -285,8 +285,8 @@ settings_init = {
     # minium fwhw fo peaks to be found in HZ
     'peak_min_width_Hz': 10, 
     # tolerance for peak fitting 
-    'xtol': 1e-18, 
-    'ftol': 1e-18, 
+    'xtol': 1e-10, # -18
+    'ftol': 1e-10, # -18
 
     ######### params for DataSaver module #########
     'unsaved_path': r'.\unsaved', 
