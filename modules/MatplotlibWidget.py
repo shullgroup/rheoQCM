@@ -38,10 +38,10 @@ import numpy as np
 import pandas as pd
 
 from UISettings import settings_init
-from modules import MathModules
+from modules import UIModules
 
 # color map for plot
-color = ['tab:blue', 'tab:red', 'tab:orange', 'tab:gray', 'tab:yellow']
+color = ['tab:blue', 'tab:red', 'tab:orange', 'tab:gray']
 
 # class NavigationToolbar(NavigationToolbar2QT):
     # set buttons to show in toolbar
@@ -163,6 +163,8 @@ class MatplotlibWidget(QWidget):
     def initax_xy(self, *args, **kwargs):
         # axes
         ax1 = self.fig.add_subplot(111, facecolor='none')
+        # ax1 = self.fig.add_subplot(111)
+
         # if self.axtype == 'sp_fit':
         #     # setattr(ax1, 'drag_pan', AxesLockY.drag_pan)
         #     ax1 = self.fig.add_subplot(111, facecolor='none', projection='AxesLockY')
@@ -445,15 +447,15 @@ class MatplotlibWidget(QWidget):
         callback of span_selector
         '''
         curr_f1, curr_f2 = self.ax[0].get_xlim()
-        curr_fc, curr_fs = MathModules.converter_startstop_to_centerspan(curr_f1, curr_f2)
+        curr_fc, curr_fs = UIModules.converter_startstop_to_centerspan(curr_f1, curr_f2)
         # selected range
-        sel_fc, sel_fs = MathModules.converter_startstop_to_centerspan(xclick, xrelease)
+        sel_fc, sel_fs = UIModules.converter_startstop_to_centerspan(xclick, xrelease)
         # calculate the new span
         ratio = curr_fs / sel_fs
         new_fs = curr_fs * ratio
         new_fc = curr_fc * (1 + ratio) - sel_fc * ratio
         # center/span to f1/f2
-        new_f1, new_f2 = MathModules.converter_centerspan_to_startstop(new_fc, new_fs)
+        new_f1, new_f2 = UIModules.converter_centerspan_to_startstop(new_fc, new_fs)
         # print('curr_fs', curr_fs)
         # print('sel_fs', sel_fs)
         # print('new_fs', new_fs)
@@ -483,9 +485,9 @@ class MatplotlibWidget(QWidget):
             color='k'
         ) # fit
 
-        self.l['lfitsp'] = self.ax[0].plot(
+        self.l['lsp'] = self.ax[0].plot(
             [], [], 
-            color='k'
+            color=color[2]
         ) # fit in span range
 
         # set label of ax[1]
@@ -710,6 +712,7 @@ class MatplotlibWidget(QWidget):
         self.l['lp'][0].set_data(x_s.iloc[ind], y_s.iloc[ind])
         self.l['lp'][0].set_label(thisline.get_label() + '_' + str(ind)) # transfer the label of picked line and ind to 'lp'
         self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
 
 
 

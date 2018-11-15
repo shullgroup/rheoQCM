@@ -1219,7 +1219,7 @@ background-color: red;
               <item>
                <widget class="QGroupBox" name="groupBox_settings_settings_harm">
                 <property name="title">
-                 <string>Harmonic (for test only)</string>
+                 <string>Harmonic</string>
                 </property>
                 <property name="flat">
                  <bool>true</bool>
@@ -1290,7 +1290,7 @@ background-color: red;
                     <enum>QTabWidget::Rounded</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>4</number>
+                    <number>1</number>
                    </property>
                    <property name="iconSize">
                     <size>
@@ -4490,7 +4490,7 @@ border-image: url(:/button/rc/plus_p.svg);
              </sizepolicy>
             </property>
             <property name="currentIndex">
-             <number>0</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="page_spectra_topshow">
              <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -4573,7 +4573,7 @@ border-image: url(:/button/rc/plus_p.svg);
                <number>0</number>
               </property>
               <item>
-               <widget class="QPushButton" name="pushButton">
+               <widget class="QPushButton" name="pushButton_manual_refit">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -4681,22 +4681,6 @@ border-image: url(:/button/rc/plus_p.svg);
                    <string>⏭</string>
                   </property>
                  </widget>
-                </item>
-                <item>
-                 <spacer name="horizontalSpacer_24">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeType">
-                   <enum>QSizePolicy::Preferred</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>0</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
                 </item>
                </layout>
               </item>
@@ -4848,7 +4832,7 @@ border: 1px solid blue;
            </size>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="page_spectra_show">
            <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -7011,8 +6995,8 @@ border: 1px solid blue;
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>80</x>
-     <y>708</y>
+     <x>89</x>
+     <y>635</y>
     </hint>
     <hint type="destinationlabel">
      <x>87</x>
@@ -7028,11 +7012,11 @@ border: 1px solid blue;
    <hints>
     <hint type="sourcelabel">
      <x>292</x>
-     <y>557</y>
+     <y>521</y>
     </hint>
     <hint type="destinationlabel">
-     <x>249</x>
-     <y>667</y>
+     <x>257</x>
+     <y>599</y>
     </hint>
    </hints>
   </connection>
@@ -7043,8 +7027,8 @@ border: 1px solid blue;
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>26</x>
-     <y>670</y>
+     <x>34</x>
+     <y>599</y>
     </hint>
     <hint type="destinationlabel">
      <x>406</x>
@@ -7059,8 +7043,8 @@ border: 1px solid blue;
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>83</x>
-     <y>670</y>
+     <x>91</x>
+     <y>599</y>
     </hint>
     <hint type="destinationlabel">
      <x>406</x>
@@ -7095,8 +7079,8 @@ border: 1px solid blue;
      <y>293</y>
     </hint>
     <hint type="destinationlabel">
-     <x>102</x>
-     <y>390</y>
+     <x>111</x>
+     <y>372</y>
     </hint>
    </hints>
   </connection>
@@ -7107,8 +7091,8 @@ border: 1px solid blue;
    <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>177</x>
-     <y>646</y>
+     <x>185</x>
+     <y>669</y>
     </hint>
     <hint type="destinationlabel">
      <x>165</x>
@@ -7127,8 +7111,8 @@ border: 1px solid blue;
      <y>519</y>
     </hint>
     <hint type="destinationlabel">
-     <x>177</x>
-     <y>646</y>
+     <x>185</x>
+     <y>669</y>
     </hint>
    </hints>
   </connection>
@@ -7143,8 +7127,8 @@ border: 1px solid blue;
      <y>360</y>
     </hint>
     <hint type="destinationlabel">
-     <x>150</x>
-     <y>696</y>
+     <x>158</x>
+     <y>673</y>
     </hint>
    </hints>
   </connection>

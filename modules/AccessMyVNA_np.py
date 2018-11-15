@@ -1123,7 +1123,7 @@ class AccessMyVNA():
         print('MyVNASetFequencies\n', ret, f1, f2) #MyVNASetFequencies
         return ret, f1, f2
     
-    @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay)
+    # @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay)
     def GetScanData(self, nStart=0, nEnd=299, nWhata=-1, nWhatb=15):
 
         print('MyVNAGetScanData')
@@ -1141,7 +1141,7 @@ class AccessMyVNA():
         # self.scandata_a.append(ptr_a)
         # self.scandata_b.append(ptr_b)
 
-        ret = _MyVNAGetScanData(nStart, nEnd, nWhata, nWhatb, ptr_a, ptr_b)
+        ret = _MyVNAGetScanData(nStart, nEnd+1, nWhata, nWhatb, ptr_a, ptr_b)
 
         # ret
         #  0: 
@@ -1149,6 +1149,8 @@ class AccessMyVNA():
         #  1: crushes before l682: (errcode = MyVNAInit()) == 0
         print(ret, data_a[0], data_b[0])
 
+        print('len', len(data_a))
+        print('end', data_a[nEnd])
         da = data_a[:nEnd]
         db = data_b[:nEnd]
         rt = ret

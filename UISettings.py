@@ -55,6 +55,23 @@ settings_init = {
         'comboBox_thrmcpltype',
     ],
 
+    # list for disable/hide widges for manual fit
+    'manual_refit_enable_disable_list':[
+        'pushButton_manual_refit',
+        'pushButton_settings_data_tostart',
+        'pushButton_settings_data_toprevious',
+        'pushButton_settings_data_tonext',
+        'pushButton_settings_data_toend',
+    ],
+    # list for disable/hide widges for manual fit
+    'manual_refit_enable_disable_harmtree_list':[
+        'lineEdit_scan_harmstart',
+        'lineEdit_scan_harmend',
+        'lineEdit_scan_harmsteps',
+        'comboBox_tracking_condition',
+        'checkBox_harmfit',
+    ],
+
     # list for disabled widges for current version
     'version_disable_list':[
 

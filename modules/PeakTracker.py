@@ -7,7 +7,7 @@ from scipy.signal import find_peaks
 from random import randrange
 
 from UISettings import settings_init
-from modules import MathModules
+from modules import UIModules
 
 # for debugging
 import traceback
@@ -331,6 +331,7 @@ class PeakTracker:
         chn_dict = {
             'samp': harm_dict,
             'ref' : harm_dict,
+            'refit' : harm_dict,
         }
         return chn_dict
 
@@ -507,7 +508,7 @@ class PeakTracker:
     
         current_xlim = np.array(self.harminput[chn_name][harm]['current_span'])
         # get the current center and current span of the data in Hz
-        current_center, current_span = MathModules.converter_startstop_to_centerspan(*self.harminput[chn_name][harm]['current_span'])
+        current_center, current_span = UIModules.converter_startstop_to_centerspan(*self.harminput[chn_name][harm]['current_span'])
         
         # initiate new_xlim == previous span
         new_xlim = self.harminput[chn_name][harm]['current_span']

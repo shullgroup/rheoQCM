@@ -21,7 +21,7 @@ from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, 
 # packages
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
-from modules import UIModules, MathModules, GBFitting, PeakTracker, DataSaver
+from modules import UIModules, GBFitting, PeakTracker, DataSaver
 from modules.MatplotlibWidget import MatplotlibWidget
 
 import _version
@@ -120,8 +120,8 @@ class QCMApp(QMainWindow):
         
         self.settings_harm = '1' # active harmonic in Settings Tab
         self.settings_chn = {'name': 'samp', 'chn': '1'} # active channel 'samp' or 'ref' in Settings Tab
-        self.active_harm = '1' # active harmonic in Data Tab
-        self.active_chn = {'name': 'samp', 'chn': '1'} # active channel 'samp' or 'ref'
+        self.active = {} # active factors e.g.: harm, chnn_name, plt_str, ind, 
+        self.chn_set_store = {} # used for storing the channal setup self.settings.freq_span and self.settings.harmdata during manual refit
 
 
         # check system
@@ -780,6 +780,12 @@ class QCMApp(QMainWindow):
 
 
         #region spectra_fit
+
+        #
+        self.ui.pushButton_manual_refit.clicked['bool'].connect(self.init_manual_refit)
+        # hide widget for manual refit
+        self.hide_widgets('manual_refit_enable_disable_list')
+
 
         self.ui.horizontalSlider_spectra_fit_spanctrl.valueChanged.connect(self.on_changed_slider_spanctrl)
         self.ui.horizontalSlider_spectra_fit_spanctrl.sliderReleased.connect(self.on_released_slider_spanctrl)
@@ -1544,10 +1550,36 @@ class QCMApp(QMainWindow):
             self.ui.label_status_pts.setText('pts')
             # print(22)
 
+    def show_widgets(self, *args):
+        '''
+        show widgets in given args
+        args: list of names
+        '''
+        print('show')
+        print(args)
+        for name_list in args:
+            for name in settings_init[name_list]:
+                print(name)
+                getattr(self.ui, name).show()
+                # getattr(self.ui, name).setVisible(True)
+
+    def hide_widgets(self, *args):
+        '''
+        hide widgets in given args
+        args: list of names
+        '''
+        print('hide')
+        print(args)
+        for name_list in args:
+            for name in settings_init[name_list]:
+                print(name)
+                getattr(self.ui, name).hide()
+                # getattr(self.ui, name).setVisible(False)
+
 
     def enable_widgets(self, *args):
         '''
-        enable/ widgets by given args
+        enable/ widgets in given args
         args: list of names
         '''
         print(args)
@@ -1557,7 +1589,7 @@ class QCMApp(QMainWindow):
 
     def disable_widgets(self, *args):
         '''
-        disable widgets by given args
+        disable widgets in given args
         args: list of names
         '''
         print(args)
@@ -1608,11 +1640,11 @@ class QCMApp(QMainWindow):
         # f1, f2 = self.ui.mpl_spectra_fit.ax[0].get_xlim()
         f1, f2 = self.get_freq_span()
         # convert start/end (f1/f2) to center/span (fc/fs)
-        fc, fs = MathModules.converter_startstop_to_centerspan(f1, f2)
+        fc, fs = UIModules.converter_startstop_to_centerspan(f1, f2)
         # multiply fs
         fs = fs * n
         # fc/fs back to f1/f2
-        f1, f2 = MathModules.converter_centerspan_to_startstop(fc, fs)
+        f1, f2 = UIModules.converter_centerspan_to_startstop(fc, fs)
 
         # set lineEdit_scan_harmstart & lineEdit_scan_harmend
         self.ui.lineEdit_scan_harmstart.setText(str(f1*1e-6)) # in MHz
@@ -1625,7 +1657,7 @@ class QCMApp(QMainWindow):
         # self.on_editingfinished_harm_freq()
         
         # # get new data
-        # f, G, B = self.sepectra_fit_get_data()
+        # f, G, B = self.spectra_fit_get_data()
         
         # # plot
         # self.tab_spectra_fit_update_mpls(f, G, B)
@@ -1662,6 +1694,7 @@ class QCMApp(QMainWindow):
         set the mode for spectra_fit
         '''
         mode = None   # None/center/refit
+      
         if self.idle == True: # no test is running
             if self.UITab == 1: # setting
                 mode = 'center'
@@ -1682,9 +1715,12 @@ class QCMApp(QMainWindow):
                     mode = 'refit'
                 else:
                     mode = None
+        
+        if self.ui.tabWidget_settings_settings_samprefchn.currentIndex() > 1:
+            mode = 'refit'
         return mode
 
-    def sepectra_fit_get_data(self):
+    def spectra_fit_get_data(self):
         ''' 
         get data for mpl_spectra_fit by spectraTab_mode and 
         return f, G, B
@@ -1703,8 +1739,15 @@ class QCMApp(QMainWindow):
                 f, G, B = self.get_vna_data_no_with(harm=harm, chn_name=chn_name)
 
         elif self.get_spectraTab_mode() == 'refit': # for refitting
-            #TODO getting data from selected index
-            pass
+            # get 
+
+            # get raw of active queue_id from data_saver
+            f, G, B = self.get_active_raw()
+                    # get the vna reset flag
+            freq_span = self.get_freq_span(harm=self.active['harm'], chn_name=self.active['chn_name'])
+
+            idx = np.where((f >= freq_span[0]) & (f <= freq_span[1]))
+            f, G, B = f[idx], G[idx], B[idx]
         else:
             print('Change Tab to Settings or Data to active the function.')
         
@@ -1803,7 +1846,7 @@ class QCMApp(QMainWindow):
     def on_clicked_pushButton_spectra_fit_refresh(self):
         print('vna', self.vna)
         # get data
-        f, G, B = self.sepectra_fit_get_data()
+        f, G, B = self.spectra_fit_get_data()
 
         # update raw
         self.tab_spectra_fit_update_mpls(f, G, B)
@@ -1811,14 +1854,19 @@ class QCMApp(QMainWindow):
 
     def on_clicked_pushButton_spectra_fit_showall(self):
         ''' show whole range of current harmonic'''
-        # get harmonic
-        harm = self.settings_harm
-        # set freq_span[harm] to the maximum range (freq_range[harm])
-        self.set_freq_span(self.settings['freq_range'][harm])
-        # get data
-        f, G, B = self.sepectra_fit_get_data()
-        # updata data
-        self.tab_spectra_fit_update_mpls(f, G, B)      
+        if self.get_spectraTab_mode() == 'center': # for peak centering
+            # get harmonic
+            harm = self.settings_harm
+            # set freq_span[harm] to the maximum range (freq_range[harm])
+            self.set_freq_span(self.settings['freq_range'][harm])
+
+        elif self.get_spectraTab_mode() == 'refit': # for peak refitting
+            # get raw of active queue_id from data_saver
+            f, _, _ = self.get_active_raw()
+            self.set_freq_span([f[0], f[-1]])
+
+        ## reset xlim to active on_fit_lims_change, emit scan and updating harmtree
+        self.ui.mpl_spectra_fit.ax[0].set_xlim(self.get_freq_span())
 
     def on_fit_lims_change(self, axes):
         print('on lim changed')
@@ -1829,7 +1877,7 @@ class QCMApp(QMainWindow):
         # print('p', axG.contains('button_press_event'))
 
         # data lims [min, max]
-        # df1, df2 = MathModules.datarange(self.ui.mpl_spectra_fit.l['lB'][0].get_xdata())
+        # df1, df2 = UIModules.datarange(self.ui.mpl_spectra_fit.l['lB'][0].get_xdata())
         # get axes lims
         f1, f2 = axG.get_xlim()
         # check lim with BW
@@ -1857,7 +1905,7 @@ class QCMApp(QMainWindow):
         self.on_editingfinished_harm_freq()
 
         # get new data
-        f, G, B = self.sepectra_fit_get_data()
+        f, G, B = self.spectra_fit_get_data()
         
         # plot
         self.tab_spectra_fit_update_mpls(f, G, B)
@@ -1871,7 +1919,7 @@ class QCMApp(QMainWindow):
         span = max(f) - min(f)
 
         # update 
-        self.ui.lineEdit_spectra_fit_span.setText(MathModules.num2str((span / 1000), precision=5)) # in kHz
+        self.ui.lineEdit_spectra_fit_span.setText(UIModules.num2str((span / 1000), precision=5)) # in kHz
 
     # def spectra_fit_axesevent_disconnect(self, event):
     #     print('disconnect')
@@ -1970,19 +2018,28 @@ class QCMApp(QMainWindow):
         print(factor_span)
         print(gc_list)
 
+        # sp_fit
         self.ui.mpl_spectra_fit.update_data(('lsp', factor_span, gc_list))
 
-        # update strk
-        cen_trk_freq = fit_result['v_fit']['cen_trk']['value']
-        cen_trk_G = self.peak_tracker.get_output(key='gmod', chn_name=self.settings_chn['name'], harm=self.settings_harm).eval(
-            self.peak_tracker.get_output(key='params', chn_name=self.settings_chn['name'], harm=self.settings_harm),
-            x=cen_trk_freq
-        ) 
+        # sp_polar
+        print(len(data_lG[0]))
+        print(factor_span)
+        idx = np.where((data_lG[0] >= factor_span[0]) & (data_lG[0] <= factor_span[1])) # determine the indices by f (data_lG[0])
+        
+        self.ui.mpl_spectra_fit_polar.update_data(('lsp', fit_result['fit_g'][idx], fit_result['fit_b'][idx]))
 
-        print(cen_trk_freq)
-        print(cen_trk_G)
+        if self.get_spectraTab_mode() == 'center': # center mode
+            # update strk
+            cen_trk_freq = fit_result['v_fit']['cen_trk']['value']
+            cen_trk_G = self.peak_tracker.get_output(key='gmod', chn_name=self.settings_chn['name'], harm=self.settings_harm).eval(
+                self.peak_tracker.get_output(key='params', chn_name=self.settings_chn['name'], harm=self.settings_harm),
+                x=cen_trk_freq
+            ) 
 
-        self.ui.mpl_spectra_fit.update_data(('strk', cen_trk_freq, cen_trk_G))
+            print(cen_trk_freq)
+            print(cen_trk_G)
+
+            self.ui.mpl_spectra_fit.update_data(('strk', cen_trk_freq, cen_trk_G))
 
         # update srec
         cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
@@ -1996,6 +2053,115 @@ class QCMApp(QMainWindow):
 
         self.ui.mpl_spectra_fit.update_data(('srec', cen_rec_freq, cen_rec_G))
 
+        # add results to textBrowser_spectra_fit_result
+        if self.get_spectraTab_mode() == 'refit': # refit mode
+            # save scan data to data_saver 
+            self.data_saver.update_refit_data(
+                self.active['chn_name'], 
+                self.get_active_queueid_from_l_harm_ind(), 
+                [self.active['harm']], 
+                fs=[fit_result['v_fit']['cen_rec']['value']], # fs
+                gs=[fit_result['v_fit']['wid_rec']['value'] * 2], # gs = 2 * half_width 
+            )
+            # update mpl_plt12
+            self.update_mpl_plt12()
+
+    def pick_manual_refit(self):
+        '''
+        manual refit process after manual refit context menu triggered
+        '''
+
+        self.show_widgets('manual_refit_enable_disable_list')
+        self.disable_widgets('manual_refit_enable_disable_harmtree_list')
+        # set pushButton_manual_refit checked 
+        self.ui.pushButton_manual_refit.setChecked(True)
+        self.init_manual_refit()
+
+        # get data from data saver
+        f, G, B = self.get_active_raw()
+        print(len(f), len(G), len(B))
+
+        # update raw
+        self.tab_spectra_fit_update_mpls(f, G, B)
+
+
+
+
+
+
+    def get_active_queueid_from_l_harm_ind(self):
+        '''
+        get queue_id from data_saver by
+        l_str: str. line 'l' or 'lm'
+        harm: str. 
+        ind: index
+        return queue_id
+        '''
+        if self.active['l_str'] == 'l': # showing all data
+            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanrows=False)
+        elif self.active['l_str'] == 'lm': # showing marked data
+            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanrows=True)
+        return queue_list[self.active['ind']]
+
+    def get_active_raw(self):
+        '''
+        get raw data of active from data_saver
+        '''
+        queue_id = self.get_active_queueid_from_l_harm_ind()
+        f, G, B = self.data_saver.get_raw(self.active['chn_name'], queue_id, self.active['harm'])
+
+
+        return f, G, B
+
+    def init_manual_refit(self):
+        '''
+        initiate widgets for manual refit
+        '''
+        print('refit isChecked', self.ui.pushButton_manual_refit.isChecked())
+        if self.ui.pushButton_manual_refit.isChecked():
+            # make a copy of self.freq_span and self.harmdata for refit
+            print('copy to active')
+            self.settings['freq_span']['refit'] = self.settings['freq_span'][self.active['chn_name']]
+            self.settings['harmdata']['refit'] = self.settings['harmdata'][self.active['chn_name']]
+
+            # add manual refit tab to tabWidget_settings_settings_samprefchn
+            self.add_manual_refit_tab(True)
+            print(self.settings_chn)
+
+            # self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(-1) # show manual refit buttons and emit update_settings_chn
+            self.ui.tabWidget_settings_settings_harm.setCurrentIndex((int(self.active['harm'])-1)/2) # set to active harm and emit update_settings_chn
+
+            # # update treeWidget_settings_settings_harmtree
+            # self.update_harmonic_tab()
+
+            # change tabWidget_settings to settings tab
+            self.ui.tabWidget_settings.setCurrentWidget(self.ui.tab_settings_settings)
+
+        else:
+            self.hide_widgets('manual_refit_enable_disable_list')
+            # delete the refit tab
+            self.enable_widgets('manual_refit_enable_disable_harmtree_list')
+            self.add_manual_refit_tab(False)
+            # reset index
+            self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
+
+
+
+
+
+    def add_manual_refit_tab(self, signal):
+        '''
+        add/delete manual refit tab to tabWidget_settings_settings_samprefchn
+        self.add_manual_refit_tab(True)
+        signal: True, add; False, delete
+        '''
+        if signal:
+            mtab = QWidget()
+            mtab.setObjectName('tab_manual_refit')
+            self.ui.tabWidget_settings_settings_samprefchn.addTab(mtab, 'Manual refit')
+            self.ui.tabWidget_settings_settings_samprefchn.setCurrentWidget(mtab)
+        else:
+            self.ui.tabWidget_settings_settings_samprefchn.removeTab(2)
 
     ###### data display functions #########
     def get_axis_settings(self, name):
@@ -2472,8 +2638,18 @@ class QCMApp(QMainWindow):
         if isinstance(pk_data[0], float): # data is not empty
             label = mpl.l['lp'][0].get_label()
             line, ind = label.split('_')
+            l, harm = line[:-1], line[-1]
             print(line)
+            print(l, harm)
             print(ind)
+
+            self.active['chn_name'] = self.get_plt_chnname(plt_str)
+            self.active['harm'] = harm
+            self.active['plt_str'] = plt_str
+            self.active['l_str'] = l
+            self.active['ind'] = int(ind)
+
+            print(self.active)
 
             # get channel name
             chn_name = self.get_plt_chnname(plt_str)
@@ -2482,7 +2658,7 @@ class QCMApp(QMainWindow):
             pkmenu = QMenu('pkmenu', self)
 
             actionManual_fit = QAction('Manual fit', self)
-            actionManual_fit.triggered.connect(lambda: self.data_saver.selector_mark_all(chn_name)) # TODO add function
+            actionManual_fit.triggered.connect(self.pick_manual_refit) 
 
             pkmenu.addAction(actionManual_fit)
 
@@ -2685,9 +2861,21 @@ class QCMApp(QMainWindow):
             self.set_harmdata(self.sender().objectName(), signal, harm=harm)
 
     def update_settings_chn(self):
-
+        print('update_settings_chn')
         if self.sender().objectName() == 'tabWidget_settings_settings_samprefchn': # switched to samp
             idx = self.ui.tabWidget_settings_settings_samprefchn.currentIndex()
+            
+            print(idx)
+            print(self.ui.pushButton_manual_refit.isChecked())
+            print(idx < 2)
+            print(self.ui.pushButton_manual_refit.isChecked() & (idx < 2))
+            if self.ui.pushButton_manual_refit.isChecked() & (idx < 2): # current idx changed out of refit (2)
+                print('samprefchn move out of 2')
+                # disable refit widgets
+                self.ui.pushButton_manual_refit.setChecked(False)
+                self.init_manual_refit() # set the widgets
+
+
             if idx == 0: # swith to samp
                 self.settings_chn = {
                     'name': 'samp', 
@@ -2698,6 +2886,13 @@ class QCMApp(QMainWindow):
                     'name': 'ref', 
                     'chn': self.settings['comboBox_ref_channel']
                 }
+            else: # refit
+                print('refit chn')
+                self.settings_chn = {
+                    'name': 'refit', 
+                    'chn': 0, # not available for test
+                }
+
         elif self.sender().objectName() == 'comboBox_ref_channel' or 'comboBox_samp_channel': # define of samp/ref channel(s) changed
             # reset corrresponding ADC
             print(self.settings['comboBox_samp_channel'])
@@ -2707,6 +2902,8 @@ class QCMApp(QMainWindow):
             elif self.settings_chn['name'] == 'ref':
                 self.settings_chn['chn'] = self.settings['comboBox_ref_channel']
             print(self.settings_chn)
+
+
         # update treeWidget_settings_settings_harmtree
         self.update_harmonic_tab()
 
@@ -2796,7 +2993,7 @@ class QCMApp(QMainWindow):
             print(objname, 'is not found!')
             return None
 
-    def set_harmdata(self, objname, val, harm=None):
+    def set_harmdata(self, objname, val, harm=None, chn_name=None):
         '''
         set data with given objname in 
         treeWidget_settings_settings_harmtree
@@ -2806,9 +3003,11 @@ class QCMApp(QMainWindow):
             harm = self.settings_harm
         else: # use given harmonic. It is useful for mpl_sp<n> getting params
             pass
+        if chn_name is None:
+            chn_name = self.settings_chn['name']
         
         try:
-            self.settings['harmdata'][self.settings_chn['name']][harm][objname] = val
+            self.settings['harmdata'][chn_name][harm][objname] = val
         except:
             print(objname, 'is not found!')
 
@@ -2910,12 +3109,12 @@ class QCMApp(QMainWindow):
             f1r, f2r = np.array(self.settings['freq_span']['ref'][harm]) * 1e-6 # in MHz
             if disp_mode == 'centerspan':
                 # convert f1, f2 from start/stop to center/span
-                f1, f2 = MathModules.converter_startstop_to_centerspan(f1, f2)
-                f1r, f2r = MathModules.converter_startstop_to_centerspan(f1r, f2r)
-            getattr(self.ui, 'lineEdit_startf' + harm).setText(MathModules.num2str(f1, precision=6)) # display as MHz
-            getattr(self.ui, 'lineEdit_endf' + harm).setText(MathModules.num2str(f2, precision=6)) # display as MHz
-            getattr(self.ui, 'lineEdit_startf' + harm + '_r').setText(MathModules.num2str(f1r, precision=6)) # display as MHz
-            getattr(self.ui, 'lineEdit_endf' + harm + '_r').setText(MathModules.num2str(f2r, precision=6)) # display as MHz
+                f1, f2 = UIModules.converter_startstop_to_centerspan(f1, f2)
+                f1r, f2r = UIModules.converter_startstop_to_centerspan(f1r, f2r)
+            getattr(self.ui, 'lineEdit_startf' + harm).setText(UIModules.num2str(f1, precision=6)) # display as MHz
+            getattr(self.ui, 'lineEdit_endf' + harm).setText(UIModules.num2str(f2, precision=6)) # display as MHz
+            getattr(self.ui, 'lineEdit_startf' + harm + '_r').setText(UIModules.num2str(f1r, precision=6)) # display as MHz
+            getattr(self.ui, 'lineEdit_endf' + harm + '_r').setText(UIModules.num2str(f2r, precision=6)) # display as MHz
                 
         # update start/end in treeWidget_settings_settings_harmtree
         harm = self.settings_harm
@@ -2923,11 +3122,11 @@ class QCMApp(QMainWindow):
         f1, f2 = self.get_freq_span()
         # Set Start
         self.ui.lineEdit_scan_harmstart.setText(
-            MathModules.num2str(f1*1e-6, precision=6)
+            UIModules.num2str(f1*1e-6, precision=6)
         )
         # set End
         self.ui.lineEdit_scan_harmend.setText(
-            MathModules.num2str(f2*1e-6, precision=6)
+            UIModules.num2str(f2*1e-6, precision=6)
         )
 
     def update_freq_display_mode(self, signal):
@@ -3359,7 +3558,7 @@ class QCMApp(QMainWindow):
         half_wid = np.absolute(freq[np.where(np.abs(half_amp-resonance)==np.min(np.abs(half_amp-resonance)))[0][0]] -  cen)
         current_xlim = self.get_freq_span(harm=harmonic, chn=chn)
         # get the current center and current span of the data in Hz
-        current_center, current_span = MathModules.converter_startstop_to_centerspan(current_xlim[0], current_xlim[1])
+        current_center, current_span = UIModules.converter_startstop_to_centerspan(current_xlim[0], current_xlim[1])
         # find the starting and ending frequency of only the peak in Hz
         if track_condition == 'fixspan':
             if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > 0.1 * current_span:
@@ -3748,7 +3947,7 @@ class QCMApp(QMainWindow):
             
             self.reading = False
 
-            # Save scan data to file fitting data in data_saver 
+            # save scan data to file fitting data in data_saver 
             self.data_saver.update_refit_data(chn_name, queue_id, harm_list, fs=fs, gs=gs)
         
             # plot data
