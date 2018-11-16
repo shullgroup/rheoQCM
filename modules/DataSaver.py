@@ -183,7 +183,7 @@ class DataSaver:
         load settings from h5 file
         '''
         try: # try to load settings from file
-            with h5py.File(self.path, 'r') as fh:
+            with h5py.File(path, 'r') as fh:
                 key_list = list(fh.keys())
                 print(key_list)
                 

@@ -113,6 +113,17 @@ settings_init = {
         'hdf5 file (*.h5)',
     ]),
 
+    # default load data file type
+    'default_settings_load_filetype': ';;'.join([
+        'hdf5 file (*.h5)',
+        'Json file (*.json)',
+    ]),
+
+    # default export data file type
+    'default_settings_export_filetype': ';;'.join([
+        'Json file (*.json)',
+    ]),
+
     # export  data file type
     'export_datafiletype': ';;'.join([
         'csv file (*.csv)',

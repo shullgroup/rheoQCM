@@ -1449,12 +1449,18 @@ class QCMApp(QMainWindow):
 
     # 
     def on_triggered_load_settings(self):
-        fileName = self.openFileNameDialog('Choose a file to load its settings', path=self.data_saver.path, filetype=settings_init['default_datafiletype']) # TODO add path of last opened folder
+        fileName = self.openFileNameDialog('Choose a file to load its settings', path=self.data_saver.path, filetype=settings_init['default_settings_load_filetype']) # TODO add path of last opened folder
 
         if fileName: 
             # load settings from file
-            settings = self.data_saver.load_settings(path=fileName)
-
+            name, ext = os.path.splitext(fileName)
+            if ext == '.h5': 
+                settings = self.data_saver.load_settings(path=fileName)
+            elif ext == '.json':
+                with open(fileName, 'r') as f:
+                    settings = json.load(f)
+            else:
+                settings = None
             # reset default settings
             # replase keys in self.settings with those in settings_default
             if not settings:
@@ -2759,6 +2765,9 @@ class QCMApp(QMainWindow):
 
             # create contextMenu
             pkmenu = QMenu('pkmenu', self)
+
+            actionManual_fit = QAction('Manual fit', self)
+            actionManual_fit.triggered.connect(self.pick_manual_refit) 
 
             actionManual_fit = QAction('Manual fit', self)
             actionManual_fit.triggered.connect(self.pick_manual_refit) 

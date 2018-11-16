@@ -1,5 +1,4 @@
 from modules.DataSaver import DataSaver
-# from UISettings import settings_init, settings_default
 
 data_saver = DataSaver()
 
