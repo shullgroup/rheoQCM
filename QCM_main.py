@@ -7,6 +7,7 @@ import os
 # import importlib
 import math
 import json
+import shutil
 import datetime, time
 import numpy as np
 import pandas as pd
@@ -900,7 +901,7 @@ class QCMApp(QMainWindow):
         self.ui.menu_settings_data_refit = QMenu(self.ui.toolButton_settings_data_refit)
         self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_all)
         self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_marked)
-        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_selected)
+        # self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_selected)
         # add menu to toolbutton
         self.ui.toolButton_settings_data_refit.setMenu(self.ui.menu_settings_data_refit)
 
@@ -909,7 +910,7 @@ class QCMApp(QMainWindow):
         self.ui.menu_settings_mechanics_solve = QMenu(self.ui.toolButton_settings_mechanics_solve)
         self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_all)
         self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_marked)
-        self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_selected)
+        # self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_selected)
         # add menu to toolbutton
         self.ui.toolButton_settings_mechanics_solve.setMenu(self.ui.menu_settings_mechanics_solve)
 
@@ -949,6 +950,7 @@ class QCMApp(QMainWindow):
 
         # set QAction
         self.ui.actionLoad_Settings.triggered.connect(self.on_triggered_load_settings)
+        self.ui.actionExport_Settings.triggered.connect(self.on_triggered_export_settings)
         self.ui.actionLoad_Exp.triggered.connect(self.on_triggered_load_exp)
         self.ui.actionNew_Exp.triggered.connect(self.on_triggered_new_exp)
         self.ui.actionSave.triggered.connect(self.on_triggered_actionSave)
@@ -1473,34 +1475,53 @@ class QCMApp(QMainWindow):
             # reload widgets' setup 
             self.load_settings()
 
+    def on_triggered_export_settings(self):
+        fileName = self.openFileNameDialog('Choose a file to load its settings', path=self.data_saver.path, filetype=settings_init['default_settings_export_filetype']) # TODO add path of last opened folder
+
+        if fileName: 
+            # load settings from file
+            name, ext = os.path.splitext(fileName)
+            if ext == '.json':
+                with open(fileName, 'w') as f:
+                    line = json.dumps(settings_default, indent=4) + "\n"
+                    f.write(line)
+                print('Settings were exported as json file.')
+                #TODO statusbar
+
     def on_triggered_actionSave(self):
-        # save current data to file if file has been opened
-        if self.data_saver.saveflag == True:
-            name, ext = os.path.splitext(self.data_saver.path)
-            with open(name+'.json', 'w') as f:
-                line = json.dumps(dict(self.settings), indent=4) + "\n"
-                f.write(line)
-        # save current data to new file otherwise
+        '''
+        save current data to file if file has been opened
+        '''
+        if self.data_saver.path: # there is file 
+            self.data_saver.save_data_settings()
+            print('Data has been saved to file!')
+        elif not self.data_saver.path & self.tempPath: # name given but file not been created (no data)
+            print('No data collected!')
         else:
-            self.on_triggered_actionSave_As()
+            print('No file information!')
 
 
     def on_triggered_actionSave_As(self):
         # save current data to a new file 
-        fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
-        try:
-            with open(fileName, 'w') as f:
-                line = json.dumps(dict(self.settings), indent=4) + "\n"
-                f.write(line)
-            # change the displayed file directory in lineEdit_datafilestr
-            self.ui.lineEdit_datafilestr.setText(fileName)
-            # indicate that a file has been loaded
-            self.data_saver.saveflag = True
 
-            self.data_saver.path= filename
-        # pass if action cancelled
-        except:
-            pass
+        # export data to a selected form
+        fileName = self.saveFileDialog(title='Choose a new file', filetype=settings_init['default_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
+        # codes for data exporting
+        if fileName:
+            if self.data_saver.path: # there is file 
+
+                # copy file
+                try:
+                    shutil.copyfile(self.data_saver.path, fileName)
+                except Exception as e:
+                    print('Failed to copy file!')
+                    pritn(e)
+                    return
+                # change the path in data_saver
+                self.data_saver.path = fileName
+                # save modification to new file
+                self.data_saver.save_data_settings() 
+
 
     def on_triggered_actionExport(self):
         # export data to a selected form

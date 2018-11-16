@@ -2545,6 +2545,11 @@ class Ui_MainWindow(object):
         self.actionRows_time.setObjectName("actionRows_time")
         self.actionRow_s1_Row_s2 = QtWidgets.QAction(MainWindow)
         self.actionRow_s1_Row_s2.setObjectName("actionRow_s1_Row_s2")
+        self.actionExport_Settings = QtWidgets.QAction(MainWindow)
+        icon20 = QtGui.QIcon()
+        icon20.addPixmap(QtGui.QPixmap(":/icon/rc/export_settings.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionExport_Settings.setIcon(icon20)
+        self.actionExport_Settings.setObjectName("actionExport_Settings")
         self.menuFile.addAction(self.actionNew_Exp)
         self.menuFile.addAction(self.actionLoad_Exp)
         self.menuFile.addAction(self.actionLoad_Settings)
@@ -2553,6 +2558,7 @@ class Ui_MainWindow(object):
         self.menuFile.addAction(self.actionSave_As)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionExport)
+        self.menuFile.addAction(self.actionExport_Settings)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionClear_All)
         self.menuFile.addSeparator()
@@ -3038,6 +3044,8 @@ class Ui_MainWindow(object):
         self.actionRows_time.setToolTip(_translate("MainWindow", "Plot selected rows vs. time"))
         self.actionRow_s1_Row_s2.setText(_translate("MainWindow", "Row[s1] - Row[s2]"))
         self.actionRow_s1_Row_s2.setToolTip(_translate("MainWindow", "Plot selected two rows (Row[s1] vs. Row[s2])"))
+        self.actionExport_Settings.setText(_translate("MainWindow", "Export Settings"))
+        self.actionExport_Settings.setToolTip(_translate("MainWindow", "Export Settings to a file"))
 
 import QCM_GUI_source_rc
 

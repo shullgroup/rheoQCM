@@ -5812,6 +5812,7 @@ border: 1px solid blue;
     <addaction name="actionSave_As"/>
     <addaction name="separator"/>
     <addaction name="actionExport"/>
+    <addaction name="actionExport_Settings"/>
     <addaction name="separator"/>
     <addaction name="actionClear_All"/>
     <addaction name="separator"/>
@@ -6270,6 +6271,18 @@ border: 1px solid blue;
    </property>
    <property name="toolTip">
     <string>Plot selected two rows (Row[s1] vs. Row[s2])</string>
+   </property>
+  </action>
+  <action name="actionExport_Settings">
+   <property name="icon">
+    <iconset resource="QCM_GUI_source.qrc">
+     <normaloff>:/icon/rc/export_settings.svg</normaloff>:/icon/rc/export_settings.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Export Settings</string>
+   </property>
+   <property name="toolTip">
+    <string>Export Settings to a file</string>
    </property>
   </action>
  </widget>
