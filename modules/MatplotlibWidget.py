@@ -88,13 +88,16 @@ class MatplotlibWidget(QWidget):
         self.ax = [] # list of axes 
         self.l = {} # all the plot stored in dict
         self.l['temp'] = [] # for temp lines in list
+        self.t = {} # all text in fig
         self.leg = '' # initiate legend 
 
         # set padding size
         if axtype == 'sp': 
-            self.fig = Figure(tight_layout={'pad': 0.05}, dpi=dpi, facecolor='none')
+            self.fig = Figure(tight_layout={'pad': 0.05}, dpi=dpi)
+            # self.fig = Figure(tight_layout={'pad': 0.05}, dpi=dpi, facecolor='none')
         else:
-            self.fig = Figure(tight_layout={'pad': 0.2}, dpi=dpi, facecolor='none')
+            self.fig = Figure(tight_layout={'pad': 0.2}, dpi=dpi)
+            # self.fig = Figure(tight_layout={'pad': 0.2}, dpi=dpi, facecolor='none')
         ### set figure background transparsent
         # self.setStyleSheet("background: transparent;")
 
@@ -330,6 +333,24 @@ class MatplotlibWidget(QWidget):
         self.set_ax(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
 
         self.ax[0].xaxis.set_major_locator(ticker.LinearLocator(3))
+
+        # add text
+        self.t['harm'] = self.fig.text(0.01, 0.98, '', va='top',ha='left') # option: weight='bold'
+        self.t['chi'] = self.fig.text(0.01, 0.01, '', va='bottom',ha='left', fontsize='7')
+
+    def update_sp_text_harm(self, harm):
+        if isinstance(harm, int):
+            harm = str(harm)
+        self.t['harm'].set_text(harm)
+
+    def update_sp_text_chi(self, chi=None):
+        '''
+        chi: number
+        '''
+        if not chi:
+            self.t['chi'].set_text('')
+        else:
+            self.t['chi'].set_text(r'$\chi^2$ = {:.4f}'.format(chi))
 
     def init_sp_fit(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''

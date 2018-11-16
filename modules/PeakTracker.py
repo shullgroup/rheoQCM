@@ -830,9 +830,9 @@ class PeakTracker:
         self.update_output(bmod=bmod)
         
 
-        f, G, B = self.harminput[chn_name][harm]['f'], \
-                  self.harminput[chn_name][harm]['G'], \
-                  self.harminput[chn_name][harm]['B']
+        f = self.harminput[chn_name][harm]['f']
+        G = self.harminput[chn_name][harm]['G']
+        B = self.harminput[chn_name][harm]['B']
 
         val = self.get_output(key='params').valuesdict() # get guessed values
 
@@ -853,11 +853,13 @@ class PeakTracker:
             max_idx = max(factor_idx)
             min_idx = min(factor_idx)
             # save min_idx and max_idx to 'factor_span'
-            self.update_output(chn_name=chn_name, harm=harm, factor_span=[f[min_idx], f[max_idx]])
+            self.update_output(chn_name=chn_name, harm=harm, factor_span=[f[min_idx], f[max_idx]]) # span of f used for fitting
 
-            f, G, B = f[min_idx: max_idx], \
-                      G[min_idx: max_idx], \
-                      B[min_idx: max_idx]
+            f = f[min_idx: max_idx]
+            G = G[min_idx: max_idx]
+            B = B[min_idx: max_idx]
+
+            print('data len after factor', len(f))
 
         print('factor\n', factor)
         # print('cen_guess\n', cen_guess)
@@ -876,7 +878,7 @@ class PeakTracker:
         try:
             result = minimize(
                 res_GB, 
-                self.harmoutput[chn_name][harm]['params'], 
+                self.get_output(key='params'), 
                 method='leastsq', 
                 args=(f, G, B), 
                 kws={'gmod': gmod, 'bmod': bmod, 'eps': eps}, 

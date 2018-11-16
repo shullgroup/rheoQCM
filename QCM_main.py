@@ -302,6 +302,7 @@ class QCMApp(QMainWindow):
         self.ui.radioButton_spectra_showpolar.toggled.connect(self.update_widget)
         self.ui.radioButton_spectra_showpolar.clicked.connect(self.mpl_sp_clr_lines_set_label)
         self.ui.checkBox_spectra_showchi.toggled.connect(self.update_widget)
+        self.ui.checkBox_spectra_showchi.toggled.connect(self.mpl_sp_clr_chis)
 
         # set signals to checkBox_control_rectemp
         self.ui.checkBox_control_rectemp.clicked['bool'].connect(self.on_clicked_set_temp_sensor)
@@ -725,6 +726,15 @@ class QCMApp(QMainWindow):
         )
         self.ui.dateTimeEdit_settings_data_t0shifted.dateTimeChanged.connect(self.on_dateTimeChanged_dateTimeEdit_t0shifted)
 
+        # move frame_settings_data_recalcref
+        self.move_to_col2(
+            self.ui.frame_settings_data_recalcref,
+            self.ui.treeWidget_settings_data_refs,
+            'Reference',
+            # 100,
+        )
+        self.ui.pushButton_settings_data_recalcref.clicked.connect(self.recalc_refs)
+
         # move frame_settings_data_sampref
         self.move_to_col2(
             self.ui.frame_settings_data_sampref,
@@ -981,7 +991,8 @@ class QCMApp(QMainWindow):
                     showtoolbar=False,
                 )
             )
-            getattr(self.ui, 'mpl_sp' + str(i)).fig.text(0.01, 0.98, str(i), va='top',ha='left') # option: weight='bold'
+            # getattr(self.ui, 'mpl_sp' + str(i)).fig.text(0.01, 0.98, str(i), va='top',ha='left') # option: weight='bold'
+            getattr(self.ui, 'mpl_sp' + str(i)).update_sp_text_harm(str(i))
             # set mpl_sp<n> border
             getattr(self.ui, 'mpl_sp' + str(i)).setStyleSheet(
                 "border: 0;"
@@ -1305,14 +1316,29 @@ class QCMApp(QMainWindow):
         # convert ref_idx from str to a list of int
         ref_idx = UIModules.index_from_str(ref_idx, chn_queue_list)
         # if the list is [] set it to [0], which mean the first data of the channel
-        if not ref_idx: 
+        if (not ref_idx) and (list(self.data_saver.get_queue_id('samp')) !=  list(self.data_saver.get_queue_id('ref'))): # samp and ref were not collected together
             ref_idx = [0]
             getattr(self.ui, 'lineEdit_settings_data_'+ chn_name + 'refidx').setText('0') 
             self.settings['lineEdit_settings_data_'+ chn_name + 'refidx'] = '0' 
 
-        # save to data_saver
-        self.data_saver.exp_ref[chn_name + '_ref'][0] = ref_source
-        self.data_saver.exp_ref[chn_name + '_ref'][1] = ref_idx
+        # # save to data_saver
+        # self.data_saver.exp_ref[chn_name + '_ref'][0] = ref_source
+        # self.data_saver.exp_ref[chn_name + '_ref'][1] = ref_idx
+
+        # save to data_saver and
+        # update and set reference
+        self.data_saver.set_ref_set(chn_name, ref_source, ref_idx, df=None) # TODO add df if ref_source == exp
+
+        # refresh mpl_plt<n>
+        self.update_mpl_plt12()
+
+    def recalc_refs(self):
+        '''
+        recalculate delf and delg by reference set saved in data_saver
+        '''
+        self.data_saver.calc_fg_ref('samp', mark=True)
+        self.data_saver.calc_fg_ref('ref', mark=True)
+
 
 
 
@@ -2043,11 +2069,19 @@ class QCMApp(QMainWindow):
             harm = str(harm)
             # clear lines
             getattr(self.ui, 'mpl_sp' + harm).clr_lines()
+            # clear .t['chi']
+            getattr(self.ui, 'mpl_sp' + harm).update_sp_text_chi()
             # set labels
             getattr(self.ui, 'mpl_sp' + harm).ax[0].set_xlabel(xlabel)
             getattr(self.ui, 'mpl_sp' + harm).ax[1].set_ylabel(y2label)
 
             getattr(self.ui, 'mpl_sp' + harm).canvas.draw()
+
+    def mpl_sp_clr_chis(self):
+        for harm in range(1, settings_init['max_harmonic']+2, 2):
+            harm = str(harm)
+            # clear .t['chi']
+            getattr(self.ui, 'mpl_sp' + harm).update_sp_text_chi()
 
 
 
@@ -3869,6 +3903,9 @@ class QCMApp(QMainWindow):
                         )                        
 
                         getattr(self.ui, 'mpl_sp' + harm).update_data(('srec', cen_rec_G, cen_rec_B))
+                    
+                    if self.settings['checkBox_spectra_showchi']: # show chi square
+                        getattr(self.ui, 'mpl_sp' + harm).update_sp_text_chi(fit_result['v_fit']['chisqr'])
 
 
                 ## get tracking data
@@ -4031,6 +4068,9 @@ class QCMApp(QMainWindow):
                         ('lsp', fit_result['fit_g'][idx], fit_result['fit_b'][idx]),
                         ('srec', cen_rec_G, cen_rec_B),
                     )
+
+                if self.settings['checkBox_spectra_showchi']: # show chi square
+                    getattr(self.ui, 'mpl_sp' + harm).update_sp_text_chi(fit_result['v_fit']['chisqr'])
             
             self.reading = False
 

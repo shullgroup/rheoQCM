@@ -139,7 +139,7 @@ class DataSaver:
         self._save_ver()
         print(self.ver)
         # save settings here to make sure the data file has enough information for reading later, even though the program crashes while running
-        self.save_settings(settings=self.settings, settings_init=self.settings_init)
+        self.save_data_settings(settings=self.settings, settings_init=self.settings_init)
 
 
     def load_file(self, path):
@@ -323,12 +323,6 @@ class DataSaver:
                 fh.create_dataset('data/' + key, data=getattr(self, key).to_json(), dtype=h5py.special_dtype(vlen=str))  
                 fh.create_dataset('data/' + key + '_ref', data=getattr(self, key + '_ref').to_json(), dtype=h5py.special_dtype(vlen=str))  
 
-            # save reference
-            print(self.exp_ref)
-            if 'exp_ref' in fh:
-                del fh['exp_ref']
-            fh.create_dataset('exp_ref',data=json.dumps(self.exp_ref))
-
     def save_settings(self, settings={}, settings_init={}):
         '''
         save settings (dict) to file
@@ -348,12 +342,20 @@ class DataSaver:
 
     def save_data_settings(self, settings={}, settings_init={}):
         '''
-        wrap up of save_data and save_settings
+        wrap up of save_data and save_settings and save_exp_ref
         '''
         self.save_data()
         self.save_settings(settings={}, settings_init={})
-        
+        self.save_exp_ref()
         self.saveflg = True
+
+    def save_exp_ref(self):
+        with h5py.File(self.path, 'a') as fh:
+            # save reference
+            print(self.exp_ref)
+            if 'exp_ref' in fh:
+                del fh['exp_ref']
+            fh.create_dataset('exp_ref',data=json.dumps(self.exp_ref))
 
     def _save_ver(self):
         '''
@@ -861,7 +863,7 @@ class DataSaver:
                 t0_shifted = t0_shifted.strftime(self.settings_init['time_str_format']) # convert to string
             self.exp_ref['to_shifted'] = t0_shifted
 
-    def get_fg_ref(self, chn_name, harm=[]):
+    def get_fg_ref(self, chn_name, harms=[]):
         '''
         get reference of f or g from self.exp_ref
         chn_name: 'samp' or 'ref'
@@ -869,8 +871,14 @@ class DataSaver:
         {'f0': [f0_1, f0_3, ...], 
          'g0': [g0_1, g0_3, ...]}
         '''
-        if not harm: # no harmonic is given
+        if not harms: # no harmonic is given
             return self.exp_ref[chn_name]
+        else:
+            idx = [(int(harm)-1)/2 for harm in harms]
+            exp_ref = self.exp_ref.copy() # make a copy to make sure not change the original one
+            exp_ref['f0'] =  [val for i, val in enumerate(exp_ref['f0']) if i in idx]
+            exp_ref['g0'] =  [val for i, val in enumerate(exp_ref['g0']) if i in idx]
+            return exp_ref
 
 
     def rows_with_marks(self, chan_name):

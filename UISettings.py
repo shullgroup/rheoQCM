@@ -416,12 +416,12 @@ settings_default = {
             11: True, 
         },
         'harmfitfactor': {
-            1:  6, 
-            3:  6, 
-            5:  6, 
-            7:  6, 
-            9:  6, 
-            11: 6, 
+            1:  3, 
+            3:  3, 
+            5:  3, 
+            7:  3, 
+            9:  3, 
+            11: 3, 
 
         },
         'peaks_maxnum': {
@@ -434,20 +434,20 @@ settings_default = {
 
         },
         'peaks_threshold': {
-            1:  0.2, 
-            3:  0.2, 
-            5:  0.2, 
-            7:  0.2, 
-            9:  0.2, 
-            11: 0.2, 
+            1:  0.001, 
+            3:  0.001, 
+            5:  0.001, 
+            7:  0.001, 
+            9:  0.001, 
+            11: 0.001, 
         },
         'peaks_prominence': {
-            1:  0.005, 
-            3:  0.005, 
-            5:  0.005, 
-            7:  0.005, 
-            9:  0.005, 
-            11: 0.005, 
+            1:  0.001, 
+            3:  0.001, 
+            5:  0.001, 
+            7:  0.001, 
+            9:  0.001, 
+            11: 0.001, 
         },
     },
 
@@ -480,14 +480,14 @@ settings_default = {
                 'comboBox_tracking_condition': 'auto',
                 # default fit settings
                 'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 6,
+                'spinBox_harmfitfactor': 3,
                 'spinBox_peaks_num': 1, 
                 'radioButton_peaks_num_max': True,
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.002,
-                'lineEdit_peaks_prominence': 0.005,
+                'lineEdit_peaks_threshold': 0.001,
+                'lineEdit_peaks_prominence': 0.001,
             },
 
             '3': {
@@ -498,14 +498,14 @@ settings_default = {
                 'comboBox_tracking_condition': 'auto',   
                 # default fit settings
                 'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 6,
+                'spinBox_harmfitfactor': 3,
                 'spinBox_peaks_num': 1, 
                 'radioButton_peaks_num_max': True,
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.002,
-                'lineEdit_peaks_prominence': 0.005,
+                'lineEdit_peaks_threshold': 0.001,
+                'lineEdit_peaks_prominence': 0.001,
             },
 
             '5': {
@@ -516,14 +516,14 @@ settings_default = {
                 'comboBox_tracking_condition': 'auto',
                 # default fit settings
                 'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 6,
+                'spinBox_harmfitfactor': 3,
                 'spinBox_peaks_num': 1, 
                 'radioButton_peaks_num_max': True,
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.002,
-                'lineEdit_peaks_prominence': 0.005,
+                'lineEdit_peaks_threshold': 0.001,
+                'lineEdit_peaks_prominence': 0.001,
             },
 
             '7': {
@@ -534,14 +534,14 @@ settings_default = {
                 'comboBox_tracking_condition': 'auto',
                 # default fit settings
                 'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 6,
+                'spinBox_harmfitfactor': 3,
                 'spinBox_peaks_num': 1, 
                 'radioButton_peaks_num_max': True,
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.002,
-                'lineEdit_peaks_prominence': 0.005,
+                'lineEdit_peaks_threshold': 0.001,
+                'lineEdit_peaks_prominence': 0.001,
             },
 
             '9': {
@@ -552,14 +552,14 @@ settings_default = {
                 'comboBox_tracking_condition': 'auto',
                 # default fit settings
                 'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 6,
+                'spinBox_harmfitfactor': 3,
                 'spinBox_peaks_num': 1, 
                 'radioButton_peaks_num_max': True,
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.002,
-                'lineEdit_peaks_prominence': 0.005,
+                'lineEdit_peaks_threshold': 0.001,
+                'lineEdit_peaks_prominence': 0.001,
             },
 
             # 11: {
@@ -570,14 +570,14 @@ settings_default = {
             #     'comboBox_tracking_condition': 'auto',
             #     # default fit settings
             #     'checkBox_harmfit': True,
-            #     'spinBox_harmfitfactor': 6,
+            #     'spinBox_harmfitfactor': 3,
             #     'spinBox_peaks_num': 1, 
             #     'radioButton_peaks_num_max': True,
             #     'radioButton_peaks_num_fixed': False,
             #     'radioButton_peaks_policy_minf': False,
             #     'radioButton_peaks_policy_maxamp': True,
-            #     'lineEdit_peaks_threshold': 0.002,
-            #     'lineEdit_peaks_prominence': 0.005,
+            #     'lineEdit_peaks_threshold': 0.001,
+            #     'lineEdit_peaks_prominence': 0.001,
             # },
         },
 
@@ -591,14 +591,14 @@ settings_default = {
                 'comboBox_tracking_condition': 'auto',
                 # default fit settings
                 'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 6,
+                'spinBox_harmfitfactor': 3,
                 'spinBox_peaks_num': 1, 
                 'radioButton_peaks_num_max': True,
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.002,
-                'lineEdit_peaks_prominence': 0.005,
+                'lineEdit_peaks_threshold': 0.001,
+                'lineEdit_peaks_prominence': 0.001,
             },
 
             '3': {
@@ -609,14 +609,14 @@ settings_default = {
                 'comboBox_tracking_condition': 'auto',   
                 # default fit settings
                 'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 6,
+                'spinBox_harmfitfactor': 3,
                 'spinBox_peaks_num': 1, 
                 'radioButton_peaks_num_max': True,
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.002,
-                'lineEdit_peaks_prominence': 0.005,
+                'lineEdit_peaks_threshold': 0.001,
+                'lineEdit_peaks_prominence': 0.001,
             },
 
             '5': {
@@ -627,14 +627,14 @@ settings_default = {
                 'comboBox_tracking_condition': 'auto',
                 # default fit settings
                 'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 6,
+                'spinBox_harmfitfactor': 3,
                 'spinBox_peaks_num': 1, 
                 'radioButton_peaks_num_max': True,
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.002,
-                'lineEdit_peaks_prominence': 0.005,
+                'lineEdit_peaks_threshold': 0.001,
+                'lineEdit_peaks_prominence': 0.001,
             },
 
             '7': {
@@ -645,14 +645,14 @@ settings_default = {
                 'comboBox_tracking_condition': 'auto',
                 # default fit settings
                 'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 6,
+                'spinBox_harmfitfactor': 3,
                 'spinBox_peaks_num': 1, 
                 'radioButton_peaks_num_max': True,
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.002,
-                'lineEdit_peaks_prominence': 0.005,
+                'lineEdit_peaks_threshold': 0.001,
+                'lineEdit_peaks_prominence': 0.001,
             },
 
             '9': {
@@ -663,14 +663,14 @@ settings_default = {
                 'comboBox_tracking_condition': 'auto',
                 # default fit settings
                 'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 6,
+                'spinBox_harmfitfactor': 3,
                 'spinBox_peaks_num': 1, 
                 'radioButton_peaks_num_max': True,
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.002,
-                'lineEdit_peaks_prominence': 0.005,
+                'lineEdit_peaks_threshold': 0.001,
+                'lineEdit_peaks_prominence': 0.001,
             },
 
             # 11: {
@@ -681,14 +681,14 @@ settings_default = {
             #     'comboBox_tracking_condition': 'auto',
             #     # default fit settings
             #     'checkBox_harmfit': True,
-            #     'spinBox_harmfitfactor': 6,
+            #     'spinBox_harmfitfactor': 3,
             #     'spinBox_peaks_num': 1, 
             #     'radioButton_peaks_num_max': True,
             #     'radioButton_peaks_num_fixed': False,
             #     'radioButton_peaks_policy_minf': False,
             #     'radioButton_peaks_policy_maxamp': True,
-            #     'lineEdit_peaks_threshold': 0.002,
-            #     'lineEdit_peaks_prominence': 0.005,
+            #     'lineEdit_peaks_threshold': 0.001,
+            #     'lineEdit_peaks_prominence': 0.001,
             # },
         },
     },
@@ -749,8 +749,8 @@ settings_default = {
     'radioButton_data_showall': True,
     'radioButton_data_showmarked': False,
     'comboBox_settings_data_samprefsource': 'samp',
-    'lineEdit_settings_data_samprefidx': 0,
+    'lineEdit_settings_data_samprefidx': [0],
     'comboBox_settings_data_refrefsource': 'ref',
-    'lineEdit_settings_data_refrefidx': 0,
+    'lineEdit_settings_data_refrefidx': [0],
 }
 
