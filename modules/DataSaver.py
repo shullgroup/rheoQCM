@@ -38,26 +38,35 @@ import csv
 
 
 class DataSaver:
-    def __init__(self, ver=''):
+    def __init__(self, ver, settings_init):
 
-        self.mode = ''  # mode of datasaver 'init': new file; 'load': append/load file
-        self.path = None
-        self.saveflg = True # flag to show if modified data has been saved to file
-        self.queue_list = []
         self._chn_keys = ['samp', 'ref'] # raw data groups
         self._ref_keys = {'fs': 'f0', 'gs': 'g0'} # corresponding keys storing the reference
-        self.refflg = False
+        self.ver  = ver # version information
+        self.settings_init = {
+            'max_harmonic': settings_init['max_harmonic'],
+            'time_str_format': settings_init['time_str_format'],
+        }
 
+        self._init_attrs()
+
+    def _init_attrs(self):
+        '''
+        attributes needs to be initiated with new file
+        '''
+        self.mode = ''  # mode of datasaver 'init': new file; 'load': append/load file
+        self.path = ''
+        self.saveflg = True # flag to show if modified data has been saved to file
+        self.refflg = False # flag if the reference has been set
+        self.queue_list = []
         # following attributes will be save in file
         self.settings = {}
-        self.settings_init = {}
         self.samp = self._make_df() # df for data form samp chn
         self.ref  = self._make_df() # df for data from ref chn
         self.samp_ref = self._make_df() # df for samp chn reference
         self.ref_ref = self._make_df() # df for ref chn reference
         self.raw  = {} # raw data from last queue
-        self.exp_ref  = {} # experiment reference setup in dict
-        self.ver  = ver # version information
+        self.exp_ref  = self._make_exp_ref() # experiment reference setup in dict
         
         
 
@@ -105,19 +114,19 @@ class DataSaver:
             #   if [] or [None], reference point by point
         } # experiment reference setup in dict
 
-    def init_file(self, path, settings_init, t0):
+    def init_file(self, path, settings, t0):
         '''
         initiate hdf5 file for data saving
         '''
+        # initiated attributes
+        self._init_attrs()
+
         self.mode = 'init'
         self.path = path
         # save some keys from settings_init for future data manipulation
-        self.settings_init = {
-            'max_harmonic': settings_init['max_harmonic'],
-            'time_str_format': settings_init['time_str_format'],
-        }
+        self.settings = settings
 
-        self.exp_ref = self._make_exp_ref() # use the settings_int values to format referene dict
+        # self.exp_ref = self._make_exp_ref() # use the settings_int values to format referene dict
         self.exp_ref['t0'] = t0
 
         # create groups for raw data
@@ -126,11 +135,12 @@ class DataSaver:
             fh.create_group('data')
             fh.create_group('raw')
         
-        # save settings information
-        self._save_ver(ver=self.ver)
+        # save version information
+        self._save_ver()
         print(self.ver)
+        # save settings here to make sure the data file has enough information for reading later, even though the program crashes while running
+        self.save_settings(settings=self.settings, settings_init=self.settings_init)
 
-        self.queue_list = []
 
     def load_file(self, path):
         '''
@@ -165,6 +175,8 @@ class DataSaver:
                 setattr(self, key + '_ref', pd.read_json(fh['data/' + key + '_ref'][()]).sort_values(by=['queue_id'])) # df for data form samp_ref/ref_ref chn
 
             self.raw  = {} # raw data from last queue
+
+            self.saveflg = True
 
     def load_settings(self, path):
         '''
@@ -207,8 +219,10 @@ class DataSaver:
             gs_all[int((harm-1)/2)] = gs[i]
 
         # update values
-        self.update_queue(chn_name, queue_id, 'fs', fs_all)
-        self.update_queue(chn_name, queue_id, 'gs', gs_all)
+        self.update_queue_col(chn_name, queue_id, 'fs', fs_all)
+        self.update_queue_col(chn_name, queue_id, 'gs', gs_all)
+
+        self.saveflg = False
 
     def dynamic_save(self, chn_names, harm_list, t=np.nan, temp=np.nan, f=None, G=None, B=None, fs=[np.nan], gs=[np.nan], marks=[0]):
         '''
@@ -259,6 +273,8 @@ class DataSaver:
 
         # save raw data to file by chn_names
         self._save_raw(chn_names, harm_list, t=t, temp=temp, f=f, G=G, B=B)
+
+        self.saveflg = False
 
 
     def _save_raw(self, chn_names, harm_list, t=np.nan, temp=np.nan, f=None, G=None, B=None):
@@ -330,7 +346,16 @@ class DataSaver:
                 del fh['settings_init']
             fh.create_dataset('settings_init', data=json.dumps(settings_init))
 
-    def _save_ver(self, ver=''):
+    def save_data_settings(self, settings={}, settings_init={}):
+        '''
+        wrap up of save_data and save_settings
+        '''
+        self.save_data()
+        self.save_settings(settings={}, settings_init={})
+        
+        self.saveflg = True
+
+    def _save_ver(self):
         '''
         save ver (str) to file
         '''
@@ -368,7 +393,7 @@ class DataSaver:
         elif col in df_chn.keys(): # col is a column name
             return df_chn.loc[queue_id, col]
 
-    def update_queue(self, chn_name, queue_id, col, val):
+    def update_queue_col(self, chn_name, queue_id, col, val):
         '''
         update col data of a queue_id
         '''
@@ -378,6 +403,8 @@ class DataSaver:
         # getattr(self, chn_name).at[getattr(self, chn_name).queue_id == queue_id, [col]] = pd.Series([val])
         getattr(self, chn_name)[getattr(self, chn_name).queue_id == queue_id][col] = [val]
         print(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col])
+
+        self.saveflg = False
         
     ####################################################
     ##              data convert functions            ##

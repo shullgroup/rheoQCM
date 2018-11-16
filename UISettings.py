@@ -73,8 +73,37 @@ settings_init = {
     ],
 
     # list for disabled widges for current version
-    'version_disable_list':[
+    'version_hide_list':[
+        'pushButton_newfile',
+        'pushButton_appendfile',
 
+        'groupBox_settings_fitting',
+
+        'pushButton_spectra_fit_autocntr',
+
+        'pushButton_settings_data_tostart',
+        'pushButton_settings_data_toprevious',
+        'pushButton_settings_data_tonext',
+        'pushButton_settings_data_toend',
+
+        # 'toolButton_settings_mechanics_solve',
+        'groupBox_nhplot',
+        'groupBox_settings_mechanics_nhcalc',
+        'checkBox_settings_mechanics_witherror',
+        'pushButton_settings_mechanics_errorsettings',
+        'label_6',
+        'comboBox_settings_mechanics_refG',
+        # 'comboBox_settings_mechanics_selectmodel',
+        'tableWidget_settings_mechanics_setmodel',
+
+        # 'groupBox_settings_mechanics_contour',
+        # 'pushButton_settings_mechanics_simulator',
+        # 'groupBox_settings_mechanics_simulator',
+    ],
+
+    # list of widges to delete in current version
+    'version_delete_list':[
+        'tab_settings_mechanics',
     ],
 
         
@@ -115,7 +144,7 @@ settings_init = {
     #     ('temp_t', 'temp. - time'),
     # ]),
     'data_plt_opts': OrderedDict([
-        ('none',   'none'),
+        # ('none',   'none'),
         ('df',   u'\u0394' + 'f'),
         ('dfn',  u'\u0394' + 'f/n'),
         ('mdf',  '-' + u'\u0394' + 'f'),

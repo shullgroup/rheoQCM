@@ -940,10 +940,10 @@ class MatplotlibWidget(QWidget):
         # print('len temp', len(self.l['temp']))
         # print('temp', self.l['temp'])
 
-        for lt in self.l['temp']:
-            # print('lt', lt)
-            ax.lines.remove(lt[0]) # remove from ax
-            self.l['temp'].remove(lt) # remove from list .l['temp']
+        for l_temp in self.l['temp']:
+            # print('l_temp', l_temp)
+            ax.lines.remove(l_temp[0]) # remove from ax
+            self.l['temp'].remove(l_temp) # remove from list .l['temp']
 
         self.canvas.draw()
         self.canvas.flush_events() # flush the GUI events 
@@ -952,16 +952,19 @@ class MatplotlibWidget(QWidget):
         ''' 
         clear all lines in .l (but not .l['temp'][:]) of key in l_list
         '''
+        # print(self.l)
         for key in self.l:
-            if  l_list is None: # clear all
-                # self.l[key][0].set_xdata([])
-                # self.l[key][0].set_ydata([])
-                self.l[key][0].set_data([], [])
-            else:
-                if key in l_list:
+            if key != 'temp':
+                # print(key)
+                if  l_list is None: # clear all
                     # self.l[key][0].set_xdata([])
                     # self.l[key][0].set_ydata([])
                     self.l[key][0].set_data([], [])
+                else:
+                    if key in l_list:
+                        # self.l[key][0].set_xdata([])
+                        # self.l[key][0].set_ydata([])
+                        self.l[key][0].set_data([], [])
 
         self.canvas.draw()
         self.canvas.flush_events() # flush the GUI events 

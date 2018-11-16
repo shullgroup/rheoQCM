@@ -99,8 +99,7 @@ class QCMApp(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        self.fileName = ''
-        self.fileFlag = True # flag for file saving
+        self.tempPath = '' # to store the file name before it is initiated
         self.settings = settings_default.copy() # import default settings. It will be initalized latter
         self.peak_tracker = PeakTracker.PeakTracker()
         self.vna_tracker = VNATracker()
@@ -109,7 +108,7 @@ class QCMApp(QMainWindow):
 
         self.UITab = 0 # 0: Control; 1: Settings;, 2: Data; 3: Mechanics
         #### initialize the attributes for data saving
-        self.data_saver = DataSaver.DataSaver(ver=_version.__version__)
+        self.data_saver = DataSaver.DataSaver(ver=_version.__version__, settings_init=settings_init)
         
         self.vna = None # vna class
         self.temp_sensor = None # class for temp sensor
@@ -163,6 +162,11 @@ class QCMApp(QMainWindow):
 
     def main(self):
         #region ###### initiate UI #################################
+
+        # hide widges not necessary
+        self.hide_widgets(
+            'version_hide_list'
+        )
 
         #region main UI 
         # link tabWidget_settings and stackedWidget_spectra and stackedWidget_data
@@ -292,8 +296,11 @@ class QCMApp(QMainWindow):
 
         # set signals to update spectra show display options
         self.ui.radioButton_spectra_showGp.toggled.connect(self.update_widget)
+        self.ui.radioButton_spectra_showGp.clicked.connect(self.mpl_sp_clr_lines_set_label)
         self.ui.radioButton_spectra_showBp.toggled.connect(self.update_widget)
+        self.ui.radioButton_spectra_showBp.clicked.connect(self.mpl_sp_clr_lines_set_label)
         self.ui.radioButton_spectra_showpolar.toggled.connect(self.update_widget)
+        self.ui.radioButton_spectra_showpolar.clicked.connect(self.mpl_sp_clr_lines_set_label)
         self.ui.checkBox_spectra_showchi.toggled.connect(self.update_widget)
 
         # set signals to checkBox_control_rectemp
@@ -1160,13 +1167,19 @@ class QCMApp(QMainWindow):
                 # TODO update statusbar
                 return
             # check filename if avaialbe
-            if self.data_saver.path is None: # no filename
+            if not self.data_saver.path: # no filename
+                if self.tempPath: # new file name is set
+                    path = self.tempPath
+                else: # no file name is set. save data to a temp file
+                    path=os.path.join(settings_init['unsaved_path'], datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.h5')
                 self.data_saver.init_file(
-                    path=os.path.join(settings_init['unsaved_path'], datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.h5'),
-                    settings_init=settings_init,
+                    path=path,
+                    settings=self.settings,
                     t0=self.settings['dateTimeEdit_reftime']
                 ) # save to unsaved folder
-            
+                # update exp_ref in UI
+                self.load_refsource()
+                self.update_refsource()
 
             # disable features
             self.disable_widgets(
@@ -1216,10 +1229,9 @@ class QCMApp(QMainWindow):
         # save data
         self.data_saver.save_data()
         # write UI information to file
-        self.data_saver.save_settings(settings=self.settings) # TODO add exp_ref
+        self.data_saver.save_data_settings(settings=self.settings) # TODO add exp_ref
 
         self.counter = 0 # reset counter
-        self.fileFlag = True # mark all data is saved
 
         print('data saver samp')
         print(self.data_saver.samp)
@@ -1372,17 +1384,21 @@ class QCMApp(QMainWindow):
         if fileName:
             # change the displayed file directory in lineEdit_datafilestr
             self.ui.lineEdit_datafilestr.setText(fileName)
+            self.tempPath = fileName # 
             # reset dateTimeEdit_reftime
             self.reset_reftime()
             # set enable
             self.enable_widgets(
                 'pushButton_newfile_enable_list',
             )
-            self.fileName = fileName
-            t0 = time.time()
-            self.data_saver.init_file(path=self.fileName, settings_init=settings_init, t0=self.settings['dateTimeEdit_reftime']) 
-            t1 = time.time()
-            print(t1 -t0)
+
+            # t0 = time.time()
+
+            # leave the init_file when click start button
+            # self.data_saver.init_file(path=fileName, settings_init=settings_init, t0=self.settings['dateTimeEdit_reftime']) 
+
+            # t1 = time.time()
+            # print(t1 -t0)
 
     def on_triggered_load_exp(self): 
         fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
@@ -1395,7 +1411,7 @@ class QCMApp(QMainWindow):
                 'pushButton_appendfile_disable_list',
             )
 
-            # change the displayed file directory in lineEdit_datafilestr and self.fileName
+            # change the displayed file directory in lineEdit_datafilestr and save it to data_saver
             self.set_filename(fileName)
 
     # open folder in explorer
@@ -1407,7 +1423,7 @@ class QCMApp(QMainWindow):
 
     # 
     def on_triggered_load_settings(self):
-        fileName = self.openFileNameDialog('Choose a file to load its settings', path=self.fileName, filetype=settings_init['default_datafiletype']) # TODO add path of last opened folder
+        fileName = self.openFileNameDialog('Choose a file to load its settings', path=self.data_saver.path, filetype=settings_init['default_datafiletype']) # TODO add path of last opened folder
 
         if fileName: 
             # load settings from file
@@ -1427,8 +1443,8 @@ class QCMApp(QMainWindow):
 
     def on_triggered_actionSave(self):
         # save current data to file if file has been opened
-        if self.fileFlag == True:
-            name, ext = os.path.splitext(self.fileName)
+        if self.data_saver.saveflag == True:
+            name, ext = os.path.splitext(self.data_saver.path)
             with open(name+'.json', 'w') as f:
                 line = json.dumps(dict(self.settings), indent=4) + "\n"
                 f.write(line)
@@ -1439,25 +1455,62 @@ class QCMApp(QMainWindow):
 
     def on_triggered_actionSave_As(self):
         # save current data to a new file 
-        self.fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
+        fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
         try:
-            with open(self.fileName, 'w') as f:
+            with open(fileName, 'w') as f:
                 line = json.dumps(dict(self.settings), indent=4) + "\n"
                 f.write(line)
             # change the displayed file directory in lineEdit_datafilestr
-            self.ui.lineEdit_datafilestr.setText(self.fileName)
+            self.ui.lineEdit_datafilestr.setText(fileName)
             # indicate that a file has been loaded
-            self.fileFlag = True
+            self.data_saver.saveflag = True
+
+            self.data_saver.path= filename
         # pass if action cancelled
         except:
             pass
 
     def on_triggered_actionExport(self):
         # export data to a selected form
-        fileName = self.saveFileDialog(title='Choose a file and data type', filetype=settings_init['export_datafiletype'], path=self.fileName) # !! add path of last opened folder
+        fileName = self.saveFileDialog(title='Choose a file and data type', filetype=settings_init['export_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
         # codes for data exporting
         if fileName:
             self.data_saver_data_exporter(fileName) # do the export
+
+    def saveflag_messagebox(self):
+        '''
+        check is the experiment is ongoing (self.timer.isActive()) and if data is saved (self.data_saver.saveflag)
+        and pop up a messageBox to ask if process
+
+        return process: Ture/False for checking
+        '''
+
+        process = False
+
+        if self.timer.isActive() or self.data_saver.saveflag == False:
+            message = []
+
+        if self.data_saver.saveflag == False:
+            message.append('There is data unsaved!')
+        if self.timer.isActive():
+            message.append('Test is Running!')
+            buttons = QMessageBox.Ok
+        else:
+            message.append('Do you want to process?')
+            buttons = QMessageBox.Yes | QMessageBox.Cancel
+
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setText('Your selection was paused!')
+        msg.setInformativeText('\n'.join(message))
+        msg.setWindowTitle(_version.__projectname__ + ' Message')
+        msg.setStandardButtons(buttons)
+        retval = msg.exec_()
+
+        if retval == QMessageBox.Yes:
+            process = True
+
+        return process
            
 
     def on_triggered_actionReset(self, settings=None):
@@ -1466,28 +1519,10 @@ class QCMApp(QMainWindow):
         if settings is given, it will load the given settings (load settings)
         """
 
-        if self.timer.isActive() or self.fileFlag == False:
-            message = []
+        process = self.saveflag_messagebox
 
-            if self.fileFlag == False:
-                message.append('There is data unsaved!')
-            if self.timer.isActive():
-                message.append('Test is Running!')
-                buttons = QMessageBox.Ok
-            else:
-                message.append('Do you want to process?')
-                buttons = QMessageBox.Yes | QMessageBox.Cancel
-
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Information)
-            msg.setText('UI reset was stopped!')
-            msg.setInformativeText('\n'.join(message))
-            msg.setWindowTitle(_version.__projectname__ + ' Message')
-            msg.setStandardButtons(buttons)
-            retval = msg.exec_()
-
-            if retval != QMessageBox.Yes:
-                return
+        if not process: 
+            return
 
         # set widgets enabled by using the disabled list
         self.enable_widgets(
@@ -1510,7 +1545,7 @@ class QCMApp(QMainWindow):
         self.load_settings()
 
         if not settings: # reset UI
-            self.data_saver = DataSaver.DataSaver(ver=_version.__version__)
+            self.data_saver = DataSaver.DataSaver(ver=_version.__version__, settings_init=settings_init)
             # enable widgets
             self.enable_widgets(
                 'pushButton_runstop_disable_list',
@@ -1527,7 +1562,7 @@ class QCMApp(QMainWindow):
         clear all data
         '''
         # re-initiate file
-        self.data_saver.init_file(path=self.fileName, settings_init=settings_init, t0=self.settings['dateTimeEdit_reftime']) 
+        self.data_saver.init_file(self.data_saver.path, settings=self.settings, t0=self.settings['dateTimeEdit_reftime']) 
         # enable widgets
         self.enable_widgets(
             'pushButton_runstop_disable_list',
@@ -1560,7 +1595,8 @@ class QCMApp(QMainWindow):
         for name_list in args:
             for name in settings_init[name_list]:
                 print(name)
-                getattr(self.ui, name).show()
+                if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list': 
+                    getattr(self.ui, name).show()
                 # getattr(self.ui, name).setVisible(True)
 
     def hide_widgets(self, *args):
@@ -1573,7 +1609,8 @@ class QCMApp(QMainWindow):
         for name_list in args:
             for name in settings_init[name_list]:
                 print(name)
-                getattr(self.ui, name).hide()
+                if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list': 
+                    getattr(self.ui, name).hide()
                 # getattr(self.ui, name).setVisible(False)
 
 
@@ -1585,7 +1622,8 @@ class QCMApp(QMainWindow):
         print(args)
         for name_list in args:
             for name in settings_init[name_list]:
-                getattr(self.ui, name).setEnabled(True)
+                if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list': 
+                    getattr(self.ui, name).setEnabled(True)
 
     def disable_widgets(self, *args):
         '''
@@ -1595,13 +1633,14 @@ class QCMApp(QMainWindow):
         print(args)
         for name_list in args:
             for name in settings_init[name_list]:
-                getattr(self.ui, name).setEnabled(False)
+                if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list': 
+                    getattr(self.ui, name).setEnabled(False)
 
     def set_filename(self, fileName=''):
         '''
-        set self.fileName and lineEdit_datafilestr
+        set self.data_saver.path and lineEdit_datafilestr
         '''
-        self.fileName = fileName
+        self.data_saver.path = fileName
         self.ui.lineEdit_datafilestr.setText(fileName)
 
     def on_acctiontriggered_slider_spanctrl(self, value):
@@ -1981,6 +2020,36 @@ class QCMApp(QMainWindow):
         # ax.set_xticklabels([str(-span * 0.5), '0', str(span * 0.5)])
         # set xlabel
         # ax.set_xlabel('f (+{} Hz)'.format(center))
+
+    def mpl_sp_clr_lines_set_label(self, signal):
+        '''
+        clear mpl_sp<n> when the plot mode changes
+        Gp, Gp+Bp, Polor
+        '''
+
+        sender = self.sender().objectName()
+        print(sender)
+        if (sender == 'radioButton_spectra_showGp') or (sender == 'radioButton_spectra_showBp'):
+            xlabel = r'$f$ (Hz)'
+            y2label = r'$B_P$ (mS)'
+        elif sender == 'radioButton_spectra_showpolar':
+            xlabel = r'$B_P$ (mS)'
+            y2label = ''
+        else:
+            xlabel = r'$f$ (Hz)'
+            y2label = r'$B_P$ (mS)'
+
+        for harm in range(1, settings_init['max_harmonic']+2, 2):
+            harm = str(harm)
+            # clear lines
+            getattr(self.ui, 'mpl_sp' + harm).clr_lines()
+            # set labels
+            getattr(self.ui, 'mpl_sp' + harm).ax[0].set_xlabel(xlabel)
+            getattr(self.ui, 'mpl_sp' + harm).ax[1].set_ylabel(y2label)
+
+            getattr(self.ui, 'mpl_sp' + harm).canvas.draw()
+
+
 
     def on_clicked_pushButton_spectra_fit_fit(self):
         '''
@@ -3373,7 +3442,7 @@ class QCMApp(QMainWindow):
         self.updat_progressbar(val=0, text='')
 
         # set lineEdit_datafilestr
-        self.ui.lineEdit_datafilestr.setText(self.fileName)
+        self.ui.lineEdit_datafilestr.setText(self.data_saver.path)
 
 
 
@@ -3497,6 +3566,15 @@ class QCMApp(QMainWindow):
 
         # set widgets to display the channel reference setup
         # the value will be load from data_saver
+
+        self.update_refsource()
+
+
+
+    def update_refsource(self):
+        '''
+        update widgets related to reference source
+        '''
         print('ref_channel_opts')
         print(self.settings['comboBox_settings_data_samprefsource'])
         self.load_comboBox(self.ui.comboBox_settings_data_samprefsource, 'ref_channel_opts')
@@ -3504,7 +3582,16 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_settings_data_samprefidx.setText(str(self.settings['lineEdit_settings_data_samprefidx']))
         self.ui.lineEdit_settings_data_refrefidx.setText(str(self.settings['lineEdit_settings_data_refrefidx']))
 
+    def load_refsource(self):
+        '''
+        update widgets related to reference source
+        '''
+        print('ref_channel_opts')
+        self.settings['comboBox_settings_data_samprefsource'] = self.data_saver.exp_ref['samp_ref'][0]
+        self.settings['comboBox_settings_data_refrefsource'] = self.data_saver.exp_ref['ref_ref'][0]
 
+        self.settings['lineEdit_settings_data_samprefidx'] = self.data_saver.exp_ref['samp_ref'][1]
+        self.settings['lineEdit_settings_data_refrefidx'] = self.data_saver.exp_ref['ref_ref'][1]
 
 
     def check_freq_range(self, harmonic, min_range, max_range):
@@ -3755,7 +3842,7 @@ class QCMApp(QMainWindow):
 
                         getattr(self.ui, 'mpl_sp' + harm).update_data(('lsp', factor_span, gc_list))
                     elif self.settings['radioButton_spectra_showpolar']: # polar plot
-                        idx = np.where(f[chn_name][harm] >= factor_span[0] & f[chn_name][harm] <= factor_span[1])
+                        idx = np.where((f[chn_name][harm] >= factor_span[0]) & (f[chn_name][harm] <= factor_span[1]))
 
                         getattr(self.ui, 'mpl_sp' + harm).update_data(('lsp', fit_result['fit_g'][idx], fit_result['fit_b'][idx]))
 
