@@ -1483,7 +1483,9 @@ class QCMApp(QMainWindow):
             name, ext = os.path.splitext(fileName)
             if ext == '.json':
                 with open(fileName, 'w') as f:
-                    line = json.dumps(settings_default, indent=4) + "\n"
+                    settings = self.settings.copy()
+                    settings.pop('dateTimeEdit_reftime', None)
+                    line = json.dumps(settings, indent=4) + "\n"
                     f.write(line)
                 print('Settings were exported as json file.')
                 #TODO statusbar
@@ -1515,7 +1517,7 @@ class QCMApp(QMainWindow):
                     shutil.copyfile(self.data_saver.path, fileName)
                 except Exception as e:
                     print('Failed to copy file!')
-                    pritn(e)
+                    print(e)
                     return
                 # change the path in data_saver
                 self.data_saver.path = fileName
