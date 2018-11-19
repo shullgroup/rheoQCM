@@ -7,5 +7,5 @@ __contact__ = ''
 __copyright__ = 'Shull Research Group @ Northwestern University'
 __license__ = 'need to decide. GLP3?'
 __deprecated__ = ''
-__date__ = '16 Oct. 2018'
+__date__ = '19 Nov. 2018'
 __version__ = '.'.join(__version_info__)
