@@ -195,7 +195,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>2</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -6041,6 +6041,9 @@ border: 1px solid blue;
    </property>
    <property name="text">
     <string>Open MyVNA</string>
+   </property>
+   <property name="toolTip">
+    <string>Open MyVNA (The changes of setup will work only after the window is closed.)</string>
    </property>
   </action>
   <action name="actionAdd_Temperature_Data">

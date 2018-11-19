@@ -3,6 +3,7 @@ This is the main code of the QCM acquization program
 '''
 
 import os
+import subprocess
 # import csv
 # import importlib
 import math
@@ -958,6 +959,8 @@ class QCMApp(QMainWindow):
         self.ui.actionExport.triggered.connect(self.on_triggered_actionExport)
         self.ui.actionReset.triggered.connect(self.on_triggered_actionReset)
         self.ui.actionClear_All.triggered.connect(self.on_triggered_actionClear_All)
+        self.ui.actionOpen_MyVNA.triggered.connect(self.on_triggered_actionOpen_MyVNA)
+
 
         #endregion
 
@@ -1342,6 +1345,12 @@ class QCMApp(QMainWindow):
         self.data_saver.calc_fg_ref('ref', mark=True)
 
 
+    def on_triggered_actionOpen_MyVNA(self):
+        '''
+        open myVNA
+        
+        '''
+        subprocess.Popen(settings_init['vna_path'])
 
 
 

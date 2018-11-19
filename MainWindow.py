@@ -2593,7 +2593,7 @@ class Ui_MainWindow(object):
         self.label_5.setBuddy(self.lineEdit_spectra_fit_span)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget_settings.setCurrentIndex(2)
+        self.tabWidget_settings.setCurrentIndex(0)
         self.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
         self.tabWidget_settings_settings_harm.setCurrentIndex(1)
         self.toolBox.setCurrentIndex(0)
@@ -3007,6 +3007,7 @@ class Ui_MainWindow(object):
         self.actionSingle_Point.setText(_translate("MainWindow", "Single Point"))
         self.actionSet_Temperature_Sensor.setText(_translate("MainWindow", "Set Temperature Sensor"))
         self.actionOpen_MyVNA.setText(_translate("MainWindow", "Open MyVNA"))
+        self.actionOpen_MyVNA.setToolTip(_translate("MainWindow", "Open MyVNA (The changes of setup will work only after the window is closed.)"))
         self.actionAdd_Temperature_Data.setText(_translate("MainWindow", "Add Temperature Data"))
         self.actionLayout_1.setText(_translate("MainWindow", "Layout 1"))
         self.actionLayout_2.setText(_translate("MainWindow", "Layout 2"))

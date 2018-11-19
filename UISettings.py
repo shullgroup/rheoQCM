@@ -13,6 +13,9 @@ settings_init = {
     # window default size
     'window_size': [1200, 800], # px
 
+    # myVNA path
+    'vna_path': r'C:\Program Files (x86)\G8KBB\myVNA\myVNA.exe',
+
     # highest harmonic can be shown in the UI. 
     'max_harmonic': 9, # do not change
     
