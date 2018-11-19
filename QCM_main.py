@@ -2637,9 +2637,9 @@ class QCMApp(QMainWindow):
         print(mpl)
         print(plt_str)
 
-        if mpl.pushButton_selectorswitch.isChecked():
+        if mpl.sel_mode == 'selector':
             self.mpl_data_open_selector_menu(position, mpl, plt_str)
-        elif mpl.pushButton_pickerswitch.isChecked():
+        elif mpl.sel_mode == 'picker':
             self.mpl_data_open_picker_menu(position, mpl, plt_str)
 
     def mpl_data_open_selector_menu(self, position, mpl, plt_str):

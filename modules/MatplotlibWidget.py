@@ -525,6 +525,8 @@ class MatplotlibWidget(QWidget):
             .l<nharm> 
             .lm<nharm>
         '''
+        self.sel_mode = 'none' # 'none', 'selector', 'picker'
+
         self.initax_xy()
 
         for i in range(1, int(settings_init['max_harmonic']+2), 2):
@@ -534,6 +536,7 @@ class MatplotlibWidget(QWidget):
                 markerfacecolor='none', 
                 picker=5, # 5 points tolerance
                 label='l'+str(i),
+                alpha=0.75,
             ) # l
         
         for i in range(1, int(settings_init['max_harmonic']+2), 2):
@@ -544,6 +547,7 @@ class MatplotlibWidget(QWidget):
                 # linestyle='none',
                 picker=5, # 5 points tolerance
                 label='lm'+str(i),
+                alpha=0.75,
             ) # maked points of line
             self.l['ls' + str(i)] = self.ax[0].plot(
                 [], [], 
@@ -603,59 +607,50 @@ class MatplotlibWidget(QWidget):
         icon_sel.addPixmap(QPixmap(':/button/rc/selector.svg'), QIcon.Normal, QIcon.Off)
         self.pushButton_selectorswitch.setIcon(icon_sel)
         
-        self.pushButton_selectorswitch.clicked.connect(self.data_rectselector_switch)
+        self.pushButton_selectorswitch.clicked.connect(self.data_rectsleector_picker_switch)
 
         # add it to toolbar
         self.toolbar.addWidget(self.pushButton_selectorswitch)
-
-        # create a toggle button for picker
-        self.pushButton_pickerswitch = QPushButton()
-        self.pushButton_pickerswitch.setText('')
-        self.pushButton_pickerswitch.setCheckable(True)
-        self.pushButton_pickerswitch.setFlat(True)
-        # icon
-        icon_pk = QIcon()
-        icon_pk.addPixmap(QPixmap(':/button/rc/picker.svg'), QIcon.Normal, QIcon.Off)
-        self.pushButton_pickerswitch.setIcon(icon_pk)
-        
-        self.pushButton_pickerswitch.clicked.connect(self.data_picker_switch)
-
-        # add it to toolbar
-        self.toolbar.addWidget(self.pushButton_pickerswitch)
-
         # # add selector switch button to toolbar
         # self.fig.canvas.manager.toolmanager.add_tool('Data Selector', SelectorSwitch, selector=self.rect_selector)
 
         # # add button to toolbar
         # self.canvas.manager.toolbar.add_tool('DataSelector', 'zoom_pan', 1)
 
-    def data_rectselector_switch(self, checked):
+
+    def data_rectsleector_picker_switch(self, checked):
         if checked:
             print(True)
-            # disable picker
-            self.pushButton_pickerswitch.setChecked(False)
-            self.data_picker_switch(False)
-
+            # active rectangle selector
             self.rect_selector.set_active(True)
-            # print(self.toolbar._active)
-            # print(dir(self.toolbar))
-            # # print(dir(self.toolbar.toggleViewAction))
-            
-            # print(dir(self.toolbar.pan))
-            # print(self.toolbar.zoom)
+            # connect pick event
+            self.cid = self.canvas.mpl_connect('pick_event', self.data_onpick_callback)
+           
             if self.toolbar._active == "PAN":
                 self.toolbar.pan()
             elif self.toolbar._active == "ZOOM":
                 self.toolbar.zoom()
         else:
+
+            # deactive rectangle selector
             self.rect_selector.set_active(False)
             # reset .l['ls<n>']
-            for i in range(1, int(settings_init['max_harmonic']+2), 2):
-                self.update_data(('ls'+ str(i), [], []))
-            
+            self.clr_lines(l_list=['ls'+ str(i) for i in range(1, int(settings_init['max_harmonic']+2), 2)])
+            # deactive pick event            
+            self.canvas.mpl_disconnect(self.cid)
+            # clear data .l['lp']
+            self.clr_lines(l_list=['lp'])
+
+            # reset
+            self.sel_mode = 'none'
+
     def data_rectselector_callback(self, eclick, erelease):
         '''
+        when rectangle selector is active
         '''
+        # clear pick data .l['lp']
+        self.clr_lines(l_list=['lp'])
+
         # print(dir(eclick))
         print(eclick)
         print(erelease)
@@ -691,30 +686,22 @@ class MatplotlibWidget(QWidget):
                     # # update selected indices
                     # sel_idx_dict[harm] = sel_idx
         
+        if sel_list: # there is data selected
+            self.sel_mode = 'selector'
+        else:
+            self.sel_mode = 'none'
+
         # print(sel_idx_dict)
         # plot the selected data
         self.update_data(*sel_list)
-
-
-    def data_picker_switch(self, checked):
-        '''
-        connect/disconnect picker event to data
-        '''
-        if checked:
-            # disable rectangleselector
-            self.pushButton_selectorswitch.setChecked(False)
-            self.data_rectselector_switch(False)
-
-            self.cid = self.canvas.mpl_connect('pick_event', self.data_onpick_callback)
-        else:
-            self.canvas.mpl_disconnect(self.cid)
-            # clear data .l['lp']
-            self.clr_lines(l_list=['lp'])
 
     def data_onpick_callback(self, event):
         '''
         callback function of mpl_data pick_event
         '''
+        # clear selector data .l['ls<n>']
+        self.clr_lines(l_list=['ls'+ str(i) for i in range(1, int(settings_init['max_harmonic']+2), 2)])
+
         # print(dir(event))
         thisline = event.artist
         x_s = thisline.get_xdata()
@@ -735,8 +722,8 @@ class MatplotlibWidget(QWidget):
         self.canvas.draw()
         self.canvas.flush_events() # flush the GUI events 
 
-
-
+        # set
+        self.sel_mode = 'picker'
 
     def init_contour(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''

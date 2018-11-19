@@ -74,8 +74,7 @@ settings_init = {
 
     # list for disabled widges for current version
     'version_hide_list':[
-        'pushButton_newfile',
-        'pushButton_appendfile',
+        'groupBox_settings_output',
 
         'groupBox_settings_fitting',
 

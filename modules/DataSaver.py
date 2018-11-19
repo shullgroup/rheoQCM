@@ -859,9 +859,9 @@ class DataSaver:
                 print(self.exp_ref)
 
         if t0_shifted is not None:
-            if isinstance(t0_shifted, datetime.datetime): # if to_shifted is datetime obj
+            if isinstance(t0_shifted, datetime.datetime): # if t0_shifted is datetime obj
                 t0_shifted = t0_shifted.strftime(self.settings_init['time_str_format']) # convert to string
-            self.exp_ref['to_shifted'] = t0_shifted
+            self.exp_ref['t0_shifted'] = t0_shifted
 
     def get_fg_ref(self, chn_name, harms=[]):
         '''
