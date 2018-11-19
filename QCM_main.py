@@ -1344,13 +1344,14 @@ class QCMApp(QMainWindow):
         self.data_saver.calc_fg_ref('samp', mark=True)
         self.data_saver.calc_fg_ref('ref', mark=True)
 
-
     def on_triggered_actionOpen_MyVNA(self):
         '''
         open myVNA
-        
         '''
         subprocess.Popen(settings_init['vna_path'])
+
+
+
 
 
 
