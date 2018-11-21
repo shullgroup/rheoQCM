@@ -159,16 +159,23 @@ class QCMApp(QMainWindow):
 
 
         self.main()
+        
+        # hide widges not necessary
+        self.hide_widgets(
+            'version_hide_list'
+        )
+
+        # hide widgets not for analysis mode
+        if self.vna is None:
+            self.hide_widgets(
+                'analysis_mode_disable_list'
+            )
+
         self.load_settings()
 
 
     def main(self):
         #region ###### initiate UI #################################
-
-        # hide widges not necessary
-        self.hide_widgets(
-            'version_hide_list'
-        )
 
         #region main UI 
         # link tabWidget_settings and stackedWidget_spectra and stackedWidget_data
@@ -466,13 +473,13 @@ class QCMApp(QMainWindow):
 
         # add comBox_tempmodule to treeWidget_settings_settings_hardware
         try: 
-            temp_class_list = TempModules.class_list # when TempModules is loaded
+            settings_init['temp_class_opts_list'] = TempModules.class_list # when TempModules is loaded
         except:
-            temp_class_list = None # no temp module is loaded
+            settings_init['temp_class_opts_list'] = None # no temp module is loaded
         self.create_combobox(
             'comboBox_tempmodule',
             # UIModules.list_modules(TempModules),  
-            temp_class_list,  
+            settings_init['temp_class_opts_list'],  
             100,
             'Module',
             self.ui.treeWidget_settings_settings_hardware, 
@@ -482,16 +489,16 @@ class QCMApp(QMainWindow):
 
         # add comboBox_tempdevice to treeWidget_settings_settings_hardware
         if self.vna and self.system == 'win32':
-            self.settings['tempdevs_opts'] = TempDevices.dict_available_devs(settings_init['tempdevices_dict'])
+            settings_init['tempdevs_opts'] = TempDevices.dict_available_devs(settings_init['tempdevices_dict'])
             self.create_combobox(
                 'comboBox_tempdevice',
-                self.settings['tempdevs_opts'],  
+                settings_init['tempdevs_opts'],  
                 100,
                 'Device',
                 self.ui.treeWidget_settings_settings_hardware, 
             )
             self.settings['comboBox_tempdevice'] = self.ui.comboBox_tempdevice.itemData(self.ui.comboBox_tempdevice.currentIndex())
-            self.ui.comboBox_tempdevice.activated.connect(self.update_tempdevice)
+            self.ui.comboBox_tempdevice.currentIndexChanged.connect(self.update_tempdevice)
         else: # vna is not available
             self.create_combobox(
                 'comboBox_tempdevice',
@@ -513,11 +520,10 @@ class QCMApp(QMainWindow):
 
         if not self.settings['comboBox_tempdevice']: # vna or tempdevice are not availabel
             # set temp related widgets unavailable
-            self.ui.checkBox_control_rectemp.setEnabled(False)
-            self.ui.checkBox_settings_temp_sensor.setEnabled(False)
-            self.ui.comboBox_tempmodule.setEnabled(False)
-            self.ui.comboBox_tempdevice.setEnabled(False)
-            self.ui.comboBox_thrmcpltype.setEnabled(False)
+            self.disable_widgets(
+                'temp_device_setting_disable_list',
+                'temp_settings_enable_disable_list',
+            )
 
 
         # insert time_unit
@@ -765,15 +771,6 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_data_refrefsource.activated.connect(self.save_data_saver_refref)
         self.ui.lineEdit_settings_data_refrefidx.textEdited.connect(self.save_data_saver_refref)
 
-
-        # insert refernence type
-        self.create_combobox(
-            'comboBox_ref_type', 
-            settings_init['ref_type_opts'], 
-            100, 
-            'Type', 
-            self.ui.treeWidget_settings_data_refs
-        )
         
        # set treeWidget_settings_data_refs expanded
         self.ui.treeWidget_settings_data_refs.expandToDepth(0)
@@ -933,21 +930,6 @@ class QCMApp(QMainWindow):
         self.ui.group_refType.addAction(self.ui.actionData_File)
         self.ui.group_refType.addAction(self.ui.actionSingle_Point)
         self.ui.group_refType.addAction(self.ui.actionExternal)
-
-        # set action group f0
-        self.ui.group_f0 = QActionGroup(self, exclusive=True)
-        self.ui.group_f0.addAction(self.ui.action5_MHz)
-        self.ui.group_f0.addAction(self.ui.action6_MHz)
-        self.ui.group_f0.addAction(self.ui.action9_MHz)
-        self.ui.group_f0.addAction(self.ui.action10_MHz)
-
-        # set action group BW
-        self.ui.group_BW = QActionGroup(self, exclusive=True)
-        self.ui.group_BW.addAction(self.ui.actionBW_2_MHz)
-        self.ui.group_BW.addAction(self.ui.actionBW_1_MHz)
-        self.ui.group_BW.addAction(self.ui.actionBW_0_5_MHz)
-        self.ui.group_BW.addAction(self.ui.actionBW_0_25_MHz)
-        self.ui.group_BW.addAction(self.ui.actionBW_0_1_MHz)
 
         # set QAction
         self.ui.actionLoad_Settings.triggered.connect(self.on_triggered_load_settings)
@@ -3310,11 +3292,11 @@ class QCMApp(QMainWindow):
 
         # set label_settings_control_label1 & label_settings_control_label2
         if disp_mode == 'startstop':
-            self.ui.label_settings_control_label1.setText('Start (MHz)')
-            self.ui.label_settings_control_label2.setText('End (MHz)')
+            self.ui.label_settings_control_label1.setText('Start')
+            self.ui.label_settings_control_label2.setText('End')
         elif disp_mode == 'centerspan':
-            self.ui.label_settings_control_label1.setText('Center (MHz)')
-            self.ui.label_settings_control_label2.setText('Span (MHz)')
+            self.ui.label_settings_control_label1.setText('Center')
+            self.ui.label_settings_control_label2.setText('Span')
         
         self.update_frequencies()
             
@@ -3629,6 +3611,8 @@ class QCMApp(QMainWindow):
         self.load_comboBox(self.ui.comboBox_settings_mechanics_selectmodel, 'thrmcpl_opts')
 
         self.ui.checkBox_settings_temp_sensor.setChecked(self.settings['checkBox_settings_temp_sensor'])
+
+        self.load_comboBox(self.ui.comboBox_tempmodule, 'temp_class_opts_list')
 
         try:
             self.load_comboBox(self.ui.comboBox_tempdevice, 'tempdevs_opts')

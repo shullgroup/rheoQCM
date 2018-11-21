@@ -883,10 +883,10 @@ class DataSaver:
 
     def rows_with_marks(self, chan_name):
         '''
-        return list of booleans of rows with marked harmonics
+        return list of booleans of rows with marked (1) harmonics
         if no marked rows, return all
         '''
-        marked_rows = getattr(self, chan_name).marks.apply(lambda x: any(x))
+        marked_rows = getattr(self, chan_name).marks.apply(lambda x: True if 1 in x else False)
         if marked_rows.any(): # there are marked rows
             print('There are marked rows')
             return marked_rows

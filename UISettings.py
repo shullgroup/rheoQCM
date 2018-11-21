@@ -22,6 +22,22 @@ settings_init = {
     # time string format
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
 
+    'analysis_mode_disable_list':[
+        'pushButton_runstop',
+        'actionOpen_MyVNA',
+        'actionNew_Exp',
+        'actionClear_All',
+        'actionLoad_Settings',
+
+        'comboBox_samp_channel',
+        'comboBox_ref_channel',
+        'comboBox_base_frequency',
+        'comboBox_bandwidth',
+        'checkBox_settings_temp_sensor',
+        'comboBox_settings_mechanics_selectmodel',
+        'comboBox_tempdevice',
+        'comboBox_thrmcpltype',
+    ],
 
     # enable and disable list
     'pushButton_runstop_enable_list': [
@@ -58,6 +74,11 @@ settings_init = {
         'comboBox_thrmcpltype',
     ],
 
+    'temp_device_setting_disable_list': [
+        'checkBox_control_rectemp',
+        'checkBox_settings_temp_sensor',
+    ],
+
     # list for disable/hide widges for manual fit
     'manual_refit_enable_disable_list':[
         'pushButton_manual_refit',
@@ -80,6 +101,8 @@ settings_init = {
         'groupBox_settings_output',
 
         'groupBox_settings_fitting',
+
+        'pushButton_settings_harm_cntr',
 
         'pushButton_spectra_fit_autocntr',
 
@@ -275,14 +298,14 @@ settings_init = {
         ('2',  '2 MHz'),
     ]),
 
-    # reference type for showing delta f and delta gamma
-    # key: number; val: for display in combobox
-    'ref_type_opts': OrderedDict([
-        ('t0',  'First point'),
-        ('t1t2',  'Selected range'),
-        # ('input',  'Input value'),
-        ('file', 'Other file'),
-    ]),
+    # # reference type for showing delta f and delta gamma
+    # # key: number; val: for display in combobox
+    # 'ref_type_opts': OrderedDict([
+    #     ('t0',  'First point'),
+    #     ('t1t2',  'Selected range'),
+    #     # ('input',  'Input value'),
+    #     ('file', 'Other file'),
+    # ]),
 
     # steps ofr span control slider
     'span_ctrl_steps': [1, 2, 5, 10, 20, 50, 100],
@@ -337,6 +360,9 @@ settings_init = {
         }, 
     },
 
+    'tempdevs_opts': {}, # this key will be updated while running and for the updating of 'comboBox_tempdevice'
+
+    'temp_class_opts_list': [], # this key will be updated while running and for the updating of 'comboBox_tempmodule'
 
     ######## params for PekTracker module #########
     # minium distance between the peakes to be found in Hz
