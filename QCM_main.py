@@ -337,6 +337,9 @@ class QCMApp(QMainWindow):
         self.ui.tabWidget_settings_settings_samprefchn.currentChanged.connect(self.update_widget)
         self.ui.tabWidget_settings_settings_samprefchn.currentChanged.connect(self.update_settings_chn)
 
+        # remove tab_settings_settings_harmchnrefit from index
+        self.add_manual_refit_tab(False)
+
         ### add combobox into treewidget
         self.ui.tabWidget_settings_settings_harm.currentChanged.connect(self.update_harmonic_tab)
         # move lineEdit_scan_harmstart
@@ -1158,7 +1161,10 @@ class QCMApp(QMainWindow):
     # @pyqtSlot['bool']
     def on_clicked_pushButton_runstop(self, checked):
         if checked:
-            # check active harmonice if no, stop
+            # turn of manual refit mode
+            self.ui.pushButton_manual_refit.setChecked(False)
+
+            # check checked harmonice if no, stop
             harm_list = self.get_all_checked_harms()
             if not harm_list:
                 self.ui.pushButton_runstop.setChecked(False)
@@ -2219,9 +2225,9 @@ class QCMApp(QMainWindow):
         manual refit process after manual refit context menu triggered
         '''
 
-        self.show_widgets('manual_refit_enable_disable_list')
         self.disable_widgets('manual_refit_enable_disable_harmtree_list')
         # set pushButton_manual_refit checked 
+        self.show_widgets('manual_refit_enable_disable_list')
         self.ui.pushButton_manual_refit.setChecked(True)
         self.init_manual_refit()
 
@@ -2308,12 +2314,15 @@ class QCMApp(QMainWindow):
         signal: True, add; False, delete
         '''
         if signal:
-            mtab = QWidget()
-            mtab.setObjectName('tab_manual_refit')
-            self.ui.tabWidget_settings_settings_samprefchn.addTab(mtab, 'Manual refit')
-            self.ui.tabWidget_settings_settings_samprefchn.setCurrentWidget(mtab)
+                if self.ui.tabWidget_settings_settings_samprefchn.currentIndex() != self.ui.tabWidget_settings_settings_samprefchn.indexOf(self.ui.tab_settings_settings_harmchnrefit): # refit is current tab
+                    self.ui.tabWidget_settings_settings_samprefchn.addTab(self.ui.tab_settings_settings_harmchnrefit, 'Refit')
+                    self.ui.tabWidget_settings_settings_samprefchn.setCurrentWidget(self.ui.tab_settings_settings_harmchnrefit)
         else:
-            self.ui.tabWidget_settings_settings_samprefchn.removeTab(2)
+            self.ui.tabWidget_settings_settings_samprefchn.removeTab(self.ui.tabWidget_settings_settings_samprefchn.indexOf(
+                self.ui.tab_settings_settings_harmchnrefit
+                )
+            )
+
 
     ###### data display functions #########
     def get_axis_settings(self, name):

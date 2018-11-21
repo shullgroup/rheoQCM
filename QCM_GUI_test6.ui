@@ -195,7 +195,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>0</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1299,7 +1299,7 @@ background-color: red;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>2</number>
                    </property>
                    <property name="documentMode">
                     <bool>false</bool>
@@ -1315,6 +1315,11 @@ background-color: red;
                    <widget class="QWidget" name="tab_settings_settings_harmchnref">
                     <attribute name="title">
                      <string>Reference Channel</string>
+                    </attribute>
+                   </widget>
+                   <widget class="QWidget" name="tab_settings_settings_harmchnrefit">
+                    <attribute name="title">
+                     <string>Refit</string>
                     </attribute>
                    </widget>
                   </widget>
