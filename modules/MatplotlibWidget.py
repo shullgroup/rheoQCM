@@ -960,10 +960,10 @@ class MatplotlibWidget(QWidget):
         ''' 
         clear all lines in .l (but not .l['temp'][:]) of key in l_list
         '''
-        # print(self.l)
+        print(self.l)
         for key in self.l:
-            if key != 'temp':
-                # print(key)
+            print(key)
+            if key not in ['temp', 'C', 'colorbar']:
                 if  l_list is None: # clear all
                     # self.l[key][0].set_xdata([])
                     # self.l[key][0].set_ydata([])
@@ -973,6 +973,9 @@ class MatplotlibWidget(QWidget):
                         # self.l[key][0].set_xdata([])
                         # self.l[key][0].set_ydata([])
                         self.l[key][0].set_data([], [])
+            elif key == 'temp':
+                for ax in self.ax:
+                    self.del_templines(ax=ax)
 
         self.canvas.draw()
         self.canvas.flush_events() # flush the GUI events 

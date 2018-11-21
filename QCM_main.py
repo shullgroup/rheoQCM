@@ -1542,38 +1542,38 @@ class QCMApp(QMainWindow):
         if fileName:
             self.data_saver_data_exporter(fileName) # do the export
 
-    def saveflag_messagebox(self):
+    def saveflg_messagebox(self):
         '''
-        check is the experiment is ongoing (self.timer.isActive()) and if data is saved (self.data_saver.saveflag)
+        check is the experiment is ongoing (self.timer.isActive()) and if data is saved (self.data_saver.saveflg)
         and pop up a messageBox to ask if process
 
         return process: Ture/False for checking
         '''
 
-        process = False
+        process = True
 
-        if self.timer.isActive() or self.data_saver.saveflag == False:
+        if self.timer.isActive() or self.data_saver.saveflg == False:
             message = []
 
-        if self.data_saver.saveflag == False:
-            message.append('There is data unsaved!')
-        if self.timer.isActive():
-            message.append('Test is Running!')
-            buttons = QMessageBox.Ok
-        else:
-            message.append('Do you want to process?')
-            buttons = QMessageBox.Yes | QMessageBox.Cancel
+            if self.data_saver.saveflg == False:
+                message.append('There is data unsaved!')
+            if self.timer.isActive():
+                message.append('Test is Running!')
+                buttons = QMessageBox.Ok
+            else:
+                message.append('Do you want to process?')
+                buttons = QMessageBox.Yes | QMessageBox.Cancel
 
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Information)
-        msg.setText('Your selection was paused!')
-        msg.setInformativeText('\n'.join(message))
-        msg.setWindowTitle(_version.__projectname__ + ' Message')
-        msg.setStandardButtons(buttons)
-        retval = msg.exec_()
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setText('Your selection was paused!')
+            msg.setInformativeText('\n'.join(message))
+            msg.setWindowTitle(_version.__projectname__ + ' Message')
+            msg.setStandardButtons(buttons)
+            retval = msg.exec_()
 
-        if retval == QMessageBox.Yes:
-            process = True
+            if retval == QMessageBox.Yes:
+                process = True
 
         return process
            
@@ -1584,10 +1584,13 @@ class QCMApp(QMainWindow):
         if settings is given, it will load the given settings (load settings)
         """
 
-        process = self.saveflag_messagebox
+        process = self.saveflg_messagebox()
 
         if not process: 
             return
+
+        # clear all mpl objects
+        self.clear_all_mpl()
 
         # set widgets enabled by using the disabled list
         self.enable_widgets(
@@ -1625,16 +1628,31 @@ class QCMApp(QMainWindow):
     def on_triggered_actionClear_All(self):
         '''
         clear all data
-        '''
+        ''' 
+        print(self.data_saver.path)
         # re-initiate file
         self.data_saver.init_file(self.data_saver.path, settings=self.settings, t0=self.settings['dateTimeEdit_reftime']) 
         # enable widgets
         self.enable_widgets(
             'pushButton_runstop_disable_list',
             'pushButton_appendfile_disable_list',
-        )        
+        )
 
- 
+        # clear all mpl objects
+        self.clear_all_mpl()
+
+    def clear_all_mpl(self):
+        '''
+        clear lines in all mpls
+        '''
+        # find all mpl objects
+        mpl_list = self.findChildren(MatplotlibWidget)
+        print(mpl_list)
+        # clear mpl_sp
+        for mpl in mpl_list:
+            mpl.clr_lines()
+
+    
     def set_status_pts(self):
         '''
         set status bar label_status_pts

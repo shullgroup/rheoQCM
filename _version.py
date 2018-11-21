@@ -1,4 +1,4 @@
-__version_info__ = ('0', '1', '6') # major, minor, micro
+__version_info__ = ('0', '1', '7') # major, minor, micro
 
 __projectname__ = 'QCM Rheology'
 __author__ = 'Qifeng Wang'
