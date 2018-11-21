@@ -536,7 +536,7 @@ class MatplotlibWidget(QWidget):
                 markerfacecolor='none', 
                 picker=5, # 5 points tolerance
                 label='l'+str(i),
-                alpha=0.75,
+                alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
             ) # l
         
         for i in range(1, int(settings_init['max_harmonic']+2), 2):

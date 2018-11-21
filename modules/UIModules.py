@@ -166,7 +166,7 @@ def idx_dict_to_harm_dict(sel_idx_dict):
 import numpy as np
 
 def datarange(data):
-    # find the min and max of data
+    '''find the min and max of data'''
     if any(data):
         return [min(data), max(data)]
     else:
@@ -178,7 +178,7 @@ def num2str(A,precision=None):
             return A.astype(str)
         elif A.any() and precision:
             for i in range(len(A)):
-                A[i] = format(float(A[i]), '.'+str(precision)+'g')
+                A[i] = format(float(A[i]), '.'+str(precision)+'f').rstrip('0').rstrip('.')
                 # A[i] = '{:.6g}'.format(float(A[i]))
             return A.astype(str)
     elif isinstance(A, float) or isinstance(A, int):
@@ -186,7 +186,7 @@ def num2str(A,precision=None):
             A = str(float(A))
             return A
         elif A and precision:
-            A = format(float(A), '.'+str(precision)+'g')
+            A = format(float(A), '.'+str(precision)+'f').rstrip('0').rstrip('.')
             # A = '{:.6g}'.format(float(A))
             return A
 

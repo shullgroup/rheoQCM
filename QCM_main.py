@@ -1486,7 +1486,7 @@ class QCMApp(QMainWindow):
             self.load_settings()
 
     def on_triggered_export_settings(self):
-        fileName = self.openFileNameDialog('Choose a file to load its settings', path=self.data_saver.path, filetype=settings_init['default_settings_export_filetype']) # TODO add path of last opened folder
+        fileName = self.saveFileDialog('Choose a file to load its settings', path=self.data_saver.path, filetype=settings_init['default_settings_export_filetype']) # TODO add path of last opened folder
 
         if fileName: 
             # load settings from file
@@ -1629,6 +1629,9 @@ class QCMApp(QMainWindow):
         '''
         clear all data
         ''' 
+        if self.data_saver.path == '': # no data 
+            return
+
         print(self.data_saver.path)
         # re-initiate file
         self.data_saver.init_file(self.data_saver.path, settings=self.settings, t0=self.settings['dateTimeEdit_reftime']) 
@@ -2149,6 +2152,9 @@ class QCMApp(QMainWindow):
         # get data in tuple (x, y)
         data_lG, data_lB = self.ui.mpl_spectra_fit.get_data(ls=['lG', 'lB'])
 
+        if len(data_lG[0]) == 0: # no data
+            return
+
         # factor = self.get_harmdata('spinBox_harmfitfactor')
 
         # get guessed value of cen and wid
@@ -2304,6 +2310,10 @@ class QCMApp(QMainWindow):
             self.add_manual_refit_tab(False)
             # reset index
             self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
+            
+            # clear mpl
+            self.ui.mpl_spectra_fit.clr_lines()
+            self.ui.mpl_spectra_fit_polar.clr_lines()
 
 
 
@@ -3658,9 +3668,14 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'checkBox_plt1_h' + str(harm)).setChecked(self.settings['checkBox_plt1_h' + str(harm)])
             getattr(self.ui, 'checkBox_plt2_h' + str(harm)).setChecked(self.settings['checkBox_plt1_h' + str(harm)])
 
+        # set radioButton_plt<n>_samp/ref
+        self.ui.radioButton_plt1_samp.setChecked(self.settings['radioButton_plt1_samp'])
+        self.ui.radioButton_plt1_ref.setChecked(self.settings['radioButton_plt1_ref'])
+        self.ui.radioButton_plt2_samp.setChecked(self.settings['radioButton_plt2_samp'])
+        self.ui.radioButton_plt2_ref.setChecked(self.settings['radioButton_plt2_ref'])
+
         # set widgets to display the channel reference setup
         # the value will be load from data_saver
-
         self.update_refsource()
 
 
