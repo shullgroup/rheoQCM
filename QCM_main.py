@@ -676,23 +676,23 @@ class QCMApp(QMainWindow):
         # set signals to update plots settings_settings
         self.ui.comboBox_timeunit.currentIndexChanged.connect(self.update_timeunit)
         self.ui.comboBox_timeunit.currentIndexChanged.connect(self.update_data_axis)
-        self.ui.comboBox_timeunit.currentIndexChanged.connect(self.update_mpl_dataplt)
+        self.ui.comboBox_timeunit.currentIndexChanged.connect(self.update_mpl_plt12)
 
         self.ui.comboBox_tempunit.currentIndexChanged.connect(self.update_tempunit)
         self.ui.comboBox_tempunit.currentIndexChanged.connect(self.update_data_axis)
-        self.ui.comboBox_tempunit.currentIndexChanged.connect(self.update_mpl_dataplt)
+        self.ui.comboBox_tempunit.currentIndexChanged.connect(self.update_mpl_plt12)
 
         self.ui.comboBox_xscale.currentIndexChanged.connect(self.update_timescale)
         self.ui.comboBox_xscale.currentIndexChanged.connect(self.update_data_axis)
-        self.ui.comboBox_xscale.currentIndexChanged.connect(self.update_mpl_dataplt)
+        self.ui.comboBox_xscale.currentIndexChanged.connect(self.update_mpl_plt12)
 
         self.ui.comboBox_yscale.currentIndexChanged.connect(self.update_yscale)
         self.ui.comboBox_yscale.currentIndexChanged.connect(self.update_data_axis)
-        self.ui.comboBox_yscale.currentIndexChanged.connect(self.update_mpl_dataplt)
+        self.ui.comboBox_yscale.currentIndexChanged.connect(self.update_mpl_plt12)
 
         self.ui.checkBox_linkx.stateChanged.connect(self.update_linkx)
         self.ui.checkBox_linkx.stateChanged.connect(self.update_data_axis)
-        self.ui.checkBox_linkx.stateChanged.connect(self.update_mpl_dataplt)
+        self.ui.checkBox_linkx.stateChanged.connect(self.update_mpl_plt12)
         
         #endregion
 
@@ -2530,15 +2530,16 @@ class QCMApp(QMainWindow):
             if 'temp' in plt_opt: # htere is temp axis in the plot
                 self.update_temp_unit(plt_str, plt_opt)
             
-            else: # other type w/o changing the unit
-
-                xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
+            if plt_opt[0] not in ['t', 'temp']: # other type in y-axis w/o changing the unit
                 ylabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
-
-                # set x/y labels
-                getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
+                # set y labels
                 getattr(self.ui, 'mpl_' + plt_str).ax[0].set_ylabel(ylabel)
+                getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
 
+            if plt_opt[1] not in ['t', 'temp']: # other type in x-axis w/o changing the unit
+                xlabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
+                # set x labels
+                getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
                 getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
 
         if sender_name == 'comboBox_timeunit': # update both axises of mpl_plt1 & mpl_plt2
@@ -2603,24 +2604,35 @@ class QCMApp(QMainWindow):
         plt_opt: list of plot type str [y, x]
         NOTE: check if time axis in plot_opt before sending to this function
         '''
+        print(plt_str)
+        print(plt_opt)
         if 't' not in plt_opt:
             return
     
         # timeunit = self.ui.comboBox_timeunit.currentText()
         timeunit = self.get_axis_settings('comboBox_timeunit')
-        
+
+        if timeunit == 's': 
+            timeunit = r's'
+        elif timeunit == 'm': 
+            timeunit = r'min'
+        elif timeunit == 'h': 
+            timeunit = r'h'        
+        elif timeunit == 'd': 
+            timeunit = r'day'        
         # convert timeunit from key to abbreviation
-        timeunit = settings_init['time_unit_opts'][timeunit]
+        # timeunit = settings_init['time_unit_opts'][timeunit]
         print(timeunit)
         if 't' == plt_opt[0]: # is y axis
             ylabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
-            ylabel = ylabel.replace('x', timeunit)
+            print(ylabel)
+            ylabel = ylabel.replace('unit', timeunit)
+            print(ylabel)
             getattr(self.ui, 'mpl_' + plt_str).ax[0].set_ylabel(ylabel)
             print(getattr(self.ui, 'mpl_' + plt_str).ax[0].get_ylabel())
-            print(ylabel)
         if 't' == plt_opt[1]: # is x axis
             xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
-            xlabel = xlabel.replace('x', timeunit)
+            xlabel = xlabel.replace('unit', timeunit)
             getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
             print(getattr(self.ui, 'mpl_' + plt_str).ax[0].get_xlabel())
             print(xlabel)
@@ -2632,6 +2644,8 @@ class QCMApp(QMainWindow):
         plt_str: 'plt1' or 'plt2'
         plt_opt: list of plot type str [y, x]
         '''
+        print(plt_str)
+        print(plt_opt)
         if 'temp' not in plt_opt:
             return
         # idx_temp, = [i for i in range(len(plt_opt)) if plt_opt[i] == 'temp']
@@ -2647,12 +2661,12 @@ class QCMApp(QMainWindow):
         print(tempunit)
         if 'temp' == plt_opt[0]: # is y axis
             ylabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
-            ylabel = ylabel.replace('x', tempunit)
+            ylabel = ylabel.replace('unit', tempunit)
             getattr(self.ui, 'mpl_' + plt_str).ax[0].set_ylabel(ylabel)
             print(ylabel)
         if 'temp' == plt_opt[1]: # is x axis
             xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
-            xlabel = xlabel.replace('x', tempunit)
+            xlabel = xlabel.replace('unit', tempunit)
             getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
             print(xlabel)
         getattr(self.ui, 'mpl_' + plt_str).canvas.draw()

@@ -203,8 +203,8 @@ settings_init = {
         'dgn':  r'$\Delta\Gamma$/n (Hz)',
         'f':    r'f (Hz)',
         'g':    r'$\Gamma$ (Hz)',
-        'temp': r'Temp. (x)', # x is going to be replaced by temperature unit
-        't':    r'Time (x)', # x is going to be replaced by time unit
+        'temp': r'Temp. (unit)', # unit is going to be replaced by temperature unit
+        't':    r'Time (unit)', # unit is going to be replaced by time unit
         'idx':    r'Index', 
     },
 
@@ -263,7 +263,7 @@ settings_init = {
         ('s', r's'),
         ('m', r'min'),
         ('h', r'h'),
-        ('d', r'day'),
+        # ('d', r'day'),
     ]),
 
     'temp_unit_opts': OrderedDict([
