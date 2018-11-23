@@ -657,6 +657,9 @@ class DataSaver:
         norm: if True, normalize value by harmonic (works only when deltaval is True)
         return: df with columns = ['1', '3', '5', '7', '9]
         '''
+        print('$$$$$$$$$$$$$')
+        print(norm)
+        
         if deltaval == True:
             s = self.convert_col_to_delta_val(chn_name, col, norm=norm)
             print(s)
@@ -707,7 +710,7 @@ class DataSaver:
         print(self.exp_ref[chn_name])
         if all(np.isnan(np.array(self.exp_ref[chn_name][self._ref_keys[col]]))): # no reference or no constant reference exist
             # check col+'_ref'
-            if self.exp_ref[chn_name + '_ref'][1][0] is None: #start index is None, dynamic reference
+            if not self.exp_ref[chn_name + '_ref'][1][0]: #start index is None or [], dynamic reference
                 print('dynamic reference')
                 ref_s=getattr(self, self.exp_ref[col + '_ref'][0]).copy()
 

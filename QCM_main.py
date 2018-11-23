@@ -2486,13 +2486,13 @@ class QCMApp(QMainWindow):
         '''
 
         print(typestr)
-        if 'df' in typestr: # get delf
+        if 'df' == typestr: # get delf
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=True, deltaval=True, norm=False)
-        elif 'dg' in typestr: # get delg
+        elif 'dg' == typestr: # get delg
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=True, deltaval=True, norm=False)
-        elif 'dfn' in typestr: # get delfn
+        elif 'dfn' == typestr: # get delfn
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=True, deltaval=True, norm=True)
-        elif 'dgn' in typestr: # get delgn
+        elif 'dgn' == typestr: # get delgn
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=True, deltaval=True, norm=True)
         elif 'f' == typestr: # get f
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=True, deltaval=False, norm=False)
