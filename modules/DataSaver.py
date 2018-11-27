@@ -778,7 +778,7 @@ class DataSaver:
             if df is None:
                 df = getattr(self, self.exp_ref['samp_ref'][0]).copy()
         else:
-            raise ValueError('df should not be None when {} is reference source.'.fromat(self.exp_ref['samp_ref'][0]))            
+            raise ValueError('df should not be None when {0} is reference source.'.fromat(self.exp_ref['samp_ref'][0]))            
 
         df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
         setattr(self, chn_name + '_ref', df)

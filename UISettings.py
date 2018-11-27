@@ -209,7 +209,7 @@ settings_init = {
     },
 
     # spinBox_harmfitfactor max value
-    'fitfactor_max': 16, # int
+    'fitfactor_max': 20, # int
 
     # comboBox_tracking_method
     'span_mehtod_opts': OrderedDict([
@@ -218,7 +218,7 @@ settings_init = {
         ('bmax',   'Bmax'),
         ('derv',    'Derivative'),
         ('prev',   'Previous value'),
-        ('usrdef', 'User-defined...'),
+        # ('usrdef', 'User-defined...'),
     ]),
 
     # track_method
@@ -240,7 +240,7 @@ settings_init = {
 
     'ref_channel_opts': OrderedDict([
     # key: str(number); val: for display in combobox
-        ('none', 'none'),
+        # ('none', 'none'),
         ('samp', 'samp'),
         ('ref', 'ref'),
         ('ext', 'ext'), # always read from the reference channel

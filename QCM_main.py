@@ -756,7 +756,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_data_samprefsource.currentIndexChanged.connect(self.update_widget)
         self.ui.lineEdit_settings_data_samprefidx.textChanged.connect(self.update_widget)
 
-        # NOTE: following two only emitted when value manually edited
+        # NOTE: following two only emitted when value manually edited (activated)
         self.ui.comboBox_settings_data_samprefsource.activated.connect(self.save_data_saver_sampref)
         self.ui.lineEdit_settings_data_samprefidx.textEdited.connect(self.save_data_saver_sampref)
 
@@ -770,7 +770,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_data_refrefsource.currentIndexChanged.connect(self.update_widget)
         self.ui.lineEdit_settings_data_refrefidx.textChanged.connect(self.update_widget)
 
-        # NOTE: following two only emitted when value manually edited
+        # NOTE: following two only emitted when value manually edited (activated)
         self.ui.comboBox_settings_data_refrefsource.activated.connect(self.save_data_saver_refref)
         self.ui.lineEdit_settings_data_refrefidx.textEdited.connect(self.save_data_saver_refref)
 
@@ -1315,7 +1315,7 @@ class QCMApp(QMainWindow):
         ref_source = self.settings['comboBox_settings_data_'+ chn_name + 'refsource']
         ref_idx = self.settings['lineEdit_settings_data_'+ chn_name + 'refidx']
         print('ref_source', ref_source)
-        print('ref_idx', ref_idx)
+        print('ref_idx', ref_idx, type(ref_idx))
 
         chn_queue_list = list(self.data_saver.get_queue_id(ref_source).tolist()) # list of available index in the target chn
         # convert ref_idx from str to a list of int
@@ -3054,11 +3054,20 @@ class QCMApp(QMainWindow):
     def update_widget(self, signal):
         #  of the signal isA QLineEdit object, update QLineEdit vals in dict
         print('update', self.sender().objectName(), signal)
+        print('type', type(signal))
         if isinstance(self.sender(), QLineEdit):
-                try:
-                    self.settings[self.sender().objectName()] = float(signal)
-                except:
-                    self.settings[self.sender().objectName()] = 0
+            # self.settings[self.sender().objectName()] = signal
+            if UIModules.isint(signal): # is int
+                self.settings[self.sender().objectName()] = int(signal)
+            elif UIModules.isfloat(signal): # is float
+                self.settings[self.sender().objectName()] = float(signal)
+            else:
+                self.settings[self.sender().objectName()] = signal
+                
+            # try:
+            #     self.settings[self.sender().objectName()] = float(signal)
+            # except:
+            #     self.settings[self.sender().objectName()] = signal
         # if the sender of the signal isA QCheckBox object, update QCheckBox vals in dict
         elif isinstance(self.sender(), QCheckBox):
             self.settings[self.sender().objectName()] = signal
@@ -3671,7 +3680,7 @@ class QCMApp(QMainWindow):
         # load default record interval
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
         # load default spectra refresh resolution
-        self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
+        self.ui.lineEdit_refreshresolution.setText(str(int(self.settings['lineEdit_refreshresolution'])))
         # update lineEdit_scaninterval
         self.set_lineEdit_scaninterval()
 
