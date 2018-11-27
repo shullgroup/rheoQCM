@@ -795,7 +795,7 @@ class DataSaver:
 
                 # copy df to ref
                 if source in self._chn_keys and self.exp_ref[chn_name + '_ref'][1][0] is not None: # use data from current test
-                    df = getattr(self, chn_name)
+                    df = getattr(self, source)
                     self.copy_to_ref(chn_name, df.loc[idx_list, :]) # copy to reference data set
                 elif source == 'ext': # data from external file
                     if df is not None:

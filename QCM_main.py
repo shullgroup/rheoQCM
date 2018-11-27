@@ -1320,11 +1320,12 @@ class QCMApp(QMainWindow):
         chn_queue_list = list(self.data_saver.get_queue_id(ref_source).tolist()) # list of available index in the target chn
         # convert ref_idx from str to a list of int
         ref_idx = UIModules.index_from_str(ref_idx, chn_queue_list)
+        print('ref_idx', ref_idx, type(ref_idx))
         # if the list is [] set it to [0], which mean the first data of the channel
         if (not ref_idx) and (list(self.data_saver.get_queue_id('samp')) !=  list(self.data_saver.get_queue_id('ref'))): # samp and ref were not collected together
             ref_idx = [0]
-            getattr(self.ui, 'lineEdit_settings_data_'+ chn_name + 'refidx').setText('0') 
-            self.settings['lineEdit_settings_data_'+ chn_name + 'refidx'] = '0' 
+            getattr(self.ui, 'lineEdit_settings_data_'+ chn_name + 'refidx').setText('[0]') 
+            self.settings['lineEdit_settings_data_'+ chn_name + 'refidx'] = '[0]' 
 
         # # save to data_saver
         # self.data_saver.exp_ref[chn_name + '_ref'][0] = ref_source

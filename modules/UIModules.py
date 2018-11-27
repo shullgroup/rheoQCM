@@ -69,7 +69,10 @@ def index_from_str(idx_str, chn_queue_list):
         return idx
 
     if isinstance(idx_str, list):
-        return idx_str 
+        return idx_str
+
+    if isinstance(idx_str, int):
+        return [idx_str]
 
     # create a dummy data with index
     data = list(range(max(chn_queue_list)))
