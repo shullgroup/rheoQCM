@@ -113,7 +113,7 @@ settings_init = {
 
         # 'toolButton_settings_mechanics_solve',
         'groupBox_nhplot',
-        'groupBox_settings_mechanics_nhcalc',
+        # 'groupBox_settings_mechanics_nhcalc',
         'checkBox_settings_mechanics_witherror',
         'pushButton_settings_mechanics_errorsettings',
         'label_6',

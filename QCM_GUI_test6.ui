@@ -195,7 +195,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>3</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1299,7 +1299,7 @@ background-color: red;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>2</number>
+                    <number>1</number>
                    </property>
                    <property name="documentMode">
                     <bool>false</bool>
@@ -2934,10 +2934,13 @@ border: none;
                       <number>1</number>
                      </property>
                      <property name="maximum">
-                      <number>11</number>
+                      <number>9</number>
                      </property>
                      <property name="singleStep">
                       <number>2</number>
+                     </property>
+                     <property name="value">
+                      <number>1</number>
                      </property>
                     </widget>
                    </item>
@@ -2956,7 +2959,7 @@ border: none;
                       <number>1</number>
                      </property>
                      <property name="maximum">
-                      <number>11</number>
+                      <number>9</number>
                      </property>
                      <property name="singleStep">
                       <number>2</number>
@@ -2987,10 +2990,13 @@ border: none;
                       <number>1</number>
                      </property>
                      <property name="maximum">
-                      <number>11</number>
+                      <number>9</number>
                      </property>
                      <property name="singleStep">
                       <number>2</number>
+                     </property>
+                     <property name="value">
+                      <number>3</number>
                      </property>
                     </widget>
                    </item>
@@ -3340,7 +3346,7 @@ border-image: url(:/button/rc/plus_p.svg);
                   </column>
                   <item row="0" column="0">
                    <property name="text">
-                    <string>::</string>
+                    <string>[::]</string>
                    </property>
                   </item>
                  </widget>
@@ -3751,11 +3757,6 @@ border-image: url(:/button/rc/plus_p.svg);
                        <string>n9</string>
                       </property>
                      </row>
-                     <row>
-                      <property name="text">
-                       <string>n11</string>
-                      </property>
-                     </row>
                      <column>
                       <property name="text">
                        <string>Δf
@@ -3893,6 +3894,9 @@ border-image: url(:/button/rc/plus_p.svg);
                <widget class="QRadioButton" name="radioButton_spectra_showBp">
                 <property name="text">
                  <string>Gp+Bp</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
                 </property>
                 <property name="checked">
                  <bool>false</bool>
@@ -4192,7 +4196,7 @@ border: 1px solid blue;
            </size>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="page_spectra_show">
            <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -4943,7 +4947,7 @@ p, li { white-space: pre-wrap; }
                    <bool>true</bool>
                   </property>
                   <attribute name="horizontalHeaderVisible">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </attribute>
                   <attribute name="horizontalHeaderCascadingSectionResizes">
                    <bool>true</bool>
@@ -5215,37 +5219,66 @@ p, li { white-space: pre-wrap; }
            </spacer>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_15">
-            <item>
-             <widget class="QRadioButton" name="radioButton_data_showall">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>17</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>All</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="radioButton_data_showmarked">
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>17</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Marked</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <widget class="QFrame" name="frame">
+            <property name="frameShape">
+             <enum>QFrame::NoFrame</enum>
+            </property>
+            <property name="frameShadow">
+             <enum>QFrame::Raised</enum>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_16">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <widget class="QRadioButton" name="radioButton_data_showall">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>17</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>All</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+               <property name="autoExclusive">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QRadioButton" name="radioButton_data_showmarked">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>17</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Marked</string>
+               </property>
+               <property name="autoExclusive">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
           </item>
           <item>
            <spacer name="horizontalSpacer_14">

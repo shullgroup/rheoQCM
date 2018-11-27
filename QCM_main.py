@@ -794,12 +794,58 @@ class QCMApp(QMainWindow):
 
 
         #region spectra_show
+        # add figure mpl_sp[n] into frame_sp[n]
+        for i in range(1, settings_init['max_harmonic']+2, 2):
+            # add first ax
+            setattr(
+                self.ui, 'mpl_sp' + str(i), 
+                MatplotlibWidget(
+                    parent=getattr(self.ui, 'frame_sp' + str(i)), 
+                    axtype='sp',
+                    showtoolbar=False,
+                )
+            )
+            # getattr(self.ui, 'mpl_sp' + str(i)).fig.text(0.01, 0.98, str(i), va='top',ha='left') # option: weight='bold'
+            getattr(self.ui, 'mpl_sp' + str(i)).update_sp_text_harm(str(i))
+            # set mpl_sp<n> border
+            getattr(self.ui, 'mpl_sp' + str(i)).setStyleSheet(
+                "border: 0;"
+            )
+            getattr(self.ui, 'mpl_sp' + str(i)).setContentsMargins(0, 0, 0, 0)
+            getattr(self.ui, 'frame_sp' + str(i)).setLayout(
+                self.set_frame_layout(
+                    getattr(self.ui, 'mpl_sp' + str(i))
+                )
+            )
+
 
         #endregion
 
 
         #region spectra_fit
+        # add figure mpl_spectra_fit_polar into frame_spectra_fit_polar
+        self.ui.mpl_spectra_fit_polar = MatplotlibWidget(
+            parent=self.ui.frame_spectra_fit_polar, 
+            axtype='sp_polar'
+            )
+        self.ui.frame_spectra_fit_polar.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit_polar))
 
+        # add figure mpl_spectra_fit into frame_spactra_fit
+        self.ui.mpl_spectra_fit = MatplotlibWidget(
+            parent=self.ui.frame_spectra_fit, 
+            axtype='sp_fit',
+            showtoolbar=False
+            ) 
+        self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
+        # connect signal
+        self.ui.mpl_spectra_fit.ax[0].cidx = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('xlim_changed', self.on_fit_lims_change)
+        self.ui.mpl_spectra_fit.ax[0].cidy = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('ylim_changed', self.on_fit_lims_change)
+        
+        # disconnect signal while dragging
+        # self.ui.mpl_spectra_fit.canvas.mpl_connect('button_press_event', self.spectra_fit_axesevent_disconnect)
+        # # reconnect signal after dragging (mouse release)
+        # self.ui.mpl_spectra_fit.canvas.mpl_connect('button_release_event', self.spectra_fit_axesevent_connect)
+            
         #
         self.ui.pushButton_manual_refit.clicked['bool'].connect(self.init_manual_refit)
         # hide widget for manual refit
@@ -823,21 +869,63 @@ class QCMApp(QMainWindow):
 
         #endregion
 
-
+        #region data
+        # add mpl_legend into frame_legend
+        self.ui.mpl_legend = MatplotlibWidget(
+            parent=self.ui.frame_legend, 
+            axtype='legend',
+            showtoolbar=False,
+            )
+        self.ui.mpl_legend.setStyleSheet("background: transparent;")
+        self.ui.frame_legend.setLayout(self.set_frame_layout(self.ui.mpl_legend))
+        # change frame_legend height
+        mpl_legend_p = self.ui.mpl_legend.leg.get_window_extent()
+        self.ui.frame_legend.setFixedHeight((mpl_legend_p.p1[1]-mpl_legend_p.p0[1]))
+        # self.ui.frame_legend.adjustSize()
+        #endregion
         #region data_data
 
-        self.ui.radioButton_data_showall.toggled.connect(self.update_widget)
+        # add figure mpl_plt1 into frame_spactra_fit
+        self.ui.mpl_plt1 = MatplotlibWidget(
+            parent=self.ui.frame_spectra_fit, 
+            axtype='data',
+            # ylabel=r'$\Delta f/n$ (Hz)',
+            )
+        self.ui.frame_plt1.setLayout(self.set_frame_layout(self.ui.mpl_plt1))
+
+
+        # add figure mpl_plt2 into frame_spactra_fit
+        self.ui.mpl_plt2 = MatplotlibWidget(
+            parent=self.ui.frame_spectra_fit, 
+            axtype='data',
+            # ylabel=r'$\Delta \Gamma$ (Hz)',
+            )
+        self.ui.frame_plt2.setLayout(self.set_frame_layout(self.ui.mpl_plt2))
+
+        # selector menu
+        self.ui.mpl_plt1.canvas.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.mpl_plt1.canvas.customContextMenuRequested.connect(lambda position, mpl=self.ui.mpl_plt1, plt_str='plt1': self.mpl_data_open_custom_menu(position, mpl, plt_str))
+
+        self.ui.mpl_plt2.canvas.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.ui.mpl_plt2.canvas.customContextMenuRequested.connect(lambda position, mpl=self.ui.mpl_plt2, plt_str='plt2': self.mpl_data_open_custom_menu(position, mpl, plt_str))
+
+        self.ui.radioButton_data_showall.toggled['bool'].connect(self.update_widget)
+        self.ui.radioButton_data_showall.clicked.connect(self.clr_mpl_l12)
         self.ui.radioButton_data_showall.clicked.connect(self.update_mpl_plt12)
-        self.ui.radioButton_data_showmarked.toggled.connect(self.update_widget)
+        self.ui.radioButton_data_showmarked.toggled['bool'].connect(self.update_widget)
+        self.ui.radioButton_data_showmarked.toggled['bool'].connect(self.set_mpl_lm_style) # when toggled clicked, this toggled too.
+        self.ui.radioButton_data_showmarked.clicked.connect(self.clr_mpl_l12)
         self.ui.radioButton_data_showmarked.clicked.connect(self.update_mpl_plt12)
 
         # set signals to update plot 1 & 2 options
         for i in range(1, settings_init['max_harmonic']+2, 2):
             getattr(self.ui, 'checkBox_plt1_h' + str(i)).stateChanged.connect(self.update_widget)
             getattr(self.ui, 'checkBox_plt1_h' + str(i)).stateChanged.connect(self.update_mpl_plt1)
+            getattr(self.ui, 'checkBox_plt1_h' + str(i)).stateChanged.connect(self.clr_mpl_harm)
 
             getattr(self.ui, 'checkBox_plt2_h' + str(i)).stateChanged.connect(self.update_widget)
             getattr(self.ui, 'checkBox_plt2_h' + str(i)).stateChanged.connect(self.update_mpl_plt2)
+            getattr(self.ui, 'checkBox_plt2_h' + str(i)).stateChanged.connect(self.clr_mpl_harm)
 
         # set signals to update plot 1 options
         self.ui.comboBox_plt1_optsy.currentIndexChanged.connect(self.update_widget)
@@ -848,8 +936,10 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_plt1_optsx.currentIndexChanged.connect(self.update_mpl_plt1)
 
         self.ui.radioButton_plt1_ref.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt1_ref.toggled.connect(self.ui.mpl_plt1.clr_all_lines)
         self.ui.radioButton_plt1_ref.clicked.connect(self.update_mpl_plt1)
         self.ui.radioButton_plt1_samp.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt1_samp.toggled.connect(self.ui.mpl_plt1.clr_all_lines)
         self.ui.radioButton_plt1_samp.clicked.connect(self.update_mpl_plt1)
 
         # set signals to update plot 2 options
@@ -861,14 +951,30 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_plt2_optsx.currentIndexChanged.connect(self.update_mpl_plt2)
 
         self.ui.radioButton_plt2_ref.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt2_ref.toggled.connect(self.ui.mpl_plt2.clr_all_lines)
         self.ui.radioButton_plt2_ref.clicked.connect(self.update_mpl_plt2)
         self.ui.radioButton_plt2_samp.toggled.connect(self.update_widget)
+        self.ui.radioButton_plt2_samp.toggled.connect(self.ui.mpl_plt2.clr_all_lines)
         self.ui.radioButton_plt2_samp.clicked.connect(self.update_mpl_plt2)
 
         #endregion
 
 
         #region data_mechanics
+
+        # add figure mpl_countour1 into frame_spectra_mechanics_contour1
+        self.ui.mpl_countour1 = MatplotlibWidget(
+            parent=self.ui.frame_spectra_mechanics_contour1, 
+            axtype='contour'
+            )
+        self.ui.frame_spectra_mechanics_contour1.setLayout(self.set_frame_layout(self.ui.mpl_countour1))
+
+        # add figure mpl_countour2 into frame_spectra_mechanics_contour2
+        self.ui.mpl_countour2 = MatplotlibWidget(
+            parent=self.ui.frame_spectra_mechanics_contour2, 
+            axtype='contour',
+            )
+        self.ui.frame_spectra_mechanics_contour2.setLayout(self.set_frame_layout(self.ui.mpl_countour2))
 
         #endregion
 
@@ -957,104 +1063,10 @@ class QCMApp(QMainWindow):
         # self.addToolBar(Qt.TopToolBarArea, self.ui.mpl_dummy_fig.toolbar)
         # self.ui.mpl_dummy_fig.hide() # hide the figure
 
-        # add mpl_legend into frame_legend
-        self.ui.mpl_legend = MatplotlibWidget(
-            parent=self.ui.frame_legend, 
-            axtype='legend',
-            showtoolbar=False,
-            )
-        self.ui.mpl_legend.setStyleSheet("background: transparent;")
-        self.ui.frame_legend.setLayout(self.set_frame_layout(self.ui.mpl_legend))
-        # change frame_legend height
-        mpl_legend_p = self.ui.mpl_legend.leg.get_window_extent()
-        self.ui.frame_legend.setFixedHeight((mpl_legend_p.p1[1]-mpl_legend_p.p0[1]))
-        # self.ui.frame_legend.adjustSize()
         
-        # add figure mpl_sp[n] into frame_sp[n]
-        for i in range(1, settings_init['max_harmonic']+2, 2):
-            # add first ax
-            setattr(
-                self.ui, 'mpl_sp' + str(i), 
-                MatplotlibWidget(
-                    parent=getattr(self.ui, 'frame_sp' + str(i)), 
-                    axtype='sp',
-                    showtoolbar=False,
-                )
-            )
-            # getattr(self.ui, 'mpl_sp' + str(i)).fig.text(0.01, 0.98, str(i), va='top',ha='left') # option: weight='bold'
-            getattr(self.ui, 'mpl_sp' + str(i)).update_sp_text_harm(str(i))
-            # set mpl_sp<n> border
-            getattr(self.ui, 'mpl_sp' + str(i)).setStyleSheet(
-                "border: 0;"
-            )
-            getattr(self.ui, 'mpl_sp' + str(i)).setContentsMargins(0, 0, 0, 0)
-            getattr(self.ui, 'frame_sp' + str(i)).setLayout(
-                self.set_frame_layout(
-                    getattr(self.ui, 'mpl_sp' + str(i))
-                )
-            )
 
 
-        # add figure mpl_spectra_fit_polar into frame_spectra_fit_polar
-        self.ui.mpl_spectra_fit_polar = MatplotlibWidget(
-            parent=self.ui.frame_spectra_fit_polar, 
-            axtype='sp_polar'
-            )
-        self.ui.frame_spectra_fit_polar.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit_polar))
 
-        # add figure mpl_spectra_fit into frame_spactra_fit
-        self.ui.mpl_spectra_fit = MatplotlibWidget(
-            parent=self.ui.frame_spectra_fit, 
-            axtype='sp_fit',
-            showtoolbar=False
-            ) 
-        self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
-        # connect signal
-        self.ui.mpl_spectra_fit.ax[0].cidx = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('xlim_changed', self.on_fit_lims_change)
-        self.ui.mpl_spectra_fit.ax[0].cidy = self.ui.mpl_spectra_fit.ax[0].callbacks.connect('ylim_changed', self.on_fit_lims_change)
-        
-        # disconnect signal while dragging
-        # self.ui.mpl_spectra_fit.canvas.mpl_connect('button_press_event', self.spectra_fit_axesevent_disconnect)
-        # # reconnect signal after dragging (mouse release)
-        # self.ui.mpl_spectra_fit.canvas.mpl_connect('button_release_event', self.spectra_fit_axesevent_connect)
-            
-        # add figure mpl_countour1 into frame_spectra_mechanics_contour1
-        self.ui.mpl_countour1 = MatplotlibWidget(
-            parent=self.ui.frame_spectra_mechanics_contour1, 
-            axtype='contour'
-            )
-        self.ui.frame_spectra_mechanics_contour1.setLayout(self.set_frame_layout(self.ui.mpl_countour1))
-
-        # add figure mpl_countour2 into frame_spectra_mechanics_contour2
-        self.ui.mpl_countour2 = MatplotlibWidget(
-            parent=self.ui.frame_spectra_mechanics_contour2, 
-            axtype='contour',
-            )
-        self.ui.frame_spectra_mechanics_contour2.setLayout(self.set_frame_layout(self.ui.mpl_countour2))
-
-        # add figure mpl_plt1 into frame_spactra_fit
-        self.ui.mpl_plt1 = MatplotlibWidget(
-            parent=self.ui.frame_spectra_fit, 
-            axtype='data',
-            # ylabel=r'$\Delta f/n$ (Hz)',
-            )
-        self.ui.frame_plt1.setLayout(self.set_frame_layout(self.ui.mpl_plt1))
-
-
-        # add figure mpl_plt2 into frame_spactra_fit
-        self.ui.mpl_plt2 = MatplotlibWidget(
-            parent=self.ui.frame_spectra_fit, 
-            axtype='data',
-            # ylabel=r'$\Delta \Gamma$ (Hz)',
-            )
-        self.ui.frame_plt2.setLayout(self.set_frame_layout(self.ui.mpl_plt2))
-
-        # selector menu
-        self.ui.mpl_plt1.canvas.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.ui.mpl_plt1.canvas.customContextMenuRequested.connect(lambda position, mpl=self.ui.mpl_plt1, plt_str='plt1': self.mpl_data_open_custom_menu(position, mpl, plt_str))
-
-        self.ui.mpl_plt2.canvas.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.ui.mpl_plt2.canvas.customContextMenuRequested.connect(lambda position, mpl=self.ui.mpl_plt2, plt_str='plt2': self.mpl_data_open_custom_menu(position, mpl, plt_str))
         #endregion
 
 
@@ -2252,9 +2264,9 @@ class QCMApp(QMainWindow):
         return queue_id
         '''
         if self.active['l_str'] == 'l': # showing all data
-            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanrows=False)
+            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanrow=False)
         elif self.active['l_str'] == 'lm': # showing marked data
-            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanrows=True)
+            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanrow=True)
         return queue_list[self.active['ind']]
 
     def get_active_raw(self):
@@ -2398,6 +2410,9 @@ class QCMApp(QMainWindow):
         plt_str: str of 'plt1' or 'plt2'
         '''
 
+        print('showall', self.settings['radioButton_data_showall'])
+        print('showmarked', self.settings['radioButton_data_showmarked'])
+
         if plt_str != 'plt1' and plt_str != 'plt2': # n is not in the UI
             # do nothing
             return
@@ -2432,8 +2447,15 @@ class QCMApp(QMainWindow):
         # from tabWidget_settings
         if self.settings['radioButton_data_showall']: # show all data
             mark = False
+            line_group = 'l'
         elif self.settings['radioButton_data_showmarked']: # show marked data only
             mark = True
+            if self.data_saver.with_marks(plt_chnname):
+                line_group = 'lm'
+                # mark = True
+            else:
+                line_group = 'l'
+                # mark = False
 
         # get y data
         ydata = self.get_data_by_typestr(plt_opt[0], plt_chnname, mark=mark, unit_t=timeuint, unit_temp=tempunit)
@@ -2466,15 +2488,21 @@ class QCMApp(QMainWindow):
 
 
             
-            data_list.append(('l'+harm, harm_xdata, harm_ydata))
+            data_list.append((line_group+harm, harm_xdata, harm_ydata))
+
+            ## display marked data (solid) along with all data (open) (can be removed if don't like)
+            if not mark and self.data_saver.with_marks(plt_chnname):
+                 mark_list = self.data_saver.rows_with_marks(plt_chnname)
+                 data_list.append(('lm'+harm, harm_xdata[mark_list], harm_ydata[mark_list]))
+            
         
         # update mpl_<plt_str>
         getattr(self.ui, 'mpl_' + plt_str).update_data(*data_list)
         
-        # get keys of harms don't want to plot
-        clr_list = ['l'+str(harm) for harm in range(1, settings_init['max_harmonic']+2, 2) if not self.settings.get('checkBox_' + plt_str + '_h' + str(harm), False)] 
-        # clear harmonics don't plot
-        getattr(self.ui, 'mpl_' + plt_str).clr_lines(clr_list)
+        # # get keys of harms don't want to plot
+        # clr_list = ['l'+str(harm) for harm in range(1, settings_init['max_harmonic']+2, 2) if not self.settings.get('checkBox_' + plt_str + '_h' + str(harm), False)] 
+        # # clear harmonics don't plot
+        # getattr(self.ui, 'mpl_' + plt_str).clr_lines(clr_list)
 
 
 
@@ -2487,28 +2515,31 @@ class QCMApp(QMainWindow):
 
         print(typestr)
         if 'df' == typestr: # get delf
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=True, deltaval=True, norm=False)
-        elif 'dg' == typestr: # get delg
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=True, deltaval=True, norm=False)
-        elif 'dfn' == typestr: # get delfn
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=True, deltaval=True, norm=True)
-        elif 'dgn' == typestr: # get delgn
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=True, deltaval=True, norm=True)
-        elif 'f' == typestr: # get f
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=True, deltaval=False, norm=False)
-        elif 'g' == typestr: # get g
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=True, deltaval=False, norm=False)
-        elif 't' == typestr: # get temp
-            data = self.data_saver.get_t_marked_rows(chn_name, dropnanrows=True, unit=unit_t)
-        elif 'temp' == typestr:
-            data = self.data_saver.get_temp_C_marked_rows(chn_name, dropnanrows=True, unit=unit_temp)
-        elif 'idx' == typestr:
-            data = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanrows=True)
-        
-        print('data', data)
-        # for df and dg
-        if 'md' in typestr: # minus delta value
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
+        elif 'mdf' == typestr: # get delf
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
             data = self.data_saver.minus_columns(data)
+        elif 'dg' == typestr: # get delg
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
+        elif 'dfn' == typestr: # get delfn
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=True)
+        elif 'mdfn' == typestr: # get delfn
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=True)
+            data = self.data_saver.minus_columns(data)
+        elif 'dgn' == typestr: # get delgn
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=False, deltaval=True, norm=True)
+        elif 'f' == typestr: # get f
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=False, norm=False)
+        elif 'g' == typestr: # get g
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=False, deltaval=False, norm=False)
+        elif 't' == typestr: # get t
+            data = self.data_saver.get_t_marked_rows(chn_name, dropnanrow=False, unit=unit_t)
+        elif 'temp' == typestr: # get temp
+            data = self.data_saver.get_temp_C_marked_rows(chn_name, dropnanrow=False, unit=unit_temp)
+        elif 'idx' == typestr: # get indices
+            data = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanrow=False)
+        
+
         return data
                     
     def update_data_axis(self, signal):
@@ -2671,6 +2702,46 @@ class QCMApp(QMainWindow):
             print(xlabel)
         getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
 
+    def clr_mpl_harm(self):
+        '''
+        clear 'l' and 'lm' lines of harm (str) in mpl_<plt_str>
+        '''
+        sender = self.sender().objectName()
+        print(sender)
+        str_list = sender.split('_')
+        print(str_list)
+        print(sender, self.settings[sender])
+
+        if not self.settings[sender]: # unchecked
+            self.clr_mpl_l(str_list[1], line_group_list=['l', 'lm'], harm_list=[sender[-1]])
+
+    def set_mpl_lm_style(self, signal):
+        line_list = ['lm'+str(i) for i in range(1, settings_init['max_harmonic']+2, 2)]
+        if signal:
+            self.ui.mpl_plt1.change_style(line_list, linestyle='-')
+            self.ui.mpl_plt2.change_style(line_list, linestyle='-')
+        else:
+            self.ui.mpl_plt1.change_style(line_list, linestyle='none')
+            self.ui.mpl_plt2.change_style(line_list, linestyle='none')
+
+    def clr_mpl_l12(self):
+        # self.clr_mpl_l('plt1')
+        # self.clr_mpl_l('plt2')
+        self.ui.mpl_plt1.clr_lines()
+        self.ui.mpl_plt2.clr_lines()
+
+    def clr_mpl_l(self, plt_str, line_group_list=['l'], harm_list=[]):
+        '''
+        clear .l['l<n>'] in mpl_<plt_str>
+        ''' 
+        if not harm_list:
+            harm_list = [str(harm) for harm in range(1, settings_init['max_harmonic']+2, 2)]
+        for line_group in line_group_list:
+            # get keys of harms don't want to plot
+            clr_list = [line_group+harm for harm in harm_list] 
+            # clear harmonics don't plot
+            getattr(self.ui, 'mpl_' + plt_str).clr_lines(clr_list)
+
     def mpl_data_open_custom_menu(self, position, mpl, plt_str):
         '''
         check which menu to open: mpl_data_open_selector_menu or mpl_data_pen_picker_menu
@@ -2685,6 +2756,9 @@ class QCMApp(QMainWindow):
         elif mpl.sel_mode == 'picker':
             self.mpl_data_open_picker_menu(position, mpl, plt_str)
 
+        # # update display
+        # mpl.canvas.draw()
+ 
     def mpl_data_open_selector_menu(self, position, mpl, plt_str):
         '''
         function to execute the selector custom context menu for selector
@@ -2718,7 +2792,8 @@ class QCMApp(QMainWindow):
         # get channel name
         chn_name = self.get_plt_chnname(plt_str)
         chn_queue_list = list(self.data_saver.get_queue_id(chn_name).tolist()) # list of available index in the target chn
-        
+
+       
 
 
         # create contextMenu
@@ -3684,6 +3759,9 @@ class QCMApp(QMainWindow):
         # set widgets to display the channel reference setup
         # the value will be load from data_saver
         self.update_refsource()
+
+        # update mpl_plt<n> at the end
+        self.update_mpl_plt12()
 
 
 

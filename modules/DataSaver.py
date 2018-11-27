@@ -540,11 +540,11 @@ class DataSaver:
 
         return df
 
-    def get_t_marked_rows(self, chn_name, dropnanrows=False, unit=None):
+    def get_t_marked_rows(self, chn_name, dropnanrow=False, unit=None):
         '''
         return rows with marks of df from self.get_t_s
         '''
-        if dropnanrows == True:
+        if dropnanrow == True:
             return self.get_t_by_unit(chn_name, unit=unit)[self.rows_with_marks(chn_name)]
         else:
             return self.get_t_by_unit(chn_name, unit=unit)
@@ -574,11 +574,11 @@ class DataSaver:
             t = t.dt.total_seconds() # convert to second
             return t
 
-    def get_queue_id_marked_rows(self, chn_name, dropnanrows=False):
+    def get_queue_id_marked_rows(self, chn_name, dropnanrow=False):
         '''
         return rows with marks of df from self.get_queue_id
         '''
-        if dropnanrows == True:
+        if dropnanrow == True:
             return self.get_queue_id(chn_name)[self.rows_with_marks(chn_name)]
         else:
             return self.get_queue_id(chn_name)
@@ -589,11 +589,11 @@ class DataSaver:
         '''
         return getattr(self, chn_name)['queue_id'].copy()
 
-    def get_temp_C_marked_rows(self, chn_name, dropnanrows=False, unit=None):
+    def get_temp_C_marked_rows(self, chn_name, dropnanrow=False, unit=None):
         '''
         return rows with marks of df from self.get_temp_C
         '''
-        if dropnanrows == True:
+        if dropnanrow == True:
             return self.get_temp_by_unit(chn_name, unit=unit)[self.rows_with_marks(chn_name)]
         else:
             return self.get_temp_by_unit(chn_name, unit=unit)
@@ -657,9 +657,7 @@ class DataSaver:
         norm: if True, normalize value by harmonic (works only when deltaval is True)
         return: df with columns = ['1', '3', '5', '7', '9]
         '''
-        print('$$$$$$$$$$$$$')
-        print(norm)
-        
+
         if deltaval == True:
             s = self.convert_col_to_delta_val(chn_name, col, norm=norm)
             print(s)
@@ -710,9 +708,9 @@ class DataSaver:
         print(self.exp_ref[chn_name])
         if all(np.isnan(np.array(self.exp_ref[chn_name][self._ref_keys[col]]))): # no reference or no constant reference exist
             # check col+'_ref'
-            if not self.exp_ref[chn_name + '_ref'][1][0]: #start index is None or [], dynamic reference
+            if self.exp_ref[chn_name + '_ref'][1][0] is None or len(self.exp_ref[chn_name + '_ref'][1]) == 0: #start index is None or [], dynamic reference
                 print('dynamic reference')
-                ref_s=getattr(self, self.exp_ref[col + '_ref'][0]).copy()
+                ref_s=getattr(self, self.exp_ref[chn_name + '_ref'][0]).copy()
 
                 # convert series value to ndarray
                 col_arr = np.array(col_s.values.tolist())
@@ -884,18 +882,29 @@ class DataSaver:
             return exp_ref
 
 
-    def rows_with_marks(self, chan_name):
+    def rows_with_marks(self, chn_name):
         '''
         return list of booleans of rows with marked (1) harmonics
         if no marked rows, return all
         '''
-        marked_rows = getattr(self, chan_name).marks.apply(lambda x: True if 1 in x else False)
+        marked_rows = getattr(self, chn_name).marks.apply(lambda x: True if 1 in x else False)
         if marked_rows.any(): # there are marked rows
             print('There are marked rows')
             return marked_rows
         else: # no amrked rows, return all
             print('There is no marked row.\nReturn all')
             return ~marked_rows
+
+    def with_marks(self, chn_name):
+        '''
+        return if there are marks in data (True/False)
+        '''
+        marked_rows = getattr(self, chn_name).marks.apply(lambda x: True if 1 in x else False)
+        if marked_rows.any(): # there are marked rows
+            return True
+        else: # no amrked rows
+            return False
+
 
     def reset_match_marks(self, df, mark_pair=(0, 1)):
         ''' 
