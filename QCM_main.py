@@ -2759,6 +2759,7 @@ class QCMApp(QMainWindow):
 
         # # update display
         # mpl.canvas.draw()
+        self.update_mpl_plt12()
  
     def mpl_data_open_selector_menu(self, position, mpl, plt_str):
         '''
