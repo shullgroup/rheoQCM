@@ -8,6 +8,7 @@ import hdf5storage
 import pdb
 
 def plot_qcmprops(propfig,inputfile,calctype,labeltext, sym):
+    props={}
     cstr = 'c' + calctype
     data = hdf5storage.loadmat(inputfile+'_calc.mat')
     dlam3 = data['d3sol'][cstr][0]
@@ -25,6 +26,11 @@ def plot_qcmprops(propfig,inputfile,calctype,labeltext, sym):
     
     timescale(propfig,'linear')
     maxtime(propfig, 350)
+
+    props['drho'] = drho[~np.isnan(drho)]
+    props['phi'] = phi[~np.isnan(phi)]
+    props['grho3'] = grho3[~np.isnan(grho3)]
+    return props
 
     
 def timescale(propfig, scale):

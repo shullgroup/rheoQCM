@@ -1,16 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Jan  4 09:19:59 2018
-
-@author: ken
-"""
-import numpy as np
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jan  4 10:01:39 2018
-
 @author: ken
 """
 
@@ -145,17 +135,6 @@ def DMAcalc(sampledata, parms, Tref):
     nqcm_aT = qcm_E.shape[0]
     qcm_aT = np.zeros(nqcm_aT)
 
-#    # %%  this is what we need to do to get the spline fit to work: taken
-#    # from https://scicomp.stackexchange.com/questions/19693/is-my-restricted-
-#    # natural-cubic-spline-equation-wrong
-#
-#    n = 100
-#    x = linspace(0, 1, n)
-#    y = (((exp(1.2*x) + 1.5*sin(7*x))-1)/3) + normal(0, 0.15, size=n)
-#    t = [0.2, 0.4, 0.6, 0.8]
-#    spl = LSQUnivariateSpline(x, y, t)
-#    plt.plot(x, spl(x), '-', x, y, 'o')
-
     # temporarily change fref to fref_raw, since we are fitting to the original
     # raw data
     sp_parms['fref'] = sp_parms['fref_raw']
@@ -244,30 +223,31 @@ def DMAcalc(sampledata, parms, Tref):
 
 
 def DMAplot(sampledata, parms, Tref):
-    make_spline = parms.get('make_spline', 'no')
     figinfo = parms.get('figinfo',{})
-    Trange = parms.get('Trange', [-200, 300])  # default range designed to include everything
+    Trange_plot = parms.get('Trange_plot', [-200, 300])  # default range for plotting
+    Trange_spline = parms.get('Trange_spline', [-200, 300])  # default range for spline fits   ()
+    markertype = parms.get('markertype', '+')
+    markersize = parms.get('markersize', 8)
+    colortype = parms.get('colortype', 'r')
+    filltype = parms.get('filltype', 'none')
     sp_parms = parms.get('sp_parms', {})
     dmadata = sampledata['dmadata']
-    if 'mark' not in parms:
-        parms['mark'] = '+'
-    
-    # read in the shift factors and the corresponding temperatures
-    Tind =     dmadata['Tind'] = np.where((dmadata['T'] >= Trange[0]) & (dmadata['T'] <= Trange[1]))[0]
+    labeltext = parms.get('labeltext','nolab')
+
+    # read in the temperatures and shift factors
     T = dmadata['T']
     aT = dmadata['aT_raw']
+
+    # deterimine Temp. indices to use for plotting and spline fits
+    Tind_plot = np.where((T >= Trange_plot[0]) & (T <= Trange_plot[1]))[0]
+    Tind_spline = np.where((T >= Trange_spline[0]) & (T <= Trange_spline[1]))[0]
     
     # now adjust the shift factors to the reference temperature
-    knots = make_knots(T[Tind], 3, {})
-    aT_spline = LSQUnivariateSpline(T[Tind], np.log(aT[Tind]), knots)   
+    knots = make_knots(T[Tind_spline], 3, {})
+    aT_spline = LSQUnivariateSpline(T[Tind_spline], np.log(aT[Tind_spline]), knots)   
     aTfix = np.exp(aT_spline(Tref))
     aT = aT/aTfix
     
-    # determine which shift factors to use
-    if parms.get('aTfit', 'self') != 'self':
-        aT = np.exp(vogel(dmadata['T'], Tref, sp_parms['B'],
-                         sp_parms['Tinf']))
-
     # make new dma plot if it doesn't exist
     if not plt.fignum_exists('dma'):
         dmafig = plt.figure('dma', figsize=(9, 3))
@@ -297,57 +277,62 @@ def DMAplot(sampledata, parms, Tref):
 
     # set up the van Gurp-Palmen plot
     if not plt.fignum_exists('vgp'):
-        vgpfig = plt.figure('vgp', figsize=(3,3))
-        vgp_ax = vgpfig.add_subplot(111)
+        vgpfig = plt.figure('vgp', figsize=(8,3))
+        vgp_ax = vgpfig.add_subplot(122)
         vgp_ax.semilogx(True)
         vgp_ax.set_ylabel(r'$\phi$ (deg.)')
         vgp_ax.set_xlabel('$|E^*|$ (Pa)')
+        vgp_ax.set_title('(b)')
+        estar_ax = vgpfig.add_subplot(121)
+        estar_ax.loglog(True)
+        estar_ax.set_xlabel(r'$fa_T$ s$^{-1}$')
+        estar_ax.set_ylabel('$|E^*|$ (Pa)')
+        estar_ax.set_title('(a)')
     else:
-        dmafig = parms['figinfo']['dmafig']
         vgpfig = parms['figinfo']['vgpfig']
         vgp_ax = parms['figinfo']['vgp_ax']
-
+        estar_ax = parms['figinfo']['estar_ax']
+        
     # put the DMA data on the Van Gurp-Palmen Plot
     dmadata1 = {}
-
 
     # reset the color cycling
     dma_ax1.set_prop_cycle(None)
     dma_ax2.set_prop_cycle(None)
     dma_ax3.set_prop_cycle(None)
     vgp_ax.set_prop_cycle(None)
+    estar_ax.set_prop_cycle(None)
 
     # put the DMA data on the plots
     dmadata1 = {}
     dmadata2 = {}
     dmadata3 = {}
-    dmadata4 = {}
 
     # take the tangent of phi if that is desired
     if parms.get('tandelta', 'no') == 'yes':
         phidata_for_plot = np.tan(np.radians(dmadata['phi']))
     else:
         phidata_for_plot = dmadata['phi']
-        
+
+    # plot the data        
     faT = np.empty_like(dmadata['f'])
-    for Tindex in Tind:
+    for Tindex in Tind_plot:
         faT[Tindex, :] = dmadata['f'][Tindex, :] * aT[Tindex]
         dmadata1[Tindex], = (dma_ax1.plot(faT[Tindex, :],
-                             dmadata['estar'][Tindex, :], marker=parms['mark'],
-                             linestyle='none'))
+                             dmadata['estar'][Tindex, :], marker=markertype,
+                             linestyle='none', fillstyle=filltype, markersize=markersize))
         dmadata2[Tindex], = (dma_ax2.plot(faT[Tindex, :],
-                             phidata_for_plot[Tindex, :], marker=parms['mark'],
-                             linestyle='none'))
-        dmadata3[Tindex], = dma_ax3.plot(T[Tindex],
-                                         aT[Tindex], '+', markersize=12)
-        
-#        dmadata4[Tindex], = vgp_ax.plot(dmadata['estar'][Tindex, :],
-#                                        dmadata['phi'][Tindex, :], '+')
-               
+                             phidata_for_plot[Tindex, :], marker=markertype,
+                             linestyle='none', fillstyle=filltype, markersize=markersize))
+        dmadata3[Tindex], = dma_ax3.plot(T[Tindex], aT[Tindex],
+                marker=markertype, fillstyle='none')
+                       
     # make necessary adjustments to axis limits
     vgp_ax.set_ylim(bottom=0)
     dma_ax2.set_ylim(bottom=0)
     dma_ax1.set_ylim(bottom=1e6, top=5e9)
+    estar_ax.set_ylim(bottom=1e6, top=5e9)
+
     
     # now we create the springpot fits and add them to the plot
     if parms.get('show_springpot_fit', 'no') == 'yes':
@@ -356,10 +341,9 @@ def DMAplot(sampledata, parms, Tref):
         fit1, = dma_ax1.loglog(faTfit, abs(Estar), 'b-')
         fit2, = dma_ax2.semilogx(faTfit, np.angle(Estar, deg=True), 'b-')
 
-
     # generate VFT fit if the parameters exist for it
     if 'B' in parms: 
-        fit3, = dma_ax3.plot(T[Tind], np.exp(vogel(T[Tind], Tref, sp_parms.get('B', 1000),
+        VFTfit, = dma_ax3.plot(T[Tind_plot], np.exp(vogel(T[Tind_plot], Tref, sp_parms.get('B', 1000),
                                       sp_parms.get('Tinf', -50), '-b')))
 
     # now add titles to plots
@@ -377,55 +361,87 @@ def DMAplot(sampledata, parms, Tref):
     dma_master = dmadata['dma_np']
     # adjust frequency by the shift factors
     dma_master[:,:,0] = dma_master[:,:,0] * aT[:, None]
-    # restrict data to the temperaures in Tind
-    dma_master = dma_master[Tind,:,:]
+    
+    # restrict data to the desired temperatures for the spline fit and plots
+    dma_master_spline = dma_master[Tind_spline,:,:]
+    dma_master_plot = dma_master[Tind_plot,:,:]
+    
     # now reshape to put all the temperature data together
-    dma_size = dma_master.shape
-    dma_master = np.reshape(dma_master, (dma_size[0]*dma_size[1], 6))
-    # now sort according to faT
-    dma_master = dma_master[dma_master[:, 0].argsort()]
-        
-    freq_master = dma_master[:, 0]
-    estar_master = dma_master[:,1]
-    phi_master = dma_master[:,2]
-    T_master = dma_master[:,3]
-    estor_master = dma_master[:,4]
-    eloss_master = dma_master[:,5]
-        
+    dma_size_spline = dma_master_spline.shape
+    dma_size_plot = dma_master_plot.shape
+
+    dma_master_spline = np.reshape(dma_master_spline,
+                                   (dma_size_spline[0]*dma_size_spline[1], 6))
+    dma_master_plot = np.reshape(dma_master_plot,
+                                   (dma_size_plot[0]*dma_size_plot[1], 6))
+    
+    # now sort according to faT - this approach elements any values of the 
+    # log(faT) that are equal, as required by LSQUnivariateSpline 
+    faT_spline, indices_spline = np.unique(np.log(dma_master_spline[:,0]),
+                                    return_index=True)
+    log_faT_plot = np.unique(np.log(dma_master_plot[:,0]))
+    dma_master_spline = dma_master_spline[indices_spline]
+    
+    # extract quantities to determine spline fits
+    freq_master_spline = dma_master_spline[:, 0]
+    estar_master_spline = dma_master_spline[:,1]
+    phi_master_spline = dma_master_spline[:,2]
+    T_master_spline = dma_master_spline[:,3]
+    estor_master_spline = dma_master_spline[:,4]
+    eloss_master_spline = dma_master_spline[:,5]
+    
     # add spline fit of shift factors
-    dma_ax3.plot(T[Tind], np.exp(aT_spline(T[Tind]))/aTfix, 'b-')    
+    dma_ax3.plot(T[Tind_plot], np.exp(aT_spline(T[Tind_plot]))/aTfix, '-',
+                 color=colortype)    
     dmafig.tight_layout()
     vgpfig.tight_layout()
     
     # make spline fits to property data
-    knots = make_knots(np.log(freq_master), 3, {})
-    estar_spline = LSQUnivariateSpline(np.log(freq_master), np.log(estar_master), knots)   
-    phi_spline = LSQUnivariateSpline(np.log(freq_master), phi_master, knots)   
+    knots = make_knots(np.log(freq_master_spline), 5, {})
+    estar_spline = LSQUnivariateSpline(np.log(freq_master_spline), np.log(estar_master_spline), knots)   
+    phi_spline = LSQUnivariateSpline(np.log(freq_master_spline), phi_master_spline, knots)   
     
-    # add master splines
-    dma_ax1.loglog(freq_master, np.exp(estar_spline(np.log(freq_master))), 'g-')
-    dma_ax2.semilogx(freq_master, phi_spline(np.log(freq_master)), 'g-')
-    vgp_ax.semilogx(np.exp(estar_spline(np.log(freq_master))), phi_spline(np.log(freq_master)), 'g-')
-    figinfo = {}
+    # add master splines to different plots
+    dma_ax1.loglog(np.exp(log_faT_plot), np.exp(estar_spline(log_faT_plot)),
+                   color=colortype, linewidth=1, label=labeltext)
+    dma_ax2.semilogx(np.exp(log_faT_plot), phi_spline(log_faT_plot),
+                     color=colortype, linewidth=1, label=labeltext)
+    vgp_ax.semilogx(np.exp(estar_spline(log_faT_plot)), phi_spline(log_faT_plot),
+                    color=colortype, linewidth=1)
+    estar_ax.loglog(np.exp(log_faT_plot), np.exp(estar_spline(log_faT_plot)),
+                   color=colortype, linewidth=1, label=labeltext)
 
+    
+    # add symbols to vgp plot
+    Estarmin = 3e8  #  minimum estar for symbols to be added to vgp plot
+    log_faT_plot_sym = np.linspace(log_faT_plot[0], log_faT_plot[-1], 10)
+    log_faT_plot_sym = log_faT_plot_sym[np.where(estar_spline(log_faT_plot_sym)
+                                        <np.log(Estarmin))]
+    
+    vgp_ax.semilogx(np.exp(estar_spline(log_faT_plot_sym)), 
+                    phi_spline(log_faT_plot_sym),color=colortype,
+                    marker=markertype, linestyle='None', fillstyle='none',
+                    label=labeltext, linewidth=1)
+    figinfo = {}
+    
     figinfo['dmafig'] = dmafig
     figinfo['dma_ax1'] = dma_ax1
     figinfo['dma_ax2'] = dma_ax2
     figinfo['dma_ax3'] = dma_ax3
     figinfo['vgpfig'] = vgpfig
     figinfo['vgp_ax'] = vgp_ax
+    figinfo['estar_ax'] = estar_ax
 
     return figinfo
 
-phi_spline(np.log(freq_master))
-def make_knots(numpy_array, num_knots, parms):                  
+
+def make_knots(numpy_array, num_knots, parms):           
     knot_interval = (np.max(numpy_array)-np.min(numpy_array))/(num_knots+1)
     minval = np.min(numpy_array)+knot_interval
     maxval = np.max(numpy_array)-knot_interval
     knots = np.linspace(minval, maxval, num_knots)
     return knots
 
-phi_spline(np.log(freq_master))
 
 def Bcompare(sample, Tref):
     qcmsize = 8  # marker size for qcm points
