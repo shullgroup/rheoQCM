@@ -57,7 +57,7 @@ class DataSaver:
         self.mode = ''  # mode of datasaver 'init': new file; 'load': append/load file
         self.path = ''
         self.saveflg = True # flag to show if modified data has been saved to file
-        self.refflg = False # flag if the reference has been set
+        self.refflg = {chn_name: False for chn_name in self._chn_keys} # flag if the reference has been set
         self.queue_list = []
         # following attributes will be save in file
         self.settings = {}
@@ -699,7 +699,7 @@ class DataSaver:
         norm: if True, nomalize value by harmonic
         '''
         # check if the reference is set
-        if not self.refflg:
+        if not self.refflg[chn_name]:
             print(self.exp_ref[chn_name + '_ref'])
             self.set_ref_set(chn_name, *self.exp_ref[chn_name + '_ref'])
 
@@ -822,7 +822,7 @@ class DataSaver:
                 'f0': self.nan_harm_list(), # list for each harmonic
                 'g0': self.nan_harm_list(), # list for each harmonic
             }
-            self.refflg = True
+            self.refflg[chn_name] = True
 
         else: # there is reference data saved
             if getattr(self, chn_name + '_ref').shape[0] > 0: # there is reference data saved
@@ -834,7 +834,7 @@ class DataSaver:
                     print(getattr(self, chn_name + '_ref')[col])
                     print(df)
                     self.exp_ref[chn_name][key] = df.mean().values.tolist()
-                self.refflg = True
+                self.refflg[chn_name] = True
             else:
                 # no data to saved 
                 # clear self.exp_ref.<chn_name>
@@ -842,7 +842,7 @@ class DataSaver:
                     'f0': self.nan_harm_list(), # list for each harmonic
                     'g0': self.nan_harm_list(), # list for each harmonic
                 }
-                self.refflg = False
+                self.refflg[chn_name] = False
 
         print(self.exp_ref)
 
