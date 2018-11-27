@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icon">
+    <file>rc/export_settings.svg</file>
     <file>rc/ref_self.svg</file>
     <file>rc/new.svg</file>
     <file>rc/delete_selected.svg</file>
@@ -22,6 +23,8 @@
     <file>rc/logo_2.svg</file>
   </qresource>
   <qresource prefix="button">
+    <file>rc/picker.svg</file>
+    <file>rc/selector.svg</file>
     <file>rc/plus_p.svg</file>
     <file>rc/minus_p.svg</file>
     <file>rc/minus.svg</file>

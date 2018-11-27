@@ -138,7 +138,7 @@ update vna channels (sample and reference) if ref == sample: sample = 'none'
 
 
 
-# MathModules module
+# UIModules module
 
 ## custom functions
 

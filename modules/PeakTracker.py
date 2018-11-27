@@ -7,15 +7,15 @@ from scipy.signal import find_peaks
 from random import randrange
 
 from UISettings import settings_init
-from modules import MathModules
+from modules import UIModules
 
 # for debugging
 import traceback
 
-peak_min_distance_Hz = 1e3 # in Hz
-peak_min_width_Hz = 10 # in Hz full width
-xtol = 1e-18 
-ftol = 1e-18
+# peak_min_distance_Hz = 1e3 # in Hz
+# peak_min_width_Hz = 10 # in Hz full width
+# xtol = 1e-18 
+# ftol = 1e-18
 
 def fun_G(x, amp, cen, wid, phi):
     ''' 
@@ -216,6 +216,10 @@ def findpeaks_py(x, resonance, output=None, sortstr=None, threshold=None, promin
     sortstr: 'ascend' or 'descend' ordering data by peak height
     '''
     # print(resonance)
+    if x is None or len(x) == 1: # for debuging
+        print('findpeaks_py input x is not well assigned!\nx = {}'.format(x))
+        exit(0)
+
     print(threshold)
     print('f distance', distance / (x[1] - x[0]))
     print(prominence)
@@ -298,11 +302,12 @@ class PeakTracker:
         self.harminput = self.init_harmdict()
         self.harmoutput = self.init_harmdict()
         for harm in range(1, settings_init['max_harmonic']+2, 2):
-            self.update_input('samp',harm , [], [], [], {}, {})
-            self.update_input('ref',harm , [], [], [], {}, {})
+            harm = str(harm)
+            self.update_input('samp', harm , [], [], [], {}, {})
+            self.update_input('ref', harm , [], [], [], {}, {})
 
-            self.update_output('samp',harm )
-            self.update_output('ref',harm )
+            self.update_output('samp', harm )
+            self.update_output('ref', harm )
 
 
         self.active_harm = None
@@ -322,10 +327,11 @@ class PeakTracker:
         '''
         harm_dict = {}
         for i in range(1, settings_init['max_harmonic']+2, 2):
-            harm_dict[i] = {}
+            harm_dict[str(i)] = {}
         chn_dict = {
             'samp': harm_dict,
             'ref' : harm_dict,
+            'refit' : harm_dict,
         }
         return chn_dict
 
@@ -340,6 +346,12 @@ class PeakTracker:
             harm_dict = {}
         else:
             harm_dict = harmdata[chn_name][harm]
+        
+            print('#### update_input ####')
+            print('chn_name', chn_name, 'harm', harm)
+            print('f[chn][harm]', len(f))
+            print('harmdata[chn][harm]', harm_dict)
+            print(' #####################')
 
         # setattr(self.harminput, chn_name, setattr())
         self.harminput[chn_name][harm]['isfitted'] = False # if the data has been fitted
@@ -456,7 +468,6 @@ class PeakTracker:
             ) # use modulus
             self.x = self.harminput[chn_name][harm]['f'][:-1] + np.diff(self.harminput[chn_name][harm]['f']) # change f size and shift
         elif method == 'prev': # use previous value
-            # nothing to do
             try:
                 pre_method = self.harmoutput[chn_name][harm]['method']
                 if pre_method == 'prev':
@@ -465,7 +476,6 @@ class PeakTracker:
                 pre_method = 'gmax'
             
             self.init_active_val(harm=harm, chn_name=chn_name, method=pre_method)
-            return
         else:
             self.resonance = self.harminput[chn_name][harm]['G']
             self.x = self.harminput[chn_name][harm]['f']
@@ -496,9 +506,9 @@ class PeakTracker:
         else:
             _, cen, half_wid, _ = guess_peak_factors(freq, resonance)
     
-        current_xlim = self.harminput[chn_name][harm]['current_span']
+        current_xlim = np.array(self.harminput[chn_name][harm]['current_span'])
         # get the current center and current span of the data in Hz
-        current_center, current_span = MathModules.converter_startstop_to_centerspan(*self.harminput[chn_name][harm]['current_span'])
+        current_center, current_span = UIModules.converter_startstop_to_centerspan(*self.harminput[chn_name][harm]['current_span'])
         
         # initiate new_xlim == previous span
         new_xlim = self.harminput[chn_name][harm]['current_span']
@@ -590,8 +600,8 @@ class PeakTracker:
             sortstr=sortstr, 
             threshold=self.harminput[chn_name][harm]['threshold'], 
             prominence=self.harminput[chn_name][harm]['prominence'],
-            distance=peak_min_distance_Hz, 
-            width=peak_min_width_Hz
+            distance=settings_init['peak_min_distance_Hz'], 
+            width=settings_init['peak_min_width_Hz']
         )
         
         print('indices', indices)
@@ -775,7 +785,7 @@ class PeakTracker:
             params.add(
                 'p'+str(i)+'_wid',                 # width (fwhm)
                 value=wid,                         # init: half range
-                min=peak_min_width_Hz / 2,         # lb in Hz
+                min= settings_init['peak_min_width_Hz'] / 2,         # lb in Hz
                 max=(np.amax(f) - np.amin(f)) * 2, # ub in Hz: assume peak is in the range of f
             )
             params.add(
@@ -820,9 +830,9 @@ class PeakTracker:
         self.update_output(bmod=bmod)
         
 
-        f, G, B = self.harminput[chn_name][harm]['f'], \
-                  self.harminput[chn_name][harm]['G'], \
-                  self.harminput[chn_name][harm]['B']
+        f = self.harminput[chn_name][harm]['f']
+        G = self.harminput[chn_name][harm]['G']
+        B = self.harminput[chn_name][harm]['B']
 
         val = self.get_output(key='params').valuesdict() # get guessed values
 
@@ -843,14 +853,13 @@ class PeakTracker:
             max_idx = max(factor_idx)
             min_idx = min(factor_idx)
             # save min_idx and max_idx to 'factor_span'
-            self.update_output(chn_name=chn_name, harm=harm, factor_span=[f[min_idx], f[max_idx]])
+            self.update_output(chn_name=chn_name, harm=harm, factor_span=[f[min_idx], f[max_idx]]) # span of f used for fitting
 
-            # _, cen_guess, half_wid_guess = guess_peak_factors(self.x, self.resonance)
-            # factor_idx, = np.where((self.x >= cen_guess - half_wid_guess * factor) & (self.x <= cen_guess + half_wid_guess * factor))
+            f = f[min_idx: max_idx]
+            G = G[min_idx: max_idx]
+            B = B[min_idx: max_idx]
 
-            f, G, B = f[min_idx: max_idx], \
-                      G[min_idx: max_idx], \
-                      B[min_idx: max_idx]
+            print('data len after factor', len(f))
 
         print('factor\n', factor)
         # print('cen_guess\n', cen_guess)
@@ -869,11 +878,11 @@ class PeakTracker:
         try:
             result = minimize(
                 res_GB, 
-                self.harmoutput[chn_name][harm]['params'], 
+                self.get_output(key='params'), 
                 method='leastsq', 
                 args=(f, G, B), 
                 kws={'gmod': gmod, 'bmod': bmod, 'eps': eps}, 
-                xtol=xtol, ftol=ftol,
+                xtol=settings_init['xtol'], ftol=settings_init['ftol'],
                 nan_policy='omit', # ('raise' default, 'propagate', 'omit')
                 )
             print(fit_report(result)) 
@@ -1016,7 +1025,7 @@ class PeakTracker:
                     return b_fit
                 else: # no mod_name matched
                     dummy = []
-                    for n in self.get_output(key='found_n', chn_name=chn_name, harm=harm):
+                    for _ in range(self.get_output(key='found_n', chn_name=chn_name, harm=harm)):
                         dummy.append(np.empty(self.harminput[chn_name][harm]['f'].shape) * np.nan)
                     return dummy
         else: # no result found
@@ -1055,7 +1064,9 @@ class PeakTracker:
             self.active_harm = harm
         
         self.init_active_val(chn_name=chn_name, harm=harm)
-        
+        print('chn:', chn_name, 'harm:', harm)
+        print('self.chn:', self.active_chn, 'self.harm:', self.active_harm)
+
         self.minimize_GB()
         
         if components is False:

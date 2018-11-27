@@ -24,6 +24,31 @@ parms['dataroot'] = qcm.find_dataroot('qifeng')
 parms['figlocation'] = 'datadir' # save data in 
 sample = sample_dict()  # read sample dictionary
 
+# define text files for plotting
+base_fig_name0 = qcm.find_base_fig_name(sample['DGEBA-Jeffamine2000_RT_7'], parms)
+base_fig_name1 = qcm.find_base_fig_name(sample['DGEBA-Jeffamine230_RT_3'], parms)
+legend1text = '1:1expoxy:amine'
+base_fig_name2 = qcm.find_base_fig_name(sample['DGEBA-Jeffamine230_RT_5'], parms)
+legend2text = '2:1epoxy:amine'
+
+# define text files for plotting
+base_fig_name3 = qcm.find_base_fig_name(sample['DGEBA-Jeffamine400_RT_3'], parms)
+
+# define text files for plotting
+base_fig_name4 = qcm.find_base_fig_name(sample['DGEBA-PACM_RT'], parms)
+legend4text = 'DGEBA-PACM'
+base_fig_name5 = qcm.find_base_fig_name(sample['DGEBA-PACM_RT_2'], parms)
+legend5text = 'DGEBA-PACM_2'
+
+base_fig_name11 = qcm.find_base_fig_name(sample['DGEBA-Jeffamine230_RT_3_cured'], parms)
+base_fig_name21 = qcm.find_base_fig_name(sample['DGEBA-Jeffamine230_RT_5_cured'], parms)
+
+base_fig_name31 = qcm.find_base_fig_name(sample['DGEBA-Jeffamine400_RT_3_cured'], parms)
+
+base_fig_name41 = qcm.find_base_fig_name(sample['DGEBA-PACM_RT_cured'], parms)
+# base_fig_name41 = qcm.find_base_fig_name(sample['DGEBA-PACM_RT_2_cured'], parms)
+
+
 ######################################################################
 
 
@@ -32,11 +57,6 @@ sample = sample_dict()  # read sample dictionary
 propfig = qcm.make_prop_axes('props', 't (min.)')
 vgpfig = qcm.make_vgp_axes('vgp')
 
-# define text files for plotting
-base_fig_name1 = qcm.find_base_fig_name(sample['DGEBA-Jeffamine230_RT_3'], parms)
-legend1text = '1:1expoxy:amine'
-base_fig_name2 = qcm.find_base_fig_name(sample['DGEBA-Jeffamine230_RT_5'], parms)
-legend2text = '2:1epoxy:amine'
 
 # add the data to the texts
 qcm.prop_plot_from_csv(propfig, base_fig_name1 + '_355.txt', 'b+', legend1text)
@@ -58,9 +78,6 @@ plt.show()
 # make the property and van Gurp-Palmen axes
 propfig = qcm.make_prop_axes('props', 't (min.)')
 vgpfig = qcm.make_vgp_axes('vgp')
-# define text files for plotting
-base_fig_name3 = qcm.find_base_fig_name(sample['DGEBA-Jeffamine400_RT_3'], parms)
-
 
 # add the data to the texts
 qcm.prop_plot_from_csv(propfig, base_fig_name3 + '_355.txt', 'b+', '355')
@@ -79,11 +96,6 @@ plt.show()
 propfig = qcm.make_prop_axes('props', 't (min.)')
 vgpfig = qcm.make_vgp_axes('vgp')
 
-# define text files for plotting
-base_fig_name4 = qcm.find_base_fig_name(sample['DGEBA-PACM_RT'], parms)
-legend4text = 'DGEBA-PACM'
-base_fig_name5 = qcm.find_base_fig_name(sample['DGEBA-PACM_RT_2'], parms)
-legend5text = 'DGEBA-PACM_2'
 
 # add the data to the texts
 qcm.prop_plot_from_csv(propfig, base_fig_name4 + '_355.txt', 'b+', legend4text +  ' 355')
@@ -160,6 +172,9 @@ propfig['drho_ax'].set_xscale('log')
 propfig['grho_ax'].set_xscale('log')
 propfig['phi_ax'].set_xscale('log')
 
+
+
+
 qcm.vgp_plot_from_csv(vgpfig, 
     qcm.find_base_fig_name(sample['DGEBA-Jeffamine2000_RT'], parms) + '_133.txt', 'bo',
     'DGEBA-Jeffamine2000 133 (1:1)')
@@ -225,6 +240,7 @@ qcm.prop_plot_from_csv(propfig, base_fig_name2 + '_355.txt', 'bo', 'DGEBA-Jeffam
 # qcm.prop_plot_from_csv(propfig, base_fig_name2 + '_133.txt', 'bv', 'DGEBA-Jeffamine230 133 (2:1)')
 qcm.prop_plot_from_csv(propfig, base_fig_name3 + '_355.txt', 'go', 'DGEBA-Jeffamine400 355 (2:1)')
 # qcm.prop_plot_from_csv(propfig, base_fig_name3 + '_353.txt', 'gv', 'DGEBA-Jeffamine400 353 (2:1)')
+qcm.prop_plot_from_csv(propfig, base_fig_name0 + '_133.txt', 'yo', 'DGEBA-Jeffamine2000 133 (2:1)')
 qcm.prop_plot_from_csv(propfig, base_fig_name4 + '_355.txt', 'ro', 'DGEBA-PACM 355 (2:1)')
 # qcm.prop_plot_from_csv(propfig, base_fig_name4 + '_353.txt', 'rv', 'DGEBA-PACM 353 (2:1)')
 # qcm.prop_plot_from_csv(propfig, base_fig_name5 + '_355.txt', 'rs', 'DGEBA-PACM_2 355 (2:1)')
@@ -233,16 +249,25 @@ propfig['drho_ax'].legend()
 propfig['drho_ax'].set_xscale('log')
 propfig['grho_ax'].set_xscale('log')
 propfig['phi_ax'].set_xscale('log')
+
+
 qcm.vgp_plot_from_csv(vgpfig, base_fig_name1 + '_355.txt', 'co', 'DGEBA-Jeffamine230 355 (1:1)')
 qcm.vgp_plot_from_csv(vgpfig, base_fig_name1 + '_133.txt', 'cv', 'DGEBA-Jeffamine230 133 (1:1)')
 qcm.vgp_plot_from_csv(vgpfig, base_fig_name2 + '_355.txt', 'bo', 'DGEBA-Jeffamine230 355 (2:1)')
 # qcm.vgp_plot_from_csv(vgpfig, base_fig_name2 + '_133.txt', 'bv', 'DGEBA-Jeffamine230 133 (2:1)')
 qcm.vgp_plot_from_csv(vgpfig, base_fig_name3 + '_355.txt', 'go', 'DGEBA-Jeffamine400 355 (2:1)')
 # qcm.vgp_plot_from_csv(vgpfig, base_fig_name3 + '_353.txt', 'gv', 'DGEBA-Jeffamine400 353 (2:1)')
+qcm.vgp_plot_from_csv(vgpfig, base_fig_name0 + '_133.txt', 'yo', 'DGEBA-Jeffamine2000 133 (2:1)')
 qcm.vgp_plot_from_csv(vgpfig, base_fig_name4 + '_355.txt', 'ro', 'DGEBA-PACM 355 (2:1)')
 # qcm.vgp_plot_from_csv(vgpfig, base_fig_name4 + '_353.txt', 'rv', 'DGEBA-PACM 353 (2:1)')
 # qcm.vgp_plot_from_csv(vgpfig, base_fig_name5 + '_355.txt', 'rs', 'DGEBA-PACM_2 355 (2:1)')
 # qcm.vgp_plot_from_csv(vgpfig, base_fig_name5 + '_133.txt', 'rd', 'DGEBA-PACM_2 353 (2:1)')
+
+# qcm.vgp_plot_from_csv(vgpfig, base_fig_name11 + '_355.txt', 'cd', 'DGEBA-Jeffamine230 355 (1:1) cured')
+# qcm.vgp_plot_from_csv(vgpfig, base_fig_name21 + '_355.txt', 'bd', 'DGEBA-Jeffamine230 355 (2:1) cured')
+# qcm.vgp_plot_from_csv(vgpfig, base_fig_name31 + '_355.txt', 'gd', 'DGEBA-Jeffamine400 355 (2:1) cured')
+# qcm.vgp_plot_from_csv(vgpfig, base_fig_name41 + '_355.txt', 'rd', 'DGEBA-PACM 355 (2:1) cured')
+
 
 plt.legend()
 plt.show()

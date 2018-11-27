@@ -18,7 +18,8 @@ ax.change_geometry(2,2,i+1)
 # rcParams['font.size'] = 9
 
 from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtWidgets import QSizePolicy, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QSizePolicy, QVBoxLayout, QWidget, QPushButton
+from PyQt5.QtGui import QIcon, QPixmap
 
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
@@ -28,16 +29,19 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.backend_tools import ToolBase, ToolToggleBase
 from matplotlib.projections import register_projection
+from matplotlib.widgets import RectangleSelector, SpanSelector
+import matplotlib.ticker as ticker
 
 import types
 
 import numpy as np
+import pandas as pd
+
 from UISettings import settings_init
+from modules import UIModules
 
 # color map for plot
 color = ['tab:blue', 'tab:red', 'tab:orange', 'tab:gray']
-
-# rcParams['toolbar'] = 'toolmanager'
 
 # class NavigationToolbar(NavigationToolbar2QT):
     # set buttons to show in toolbar
@@ -46,7 +50,7 @@ color = ['tab:blue', 'tab:red', 'tab:orange', 'tab:gray']
 
 class AxesLockY(Axes): 
     '''
-    cutomized axes with constrained pan/zoom to x only
+    cutomized axes with constrained pan to x only
     '''
     def __init__(self, partent=None):
         super(AxesLockY, self).__init__(partent)
@@ -55,6 +59,24 @@ class AxesLockY(Axes):
         Axes.drag_pan(self, button, key, 'x', y) # pretend key=='x
 
 register_projection(AxesLockY)
+
+
+class SelectorSwitch(ToolToggleBase):
+    '''turn on and of '''
+    # In case we want to add a toggle button to the toolbar for active/deactive change span
+    # default_keymap = 'S'
+    description = 'Turn on and off the data selector'
+
+    def __init__(self, *args, **kwargs):
+        self.span_selector = kwargs.pop('selector')
+        ToolToggleBase.__init__(self, *args, **kwargs)
+
+    def enable(self, *args):
+        self.span_selector.set_active(True)
+
+    def disable(self, *args):
+        self.span_selector.set_active(False)
+
 
 class MatplotlibWidget(QWidget):
 
@@ -66,13 +88,16 @@ class MatplotlibWidget(QWidget):
         self.ax = [] # list of axes 
         self.l = {} # all the plot stored in dict
         self.l['temp'] = [] # for temp lines in list
+        self.t = {} # all text in fig
         self.leg = '' # initiate legend 
 
         # set padding size
         if axtype == 'sp': 
-            self.fig = Figure(tight_layout={'pad': 0.}, dpi=dpi, facecolor='none')
+            self.fig = Figure(tight_layout={'pad': 0.05}, dpi=dpi)
+            # self.fig = Figure(tight_layout={'pad': 0.05}, dpi=dpi, facecolor='none')
         else:
-            self.fig = Figure(tight_layout={'pad': 0.2}, dpi=dpi, facecolor='none')
+            self.fig = Figure(tight_layout={'pad': 0.2}, dpi=dpi)
+            # self.fig = Figure(tight_layout={'pad': 0.2}, dpi=dpi, facecolor='none')
         ### set figure background transparsent
         # self.setStyleSheet("background: transparent;")
 
@@ -129,6 +154,7 @@ class MatplotlibWidget(QWidget):
         #     # self.fig.tight_layout()
         #     # self.fig.tight_layout(pad=0.5, h_pad=0, w_pad=0, rect=(0, 0, 1, 1))
         self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
     
              
         # self.fig.set_constrained_layout_pads(w_pad=0., h_pad=0., hspace=0., wspace=0.) # for python >= 3.6
@@ -140,6 +166,8 @@ class MatplotlibWidget(QWidget):
     def initax_xy(self, *args, **kwargs):
         # axes
         ax1 = self.fig.add_subplot(111, facecolor='none')
+        # ax1 = self.fig.add_subplot(111)
+
         # if self.axtype == 'sp_fit':
         #     # setattr(ax1, 'drag_pan', AxesLockY.drag_pan)
         #     ax1 = self.fig.add_subplot(111, facecolor='none', projection='AxesLockY')
@@ -295,10 +323,34 @@ class MatplotlibWidget(QWidget):
             color=color[2]
         ) # peak freq span
 
+
+        # self.ax[0].xaxis.set_major_locator(plt.AutoLocator())
+        # self.ax[0].xaxis.set_major_locator(plt.LinearLocator())
+        # self.ax[0].xaxis.set_major_locator(plt.MaxNLocator(3))
+
         # set label of ax[1]
         self.set_ax(self.ax[0], title=title, xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
         self.set_ax(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
 
+        self.ax[0].xaxis.set_major_locator(ticker.LinearLocator(3))
+
+        # add text
+        self.t['harm'] = self.fig.text(0.01, 0.98, '', va='top',ha='left') # option: weight='bold'
+        self.t['chi'] = self.fig.text(0.01, 0.01, '', va='bottom',ha='left', fontsize='7')
+
+    def update_sp_text_harm(self, harm):
+        if isinstance(harm, int):
+            harm = str(harm)
+        self.t['harm'].set_text(harm)
+
+    def update_sp_text_chi(self, chi=None):
+        '''
+        chi: number
+        '''
+        if not chi:
+            self.t['chi'].set_text('')
+        else:
+            self.t['chi'].set_text(r'$\chi^2$ = {:.4f}'.format(chi))
 
     def init_sp_fit(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
@@ -365,9 +417,11 @@ class MatplotlibWidget(QWidget):
         self.set_ax(self.ax[0], xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
         self.set_ax(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
 
+        self.ax[0].xaxis.set_major_locator(ticker.LinearLocator(3))
+
         # self.ax[0].xaxis.set_major_locator(plt.AutoLocator())
         # self.ax[0].xaxis.set_major_locator(plt.LinearLocator())
-        self.ax[0].xaxis.set_major_locator(plt.MaxNLocator(3))
+        # self.ax[0].xaxis.set_major_locator(plt.MaxNLocator(3))
 
         self.ax[0].margins(x=0)
         self.ax[1].margins(x=0)
@@ -378,6 +432,60 @@ class MatplotlibWidget(QWidget):
         # self.ax[0].autoscale()
         # self.ax[1].autoscale()
 
+        # add span selector
+        self.span_selector_zoomin = SpanSelector(
+            self.ax[0], 
+            self.sp_spanselect_zoomin_callback,
+            direction='horizontal', 
+            useblit=True,
+            button=[1],  # left click
+            minspan=5,
+            span_stays=False,
+            rectprops=dict(facecolor='red', alpha=0.2)
+        )        
+
+        self.span_selector_zoomout = SpanSelector(
+            self.ax[0], 
+            self.sp_spanselect_zoomout_callback,
+            direction='horizontal', 
+            useblit=True,
+            button=[3],  # right
+            minspan=5,
+            span_stays=False,
+            rectprops=dict(facecolor='blue', alpha=0.2)
+        )        
+
+    def sp_spanselect_zoomin_callback(self, xclick, xrelease): 
+        '''
+        callback of span_selector
+        '''
+
+        self.ax[0].set_xlim(xclick, xrelease)
+
+
+    def sp_spanselect_zoomout_callback(self, xclick, xrelease): 
+        '''
+        callback of span_selector
+        '''
+        curr_f1, curr_f2 = self.ax[0].get_xlim()
+        curr_fc, curr_fs = UIModules.converter_startstop_to_centerspan(curr_f1, curr_f2)
+        # selected range
+        sel_fc, sel_fs = UIModules.converter_startstop_to_centerspan(xclick, xrelease)
+        # calculate the new span
+        ratio = curr_fs / sel_fs
+        new_fs = curr_fs * ratio
+        new_fc = curr_fc * (1 + ratio) - sel_fc * ratio
+        # center/span to f1/f2
+        new_f1, new_f2 = UIModules.converter_centerspan_to_startstop(new_fc, new_fs)
+        # print('curr_fs', curr_fs)
+        # print('sel_fs', sel_fs)
+        # print('new_fs', new_fs)
+        # print('curr', curr_f1, curr_f2)
+        # print('new', new_f1, new_f2)
+        # set new xlim
+        self.ax[0].set_xlim(new_f1, new_f2)
+
+        
 
     def init_sp_polar(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
@@ -398,9 +506,9 @@ class MatplotlibWidget(QWidget):
             color='k'
         ) # fit
 
-        self.l['lfitsp'] = self.ax[0].plot(
+        self.l['lsp'] = self.ax[0].plot(
             [], [], 
-            color='k'
+            color=color[2]
         ) # fit in span range
 
         # set label of ax[1]
@@ -417,6 +525,8 @@ class MatplotlibWidget(QWidget):
             .l<nharm> 
             .lm<nharm>
         '''
+        self.sel_mode = 'none' # 'none', 'selector', 'picker'
+
         self.initax_xy()
 
         for i in range(1, int(settings_init['max_harmonic']+2), 2):
@@ -424,18 +534,196 @@ class MatplotlibWidget(QWidget):
                 [], [], 
                 marker='o', 
                 markerfacecolor='none', 
+                picker=5, # 5 points tolerance
+                label='l'+str(i),
+                alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
             ) # l
+        
+        for i in range(1, int(settings_init['max_harmonic']+2), 2):
             self.l['lm' + str(i)] = self.ax[0].plot(
-                    [], [], 
-                    marker='x', 
-                    color=self.l['l' + str(i)][0].get_color() # set the same color as .l
-                ) # lm
+                [], [], 
+                marker='o', 
+                color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
+                # linestyle='none',
+                picker=5, # 5 points tolerance
+                label='lm'+str(i),
+                alpha=0.75,
+            ) # maked points of line
+            self.l['ls' + str(i)] = self.ax[0].plot(
+                [], [], 
+                marker='o', 
+                markeredgecolor=color[1], 
+                markerfacecolor=color[1],
+                alpha= 0.5,
+                linestyle='none',
+                label='ls'+str(i),
+            ) # points in rectangle_selector
+
+        self.l['lp'] = self.ax[0].plot(
+            [], [], 
+            marker='+', 
+            markersize = 12,
+            markeredgecolor=color[1],
+            markeredgewidth=1, 
+            alpha= 1,
+            linestyle='none',
+            label='',
+        ) # points of picker
+        
+        self.cid = None # for storing the cid of pick_event
 
         # set label of ax[1]
         self.set_ax(self.ax[0], xlabel='Time (s)',ylabel=ylabel)
 
         # self.ax[0].autoscale()
 
+        # add rectangle_selector
+        self.rect_selector = RectangleSelector(
+            self.ax[0], 
+            self.data_rectselector_callback,
+            drawtype='box',
+            button=[1], # left
+            useblit=True,
+            minspanx=5,
+            minspany=5,
+            # lineprops=None,
+            rectprops=dict(edgecolor = 'black', facecolor='none', alpha=0.2, fill=False),
+            spancoords='pixels', # default 'data'
+            maxdist=10,
+            marker_props=None,
+            interactive=False, # change rect after drawn
+            state_modifier_keys=None,
+        )  
+        # set if inavtive
+        self.rect_selector.set_active(False)
+
+        # create a toggle button fro selector
+        self.pushButton_selectorswitch = QPushButton()
+        self.pushButton_selectorswitch.setText('')
+        self.pushButton_selectorswitch.setCheckable(True)
+        self.pushButton_selectorswitch.setFlat(True)
+        # icon
+        icon_sel = QIcon()
+        icon_sel.addPixmap(QPixmap(':/button/rc/selector.svg'), QIcon.Normal, QIcon.Off)
+        self.pushButton_selectorswitch.setIcon(icon_sel)
+        
+        self.pushButton_selectorswitch.clicked.connect(self.data_rectsleector_picker_switch)
+
+        # add it to toolbar
+        self.toolbar.addWidget(self.pushButton_selectorswitch)
+        # # add selector switch button to toolbar
+        # self.fig.canvas.manager.toolmanager.add_tool('Data Selector', SelectorSwitch, selector=self.rect_selector)
+
+        # # add button to toolbar
+        # self.canvas.manager.toolbar.add_tool('DataSelector', 'zoom_pan', 1)
+
+
+    def data_rectsleector_picker_switch(self, checked):
+        if checked:
+            print(True)
+            # active rectangle selector
+            self.rect_selector.set_active(True)
+            # connect pick event
+            self.cid = self.canvas.mpl_connect('pick_event', self.data_onpick_callback)
+           
+            if self.toolbar._active == "PAN":
+                self.toolbar.pan()
+            elif self.toolbar._active == "ZOOM":
+                self.toolbar.zoom()
+        else:
+
+            # deactive rectangle selector
+            self.rect_selector.set_active(False)
+            # reset .l['ls<n>']
+            self.clr_lines(l_list=['ls'+ str(i) for i in range(1, int(settings_init['max_harmonic']+2), 2)])
+            # deactive pick event            
+            self.canvas.mpl_disconnect(self.cid)
+            # clear data .l['lp']
+            self.clr_lines(l_list=['lp'])
+
+            # reset
+            self.sel_mode = 'none'
+
+    def data_rectselector_callback(self, eclick, erelease):
+        '''
+        when rectangle selector is active
+        '''
+        # clear pick data .l['lp']
+        self.clr_lines(l_list=['lp'])
+
+        # print(dir(eclick))
+        print(eclick)
+        print(erelease)
+        x1, x2 = sorted([eclick.xdata, erelease.xdata]) # x1 < x2
+        y1, y2 = sorted([eclick.ydata, erelease.ydata]) # y1 < y2
+        
+        # # dict for storing the selected indices
+        # sel_idx_dict = {}
+        # list for updating selected data
+        sel_list = []
+        # find the points in rect
+        for l_str in ['l', 'lm']: # only one will be not empty
+            for harm in range(1, settings_init['max_harmonic']+2, 2):
+                harm = str(harm)
+                print(harm)
+                # get data from current plotted lines
+                # clear .l['ls<n>']
+                self.clr_lines(l_list=['ls'+harm])
+                
+                print(l_str)
+                # print(self.l[l_str + harm][0].get_data())
+                harm_x, harm_y = self.l[l_str + harm][0].get_data()
+                
+                if isinstance(harm_x, pd.Series): # if data is series (not empty)
+                    sel_bool = harm_x.between(x1, x2) & harm_y.between(y1, y2)
+
+                    # save data for plotting selected data
+                    sel_list.append(('ls'+harm, harm_x[sel_bool], harm_y[sel_bool]))
+
+                    # # save indices for later process
+                    # sel_idx = harm_x[sel_bool].index
+                    # print(sel_idx)
+                    # # update selected indices
+                    # sel_idx_dict[harm] = sel_idx
+        
+        if sel_list: # there is data selected
+            self.sel_mode = 'selector'
+        else:
+            self.sel_mode = 'none'
+
+        # print(sel_idx_dict)
+        # plot the selected data
+        self.update_data(*sel_list)
+
+    def data_onpick_callback(self, event):
+        '''
+        callback function of mpl_data pick_event
+        '''
+        # clear selector data .l['ls<n>']
+        self.clr_lines(l_list=['ls'+ str(i) for i in range(1, int(settings_init['max_harmonic']+2), 2)])
+
+        # print(dir(event))
+        thisline = event.artist
+        x_s = thisline.get_xdata()
+        y_s = thisline.get_ydata()
+        ind = event.ind[0]
+        print(thisline)
+        # print(dir(thisline))
+        print(thisline.get_label())
+        print(x_s.name)
+        print(y_s.name) 
+        print(ind)   
+        # print('onpick1 line:', zip(np.take(xdata, ind), np.take(ydata, ind)))
+
+        # plot
+        print(x_s.iloc[ind], y_s.iloc[ind])
+        self.l['lp'][0].set_data(x_s.iloc[ind], y_s.iloc[ind])
+        self.l['lp'][0].set_label(thisline.get_label() + '_' + str(ind)) # transfer the label of picked line and ind to 'lp'
+        self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
+
+        # set
+        self.sel_mode = 'picker'
 
     def init_contour(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
@@ -460,6 +748,7 @@ class MatplotlibWidget(QWidget):
         ) # l
         self.l['colorbar'] = plt.colorbar(self.l['C'], ax=self.ax[0]) # lm
         self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
 
         # set label of ax[1]
         self.set_ax(self.ax[0], xlabel=r'$d/\lambda$',ylabel=r'$\Phi$ ($\degree$)')
@@ -489,6 +778,7 @@ class MatplotlibWidget(QWidget):
             columnspacing=0.5
         )
         self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
         
         # set label of ax[1]
         self.set_ax(self.ax[0], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
@@ -551,6 +841,7 @@ class MatplotlibWidget(QWidget):
         ax.yaxis.label.set_size(fontsize+1)
         # ax.set_ylabel(fontsize=fontsize+1)
         ax.tick_params(labelsize=fontsize)
+        # ax.xaxis.set_major_locator(ticker.LinearLocator(3))
 
     def resize(self, event):
         # on resize reposition the navigation toolbar to (0,0) of the axes.
@@ -611,15 +902,27 @@ class MatplotlibWidget(QWidget):
         '''
         axs = set() # initialize a empty set
         for ln, x, y in args:
-            self.l[ln][0].set_xdata(x)
-            self.l[ln][0].set_ydata(y)
+            # self.l[ln][0].set_xdata(x)
+            # self.l[ln][0].set_ydata(y)
+            self.l[ln][0].set_data(x, y)
             axs.add(self.l[ln][0].axes)
+            
+            # ax = self.l[ln][0].axes
+            # axbackground = self.canvas.copy_from_bbox(ax.bbox)
+            # print(ax)
+            # self.canvas.restore_region(axbackground)
+            # ax.draw_artist(self.l[ln][0])
+            # self.canvas.blit(ax.bbox)
 
         for ax in axs:
             ax.relim()
             ax.autoscale_view(True,True,True)
         self.canvas.draw()
-        # plt.draw()
+        # self.canvas.draw_idle()
+        # self.canvas.draw_event()
+        # self.canvas.draw_cursor()
+        # TODP the flush_events() makes the UI blury
+        self.canvas.flush_events() # flush the GUI events 
 
     def get_data(self, ls=[]):
         '''
@@ -628,8 +931,9 @@ class MatplotlibWidget(QWidget):
         '''
         data = []
         for l in ls:
-            xdata = self.l[l][0].get_xdata()
-            ydata = self.l[l][0].get_ydata()
+            # xdata = self.l[l][0].get_xdata()
+            # ydata = self.l[l][0].get_ydata()
+            xdata, ydata = self.l[l][0].get_data()
             data.append((xdata, ydata))
         return data
 
@@ -644,27 +948,37 @@ class MatplotlibWidget(QWidget):
         # print('len temp', len(self.l['temp']))
         # print('temp', self.l['temp'])
 
-        for lt in self.l['temp']:
-            # print('lt', lt)
-            ax.lines.remove(lt[0]) # remove from ax
-            self.l['temp'].remove(lt) # remove from list .l['temp']
+        for l_temp in self.l['temp']:
+            # print('l_temp', l_temp)
+            ax.lines.remove(l_temp[0]) # remove from ax
+            self.l['temp'].remove(l_temp) # remove from list .l['temp']
 
         self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
 
     def clr_lines(self, l_list=None):
         ''' 
         clear all lines in .l (but not .l['temp'][:]) of key in l_list
         '''
+        print(self.l)
         for key in self.l:
-            if  l_list is None: # clear all
-                self.l[key][0].set_xdata([])
-                self.l[key][0].set_ydata([])
-            else:
-                if key in l_list:
-                    self.l[key][0].set_xdata([])
-                    self.l[key][0].set_ydata([])
+            print(key)
+            if key not in ['temp', 'C', 'colorbar']:
+                if  l_list is None: # clear all
+                    # self.l[key][0].set_xdata([])
+                    # self.l[key][0].set_ydata([])
+                    self.l[key][0].set_data([], [])
+                else:
+                    if key in l_list:
+                        # self.l[key][0].set_xdata([])
+                        # self.l[key][0].set_ydata([])
+                        self.l[key][0].set_data([], [])
+            elif key == 'temp':
+                for ax in self.ax:
+                    self.del_templines(ax=ax)
 
         self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
 
     def new_plt(self, xdata=[], ydata=[], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         ''' 
@@ -711,6 +1025,7 @@ class MatplotlibWidget(QWidget):
                     )
                 )
         self.canvas.draw()
+        self.canvas.flush_events() # flush the GUI events 
 
 def press_zoomX(obj, event):
     event.key = 'x'

@@ -5,7 +5,98 @@
 
 def sample_dict():
     sample = {}  # individual sample dictionaries get added to sample
+
+    # 20181029 DGEBA-PACM_RT_2_cured 
+    samplename = 'DGEBA-PACM_RT_2_cured'
+    sample[samplename] = {
+    'samplename': 'DGEBA-PACM_RT_2_cured',
+    'datadir': '20181029',
+    'barefile': 'DGEBA-PACM_RT_2_bare_air',
+    'filmfile': 'DGEBA-PACM_RT_2_cured',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['353', '355'],
+    'nhplot': [1, 3, 5]
+    }
+
+    # 20181029 DGEBA-PACM_RT_cured 
+    samplename = 'DGEBA-PACM_RT_cured'
+    sample[samplename] = {
+    'samplename': 'DGEBA-PACM_RT_cured',
+    'datadir': '20181029',
+    'barefile': 'DGEBA-PACM_RT_bare_air',
+    'filmfile': 'DGEBA-PACM_RT_cured',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['353', '355'],
+    'nhplot': [1, 3, 5]
+    }
+
+    # 20181029 DGEBA-Jeffamine400_RT_3_cured 
+    samplename = 'DGEBA-Jeffamine400_RT_3_cured'
+    sample[samplename] = {
+    'samplename': 'DGEBA-Jeffamine400_RT_3_cured',
+    'datadir': '20181029',
+    'barefile': 'DGEBA-Jeffamine400_RT_3_bare_air',
+    'filmfile': 'DGEBA-Jeffamine400_RT_3_cured',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['353', '355'],
+    'nhplot': [1, 3, 5]
+    }
     
+    # 20181029 DGEBA-Jeffamine400_RT_2_cured 
+    samplename = 'DGEBA-Jeffamine400_RT_2_cured'
+    sample[samplename] = {
+    'samplename': 'DGEBA-Jeffamine400_RT_2_cured',
+    'datadir': '20181029',
+    'barefile': 'DGEBA-Jeffamine400_RT_2_bare_air',
+    'filmfile': 'DGEBA-Jeffamine400_RT_2_cured',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['353', '355'],
+    'nhplot': [1, 3, 5]
+    }
+
+    
+    # 20181029 DGEBA-Jeffamine230_RT_5_cured 
+    samplename = 'DGEBA-Jeffamine230_RT_5_cured'
+    sample[samplename] = {
+    'samplename': 'DGEBA-Jeffamine230_RT_5_cured',
+    'datadir': '20181029',
+    'barefile': 'DGEBA-Jeffamine230_RT_5_bare_air',
+    'filmfile': 'DGEBA-Jeffamine230_RT_5_cured',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['353', '355'],
+    'nhplot': [1, 3, 5]
+    }
+    
+    # 20181029 DGEBA-Jeffamine230_RT_3_cured 
+    samplename = 'DGEBA-Jeffamine230_RT_3_cured'
+    sample[samplename] = {
+    'samplename': 'DGEBA-Jeffamine230_RT_3_cured',
+    'datadir': '20181029',
+    'barefile': 'DGEBA-Jeffamine230_RT_3_bare_air',
+    'filmfile': 'DGEBA-Jeffamine230_RT_3_cured',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['353', '355'],
+    'nhplot': [1, 3, 5]
+    }
+
     # 20180917 2:1 
     samplename = 'DGEBA-Jeffamine2000_RT_7'
     sample[samplename] = {
@@ -15,9 +106,9 @@ def sample_dict():
     'filmfile': 'DGEBA-Jeffamine2000_RT_7',
     'firstline': 0,
     # 'filmtrange': [1, 10],
-    # 'filmindex': range(3, 50, 5),
-    'xscale': 'log',
-    'nhcalc': ['133',],
+    'filmindex': list(range(0, 156, 10)) + [156, 158, 160, 162, 163, 164],
+    # 'xscale': 'log',
+    'nhcalc': ['133'],
     'nhplot': [1, 3,]
     }
 
