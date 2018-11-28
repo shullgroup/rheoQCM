@@ -11,5 +11,3 @@ h5py
 nidaqmx
 win32ui
 win32process
-
-(hdf5storage)

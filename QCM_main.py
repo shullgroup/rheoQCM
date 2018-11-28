@@ -234,7 +234,7 @@ class QCMApp(QMainWindow):
             self.ui.comboBox_plt2_optsx.addItem(val, key)
 
         # set RUN/STOP button
-        self.ui.pushButton_runstop.clicked.connect(self.on_clicked_pushButton_runstop)
+        self.ui.pushButton_runstop.clicked.toggled(self.on_clicked_pushButton_runstop)
 
         # set arrows (la and ra) to change pages 
         self.ui.pushButton_settings_la.clicked.connect(
@@ -1419,6 +1419,11 @@ class QCMApp(QMainWindow):
         return fileName 
 
     def on_triggered_new_exp(self):
+        process = self.process_messagebox(message='Create a new experiment!')
+
+        if not process: 
+            return
+
         fileName = self.saveFileDialog(title='Choose a new file') # !! add path of last opened folder
         if fileName:
             # change the displayed file directory in lineEdit_datafilestr
@@ -1440,6 +1445,12 @@ class QCMApp(QMainWindow):
             # print(t1 -t0)
 
     def on_triggered_load_exp(self): 
+
+        process = self.process_messagebox(message='Load new experiment data!')
+
+        if not process: 
+            return
+
         fileName = self.openFileNameDialog(title='Choose an existing file to append') # !! add path of last opened folder
         if fileName:
             # load UI settings
@@ -1462,9 +1473,14 @@ class QCMApp(QMainWindow):
 
     # 
     def on_triggered_load_settings(self):
+
+        # turn of manual refit mode
+        self.ui.pushButton_manual_refit.setChecked(False)
+
         fileName = self.openFileNameDialog('Choose a file to load its settings', path=self.data_saver.path, filetype=settings_init['default_settings_load_filetype']) # TODO add path of last opened folder
 
         if fileName: 
+
             # load settings from file
             name, ext = os.path.splitext(fileName)
             if ext == '.h5': 
@@ -1543,7 +1559,7 @@ class QCMApp(QMainWindow):
         if fileName:
             self.data_saver_data_exporter(fileName) # do the export
 
-    def saveflg_messagebox(self):
+    def process_messagebox(self, message=[]):
         '''
         check is the experiment is ongoing (self.timer.isActive()) and if data is saved (self.data_saver.saveflg)
         and pop up a messageBox to ask if process
@@ -1554,8 +1570,6 @@ class QCMApp(QMainWindow):
         process = True
 
         if self.timer.isActive() or self.data_saver.saveflg == False:
-            message = []
-
             if self.data_saver.saveflg == False:
                 message.append('There is data unsaved!')
             if self.timer.isActive():
@@ -1574,7 +1588,16 @@ class QCMApp(QMainWindow):
             retval = msg.exec_()
 
             if retval == QMessageBox.Yes:
+                if self.timer.isActive():
+                    # stop test
+                    self.ui.pushButton_runstop.setChecked(False)
+                
                 process = True
+
+        if process:
+            # turn of manual refit mode
+            self.ui.pushButton_manual_refit.setChecked(False)
+
 
         return process
            
@@ -1585,7 +1608,7 @@ class QCMApp(QMainWindow):
         if settings is given, it will load the given settings (load settings)
         """
 
-        process = self.saveflg_messagebox()
+        process = self.process_messagebox()
 
         if not process: 
             return
@@ -1631,6 +1654,11 @@ class QCMApp(QMainWindow):
         clear all data
         ''' 
         if self.data_saver.path == '': # no data 
+            return
+
+        process = self.process_messagebox(message='All data will be deleted!')
+
+        if not process: 
             return
 
         print(self.data_saver.path)
