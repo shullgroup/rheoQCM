@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1141</width>
-    <height>988</height>
+    <height>877</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1299,7 +1299,7 @@ background-color: red;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <property name="documentMode">
                     <bool>false</bool>
@@ -1342,7 +1342,7 @@ background-color: red;
                     <enum>QTabWidget::Rounded</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>3</number>
                    </property>
                    <property name="iconSize">
                     <size>
@@ -1654,7 +1654,7 @@ background-color: red;
                    <x>0</x>
                    <y>0</y>
                    <width>286</width>
-                   <height>165</height>
+                   <height>110</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1783,8 +1783,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>286</width>
-                   <height>165</height>
+                   <width>83</width>
+                   <height>71</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -2782,34 +2782,81 @@ border: none;
                <number>0</number>
               </property>
               <item>
-               <widget class="QToolButton" name="toolButton_settings_mechanics_solve">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
+               <widget class="QFrame" name="frame_4">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
                 </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>30</height>
-                 </size>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
                 </property>
-                <property name="text">
-                 <string> Solve</string>
-                </property>
-                <property name="popupMode">
-                 <enum>QToolButton::InstantPopup</enum>
-                </property>
-                <property name="toolButtonStyle">
-                 <enum>Qt::ToolButtonTextOnly</enum>
-                </property>
-                <property name="autoRaise">
-                 <bool>false</bool>
-                </property>
-                <property name="arrowType">
-                 <enum>Qt::NoArrow</enum>
-                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_15">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QTabWidget" name="tabWidget_mechanics_chn">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>21</height>
+                    </size>
+                   </property>
+                   <property name="currentIndex">
+                    <number>1</number>
+                   </property>
+                   <widget class="QWidget" name="tab_settings_mechanis_sampchn">
+                    <attribute name="title">
+                     <string>Sample Channel</string>
+                    </attribute>
+                   </widget>
+                   <widget class="QWidget" name="tab_settings_mechanis_refchn">
+                    <attribute name="title">
+                     <string>Reference Channel</string>
+                    </attribute>
+                   </widget>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QToolButton" name="toolButton_settings_mechanics_solve">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>30</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string> Solve</string>
+                   </property>
+                   <property name="popupMode">
+                    <enum>QToolButton::InstantPopup</enum>
+                   </property>
+                   <property name="toolButtonStyle">
+                    <enum>Qt::ToolButtonTextOnly</enum>
+                   </property>
+                   <property name="autoRaise">
+                    <bool>false</bool>
+                   </property>
+                   <property name="arrowType">
+                    <enum>Qt::NoArrow</enum>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
               <item>
@@ -2840,35 +2887,35 @@ border: none;
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QCheckBox" name="checkBox">
+                  <widget class="QCheckBox" name="checkBox_nhplot1">
                    <property name="text">
                     <string>1</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QCheckBox" name="checkBox_2">
+                  <widget class="QCheckBox" name="checkBox_nhplot3">
                    <property name="text">
                     <string>3</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QCheckBox" name="checkBox_3">
+                  <widget class="QCheckBox" name="checkBox_nhplot5">
                    <property name="text">
                     <string>5</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QCheckBox" name="checkBox_4">
+                  <widget class="QCheckBox" name="checkBox_nhplot7">
                    <property name="text">
                     <string>7</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QCheckBox" name="checkBox_5">
+                  <widget class="QCheckBox" name="checkBox_nhplot9">
                    <property name="text">
                     <string>9</string>
                    </property>
@@ -3001,7 +3048,7 @@ border: none;
                     </widget>
                    </item>
                    <item>
-                    <widget class="QPushButton" name="pushButton_settings_mechanics_harmminus">
+                    <widget class="QPushButton" name="pushButton_settings_mechanics_harmremove">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                        <horstretch>0</horstretch>
@@ -3042,7 +3089,7 @@ border-image: url(:/button/rc/minus_p.svg);
                     </widget>
                    </item>
                    <item>
-                    <widget class="QPushButton" name="pushButton_settings_mechanics_harmplus">
+                    <widget class="QPushButton" name="pushButton_settings_mechanics_harmadd">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                        <horstretch>0</horstretch>
@@ -3851,7 +3898,7 @@ border-image: url(:/button/rc/plus_p.svg);
              </sizepolicy>
             </property>
             <property name="currentIndex">
-             <number>0</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="page_spectra_topshow">
              <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -4934,6 +4981,9 @@ p, li { white-space: pre-wrap; }
                   <property name="sizeAdjustPolicy">
                    <enum>QAbstractScrollArea::AdjustIgnored</enum>
                   </property>
+                  <property name="dragEnabled">
+                   <bool>false</bool>
+                  </property>
                   <property name="alternatingRowColors">
                    <bool>true</bool>
                   </property>
@@ -5043,6 +5093,11 @@ p, li { white-space: pre-wrap; }
                   <row>
                    <property name="text">
                     <string>rd</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>Time (s)</string>
                    </property>
                   </row>
                   <row>

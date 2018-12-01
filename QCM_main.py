@@ -23,7 +23,7 @@ from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, 
 # packages
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
-from modules import UIModules, GBFitting, PeakTracker, DataSaver
+from modules import UIModules, GBFitting, PeakTracker, DataSaver, QCM
 from modules.MatplotlibWidget import MatplotlibWidget
 
 import _version
@@ -105,6 +105,7 @@ class QCMApp(QMainWindow):
         self.settings = settings_default.copy() # import default settings. It will be initalized latter
         self.peak_tracker = PeakTracker.PeakTracker()
         self.vna_tracker = VNATracker()
+        self.qcm = QCM.QCM()
   
         # define instrument state variables
 
@@ -234,7 +235,7 @@ class QCMApp(QMainWindow):
             self.ui.comboBox_plt2_optsx.addItem(val, key)
 
         # set RUN/STOP button
-        self.ui.pushButton_runstop.clicked.toggled(self.on_clicked_pushButton_runstop)
+        self.ui.pushButton_runstop.toggled.connect(self.on_clicked_pushButton_runstop)
 
         # set arrows (la and ra) to change pages 
         self.ui.pushButton_settings_la.clicked.connect(
@@ -834,7 +835,8 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit = MatplotlibWidget(
             parent=self.ui.frame_spectra_fit, 
             axtype='sp_fit',
-            showtoolbar=False
+            showtoolbar=('Save',),
+            # showtoolbar=False,
             ) 
         self.ui.frame_spectra_fit.setLayout(self.set_frame_layout(self.ui.mpl_spectra_fit))
         # connect signal
@@ -1017,7 +1019,8 @@ class QCMApp(QMainWindow):
         self.ui.menu_settings_mechanics_solve = QMenu(self.ui.toolButton_settings_mechanics_solve)
         self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_all)
         self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_marked)
-        # self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_selected)
+        self.ui.actionSolve_all.triggered.connect(self.mech_solve_all)
+        self.ui.actionSolve_marked.triggered.connect(self.mech_solve_marked)
         # add menu to toolbutton
         self.ui.toolButton_settings_mechanics_solve.setMenu(self.ui.menu_settings_mechanics_solve)
 
@@ -1173,7 +1176,7 @@ class QCMApp(QMainWindow):
     # @pyqtSlot['bool']
     def on_clicked_pushButton_runstop(self, checked):
         if checked:
-            # turn of manual refit mode
+            # turn off manual refit mode
             self.ui.pushButton_manual_refit.setChecked(False)
 
             # check checked harmonice if no, stop
@@ -1474,8 +1477,10 @@ class QCMApp(QMainWindow):
     # 
     def on_triggered_load_settings(self):
 
-        # turn of manual refit mode
-        self.ui.pushButton_manual_refit.setChecked(False)
+        process = self.process_messagebox(message='Load settings from other file!')
+
+        if not process: 
+            return
 
         fileName = self.openFileNameDialog('Choose a file to load its settings', path=self.data_saver.path, filetype=settings_init['default_settings_load_filetype']) # TODO add path of last opened folder
 
@@ -1503,6 +1508,10 @@ class QCMApp(QMainWindow):
             self.load_settings()
 
     def on_triggered_export_settings(self):
+        process = self.process_messagebox(message='Export settings to a file!')
+        if not process: 
+            return
+
         fileName = self.saveFileDialog('Choose a file to load its settings', path=self.data_saver.path, filetype=settings_init['default_settings_export_filetype']) # TODO add path of last opened folder
 
         if fileName: 
@@ -1521,6 +1530,9 @@ class QCMApp(QMainWindow):
         '''
         save current data to file if file has been opened
         '''
+        # turn off manual refit mode
+        self.ui.pushButton_manual_refit.setChecked(False)
+
         if self.data_saver.path: # there is file 
             self.data_saver.save_data_settings()
             print('Data has been saved to file!')
@@ -1531,7 +1543,10 @@ class QCMApp(QMainWindow):
 
 
     def on_triggered_actionSave_As(self):
-        # save current data to a new file 
+        ''' save current data to a new file  '''
+
+        # turn off manual refit mode
+        self.ui.pushButton_manual_refit.setChecked(False)
 
         # export data to a selected form
         fileName = self.saveFileDialog(title='Choose a new file', filetype=settings_init['default_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
@@ -1553,7 +1568,11 @@ class QCMApp(QMainWindow):
 
 
     def on_triggered_actionExport(self):
-        # export data to a selected form
+        ''' export data to a selected format '''
+        process = self.process_messagebox(message='Export data to a selected format!')
+        if not process: 
+            return
+
         fileName = self.saveFileDialog(title='Choose a file and data type', filetype=settings_init['export_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
         # codes for data exporting
         if fileName:
@@ -1595,7 +1614,7 @@ class QCMApp(QMainWindow):
                 process = True
 
         if process:
-            # turn of manual refit mode
+            # turn off manual refit mode
             self.ui.pushButton_manual_refit.setChecked(False)
 
 
@@ -2564,7 +2583,7 @@ class QCMApp(QMainWindow):
         elif 't' == typestr: # get t
             data = self.data_saver.get_t_marked_rows(chn_name, dropnanrow=False, unit=unit_t)
         elif 'temp' == typestr: # get temp
-            data = self.data_saver.get_temp_C_marked_rows(chn_name, dropnanrow=False, unit=unit_temp)
+            data = self.data_saver.get_temp_by_uint_marked_rows(chn_name, dropnanrow=False, unit=unit_temp)
         elif 'idx' == typestr: # get indices
             data = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanrow=False)
         
@@ -2950,6 +2969,37 @@ class QCMApp(QMainWindow):
         else: 
             # nothing to do
             pass
+
+
+    def mech_solve_all(self):
+        marks = self.data_saver.get_marks(self.mechanics_chn)
+        # change marks 0 to 1
+        marks = self.data_saver.reset_match_marks(marks, mark_pair=(0, 1))
+        self.mech_solve(self.mechanics_chn, marks)
+
+
+    def mech_solve_marked(self):
+        marks = self.data_saver.get_marks(self.mechanics_chn)
+        self.mech_solve(self.mechanics_chn, marks)
+
+
+    def update_mechanics_chn(self):
+        '''
+        update self.mechanics_chn
+        '''
+        idx = self.ui.tabWidget_mechanics_chn.currentIndex()
+        if idx == 0: # samp
+            self.mechanics_chn = 'samp'
+        elif idx == 1: # ref
+            self.mechanics_chn = 'ref'
+
+
+    def mech_solve(self, chn_name, marks):
+        '''
+        send the data to qcm module to solve in secquence by marks and
+        save the returned mechanic data to data_saver
+        '''
+        pass
 
 
 

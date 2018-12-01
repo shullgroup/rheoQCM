@@ -114,10 +114,10 @@ settings_init = {
         # 'toolButton_settings_mechanics_solve',
         'groupBox_nhplot',
         # 'groupBox_settings_mechanics_nhcalc',
-        'checkBox_settings_mechanics_witherror',
+        # 'checkBox_settings_mechanics_witherror',
         'pushButton_settings_mechanics_errorsettings',
-        'label_6',
-        'comboBox_settings_mechanics_refG',
+        # 'label_6',
+        # 'comboBox_settings_mechanics_refG',
         # 'comboBox_settings_mechanics_selectmodel',
         'tableWidget_settings_mechanics_setmodel',
 
