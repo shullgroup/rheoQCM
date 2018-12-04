@@ -50,6 +50,7 @@ class DataSaver:
 
         self._init_attrs()
 
+
     def _init_attrs(self):
         '''
         attributes needs to be initiated with new file
@@ -57,7 +58,7 @@ class DataSaver:
         self.mode = ''  # mode of datasaver 'init': new file; 'load': append/load file
         self.path = ''
         self.saveflg = True # flag to show if modified data has been saved to file
-        self.refflg = False # flag if the reference has been set
+        self.refflg = {chn_name: False for chn_name in self._chn_keys} # flag if the reference has been set
         self.queue_list = []
         # following attributes will be save in file
         self.settings = {}
@@ -67,6 +68,8 @@ class DataSaver:
         self.ref_ref = self._make_df() # df for ref chn reference
         self.raw  = {} # raw data from last queue
         self.exp_ref  = self._make_exp_ref() # experiment reference setup in dict
+        self.samp_mech = {} # a dict for calculated mechanical results keys: '131'... values: pd.dataframe
+        self.ref_mech = {}
         
         
 
@@ -113,6 +116,75 @@ class DataSaver:
             #   if len == 1 (e.g.: [0,]), is a single point 
             #   if [] or [None], reference point by point
         } # experiment reference setup in dict
+
+
+    def _update_mech_df(self, chn_name, nhcalc):
+        '''
+        initiate an empty df for storing the mechanic data in self.mech with nhcalc as a key
+        if there is a key with the same name, check and add missed rows (queue_id)
+        nhcalc: list of harmonics (int)
+        '''
+        nhcalc_str = ''.join(nhcalc)
+        if nhcalc_str in getattr(self, chn_name + '_mech').keys():
+            df_mech = getattr(self, chn_name + '_mech')
+            mech_queue_id = df_mech['queue_id']
+            data_queue_id = getattr(self, chn_name)['queue_id']
+            # check if queue_id is the same as self.chn_name
+            if mech_queue_id != data_queue_id:
+                # delete the extra queue_id
+                df_mech = df_mech[df_mech['queue_id'] in (set(mech_queue_id) & set(data_queue_id))]
+                # add the missed queue_id
+                df_mech.append(pd.DataFrame.from_dict(dict(queue_id=list(set(data_queue_id) - set(mech_queue_id)))), ignore_index = True)
+                # replace na with self.nan_harm_list
+                df_mech.fillna(self.nan_harm_list)
+
+                # save back to class
+                setattr(self, chn_name + '_mech', df_mech)
+
+        else: # not exist, make a new dataframe
+          df_mech = pd.DataFrame(columns=[
+            'queue_id', # indices of each timer
+            # 't',
+            # 'temp',
+            # 'marks', # list default [0, 0, 0, 0, 0]
+            # 'delfs',
+            # 'delgs',
+            'delf_calcs',
+            'delg_calcs',
+            'drhos',
+            'grhos',
+            'phis',
+            'd_lams',
+            'lamrhos',
+            'delrhos',
+            'delf_delfsns',
+            'delg_delfsns',
+            'rhs',
+            'rds',
+        ])
+
+        # set values
+        nrows = len(getattr(self, chn_name)['queue_id'])
+        nan_list = [self.nan_harm_list]* nrows 
+        df_mech['queue_id'] = getattr(self, chn_name)['queue_id']
+        df_mech['t'] = getattr(self, chn_name)['t']
+        df_mech['temp'] = getattr(self, chn_name)['temp']
+        df_mech['delf_calcs'] = nan_list
+        df_mech['delg_cals'] = nan_list
+        df_mech['drhos'] = nan_list
+        df_mech['grhos'] = nan_list
+        df_mech['phis'] = nan_list
+        df_mech['d_lams'] = nan_list
+        df_mech['lamrhos'] = nan_list
+        df_mech['delrhos'] = nan_list
+        df_mech['delf_delfsns'] = nan_list
+        df_mech['delg_delfsns'] = nan_list
+        df_mech['rhs'] = nan_list
+        df_mech['rds'] = nan_list
+
+        # set it to class
+        getattr(self, chn_name + '_mech')[nhcalc_str] = df_mech
+
 
     def init_file(self, path, settings, t0):
         '''
@@ -178,6 +250,7 @@ class DataSaver:
 
             self.saveflg = True
 
+
     def load_settings(self, path):
         '''
         load settings from h5 file
@@ -197,6 +270,7 @@ class DataSaver:
             return settings
         except: # failed to load settings
             return None
+
 
     def update_refit_data(self, chn_name, queue_id, harm_list, fs=[np.nan], gs=[np.nan]):
         '''
@@ -223,6 +297,7 @@ class DataSaver:
         self.update_queue_col(chn_name, queue_id, 'gs', gs_all)
 
         self.saveflg = False
+
 
     def dynamic_save(self, chn_names, harm_list, t=np.nan, temp=np.nan, f=None, G=None, B=None, fs=[np.nan], gs=[np.nan], marks=[0]):
         '''
@@ -307,6 +382,7 @@ class DataSaver:
         t1 = time.time()
         print(t1 - t0)
 
+
     def save_data(self):
         '''
         save samp (df), ref (df) to h5 file serializing with json
@@ -322,6 +398,7 @@ class DataSaver:
                 # fh['data/' + key] = json.dumps(getattr(self, key).to_dict())        
                 fh.create_dataset('data/' + key, data=getattr(self, key).to_json(), dtype=h5py.special_dtype(vlen=str))  
                 fh.create_dataset('data/' + key + '_ref', data=getattr(self, key + '_ref').to_json(), dtype=h5py.special_dtype(vlen=str))  
+
 
     def save_settings(self, settings={}, settings_init={}):
         '''
@@ -340,6 +417,7 @@ class DataSaver:
                 del fh['settings_init']
             fh.create_dataset('settings_init', data=json.dumps(settings_init))
 
+
     def save_data_settings(self, settings={}, settings_init={}):
         '''
         wrap up of save_data and save_settings and save_exp_ref
@@ -349,6 +427,7 @@ class DataSaver:
         self.save_exp_ref()
         self.saveflg = True
 
+
     def save_exp_ref(self):
         with h5py.File(self.path, 'a') as fh:
             # save reference
@@ -357,6 +436,7 @@ class DataSaver:
                 del fh['exp_ref']
             fh.create_dataset('exp_ref',data=json.dumps(self.exp_ref))
 
+
     def _save_ver(self):
         '''
         save ver (str) to file
@@ -364,11 +444,13 @@ class DataSaver:
         with h5py.File(self.path, 'a') as fh:
             fh.attrs['ver'] = self.ver
 
+
     def get_npts(self):
         '''
         get number of total points
         '''
         return len(self.queue_list)
+
 
     def nan_harm_list(self):
         return [np.nan] * int((self.settings_init['max_harmonic'] + 1) / 2)
@@ -383,6 +465,7 @@ class DataSaver:
         print(type(self.raw))
         return [self.raw[0, :], self.raw[1, :], self.raw[2, :]]
 
+
     def get_queue(self, chn_name, queue_id, col=''):
         '''
         get data of a queue_id
@@ -394,6 +477,7 @@ class DataSaver:
             return df_chn.loc[queue_id, :]
         elif col in df_chn.keys(): # col is a column name
             return df_chn.loc[queue_id, col]
+
 
     def update_queue_col(self, chn_name, queue_id, col, val):
         '''
@@ -407,7 +491,8 @@ class DataSaver:
         print(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col])
 
         self.saveflg = False
-        
+
+
     ####################################################
     ##              data convert functions            ##
     ##  They can also be used external for accessing, ## 
@@ -540,20 +625,23 @@ class DataSaver:
 
         return df
 
-    def get_t_marked_rows(self, chn_name, dropnanrows=False, unit=None):
+
+    def get_t_marked_rows(self, chn_name, dropnanrow=False, unit=None):
         '''
         return rows with marks of df from self.get_t_s
         '''
-        if dropnanrows == True:
+        if dropnanrow == True:
             return self.get_t_by_unit(chn_name, unit=unit)[self.rows_with_marks(chn_name)]
         else:
             return self.get_t_by_unit(chn_name, unit=unit)
+
 
     def get_t_by_unit(self, chn_name, unit=None):
         '''
         get time in given unit
         '''
         return self.time_s_to_unit(self.get_t_s(chn_name), unit=unit)
+
 
     def get_t_s(self, chn_name):
         '''
@@ -574,14 +662,16 @@ class DataSaver:
             t = t.dt.total_seconds() # convert to second
             return t
 
-    def get_queue_id_marked_rows(self, chn_name, dropnanrows=False):
+
+    def get_queue_id_marked_rows(self, chn_name, dropnanrow=False):
         '''
         return rows with marks of df from self.get_queue_id
         '''
-        if dropnanrows == True:
+        if dropnanrow == True:
             return self.get_queue_id(chn_name)[self.rows_with_marks(chn_name)]
         else:
             return self.get_queue_id(chn_name)
+
 
     def get_queue_id(self, chn_name):
         '''
@@ -589,14 +679,16 @@ class DataSaver:
         '''
         return getattr(self, chn_name)['queue_id'].copy()
 
-    def get_temp_C_marked_rows(self, chn_name, dropnanrows=False, unit=None):
+
+    def get_temp_by_uint_marked_rows(self, chn_name, dropnanrow=False, unit=None):
         '''
         return rows with marks of df from self.get_temp_C
         '''
-        if dropnanrows == True:
+        if dropnanrow == True:
             return self.get_temp_by_unit(chn_name, unit=unit)[self.rows_with_marks(chn_name)]
         else:
             return self.get_temp_by_unit(chn_name, unit=unit)
+
 
     def get_temp_by_unit(self, chn_name, unit=None):
         '''
@@ -604,12 +696,14 @@ class DataSaver:
         '''
         return self.temp_C_to_unit(self.get_temp_C(chn_name), unit=unit)
 
+
     def get_temp_C(self, chn_name):
         '''
         get temperature (temp) in sec as pd.series
         t: pd.series of str
         '''
         return getattr(self, chn_name)['temp'].copy()
+
 
     def get_t_ref(self):
         '''
@@ -636,7 +730,8 @@ class DataSaver:
                 t0 = datetime.datetime.strptime(t0, self.settings_init['time_str_format'])
         
         return t0
-        
+
+
     def get_list_column_to_columns_marked_rows(self, chn_name, col, mark=False, dropnanrow=False, deltaval=False, norm=False):
         '''        
         return rows with marks of df from self.get_list_column_to_columns
@@ -646,7 +741,8 @@ class DataSaver:
             return cols_df[self.rows_with_marks(chn_name)][:]
         else:
             return cols_df
- 
+
+
     def get_list_column_to_columns(self, chn_name, col, mark=False, deltaval=False, norm=False):
         '''
         get a df of marks, fs or gs by open the columns with list to colums by harmonics
@@ -657,9 +753,7 @@ class DataSaver:
         norm: if True, normalize value by harmonic (works only when deltaval is True)
         return: df with columns = ['1', '3', '5', '7', '9]
         '''
-        print('$$$$$$$$$$$$$')
-        print(norm)
-        
+
         if deltaval == True:
             s = self.convert_col_to_delta_val(chn_name, col, norm=norm)
             print(s)
@@ -701,7 +795,7 @@ class DataSaver:
         norm: if True, nomalize value by harmonic
         '''
         # check if the reference is set
-        if not self.refflg:
+        if not self.refflg[chn_name]:
             print(self.exp_ref[chn_name + '_ref'])
             self.set_ref_set(chn_name, *self.exp_ref[chn_name + '_ref'])
 
@@ -710,9 +804,9 @@ class DataSaver:
         print(self.exp_ref[chn_name])
         if all(np.isnan(np.array(self.exp_ref[chn_name][self._ref_keys[col]]))): # no reference or no constant reference exist
             # check col+'_ref'
-            if not self.exp_ref[chn_name + '_ref'][1][0]: #start index is None or [], dynamic reference
+            if self.exp_ref[chn_name + '_ref'][1][0] is None or len(self.exp_ref[chn_name + '_ref'][1]) == 0: #start index is None or [], dynamic reference
                 print('dynamic reference')
-                ref_s=getattr(self, self.exp_ref[col + '_ref'][0]).copy()
+                ref_s=getattr(self, self.exp_ref[chn_name + '_ref'][0]).copy()
 
                 # convert series value to ndarray
                 col_arr = np.array(col_s.values.tolist())
@@ -750,12 +844,14 @@ class DataSaver:
             else: 
                 return col_s
 
+
     def _norm_by_harm(self, s):
         '''
         normalize series 'fs' or 'gs' by harmonic
         this function doesn't change the column name of series
         '''
         return s.apply(lambda x: list(np.array(x, dtype=np.float) / np.arange(1, len(x)*2+1, 2)))
+
 
     def minus_columns(self, df):
         '''
@@ -767,6 +863,7 @@ class DataSaver:
         # rename
         df.rename(columns=lambda x: 'm'+ x, inplace=True) 
         return df
+
 
     def copy_to_ref(self, chn_name, df=None):
         '''
@@ -780,10 +877,11 @@ class DataSaver:
             if df is None:
                 df = getattr(self, self.exp_ref['samp_ref'][0]).copy()
         else:
-            raise ValueError('df should not be None when {} is reference source.'.fromat(self.exp_ref['samp_ref'][0]))            
+            raise ValueError('df should not be None when {0} is reference source.'.fromat(self.exp_ref['samp_ref'][0]))            
 
         df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
         setattr(self, chn_name + '_ref', df)
+
 
     def set_ref_set(self, chn_name, source, idx_list=[], df=None):
         '''
@@ -797,7 +895,7 @@ class DataSaver:
 
                 # copy df to ref
                 if source in self._chn_keys and self.exp_ref[chn_name + '_ref'][1][0] is not None: # use data from current test
-                    df = getattr(self, chn_name)
+                    df = getattr(self, source)
                     self.copy_to_ref(chn_name, df.loc[idx_list, :]) # copy to reference data set
                 elif source == 'ext': # data from external file
                     if df is not None:
@@ -824,7 +922,7 @@ class DataSaver:
                 'f0': self.nan_harm_list(), # list for each harmonic
                 'g0': self.nan_harm_list(), # list for each harmonic
             }
-            self.refflg = True
+            self.refflg[chn_name] = True
 
         else: # there is reference data saved
             if getattr(self, chn_name + '_ref').shape[0] > 0: # there is reference data saved
@@ -836,7 +934,7 @@ class DataSaver:
                     print(getattr(self, chn_name + '_ref')[col])
                     print(df)
                     self.exp_ref[chn_name][key] = df.mean().values.tolist()
-                self.refflg = True
+                self.refflg[chn_name] = True
             else:
                 # no data to saved 
                 # clear self.exp_ref.<chn_name>
@@ -844,9 +942,10 @@ class DataSaver:
                     'f0': self.nan_harm_list(), # list for each harmonic
                     'g0': self.nan_harm_list(), # list for each harmonic
                 }
-                self.refflg = False
+                self.refflg[chn_name] = False
 
         print(self.exp_ref)
+
 
     def set_t0(self, t0=None, t0_shifted=None):
         '''
@@ -866,6 +965,7 @@ class DataSaver:
                 t0_shifted = t0_shifted.strftime(self.settings_init['time_str_format']) # convert to string
             self.exp_ref['t0_shifted'] = t0_shifted
 
+
     def get_fg_ref(self, chn_name, harms=[]):
         '''
         get reference of f or g from self.exp_ref
@@ -884,18 +984,37 @@ class DataSaver:
             return exp_ref
 
 
-    def rows_with_marks(self, chan_name):
+    def get_marks(self, chn_name):
+        '''
+        get a copy of marks column
+        '''
+        return getattr(self, chn_name).marks.copy()
+
+
+    def rows_with_marks(self, chn_name):
         '''
         return list of booleans of rows with marked (1) harmonics
         if no marked rows, return all
         '''
-        marked_rows = getattr(self, chan_name).marks.apply(lambda x: True if 1 in x else False)
+        marked_rows = getattr(self, chn_name).marks.apply(lambda x: True if 1 in x else False)
         if marked_rows.any(): # there are marked rows
             print('There are marked rows')
             return marked_rows
         else: # no amrked rows, return all
             print('There is no marked row.\nReturn all')
             return ~marked_rows
+
+
+    def with_marks(self, chn_name):
+        '''
+        return if there are marks in data (True/False)
+        '''
+        marked_rows = getattr(self, chn_name).marks.apply(lambda x: True if 1 in x else False)
+        if marked_rows.any(): # there are marked rows
+            return True
+        else: # no amrked rows
+            return False
+
 
     def reset_match_marks(self, df, mark_pair=(0, 1)):
         ''' 
@@ -907,6 +1026,7 @@ class DataSaver:
         print(type(df_new))
         df_new.marks = df_new.marks.apply(lambda x: [new_mark if mark == old_mark else mark for mark in x])
         return df_new
+
 
     def mark_data(self, df, idx=[], harm=None, mark_val=1):
         '''
@@ -934,6 +1054,7 @@ class DataSaver:
 
         return df_new
 
+
     def mark_all_to(self, df, mark_val=1):
         ''' 
         mark all to given mark_val e.g.: 0, 1
@@ -943,6 +1064,7 @@ class DataSaver:
         print(df_new.marks)
         return df_new
 
+
     ###### selector functions ######
     def selector_mark_all(self, chn_name, mark_val):
         '''
@@ -950,6 +1072,7 @@ class DataSaver:
         mark all data in chn_name to mark_val
         '''
         setattr(self, chn_name, self.mark_all_to(getattr(self, chn_name), mark_val=mark_val))
+
 
     def selector_mark_sel(self, chn_name, sel_idx_dict, mark_val):
         '''
@@ -964,6 +1087,7 @@ class DataSaver:
             df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=mark_val)
             # print(df_chn.marks)
         setattr(self, chn_name, df_chn)
+
 
     def selector_del_sel(self, chn_name, sel_idx_dict):
         '''
@@ -1011,6 +1135,7 @@ class DataSaver:
         else:
             factors = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}
             return t / factors[unit] 
+
 
     def temp_C_to_unit(self, temp, unit='C'):
         '''

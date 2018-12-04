@@ -1,4 +1,3 @@
-dependency
 
 pyqt5
 matplotlib
@@ -6,10 +5,9 @@ numpy
 scipy
 pandas
 lmfit
-openypyxl or xlsxwriter (may depend on system)
+# openypyxl or xlsxwriter (may depend on system)
+xlsxwriter
 h5py
 nidaqmx
 win32ui
 win32process
-
-(hdf5storage)

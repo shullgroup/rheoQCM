@@ -544,7 +544,7 @@ class MatplotlibWidget(QWidget):
                 [], [], 
                 marker='o', 
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
-                # linestyle='none',
+                linestyle='none',
                 picker=5, # 5 points tolerance
                 label='lm'+str(i),
                 alpha=0.75,
@@ -665,12 +665,12 @@ class MatplotlibWidget(QWidget):
         for l_str in ['l', 'lm']: # only one will be not empty
             for harm in range(1, settings_init['max_harmonic']+2, 2):
                 harm = str(harm)
-                print(harm)
+                # print(harm)
                 # get data from current plotted lines
                 # clear .l['ls<n>']
                 self.clr_lines(l_list=['ls'+harm])
                 
-                print(l_str)
+                # print(l_str)
                 # print(self.l[l_str + harm][0].get_data())
                 harm_x, harm_y = self.l[l_str + harm][0].get_data()
                 
@@ -685,13 +685,16 @@ class MatplotlibWidget(QWidget):
                     # print(sel_idx)
                     # # update selected indices
                     # sel_idx_dict[harm] = sel_idx
-        
+            if (l_str == 'l') and sel_list: # UI mode showall
+                break
+                #TODO It can also set the display mode from UI (showall/showmarked) and do the loop by the mode
+
         if sel_list: # there is data selected
             self.sel_mode = 'selector'
         else:
             self.sel_mode = 'none'
 
-        # print(sel_idx_dict)
+        # print(sel_list)
         # plot the selected data
         self.update_data(*sel_list)
 
@@ -902,6 +905,7 @@ class MatplotlibWidget(QWidget):
         '''
         axs = set() # initialize a empty set
         for ln, x, y in args:
+            # print(len(x), len(y))
             # self.l[ln][0].set_xdata(x)
             # self.l[ln][0].set_ydata(y)
             self.l[ln][0].set_data(x, y)
@@ -956,13 +960,16 @@ class MatplotlibWidget(QWidget):
         self.canvas.draw()
         self.canvas.flush_events() # flush the GUI events 
 
+    def clr_all_lines(self):
+        self.clr_lines()
+
     def clr_lines(self, l_list=None):
         ''' 
         clear all lines in .l (but not .l['temp'][:]) of key in l_list
         '''
-        print(self.l)
+        # print(self.l)
         for key in self.l:
-            print(key)
+            # print(key)
             if key not in ['temp', 'C', 'colorbar']:
                 if  l_list is None: # clear all
                     # self.l[key][0].set_xdata([])
@@ -979,6 +986,18 @@ class MatplotlibWidget(QWidget):
 
         self.canvas.draw()
         self.canvas.flush_events() # flush the GUI events 
+
+    def change_style(self, line_list, **kwargs):
+        '''
+        set style of artists in class
+        artists: 'linestyle', 'markersize' etc. the same keywords as in matplotlib
+        '''
+        print(line_list)
+        print(self.l)
+        print(self.l.keys())
+        for key, val in kwargs.items():
+            for l in line_list:
+                eval("self.l['{0}'][0].set_{1}('{2}')".format(l, key, val))
 
     def new_plt(self, xdata=[], ydata=[], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         ''' 

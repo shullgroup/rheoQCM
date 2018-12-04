@@ -67,6 +67,13 @@ def index_from_str(idx_str, chn_queue_list):
     idx = [] # for found indices
     if chn_queue_list == []:
         return idx
+
+    if isinstance(idx_str, list):
+        return idx_str
+
+    if isinstance(idx_str, int):
+        return [idx_str]
+
     # create a dummy data with index
     data = list(range(max(chn_queue_list)))
     print(data)
@@ -159,7 +166,22 @@ def idx_dict_to_harm_dict(sel_idx_dict):
         
     return sel_harm_dict
    
+def isfloat(x):
+    try:
+        a = float(x)
+    except ValueError:
+        return False
+    else:
+        return True
 
+def isint(x):
+    try:
+        a = float(x)
+        b = int(a)
+    except ValueError:
+        return False
+    else:
+        return a == b
 
 ############# MathModules ###########
 
