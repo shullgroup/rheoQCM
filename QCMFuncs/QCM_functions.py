@@ -65,8 +65,8 @@ def fstar_err_calc(fstar):
     err_frac = 3e-2 # error in f or gamma as a fraction of gamma
     # start by specifying the error input parameters
     fstar_err = np. zeros(1, dtype=np.complex128)
-    fstar_err = (max(f_err_min, err_frac*real(fstar)) + 1j*
-                 max(g_err_min, err_frac*imag(fstar)))
+    fstar_err = (f_err_min + err_frac*imag(fstar) + 1j*
+                 (g_err_min + err_frac*imag(fstar)))
     return fstar_err
 
 
@@ -126,7 +126,7 @@ def lamrho3_calc(grho3, phi):
 def D(n, drho, grho3, phi):
     return 2*np.pi*drho*n*f1*(cosd(phi/2) - 1j*sind(phi/2)) / \
         (grho(n, grho3, phi)) ** 0.5
-
+        
 
 def DfromZ(n, drho, Zstar):
     return 2*np.pi*n*f1*drho/Zstar
@@ -146,11 +146,16 @@ def zstarfilm(n, drho, grhostar):
 
 
 def rstar(n, drho, grho3, phi, overlayer):
+    # set overlayer props to zero if it doesn't exist
+    overlayer_drho = overlayer.get('drho', 0)
+    overlayer_grho3 = overlayer.get('gho3', 0)
+    overlayer_phi = overlayer.get('phi', 0)
+
     # overlayer is dictionary with drho, grho3 and phi
     grhostar_1 = grhostar(n, grho3, phi)
-    grhostar_2 = grhostar(n, overlayer['grho3'], overlayer['phi'])
+    grhostar_2 = grhostar(n, overlayer_grho3, overlayer_phi)
     zstar_1 = zstarbulk(grhostar_1)
-    zstar_2 = zstarfilm(n, overlayer['drho'], grhostar_2)   
+    zstar_2 = zstarfilm(n, overlayer_drho, grhostar_2)   
     return zstar_2/zstar_1
     
     
@@ -221,7 +226,7 @@ def solve_general(soln_input):
     # set up to handle one or two layer cases
     # overlayer set to air if it doesn't exist in soln_input
     overlayer = soln_input.get('overlayer', {'drho':0, 'grho3':0, 'phi':0})
-    nhplot = soln_input['nhplot']
+    nhplot = soln_input.get('nhplot', [1, 3, 5])
     nh = soln_input['nh']
     n1 = int(nh[0])
     n2 = int(nh[1])
@@ -273,11 +278,12 @@ def solve_general(soln_input):
     
     # put the input uncertainties into a 3 element vector
     delfstar_err = np.zeros(3)
-    delfstar_err[0] = real(soln_input['delfstar_err'][n1])
-    delfstar_err[1] = real(soln_input['delfstar_err'][n2])
-    delfstar_err[2] = imag(soln_input['delfstar_err'][n3])
     
-    # initialize the uncertainties
+    delfstar_err[0] = real(fstar_err_calc(delfstar[n1]))
+    delfstar_err[1] = real(fstar_err_calc(delfstar[n2]))
+    delfstar_err[2] = imag(fstar_err_calc(delfstar[n3]))
+    
+    # initialize the output uncertainties
     err = {}
     err_names=['drho', 'grho3', 'phi']
 
@@ -290,7 +296,10 @@ def solve_general(soln_input):
         dlam3 = d_lamcalc(3, drho, grho3, phi)
         jac = soln2['jac']
         jac_inv = np.linalg.inv(jac)
+        # define sensibly names partial derivatives for further use
+        deriv = {}
         for k in [0, 1, 2]:
+            deriv[err_names[k]]={0:jac_inv[k, 0], 1:jac_inv[k, 1], 2:jac_inv[k, 2]}
             err[err_names[k]] = ((jac_inv[k, 0]*delfstar_err[0])**2 + 
                                 (jac_inv[k, 1]*delfstar_err[1])**2 +
                                 (jac_inv[k, 2]*delfstar_err[2])**2)**0.5
@@ -299,10 +308,11 @@ def solve_general(soln_input):
         grho3 = np.nan
         phi = np.nan
         dlam3 = np.nan
+        deriv = {}
         for k in [0, 1, 2]:
             err[err_names[k]] = np.nan
            
-    # now back calculate delfstar, rh and rdfrom the solution
+    # now back calculate delfstar, rh and rd from the solution
     delfstar_calc = {}
     rh = {}
     rd = {}
@@ -315,6 +325,8 @@ def solve_general(soln_input):
                    'delfstar_calc': delfstar_calc, 'rh': rh, 'rd': rd}
     
     soln_output['err'] = err
+    soln_output['delfstar_err'] = delfstar_err
+    soln_output['deriv'] = deriv
     return soln_output
 
 
@@ -338,8 +350,9 @@ def find_base_fig_name(sample, parms):
     # specify the location for the output figure files
     figlocation = parms.get('figlocation', 'figures')
     datadir = sample.get('datadir', '')
+    filmfile = sample.get('filmfile', '')
     if figlocation == 'datadir':
-        base_fig_name = os.path.join(parms['dataroot'], datadir, sample['filmfile'])
+        base_fig_name = os.path.join(parms['dataroot'], datadir, filmfile)
     else:
         # check in which folder we are running 
         cwd = os.getcwd()
@@ -376,27 +389,17 @@ def analyze(sample, parms):
         sample['xlabel'] = r'$T \: (^\circ$C)'
 
     sample['nhcalc'] = sample.get('nhcalc', ['355'])
-    imagetype = parms.get('imagetype', 'svg')
-
-    base_fig_name = find_base_fig_name(sample, parms)
-
-
-    imagetype = parms.get('imagetype', 'svg')
 
     # set the color dictionary for the different harmonics
     colors = {1: [1, 0, 0], 3: [0, 0.5, 0], 5: [0, 0, 1]}
-
-    # now set the markers used for the different calculation types
-    markers = {'131': '>', '133': '^', '353': '+', '355': 'x', '3': 'x'}
+    parms['colors'] = colors
 
     # initialize the dictionary we'll use to keep track of the points to plot
     idx = {}
 
     # plot and process the film data
     film = process_raw(sample, 'film')
-
     # plot and process bare crystal data
-
     bare = process_raw(sample, 'bare')
     
     # if there is only one temperature, than we use time as the x axis, using
@@ -408,7 +411,7 @@ def analyze(sample, parms):
             nx = min(parms.get('nx',np.inf), film['n_in_range'])
     else:
         nx = Temp.shape[0]
-
+        
     # move getting index out of for loop for getting index from dict
     if film['filmindex'] is not None:
         film['idx'] = film['filmindex']
@@ -467,29 +470,80 @@ def analyze(sample, parms):
         for n in nhplot: 
             delfstar[i][n] = (film['fstar'][n][idxf] - film['fstar_ref'][n][idxf])
             delfstar_err[i][n] = fstar_err_calc(film['fstar'][n][idxf])
+            
+    sample['delfstar'] = delfstar
+    sample['delfstar_err'] = delfstar_err
+    sample['film'] = film
+    sample['bare'] = bare
+    
+    # set the appropriate value for xdata
+    if Temp.shape[0] == 1:
+        sample['xdata'] = film['t'][film['idx']]
+    else:
+        sample['xdata'] = Temp
+        
+    # set up the property axes 
+    sample['propfig'] = make_prop_axes('prop_'+sample['samplename'], 
+          sample['xlabel'])
+              
+    solve_from_delfstar(sample, parms)
+    
+    # tidy up the property figure
+    cleanup_propfig(sample, parms)
 
-    # set up the property axes
-    propfig = make_prop_axes('prop_'+sample['samplename'], sample['xlabel'])
+
+def find_idx_in_range(t, t_range):
+    if t_range[0] == t_range[1]:
+        idx = np.arange(t.shape[0]).astype(int)
+    else:
+        idx = np.where((t >= t_range[0]) &
+                       (t <= t_range[1]))[0]
+    return idx
+
+
+def nhcalc_in_nhplot(nhcalc_in, nhplot):
+    # there is probably a more elegant way to do this
+    # only consider harmonics in nhcalc that exist in nhplot
+    nhcalc_out = []
+    nhplot = list(set(nhplot))
+    for nh in nhcalc_in:
+        nhlist = list(set(nh))
+        nhlist = [int(i) for i in nhlist]
+        if all(elem in nhplot for elem in nhlist):
+            nhcalc_out.append(nh)
+    return nhcalc_out
+
+
+def solve_from_delfstar(sample, parms):
+    # now set the markers used for the different calculation types
+    markers = {'131': '>', '133': '^', '353': '+', '355': 'x', '3': 'x'}
+    colors = parms['colors']
+    imagetype = parms.get('imagetype', 'svg')
+    close_on_click_switch = parms.get('close_on_click_switch', True)
+    
+    base_fig_name = find_base_fig_name(sample, parms)
+    imagetype = parms.get('imagetype', 'svg')
+    nhplot = sample.get('nhplot', [1, 3, 5])
+    delfstar = sample['delfstar']
+    xdata = sample['xdata']
+    propfig = sample['propfig']
+    nx = len(delfstar)  # this is the number of data points
+
+    
+    # set up the consistency check axes
     checkfig = {}
     for nh in sample['nhcalc']:
         checkfig[nh] = make_check_axes(sample, nh)
-        if not run_from_ipython():
+        if close_on_click_switch and not run_from_ipython():
             # when code is run with IPython don't use the event
             checkfig[nh]['figure'].canvas.mpl_connect('key_press_event', 
                                                     close_on_click)
 
-    # set the appropriate value for xdata
-    if Temp.shape[0] == 1:
-        xdata = film['t'][film['idx']]
-    else:
-        xdata = Temp
-
     # now do all of the calculations and plot the data
     soln_input = {'nhplot': nhplot}
     results = {}
-
-    # now we set calculation and plot all of the desired solutions
     for nh in sample['nhcalc']:
+        # initialize all the dictionaries
         results[nh] = {'drho': np.zeros(nx), 'grho3': np.zeros(nx),
                        'phi': np.zeros(nx), 'dlam3': np.zeros(nx),
                        'lamrho3': np.zeros(nx), 'rd': {}, 'rh': {},
@@ -506,7 +560,6 @@ def analyze(sample, parms):
             # obtain the solution for the properties
             soln_input['nh'] = nh
             soln_input['delfstar'] = delfstar[i]
-            soln_input['delfstar_err'] = delfstar_err[i]
             if (np.isnan(delfstar[i][int(nh[0])].real) or 
                 np.isnan(delfstar[i][int(nh[1])].real) or
                 np.isnan(delfstar[i][int(nh[2])].imag)):                
@@ -574,7 +627,7 @@ def analyze(sample, parms):
         checkfig[nh]['figure'].savefig(base_fig_name + '_'+nh +
                                        '.' + imagetype)
 
-        # add property data to the property figure
+        # get the property data to add to the property figure
         drho = 1000*results[nh]['drho']
         grho3 = results[nh]['grho3']/1000
         phi = results[nh]['phi']
@@ -582,9 +635,15 @@ def analyze(sample, parms):
         grho3_err = results[nh]['grho3_err']/1000
         phi_err = results[nh]['phi_err']
         
+        # this is where we determine what marker to use.  We change it if
+        # we have specified a different marker in the sample dictionary
+        if 'forcemarker' in sample:
+            markers[nh] = sample['forcemarker']
+        
+        # add property data with error bars to the figure
         propfig['drho_ax'].errorbar(xdata, drho, yerr=drho_err,
                                     marker=markers[nh], label=nh)
-        propfig['grho_ax'].errorbar(xdata, grho3, yerr=grho3_err,
+        propfig['grho3_ax'].errorbar(xdata, grho3, yerr=grho3_err,
                                     marker=markers[nh], label=nh)
         propfig['phi_ax'].errorbar(xdata, phi, yerr=phi_err,
                                     marker=markers[nh], label=nh)
@@ -593,57 +652,57 @@ def analyze(sample, parms):
                    delimiter=',', header='xdata,drho,grho,phi', comments='')
         
         # add values of d/lam3 to the film raw data figure
-        film['dlam3_ax'].plot(xdata, results[nh]['dlam3'],'+', label=nh)
-    # add legends to the property figure
-    propfig['drho_ax'].legend()
-    propfig['grho_ax'].legend()
-    propfig['phi_ax'].legend()
-    if 'xscale' in sample:
-        propfig['drho_ax'].set_xscale(sample['xscale'])
-        propfig['grho_ax'].set_xscale(sample['xscale'])
-        propfig['phi_ax'].set_xscale(sample['xscale'])
+        if plt.fignum_exists('rawfig'):
+            sample['film']['dlam3_ax'].plot(xdata, results[nh]['dlam3'],'+', label=nh)
 
     # add legend to the the dlam3 figure
-    film['dlam3_ax'].legend()
+    if plt.fignum_exists('rawfig'):
+        sample['film']['dlam3_ax'].legend()
 
-    # tidy up the raw data and property figures
-    propfig['figure'].tight_layout()
-    propfig['figure'].savefig(base_fig_name+'_prop.'+imagetype)
+    # tidy up the raw data figure 
     print('done with ', base_fig_name, 'press any key to close plots and continue')
-
-    if not run_from_ipython(): 
+    
+    if close_on_click_switch and not run_from_ipython(): 
         # when code is run with IPython, don't use the event
         propfig['figure'].canvas.mpl_connect('key_press_event', close_on_click)
-        film['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
-        bare['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
+        if plt.fignum_exists('rawfig'):
+            sample['film']['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
+            sample['bare']['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
         
     openplots = 3 + len(checkfig)
     if not run_from_ipython():
         # when code is run with IPython, don't use key_press_event
         while openplots>0:
             plt.pause(1)
+        
+    sample['results'] = results
+    return sample
 
+def cleanup_propfig(sample, parms):
+    make_legend = parms.get('make_legend', True)
+    make_titles = parms.get('make_titles', True)
+    propfig = sample['propfig']
+    # add legends to the property figure
+    if make_legend:
+        propfig['drho_ax'].legend()
+        propfig['grho3_ax'].legend()
+        propfig['phi_ax'].legend()
+    # add axes titles to the property figure
+    if make_titles:
+        propfig['drho_ax'].set_title('(a)')
+        propfig['grho3_ax'].set_title('(b)')
+        propfig['phi_ax'].set_title('(c)')   
+    # adjust linear and log axes as desired
+    if 'xscale' in sample:
+        propfig['drho_ax'].set_xscale(sample['xscale'])
+        propfig['grho3_ax'].set_xscale(sample['xscale'])
+        propfig['phi_ax'].set_xscale(sample['xscale'])
+    if 'grho3scale' in sample:
+        propfig['grho3_ax'].set_yscale(sample['grho3scale'])
+    propfig['figure'].tight_layout()
+    propfig['figure'].savefig(find_base_fig_name(sample, parms)+
+           '_prop.'+parms.get('imagetype', 'svg'))
 
-def find_idx_in_range(t, t_range):
-    if t_range[0] == t_range[1]:
-        idx = np.arange(t.shape[0]).astype(int)
-    else:
-        idx = np.where((t >= t_range[0]) &
-                       (t <= t_range[1]))[0]
-    return idx
-
-
-def nhcalc_in_nhplot(nhcalc_in, nhplot):
-    # there is probably a more elegant way to do this
-    # only consider harmonics in nhcalc that exist in nhplot
-    nhcalc_out = []
-    nhplot = list(set(nhplot))
-    for nh in nhcalc_in:
-        nhlist = list(set(nh))
-        nhlist = [int(i) for i in nhlist]
-        if all(elem in nhplot for elem in nhlist):
-            nhcalc_out.append(nh)
-    return nhcalc_out
 
 
 def pickpoints(Temp, nx, data_dict):
@@ -695,9 +754,9 @@ def make_prop_axes(propfigname, xlabel):
     drho_ax.set_xlabel(xlabel)
     drho_ax.set_ylabel(r'$d\rho$ (g/m$^2$)')
 
-    grho_ax = fig.add_subplot(132)
-    grho_ax.set_xlabel(xlabel)
-    grho_ax.set_ylabel(r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)')
+    grho3_ax = fig.add_subplot(132)
+    grho3_ax.set_xlabel(xlabel)
+    grho3_ax.set_ylabel(r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)')
 
     phi_ax = fig.add_subplot(133)
     phi_ax.set_xlabel(xlabel)
@@ -705,7 +764,7 @@ def make_prop_axes(propfigname, xlabel):
     
     fig.tight_layout()
 
-    return {'figure': fig, 'drho_ax': drho_ax, 'grho_ax': grho_ax,
+    return {'figure': fig, 'drho_ax': drho_ax, 'grho3_ax': grho3_ax,
             'phi_ax': phi_ax}
     
     
@@ -715,9 +774,7 @@ def make_vgp_axes(vgpfigname):
     vgp_ax = fig.add_subplot(111)
     vgp_ax.set_xlabel((r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)'))
     vgp_ax.set_ylabel(r'$\phi$ (deg.)')
-
     fig.tight_layout()
-
     return {'figure': fig, 'vgp_ax':vgp_ax}
 
 
@@ -725,7 +782,7 @@ def prop_plot_from_csv(figure, csvfile, plotstr, legendtext):
     data = pd.read_csv(csvfile)    
     figure['drho_ax'].plot(data['xdata'].values, data['drho'].values, plotstr, 
                 label=legendtext)   
-    figure['grho_ax'].plot(data['xdata'].values, data['grho'].values, plotstr, 
+    figure['grho3_ax'].plot(data['xdata'].values, data['grho'].values, plotstr, 
                 label=legendtext)
     figure['phi_ax'].plot(data['xdata'].values, data['phi'].values, plotstr, 
                 label=legendtext)
@@ -752,6 +809,7 @@ def process_raw(sample, data_type):
         data_dict['filmindex'] = np.array(sample['filmindex'], dtype=int)
     else:
         data_dict['filmindex'] = None
+        
     # set key for getting index to plot from txt file
     data_dict['idx_file'] = os.path.join(sample['dataroot'], datadir, sample[data_type+'file']+'_film_idx.txt')
 
@@ -1013,6 +1071,59 @@ def thinfilm_guess(delfstar):
     # really a placeholder function until we develop a more creative strategy
     # for estimating the starting point
     return [0.05, 5]
+
+def make_knots(numpy_array, num_knots, parms):  
+    # makes num_knots evenly spaced knots along array         
+    knot_interval = (np.max(numpy_array)-np.min(numpy_array))/(num_knots+1)
+    minval = np.min(numpy_array)+knot_interval
+    maxval = np.max(numpy_array)-knot_interval
+    knots = np.linspace(minval, maxval, num_knots)
+    return knots
+
+def springpot(f, sp_parms):
+    # this function supports a combination of different springpot elments
+    # combined in series, and then in parallel.  For example, if typ is
+    # [1,2,3],  there are three branches
+    # in parallel with one another:  the first one is element 1, the
+    # second one is a series comination of eleents 2 and 3, and the third
+    # one is a series combination of 4, 5 and 6.
+    fref = sp_parms['fref']
+    phi = sp_parms['phi']
+    E = sp_parms['E']
+    typ = sp_parms['typ']
+    nf = f.shape[0]  # number of frequencies
+    n_br = typ.shape[0]  # number of series branches
+    n_sp = typ.sum()  # number of springpot elements
+    sp_comp = np.empty((nf, n_sp), dtype=np.complex)  # element compliance
+    br_E = np.empty((nf, n_br), dtype=np.complex)  # branch stiffness
+
+    for i in np.arange(n_sp):
+        sp_comp[:, i] = 1/(E[i]*(1j*(f/fref)) ** (phi[i]/90))
+
+    sp_vec = np.append(0, typ.cumsum())
+    for i in np.arange(n_br):
+        sp_i = np.arange(sp_vec[i], sp_vec[i+1])
+        br_E[:, i] = 1/sp_comp[:, sp_i].sum(1)
+
+    return br_E.sum(1)
+
+
+def springpot_f(sp_parms):
+    # this function returns a sensible array of frequencies to use to plot
+    # the springpot fit
+    fref = sp_parms['fref']
+    E = sp_parms['E']
+    phi = sp_parms['phi']
+    fmax = 1e3*fref
+    fmin = 1e-3*fref*(min(E)/max(E))**(1/(max(phi)/90))
+    faTfit = np.logspace(np.log10(fmin), np.log10(fmax), 100)
+    return faTfit
+
+
+def vogel(T, Tref, B, Tinf):
+    logaT = -B/(Tref-Tinf) + B/(T-Tinf)
+    return logaT
+
 
 def run_from_ipython():
     try:

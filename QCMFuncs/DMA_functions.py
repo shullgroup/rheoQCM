@@ -6,6 +6,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import QCM_functions as qcm
 from scipy.optimize import fsolve, curve_fit
 import hdf5storage
 from scipy.interpolate import LSQUnivariateSpline
@@ -13,116 +14,121 @@ import pandas as pd
 import pdb
 
 
-def DMAread(sample):
+def DMAread_delgado(sample, parms):
     # this reads the dMA data and puts it into the dmadata dictionary so we
     # can more easilty plot it later
-    dmadata = sample['dmadata']
+    dmadir = parms['dmadir']
+    file = sample['file']
 
     # read in the DMA data from the orignal data file
-    dma__df = pd.read_csv(dmadata['datapath'] + dmadata['filename'] +
+    dma__df = pd.read_csv(dmadir + file +
                           '/mech_data.txt',  header=[0, 1], sep='\t',
                           encoding="ISO-8859-1")
-    dma_np = np.array(dma__df)[:, 0:4].astype(float)
+    
+    freq = np.array(dma__df)[:, 0].astype(float)
+    estor = np.array(dma__df)[:, 1].astype(float)
+    eloss = np.array(dma__df)[:, 2].astype(float)
+    tanphi = np.array(dma__df)[:, 3].astype(float)
+    phi = np.rad2deg(np.arctan(tanphi))
+    estar = (estor ** 2 + eloss ** 2) ** 0.5
 
-    # column 0:  frequency
-    # column 1  E prime in Pa
-    # column 2  E double prime in Pa
-    # column 3  tangent of phi
-
-    # Add calculated values
-    dma_np = np.append(dma_np, np.zeros((dma_np.shape[0], 3)), axis=1)
-
-    dma_np[:, 4] = np.rad2deg(np.arctan(dma_np[:, 3]))
-    dma_np[:, 5] = (dma_np[:, 1] ** 2 + dma_np[:, 2] ** 2) ** 0.5
-
-    # column 4: phi in degrees
-    # column 5 is magnitude of E
-    # column 6 is going to be faT
-    input_Tfile = (dmadata['datapath'] + dmadata['filename'] +
-                   '/temp_data.txt')
+    input_Tfile = (dmadir + file + '/temp_data.txt')
 
     # now read in the file that contains temperatures and shift factors
     # column 0 is T (C)
     # column 1 is aT (we don't care much about the other columns
     T_df = pd.read_csv(input_Tfile, header=[0, 1],
                        sep='\t', encoding="ISO-8859-1")
-    T_np = np.array(T_df)
-    T_np = T_np[:, 0:3].astype(float)
-    Tnum = T_np.shape[0]  # the number of temperatures
-    fnum = int(dma_np.shape[0]/Tnum)  # number of frequencies at each temp
+    
+    T = np.array(T_df)[:, 0].astype(float)
+    aT_raw = np.array(T_df)[:, 1].astype(float)
 
-    dma_np = np.reshape(dma_np, (Tnum, fnum, 7))
-
-    # put the data into a dictionary that we can more easily deal with later
-    dmadata['T'] = T_np[:, 0]
-    dmadata['aT_raw'] = T_np[:, 1]
+    Tnum = T.shape[0]  # the number of temperatures
+    ftotal = freq.shape[0]
+    fnum = ftotal/Tnum  # number of frequencies at each temp
+    
+    if fnum != np.fix(fnum):
+        print('non-integral fnum')
+    else:
+        fnum = int(fnum)
+        
+    dma_np = np.zeros([ftotal, 5])
+    
+    dma_np[:, 0] = freq
+    dma_np[:, 1] = estar
+    dma_np[:, 2] = phi
+    dma_np[:, 3] = estor
+    dma_np[:, 4] = eloss
+    dma_np = np.reshape(dma_np, (Tnum, fnum, 5))
+    
+    dmadata = {}
     dmadata['f'] = dma_np[:, :, 0]
-    dmadata['phi'] = dma_np[:, :, 4]
-    dmadata['estar'] = dma_np[:, :, 5]
-
-    # determine temperature indices where temp. is in the desired range
-    Trange = dmadata['Trange']
-    dmadata['Tind'] = np.where((dmadata['T'] >= Trange[0]) & (dmadata['T'] <=
-                               Trange[1]))[0]
+    dmadata['estar'] = dma_np[:, :, 1]
+    dmadata['phi'] = dma_np[:, :, 2]    
+    dmadata['estor'] = dma_np[:, :, 3]
+    dmadata['eloss'] = dma_np[:, :, 4]
+    dmadata['dma_np'] = dma_np
+    dmadata['aT_raw'] = aT_raw
+    dmadata['T'] = T
 
     sample['dmadata'] = dmadata
-
     return sample
 
 
-def DMAread_sturdy(datadir, file, parms):
+def DMAread_sturdy(sample, parms):
+    dmadir = parms['dmadir']
+    file = sample['file']
     # a read file for Laruen's MAT files
-    sample = {}
-    data_input = hdf5storage.loadmat(datadir + file)
+    data_input = hdf5storage.loadmat(dmadir + file)
     # not surewhy dtype needs to be specified here, but it seems to be 
     # necessary at least for estor
     freq = np.array(data_input['rawdata'][2,0][:,0], dtype=np.float64)
     estor = np.array(data_input['rawdata'][2,1][:,0], dtype=np.float64)
     eloss = np.array(data_input['rawdata'][2,2][:,0], dtype=np.float64)
-    T = np.array(data_input['rawdata'][2,4][:,0]) # these are Temps for each freq. point
+    T = np.array(data_input['T'][0,:]) # these are Temps 
+    aT_raw = np.array(data_input['shift_factors'][:,0])
     estar =(estor**2+eloss**2)**0.5
     phi = np.degrees(np.arctan(eloss/estor))
     ftotal = freq.shape[0]
     Tnum = data_input['T'].shape[1]  # the number of temperatures
     fnum = ftotal/Tnum  # number of frequencies at each temp
+    
     if fnum != np.fix(fnum):
         print('non-integral fnum')
     else:
         fnum = int(fnum)
-    dma_np = np.zeros([ftotal, 6])
+    dma_np = np.zeros([ftotal, 5])
+    
     dma_np[:, 0] = freq
     dma_np[:, 1] = estar
     dma_np[:, 2] = phi
-    dma_np[:, 3] = T
-    dma_np[:, 4] = estor
-    dma_np[:, 5] = eloss
+    dma_np[:, 3] = estor
+    dma_np[:, 4] = eloss
+    dma_np = np.reshape(dma_np, (Tnum, fnum, 5))
     
-    dma_np = np.reshape(dma_np, (Tnum, fnum, 6))
-    dmadata = {}
+    dmadata = sample.get('dmadata',{})
     dmadata['f'] = dma_np[:, :, 0]
     dmadata['estar'] = dma_np[:, :, 1]
     dmadata['phi'] = dma_np[:, :, 2]    
-    dmadata['aT_raw'] = np.squeeze(data_input['shift_factors'])
-    dmadata['T'] = np.squeeze(data_input['T'])
-    dmadata['estor'] = dma_np[:, :, 4]
-    dmadata['eloss'] = dma_np[:, :, 5]
+    dmadata['estor'] = dma_np[:, :, 3]
+    dmadata['eloss'] = dma_np[:, :, 4]
     dmadata['dma_np'] = dma_np
+    dmadata['aT_raw'] = aT_raw
+    dmadata['T'] = T
     
-    # determine temperature indices where temp. is in the desired range
     sample['dmadata'] = dmadata
     return sample
 
 
-
-def DMAcalc(sampledata, parms, Tref):
+def DMAcalc(sample, parms, Tref):
     # we stick with the standard
     qcmsize = 8  # marker size for qcm points
     # calculates shift factors - generally only need to run this once
 
     # Read the fits from the appropriate sample file
-    dmadata = sampledata['dmadata']
-    qcmdata = sampledata.get('qcmdata',{})
-    sp_parms = sampledata.get('sp_parms',{})
+    dmadata = sample['dmadata']
+    qcmdata = sample.get('qcmdata',{})
+    sp_parms = sample.get('sp_parms',{})
 
     # now we add the QCM points and do the fits
     K = 2.4e9  # bulk modulus of rubber from Polymer 35, 2759–2763 (1994).
@@ -140,7 +146,7 @@ def DMAcalc(sampledata, parms, Tref):
     sp_parms['fref'] = sp_parms['fref_raw']
     for i in np.arange(nqcm_aT):
         def ftosolve(f):
-            return (abs(springpot(np.array([f]), sampledata['sp_parms']))
+            return (abs(qcm.springpot(np.array([f]), sample['sp_parms']))
                     - qcm_E[i])
         f_guess = 0.01*sp_parms['fref_raw']  # usually works as a guess
         # take abs value in case fsolve returns the negative of the freq.
@@ -152,18 +158,18 @@ def DMAcalc(sampledata, parms, Tref):
     T_total = np.append(dmadata['T'][Tind], qcmdata['qcm_T'])
     aT_total = np.append(dmadata['aT_raw'][Tind], qcm_aT)
 
-    [Tref_raw, B, Tinf], pcov = curve_fit(vogel, T_total,
+    [Tref_raw, B, Tinf], pcov = curve_fit(qcm.vogel, T_total,
                                           np.log(aT_total), vft_guess)
 
     # now we adjust the shift factors based on ref. temp
-    aTfix = np.exp(vogel(Tref, Tref_raw, B, Tinf))
-    sampledata['aTfix'] = aTfix
+    aTfix = np.exp(qcm.vogel(Tref, Tref_raw, B, Tinf))
+    sample['aTfix'] = aTfix
     dmadata['aT'] = dmadata['aT_raw']/aTfix
     sp_parms['fref'] = sp_parms['fref_raw']/aTfix
 
     # Calculate Tg as Temp where fref = 1 Hz.
     def fvogel(T):
-        return vogel(T, Tref_raw, B, Tinf)-np.log(sp_parms['fref_raw'])
+        return qcm.vogel(T, Tref_raw, B, Tinf)-np.log(sp_parms['fref_raw'])
     Tg_guess = Tinf+50
     sp_parms['Tg'] = fsolve(fvogel, Tg_guess)
 
@@ -177,16 +183,16 @@ def DMAcalc(sampledata, parms, Tref):
     qcmdata['qcm_aT'] = qcm_aT
     qcmdata['qcm_E'] = qcm_E
 
-    sampledata['T_total'] = T_total
-    sampledata['aT_total'] = aT_total
-    sampledata['qcmdata'] = qcmdata
-    sampledata['dmadata'] = dmadata
-    sampledata['sp_parms'] = sp_parms
+    sample['T_total'] = T_total
+    sample['aT_total'] = aT_total
+    sample['qcmdata'] = qcmdata
+    sample['dmadata'] = dmadata
+    sample['sp_parms'] = sp_parms
     parms['sp_parms'] = sp_parms
 
     # make the plot
     if parms.get('calc_plot', 'yes') == 'yes':
-        figinfo = DMAplot(sampledata, parms, Tref)
+        figinfo = DMAplot(sample, parms, Tref)
 
         dma_ax1 = figinfo['dma_ax1']
         dma_ax2 = figinfo['dma_ax2']
@@ -206,11 +212,11 @@ def DMAcalc(sampledata, parms, Tref):
                        ['DMA', 'QCM', 'fit'])
 
         dmafig.tight_layout() 
-        dmafig.savefig('../figures/'+sampledata['title']+'.svg')
+        dmafig.savefig('../figures/'+sample['title']+'.svg')
 
     # print the parameters we care about to the screen
     print('')
-    print('sample=', sampledata['title'])
+    print('sample=', sample['title'])
     print('Tg=', sp_parms['Tg'])
     print('B=', B)
     print('Tinf=', Tinf)
@@ -219,10 +225,12 @@ def DMAcalc(sampledata, parms, Tref):
     print('E=', sp_parms['E'])
     print('phi=', sp_parms['phi'])
 
-    return sampledata
+    return sample
 
 
-def DMAplot(sampledata, parms, Tref):
+def DMAplot(sample, parms, Tref):
+    dmadata = sample['dmadata']
+    sp_parms = sample['sp_parms'] 
     figinfo = parms.get('figinfo',{})
     Trange_plot = parms.get('Trange_plot', [-200, 300])  # default range for plotting
     Trange_spline = parms.get('Trange_spline', [-200, 300])  # default range for spline fits   ()
@@ -231,7 +239,6 @@ def DMAplot(sampledata, parms, Tref):
     colortype = parms.get('colortype', 'r')
     filltype = parms.get('filltype', 'none')
     sp_parms = parms.get('sp_parms', {})
-    dmadata = sampledata['dmadata']
     labeltext = parms.get('labeltext','nolab')
 
     # read in the temperatures and shift factors
@@ -336,19 +343,20 @@ def DMAplot(sampledata, parms, Tref):
     
     # now we create the springpot fits and add them to the plot
     if parms.get('show_springpot_fit', 'no') == 'yes':
-        faTfit = springpot_f(sp_parms)
-        Estar = springpot(faTfit, sp_parms)
+        pdb.set_trace()
+        faTfit = qcm.springpot_f(sp_parms)
+        Estar = qcm.springpot(faTfit, sp_parms)
         fit1, = dma_ax1.loglog(faTfit, abs(Estar), 'b-')
         fit2, = dma_ax2.semilogx(faTfit, np.angle(Estar, deg=True), 'b-')
 
     # generate VFT fit if the parameters exist for it
     if 'B' in parms: 
-        VFTfit, = dma_ax3.plot(T[Tind_plot], np.exp(vogel(T[Tind_plot], Tref, sp_parms.get('B', 1000),
+        VFTfit, = dma_ax3.plot(T[Tind_plot], np.exp(qcm.vogel(T[Tind_plot], Tref, sp_parms.get('B', 1000),
                                       sp_parms.get('Tinf', -50), '-b')))
 
     # now add titles to plots
     if parms.get('add_titles', 'no') == 'yes':
-        dma_ax1.set_title(sampledata['title'])
+        dma_ax1.set_title(parms['title'])
         dma_ax2.set_title('$T_{ref}=$'+str(Tref) + r'$^{\circ}$' +
                           'C \n $f_{ref}=$' +
                           '{:.1e}'.format(sp_parms['fref']) + ' s$^{-1}$')
@@ -357,7 +365,7 @@ def DMAplot(sampledata, parms, Tref):
                           '{:.0f}'.format(sp_parms['Tinf']) + r'$^{\circ}$C')
         
     # organize the data so we can make a master plot
-                  
+                
     dma_master = dmadata['dma_np']
     # adjust frequency by the shift factors
     dma_master[:,:,0] = dma_master[:,:,0] * aT[:, None]
@@ -371,9 +379,9 @@ def DMAplot(sampledata, parms, Tref):
     dma_size_plot = dma_master_plot.shape
 
     dma_master_spline = np.reshape(dma_master_spline,
-                                   (dma_size_spline[0]*dma_size_spline[1], 6))
+                                   (dma_size_spline[0]*dma_size_spline[1], 5))
     dma_master_plot = np.reshape(dma_master_plot,
-                                   (dma_size_plot[0]*dma_size_plot[1], 6))
+                                   (dma_size_plot[0]*dma_size_plot[1], 5))
     
     # now sort according to faT - this approach elements any values of the 
     # log(faT) that are equal, as required by LSQUnivariateSpline 
@@ -386,9 +394,6 @@ def DMAplot(sampledata, parms, Tref):
     freq_master_spline = dma_master_spline[:, 0]
     estar_master_spline = dma_master_spline[:,1]
     phi_master_spline = dma_master_spline[:,2]
-    T_master_spline = dma_master_spline[:,3]
-    estor_master_spline = dma_master_spline[:,4]
-    eloss_master_spline = dma_master_spline[:,5]
     
     # add spline fit of shift factors
     dma_ax3.plot(T[Tind_plot], np.exp(aT_spline(T[Tind_plot]))/aTfix, '-',
@@ -488,13 +493,13 @@ def Bcompare(sample, Tref):
                                markersize=qcmsize)
 
     # add the fits for the orginal values B, Tinf
-    faTfit = springpot_f(sp_parms)
-    Estarfit = springpot(faTfit, sp_parms)
+    faTfit = qcm.springpot_f(sp_parms)
+    Estarfit = qcm.springpot(faTfit, sp_parms)
     fitE, = Bcomp_ax1.plot(faTfit, abs(Estarfit), 'b-')
     B1 = sp_parms['B']  # this is the standard, best fit value
     Tinf1 = sp_parms['Tinf']  # standard, best fit value
     Tforplot = np.linspace(min(T_total), max(T_total), 100)
-    fitaT1, = Bcomp_ax2.plot(Tforplot, np.exp(vogel(Tforplot, Tref, B1,
+    fitaT1, = Bcomp_ax2.plot(Tforplot, np.exp(qcm.vogel(Tforplot, Tref, B1,
                                                     Tinf1)), '-b')
 
     # now plot the curves with other values of B
@@ -520,9 +525,9 @@ def Bcompare(sample, Tref):
                                      np.log(dmadata['aT'][Tind]), vft_guess)
 
     # now we add these alternate curves to the aT plot
-    fitaT2, = Bcomp_ax2.plot(Tforplot, np.exp(vogel(Tforplot, Tref2, B2,
+    fitaT2, = Bcomp_ax2.plot(Tforplot, np.exp(qcm.vogel(Tforplot, Tref2, B2,
                                                     Tinf2)), '--g')
-    fitaT3, = Bcomp_ax2.plot(Tforplot, np.exp(vogel(Tforplot, Tref3, B3,
+    fitaT3, = Bcomp_ax2.plot(Tforplot, np.exp(qcm.vogel(Tforplot, Tref3, B3,
                                                     Tinf3)), '-.r')
 
     # now add titles to plots
@@ -585,8 +590,8 @@ def Rheodata(sample, Tref):
                                               dmadata['phi'][Tindex, :], '+')
 
     # add the fits for the orginal values B, Tinf
-    faTfit = springpot_f(sp_parms)
-    Estarfit = springpot(faTfit, sp_parms)
+    faTfit = qcm.springpot_f(sp_parms)
+    Estarfit = qcm.springpot(faTfit, sp_parms)
     fitE, = Rheodata_ax1.plot(faTfit, abs(Estarfit), 'b-')
     fitphi, = Rheodata_ax2.plot(faTfit, np.angle(Estarfit, deg=True), 'b-')
 
@@ -623,12 +628,12 @@ def Rheodata(sample, Tref):
     Rheodatafig.savefig('../figures/'+sample['title']+'_Rheodata.svg')
 
 
-def addVGPplot(sampledata, samplefits, vgpfig, fignum):
+def addVGPplot(sample, samplefits, vgpfig, fignum):
     qcmsize = 8  # marker size for qcm points
     # Read the fits from the appropriate sample file
 
     sp_parms = samplefits['sp_parms']
-    dmadata = sampledata['dmadata']
+    dmadata = sample['dmadata']
 
     # set up the van Gurp-Palmen plot
     # this assumes that DMAplot has been run to update the sample ditionary
@@ -650,20 +655,20 @@ def addVGPplot(sampledata, samplefits, vgpfig, fignum):
 
     # read in factors needed for the fit
 
-    faTfit = springpot_f(sp_parms)
+    faTfit = qcm.springpot_f(sp_parms)
 
     # calc. and plot the magnitude and phase angle of E from the fit function
-    fit_E = np.absolute(springpot(faTfit, sp_parms))
-    fit_phi = np.angle(springpot(faTfit, sp_parms), deg=True)
+    fit_E = np.absolute(qcm.springpot(faTfit, sp_parms))
+    fit_phi = np.angle(qcm.springpot(faTfit, sp_parms), deg=True)
     fit, = vgp_ax.plot(fit_E, fit_phi, 'b-')
 
     # read in the QCM data and add them to the plot
     K = 2.4e9  # bulk modulus of rubber from Polymer 35, 2759–2763 (1994).
-    qcm_G = sampledata['qcmdata']['qcm_rhog']/sampledata['qcmdata']['rho']
+    qcm_G = sample['qcmdata']['qcm_rhog']/sample['qcmdata']['rho']
     qcm_E = 9*K * qcm_G/(3*K + qcm_G)
-    qcm_phi = sampledata['qcmdata']['qcm_phi']
+    qcm_phi = sample['qcmdata']['qcm_phi']
     qcmdata, = vgp_ax.plot(qcm_E, qcm_phi, 'ro', markersize=qcmsize)
-    vgp_ax.set_title(sampledata['title'])
+    vgp_ax.set_title(sample['title'])
     vgp_ax.legend([dmadata1[Tind[0]], qcmdata, fit], ['DMA', 'QCM', 'fit'])
 
     vgpfig.savefig('../figures/vgpfig.svg')
@@ -687,17 +692,17 @@ def afmplot(sample, Tref):
     # These are the continuous fits over the full range
     sp_parms = sample['sp_parms']
 
-    logaTfit = vogel(Tfit, sample['Tref_raw'], sample['B'],
+    logaTfit = qcm.vogel(Tfit, sample['Tref_raw'], sample['B'],
                      sample['Tinf'])
     aTfit = np.exp(logaTfit)
-    Estarfit = springpot(f_afm*aTfit, sp_parms)
+    Estarfit = qcm.springpot(f_afm*aTfit, sp_parms)
     phifit = np.degrees(np.angle(Estarfit))
 
     # These are just evaluated at the AFM points
-    logaT_afm = vogel(T_afm, sample['Tref_raw'], sample['B'],
+    logaT_afm = qcm.vogel(T_afm, sample['Tref_raw'], sample['B'],
                       sample['Tinf'])
     aT_afm = 10**logaT_afm
-    Estar_afm = springpot(f_afm*aT_afm, sp_parms)
+    Estar_afm = qcm.springpot(f_afm*aT_afm, sp_parms)
     abs_Sstar_afm = p0_afm/d0_afm
     a_afm = 1e9*(3/8)*abs_Sstar_afm/abs(Estar_afm)
     ah_afm = (dmax_afm*R_afm)**0.5  # Hertzian contact radius from max disp.
@@ -838,57 +843,12 @@ def springpot_plot(sample):
     sp_parms['phi'] = sample['phi']
     sp_parms['E'] = sample['E']
     sp_parms['typ'] = sample['typ']
-    ax_sp.plot(f, abs(springpot(f, sp_parms)), '-b', linewidth=2,
+    ax_sp.plot(f, abs(qcm.springpot(f, sp_parms)), '-b', linewidth=2,
                label='total')
 
     plt.legend(ncol=4)
 
     return fig
-
-
-def springpot(f, sp_parms):
-    # this function supports a combination of different springpot elments
-    # combined in series, and then in parallel.  For example, if typ is
-    # [1,2,3],  there are three branches
-    # in parallel with one another:  the first one is element 1, the
-    # second one is a series comination of eleents 2 and 3, and the third
-    # one is a series combination of 4, 5 and 6.
-    fref = sp_parms['fref']
-    phi = sp_parms['phi']
-    E = sp_parms['E']
-    typ = sp_parms['typ']
-    nf = f.shape[0]  # number of frequencies
-    n_br = typ.shape[0]  # number of series branches
-    n_sp = typ.sum()  # number of springpot elements
-    sp_comp = np.empty((nf, n_sp), dtype=np.complex)  # element compliance
-    br_E = np.empty((nf, n_br), dtype=np.complex)  # branch stiffness
-
-    for i in np.arange(n_sp):
-        sp_comp[:, i] = 1/(E[i]*(1j*(f/fref)) ** (phi[i]/90))
-
-    sp_vec = np.append(0, typ.cumsum())
-    for i in np.arange(n_br):
-        sp_i = np.arange(sp_vec[i], sp_vec[i+1])
-        br_E[:, i] = 1/sp_comp[:, sp_i].sum(1)
-
-    return br_E.sum(1)
-
-
-def springpot_f(sp_parms):
-    # this function returns a sensible array of frequencies to use to plot
-    # the springpot fit
-    fref = sp_parms['fref']
-    E = sp_parms['E']
-    phi = sp_parms['phi']
-    fmax = 1e3*fref
-    fmin = 1e-3*fref*(min(E)/max(E))**(1/(max(phi)/90))
-    faTfit = np.logspace(np.log10(fmin), np.log10(fmax), 100)
-    return faTfit
-
-
-def vogel(T, Tref, B, Tinf):
-    logaT = -B/(Tref-Tinf) + B/(T-Tinf)
-    return logaT
 
 
 def getlimits(f):

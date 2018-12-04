@@ -6,8 +6,9 @@
 
 # %% import the routines we need and set up the combined Van Gurp-Palmen fig.
 import DMA_sampledefs
-import DMA_plots as dma
+import DMA_functions as dma
 import matplotlib.pyplot as plt
+import QCM_functions as qcm
 parms = {}
 
 #%% make the dmaplots from Lauren's data
@@ -20,7 +21,7 @@ Tref = 20
 parms['show_springpot_fit'] = 'yes'
 # 1-4 PBD sample
 sampletemp = dma.DMAread(DMA_sampledefs.PBD_14())
-samplePBD = qcm.DMAcalc(sampletemp, parms, Tref)
+samplePBD = qcm.DMAplot(sampletemp, parms, Tref)
 
 # 1-4 PI sample
 sampletemp = qcm.DMAread(DMA_sampledefs.PI_14())
