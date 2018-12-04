@@ -27,7 +27,7 @@
    <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_31">
+   <layout class="QVBoxLayout" name="verticalLayout_37">
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="sizePolicy">
@@ -2783,6 +2783,12 @@ border: none;
               </property>
               <item>
                <widget class="QFrame" name="frame_4">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="frameShape">
                  <enum>QFrame::StyledPanel</enum>
                 </property>
@@ -2811,7 +2817,7 @@ border: none;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <widget class="QWidget" name="tab_settings_mechanis_sampchn">
                     <attribute name="title">
@@ -3204,33 +3210,8 @@ border-image: url(:/button/rc/plus_p.svg);
                 <item>
                  <widget class="QComboBox" name="comboBox_settings_mechanics_refG">
                   <property name="currentIndex">
-                   <number>0</number>
+                   <number>-1</number>
                   </property>
-                  <item>
-                   <property name="text">
-                    <string>G1</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>G3</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>G5</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>G7</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>G9</string>
-                   </property>
-                  </item>
                  </widget>
                 </item>
                </layout>
@@ -3293,33 +3274,7 @@ border-image: url(:/button/rc/plus_p.svg);
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_19">
                   <item>
-                   <widget class="QComboBox" name="comboBox_settings_mechanics_selectmodel">
-                    <item>
-                     <property name="text">
-                      <string>Select Model</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>one layer</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>two layers</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>bulk</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>multiple models (defined by data index)</string>
-                     </property>
-                    </item>
-                   </widget>
+                   <widget class="QComboBox" name="comboBox_settings_mechanics_selectmodel"/>
                   </item>
                   <item>
                    <spacer name="horizontalSpacer_16">
@@ -3603,14 +3558,14 @@ border-image: url(:/button/rc/plus_p.svg);
                </widget>
               </item>
               <item>
-               <spacer name="verticalSpacer_10">
+               <spacer name="verticalSpacer_6">
                 <property name="orientation">
                  <enum>Qt::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
                   <width>20</width>
-                  <height>40</height>
+                  <height>100</height>
                  </size>
                 </property>
                </spacer>

@@ -112,7 +112,7 @@ settings_init = {
         'pushButton_settings_data_toend',
 
         # 'toolButton_settings_mechanics_solve',
-        'groupBox_nhplot',
+        # 'groupBox_nhplot',
         # 'groupBox_settings_mechanics_nhcalc',
         # 'checkBox_settings_mechanics_witherror',
         'pushButton_settings_mechanics_errorsettings',
@@ -306,6 +306,14 @@ settings_init = {
     #     # ('input',  'Input value'),
     #     ('file', 'Other file'),
     # ]),
+
+    # options for comboBox_settings_mechanics_selectmodel
+    'qcm_model_opts': {
+        'onelayer': 'One layer',
+        'twolayers': 'Two layers',
+        'bulk': 'Bulk',
+        # 'multiple': 'Multiple models',
+    },
 
     # steps ofr span control slider
     'span_ctrl_steps': [1, 2, 5, 10, 20, 50, 100],

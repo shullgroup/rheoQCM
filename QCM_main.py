@@ -221,6 +221,12 @@ class QCMApp(QMainWindow):
 
             getattr(self.ui, 'checkBox_harm' + str(i)).toggled['bool'].connect(self.update_widget)
 
+            # comboBox_settings_mechanics_refG
+            self.ui.comboBox_settings_mechanics_refG.addItem('G'+str(i), userData=str(i))
+
+            # checkBox_nhplot<n>
+            getattr(self.ui, 'checkBox_nhplot' + str(i)).toggled.connect(self.update_widget)
+
         # show samp & ref related widgets 
         self.setvisible_samprefwidgets(samp_value=True, ref_value=False)
 
@@ -784,6 +790,19 @@ class QCMApp(QMainWindow):
 
         #region settings_mechanis
         ######### 
+
+        for key, val in settings_init['qcm_model_opts'].items():
+            self.ui.comboBox_settings_mechanics_selectmodel.addItem(val, userData=key)
+        self.ui.tabWidget_mechanics_chn.currentChanged.connect(self.update_mechanics_chn)
+
+        self.ui.comboBox_settings_mechanics_selectmodel.currentIndexChanged.connect(self.update_widget)
+
+        self.ui.comboBox_settings_mechanics_refG.currentIndexChanged.connect(self.update_widget)
+
+        self.ui.checkBox_settings_mechanics_witherror.toggled.connect(self.update_widget)
+
+
+
         # hide tableWidget_settings_mechanics_errortab
         self.ui.tableWidget_settings_mechanics_errortab.hide()
         # hide tableWidget_settings_mechanics_contoursettings
@@ -2972,15 +2991,13 @@ class QCMApp(QMainWindow):
 
 
     def mech_solve_all(self):
-        marks = self.data_saver.get_marks(self.mechanics_chn)
-        # change marks 0 to 1
-        marks = self.data_saver.reset_match_marks(marks, mark_pair=(0, 1))
-        self.mech_solve(self.mechanics_chn, marks)
+        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mechanics_chn, dropnanrow=False)
+        self.mech_solve_chn(self.mechanics_chn, queue_ids)
 
 
     def mech_solve_marked(self):
-        marks = self.data_saver.get_marks(self.mechanics_chn)
-        self.mech_solve(self.mechanics_chn, marks)
+        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mechanics_chn, dropnanrow=False)       
+        self.mech_solve_chn(self.mechanics_chn, queue_ids)
 
 
     def update_mechanics_chn(self):
@@ -2988,18 +3005,36 @@ class QCMApp(QMainWindow):
         update self.mechanics_chn
         '''
         idx = self.ui.tabWidget_mechanics_chn.currentIndex()
+        print(idx)
         if idx == 0: # samp
             self.mechanics_chn = 'samp'
         elif idx == 1: # ref
             self.mechanics_chn = 'ref'
 
 
-    def mech_solve(self, chn_name, marks):
+    def mech_solve_chn(self, chn_name, queue_ids):
         '''
-        send the data to qcm module to solve in secquence by marks and
+        send the data to qcm module to solve in secquence by queue_ids and
         save the returned mechanic data to data_saver
         '''
-        pass
+        # get nhcalc
+        nhcalc_list = ['133', '355']
+        # get G ref harmonic
+        rh = self.settings['comboBox_settings_mechanics_refG']
+        # get qcm data (columns=['queue_id', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs'])
+        # 'delf', 'delgs' may not necessary
+        qcm_df = self.data_saver.df_qcm(chn_name)
+
+        # do calc with each nhcalc
+        for nhcalc in nhcalc_list:
+            mech_df = self.data_saver.update_mech_df_shape(chn_name, nhcalc)
+
+            mech_df = self.qcm.analyze(nhcalc, queue_ids, qcm_df, mech_df)
+
+            # save back to data_saver
+            self.data_saver.save_mech_df(chn_name, nhcalc, mech_df)
+
+            print('Calculation of {} finished'.format(nhcalc))
 
 
 

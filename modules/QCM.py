@@ -8,9 +8,23 @@ This module doesn't have plotting functions.
 
 import numpy as np
 from scipy.optimize import least_squares
-from lmfit import Model, minimize, Parameters, fit_report, printfuncs
+from lmfit import Minimizer, minimize, Parameters, fit_report, printfuncs
 
 import pandas as pd
+
+
+# variable limitions
+drho_range = (0, 1e-2)
+grho_rh_range = (0, 1e-2)
+phi_range = (0, 1e-2)
+
+
+def nh2i(nh):
+    '''
+    convert harmonic (str) to index (int)
+    '''
+    return (int(nh) - 1) / 2
+    
 
 
 class QCM:
@@ -26,8 +40,8 @@ class QCM:
 
         self.rh = None # reference harmonic for calculation
         # default values
-        self.nhcalc = [3, 5, 5] # harmonics used for calculating
-        self.nhplot = [1, 3, 5] # harmonics used for plotting (show calculated data)
+        self.nhcalc = '355' # harmonics used for calculating
+        # self.nhplot = [1, 3, 5] # harmonics used for plotting (show calculated data)
 
 
 
@@ -146,7 +160,7 @@ class QCM:
 
     def rhcalc(self, nh, dlam_rh, phi):
         ''' nh string e.g. '353' ??? '''
-        return self.normdelfstar(nh[0], dlam_rh, phi).np.real /  self.normdelfstar(nh[1], dlam_rh, phi).real
+        return self.normdelfstar(nh[0], dlam_rh, phi).real /  self.normdelfstar(nh[1], dlam_rh, phi).real
 
 
     def rhexp(self, nh, delfstar):
@@ -187,7 +201,7 @@ class QCM:
         drho = lamrho_rh / 4
         dlam_rh = self.d_lamcalc(self.rh, drho, grho_rh, phi)
 
-        return [dlam_rh, min(phi, 90)]
+        return [dlam_rh, min(phi, np.pi/2)]
 
 
     def guess_from_props(self, drho, grho_rh, phi):
@@ -200,7 +214,7 @@ class QCM:
         really a placeholder function until we develop a more creative strategy
         for estimating the starting point 
         '''
-        return [0.05, 5]
+        return [0.05, np.pi/180*5]
 
 
 ########################################################
@@ -210,265 +224,222 @@ class QCM:
 ########################################################
 
 
-    def solve_general(self, soln_input):
+    def solve_general(self, nh, qcm_queue, mech_queue):
+        '''
+        solve the property of a single test.
+        nh: list of str
+        qcm_queue:  QCM data. df (shape[0]=1) 
+        mech_queue: initialized property data. df (shape[0]=1)
+        return mech_queue
+        '''
+        # get fstar
+        fstars = qcm_queue.fstars.iat[0, 0] # list
+        # get delfstar
+        delfstars = qcm_queue.delfstars.iat[0, 0] # list
+        # convert list to dict to make it easier to do the calculation
+        fstar = {int(i*2+1): fstar[i] for i, fstar in enumerate(fstars)}
+        delfstar = {int(i*2+1): dfstar[i] for i, dfstar in enumerate(delfstars)}
+        # get the marks [1st, 3rd, 5th, ...]
+        marks = qcm_queue.marks.iat[0, 0]
+        # find where the mark is not nan or None
+        nhplot = [i*2+1 for i, mark in enumerate(marks) if mark != np.nan and mark is not None ]
+
+        fstar_err ={}
+        for n in nhplot: 
+            fstar_err[n] = self.fstar_err_calc(fstar[n])
+
+
         # set up to handle one or two layer cases
         # overlayer set to air if it doesn't exist in soln_input
-        overlayer = soln_input.get('overlayer', {'drho':0, 'grho_rh':0, 'phi':0})
-        nhplot = soln_input['nhplot']
-        nh = soln_input['nh']
+        if 'overlayer' in qcm_queue.keys():
+            overlayer = qcm_queue.overlayer.iat[0, 0]
+        else:
+            overlayer = {'drho':0, 'grho_rh':0, 'phi':0}
         n1 = int(nh[0])
         n2 = int(nh[1])
         n3 = int(nh[2])
-        delfstar = soln_input['delfstar']
 
         # first pass at solution comes from rh and rd
         rd_exp = self.rdexp(nh, delfstar) # nh[3]
         rh_exp = self.rhexp(nh, delfstar) # nh[1], nh[2]
 
-        if 'prop_guess' in soln_input:
-            drho = soln_input['propguess']['drho']
-            grho_rh = soln_input['propguess']['grho_rh']
-            phi = soln_input['propguess']['phi']
-            soln1_guess = self.guess_from_props(drho, grho_rh, phi)
+        if 'prop_guess' in qcm_queue.keys(): # value{'drho', 'grho_rh', 'phi'}
+            dlam_rh, phi = self.guess_from_props(**qcm_queue.prop_guess.iat[0, 0])
         elif rd_exp > 0.5:
-            soln1_guess = self.bulk_guess(delfstar)
+            dlam_rh, phi = self.bulk_guess(delfstar)
         else:
-            soln1_guess = self.thinfilm_guess(delfstar)
+            dlam_rh, phi = self.thinfilm_guess(delfstar)
 
-        lb = np.array([0, 0      ])  # lower bounds on dlam_rh and phi
-        ub = np.array([5, np.pi/2])  # upper bonds on dlam_rh and phi
-        ## WHY ub is
+        params1 = Parameters()
 
-        def ftosolve(x):
-            return [self.rhcalc(nh, x[0], x[1])-rh_exp, self.rdcalc(nh, x[0], x[1])-rd_exp]
+        params1.add('dlam_rh', value=dlam_rh, min=0, max=5)
+        params1.add('phi', value=phi, min=0, max=np.pi/2)
 
-        soln1 = least_squares(ftosolve, soln1_guess, bounds=(lb, ub))
+        def residual1(params, rh_exp, rd_exp):
+            dlam_rh = params['dlam_rh'].value
+            phi = params['phi'].value
+            return [self.rhcalc(nh, dlam_rh, phi)-rh_exp, self.rdcalc(nh, dlam_rh, phi)-rd_exp]
 
-        dlam_rh = soln1['x'][0]
-        phi = soln1['x'][1]
+        mini = Minimizer(
+            residual1,
+            params1,
+            fcn_args=(rh_exp, rd_exp),
+        )
+        soln1 = mini.leastsq(
+            # xtol=1e-7,
+            # ftol=1e-7,
+        )
+
+        dlam_rh = soln1.params.get('dlam_rh')
+        phi =soln1.params.get('phi')
         drho = self.drho(n1, delfstar, dlam_rh, phi)
         grho_rh = self.grho_from_dlam(self.rh, drho, dlam_rh, phi)
 
         # we solve it again to get the Jacobian with respect to our actual
         # input variables - this is helpfulf for the error analysis
-        x0 = np.array([drho, grho_rh, phi])
-        
-        lb = np.array([0,    1e7,  0        ])  # lower bounds drho, grho_rh, phi
-        ub = np.array([1e-2, 1e13, np.pi / 2])  # upper bounds drho, grho_rh, phi
-
-        def ftosolve2(x):
-            return ([np.real(delfstar[n1]) -
-                    np.real(self.delfstarcalc(n1, x[0], x[1], x[2], overlayer)),
-                    np.real(delfstar[n2]) -
-                    np.real(self.delfstarcalc(n2, x[0], x[1], x[2], overlayer)),
-                    np.imag(delfstar[n3]) -
-                    np.imag(self.delfstarcalc(n3, x[0], x[1], x[2], overlayer))])
-        
-        # put the input uncertainties into a 3 element vector
-        delfstar_err = np.zeros(3)
-        delfstar_err[0] = np.real(soln_input['delfstar_err'][n1])
-        delfstar_err[1] = np.real(soln_input['delfstar_err'][n2])
-        delfstar_err[2] = np.imag(soln_input['delfstar_err'][n3])
-        
-        # initialize the uncertainties
         err = {}
         err_names=['drho', 'grho_rh', 'phi']
 
-        # recalculate solution to give the uncertainty, if solution is viable
-        if np.all(lb<x0) and np.all(x0<ub):
-            soln2 = least_squares(ftosolve2, x0, bounds=(lb, ub))
-            drho = soln2['x'][0]
-            grho_rh = soln2['x'][1]
-            phi = soln2['x'][2]
+        if drho_range[0]<=drho<=drho_range[1] and grho_rh_range[0]<=grho_rh<=grho_rh_range[1] and phi_range[0]<=phi<=phi_range[1]:
+            params2 = Parameters()
+
+            params2.add('drho', value=dlam_rh, min=drho_range[0], max=drho_range[1])
+            params2.add('grho_rh', value=grho_rh, min=grho_rh_range[0], max=grho_rh_range[1])
+            params2.add('phi', value=phi, min=phi_range[0], max=phi_range[1])
+
+            def residual2(params, delfstar, overlayer, n1, n2, n3):
+                drho = params['drho'].value
+                grho_rh = params['grho_rh'].value
+                phi = params['phi'].value
+                return ([np.real(delfstar[n1]) -
+                        np.real(self.delfstarcalc(n1, drho, grho_rh, phi, overlayer)),
+                        np.real(delfstar[n2]) -
+                        np.real(self.delfstarcalc(n2, drho, grho_rh, phi, overlayer)),
+                        np.imag(delfstar[n3]) -
+                        np.imag(self.delfstarcalc(n3, drho, grho_rh, phi, overlayer))])
+            
+            mini = Minimizer(
+                residual2,
+                params2,
+                method='leastsq',
+                fun_args=(delfstar, overlayer, n1, n2, n3),
+            )
+            soln2 = mini.leastsq(
+                # xtol=1e-7,
+                # ftol=1e-7,
+            )
+            # put the input uncertainties into a 3 element vector
+            delfstar_err = np.zeros(3)
+            delfstar_err[0] = np.real(fstar_err[n1])
+            delfstar_err[1] = np.real(fstar_err[n2])
+            delfstar_err[2] = np.imag(fstar_err[n3])
+            
+            # initialize the uncertainties
+
+            # recalculate solution to give the uncertainty, if solution is viable
+            drho = soln2.params.get('drho')
+            grho_rh = soln2.params.get('grho_rh')
+            phi = soln2.params.get('phi')
             dlam_rh = self.d_lamcalc(self.rh, drho, grho_rh, phi)
-            jac = soln2['jac']
+            jac = soln2.params.get('jac') #TODO ???
             jac_inv = np.linalg.inv(jac)
-            for k in range(3):
-                err[err_names[k]] = ((jac_inv[k, 0]*delfstar_err[0])**2 + 
-                                    (jac_inv[k, 1]*delfstar_err[1])**2 +
-                                    (jac_inv[k, 2]*delfstar_err[2])**2)**0.5
+            for i, k in enumerate(err_names):
+                err[k] = ((jac_inv[i, 0]*delfstar_err[0])**2 + 
+                        (jac_inv[i, 1]*delfstar_err[1])**2 +
+                        (jac_inv[i, 2]*delfstar_err[2])**2)**0.5
         else:
             drho = np.nan
             grho_rh = np.nan
             phi = np.nan
             dlam_rh = np.nan
-            for k in range(3):
-                err[err_names[k]] = np.nan
+            for k in err_names:
+                err[k] = np.nan
             
         # now back calculate delfstar, rh and rd from the solution
         delfstar_calc = {}
         rh = {}
         rd = {}
+        delf_calcs = mech_queue.delf_calcs.values[0]
+        delg_calcs = mech_queue.delg_calcs.values[0]
+        rds = mech_queue.rds.values[0]
         for n in nhplot:
             delfstar_calc[n] = self.delfstarcalc(n, drho, grho_rh, phi, overlayer)
+            delf_calcs[nh2i(n)] = np.real(delfstar_calc[n])
+            delg_calcs[nh2i(n)] = np.imag(delfstar_calc[n])
+            
             rd[n] = self.rd_from_delfstar(n, delfstar_calc)
+            rds[nh2i(n)] = rd[n]
         rh = self.rh_from_delfstar(nh, delfstar_calc)
 
-        soln_output = {
-            'drho': drho, 
-            'grho_rh': grho_rh, 
-            'phi': phi, 
-            'dlam_rh': dlam_rh, 
-            'delfstar_calc': delfstar_calc, 
-            'rh': rh, 
-            'rd': rd,
-        }
-        
-        soln_output['err'] = err
-        return soln_output
-
-
-    def null_solution(self, nhplot):
-        soln_output = {'drho':np.nan, 'grho_rh':np.nan, 'phi':np.nan, 'dlam_rh':np.nan,
-                'err':{'drho':np.nan, 'grho_rh':np.nan, 'phi': np.nan}}
-        delfstar_calc = {}
-        rh = {}
-        rd = {}
-        for n in nhplot:
-            delfstar_calc[n] = np.nan
-            rd[n] = np.nan
-        rh = np.nan
-        soln_output['rd'] = rd
-        soln_output['rh'] = rh
-        soln_output['delfstar_calc'] = delfstar_calc
-        
-        return soln_output
-
-
-    def add_delfstar(self, df):
-        '''
-        convert delfs and delgs in df to delfstar (pd.series) for calculation
-        '''
-        # get delf and delg in form of [n1, n3, n5, ...]
-        delfs = df.loc['delfs']
-        delgs = df.loc['delgs']
-
-        # convert to array
-        delf_arr = np.array(delfs.values.tolist())
-        delg_arr = np.array(delgs.values.tolist())
-
-        # get delfstar as array
-        delfstar_arr = delf_arr + 1j * delg_arr
-        df['delfstars'] = list(delfstar_arr)
-
-    def analyze_single(self):
-        pass
+    # drho = 1000*results[nh]['drho']
+    # grho3 = results[nh]['grho3']/1000
+    # phi = results[nh]['phi']
     
-    def analyze_series(self, sample, parms):
-        # read in the optional inputs, assigning default values if not assigned
-        nhplot = sample.get('nhplot', [1, 3, 5])
+        # save back to mech_queue
+        # single value
+        mech_queue['drho'] = list(drho * 1000) # in kg/m2
+        mech_queue['drho_err'] = list(err['drho']) # in kg/m2
+        mech_queue['grho_rh'] = list(grho_rh) # in Pa kg/m3
+        mech_queue['grho_rh_err'] = list(err['grho_rh']) # in Pa kg/m3
+        mech_queue['phi'] = list(phi) # in rad
+        mech_queue['phi_err'] = list(err['phi']) # in rad
+        mech_queue['dlam_rh'] = list(dlam_rh) # in na
+        mech_queue['lamrho'] = list() # in kg/m2
+        mech_queue['delrho'] = list() # in kg/m2
+        mech_queue['delf_delfsns'] = list()
+        mech_queue['rh'] = list(rh)
 
-        sample['nhcalc'] = sample.get('nhcalc', '355')
-        imagetype = parms.get('imagetype', 'svg')
+        # multiple values in list
+        mech_queue['delf_calcs'] = list(delf_calcs)
+        mech_queue['delg_calcs'] = list(delg_calcs)
+        mech_queue['delg_delfsns'] = list()
+        mech_queue['rds'] = list(rds)
+                
+        return mech_queue
 
-        # initialize the dictionary we'll use to keep track of the points to plot
-        idx = {}
 
-        # plot and process the film data
-        film, bare = self.process_raw(sample, 'film')
-
-        # move getting index out of for loop for getting index from dict
-
-        # pick the points that we want to analyze and add them to the plots
-        for data_dict in [bare, film]:
-            data_dict['fstar_err'] = {}
-            idx = data_dict['idx']
-            print(idx)
-            for n in nhplot:
-                data_dict['fstar_err'][n] = np.zeros(data_dict['n_all'], dtype=np.complex128)
-                for i in range(len(queue_list)):
-                    data_dict['fstar_err'][n][i] = self.fstar_err_calc(data_dict['fstar'][n][i])
-                    f = np.real(data_dict['fstar'][n][i])/n
-                    g = np.imag(data_dict['fstar'][n][i])
-                    f_err = np.real(data_dict['fstar_err'][n][i])/n
-                    g_err = np.imag(data_dict['fstar_err'][n][i])
-
-        # adjust nhcalc to account to only include calculations for for which
-        # the data exist
-        # !!! this will be done in UI
-        sample['nhcalc'] = self.nhcalc_in_nhplot(sample['nhcalc'], nhplot) 
-
-        # now calculate the frequency and dissipation shifts
-        delfstar = {}
-        delfstar_err = {}
-        film['fstar_ref']={}
+    def all_nhcaclc_harm_not_na(self, nh, qcm_queue):
+        '''
+        check if all harmonics in nhcalc are not na
+        nh: list of strings
+        qcm_queue: qcm data (df) of a single queue
+        return: True/False
+        '''
+        if np.isnan(qcm_queue.delfstar[nh2i(nh[0])].real) or np.isnan(qcm_queue.delfstar[nh2i(nh[1])].real) or np.isnan(qcm_queue.delfstar[nh2i(nh[2])].imag):
+            return False
+        else:
+            return True
         
-        # if the number of temperatures is 1, we use the average of the 
-        # bare temperature readings
-        for n in nhplot:
-            film['fstar_ref'][n] = np.zeros(film['n_all'], dtype=np.complex128)
-            film['fstar_ref'][n][film['idx']] = bare['fstar'][n][bare['idx']]
-        
-        for i in range(len(queue_list)):
-            idxf = film['idx'][i]
-            delfstar[i] = {}
-            delfstar_err[i] ={}
-            for n in nhplot: 
-                delfstar[i][n] = (film['fstar'][n][idxf] - film['fstar_ref'][n][idxf])
-                delfstar_err[i][n] = self.fstar_err_calc(film['fstar'][n][idxf])
-
-        # now do all of the calculations and plot the data
-        soln_input = {'nhplot': nhplot}
-        results = {}
-
-        # now we set calculation of the desired solutions
-        for nh in sample['nhcalc']:
-            results[nh] = {'drho': np.zeros(nx), 'grho_rh': np.zeros(nx),
-                        'phi': np.zeros(nx), 'dlam_rh': np.zeros(nx),
-                        'lamrho_rh': np.zeros(nx), 'rd': {}, 'rh': {},
-                        'delfstar_calc': {}, 'drho_err': np.zeros(nx),
-                        'grho_rh_err': np.zeros(nx), 'phi_err': np.zeros(nx)}
-            for n in nhplot:
-                results[nh]['delfstar_calc'][n] = (np.zeros(nx,
-                                                dtype=np.complex128))
-                results[nh]['rd'][n] = np.zeros(nx)
-
-            results[nh]['rh'] = np.zeros(nx)
-
-            for i in np.arange(nx):
-                # obtain the solution for the properties
-                soln_input['nh'] = nh
-                soln_input['delfstar'] = delfstar[i]
-                soln_input['delfstar_err'] = delfstar_err[i]
-                if (np.isnan(delfstar[i][int(nh[0])].real) or 
-                    np.isnan(delfstar[i][int(nh[1])].real) or
-                    np.isnan(delfstar[i][int(nh[2])].imag)):                
-                    soln = null_solution(nhplot)
-                else:
-                    soln = solve_general(soln_input)
-
-                results[nh]['drho'][i] = soln['drho']
-                results[nh]['grho_rh'][i] = soln['grho_rh']
-                results[nh]['phi'][i] = soln['phi']
-                results[nh]['dlam_rh'][i] = soln['dlam_rh']
-                results[nh]['drho_err'][i] = soln['err']['drho']
-                results[nh]['grho_rh_err'][i] = soln['err']['grho_rh']
-                results[nh]['phi_err'][i] = soln['err']['phi']
-
-                for n in nhplot:
-                    results[nh]['delfstar_calc'][n][i] = (
-                    soln['delfstar_calc'][n])
-                    results[nh]['rd'][n][i] = soln['rd'][n]
-                results[nh]['rh'][i] = soln['rh']
-
-            # add property data to the property figure
-            drho = 1000*results[nh]['drho']
-            grho3 = results[nh]['grho3']/1000
-            phi = results[nh]['phi']
-            drho_err = 1000*results[nh]['drho_err']
-            grho3_err = results[nh]['grho3_err']/1000
-            phi_err = results[nh]['phi_err']
+        # for h in set(nh):
+        #     if np.isnan(qcm_queue.delfstar[nh2i(h)]): # both real and imag are not nan
+        #         return False
+        # return True
 
 
-def nhcalc_in_nhplot(nhcalc_in, nhplot):
-    # there is probably a more elegant way to do this
-    # only consider harmonics in nhcalc that exist in nhplot
-    nhcalc_out = []
-    nhplot = list(set(nhplot))
-    for nh in nhcalc_in:
-        nhlist = list(set(nh))
-        nhlist = [int(i) for i in nhlist]
-        if all(elem in nhplot for elem in nhlist):
-            nhcalc_out.append(nh)
-    return nhcalc_out
+    def analyze(self, nhcalc, queue_ids, qcm_df, mech_df):
+        # sample, parms
+        '''
+        calculate with qcm_df and save to mech_df
+        '''
+        nh = nhcalc.split() # list of harmonics (str) in nhcalc
+        for queue_id in queue_ids: # iterate all ids
+            # queue index
+            idx = qcm_df[qcm_df.queue_id == queue_id].index.astype(int)[0]
+            # qcm data of queue_id
+            qcm_queue = qcm_df.loc[idx, :]
+            # mechanic data of queue_id
+            mech_queue = mech_df.loc[idx, :]
+
+            # obtain the solution for the properties
+            if self.all_nhcaclc_harm_not_na(nh, qcm_queue):
+                # solve a single queue
+                mech_queue = self.solve_general(nh, qcm_queue, mech_queue)
+                # save back to mech_df
+                mech_df[idx, :] = mech_queue
+            else:
+                # since the df already initialized with nan values, nothing todo
+                pass
+        return mech_df
+
+
 

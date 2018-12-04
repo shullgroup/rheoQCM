@@ -87,6 +87,8 @@ class DataSaver:
             'gs',
         ])
 
+
+
     def _make_exp_ref(self):
         '''
         initiact an dict for storing the experiment reference information
@@ -118,14 +120,36 @@ class DataSaver:
         } # experiment reference setup in dict
 
 
-    def _update_mech_df(self, chn_name, nhcalc):
+    def update_mech_df_shape(self, chn_name, nhcalc):
         '''
         initiate an empty df for storing the mechanic data in self.mech with nhcalc as a key
         if there is a key with the same name, check and add missed rows (queue_id)
-        nhcalc: list of harmonics (int)
+        nhcalc: str '133'
+        return the updated df
         '''
-        nhcalc_str = ''.join(nhcalc)
-        if nhcalc_str in getattr(self, chn_name + '_mech').keys():
+        # data_keys = ['queue_id', 't', 'temp', 'marks', 'delfs', 'delgs',]
+        data_keys = ['queue_id']
+        mech_keys_single = [
+            'drho',
+            'drho_err'
+            'grho_rh',
+            'grho_rh_err'
+            'phi',
+            'phi_err'
+            'dlam_rh',
+            'lamrho',
+            'delrho',
+            'delf_delfsns',
+            'rh',
+        ]
+        mech_keys_multiple = [
+            'delf_calcs', # n
+            'delg_calcs', # n
+            'delg_delfsns',
+            'rds', # n
+        ]
+        # nhcalc_str = ''.join(nhcalc)
+        if nhcalc in getattr(self, chn_name + '_mech').keys():
             df_mech = getattr(self, chn_name + '_mech')
             mech_queue_id = df_mech['queue_id']
             data_queue_id = getattr(self, chn_name)['queue_id']
@@ -133,57 +157,33 @@ class DataSaver:
             if mech_queue_id != data_queue_id:
                 # delete the extra queue_id
                 df_mech = df_mech[df_mech['queue_id'] in (set(mech_queue_id) & set(data_queue_id))]
-                # add the missed queue_id
+                # add the missed queue_id, this will leave other columns as NA
                 df_mech.append(pd.DataFrame.from_dict(dict(queue_id=list(set(data_queue_id) - set(mech_queue_id)))), ignore_index = True)
                 # replace na with self.nan_harm_list
-                df_mech.fillna(self.nan_harm_list)
+                df_mech.loc[mech_keys_single] = df_mech.loc[mech_keys_single].fillna(np.nan)
+                df_mech.loc[mech_keys_multiple] = df_mech.loc[mech_keys_multiple].fillna(self.nan_harm_list())
 
                 # save back to class
-                setattr(self, chn_name + '_mech', df_mech)
+                getattr(self, chn_name + '_mech')[nhcalc] = df_mech
 
         else: # not exist, make a new dataframe
-          df_mech = pd.DataFrame(columns=[
-            'queue_id', # indices of each timer
-            # 't',
-            # 'temp',
-            # 'marks', # list default [0, 0, 0, 0, 0]
-            # 'delfs',
-            # 'delgs',
-            'delf_calcs',
-            'delg_calcs',
-            'drhos',
-            'grhos',
-            'phis',
-            'd_lams',
-            'lamrhos',
-            'delrhos',
-            'delf_delfsns',
-            'delg_delfsns',
-            'rhs',
-            'rds',
-        ])
+            df_mech = pd.DataFrame(columns=data_keys+mech_keys_single+mech_keys_multiple)
 
-        # set values
-        nrows = len(getattr(self, chn_name)['queue_id'])
-        nan_list = [self.nan_harm_list]* nrows 
-        df_mech['queue_id'] = getattr(self, chn_name)['queue_id']
-        df_mech['t'] = getattr(self, chn_name)['t']
-        df_mech['temp'] = getattr(self, chn_name)['temp']
-        df_mech['delf_calcs'] = nan_list
-        df_mech['delg_cals'] = nan_list
-        df_mech['drhos'] = nan_list
-        df_mech['grhos'] = nan_list
-        df_mech['phis'] = nan_list
-        df_mech['d_lams'] = nan_list
-        df_mech['lamrhos'] = nan_list
-        df_mech['delrhos'] = nan_list
-        df_mech['delf_delfsns'] = nan_list
-        df_mech['delg_delfsns'] = nan_list
-        df_mech['rhs'] = nan_list
-        df_mech['rds'] = nan_list
+            # set values
+            nrows = len(getattr(self, chn_name)['queue_id'])
+            nan_list = [self.nan_harm_list]* nrows 
+            df_mech['queue_id'] = getattr(self, chn_name)['queue_id']
+            # df_mech['t'] = getattr(self, chn_name)['t']
+            # df_mech['temp'] = getattr(self, chn_name)['temp']
+            for key in mech_keys_single:
+                df_mech[key] = np.nan
+            for key in mech_keys_multiple:
+                df_mech[key] = nan_list
 
-        # set it to class
-        getattr(self, chn_name + '_mech')[nhcalc_str] = df_mech
+            # set it to class
+            getattr(self, chn_name + '_mech')[nhcalc_str] = df_mech
+
+        return getattr(self, chn_name + '_mech')[nhcalc]
 
 
     def init_file(self, path, settings, t0):
@@ -218,6 +218,8 @@ class DataSaver:
         '''
         load data information from exist hdf5 file
         '''
+        self._init_attrs()
+
         self.mode = 'load'
         self.path = path
 
@@ -790,7 +792,7 @@ class DataSaver:
 
     def convert_col_to_delta_val(self, chn_name, col, norm=False):
         '''
-        convert fs or gs column to delf or delg
+        convert fs or gs column to delfs or delgs
         and return the series 
         norm: if True, nomalize value by harmonic
         '''
@@ -1167,3 +1169,44 @@ class DataSaver:
 
 
 
+    def df_qcm(self, chn_name):
+        '''
+        convert delfs and delgs in df to delfstar for calculation and 
+        return a df with ['queue_id', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs']
+        '''
+        df = self.get_queue_id(chn_name)
+        df['marks'] = self.get_marks(chn_name)
+
+        # get freqs and gamms in form of [n1, n3, n5, ...]
+        fs = getattr(self, chn_name).loc['fs'].copy()
+        gs = getattr(self, chn_name).loc['gs'].copy()
+        # get delf and delg in form of [n1, n3, n5, ...]
+        delfs = convert_col_to_delta_val(chn_name, 'fs', norm=False)
+        delgs = convert_col_to_delta_val(chn_name, 'gs', norm=False)
+
+        # convert to array
+        f_arr = np.array(fs.values.tolist())
+        g_arr = np.array(gs.values.tolist())
+
+        delf_arr = np.array(delfs.values.tolist())
+        delg_arr = np.array(delgs.values.tolist())
+
+        # get delfstar as array
+        fstar_arr = f_arr + 1j * g_arr
+        delfstar_arr = delf_arr + 1j * delg_arr
+
+        df['fstars'] = list(delfstar_arr)
+        df['delfstars'] = list(delfstar_arr)
+        df['fs'] = fs
+        df['gs'] = gs
+        df['delfs'] = delfs
+        df['delgs'] = delgs
+
+        return df
+
+
+    def save_mech_df(self, chn_name, nhcalc, mech_df):
+        '''
+        save mech_df to self.'chn_nam'_mech[nhcalc]
+        '''
+        getattr(self, chn_name + '_mech')[nhcalc] = mech_df 

@@ -1151,8 +1151,8 @@ class AccessMyVNA():
 
         print('len', len(data_a))
         print('end', data_a[nEnd])
-        da = data_a[:nEnd]
-        db = data_b[:nEnd]
+        da = data_a[:]
+        db = data_b[:]
         rt = ret
         del data_a, data_b, ret
 
