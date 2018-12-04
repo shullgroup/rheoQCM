@@ -27,5 +27,3 @@ qcm.analyze(sample['linseed_bulk'], parms)
 
 # %% sample with PS film
 qcm.analyze(sample['linseed_PS'], parms)
-#%% Gwen's linseed oil with PS ultrathin layer
-qcm.analyze(sample['linseed_PS'], parms)

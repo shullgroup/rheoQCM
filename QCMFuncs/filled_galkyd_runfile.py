@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 import QCM_functions as qcm
 import DMA_functions as dma
 import legacy_functions as legacy
+import DMA_sampledefs
 
+parms = {}
 # define locations of the QCM data files
 w00_1 = '/home/ken/Mydocs/People/Sturdy/Filled_Galkyd_Paper/data/QCM/LFS_GZO0_01_data'
 w00_ref = '/home/ken/Mydocs/People/Sturdy/Filled_Galkyd_Paper/data/QCM/LFS_G_08_data'
@@ -26,18 +28,7 @@ w_dry=w_wet/(0.43*w_wet+0.57)
 phi_ZnO = (w_dry/5.6)/(w_dry/5.6+(1-w_dry)/1.2)
 rho=5.6*phi_ZnO+(1-phi_ZnO)*1.2
 
-# now define locations of the DMA files
-dmadir = '/home/ken/Mydocs/People/Sturdy/Filled_Galkyd_Paper/data/DMA/'
-ZnO_00_2 = 'Alkyd_sample_2_150423_shifted'
-ZnO_00_4a = 'Alkyd_sample_4_150602_shifted'
-ZnO_00_4b = 'Alkyd_sample_4_150602_shiftedv2'
-ZnO_00_6 = 'Alkyd_sample_6_150728_shifted'
-ZnO_05 = 'ZnO_5_percent_sample_3_150702_shifted'
-ZnO_10 = 'ZnO_10_percent_sample_2_150709_shifted'
-ZnO_20a = 'ZnO_20_percent_sample_2_150709_shifted'
-ZnO_20b = 'ZnO_20_percent_sample_3_150709_shifted'
-ZnO_20c = 'ZnO_20_percent_sample_4_5_Combined_150716_shifted'
-ZnO_20d = 'ZnO_20_percent_sample_4_150716_shifted'
+parms['dmadir'] = '/home/ken/Mydocs/People/Sturdy/Filled_Galkyd_Paper/data/DMA'
 
 #%% now compare results for increasing volume fractions, all using 353
 fig1 = qcm.make_prop_axes('fig1', 'time')
@@ -67,15 +58,15 @@ fig2['figure'].savefig('/home/ken/Mydocs/People/Sturdy/Filled_Galkyd_Paper/vgp.p
 #%%  generate the dictionaries used by the plot function
 parms = {}
 Tref = 20
-sample_ZnO_00_2 = dma.DMAread_sturdy(dmadir, ZnO_00_2, parms)
-sample_ZnO_00_4b = dma.DMAread_sturdy(dmadir, ZnO_00_4b, parms)
-sample_ZnO_00_6 = dma.DMAread_sturdy(dmadir, ZnO_00_6, parms)
-sample_ZnO_05 = dma.DMAread_sturdy(dmadir, ZnO_05, parms)
-sample_ZnO_10 = dma.DMAread_sturdy(dmadir, ZnO_10, parms)
-sample_ZnO_20a = dma.DMAread_sturdy(dmadir, ZnO_20a, parms)
-sample_ZnO_20b = dma.DMAread_sturdy(dmadir, ZnO_20b, parms)
-sample_ZnO_20c = dma.DMAread_sturdy(dmadir, ZnO_20c, parms)
-sample_ZnO_20d = dma.DMAread_sturdy(dmadir, ZnO_20d, parms)
+sample_ZnO_00_2 = dma.DMAread_sturdy(DMA_sampledefs.ZnO_00_2, parms)
+sample_ZnO_00_4b = dma.DMAread_sturdy(DMA_sampledefs.ZnO_00_4b, parms)
+sample_ZnO_00_6 = dma.DMAread_sturdy(DMA_sampledefs.ZnO_00_6, parms)
+sample_ZnO_05 = dma.DMAread_sturdy(DMA_sampledefs.ZnO_05, parms)
+sample_ZnO_10 = dma.DMAread_sturdy(DMA_sampledefs.ZnO_10, parms)
+sample_ZnO_20a = dma.DMAread_sturdy(DMA_sampledefs.ZnO_20a, parms)
+sample_ZnO_20b = dma.DMAread_sturdy(DMA_sampledefs.ZnO_20b, parms)
+sample_ZnO_20c = dma.DMAread_sturdy(DMA_sampledefs.ZnO_20c, parms)
+sample_ZnO_20d = dma.DMAread_sturdy(DMA_sampledefs.ZnO_20d, parms)
 
 #%%  comparision of the different unfilled samples
 parms = {'Trange':[-20, 50]}
@@ -100,22 +91,22 @@ parms['filltype']='full'
 parms['markertype']='o'
 parms['markersize']=2.5
 parms['labeltext']=r'$\phi_{\mathrm{ZnO}}=0$'
-sample_ZnO_00_2 = dma.DMAread_sturdy(dmadir, ZnO_00_2, parms)
+sample_ZnO_00_2 = dma.DMAread_sturdy(DMA_sampledefs(), parms)
 parms['figinfo'] = dma.DMAplot(sample_ZnO_00_2, parms, Tref)
 
 parms['colortype']='k'
 parms['labeltext']=r'$\phi_{\mathrm{ZnO}}=0.02$'
-sample_ZnO_05 = dma.DMAread_sturdy(dmadir, ZnO_05, parms)
+sample_ZnO_05 = dma.DMAread_sturdy(DMA_sampledefs(), parms)
 parms['figinfo'] = dma.DMAplot(sample_ZnO_05, parms, Tref)
 
 parms['colortype']='r'
 parms['labeltext']=r'$\phi_{\mathrm{ZnO}}=0.04$'
-sample_ZnO_10 = dma.DMAread_sturdy(dmadir, ZnO_10, parms)
+sample_ZnO_10 = dma.DMAread_sturdy(DMA_sampledefs(), parms)
 parms['figinfo'] = dma.DMAplot(sample_ZnO_10, parms, Tref)
 
 parms['colortype']='b'
 parms['labeltext']=r'$\phi_{\mathrm{ZnO}}=0.09$'
-sample_ZnO_20d = dma.DMAread_sturdy(dmadir, ZnO_20d, parms)
+sample_ZnO_20d = dma.DMAread_sturdy(DMA_sampledefs(), parms)
 parms['figinfo'] = dma.DMAplot(sample_ZnO_20d, parms, Tref)
 
 # adjust y limit for phase angle plots

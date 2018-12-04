@@ -1,4 +1,6 @@
 import numpy as np
+import pdb
+
 # note that the values of fref used for the springpot models are for the
 # reference temperature from the original DMA data, which is a bit
 # arbitrary
@@ -11,7 +13,7 @@ def sbr():
 
     # specify the DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = '0425161'
     dmadata['Trange'] = [-50, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -51,7 +53,7 @@ def sbr50():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = 'NU_50_Duke'
     dmadata['Trange'] = [-40, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -85,7 +87,7 @@ def sbr51():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = 'NU_51_Duke'
     dmadata['Trange'] = [-40, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -121,7 +123,7 @@ def sbr52():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = 'NU_52_Duke'
     dmadata['Trange'] = [-40, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -157,7 +159,7 @@ def sbr53():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = 'NU_53_Duke'
     dmadata['Trange'] = [-40, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -193,7 +195,7 @@ def sbr54():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = 'NU_54_N121_120517'
     dmadata['Trange'] = [-40, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -208,7 +210,7 @@ def sbr55():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = 'NU_52_N121_121817'
     dmadata['Trange'] = [-40, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -223,7 +225,7 @@ def sbr34():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = 'NU_34_Mix_2_min_0_N660_092917'
     dmadata['Trange'] = [-40, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -238,7 +240,7 @@ def sbr35():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = 'NU_35_Mix_4_min_25_N660_092517'
     dmadata['Trange'] = [-40, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -253,7 +255,7 @@ def sbr36():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = 'NU_36_Mix_4_min_15_N660_092517_good'
     dmadata['Trange'] = [-40, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -268,7 +270,7 @@ def sbr37():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = 'NU_37_Mix_4_min_10_N660_092217'
     dmadata['Trange'] = [-40, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -283,7 +285,7 @@ def sbr38():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = 'NU_38_Mix_4_min_1_N660_092217'
     dmadata['Trange'] = [-40, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -298,7 +300,7 @@ def sbr39():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = 'NU_39_Mix_4_min_0_N660_092217'
     dmadata['Trange'] = [-40, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -334,7 +336,7 @@ def sbr44():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = 'NU_44_Mix_6_min_0_N660_092917'
     dmadata['Trange'] = [-50, -10]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -348,7 +350,6 @@ def PI_34():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
     dmadata['filename'] = 'crosslinked0_5_3_4042217_no_transition'
     dmadata['Trange'] = [-20, 30]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -385,7 +386,7 @@ def sbr2():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
+    dmadata['datapath'] = 'data/DMA/'
     dmadata['filename'] = '0630161_sbr'
     dmadata['Trange'] = [-60, 0]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -423,7 +424,6 @@ def PI_14():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
     dmadata['filename'] = 'GY_3_03_natsyn_12_21'
     dmadata['Trange'] = [-75, -30]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -458,7 +458,6 @@ def PBD_14():
 
     # specify DMA data
     dmadata = {}
-    dmadata['datapath'] = '../data/DMA/'
     dmadata['filename'] = '02_1_pbd'
     dmadata['Trange'] = [-115, -75]  # Temp. range to include
     sample['dmadata'] = dmadata
@@ -486,3 +485,34 @@ def PBD_14():
     sample['sp_parms'] = sp_parms
 
     return sample
+
+def ZnO_00_2():
+    return {'filename':'Alkyd_sample_2_150423_shifted'}
+    
+def ZnO_00_4a():
+    return {'filename':'Alkyd_sample_4_150602_shifted'}
+    
+def ZnO_00_4b():
+    return {'filename':'Alkyd_sample_4_150602_shiftedv2'}
+
+def ZnO_00_6():
+    return {'filename':'Alkyd_sample_6_150728_shifted'}
+    
+def ZnO_05():
+        return {'filename':'ZnO_5_percent_sample_3_150702_shifted'}
+
+def ZnO_10():
+        return {'filename':'ZnO_10_percent_sample_2_150709_shifted'}
+
+def ZnO_20a():
+        return {'filename':'ZnO_20_percent_sample_2_150709_shifted'}
+
+def ZnO_20b():
+        return {'ZnO_20_percent_sample_3_150709_shifted'}
+
+def ZnO_20c():
+        return {'ZnO_20_percent_sample_4_5_Combined_150716_shifted'}
+
+def ZnO_20d():
+        return {'filename':'ZnO_20_percent_sample_4_150716_shifted'}
+
