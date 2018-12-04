@@ -167,10 +167,10 @@ class QCMApp(QMainWindow):
         )
 
         # hide widgets not for analysis mode
-        if self.vna is None:
-            self.hide_widgets(
-                'analysis_mode_disable_list'
-            )
+        # if self.vna is None:
+        #     self.hide_widgets(
+        #         'analysis_mode_disable_list'
+        #     )
 
         self.load_settings()
 
@@ -3691,15 +3691,16 @@ class QCMApp(QMainWindow):
             the combobox is in harmwidget
         '''
         comboBoxName = comboBox.objectName()
-        for key in settings_init[choose_dict_name].keys():
-            if harm is None: # not embeded in subdict
-                if key == self.settings[comboBoxName]:
-                    comboBox.setCurrentIndex(comboBox.findData(key))
-                    break
-            else:
-                if key == self.get_harmdata(comboBoxName, harm):
-                    comboBox.setCurrentIndex(comboBox.findData(key))
-                    break
+        if settings_init[choose_dict_name]:
+            for key in settings_init[choose_dict_name].keys():
+                if harm is None: # not embeded in subdict
+                    if key == self.settings[comboBoxName]:
+                        comboBox.setCurrentIndex(comboBox.findData(key))
+                        break
+                else:
+                    if key == self.get_harmdata(comboBoxName, harm):
+                        comboBox.setCurrentIndex(comboBox.findData(key))
+                        break
                 
 
     def update_guichecks(self, checkBox, name_in_settings):
