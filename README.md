@@ -6,6 +6,13 @@ This is the Python project page for the QCM data collection and analysis softwar
 
 The analysis portions of the software should work on Windows/Mac/Linux platforms. In all cases you'll need some familiarity with running commands from the terminal, however.  It's assumed in the following that you know how to do this on your platform.  The software to interface with the network analyzers only runs on Windows-based computers.
 
+### Functions
+
+* Collecting data interfacing with network analyzers.  
+* Fast recording without openning the dependent external software. Less resources are required.  
+* Combine data collection and analysis in one software.  
+* Functioned with temperature recording. (with NI devices)
+
 ### Prerequisites
 
 * Python 3.5+ is required. For data analysis only, it can run with both 32-bit and 64-bit Python. If you want the data collection with myVNA, 32-bit Python and Windows are required.  
@@ -45,6 +52,7 @@ The functions for Matlab version data are locoalized in .\QCMFuncs folder.
 * Property data plotting and exporting.
 * Data analysis with QCM-D data.
 * Compile to runnable single file for those who doesn't want to run commond lines.
+* Interface with other hardware. (If you have a hardware and interested in interfacing with our software, please feel free to contact us.)
 
 ## Authors
 
