@@ -1025,8 +1025,8 @@ class MatplotlibWidget(QWidget):
         all the lines share the same xdata
         '''
         for (x, y) in zip(xlist, ylist):
-            print('len x: ', len(x))
-            print('len y: ', len(y))
+            # print('len x: ', len(x))
+            # print('len y: ', len(y))
             # print(x)
             # print(y)
             if ax is None:

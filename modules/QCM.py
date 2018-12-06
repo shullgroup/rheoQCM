@@ -3,6 +3,8 @@ This module is a modified version of QCM_functions.
 It is used for UI, but you can also use it for data analysis.
 The input and return data are all in form of DataFrame.
 This module doesn't have plotting functions.
+
+NOTE: Differnt to other modules, the harmonics used in this module are all INT.
 '''
 
 
@@ -14,16 +16,18 @@ import pandas as pd
 
 
 # variable limitions
+dlam_rh_range = (0, 5)
 drho_range = (0, 1e-2)
-grho_rh_range = (0, 1e-2)
-phi_range = (0, 1e-2)
+grho_rh_range = (1e7, 1e13)
+phi_range = (0, np.pi/2)
 
 
 def nh2i(nh):
     '''
-    convert harmonic (str) to index (int)
+    convert harmonic (str) to index (int) 
+    since only odd harmonics are stored in list
     '''
-    return (int(nh) - 1) / 2
+    return int((nh - 1) / 2)
     
 
 
@@ -40,17 +44,21 @@ class QCM:
 
         self.rh = None # reference harmonic for calculation
         # default values
-        self.nhcalc = '355' # harmonics used for calculating
+        # self.nhcalc = '355' # harmonics used for calculating
         # self.nhplot = [1, 3, 5] # harmonics used for plotting (show calculated data)
 
 
 
     def fstar_err_calc(self, fstar):
-        ''' calculate the error in delfstar '''
+        ''' 
+        calculate the error in delfstar
+        fstar: complex number 
+        '''
         # start by specifying the error input parameters
         fstar_err = np. zeros(1, dtype=np.complex128)
-        fstar_err = (max(self.f_err_min, self.err_frac* np.real(fstar)) + 1j*max(self.g_err_min, self.err_frac*np.imag(fstar)))
+        fstar_err = (self.f_err_min + self.err_frac * np.imag(fstar)) + 1j*(self.g_err_min + self.err_frac*np.imag(fstar))
         return fstar_err
+        # ?? show above both imag?
 
 
     def sauerbreyf(self, n, drho):
@@ -108,12 +116,12 @@ class QCM:
         return answer
 
 
-    def rstar(self, n, drho, grho_rh, phi, overlayer):
+    def rstar(self, n, drho, grho_rh, phi, overlayer={'drho': 0, 'gho_rh': 0, 'phi': 0}):
         # overlayer is dictionary with drho, grho_rh and phi
         grhostar_1 = self.grhostar(n, grho_rh, phi)
-        grhostar_2 = self.grhostar(n, overlayer['grho_rh'], overlayer['phi'])
+        grhostar_2 = self.grhostar(n, overlayer.get('grho_rh', 0), overlayer.get('phi', 0))
         zstar_1 = self.zstarbulk(grhostar_1)
-        zstar_2 = self.zstarfilm(n, overlayer['drho'], grhostar_2)   
+        zstar_2 = self.zstarfilm(n, overlayer.get('drho', 0), grhostar_2)   
         return zstar_2 / zstar_1
     
     
@@ -147,7 +155,7 @@ class QCM:
 
 
     def dlam(self, n, dlam_rh, phi):
-        return dlam_rh*(int(n)/self.rh) ** (1-phi/2)
+        return dlam_rh*(n/self.rh) ** (1-phi/2)
 
 
     def normdelfstar(self, n, dlam_rh, phi):
@@ -159,15 +167,15 @@ class QCM:
 
 
     def rhcalc(self, nh, dlam_rh, phi):
-        ''' nh string e.g. '353' ??? '''
+        ''' nh list '''
         return self.normdelfstar(nh[0], dlam_rh, phi).real /  self.normdelfstar(nh[1], dlam_rh, phi).real
 
 
     def rhexp(self, nh, delfstar):
-        return (nh[2]/nh[1])*np.real(delfstar[nh[1]]) / np.real(delfstar[nh[2]])
+        return (nh[1]/nh[0])*np.real(delfstar[nh[0]]) / np.real(delfstar[nh[1]])
 
     def rh_from_delfstar(self, nh, delfstar):
-        ''' nh here is the calc string (i.e., '353') '''
+        ''' this func is the same as rhexp!!! '''
         n1 = int(nh[0])
         n2 = int(nh[1])
         return (n2/n1)*np.real(delfstar[n1])/np.real(delfstar[n2])
@@ -178,7 +186,7 @@ class QCM:
 
 
     def rdexp(self, nh, delfstar):
-        return -np.imag(delfstar[nh[3]]) / np.real(delfstar[nh[3]])
+        return -np.imag(delfstar[nh[2]]) / np.real(delfstar[nh[2]])
 
 
     def rd_from_delfstar(self, n, delfstar):
@@ -227,26 +235,29 @@ class QCM:
     def solve_general(self, nh, qcm_queue, mech_queue):
         '''
         solve the property of a single test.
-        nh: list of str
+        nh: list of int
         qcm_queue:  QCM data. df (shape[0]=1) 
         mech_queue: initialized property data. df (shape[0]=1)
         return mech_queue
         '''
         # get fstar
-        fstars = qcm_queue.fstars.iat[0, 0] # list
+        fstars = qcm_queue.fstars.iloc[0] # list
         # get delfstar
-        delfstars = qcm_queue.delfstars.iat[0, 0] # list
+        delfstars = qcm_queue.delfstars.iloc[0] # list
+        print('fstars', fstars)
+        print(delfstars)
         # convert list to dict to make it easier to do the calculation
-        fstar = {int(i*2+1): fstar[i] for i, fstar in enumerate(fstars)}
-        delfstar = {int(i*2+1): dfstar[i] for i, dfstar in enumerate(delfstars)}
+        # fstar = {int(i*2+1): fstar[i] for i, fstar in enumerate(fstars)}
+        delfstar = {int(i*2+1): dfstar for i, dfstar in enumerate(delfstars)}
+        print(delfstar)
         # get the marks [1st, 3rd, 5th, ...]
-        marks = qcm_queue.marks.iat[0, 0]
+        marks = qcm_queue.marks.iloc[0]
         # find where the mark is not nan or None
         nhplot = [i*2+1 for i, mark in enumerate(marks) if mark != np.nan and mark is not None ]
 
-        fstar_err ={}
-        for n in nhplot: 
-            fstar_err[n] = self.fstar_err_calc(fstar[n])
+        # fstar_err ={}
+        # for n in nhplot: 
+        #     fstar_err[n] = self.fstar_err_calc(fstar[n])
 
 
         # set up to handle one or two layer cases
@@ -255,113 +266,146 @@ class QCM:
             overlayer = qcm_queue.overlayer.iat[0, 0]
         else:
             overlayer = {'drho':0, 'grho_rh':0, 'phi':0}
-        n1 = int(nh[0])
-        n2 = int(nh[1])
-        n3 = int(nh[2])
+        n1 = nh[0]
+        n2 = nh[1]
+        n3 = nh[2]
 
-        # first pass at solution comes from rh and rd
-        rd_exp = self.rdexp(nh, delfstar) # nh[3]
-        rh_exp = self.rhexp(nh, delfstar) # nh[1], nh[2]
-
-        if 'prop_guess' in qcm_queue.keys(): # value{'drho', 'grho_rh', 'phi'}
-            dlam_rh, phi = self.guess_from_props(**qcm_queue.prop_guess.iat[0, 0])
-        elif rd_exp > 0.5:
-            dlam_rh, phi = self.bulk_guess(delfstar)
-        else:
-            dlam_rh, phi = self.thinfilm_guess(delfstar)
-
-        params1 = Parameters()
-
-        params1.add('dlam_rh', value=dlam_rh, min=0, max=5)
-        params1.add('phi', value=phi, min=0, max=np.pi/2)
-
-        def residual1(params, rh_exp, rd_exp):
-            dlam_rh = params['dlam_rh'].value
-            phi = params['phi'].value
-            return [self.rhcalc(nh, dlam_rh, phi)-rh_exp, self.rdcalc(nh, dlam_rh, phi)-rd_exp]
-
-        mini = Minimizer(
-            residual1,
-            params1,
-            fcn_args=(rh_exp, rd_exp),
-        )
-        soln1 = mini.leastsq(
-            # xtol=1e-7,
-            # ftol=1e-7,
-        )
-
-        dlam_rh = soln1.params.get('dlam_rh')
-        phi =soln1.params.get('phi')
-        drho = self.drho(n1, delfstar, dlam_rh, phi)
-        grho_rh = self.grho_from_dlam(self.rh, drho, dlam_rh, phi)
-
-        # we solve it again to get the Jacobian with respect to our actual
         # input variables - this is helpfulf for the error analysis
+        # define sensibly names partial derivatives for further use
+        deriv = {}
         err = {}
         err_names=['drho', 'grho_rh', 'phi']
 
-        if drho_range[0]<=drho<=drho_range[1] and grho_rh_range[0]<=grho_rh<=grho_rh_range[1] and phi_range[0]<=phi<=phi_range[1]:
-            params2 = Parameters()
+        # first pass at solution comes from rh and rd
+        rd_exp = self.rdexp(nh, delfstar) # nh[2]
+        rh_exp = self.rhexp(nh, delfstar) # nh[0], nh[1]
+        print('rd_exp', rd_exp)
+        print('rh_exp', rh_exp)
 
-            params2.add('drho', value=dlam_rh, min=drho_range[0], max=drho_range[1])
-            params2.add('grho_rh', value=grho_rh, min=grho_rh_range[0], max=grho_rh_range[1])
-            params2.add('phi', value=phi, min=phi_range[0], max=phi_range[1])
 
-            def residual2(params, delfstar, overlayer, n1, n2, n3):
-                drho = params['drho'].value
-                grho_rh = params['grho_rh'].value
-                phi = params['phi'].value
-                return ([np.real(delfstar[n1]) -
-                        np.real(self.delfstarcalc(n1, drho, grho_rh, phi, overlayer)),
-                        np.real(delfstar[n2]) -
-                        np.real(self.delfstarcalc(n2, drho, grho_rh, phi, overlayer)),
-                        np.imag(delfstar[n3]) -
-                        np.imag(self.delfstarcalc(n3, drho, grho_rh, phi, overlayer))])
-            
+        # solve the problem
+        if ~np.isnan(rd_exp) or ~np.isnan(rh_exp):
+
+            # TODO change here for the model selection
+            if 'prop_guess' in qcm_queue.keys(): # value{'drho', 'grho_rh', 'phi'}
+                dlam_rh, phi = self.guess_from_props(**qcm_queue.prop_guess[0])
+            elif rd_exp > 0.5:
+                dlam_rh, phi = self.bulk_guess(delfstar)
+            else:
+                dlam_rh, phi = self.thinfilm_guess(delfstar)
+
+            print('dlam_rh', dlam_rh)
+            print('phi', phi)
+            params1 = Parameters()
+            params1.add('dlam_rh', value=dlam_rh, min=dlam_rh_range[0], max=dlam_rh_range[1])
+            params1.add('phi', value=phi, min=phi_range[0], max=phi_range[1])
+
+            def residual1(params, rh_exp, rd_exp):
+                # dlam_rh = params['dlam_rh'].value
+                # phi = params['phi'].value
+                return [self.rhcalc(nh, dlam_rh, phi)-rh_exp, self.rdcalc(nh, dlam_rh, phi)-rd_exp]
+
             mini = Minimizer(
-                residual2,
-                params2,
-                method='leastsq',
-                fun_args=(delfstar, overlayer, n1, n2, n3),
+                residual1,
+                params1,
+                fcn_args=(rh_exp, rd_exp),
+                nan_policy='omit',
             )
-            soln2 = mini.leastsq(
+            soln1 = mini.leastsq(
                 # xtol=1e-7,
                 # ftol=1e-7,
             )
-            # put the input uncertainties into a 3 element vector
-            delfstar_err = np.zeros(3)
-            delfstar_err[0] = np.real(fstar_err[n1])
-            delfstar_err[1] = np.real(fstar_err[n2])
-            delfstar_err[2] = np.imag(fstar_err[n3])
-            
-            # initialize the uncertainties
 
-            # recalculate solution to give the uncertainty, if solution is viable
-            drho = soln2.params.get('drho')
-            grho_rh = soln2.params.get('grho_rh')
-            phi = soln2.params.get('phi')
-            dlam_rh = self.d_lamcalc(self.rh, drho, grho_rh, phi)
-            jac = soln2.params.get('jac') #TODO ???
-            jac_inv = np.linalg.inv(jac)
-            for i, k in enumerate(err_names):
-                err[k] = ((jac_inv[i, 0]*delfstar_err[0])**2 + 
-                        (jac_inv[i, 1]*delfstar_err[1])**2 +
-                        (jac_inv[i, 2]*delfstar_err[2])**2)**0.5
-        else:
+            print(fit_report(soln1)) 
+            print('success', soln1.success)
+            print('message', soln1.message)
+            print('lmdif_message', soln1.lmdif_message)
+
+            dlam_rh = soln1.params.get('dlam_rh').value
+            phi =soln1.params.get('phi').value
+            drho = self.drho(n1, delfstar, dlam_rh, phi)
+            grho_rh = self.grho_from_dlam(self.rh, drho, dlam_rh, phi)
+
+            print(dlam_rh)
+            print(phi)
+            print(drho)
+            print(grho_rh)
+
+            # we solve it again to get the Jacobian with respect to our actual
+            if drho_range[0]<=drho<=drho_range[1] and grho_rh_range[0]<=grho_rh<=grho_rh_range[1] and phi_range[0]<=phi<=phi_range[1]:
+                params2 = Parameters()
+
+                params2.add('drho', value=dlam_rh, min=drho_range[0], max=drho_range[1])
+                params2.add('grho_rh', value=grho_rh, min=grho_rh_range[0], max=grho_rh_range[1])
+                params2.add('phi', value=phi, min=phi_range[0], max=phi_range[1])
+
+                def residual2(params, delfstar, overlayer, n1, n2, n3):
+                    drho = params['drho'].value
+                    grho_rh = params['grho_rh'].value
+                    phi = params['phi'].value
+                    return ([np.real(delfstar[n1]) -
+                            np.real(self.delfstarcalc(n1, drho, grho_rh, phi, overlayer)),
+                            np.real(delfstar[n2]) -
+                            np.real(self.delfstarcalc(n2, drho, grho_rh, phi, overlayer)),
+                            np.imag(delfstar[n3]) -
+                            np.imag(self.delfstarcalc(n3, drho, grho_rh, phi, overlayer))])
+                
+                mini = Minimizer(
+                    residual2,
+                    params2,
+                    fcn_args=(delfstar, overlayer, n1, n2, n3),
+                    nan_policy='omit',
+                )
+                soln2 = mini.leastsq(
+                    # xtol=1e-7,
+                    # ftol=1e-7,
+                )
+
+                print(fit_report(soln2)) 
+                print('success', soln2.success)
+                print('message', soln2.message)
+                print('lmdif_message', soln1.lmdif_message)
+
+                # put the input uncertainties into a 3 element vector
+                delfstar_err = np.zeros(3)
+                delfstar_err[0] = np.real(self.fstar_err_calc(delfstar[n1]))
+                delfstar_err[1] = np.real(self.fstar_err_calc(delfstar[n2]))
+                delfstar_err[2] = np.imag(self.fstar_err_calc(delfstar[n3]))
+                
+                # initialize the uncertainties
+
+                # recalculate solution to give the uncertainty, if solution is viable
+                drho = soln2.params.get('drho').value
+                grho_rh = soln2.params.get('grho_rh').value
+                phi = soln2.params.get('phi').value
+                dlam_rh = self.d_lamcalc(self.rh, drho, grho_rh, phi)
+                jac = soln2.params.get('jac') #TODO ???
+                jac_inv = np.linalg.inv(jac)
+
+                for i, k in enumerate(err_names):
+                    deriv[k]={0:jac_inv[i, 0], 1:jac_inv[i, 1], 2:jac_inv[i, 2]}
+                    err[k] = ((jac_inv[i, 0]*delfstar_err[0])**2 + 
+                            (jac_inv[i, 1]*delfstar_err[1])**2 +
+                            (jac_inv[i, 2]*delfstar_err[2])**2)**0.5
+
+        if np.isnan(rd_exp) or np.isnan(rh_exp) or not deriv or not err:
+            # assign the default value first
             drho = np.nan
             grho_rh = np.nan
             phi = np.nan
             dlam_rh = np.nan
             for k in err_names:
                 err[k] = np.nan
-            
+
         # now back calculate delfstar, rh and rd from the solution
         delfstar_calc = {}
         rh = {}
         rd = {}
-        delf_calcs = mech_queue.delf_calcs.values[0]
-        delg_calcs = mech_queue.delg_calcs.values[0]
-        rds = mech_queue.rds.values[0]
+        delf_calcs = mech_queue.delf_calcs.iloc[0]
+        delg_calcs = mech_queue.delg_calcs.iloc[0]
+        rds = mech_queue.rds.iloc[0]
+        print('delf_calcs', delf_calcs)
+        print(type(delf_calcs))
         for n in nhplot:
             delfstar_calc[n] = self.delfstarcalc(n, drho, grho_rh, phi, overlayer)
             delf_calcs[nh2i(n)] = np.real(delfstar_calc[n])
@@ -377,23 +421,25 @@ class QCM:
     
         # save back to mech_queue
         # single value
-        mech_queue['drho'] = list(drho * 1000) # in kg/m2
-        mech_queue['drho_err'] = list(err['drho']) # in kg/m2
-        mech_queue['grho_rh'] = list(grho_rh) # in Pa kg/m3
-        mech_queue['grho_rh_err'] = list(err['grho_rh']) # in Pa kg/m3
-        mech_queue['phi'] = list(phi) # in rad
-        mech_queue['phi_err'] = list(err['phi']) # in rad
-        mech_queue['dlam_rh'] = list(dlam_rh) # in na
-        mech_queue['lamrho'] = list() # in kg/m2
-        mech_queue['delrho'] = list() # in kg/m2
-        mech_queue['delf_delfsns'] = list()
-        mech_queue['rh'] = list(rh)
+        mech_queue['drho'] = [drho] # in kg/m2
+        mech_queue['drho_err'] = [err['drho']] # in kg/m2
+        mech_queue['grho_rh'] = [grho_rh] # in Pa kg/m3
+        mech_queue['grho_rh_err'] = [err['grho_rh']] # in Pa kg/m3
+        mech_queue['phi'] = [phi] # in rad
+        mech_queue['phi_err'] = [err['phi']] # in rad
+        mech_queue['dlam_rh'] = [dlam_rh] # in na
+        # mech_queue['lamrho'] = [] # in kg/m2
+        # mech_queue['delrho'] = [] # in kg/m2
+        # mech_queue['delf_delfsns'] = []
+        mech_queue['rh'] = [rh]
 
         # multiple values in list
-        mech_queue['delf_calcs'] = list(delf_calcs)
-        mech_queue['delg_calcs'] = list(delg_calcs)
-        mech_queue['delg_delfsns'] = list()
-        mech_queue['rds'] = list(rds)
+        mech_queue['delf_calcs'] = [delf_calcs]
+        mech_queue['delg_calcs'] = [delg_calcs]
+        # mech_queue['delg_delfsns'] = []
+        mech_queue['rds'] = [rds]
+
+        # TODO save delfstar, deriv {n1:, n2:, n3:}
                 
         return mech_queue
 
@@ -405,7 +451,11 @@ class QCM:
         qcm_queue: qcm data (df) of a single queue
         return: True/False
         '''
-        if np.isnan(qcm_queue.delfstar[nh2i(nh[0])].real) or np.isnan(qcm_queue.delfstar[nh2i(nh[1])].real) or np.isnan(qcm_queue.delfstar[nh2i(nh[2])].imag):
+        print(nh)
+        print(nh2i(nh[0]))
+        print(qcm_queue.delfstars.values)
+        print(qcm_queue.delfstars.iloc[0])
+        if np.isnan(qcm_queue.delfstars.iloc[0][nh2i(nh[0])].real) or np.isnan(qcm_queue.delfstars.iloc[0][nh2i(nh[1])].real) or np.isnan(qcm_queue.delfstars.iloc[0][nh2i(nh[2])].imag):
             return False
         else:
             return True
@@ -421,21 +471,26 @@ class QCM:
         '''
         calculate with qcm_df and save to mech_df
         '''
-        nh = nhcalc.split() # list of harmonics (str) in nhcalc
+        nh = [int(s) for s in nhcalc] # list of harmonics (int) in nhcalc
         for queue_id in queue_ids: # iterate all ids
+            print('queue_id', queue_id)
+            # print('qcm_df', qcm_df)
+            print(type(qcm_df))
             # queue index
             idx = qcm_df[qcm_df.queue_id == queue_id].index.astype(int)[0]
             # qcm data of queue_id
-            qcm_queue = qcm_df.loc[idx, :]
+            qcm_queue = qcm_df.loc[[idx], :] # as a dataframe
             # mechanic data of queue_id
-            mech_queue = mech_df.loc[idx, :]
+            mech_queue = mech_df.loc[[idx], :]  # as a dataframe
 
             # obtain the solution for the properties
             if self.all_nhcaclc_harm_not_na(nh, qcm_queue):
                 # solve a single queue
                 mech_queue = self.solve_general(nh, qcm_queue, mech_queue)
                 # save back to mech_df
-                mech_df[idx, :] = mech_queue
+                print(mech_df.loc[[idx], :])
+                print(mech_queue)
+                mech_df.update(mech_queue)
             else:
                 # since the df already initialized with nan values, nothing todo
                 pass

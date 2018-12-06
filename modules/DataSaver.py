@@ -120,11 +120,13 @@ class DataSaver:
         } # experiment reference setup in dict
 
 
-    def update_mech_df_shape(self, chn_name, nhcalc):
+    def update_mech_df_shape(self, chn_name, nhcalc, rh):
         '''
-        initiate an empty df for storing the mechanic data in self.mech with nhcalc as a key
+        initiate an empty df for storing the mechanic data in self.mech with nhcalc_rh as a key
         if there is a key with the same name, check and add missed rows (queue_id)
         nhcalc: str '133'
+        rh: in, reference harmonit
+        the df will be saved/updated as nhcalc_str(rh)
         return the updated df
         '''
         # data_keys = ['queue_id', 't', 'temp', 'marks', 'delfs', 'delgs',]
@@ -148,8 +150,11 @@ class DataSaver:
             'delg_delfsns',
             'rds', # n
         ]
-        # nhcalc_str = ''.join(nhcalc)
-        if nhcalc in getattr(self, chn_name + '_mech').keys():
+
+        key = self.get_mech_key(nhcalc, rh)
+        print(key)
+
+        if key in getattr(self, chn_name + '_mech').keys():
             df_mech = getattr(self, chn_name + '_mech')
             mech_queue_id = df_mech['queue_id']
             data_queue_id = getattr(self, chn_name)['queue_id']
@@ -164,14 +169,14 @@ class DataSaver:
                 df_mech.loc[mech_keys_multiple] = df_mech.loc[mech_keys_multiple].fillna(self.nan_harm_list())
 
                 # save back to class
-                getattr(self, chn_name + '_mech')[nhcalc] = df_mech
+                getattr(self, chn_name + '_mech')[key] = df_mech
 
         else: # not exist, make a new dataframe
             df_mech = pd.DataFrame(columns=data_keys+mech_keys_single+mech_keys_multiple)
 
             # set values
             nrows = len(getattr(self, chn_name)['queue_id'])
-            nan_list = [self.nan_harm_list]* nrows 
+            nan_list = [self.nan_harm_list()] * nrows 
             df_mech['queue_id'] = getattr(self, chn_name)['queue_id']
             # df_mech['t'] = getattr(self, chn_name)['t']
             # df_mech['temp'] = getattr(self, chn_name)['temp']
@@ -181,9 +186,9 @@ class DataSaver:
                 df_mech[key] = nan_list
 
             # set it to class
-            getattr(self, chn_name + '_mech')[nhcalc_str] = df_mech
+            getattr(self, chn_name + '_mech')[key] = df_mech
 
-        return getattr(self, chn_name + '_mech')[nhcalc]
+        return getattr(self, chn_name + '_mech')[key].copy()
 
 
     def init_file(self, path, settings, t0):
@@ -241,16 +246,33 @@ class DataSaver:
             print(self.exp_ref)
             # get queue_list
             # self.queue_list = list(fh['raw/samp'].keys())
-            self.queue_list = [int(s) for s in fh['raw/samp'].keys()]
+            # self.queue_list = [int(s) for s in fh['raw/samp'].keys()]
 
             print(fh['data/samp'][()])
-            for key in self._chn_keys:
-                setattr(self, key, pd.read_json(fh['data/' + key][()]).sort_values(by=['queue_id'])) # df for data form samp/ref chn
-                setattr(self, key + '_ref', pd.read_json(fh['data/' + key + '_ref'][()]).sort_values(by=['queue_id'])) # df for data form samp_ref/ref_ref chn
+            for chn_name in self._chn_keys:
+                setattr(self, chn_name, pd.read_json(fh['data/' + chn_name][()]).sort_values(by=['queue_id'])) # df for data form samp/ref chn
+                setattr(self, chn_name + '_ref', pd.read_json(fh['data/' + chn_name + '_ref'][()]).sort_values(by=['queue_id'])) # df for data form samp_ref/ref_ref chn
+                
+            # get queue_list for each channel
+            # method 1: from raw. problem of this method is repeat queue_id may be created after deleting data points. 
+            # queue_samp = []
+            # queue_ref = []
+            # if 'samp' in fh['raw'].keys():
+            #     queue_samp = [int(s) for s in fh['raw/samp'].keys()]
+            # if 'ref' in fh['raw'].keys():
+            #     queue_ref = [int(s) for s in fh['raw/ref'].keys()]
+            # method 2: from data
+            queue_samp = self.samp.queue_id.values
+            queue_ref = self.ref.queue_id.values
+            self.queue_list = list(set(queue_samp) | set(queue_ref))    
+                
+            self.replace_none_with_nan_after_loading() 
 
             self.raw  = {} # raw data from last queue
 
             self.saveflg = True
+
+            # print(self.samp)
 
 
     def load_settings(self, path):
@@ -495,6 +517,21 @@ class DataSaver:
         self.saveflg = False
 
 
+    def replace_none_with_nan_after_loading(self):
+        '''
+        replace the None with nan in marks, fs, gs
+        '''
+        for chn_name in self._chn_keys:
+            df = getattr(self, chn_name)
+            col_endswith_s = [col for col in df.columns if col.endswith('s')]
+            print(col_endswith_s)
+            
+            for col in col_endswith_s:
+                df[col] = df[col].apply(lambda row: [np.nan if x is None else x for x in row])
+
+
+    
+
     ####################################################
     ##              data convert functions            ##
     ##  They can also be used external for accessing, ## 
@@ -732,6 +769,13 @@ class DataSaver:
                 t0 = datetime.datetime.strptime(t0, self.settings_init['time_str_format'])
         
         return t0
+
+
+    def get_cols(self, chn_name, cols=[]):
+        '''
+        return a copy of df with all rows and giving columns list
+        '''
+        return getattr(self, chn_name).loc[:, cols].copy()
 
 
     def get_list_column_to_columns_marked_rows(self, chn_name, col, mark=False, dropnanrow=False, deltaval=False, norm=False):
@@ -980,10 +1024,12 @@ class DataSaver:
             return self.exp_ref[chn_name]
         else:
             idx = [(int(harm)-1)/2 for harm in harms]
-            exp_ref = self.exp_ref.copy() # make a copy to make sure not change the original one
-            exp_ref['f0'] =  [val for i, val in enumerate(exp_ref['f0']) if i in idx]
-            exp_ref['g0'] =  [val for i, val in enumerate(exp_ref['g0']) if i in idx]
-            return exp_ref
+            ref_dict = self.exp_ref[chn_name].copy() # make a copy to make sure not change the original one
+            ref_dict['f0'] =  [val for i, val in enumerate(ref_dict['f0']) if i in idx]
+            ref_dict['g0'] =  [val for i, val in enumerate(ref_dict['g0']) if i in idx]
+            # print(ref_dict)
+            # print(self.exp_ref[chn_name])
+            return ref_dict
 
 
     def get_marks(self, chn_name):
@@ -1174,15 +1220,15 @@ class DataSaver:
         convert delfs and delgs in df to delfstar for calculation and 
         return a df with ['queue_id', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs']
         '''
-        df = self.get_queue_id(chn_name)
+        df = self.get_queue_id(chn_name).to_frame()
         df['marks'] = self.get_marks(chn_name)
 
         # get freqs and gamms in form of [n1, n3, n5, ...]
-        fs = getattr(self, chn_name).loc['fs'].copy()
-        gs = getattr(self, chn_name).loc['gs'].copy()
+        fs = self.get_cols(chn_name, cols=['fs'])
+        gs = self.get_cols(chn_name, cols=['gs'])
         # get delf and delg in form of [n1, n3, n5, ...]
-        delfs = convert_col_to_delta_val(chn_name, 'fs', norm=False)
-        delgs = convert_col_to_delta_val(chn_name, 'gs', norm=False)
+        delfs = self.convert_col_to_delta_val(chn_name, 'fs', norm=False)
+        delgs = self.convert_col_to_delta_val(chn_name, 'gs', norm=False)
 
         # convert to array
         f_arr = np.array(fs.values.tolist())
@@ -1195,7 +1241,7 @@ class DataSaver:
         fstar_arr = f_arr + 1j * g_arr
         delfstar_arr = delf_arr + 1j * delg_arr
 
-        df['fstars'] = list(delfstar_arr)
+        df['fstars'] = list(fstar_arr)
         df['delfstars'] = list(delfstar_arr)
         df['fs'] = fs
         df['gs'] = gs
@@ -1205,8 +1251,15 @@ class DataSaver:
         return df
 
 
-    def save_mech_df(self, chn_name, nhcalc, mech_df):
+    def save_mech_df(self, chn_name, nhcalc, rh, mech_df):
         '''
         save mech_df to self.'chn_nam'_mech[nhcalc]
         '''
         getattr(self, chn_name + '_mech')[nhcalc] = mech_df 
+
+
+    def get_mech_key(self, nhcalc, rh):
+        '''
+        return a str which represents the key in self.<chn_name>_mech[key]
+        '''
+        return nhcalc + '_' + str(rh)

@@ -241,8 +241,8 @@ settings_init = {
     'ref_channel_opts': OrderedDict([
     # key: str(number); val: for display in combobox
         # ('none', 'none'),
-        ('samp', 'samp'),
-        ('ref', 'ref'),
+        ('samp', 'S chn.'),
+        ('ref', 'R chn.'),
         ('ext', 'ext'), # always read from the reference channel
     ]),
 
@@ -263,7 +263,7 @@ settings_init = {
         ('s', r's'),
         ('m', r'min'),
         ('h', r'h'),
-        # ('d', r'day'),
+        ('d', r'day'),
     ]),
 
     'temp_unit_opts': OrderedDict([

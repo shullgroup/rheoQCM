@@ -123,6 +123,7 @@ class QCMApp(QMainWindow):
         self.settings_harm = '1' # active harmonic in Settings Tab
         self.settings_chn = {'name': 'samp', 'chn': '1'} # active channel 'samp' or 'ref' in Settings Tab
         self.active = {} # active factors e.g.: harm, chnn_name, plt_str, ind, 
+        self.mech_chn = 'samp'
         self.chn_set_store = {} # used for storing the channal setup self.settings.freq_span and self.settings.harmdata during manual refit
 
 
@@ -220,9 +221,6 @@ class QCMApp(QMainWindow):
             )
 
             getattr(self.ui, 'checkBox_harm' + str(i)).toggled['bool'].connect(self.update_widget)
-
-            # comboBox_settings_mechanics_refG
-            self.ui.comboBox_settings_mechanics_refG.addItem('G'+str(i), userData=str(i))
 
             # checkBox_nhplot<n>
             getattr(self.ui, 'checkBox_nhplot' + str(i)).toggled.connect(self.update_widget)
@@ -448,7 +446,7 @@ class QCMApp(QMainWindow):
             'comboBox_samp_channel', 
             settings_init['vna_channel_opts'], 
             100, 
-            'Sample Channel', 
+            'S Channel', 
             self.ui.treeWidget_settings_settings_hardware
         )
 
@@ -457,7 +455,7 @@ class QCMApp(QMainWindow):
             'comboBox_ref_channel', 
             settings_init['vna_channel_opts'], 
             100, 
-            'Ref. Channel', 
+            'R Channel', 
             self.ui.treeWidget_settings_settings_hardware
         )
         # connect ref_channel
@@ -757,7 +755,7 @@ class QCMApp(QMainWindow):
         self.move_to_col2(
             self.ui.frame_settings_data_sampref,
             self.ui.treeWidget_settings_data_refs,
-            'samp chn.',
+            'S chn.',
             # 100,
         )
         self.ui.comboBox_settings_data_samprefsource.currentIndexChanged.connect(self.update_widget)
@@ -771,7 +769,7 @@ class QCMApp(QMainWindow):
         self.move_to_col2(
             self.ui.frame_settings_data_refref,
             self.ui.treeWidget_settings_data_refs,
-            'ref chn.',
+            'R chn.',
             # 100,
         )
         self.ui.comboBox_settings_data_refrefsource.currentIndexChanged.connect(self.update_widget)
@@ -798,6 +796,10 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_mechanics_selectmodel.currentIndexChanged.connect(self.update_widget)
 
         self.ui.comboBox_settings_mechanics_refG.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_settings_mechanics_refG.currentIndexChanged.connect(self.update_qcm_rh)
+        for harm in range(1, settings_init['max_harmonic']+2, 2): # this should be after connecting with signals
+            # comboBox_settings_mechanics_refG
+            self.ui.comboBox_settings_mechanics_refG.addItem('G'+str(harm), userData=str(harm))
 
         self.ui.checkBox_settings_mechanics_witherror.toggled.connect(self.update_widget)
 
@@ -1691,7 +1693,7 @@ class QCMApp(QMainWindow):
         '''
         clear all data
         ''' 
-        if self.data_saver.path == '': # no data 
+        if not self.data_saver.path: # no data 
             return
 
         process = self.process_messagebox(message='All data will be deleted!')
@@ -2294,7 +2296,7 @@ class QCMApp(QMainWindow):
                 self.get_active_queueid_from_l_harm_ind(), 
                 [self.active['harm']], 
                 fs=[fit_result['v_fit']['cen_rec']['value']], # fs
-                gs=[fit_result['v_fit']['wid_rec']['value'] * 2], # gs = 2 * half_width 
+                gs=[fit_result['v_fit']['wid_rec']['value']], # gs = half_width 
             )
             # update mpl_plt12
             self.update_mpl_plt12()
@@ -2991,48 +2993,64 @@ class QCMApp(QMainWindow):
 
 
     def mech_solve_all(self):
-        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mechanics_chn, dropnanrow=False)
-        self.mech_solve_chn(self.mechanics_chn, queue_ids)
+        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanrow=False)
+        self.mech_solve_chn(self.mech_chn, queue_ids)
 
 
     def mech_solve_marked(self):
-        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mechanics_chn, dropnanrow=False)       
-        self.mech_solve_chn(self.mechanics_chn, queue_ids)
+        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanrow=True)       
+        self.mech_solve_chn(self.mech_chn, queue_ids)
 
 
     def update_mechanics_chn(self):
         '''
-        update self.mechanics_chn
+        update self.mech_chn
         '''
         idx = self.ui.tabWidget_mechanics_chn.currentIndex()
         print(idx)
         if idx == 0: # samp
-            self.mechanics_chn = 'samp'
+            self.mech_chn = 'samp'
         elif idx == 1: # ref
-            self.mechanics_chn = 'ref'
+            self.mech_chn = 'ref'
 
+    def update_qcm_rh(self):
+        '''
+        update reference harmonic in qcm
+        '''
+        self.qcm.rh = int(self.settings['comboBox_settings_mechanics_refG'])
 
     def mech_solve_chn(self, chn_name, queue_ids):
         '''
         send the data to qcm module to solve in secquence by queue_ids and
         save the returned mechanic data to data_saver
         '''
+
+        if not self.data_saver.path:
+            print('No data available!')
+            return
+        # get f1
+        f1 = self.data_saver.get_fg_ref(chn_name, harms=[1])['f0'][0]
+        # set f1 to qcm module
+        self.qcm.f1 = f1
+
+        self.qcm.rh = int(self.settings['comboBox_settings_mechanics_refG'])
+        rh = self.qcm.rh # reference harmonic
+
+        print('f1', self.qcm.f1, 'rh', rh)
         # get nhcalc
         nhcalc_list = ['133', '355']
-        # get G ref harmonic
-        rh = self.settings['comboBox_settings_mechanics_refG']
         # get qcm data (columns=['queue_id', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs'])
         # 'delf', 'delgs' may not necessary
         qcm_df = self.data_saver.df_qcm(chn_name)
 
         # do calc with each nhcalc
         for nhcalc in nhcalc_list:
-            mech_df = self.data_saver.update_mech_df_shape(chn_name, nhcalc)
+            mech_df = self.data_saver.update_mech_df_shape(chn_name, nhcalc, rh)
 
             mech_df = self.qcm.analyze(nhcalc, queue_ids, qcm_df, mech_df)
 
             # save back to data_saver
-            self.data_saver.save_mech_df(chn_name, nhcalc, mech_df)
+            self.data_saver.save_mech_df(chn_name, nhcalc, rh, mech_df)
 
             print('Calculation of {} finished'.format(nhcalc))
 
@@ -3516,9 +3534,13 @@ class QCMApp(QMainWindow):
         if disp_mode == 'startstop':
             self.ui.label_settings_control_label1.setText('Start')
             self.ui.label_settings_control_label2.setText('End')
+            self.ui.label_settings_control_label1_r.setText('Start')
+            self.ui.label_settings_control_label2_r.setText('End')
         elif disp_mode == 'centerspan':
             self.ui.label_settings_control_label1.setText('Center')
             self.ui.label_settings_control_label2.setText('Span')
+            self.ui.label_settings_control_label1_r.setText('Center')
+            self.ui.label_settings_control_label2_r.setText('Span')
         
         self.update_frequencies()
             
@@ -4175,7 +4197,7 @@ class QCMApp(QMainWindow):
                     
                     # save data to fs and gs
                     fs[chn_name].append(fit_result['v_fit']['cen_rec']['value']) # fs 
-                    gs[chn_name].append(fit_result['v_fit']['wid_rec']['value'] * 2) # gs = 2 * half_width 
+                    gs[chn_name].append(fit_result['v_fit']['wid_rec']['value'] ) # gs = half_width 
                     print(cen_rec_freq)
                     print(cen_rec_G)
 
@@ -4305,7 +4327,7 @@ class QCMApp(QMainWindow):
 
                 # save data to fs and gs
                 fs.append(fit_result['v_fit']['cen_rec']['value']) # fs 
-                gs.append(fit_result['v_fit']['wid_rec']['value'] * 2) # gs = 2 * half_width 
+                gs.append(fit_result['v_fit']['wid_rec']['value'] ) # gs = half_width 
 
                 # update lsp
                 factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=chn_name, harm=harm)

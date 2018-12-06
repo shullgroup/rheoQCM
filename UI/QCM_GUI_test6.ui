@@ -195,7 +195,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>2</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -606,7 +606,7 @@ background-color: red;
                    <item>
                     <widget class="QLabel" name="label_settings_control_samp">
                      <property name="text">
-                      <string>Samp. Scan (MHz)</string>
+                      <string>S Channel (MHz)</string>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>
@@ -616,7 +616,7 @@ background-color: red;
                    <item>
                     <widget class="QLabel" name="label_settings_control_ref">
                      <property name="text">
-                      <string>Ref. Scan (MHz)</string>
+                      <string>R Channel (MHz)</string>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>
@@ -1299,7 +1299,7 @@ background-color: red;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <property name="documentMode">
                     <bool>false</bool>
@@ -1309,12 +1309,12 @@ background-color: red;
                    </property>
                    <widget class="QWidget" name="tab_settings_settings_harmchnsamp">
                     <attribute name="title">
-                     <string>Sample Channel</string>
+                     <string>S Channel</string>
                     </attribute>
                    </widget>
                    <widget class="QWidget" name="tab_settings_settings_harmchnref">
                     <attribute name="title">
-                     <string>Reference Channel</string>
+                     <string>R Channel</string>
                     </attribute>
                    </widget>
                    <widget class="QWidget" name="tab_settings_settings_harmchnrefit">
@@ -1730,12 +1730,12 @@ background-color: red;
                      </property>
                      <item>
                       <property name="text">
-                       <string>Sample Channel</string>
+                       <string>S Channel</string>
                       </property>
                      </item>
                      <item>
                       <property name="text">
-                       <string>Ref. Channel</string>
+                       <string>R Channel</string>
                       </property>
                      </item>
                     </item>
@@ -2401,7 +2401,7 @@ border: none;
                     </property>
                     <item>
                      <property name="text">
-                      <string>samp chn.</string>
+                      <string>S chn.</string>
                      </property>
                      <property name="text">
                       <string/>
@@ -2412,7 +2412,7 @@ border: none;
                     </item>
                     <item>
                      <property name="text">
-                      <string>ref chn.</string>
+                      <string>R chn.</string>
                      </property>
                      <property name="text">
                       <string/>
