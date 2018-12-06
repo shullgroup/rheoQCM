@@ -8,8 +8,8 @@ The analysis portions of the software should work on Windows/Mac/Linux platforms
 
 ### Functions
 
-* Collecting data interfacing with network analyzers.  
-* Fast recording without openning the dependent external software. Less resources are required.  
+* Collecting data interfaces with network analyzers.  
+* Communicate with analysers directy. Fast recording without openning the dependent external software. Less resources are required.  
 * Combine data collection and analysis in one software.  
 * Functioned with temperature recording. (with NI devices)
 
