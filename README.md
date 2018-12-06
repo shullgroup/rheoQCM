@@ -42,14 +42,14 @@ To see an example of how the program works, run example_runfile.py, which will a
 
 The QCMnotes.pdf file has some background information on the rheometric mode of the QCM that we utilize, with some useful references include.
 
-Module DataSaver and QCM in .\Modules folder are availabe for dealing with the data and doing ananlysis manually. Those modules include functions run out of the software. You can simply import those modules and you can do almost the same thing in the software by running your own codes.
+Modules `DataSaver` and `QCM` in Modules/ folder are availabe for dealing with the data and doing ananlysis manually. Those modules include functions run out of the software. You can simply import those modules and you can do almost the same thing in the software by running your own codes.
 
-The functions for Matlab version data are locoalized in .\QCMFuncs folder.  
+The functions for Matlab version data are locoalized in QCMFuncs/ folder.  
 
 ## To Do
 
 * Documentation.
-* Property data plotting and exporting.
+* Property results plotting and exporting.
 * Data analysis with QCM-D data.
 * Compile to runnable single file for those who doesn't want to run commond lines.
 * Interface with other hardware. (If you have a hardware and interested in interfacing with our software, please feel free to contact us.)
@@ -60,11 +60,7 @@ The functions for Matlab version data are locoalized in .\QCMFuncs folder.
 * **Megan Yang**  - *Developer of the current (python) version of this project*
 * **Kenneth R. Shull** - *Project PI and author of some of the specific functions used in the project*
 
-## License
-
-We still need to figure out the right license.  https://choosealicense.com/ might help.
-
-## Others
+## Other Versions
 
 If you are a Matlab user, our long-term developed Matlab version software can be found here: https://github.com/Shull-Research-Group/QCM_Data_Acquisition_Program It is developed and being maintained by Josh Yeh. This Python project is developed based on the Matlab version.  
 
