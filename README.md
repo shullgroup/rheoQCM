@@ -16,19 +16,23 @@ The analysis portions of the software should work on Windows/Mac/Linux platforms
 ### Prerequisites
 
 * Python 3.5+ is required. For data analysis only, it can run with both 32-bit and 64-bit Python. If you want the data collection with myVNA, 32-bit Python and Windows are required.  
-* Hardware and external software for data collection: The AccessMyVNA and myVNA programs were obtained from http://g8kbb.co.uk/html/downloads.html.
+
+* Hardware and external software for data collection: The AccessMyVNA and myVNA programs were obtained from <http://g8kbb.co.uk/html/downloads.html>.
 * Python labroaries needed to run the software is listed in the `requirements.txt` file.  
+  
 * Anaconda platform is suggested Download and install the Anaconda distribution of python from [anaconda.com](https://anaconda.com/download).  
-* QCM data files are currently stored in a MATLAB-compatible .mat files.  In order to read and write these and get the analysis scripts to work, you need to install the hdf5storage package, which you can add with the following command (assuming you have already added the conda python distribution):
-```
-conda install -c conda-forge hdf5storage 
+
+* QCM data files are currently stored in a MATLAB-compatible .mat files.  In order to read and write these and get the analysis scripts to work, you need to install the hdf5storage package, which you can add with the following command (assuming you have already added the conda python distribution):  
+
+```bash
+conda install -c conda-forge hdf5storage  
 ```
 
 ### Installation
 
 To install everything you need from this repository, run the following command from a command window in the directory where you want everthing to be installed:
 
-```
+```bash
 git clone https://github.com/zhczq/QCM_py
 ```
 
@@ -36,7 +40,7 @@ If you just need the updated analysis software (which currently the only softwar
 
 ## Using the Analysis Program
 
-To see an example of how the program works, run example_runfile.py, which will act on some of the data in the example_data directory and generate some figures representing the analyzed data in a figures folder. 
+To see an example of how the program works, run example_runfile.py, which will act on some of the data in the example_data directory and generate some figures representing the analyzed data in a figures folder.  
 
 ## Documentation
 
@@ -62,7 +66,7 @@ The functions for Matlab version data are locoalized in QCMFuncs/ folder.
 
 ## Other Versions
 
-If you are a Matlab user, our long-term developed Matlab version software can be found here: https://github.com/Shull-Research-Group/QCM_Data_Acquisition_Program It is developed and being maintained by Josh Yeh. This Python project is developed based on the Matlab version.  
+If you are a Matlab user, our long-term developed Matlab version software can be found here: <https://github.com/Shull-Research-Group/QCM_Data_Acquisition_Program>. It is developed and being maintained by Josh Yeh. This Python project is developed based on the Matlab version.  
 
 ## Acknowledgments
 
