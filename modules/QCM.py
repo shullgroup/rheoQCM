@@ -305,23 +305,23 @@ class QCM:
         mech_queue['phi'] = [phi] # in rad
         mech_queue['phi_err'] = [err['phi']] # in rad
         mech_queue['dlam_rh'] = [dlam_rh] # in na
-        # mech_queue['lamrho'] = [] # in kg/m2
-        # mech_queue['delrho'] = [] # in kg/m2
-        # mech_queue['delf_delfsns'] = []
+        mech_queue['lamrho'] = [np.nan] # in kg/m2
+        mech_queue['delrho'] = [np.nan] # in kg/m2
+        mech_queue['delf_delfsns'] = [np.nan]
         mech_queue['rh'] = [rh]
 
         # multiple values in list
         mech_queue['delf_calcs'] = [delf_calcs]
         mech_queue['delg_calcs'] = [delg_calcs]
-        # mech_queue['delg_delfsns'] = []
+        mech_queue['delg_delfsns'] =[[np.nan] * len(delf_calcs)]
         mech_queue['rds'] = [rds]
 
         print(mech_queue['delf_calcs'])
         print(mech_queue['delg_calcs'])
         # TODO save delfstar, deriv {n1:, n2:, n3:}
         print(mech_queue)   
-        print(mech_queue)   
         return mech_queue
+        ########## TODO 
 
 
     def solve_general(self, nh, delfstar, overlayer, prop_guess={}):
@@ -577,8 +577,12 @@ class QCM:
                 # save back to mech_df
                 print(mech_df.loc[[idx], :].to_dict())
                 print(mech_queue.to_dict())
+                # set mech_queue index the same as where it is from for update
+                print(mech_df.delg_calcs)
+                mech_queue.index = [idx]
                 mech_df.update(mech_queue)
-                print(mech_df)
+                # print(mech_df)
+                print(mech_df.delg_calcs)
             else:
                 # since the df already initialized with nan values, nothing todo
                 pass
