@@ -195,7 +195,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>2</number>
+             <number>3</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -2817,16 +2817,16 @@ border: none;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <widget class="QWidget" name="tab_settings_mechanis_sampchn">
                     <attribute name="title">
-                     <string>Sample Channel</string>
+                     <string>S Channel</string>
                     </attribute>
                    </widget>
                    <widget class="QWidget" name="tab_settings_mechanis_refchn">
                     <attribute name="title">
-                     <string>Reference Channel</string>
+                     <string>R Channel</string>
                     </attribute>
                    </widget>
                   </widget>

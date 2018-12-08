@@ -799,5 +799,16 @@ settings_default = {
     'lineEdit_settings_data_samprefidx': [0],
     'comboBox_settings_data_refrefsource': 'ref',
     'lineEdit_settings_data_refrefidx': [0],
+
+    ### settings_mech
+    'checkBox_nhplot1': True,
+    'checkBox_nhplot3': True,
+    'checkBox_nhplot5': True,
+    'checkBox_nhplot7': False,
+    'checkBox_nhplot9': False,
+    'checkBox_settings_mechanics_witherror': True, # errorbar
+    'comboBox_settings_mechanics_refG': '3', # reference harmonic for property
+    
+
 }
 

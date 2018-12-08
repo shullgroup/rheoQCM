@@ -168,10 +168,10 @@ class QCMApp(QMainWindow):
         )
 
         # hide widgets not for analysis mode
-        # if self.vna is None:
-        #     self.hide_widgets(
-        #         'analysis_mode_disable_list'
-        #     )
+        if self.vna is None:
+            self.hide_widgets(
+                'analysis_mode_disable_list'
+            )
 
         self.load_settings()
 
@@ -1555,7 +1555,7 @@ class QCMApp(QMainWindow):
         self.ui.pushButton_manual_refit.setChecked(False)
 
         if self.data_saver.path: # there is file 
-            self.data_saver.save_data_settings()
+            self.data_saver.save_data_settings(settings=self.settings)
             print('Data has been saved to file!')
         elif not self.data_saver.path & self.tempPath: # name given but file not been created (no data)
             print('No data collected!')
@@ -1751,8 +1751,8 @@ class QCMApp(QMainWindow):
             for name in settings_init[name_list]:
                 print(name)
                 if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list': 
-                    getattr(self.ui, name).show()
-                # getattr(self.ui, name).setVisible(True)
+                    # getattr(self.ui, name).show()
+                    getattr(self.ui, name).setVisible(True)
 
     def hide_widgets(self, *args):
         '''
@@ -1765,8 +1765,8 @@ class QCMApp(QMainWindow):
             for name in settings_init[name_list]:
                 print(name)
                 if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list': 
-                    getattr(self.ui, name).hide()
-                # getattr(self.ui, name).setVisible(False)
+                    # getattr(self.ui, name).hide()
+                    getattr(self.ui, name).setVisible(False)
 
 
     def enable_widgets(self, *args):
@@ -2518,13 +2518,13 @@ class QCMApp(QMainWindow):
             mark = False
             line_group = 'l'
         elif self.settings['radioButton_data_showmarked']: # show marked data only
-            mark = True
+            # mark = True
             if self.data_saver.with_marks(plt_chnname):
                 line_group = 'lm'
-                # mark = True
+                mark = True
             else:
                 line_group = 'l'
-                # mark = False
+                mark = False
 
         # get y data
         ydata = self.get_data_by_typestr(plt_opt[0], plt_chnname, mark=mark, unit_t=timeuint, unit_temp=tempunit)
@@ -2541,6 +2541,7 @@ class QCMApp(QMainWindow):
 
         # prepare data for plotting
         data_list = []
+        mark_df = self.data_saver.get_list_column_to_columns_marked_rows(plt_chnname, 'marks', mark=False, dropnanrow=False, deltaval=False, norm=False)
         for harm in plt_harms: # selected
             harm = str(harm)
             # set xdata for harm
@@ -2560,9 +2561,13 @@ class QCMApp(QMainWindow):
             data_list.append((line_group+harm, harm_xdata, harm_ydata))
 
             ## display marked data (solid) along with all data (open) (can be removed if don't like)
-            if not mark and self.data_saver.with_marks(plt_chnname):
-                 mark_list = self.data_saver.rows_with_marks(plt_chnname)
-                 data_list.append(('lm'+harm, harm_xdata[mark_list], harm_ydata[mark_list]))
+            if self.settings['radioButton_data_showall']:
+                if self.data_saver.with_marks(plt_chnname):
+                    mark_list = mark_df['mark'+harm] == 1
+                    print('mark_list', mark_list)
+                else: 
+                    mark_list = []
+                data_list.append(('lm'+harm, harm_xdata[mark_list], harm_ydata[mark_list]))
             
         
         # update mpl_<plt_str>
@@ -2820,13 +2825,19 @@ class QCMApp(QMainWindow):
         print(mpl)
         print(plt_str)
 
+        if not self.data_saver.path:
+            return
+
         if mpl.sel_mode == 'selector':
             self.mpl_data_open_selector_menu(position, mpl, plt_str)
         elif mpl.sel_mode == 'picker':
             self.mpl_data_open_picker_menu(position, mpl, plt_str)
+        # else:
+        #     self.mpl_data_open_selector_menu(position, mpl, plt_str)
 
         # # update display
         # mpl.canvas.draw()
+        print('this should run after contextmenu')
         self.update_mpl_plt12()
  
     def mpl_data_open_selector_menu(self, position, mpl, plt_str):
@@ -2842,14 +2853,15 @@ class QCMApp(QMainWindow):
         # dict for storing the selected indices
         sel_idx_dict = {}
         selflg = False # flag for if sel_data_dict is empty
-        for harm in range(1, settings_init['max_harmonic']+2, 2):
+        plt_harms = self.get_plt_harms(plt_str) # get checked harmonics
+        for harm in plt_harms:
             harm = str(harm)
             print('harm', harm)
             # print(mpl.get_data(ls=['ls'+harm]))
             harm_sel_data, = mpl.get_data(ls=['ls'+harm]) # (xdata, ydata)
             print(harm_sel_data)
             print(harm_sel_data[0])
-            if isinstance(harm_sel_data[0], pd.Series): # data is not empty
+            if isinstance(harm_sel_data[0], pd.Series) and harm_sel_data[0].shape[0] > 0: # data is not empty
                 harm_sel_idx = harm_sel_data[0].index # get indices from xdata
                 print(harm_sel_idx)
                 sel_idx_dict[harm] = harm_sel_idx
@@ -2857,77 +2869,85 @@ class QCMApp(QMainWindow):
         print(sel_idx_dict)
         # if no selected data return
         if not selflg:
+            # pass
             return
+
+        print('selflg', selflg)
 
         # get channel name
         chn_name = self.get_plt_chnname(plt_str)
         chn_queue_list = list(self.data_saver.get_queue_id(chn_name).tolist()) # list of available index in the target chn
 
-       
-
-
         # create contextMenu
         selmenu = QMenu('selmenu', self)
 
         menuMark = QMenu('Mark', self)
-        actionMark_all = QAction('Mark all data', self)
-        actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_all(chn_name, 1))
-        actionMark_selpts = QAction('Mark selected points', self)
-        actionMark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selpts', chn_queue_list), 1))
-        actionMark_selidx = QAction('Mark selected indices', self)
-        actionMark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selidx', chn_queue_list), 1))
-        actionMark_selharm = QAction('Mark selected harmonics', self)
-        actionMark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selharm', chn_queue_list), 1))
+        actionMark_all = QAction('Mark all showing data', self)
+        actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list), 1))
+        if selflg:
+            actionMark_selpts = QAction('Mark selected points', self)
+            actionMark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', chn_queue_list), 1))
+            actionMark_selidx = QAction('Mark selected indices', self)
+            actionMark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', chn_queue_list), 1))
+            actionMark_selharm = QAction('Mark selected harmonics', self)
+            actionMark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', chn_queue_list), 1))
 
         menuMark.addAction(actionMark_all)
-        menuMark.addAction(actionMark_selpts)
-        menuMark.addAction(actionMark_selidx)
-        menuMark.addAction(actionMark_selharm)
+        if selflg:
+            menuMark.addAction(actionMark_selpts)
+            menuMark.addAction(actionMark_selidx)
+            menuMark.addAction(actionMark_selharm)
 
         menuUnmark = QMenu('Unmark', self)
-        actionUnmark_all = QAction('Unmark all data', self)
-        actionUnmark_all.triggered.connect(lambda: self.data_saver.selector_mark_all(chn_name, 0))
-        actionUnmark_selpts = QAction('Unmark selected points', self)
-        actionUnmark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selpts', chn_queue_list), 0))
-        actionUnmark_selidx = QAction('Unmark selected indices', self)
-        actionUnmark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selidx', chn_queue_list), 0))
-        actionUnmark_selharm = QAction('Unmark selected harmonics', self)
-        actionUnmark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selharm', chn_queue_list), 0))
+        actionUnmark_all = QAction('Unmark all showing data', self)
+        actionUnmark_all.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list), 0))
+        if selflg:
+            actionUnmark_selpts = QAction('Unmark selected points', self)
+            actionUnmark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', chn_queue_list), 0))
+            actionUnmark_selidx = QAction('Unmark selected indices', self)
+            actionUnmark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', chn_queue_list), 0))
+            actionUnmark_selharm = QAction('Unmark selected harmonics', self)
+            actionUnmark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', chn_queue_list), 0))
 
         menuUnmark.addAction(actionUnmark_all)
-        menuUnmark.addAction(actionUnmark_selpts)
-        menuUnmark.addAction(actionUnmark_selidx)
-        menuUnmark.addAction(actionUnmark_selharm)
+        if selflg:
+            menuUnmark.addAction(actionUnmark_selpts)
+            menuUnmark.addAction(actionUnmark_selidx)
+            menuUnmark.addAction(actionUnmark_selharm)
 
         menuDel = QMenu('Delete', self)
-        actionDel_all = QAction('Delete all data', self)
-        actionDel_all.triggered.connect(self.on_triggered_actionClear_All)
-        actionDel_selpts = QAction('Delete selected points', self)
-        actionDel_selpts.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selpts', chn_queue_list)))
-        actionDel_selidx = QAction('Delete selected indices', self)
-        actionDel_selidx.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selidx', chn_queue_list)))
-        actionDel_selharm = QAction('Delete selected harmonics', self)
-        actionDel_selharm.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selharm', chn_queue_list)))
+        actionDel_all = QAction('Delete all showing data', self)
+        actionDel_all.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list)))
+        if selflg:
+            actionDel_selpts = QAction('Delete selected points', self)
+            actionDel_selpts.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', chn_queue_list)))
+            actionDel_selidx = QAction('Delete selected indices', self)
+            actionDel_selidx.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', chn_queue_list)))
+            actionDel_selharm = QAction('Delete selected harmonics', self)
+            actionDel_selharm.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', chn_queue_list)))
 
         menuDel.addAction(actionDel_all)
-        menuDel.addAction(actionDel_selpts)
-        menuDel.addAction(actionDel_selidx)
-        menuDel.addAction(actionDel_selharm)
+        if selflg:
+            menuDel.addAction(actionDel_selpts)
+            menuDel.addAction(actionDel_selidx)
+            menuDel.addAction(actionDel_selharm)
 
         menuRefit = QMenu('Refit', self)
-        actionRefit_all = QAction('Refit all data', self)
-        actionRefit_all.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'all', chn_queue_list)))
-        actionRefit_selpts = QAction('Refit selected points', self)
-        actionRefit_selpts.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selpts', chn_queue_list)))
-        actionRefit_selidx = QAction('Refit selected indices', self)
-        actionRefit_selidx.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selidx', chn_queue_list)))
-        actionRefit_selharm = QAction('Refit selected harmonics', self)
-        actionRefit_selharm.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(sel_idx_dict, 'selharm', chn_queue_list)))
+        actionRefit_all = QAction('Refit all showing data', self)
+        actionRefit_all.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list)))
+        if selflg:
+            actionRefit_selpts = QAction('Refit selected points', self)
+            actionRefit_selpts.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', chn_queue_list)))
+            actionRefit_selidx = QAction('Refit selected indices', self)
+            actionRefit_selidx.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', chn_queue_list)))
+            actionRefit_selharm = QAction('Refit selected harmonics', self)
+            actionRefit_selharm.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', chn_queue_list)))
 
         menuRefit.addAction(actionRefit_all)
-        menuRefit.addAction(actionRefit_selpts)
-        menuRefit.addAction(actionRefit_selidx)
-        menuRefit.addAction(actionRefit_selharm)
+        if selflg:
+            menuRefit.addAction(actionRefit_selpts)
+            menuRefit.addAction(actionRefit_selidx)
+            menuRefit.addAction(actionRefit_selharm)
 
         selmenu.addMenu(menuMark)
         selmenu.addMenu(menuUnmark)
@@ -2936,6 +2956,7 @@ class QCMApp(QMainWindow):
         
         #else, find out the indices and do mark/unmark/delete
         selmenu.exec_(mpl.canvas.mapToGlobal(position))
+
 
     def mpl_data_open_picker_menu(self, position, mpl, plt_str):
         '''
@@ -3013,11 +3034,13 @@ class QCMApp(QMainWindow):
         elif idx == 1: # ref
             self.mech_chn = 'ref'
 
+
     def update_qcm_rh(self):
         '''
         update reference harmonic in qcm
         '''
         self.qcm.rh = int(self.settings['comboBox_settings_mechanics_refG'])
+
 
     def mech_solve_chn(self, chn_name, queue_ids):
         '''
@@ -3038,7 +3061,7 @@ class QCMApp(QMainWindow):
 
         print('f1', self.qcm.f1, 'rh', rh)
         # get nhcalc
-        nhcalc_list = ['133', '355']
+        nhcalc_list = ['353']
         # get qcm data (columns=['queue_id', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs'])
         # 'delf', 'delgs' may not necessary
         qcm_df = self.data_saver.df_qcm(chn_name)
@@ -3052,7 +3075,7 @@ class QCMApp(QMainWindow):
             # save back to data_saver
             self.data_saver.save_mech_df(chn_name, nhcalc, rh, mech_df)
 
-            print('Calculation of {} finished'.format(nhcalc))
+            print('{} calculation finished'.format(nhcalc))
 
 
 
@@ -3146,27 +3169,17 @@ class QCMApp(QMainWindow):
             self.ui.pushButton_status_temp_sensor.setText('')
             self.ui.pushButton_status_temp_sensor.setToolTip('Temp. sensor is off.')
 
-    # def temp_by_unit(self, data):
-    #     '''
-    #     NOTUSING
-    #     data: double or ndarray
-    #     unit: str. C for celsius, K for Kelvin and F for fahrenheit
-    #     '''
-    #     unit = self.settings['comboBox_tempunit']
-    #     if unit == 'C':
-    #         return data # temp data is saved as C
-    #     elif unit == 'K': # convert to K
-    #         return data + 273.15 
-    #     elif unit == 'F': # convert to F
-    #         return data * 9 / 5 + 32
+
         
     def on_clicked_checkBox_dynamicfitbyharm(self, value):
         self.ui.checkBox_dynamicfit.setEnabled(not value)
-    
+
+
     def on_clicked_checkBox_fitfactorbyharm(self, value):
         self.ui.spinBox_fitfactor.setEnabled(not value)
         self.ui.label_fitfactor.setEnabled(not value)
-        
+
+
     def set_stackedwidget_index(self, stwgt, idx=[], diret=[]):
         '''
         chenge the index of stwgt to given idx (if not []) 
@@ -3704,6 +3717,7 @@ class QCMApp(QMainWindow):
        self.settings['checkBox_linkx'] = not self.settings['checkBox_linkx']
         # TODO update plt1 and plt2
 
+
     def load_comboBox(self, comboBox, choose_dict_name, harm=None):
         '''
         load combobox value from self.settings 
@@ -3729,13 +3743,29 @@ class QCMApp(QMainWindow):
         #NOTUSING
         print("update_guichecks was called")
         checkBox.setChecked(self.get_harmdata(name_in_settings, harm=self.settings_harm))
-        
+
+
     # debug func
     def log_update(self):
         #NOTUSING
         with open('settings.json', 'w') as f:
             line = json.dumps(dict(self.settings), indent=4) + "\n"
             f.write(line)
+
+
+    def load_normal_widgets(self, name_list):
+        '''
+        load those widgets don't require special setup
+        find the type by widget's name
+        '''
+        for name in name_list:
+            if name.startswith('lineEdit_'):
+                getattr(self.ui, name).setText(self.settings[name])
+            elif name.startswith('checkBox_') or name.startswith('radioButton_'):
+                getattr(self.ui, name).setChecked(self.settings[name])
+
+
+
 
     def load_settings(self):
         '''
@@ -3765,6 +3795,8 @@ class QCMApp(QMainWindow):
         self.ui.stackedWidget_data.setCurrentIndex(0)
         # set deflault displaying of tabWidget_settings_settings_harm
         self.ui.tabWidget_settings_settings_harm.setCurrentIndex(0)
+        # set deflault displaying of tabWidget_mechanics_chn
+        self.ui.tabWidget_mechanics_chn.setCurrentIndex(0)
         # set actived harmonic tab
         # self.settings_harm = 1 #TODO
         # set active_chn
@@ -3802,8 +3834,14 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(self.settings['checkBox_harm' + str(i)])
             getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(self.settings['checkBox_harm' + str(i)])
 
-        # load reference time
+        # store t0_shift in a temp variable to prevent it been overwritten while loading reference time 
         print(self.settings.keys())
+        if 'dateTimeEdit_settings_data_t0shifted' in self.settings.keys(): # there is t0_shifted 
+            temp = self.settings['dateTimeEdit_settings_data_t0shifted']
+        else:
+            temp = ''
+
+        # load reference time
         if 'dateTimeEdit_reftime' in self.settings.keys(): # reference time has been defined
             print(self.settings['dateTimeEdit_reftime'])
             print(type(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], settings_init['time_str_format'])))
@@ -3814,6 +3852,10 @@ class QCMApp(QMainWindow):
         else: # reference time is not defined
             # use current time
             self.reset_reftime()
+
+        # set t0_shifted back
+        if temp:
+            self.settings['dateTimeEdit_settings_data_t0shifted'] = temp
 
         # load default record interval
         self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
@@ -3902,6 +3944,16 @@ class QCMApp(QMainWindow):
         self.ui.radioButton_plt1_ref.setChecked(self.settings['radioButton_plt1_ref'])
         self.ui.radioButton_plt2_samp.setChecked(self.settings['radioButton_plt2_samp'])
         self.ui.radioButton_plt2_ref.setChecked(self.settings['radioButton_plt2_ref'])
+
+
+        # load t0_shifted time
+        if 'dateTimeEdit_settings_data_t0shifted' in self.settings.keys(): # t0_shifted has been defined
+            print(self.settings['dateTimeEdit_settings_data_t0shifted'])
+            self.ui.dateTimeEdit_settings_data_t0shifted.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_settings_data_t0shifted'], settings_init['time_str_format']))
+
+        else: # t0_shifted is not defined
+            # use reference time
+            self.ui.dateTimeEdit_settings_data_t0shifted.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], settings_init['time_str_format']))
 
         # set widgets to display the channel reference setup
         # the value will be load from data_saver

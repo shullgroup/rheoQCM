@@ -49,6 +49,8 @@ def find_dataroot(owner):
                      r'C:\Users\Gwen dePolo\gwendepolo2023@u.northwestern.edu\Research-Depolo\data']
     elif owner == 'sturdy':
         dataroots =['/home/ken/Mydocs/People/Sturdy/Filled_Galkyd_Paper/data/QCM/']
+    else: 
+        dataroots = [os.getcwd()] # current folder
 
     for directory in dataroots:
         if os.path.exists(directory):
@@ -236,7 +238,9 @@ def solve_general(soln_input):
     # first pass at solution comes from rh and rd
     rd_exp = -imag(delfstar[n3])/real(delfstar[n3])
     rh_exp = (n2/n1)*real(delfstar[n1])/real(delfstar[n2])
-
+    print('rd_exp', rd_exp)
+    print('rh_exp', rh_exp)
+    
     if 'prop_guess' in soln_input:
         drho = soln_input['propguess']['drho']
         grho3 = soln_input['propguess']['grho3']
@@ -247,12 +251,14 @@ def solve_general(soln_input):
     else:
         soln1_guess = thinfilm_guess(delfstar)
 
+    print(soln1_guess)
+
     lb = np.array([0, 0])  # lower bounds on dlam3 and phi
     ub = np.array([5, 90])  # upper bonds on dlam3 and phi
 
     def ftosolve(x):
         return [rhcalc(nh, x[0], x[1])-rh_exp, rdcalc(nh, x[0], x[1])-rd_exp]
-
+    print(soln1_guess)
     soln1 = least_squares(ftosolve, soln1_guess, bounds=(lb, ub))
 
     dlam3 = soln1['x'][0]
@@ -260,6 +266,11 @@ def solve_general(soln_input):
     drho = (sauerbreym(n1, real(delfstar[n1])) /
             real(normdelfstar(n1, dlam3, phi)))
     grho3 = grho_from_dlam(3, drho, dlam3, phi)
+
+    print(dlam3)
+    print(phi)
+    print(drho)
+    print(grho3)
 
     # we solve it again to get the Jacobian with respect to our actual
     # input variables - this is helpfulf for the error analysis
@@ -296,6 +307,8 @@ def solve_general(soln_input):
         dlam3 = d_lamcalc(3, drho, grho3, phi)
         jac = soln2['jac']
         jac_inv = np.linalg.inv(jac)
+        print('jac', jac)
+        print('jac_inv', jac_inv)
         # define sensibly names partial derivatives for further use
         deriv = {}
         for k in [0, 1, 2]:

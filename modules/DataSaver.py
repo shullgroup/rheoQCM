@@ -133,11 +133,11 @@ class DataSaver:
         data_keys = ['queue_id']
         mech_keys_single = [
             'drho',
-            'drho_err'
+            'drho_err',
             'grho_rh',
-            'grho_rh_err'
+            'grho_rh_err',
             'phi',
-            'phi_err'
+            'phi_err',
             'dlam_rh',
             'lamrho',
             'delrho',
@@ -155,6 +155,7 @@ class DataSaver:
         print(key)
 
         if key in getattr(self, chn_name + '_mech').keys():
+            exit(0)
             df_mech = getattr(self, chn_name + '_mech')
             mech_queue_id = df_mech['queue_id']
             data_queue_id = getattr(self, chn_name)['queue_id']
@@ -168,8 +169,6 @@ class DataSaver:
                 df_mech.loc[mech_keys_single] = df_mech.loc[mech_keys_single].fillna(np.nan)
                 df_mech.loc[mech_keys_multiple] = df_mech.loc[mech_keys_multiple].fillna(self.nan_harm_list())
 
-                # save back to class
-                getattr(self, chn_name + '_mech')[key] = df_mech
 
         else: # not exist, make a new dataframe
             df_mech = pd.DataFrame(columns=data_keys+mech_keys_single+mech_keys_multiple)
@@ -185,8 +184,10 @@ class DataSaver:
             for key in mech_keys_multiple:
                 df_mech[key] = nan_list
 
-            # set it to class
-            getattr(self, chn_name + '_mech')[key] = df_mech
+        print(df_mech)
+
+        # set it to class
+        getattr(self, chn_name + '_mech')[key] = df_mech
 
         return getattr(self, chn_name + '_mech')[key].copy()
 
@@ -447,7 +448,7 @@ class DataSaver:
         wrap up of save_data and save_settings and save_exp_ref
         '''
         self.save_data()
-        self.save_settings(settings={}, settings_init={})
+        self.save_settings(settings=settings, settings_init=settings_init)
         self.save_exp_ref()
         self.saveflg = True
 
@@ -1220,7 +1221,7 @@ class DataSaver:
         convert delfs and delgs in df to delfstar for calculation and 
         return a df with ['queue_id', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs']
         '''
-        df = self.get_queue_id(chn_name).to_frame()
+        df = self.get_queue_id(chn_name).astype('int64').to_frame()
         df['marks'] = self.get_marks(chn_name)
 
         # get freqs and gamms in form of [n1, n3, n5, ...]

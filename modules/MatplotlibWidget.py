@@ -95,6 +95,9 @@ class MatplotlibWidget(QWidget):
         if axtype == 'sp': 
             self.fig = Figure(tight_layout={'pad': 0.05}, dpi=dpi)
             # self.fig = Figure(tight_layout={'pad': 0.05}, dpi=dpi, facecolor='none')
+        elif axtype == 'legend':
+            self.fig = Figure(dpi=dpi, facecolor='none')
+
         else:
             self.fig = Figure(tight_layout={'pad': 0.2}, dpi=dpi)
             # self.fig = Figure(tight_layout={'pad': 0.2}, dpi=dpi, facecolor='none')

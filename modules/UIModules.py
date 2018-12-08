@@ -20,14 +20,17 @@ def open_file(path):
         opener ="open" if platform == "darwin" else "xdg-open" 
         subprocess.call([opener, path]) # this opens a new window on Linux every time
 
+
 def system_check():
     return sys.platform
+
 
 def closest_spanctr_step(l, n):
     if n >= 1:
         return min(l, key=lambda x:abs(x-n))
     elif n < 1:
         return min(l, key=lambda x:abs(x-1/n))
+
 
 def list_modules(module):
     ''' 
@@ -51,6 +54,7 @@ def list_modules(module):
 
 def split_path(path):
     pass
+
 
 def index_from_str(idx_str, chn_queue_list):
     '''
@@ -110,17 +114,18 @@ def index_from_str(idx_str, chn_queue_list):
         return idx
 
 
-def sel_ind_dict(sel_idx_dict, mode, chn_queue_list):
+def sel_ind_dict(harms, sel_idx_dict, mode, chn_queue_list):
     '''
     recalculate the indices in sel_idx_dict (from selector of main UI) by mode
     sel_idx_dict = {
         'harm': [index]
     }
+    harms: list of harms for recalculating
     mode: 'all', 'selpts', 'selidx', 'selharm'
     '''
 
     if mode == 'all':
-        for harm in sel_idx_dict.keys():
+        for harm in harms:
             sel_idx_dict[harm] = list(chn_queue_list)       
     if mode == 'selpts':
         pass
@@ -129,7 +134,7 @@ def sel_ind_dict(sel_idx_dict, mode, chn_queue_list):
         for idx in sel_idx_dict.values():
             idx_set |= set(idx)
         idx = list(idx_set)
-        for harm in sel_idx_dict.keys():
+        for harm in harms:
             sel_idx_dict[harm] = idx
     elif mode == 'selharm':
         for harm in sel_idx_dict.keys():
@@ -165,7 +170,8 @@ def idx_dict_to_harm_dict(sel_idx_dict):
                 sel_harm_dict[idx].append(harm)
         
     return sel_harm_dict
-   
+
+
 def isfloat(x):
     try:
         a = float(x)
@@ -173,6 +179,7 @@ def isfloat(x):
         return False
     else:
         return True
+
 
 def isint(x):
     try:
@@ -183,9 +190,9 @@ def isint(x):
     else:
         return a == b
 
+
 ############# MathModules ###########
 
-import numpy as np
 
 def datarange(data):
     '''find the min and max of data'''
@@ -193,6 +200,7 @@ def datarange(data):
         return [min(data), max(data)]
     else:
         return [None, None]
+
 
 def num2str(A,precision=None):
     if isinstance(A, np.ndarray):
@@ -218,6 +226,7 @@ def converter_startstop_to_centerspan(f1, f2):
     fc = (f1 + f2) / 2
     fs = f2 - f1
     return [fc, fs]
+
 
 def converter_centerspan_to_startstop(fc, fs):
     '''convert center/span (fc/fs) to start/stop (f1/f2)'''

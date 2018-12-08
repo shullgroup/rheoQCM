@@ -21,6 +21,8 @@ drho_range = (0, 1e-2)
 grho_rh_range = (1e7, 1e13)
 phi_range = (0, np.pi/2)
 
+fit_method = 'lmfit'
+fit_method = 'scipy'
 
 def nh2i(nh):
     '''
@@ -155,7 +157,7 @@ class QCM:
 
 
     def dlam(self, n, dlam_rh, phi):
-        return dlam_rh*(n/self.rh) ** (1-phi/2)
+        return dlam_rh*(n/self.rh) ** (1-phi/np.pi)
 
 
     def normdelfstar(self, n, dlam_rh, phi):
@@ -168,7 +170,7 @@ class QCM:
 
     def rhcalc(self, nh, dlam_rh, phi):
         ''' nh list '''
-        return self.normdelfstar(nh[0], dlam_rh, phi).real /  self.normdelfstar(nh[1], dlam_rh, phi).real
+        return np.real(self.normdelfstar(nh[0], dlam_rh, phi)) /  np.real(self.normdelfstar(nh[1], dlam_rh, phi))
 
 
     def rhexp(self, nh, delfstar):
@@ -225,14 +227,14 @@ class QCM:
         return [0.05, np.pi/180*5]
 
 
-########################################################
+    ########################################################
 
 
 
-########################################################
+    ########################################################
 
 
-    def solve_general(self, nh, qcm_queue, mech_queue):
+    def solve_single_queue(self, nh, qcm_queue, mech_queue):
         '''
         solve the property of a single test.
         nh: list of int
@@ -266,143 +268,16 @@ class QCM:
             overlayer = qcm_queue.overlayer.iat[0, 0]
         else:
             overlayer = {'drho':0, 'grho_rh':0, 'phi':0}
-        n1 = nh[0]
-        n2 = nh[1]
-        n3 = nh[2]
-
-        # input variables - this is helpfulf for the error analysis
-        # define sensibly names partial derivatives for further use
-        deriv = {}
-        err = {}
-        err_names=['drho', 'grho_rh', 'phi']
-
-        # first pass at solution comes from rh and rd
-        rd_exp = self.rdexp(nh, delfstar) # nh[2]
-        rh_exp = self.rhexp(nh, delfstar) # nh[0], nh[1]
-        print('rd_exp', rd_exp)
-        print('rh_exp', rh_exp)
 
 
-        # solve the problem
-        if ~np.isnan(rd_exp) or ~np.isnan(rh_exp):
-
-            # TODO change here for the model selection
-            if 'prop_guess' in qcm_queue.keys(): # value{'drho', 'grho_rh', 'phi'}
-                dlam_rh, phi = self.guess_from_props(**qcm_queue.prop_guess[0])
-            elif rd_exp > 0.5:
-                dlam_rh, phi = self.bulk_guess(delfstar)
-            else:
-                dlam_rh, phi = self.thinfilm_guess(delfstar)
-
-            print('dlam_rh', dlam_rh)
-            print('phi', phi)
-            params1 = Parameters()
-            params1.add('dlam_rh', value=dlam_rh, min=dlam_rh_range[0], max=dlam_rh_range[1])
-            params1.add('phi', value=phi, min=phi_range[0], max=phi_range[1])
-
-            def residual1(params, rh_exp, rd_exp):
-                # dlam_rh = params['dlam_rh'].value
-                # phi = params['phi'].value
-                return [self.rhcalc(nh, dlam_rh, phi)-rh_exp, self.rdcalc(nh, dlam_rh, phi)-rd_exp]
-
-            mini = Minimizer(
-                residual1,
-                params1,
-                fcn_args=(rh_exp, rd_exp),
-                nan_policy='omit',
-            )
-            soln1 = mini.leastsq(
-                # xtol=1e-7,
-                # ftol=1e-7,
-            )
-
-            print(fit_report(soln1)) 
-            print('success', soln1.success)
-            print('message', soln1.message)
-            print('lmdif_message', soln1.lmdif_message)
-
-            dlam_rh = soln1.params.get('dlam_rh').value
-            phi =soln1.params.get('phi').value
-            drho = self.drho(n1, delfstar, dlam_rh, phi)
-            grho_rh = self.grho_from_dlam(self.rh, drho, dlam_rh, phi)
-
-            print(dlam_rh)
-            print(phi)
-            print(drho)
-            print(grho_rh)
-
-            # we solve it again to get the Jacobian with respect to our actual
-            if drho_range[0]<=drho<=drho_range[1] and grho_rh_range[0]<=grho_rh<=grho_rh_range[1] and phi_range[0]<=phi<=phi_range[1]:
-                params2 = Parameters()
-
-                params2.add('drho', value=dlam_rh, min=drho_range[0], max=drho_range[1])
-                params2.add('grho_rh', value=grho_rh, min=grho_rh_range[0], max=grho_rh_range[1])
-                params2.add('phi', value=phi, min=phi_range[0], max=phi_range[1])
-
-                def residual2(params, delfstar, overlayer, n1, n2, n3):
-                    drho = params['drho'].value
-                    grho_rh = params['grho_rh'].value
-                    phi = params['phi'].value
-                    return ([np.real(delfstar[n1]) -
-                            np.real(self.delfstarcalc(n1, drho, grho_rh, phi, overlayer)),
-                            np.real(delfstar[n2]) -
-                            np.real(self.delfstarcalc(n2, drho, grho_rh, phi, overlayer)),
-                            np.imag(delfstar[n3]) -
-                            np.imag(self.delfstarcalc(n3, drho, grho_rh, phi, overlayer))])
-                
-                mini = Minimizer(
-                    residual2,
-                    params2,
-                    fcn_args=(delfstar, overlayer, n1, n2, n3),
-                    nan_policy='omit',
-                )
-                soln2 = mini.leastsq(
-                    # xtol=1e-7,
-                    # ftol=1e-7,
-                )
-
-                print(fit_report(soln2)) 
-                print('success', soln2.success)
-                print('message', soln2.message)
-                print('lmdif_message', soln1.lmdif_message)
-
-                # put the input uncertainties into a 3 element vector
-                delfstar_err = np.zeros(3)
-                delfstar_err[0] = np.real(self.fstar_err_calc(delfstar[n1]))
-                delfstar_err[1] = np.real(self.fstar_err_calc(delfstar[n2]))
-                delfstar_err[2] = np.imag(self.fstar_err_calc(delfstar[n3]))
-                
-                # initialize the uncertainties
-
-                # recalculate solution to give the uncertainty, if solution is viable
-                drho = soln2.params.get('drho').value
-                grho_rh = soln2.params.get('grho_rh').value
-                phi = soln2.params.get('phi').value
-                dlam_rh = self.d_lamcalc(self.rh, drho, grho_rh, phi)
-                jac = soln2.params.get('jac') #TODO ???
-                jac_inv = np.linalg.inv(jac)
-
-                for i, k in enumerate(err_names):
-                    deriv[k]={0:jac_inv[i, 0], 1:jac_inv[i, 1], 2:jac_inv[i, 2]}
-                    err[k] = ((jac_inv[i, 0]*delfstar_err[0])**2 + 
-                            (jac_inv[i, 1]*delfstar_err[1])**2 +
-                            (jac_inv[i, 2]*delfstar_err[2])**2)**0.5
-
-        if np.isnan(rd_exp) or np.isnan(rh_exp) or not deriv or not err:
-            # assign the default value first
-            drho = np.nan
-            grho_rh = np.nan
-            phi = np.nan
-            dlam_rh = np.nan
-            for k in err_names:
-                err[k] = np.nan
+        drho, grho_rh, phi, dlam_rh, err = self.solve_general(nh, delfstar, overlayer)
 
         # now back calculate delfstar, rh and rd from the solution
         delfstar_calc = {}
         rh = {}
         rd = {}
-        delf_calcs = mech_queue.delf_calcs.iloc[0]
-        delg_calcs = mech_queue.delg_calcs.iloc[0]
+        delf_calcs = mech_queue.delf_calcs.iloc[0].copy()
+        delg_calcs = mech_queue.delg_calcs.iloc[0].copy()
         rds = mech_queue.rds.iloc[0]
         print('delf_calcs', delf_calcs)
         print(type(delf_calcs))
@@ -414,10 +289,12 @@ class QCM:
             rd[n] = self.rd_from_delfstar(n, delfstar_calc)
             rds[nh2i(n)] = rd[n]
         rh = self.rh_from_delfstar(nh, delfstar_calc)
+        print('delf_calcs', delf_calcs)
+        print('delg_calcs', delg_calcs)
 
-    # drho = 1000*results[nh]['drho']
-    # grho3 = results[nh]['grho3']/1000
-    # phi = results[nh]['phi']
+        # drho = 1000*results[nh]['drho']
+        # grho3 = results[nh]['grho3']/1000
+        # phi = results[nh]['phi']
     
         # save back to mech_queue
         # single value
@@ -439,9 +316,219 @@ class QCM:
         # mech_queue['delg_delfsns'] = []
         mech_queue['rds'] = [rds]
 
+        print(mech_queue['delf_calcs'])
+        print(mech_queue['delg_calcs'])
         # TODO save delfstar, deriv {n1:, n2:, n3:}
-                
+        print(mech_queue)   
+        print(mech_queue)   
         return mech_queue
+
+
+    def solve_general(self, nh, delfstar, overlayer, prop_guess={}):
+        '''
+        solve the property of a single test.
+        nh: list of int
+        delfstar: dict {harm(int): complex, ...}
+        overlayer: dicr e.g.: {'drho': 0, 'grho_rh': 0, 'phi': 0}
+        return drho, grho_rh, phi, dlam_rh, err
+        '''
+        # input variables - this is helpfulf for the error analysis
+        # define sensibly names partial derivatives for further use
+        deriv = {}
+        err = {}
+        err_names=['drho', 'grho_rh', 'phi']
+
+        # first pass at solution comes from rh and rd
+        rd_exp = self.rdexp(nh, delfstar) # nh[2]
+        rh_exp = self.rhexp(nh, delfstar) # nh[0], nh[1]
+        print('rd_exp', rd_exp)
+        print('rh_exp', rh_exp)
+
+        n1 = nh[0]
+        n2 = nh[1]
+        n3 = nh[2]
+
+        # solve the problem
+        if ~np.isnan(rd_exp) or ~np.isnan(rh_exp):
+            print('rd_exp, rh_exp is not nan')
+            # TODO change here for the model selection
+            if prop_guess: # value{'drho', 'grho_rh', 'phi'}
+                dlam_rh, phi = self.guess_from_props(**prop_guess)
+            elif rd_exp > 0.5:
+                dlam_rh, phi = self.bulk_guess(delfstar)
+            else:
+                dlam_rh, phi = self.thinfilm_guess(delfstar)
+
+            print('dlam_rh', dlam_rh)
+            print('phi', phi)
+            
+            if fit_method == 'lmfit':
+                params1 = Parameters()
+                params1.add('dlam_rh', value=dlam_rh, min=dlam_rh_range[0], max=dlam_rh_range[1])
+                params1.add('phi', value=phi, min=phi_range[0], max=phi_range[1])
+
+                def residual1(params, rh_exp, rd_exp):
+                    # dlam_rh = params['dlam_rh'].value
+                    # phi = params['phi'].value
+                    return [self.rhcalc(nh, dlam_rh, phi)-rh_exp, self.rdcalc(nh, dlam_rh, phi)-rd_exp]
+
+                mini = Minimizer(
+                    residual1,
+                    params1,
+                    fcn_args=(rh_exp, rd_exp),
+                    # nan_policy='omit',
+                )
+                soln1 = mini.leastsq(
+                    # xtol=1e-7,
+                    # ftol=1e-7,
+                )
+
+                print(fit_report(soln1)) 
+                print('success', soln1.success)
+                print('message', soln1.message)
+                print('lmdif_message', soln1.lmdif_message)
+
+                dlam_rh = soln1.params.get('dlam_rh').value
+                phi =soln1.params.get('phi').value
+                drho = self.drho(n1, delfstar, dlam_rh, phi)
+                grho_rh = self.grho_from_dlam(self.rh, drho, dlam_rh, phi)
+            else: # scipy
+                lb = np.array([dlam_rh_range[0], phi_range[0]])  # lower bounds on dlam3 and phi
+                ub = np.array([dlam_rh_range[1], phi_range[1]])  # upper bonds on dlam3 and phi
+
+                def ftosolve(x):
+                    return [self.rhcalc(nh, x[0], x[1])-rh_exp, self.rdcalc(nh, x[0], x[1])-rd_exp]
+
+                x0 = np.array([dlam_rh, phi])
+                print(x0)
+                soln1 = least_squares(ftosolve, x0, bounds=(lb, ub))
+                print(soln1['x'])
+                dlam_rh = soln1['x'][0]
+                phi =soln1['x'][1]
+                drho = self.drho(n1, delfstar, dlam_rh, phi)
+                grho_rh = self.grho_from_dlam(self.rh, drho, dlam_rh, phi)
+
+            print('solution of 1st solving:')
+            print('dlam_rh', dlam_rh)
+            print('phi', phi)
+            print('drho', phi)
+            print('grho_rh', grho_rh)
+
+            # we solve it again to get the Jacobian with respect to our actual
+            if drho_range[0]<=drho<=drho_range[1] and grho_rh_range[0]<=grho_rh<=grho_rh_range[1] and phi_range[0]<=phi<=phi_range[1]:
+                
+                print('1st solution in range')
+                if fit_method == 'lmfit':
+                    params2 = Parameters()
+
+                    params2.add('drho', value=dlam_rh, min=drho_range[0], max=drho_range[1])
+                    params2.add('grho_rh', value=grho_rh, min=grho_rh_range[0], max=grho_rh_range[1])
+                    params2.add('phi', value=phi, min=phi_range[0], max=phi_range[1])
+
+                    def residual2(params, delfstar, overlayer, n1, n2, n3):
+                        drho = params['drho'].value
+                        grho_rh = params['grho_rh'].value
+                        phi = params['phi'].value
+                        return ([np.real(delfstar[n1]) -
+                                np.real(self.delfstarcalc(n1, drho, grho_rh, phi, overlayer)),
+                                np.real(delfstar[n2]) -
+                                np.real(self.delfstarcalc(n2, drho, grho_rh, phi, overlayer)),
+                                np.imag(delfstar[n3]) -
+                                np.imag(self.delfstarcalc(n3, drho, grho_rh, phi, overlayer))])
+                    
+                    mini = Minimizer(
+                        residual2,
+                        params2,
+                        fcn_args=(delfstar, overlayer, n1, n2, n3),
+                        # nan_policy='omit',
+                    )
+                    soln2 = mini.least_squares(
+                        # xtol=1e-7,
+                        # ftol=1e-7,
+                    )
+                    print(soln2.params.keys())
+                    print(soln2.params['drho'])
+                    print(fit_report(soln2)) 
+                    print('success', soln2.success)
+                    print('message', soln2.message)
+                    print('lmdif_message', soln1.lmdif_message)
+
+                    # put the input uncertainties into a 3 element vector
+                    delfstar_err = np.zeros(3)
+                    delfstar_err[0] = np.real(self.fstar_err_calc(delfstar[n1]))
+                    delfstar_err[1] = np.real(self.fstar_err_calc(delfstar[n2]))
+                    delfstar_err[2] = np.imag(self.fstar_err_calc(delfstar[n3]))
+                    
+                    # initialize the uncertainties
+
+                    # recalculate solution to give the uncertainty, if solution is viable
+                    drho = soln2.params.get('drho').value
+                    grho_rh = soln2.params.get('grho_rh').value
+                    phi = soln2.params.get('phi').value
+                    dlam_rh = self.d_lamcalc(self.rh, drho, grho_rh, phi)
+                    jac = soln2.params.get('jac') #TODO ???
+                    print('jac', jac)
+                    jac_inv = np.linalg.inv(jac)
+
+                    for i, k in enumerate(err_names):
+                        deriv[k]={0:jac_inv[i, 0], 1:jac_inv[i, 1], 2:jac_inv[i, 2]}
+                        err[k] = ((jac_inv[i, 0]*delfstar_err[0])**2 + 
+                                (jac_inv[i, 1]*delfstar_err[1])**2 +
+                                (jac_inv[i, 2]*delfstar_err[2])**2)**0.5
+                else: # scipy
+                    x0 = np.array([drho, grho_rh, phi])
+                    
+                    lb = np.array([drho_range[0], grho_rh_range[0], phi_range[0]])  # lower bounds drho, grho3, phi
+                    ub = np.array([drho_range[1], grho_rh_range[1], phi_range[1]])  # upper bounds drho, grho3, phi
+
+                    def ftosolve2(x):
+                        return ([np.real(delfstar[n1]) -
+                                np.real(self.delfstarcalc(n1, x[0], x[1], x[2], overlayer)),
+                                np.real(delfstar[n2]) -
+                                np.real(self.delfstarcalc(n2, x[0], x[1], x[2], overlayer)),
+                                np.imag(delfstar[n3]) -
+                                np.imag(self.delfstarcalc(n3, x[0], x[1], x[2], overlayer))])
+                    
+                    # put the input uncertainties into a 3 element vector
+                    delfstar_err = np.zeros(3)
+                    delfstar_err[0] = np.real(self.fstar_err_calc(delfstar[n1]))
+                    delfstar_err[1] = np.real(self.fstar_err_calc(delfstar[n2]))
+                    delfstar_err[2] = np.imag(self.fstar_err_calc(delfstar[n3]))
+
+                    # recalculate solution to give the uncertainty, if solution is viable
+                    soln2 = least_squares(ftosolve2, x0, bounds=(lb, ub))
+                    drho = soln2['x'][0]
+                    grho_rh = soln2['x'][1]
+                    phi = soln2['x'][2]
+                    dlam_rh = self.d_lamcalc(self.rh, drho, grho_rh, phi)
+                    jac = soln2['jac']
+                    jac_inv = np.linalg.inv(jac)
+                    print('jac', jac)
+                    print('jac_inv', jac_inv)
+
+                    for i, k in enumerate(err_names):
+                        deriv[k]={0:jac_inv[i, 0], 1:jac_inv[i, 1], 2:jac_inv[i, 2]}
+                        err[k] = ((jac_inv[i, 0]*delfstar_err[0])**2 + 
+                                (jac_inv[i, 1]*delfstar_err[1])**2 +
+                                (jac_inv[i, 2]*delfstar_err[2])**2)**0.5
+
+        if np.isnan(rd_exp) or np.isnan(rh_exp) or not deriv or not err: # failed to solve the problem
+            print('2nd solving failed')
+            # assign the default value first
+            drho = np.nan
+            grho_rh = np.nan
+            phi = np.nan
+            dlam_rh = np.nan
+            for k in err_names:
+                err[k] = np.nan
+
+        print('drho', drho)
+        print('grho_rh', grho_rh)
+        print('phi', phi)
+        print('dlam_rh', phi)
+        print('err', err)
+
+        return drho, grho_rh, phi, dlam_rh, err
 
 
     def all_nhcaclc_harm_not_na(self, nh, qcm_queue):
@@ -479,22 +566,46 @@ class QCM:
             # queue index
             idx = qcm_df[qcm_df.queue_id == queue_id].index.astype(int)[0]
             # qcm data of queue_id
-            qcm_queue = qcm_df.loc[[idx], :] # as a dataframe
+            qcm_queue = qcm_df.loc[[idx], :].copy() # as a dataframe
             # mechanic data of queue_id
-            mech_queue = mech_df.loc[[idx], :]  # as a dataframe
+            mech_queue = mech_df.loc[[idx], :].copy()  # as a dataframe
 
             # obtain the solution for the properties
             if self.all_nhcaclc_harm_not_na(nh, qcm_queue):
                 # solve a single queue
-                mech_queue = self.solve_general(nh, qcm_queue, mech_queue)
+                mech_queue = self.solve_single_queue(nh, qcm_queue, mech_queue)
                 # save back to mech_df
-                print(mech_df.loc[[idx], :])
-                print(mech_queue)
+                print(mech_df.loc[[idx], :].to_dict())
+                print(mech_queue.to_dict())
                 mech_df.update(mech_queue)
+                print(mech_df)
             else:
                 # since the df already initialized with nan values, nothing todo
                 pass
         return mech_df
 
+
+if __name__ == '__main__':
+    qcm = QCM()
+    qcm.f1 = 5e6 # Hz
+    qcm.rh = 3
+
+    nh = [3,5,3]
+
+    delfstar = {
+        1: -11374.5837019132 + 1j*2.75600512576013,
+        3: -34446.6126772240 + 1j*41.5415621054838,
+        5: -58249.9656346552 + 1j*79.9003634583878,
+    }
+
+    overlayer = {'drho':0, 'grho_rh':0, 'phi':0}
+
+    drho, grho_rh, phi, dlam_rh, err = qcm.solve_general(nh, delfstar, overlayer)
+
+    print('drho', drho)
+    print('grho_rh', grho_rh)
+    print('phi', phi)
+    print('dlam_rh', phi)
+    print('err', err)
 
 
