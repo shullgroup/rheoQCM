@@ -789,22 +789,25 @@ class QCMApp(QMainWindow):
 
         #region settings_mechanis
         ######### 
-
-        for key, val in settings_init['qcm_model_opts'].items():
-            self.ui.comboBox_settings_mechanics_selectmodel.addItem(val, userData=key)
         self.ui.tabWidget_mechanics_chn.currentChanged.connect(self.update_mechanics_chn)
 
-        self.ui.comboBox_settings_mechanics_selectmodel.currentIndexChanged.connect(self.update_widget)
+        for harm in range(1, settings_init['max_harmonic']+2, 2):
+            getattr(self.ui, 'checkBox_nhplot' + str(harm)).toggled.connect(self.update_widget)
 
-        self.ui.comboBox_settings_mechanics_refG.currentIndexChanged.connect(self.update_widget)
-        self.ui.comboBox_settings_mechanics_refG.currentIndexChanged.connect(self.update_qcm_rh)
-        for harm in range(1, settings_init['max_harmonic']+2, 2): # this should be after connecting with signals
+        self.ui.spinBox_settings_mechanics_nhcalc_n1.valueChanged.connect(self.update_widget)
+        self.ui.spinBox_settings_mechanics_nhcalc_n2.valueChanged.connect(self.update_widget)
+        self.ui.spinBox_settings_mechanics_nhcalc_n3.valueChanged.connect(self.update_widget)
+
+
+        for harm in range(1, settings_init['max_harmonic']+2, 2): 
             # comboBox_settings_mechanics_refG
             self.ui.comboBox_settings_mechanics_refG.addItem('G'+str(harm), userData=str(harm))
+        self.ui.comboBox_settings_mechanics_refG.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_settings_mechanics_refG.currentIndexChanged.connect(self.update_qcm_rh)
+        # set an initial value to active the key in self.settings
+        self.ui.comboBox_settings_mechanics_refG.setCurrentIndex(0)
 
         self.ui.checkBox_settings_mechanics_witherror.toggled.connect(self.update_widget)
-
-
 
         # hide tableWidget_settings_mechanics_errortab
         self.ui.tableWidget_settings_mechanics_errortab.hide()
@@ -812,6 +815,10 @@ class QCMApp(QMainWindow):
         self.ui.tableWidget_settings_mechanics_contoursettings.hide()
         # hide groupBox_settings_mechanics_simulator
         self.ui.groupBox_settings_mechanics_simulator.hide()
+
+        for key, val in settings_init['qcm_model_opts'].items():
+            self.ui.comboBox_settings_mechanics_selectmodel.addItem(val, userData=key)
+        self.ui.comboBox_settings_mechanics_selectmodel.currentIndexChanged.connect(self.update_widget)
 
         #endregion
 
@@ -4107,6 +4114,7 @@ class QCMApp(QMainWindow):
         comboBoxName = comboBox.objectName()
         if settings_init[choose_dict_name]:
             for key in settings_init[choose_dict_name].keys():
+                # TODO look for value from itemdata and loop use for in combox.count()
                 if harm is None: # not embeded in subdict
                     if key == self.settings[comboBoxName]:
                         comboBox.setCurrentIndex(comboBox.findData(key))
@@ -4340,7 +4348,24 @@ class QCMApp(QMainWindow):
         # update mpl_plt<n> at the end
         self.update_mpl_plt12()
 
+        # settings_mechanics
+        self.ui.checkBox_settings_mech_liveupdate.setChecked(self.settings['checkBox_settings_mech_liveupdate'])
 
+        self.ui.checkBox_nhplot1.setChecked(self.settings['checkBox_nhplot1'])
+        self.ui.checkBox_nhplot3.setChecked(self.settings['checkBox_nhplot3'])
+        self.ui.checkBox_nhplot5.setChecked(self.settings['checkBox_nhplot5'])
+        self.ui.checkBox_nhplot7.setChecked(self.settings['checkBox_nhplot7'])
+        self.ui.checkBox_nhplot9.setChecked(self.settings['checkBox_nhplot9'])
+
+        self.ui.spinBox_settings_mechanics_nhcalc_n1.setValue(self.settings['spinBox_settings_mechanics_nhcalc_n1'])
+        self.ui.spinBox_settings_mechanics_nhcalc_n2.setValue(self.settings['spinBox_settings_mechanics_nhcalc_n2'])
+        self.ui.spinBox_settings_mechanics_nhcalc_n3.setValue(self.settings['spinBox_settings_mechanics_nhcalc_n3'])
+
+        self.ui.comboBox_settings_mechanics_refG.setCurrentIndex(self.ui.comboBox_settings_mechanics_refG.findData(self.settings['comboBox_settings_mechanics_refG']))
+
+        self.ui.checkBox_settings_mechanics_witherror.setChecked(self.settings['checkBox_settings_mechanics_witherror'])
+
+        self.load_comboBox(self.ui.comboBox_settings_mechanics_selectmodel, 'qcm_model_opts')
 
     def update_refsource(self):
         '''

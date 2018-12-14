@@ -841,18 +841,21 @@ settings_default = {
     'lineEdit_settings_data_refrefidx': [0],
 
     ### settings_mech
+    'checkBox_settings_mech_liveupdate': True,
     'checkBox_nhplot1': True,
     'checkBox_nhplot3': True,
     'checkBox_nhplot5': True,
     'checkBox_nhplot7': False,
     'checkBox_nhplot9': False,
-    'checkBox_settings_mechanics_witherror': True, # errorbar
+
+    'spinBox_settings_mechanics_nhcalc_n1': 3,
+    'spinBox_settings_mechanics_nhcalc_n2': 5,
+    'spinBox_settings_mechanics_nhcalc_n3': 3,
+
     'comboBox_settings_mechanics_refG': '3', # reference harmonic for property
-    'checkBox_settings_mech_liveupdate': True,
+    'checkBox_settings_mechanics_witherror': True, # errorbar
 
-    'spinBoxsettings_mechanics_nhcalc_n1': '3',
-    'spinBoxsettings_mechanics_nhcalc_n2': '5',
-    'spinBoxsettings_mechanics_nhcalc_n3': '3',
-
+    'comboBox_settings_mechanics_selectmodel': 'onelayer',
+    
 }
 
