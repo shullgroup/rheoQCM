@@ -1000,6 +1000,7 @@ class QCMApp(QMainWindow):
             )
         self.ui.frame_spectra_mechanics_contour2.setLayout(self.set_frame_layout(self.ui.mpl_countour2))
 
+        self.ui.pushButton_spectra_mechanics_clear.clicked.connect(self.del_prop_plot)
         #endregion
 
 
@@ -1232,7 +1233,6 @@ class QCMApp(QMainWindow):
             self.disable_widgets(
                 'pushButton_runstop_disable_list'
             )
-
 
             # cmd diary?
 
@@ -2547,7 +2547,7 @@ class QCMApp(QMainWindow):
         print('-------------------')
 
         # prepare data for plotting
-        data_list = self.prepare_harm_data_for_mpl_update(plt_chnname, plt_harms, line_group, xdata, ydata, mark_lm_when_l=True)
+        data_list = self.prepare_harm_data_for_mpl_update(plt_chnname, plt_harms, line_group, xdata, ydata, show_marked_when_all=True)
         
         # update mpl_<plt_str>
         getattr(self.ui, 'mpl_' + plt_str).update_data(*data_list)
@@ -2558,13 +2558,13 @@ class QCMApp(QMainWindow):
         # getattr(self.ui, 'mpl_' + plt_str).clr_lines(clr_list)
 
 
-    def prepare_harm_data_for_mpl_update(self, plt_chnname, plt_harms, line_group, xdata, ydata, mark_lm_when_l=True):
+    def prepare_harm_data_for_mpl_update(self, plt_chnname, plt_harms, line_group, xdata, ydata, show_marked_when_all=True):
         '''
         devide xdata/ydata by harmonics and return a list of tuples for data_saver.update_data
         '''
         data_list = []
 
-        if mark_lm_when_l: 
+        if show_marked_when_all: 
             mark_df = self.data_saver.get_list_column_to_columns_marked_rows(plt_chnname, 'marks', mark=False, dropnanrow=False, deltaval=False, norm=False)            
         for harm in plt_harms: # selected
             harm = str(harm)
@@ -2581,7 +2581,7 @@ class QCMApp(QMainWindow):
                 harm_ydata = ydata.filter(like=harm, axis=1).squeeze() # convert to series
             data_list.append((line_group+harm, harm_xdata, harm_ydata))
 
-            if mark_lm_when_l:
+            if show_marked_when_all:
                 ## display marked data (solid) along with all data (open) (can be removed if don't like)
                 if self.settings['radioButton_data_showall']:
                     if self.data_saver.with_marks(plt_chnname):
@@ -3368,12 +3368,12 @@ class QCMApp(QMainWindow):
                 else:
                     figharms = [str(rh)]
                 # prepare data
-                data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, mark_lm_when_l=False)
+                data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, show_marked_when_all=False)
                 
                 # update data in figure
                 self.prop_plot_list[-1].update_data(*data_list)
                 # add to scrollarea
-                self.add_mpl_to_prop_scrollarea(self.prop_plot_list)
+                self.update_mpl_to_prop_scrollarea()
 
 
         elif plot_type in ['r1r2', 'r2r1']:
@@ -3414,28 +3414,30 @@ class QCMApp(QMainWindow):
                 )
             )
             # check if data is harmonic dependent
-            if var.endswith('s'):
+            if varplot[0].endswith('s') or varplot[1].endswith('s'):
                 figharms = plt_harms
             else:
                 figharms = [str(rh)]
             # prepare data
-            data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, mark_lm_when_l=False)
+            data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, show_marked_when_all=False)
             
             # update data in figure
             self.prop_plot_list[-1].update_data(*data_list)
             # add to scrollarea
-            self.add_mpl_to_prop_scrollarea(self.prop_plot_list)
+            self.update_mpl_to_prop_scrollarea()
 
 
-    def add_mpl_to_prop_scrollarea(self, prop_plot_list):
+    def update_mpl_to_prop_scrollarea(self):
         '''
         add mpl figure (prop_plot_list[-1]) into scrollArea_data_mechanics_plots
         at the end of its layout
         '''
-        n = len(prop_plot_list)
-        mpl = prop_plot_list[-1]
+        n = len(self.prop_plot_list)
+        mpl = self.prop_plot_list[-1]
 
         self.ui.gridLayout_propplot.addWidget(mpl, (n-1)//2, (n-1)%2)
+        if not (n-1)%2: # n is odd
+            self.ui.gridLayout_propplot.setRowMinimumHeight((n-1)//2, settings_init['prop_plot_minmum_row_height'])
         # return
         # self.ui.scrollArea_data_mechanics_plots.setWidget(mpl)
         # self.ui.scrollArea_data_mechanics_plots.show()
@@ -3448,7 +3450,11 @@ class QCMApp(QMainWindow):
         '''
         delete all prop plots in 
         '''
-        pass
+        for i in reversed(range(self.ui.gridLayout_propplot.count())):
+            item = self.ui.gridLayout_propplot.itemAt(i)
+            item.widget().deleteLater()
+        self.prop_plot_list = []
+
 
     def on_clicked_set_temp_sensor(self, checked):
         # below only runs when vna is available

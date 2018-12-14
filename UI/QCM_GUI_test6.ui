@@ -27,8 +27,8 @@
    <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_37">
-    <item>
+   <layout class="QGridLayout" name="gridLayout_6">
+    <item row="0" column="0">
      <widget class="QSplitter" name="splitter">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
@@ -1783,7 +1783,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>83</width>
+                   <width>98</width>
                    <height>71</height>
                   </rect>
                  </property>
@@ -5071,16 +5071,6 @@ p, li { white-space: pre-wrap; }
                   <row>
                    <property name="text">
                     <string>rd</string>
-                   </property>
-                  </row>
-                  <row>
-                   <property name="text">
-                    <string>Time (s)</string>
-                   </property>
-                  </row>
-                  <row>
-                   <property name="text">
-                    <string>Temp. (°C)</string>
                    </property>
                   </row>
                   <column>
