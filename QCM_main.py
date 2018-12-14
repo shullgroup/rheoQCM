@@ -3243,11 +3243,11 @@ class QCMApp(QMainWindow):
     def gen_nhcalc_str(self):
         '''
         generate nhcalc str from relative widgets
-        spinBoxsettings_mechanics_nhcalc_n1/2/3
+        spinBox_settings_mechanics_nhcalc_n1/2/3
         '''
-        n1 = self.settings['spinBoxsettings_mechanics_nhcalc_n1']
-        n2 = self.settings['spinBoxsettings_mechanics_nhcalc_n2']
-        n3 = self.settings['spinBoxsettings_mechanics_nhcalc_n3']
+        n1 = self.settings['spinBox_settings_mechanics_nhcalc_n1']
+        n2 = self.settings['spinBox_settings_mechanics_nhcalc_n2']
+        n3 = self.settings['spinBox_settings_mechanics_nhcalc_n3']
         return ''.join([n1, n2, n3])
 
 
