@@ -3397,9 +3397,9 @@ class QCMApp(QMainWindow):
             # varplot[1] as x
             xdata = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, varplot[1], mark=mark, dropnanrow=False)
             xdata = self.qcm.convert_mech_unit(xdata) # convert unit for plot
-            ylabel = settings_init['data_plt_axis_label'][varplot[1]]
+            xlabel = settings_init['data_plt_axis_label'][varplot[1]]
             if '_rh' in varplot[1]: # variable referenced to rh
-                ylabel = ylabel.replace('{rh}', '{' + str(rh) + '}')
+                xlabel = xlabel.replace('{rh}', '{' + str(rh) + '}')
 
             ## make the plot
             # create figure
@@ -3436,12 +3436,12 @@ class QCMApp(QMainWindow):
         mpl = prop_plot_list[-1]
 
         self.ui.gridLayout_propplot.addWidget(mpl, (n-1)//2, (n-1)%2)
-        return
-        self.ui.scrollArea_data_mechanics_plots.setWidget(mpl)
-        self.ui.scrollArea_data_mechanics_plots.show()
-        return
-        layout = self.ui.scrollArea_data_mechanics_plots.layout()
-        layout.insertWidget(layout.count() - 1, mpl)
+        # return
+        # self.ui.scrollArea_data_mechanics_plots.setWidget(mpl)
+        # self.ui.scrollArea_data_mechanics_plots.show()
+        # return
+        # layout = self.ui.scrollArea_data_mechanics_plots.layout()
+        # layout.insertWidget(layout.count() - 1, mpl)
 
 
     def del_prop_plot(self):

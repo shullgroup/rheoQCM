@@ -215,7 +215,7 @@ settings_init = {
         'drho':         r'd$\rho$ (g/cm$^2$)',
         'grho_rh':      r'$|G_{rh}^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
         'phi':          r'$\phi$ ($\degree$)',
-        'dlam_rh':      r'd/$\lambda_{rh}',
+        'dlam_rh':      r'd/$\lambda_{rh}$',
         'lamrho':       r'$\lambda\rho$ (g/cm$^2$)',
         'delrho':       r'$\delta\rho$ (g/cm$^2$)',
         'delf_delfsn':  r'$\Delta$f/$\Delta$f$_{sn}$',
