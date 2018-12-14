@@ -205,7 +205,23 @@ settings_init = {
         'g':    r'$\Gamma$ (Hz)',
         'temp': r'Temp. (unit)', # unit is going to be replaced by temperature unit
         't':    r'Time (unit)', # unit is going to be replaced by time unit
-        'idx':    r'Index', 
+        'idx':  r'Index', 
+
+        # for property
+        'delfs':        r'$\Delta$f (Hz)',
+        'delf_calcs':   r'$\Delta$f$_{calc}$ (Hz)',
+        'delgs':        r'$\Delta\Gamma$ (Hz)',
+        'delg_calcs':   r'$\Delta\Gamma_{calc}$ (Hz)',
+        'drho':         r'd$\rho$ (g/cm$^2$)',
+        'grho_rh':      r'$|G_{rh}^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
+        'phi':          r'$\phi$ ($\degree$)',
+        'dlam_rh':      r'd/$\lambda_{rh}',
+        'lamrho':       r'$\lambda\rho$ (g/cm$^2$)',
+        'delrho':       r'$\delta\rho$ (g/cm$^2$)',
+        'delf_delfsn':  r'$\Delta$f/$\Delta$f$_{sn}$',
+        'delg_delfsns': r'$\Delta\Gamma$/$\Delta$f$_{sn}$',
+        'rh':           r'r$_h$',
+        'rds':          r'r$_d$',
     },
 
     # spinBox_harmfitfactor max value
@@ -348,6 +364,28 @@ settings_init = {
     'progressbar_update_steps': 100, 
     'progressbar_min_interval': 100, # in ms
     'progressbar_max_interval': 1000, # in ms
+
+    # rowheader for tableWidget_spectra_mechanics_table
+    # DON't change the value of this key
+    'mech_table_rowheaders':{
+        'delfs':         u'\u0394' + 'f (Hz)',
+        'delf_calcs':     u'\u0394' + 'fcalc (Hz)',
+        'delgs':         u'\u0394\u0393' + ' (Hz)',
+        'delg_calcs':    u'\u0394\u0393' + 'calc (Hz)',
+        'drho':         'd' + u'\u03C1' + ' (g/cm'+ u'\u00B2' + ')',
+        'grho_rh':      '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')',
+        'phi':          u'\u03A6' + ' (' + u'\u00B0' + ')',
+        'dlam_rh':      'd/' + u'\u03BB\u2099',
+        'lamrho':       u'\u03BB\u03C1' + ' (g/cm' + u'\u00B2' + ')',
+        'delrho':       u'\u03B4\u03C1' + ' (g/cm' + u'\u00B2' + ')',
+        'delf_delfsn':  u'\u0394' + 'f/' + u'\u0394' + 'f' + u'\u209B\u2099',
+        'delg_delfsns': u'\u0394\u0393' + '/' + u'\u0394' + 'f' + u'\u209B\u2099',
+        'rh':           'rh',
+        'rds':           'rd',
+        't':         'Time (s)',
+        'temp':         'Temp. (' + u'\u00B0' + 'C)',
+    },
+
 
     ############ params for temperature modules ###########
     # temperature modules path
@@ -808,7 +846,11 @@ settings_default = {
     'checkBox_nhplot9': False,
     'checkBox_settings_mechanics_witherror': True, # errorbar
     'comboBox_settings_mechanics_refG': '3', # reference harmonic for property
-    
+    'checkBox_settings_mech_liveupdate': True,
+
+    'spinBoxsettings_mechanics_nhcalc_n1': '3',
+    'spinBoxsettings_mechanics_nhcalc_n2': '5',
+    'spinBoxsettings_mechanics_nhcalc_n3': '3',
 
 }
 

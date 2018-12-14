@@ -16,7 +16,7 @@ import scipy.signal
 # import types
 from PyQt5.QtCore import pyqtSlot, Qt, QEvent, QTimer, QEventLoop
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QRadioButton, QMenu, QAction, QMessageBox
+    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QRadioButton, QMenu, QAction, QMessageBox, QTableWidgetItem
 )
 from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, QDoubleValidator, QRegExpValidator
 
@@ -125,6 +125,7 @@ class QCMApp(QMainWindow):
         self.active = {} # active factors e.g.: harm, chnn_name, plt_str, ind, 
         self.mech_chn = 'samp'
         self.chn_set_store = {} # used for storing the channal setup self.settings.freq_span and self.settings.harmdata during manual refit
+        self.prop_plot_list = [] # a list to store handles of prop plots
 
 
         # check system
@@ -1046,23 +1047,29 @@ class QCMApp(QMainWindow):
         self.ui.toolButton_settings_mechanics_solve.setMenu(self.ui.menu_settings_mechanics_solve)
 
         # toolButton_spectra_mechanics_plotrows
+        self.ui.actionRows_Time.triggered.connect(self.mechanics_plot_r_time)
+        self.ui.actionRows_Temp.triggered.connect(self.mechanics_plot_r_temp)
+        self.ui.actionRow_s1_Row_s2.triggered.connect(self.mechanics_plot_r1_r2)
+        self.ui.actionRow_s2_Row_s1.triggered.connect(self.mechanics_plot_r2_r1)
         # create menu: menu_spectra_mechanics_plotrows
         self.ui.menu_spectra_mechanics_plotrows = QMenu(self.ui.toolButton_spectra_mechanics_plotrows)
-        self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRows_time)
+        self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRows_Time)
+        self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRows_Temp)
         self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRow_s1_Row_s2)
+        self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRow_s2_Row_s1)
         # add menu to toolbutton
         self.ui.toolButton_spectra_mechanics_plotrows.setMenu(self.ui.menu_spectra_mechanics_plotrows)
 
-        # set action group channel
-        self.ui.group_channel = QActionGroup(self, exclusive=True)
-        self.ui.group_channel.addAction(self.ui.actionADC_1)
-        self.ui.group_channel.addAction(self.ui.actionADC_2)
+        # # set action group channel
+        # self.ui.group_channel = QActionGroup(self, exclusive=True)
+        # self.ui.group_channel.addAction(self.ui.actionADC_1)
+        # self.ui.group_channel.addAction(self.ui.actionADC_2)
 
-        # set action group refType
-        self.ui.group_refType = QActionGroup(self, exclusive=True)
-        self.ui.group_refType.addAction(self.ui.actionData_File)
-        self.ui.group_refType.addAction(self.ui.actionSingle_Point)
-        self.ui.group_refType.addAction(self.ui.actionExternal)
+        # # set action group refType
+        # self.ui.group_refType = QActionGroup(self, exclusive=True)
+        # self.ui.group_refType.addAction(self.ui.actionData_File)
+        # self.ui.group_refType.addAction(self.ui.actionSingle_Point)
+        # self.ui.group_refType.addAction(self.ui.actionExternal)
 
         # set QAction
         self.ui.actionLoad_Settings.triggered.connect(self.on_triggered_load_settings)
@@ -2514,10 +2521,7 @@ class QCMApp(QMainWindow):
         # axis scale will be auto changed when comboBox_plt<n>_opts changed. We don't need to get it here
 
         # from tabWidget_settings
-        if self.settings['radioButton_data_showall']: # show all data
-            mark = False
-            line_group = 'l'
-        elif self.settings['radioButton_data_showmarked']: # show marked data only
+        if self.show_marked_data(): # show marked data only
             # mark = True
             if self.data_saver.with_marks(plt_chnname):
                 line_group = 'lm'
@@ -2525,6 +2529,9 @@ class QCMApp(QMainWindow):
             else:
                 line_group = 'l'
                 mark = False
+        else: # show all data
+            mark = False
+            line_group = 'l'
 
         # get y data
         ydata = self.get_data_by_typestr(plt_opt[0], plt_chnname, mark=mark, unit_t=timeuint, unit_temp=tempunit)
@@ -2540,8 +2547,25 @@ class QCMApp(QMainWindow):
         print('-------------------')
 
         # prepare data for plotting
+        data_list = self.prepare_harm_data_for_mpl_update(plt_chnname, plt_harms, line_group, xdata, ydata, mark_lm_when_l=True)
+        
+        # update mpl_<plt_str>
+        getattr(self.ui, 'mpl_' + plt_str).update_data(*data_list)
+        
+        # # get keys of harms don't want to plot
+        # clr_list = ['l'+str(harm) for harm in range(1, settings_init['max_harmonic']+2, 2) if not self.settings.get('checkBox_' + plt_str + '_h' + str(harm), False)] 
+        # # clear harmonics don't plot
+        # getattr(self.ui, 'mpl_' + plt_str).clr_lines(clr_list)
+
+
+    def prepare_harm_data_for_mpl_update(self, plt_chnname, plt_harms, line_group, xdata, ydata, mark_lm_when_l=True):
+        '''
+        devide xdata/ydata by harmonics and return a list of tuples for data_saver.update_data
+        '''
         data_list = []
-        mark_df = self.data_saver.get_list_column_to_columns_marked_rows(plt_chnname, 'marks', mark=False, dropnanrow=False, deltaval=False, norm=False)
+
+        if mark_lm_when_l: 
+            mark_df = self.data_saver.get_list_column_to_columns_marked_rows(plt_chnname, 'marks', mark=False, dropnanrow=False, deltaval=False, norm=False)            
         for harm in plt_harms: # selected
             harm = str(harm)
             # set xdata for harm
@@ -2555,28 +2579,19 @@ class QCMApp(QMainWindow):
                 harm_ydata = ydata
             else: # multiple columns
                 harm_ydata = ydata.filter(like=harm, axis=1).squeeze() # convert to series
-
-
-            
             data_list.append((line_group+harm, harm_xdata, harm_ydata))
 
-            ## display marked data (solid) along with all data (open) (can be removed if don't like)
-            if self.settings['radioButton_data_showall']:
-                if self.data_saver.with_marks(plt_chnname):
-                    mark_list = mark_df['mark'+harm] == 1
-                    print('mark_list', mark_list)
-                else: 
-                    mark_list = []
-                data_list.append(('lm'+harm, harm_xdata[mark_list], harm_ydata[mark_list]))
-            
-        
-        # update mpl_<plt_str>
-        getattr(self.ui, 'mpl_' + plt_str).update_data(*data_list)
-        
-        # # get keys of harms don't want to plot
-        # clr_list = ['l'+str(harm) for harm in range(1, settings_init['max_harmonic']+2, 2) if not self.settings.get('checkBox_' + plt_str + '_h' + str(harm), False)] 
-        # # clear harmonics don't plot
-        # getattr(self.ui, 'mpl_' + plt_str).clr_lines(clr_list)
+            if mark_lm_when_l:
+                ## display marked data (solid) along with all data (open) (can be removed if don't like)
+                if self.settings['radioButton_data_showall']:
+                    if self.data_saver.with_marks(plt_chnname):
+                        mark_list = mark_df['mark'+harm] == 1
+                        print('mark_list', mark_list)
+                    else: 
+                        mark_list = []
+                    if isinstance(mark_list, pd.Series):
+                        data_list.append(('lm'+harm, harm_xdata[mark_list], harm_ydata[mark_list]))
+        return data_list
 
 
 
@@ -2588,12 +2603,12 @@ class QCMApp(QMainWindow):
         '''
 
         print(typestr)
-        if 'df' == typestr: # get delf
+        if typestr in ['df', 'delfs']: # get delf
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
         elif 'mdf' == typestr: # get delf
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
             data = self.data_saver.minus_columns(data)
-        elif 'dg' == typestr: # get delg
+        elif typestr in ['dg', 'delgs']: # get delg
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
         elif 'dfn' == typestr: # get delfn
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=True)
@@ -2613,9 +2628,9 @@ class QCMApp(QMainWindow):
         elif 'idx' == typestr: # get indices
             data = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanrow=False)
         
-
         return data
-                    
+
+
     def update_data_axis(self, signal):
 
         sender_name = self.sender().objectName()
@@ -2702,6 +2717,20 @@ class QCMApp(QMainWindow):
     #     # set mpl_plt1 xlim
     #     self.ui.mpl_plt1.ax[0].set_xlim(xlim)
 
+
+    def show_marked_data(self):
+        '''
+        check radiobuttons and return mode to display data
+        '''
+        if self.settings['radioButton_data_showall']: # show all data
+            mark = False
+            line_group = 'l'
+        elif self.settings['radioButton_data_showmarked']: # show marked data only
+            mark = True
+
+        return mark
+
+
     def update_time_unit(self, plt_str, plt_opt):
         '''
         update time unit in mpl_<plt_str> x/y label
@@ -2714,34 +2743,21 @@ class QCMApp(QMainWindow):
         if 't' not in plt_opt:
             return
     
-        # timeunit = self.ui.comboBox_timeunit.currentText()
-        timeunit = self.get_axis_settings('comboBox_timeunit')
-
-        if timeunit == 's': 
-            timeunit = r's'
-        elif timeunit == 'm': 
-            timeunit = r'min'
-        elif timeunit == 'h': 
-            timeunit = r'h'        
-        elif timeunit == 'd': 
-            timeunit = r'day'        
-        # convert timeunit from key to abbreviation
-        # timeunit = settings_init['time_unit_opts'][timeunit]
-        print(timeunit)
         if 't' == plt_opt[0]: # is y axis
             ylabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
             print(ylabel)
-            ylabel = ylabel.replace('unit', timeunit)
+            ylabel = self.time_str_unit_replace(ylabel)
             print(ylabel)
             getattr(self.ui, 'mpl_' + plt_str).ax[0].set_ylabel(ylabel)
             print(getattr(self.ui, 'mpl_' + plt_str).ax[0].get_ylabel())
         if 't' == plt_opt[1]: # is x axis
             xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
-            xlabel = xlabel.replace('unit', timeunit)
+            xlabel = self.time_str_unit_replace(xlabel)
             getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
             print(getattr(self.ui, 'mpl_' + plt_str).ax[0].get_xlabel())
             print(xlabel)
         getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
+
 
     def update_temp_unit(self, plt_str, plt_opt):
         '''
@@ -2756,6 +2772,42 @@ class QCMApp(QMainWindow):
         # idx_temp, = [i for i in range(len(plt_opt)) if plt_opt[i] == 'temp']
         # print(idx_temp)
 
+        if 'temp' == plt_opt[0]: # is y axis
+            ylabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
+            ylabel = self.temp_str_unit_replace(ylabel)
+            getattr(self.ui, 'mpl_' + plt_str).ax[0].set_ylabel(ylabel)
+            print(ylabel)
+        if 'temp' == plt_opt[1]: # is x axis
+            xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
+            xlabel = self.temp_str_unit_replace(xlabel)
+            getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
+            print(xlabel)
+        getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
+
+
+    def time_str_unit_replace(self, time_str):
+        '''
+        replace 'unit' in time_str and
+        return time_str with uint set in UI
+        '''
+        timeunit = self.get_axis_settings('comboBox_timeunit')
+        print(timeunit)
+        if timeunit == 's': 
+            timeunit = r's'
+        elif timeunit == 'm': 
+            timeunit = r'min'
+        elif timeunit == 'h': 
+            timeunit = r'h'        
+        elif timeunit == 'd': 
+            timeunit = r'day'        
+        return time_str.replace('unit', timeunit)
+
+
+    def temp_str_unit_replace(self, temp_str):
+        '''
+        replace 'unit' in temp_str and
+        return temp_str with uint set in UI
+        '''
         tempunit = self.get_axis_settings('comboBox_tempunit')
         if tempunit == 'C': 
             tempunit = r'$\degree$C'
@@ -2764,17 +2816,9 @@ class QCMApp(QMainWindow):
         elif tempunit == 'F': 
             tempunit = r'$\degree$F'
         print(tempunit)
-        if 'temp' == plt_opt[0]: # is y axis
-            ylabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
-            ylabel = ylabel.replace('unit', tempunit)
-            getattr(self.ui, 'mpl_' + plt_str).ax[0].set_ylabel(ylabel)
-            print(ylabel)
-        if 'temp' == plt_opt[1]: # is x axis
-            xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
-            xlabel = xlabel.replace('unit', tempunit)
-            getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
-            print(xlabel)
-        getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
+
+        return temp_str.replace('unit', tempunit)
+
 
     def clr_mpl_harm(self):
         '''
@@ -2787,7 +2831,7 @@ class QCMApp(QMainWindow):
         print(sender, self.settings[sender])
 
         if not self.settings[sender]: # unchecked
-            self.clr_mpl_l(str_list[1], line_group_list=['l', 'lm'], harm_list=[sender[-1]])
+            self.clr_mpl_l(str_list[1], line_group_list=['l', 'lm'], harm_list=[sender[-1]]) # sender[-1] is the harm from checkBox_plt<n>_h<harm>
 
     def set_mpl_lm_style(self, signal):
         line_list = ['lm'+str(i) for i in range(1, settings_init['max_harmonic']+2, 2)]
@@ -3061,8 +3105,8 @@ class QCMApp(QMainWindow):
 
         print('f1', self.qcm.f1, 'rh', rh)
         # get nhcalc
-        nhcalc_list = ['353']
-        # get qcm data (columns=['queue_id', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs'])
+        nhcalc_list = self.gen_nhcalc_list()
+        # get qcm data (columns=['queue_id', 't', 'temp', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs'])
         # 'delf', 'delgs' may not necessary
         qcm_df = self.data_saver.df_qcm(chn_name)
 
@@ -3070,14 +3114,341 @@ class QCMApp(QMainWindow):
         for nhcalc in nhcalc_list:
             mech_df = self.data_saver.update_mech_df_shape(chn_name, nhcalc, rh)
 
-            mech_df = self.qcm.analyze(nhcalc, queue_ids, qcm_df, mech_df)
+            print(mech_df)
+
+            # if live update is not needed, use QCM.analyze to replace. the codes should be the same
+            nh = QCM.nhcalc2nh(nhcalc)
+            for queue_id in queue_ids: # iterate all ids
+                print('queue_id', queue_id)
+                # print('qcm_df', qcm_df)
+                print(type(qcm_df))
+                # queue index
+                idx = qcm_df[qcm_df.queue_id == queue_id].index.astype(int)[0]
+                # idx = qcm_df[qcm_df.queue_id == queue_id].index
+                print('index', qcm_df.index)
+                print('idx', idx)
+                # qcm data of queue_id
+                qcm_queue = qcm_df.loc[[idx], :].copy() # as a dataframe
+                # mechanic data of queue_id
+                mech_queue = mech_df.loc[[idx], :].copy()  # as a dataframe
+                print(mech_queue)
+
+                # obtain the solution for the properties
+                if self.qcm.all_nhcaclc_harm_not_na(nh, qcm_queue):
+                    # solve a single queue
+                    mech_queue = self.qcm.solve_single_queue(nh, qcm_queue, mech_queue)
+                    # save back to mech_df
+                    print(mech_df.loc[[idx], :].to_dict())
+                    print(mech_queue.to_dict())
+                    # set mech_queue index the same as where it is from for update
+                    print(mech_df.delg_calcs[idx])
+                    mech_queue.index = [idx]
+                    mech_df.update(mech_queue)
+                    # print(mech_df)
+                    print(mech_df.delg_calcs[idx])
+
+                    if self.settings['checkBox_settings_mech_liveupdate']: # live update
+                        # update tableWidget_spectra_mechanics_table
+                        self.update_spectra_mechanics_table(chn_name, nhcalc, rh, queue_id, qcm_queue, mech_queue)
+
+                else:
+                    # since the df already initialized with nan values, nothing to do here
+                    pass
 
             # save back to data_saver
-            self.data_saver.save_mech_df(chn_name, nhcalc, rh, mech_df)
+            self.data_saver.update_mech_df_in_prop(chn_name, nhcalc, rh, mech_df)
 
             print('{} calculation finished'.format(nhcalc))
 
 
+    def update_spectra_mechanics_table(self, chn_name, nhcalc, rh, queue_id,qcm_queue, mech_queue):
+        '''
+        this function update data in tableWidget_spectra_mechanics_table 
+        and relative information displaying
+        '''
+        # convert grho, drho and phi unit in mech_queue
+        mech_queue = self.qcm.convert_mech_unit(mech_queue)
+        # update current mech_key
+        self.ui.label_spectra_mechanics_currmechkey.setText('Solution: {}; id: {}'.format(self.data_saver.get_mech_key(nhcalc, rh), queue_id))
+        
+        self.ui.label_spectra_mechanics_currmechkey.update()
+
+        # clear table
+        table = self.ui.tableWidget_spectra_mechanics_table
+        table.clearContents()
+        # get n of rows and columns of the table
+        tb_rows = table.rowCount()
+        tb_cols = table.columnCount()
+
+        # get keys in qcm_queue and mech_queue
+        qcm_cols = qcm_queue.columns
+        mech_cols = mech_queue.columns
+
+        # update table contents
+        for tb_row in range(tb_rows):
+            vh = table.verticalHeaderItem(tb_row).text()
+            # print('vh', vh)
+            # find corresponding key in qcm_queue or mech_queue
+            for key, val in settings_init['mech_table_rowheaders'].items():
+                if vh == val:
+                    df_colname = key
+                    # print(key)
+                    if df_colname in qcm_cols:
+                        df_queue = qcm_queue
+                        # print(qcm_cols)
+                    elif df_colname in mech_cols:
+                        df_queue = mech_queue
+                        # print(mech_cols)
+                    else:
+                        print('did not find', key, val)
+                    break
+                else:
+                    # print(vh.encode('utf-8'))
+                    # print(val.encode('utf-8'))
+                    df_colname = ''
+            if df_colname:
+                row_data = df_queue[df_colname].iloc[0]
+                for tb_col in range(tb_cols):
+                    # print('r,c', tb_row, tb_col)
+                    # if df_colname.endswith('s'): # multiple values
+                    #     data = df_queue[df_colname].iloc[0][tb_col]
+                    # else:
+                    #     data = df_queue[df_colname].iloc[0]
+                    if isinstance(row_data, list):
+                        data = df_queue[df_colname].iloc[0][tb_col]
+                    else:
+                        data = row_data
+                    # print(data)
+
+                    tableitem = self.ui.tableWidget_spectra_mechanics_table.item(tb_row, tb_col)
+                    if tableitem: # tableitem != 0
+                        print('item not set')
+                        tableitem.setText(str(data))
+                    else: # item is not set
+                        # print('item set')
+                        self.ui.tableWidget_spectra_mechanics_table.setItem(tb_row, tb_col, QTableWidgetItem(str(data)))
+        # print(self.ui.tableWidget_spectra_mechanics_table.item(0,0))
+        self.ui.tableWidget_spectra_mechanics_table.viewport().update() # TODO update doesn't work. update in UI
+
+        # TODO update contours if checked 
+
+
+    def gen_nhcalc_str(self):
+        '''
+        generate nhcalc str from relative widgets
+        spinBoxsettings_mechanics_nhcalc_n1/2/3
+        '''
+        n1 = self.settings['spinBoxsettings_mechanics_nhcalc_n1']
+        n2 = self.settings['spinBoxsettings_mechanics_nhcalc_n2']
+        n3 = self.settings['spinBoxsettings_mechanics_nhcalc_n3']
+        return ''.join([n1, n2, n3])
+
+
+    def gen_nhcalc_list(self):
+        '''
+        make list from nhcalc strs
+        '''
+        #TODO can be extanded to multiple strings
+        return [self.gen_nhcalc_str()]
+
+
+    def mechanics_plot_r_time(self):
+        self.mechanics_plot('t')
+
+
+    def mechanics_plot_r_temp(self):
+        self.mechanics_plot('temp')
+
+
+    def mechanics_plot_r1_r2(self):
+        self.mechanics_plot('r1r2')
+
+    def mechanics_plot_r2_r1(self):
+        self.mechanics_plot('r2r1')
+
+
+    def mechanics_plot(self, plot_type):
+        '''
+        make plot by plot_type
+        variable is given by row selection of tableWidget_spectra_mechanics_table
+        '''
+        print('plot_type', plot_type)
+
+        # get chn_name
+        chn_name = self.mech_chn
+        print('chn_name', chn_name)
+
+        # get mech_key
+        nhcalc = self.gen_nhcalc_str()
+        print('nhcalc', nhcalc)
+        
+        rh =int(self.settings['comboBox_settings_mechanics_refG']) # rh can also be gotten from label_spectra_mechanics_currmechkey
+        print('rh', rh)
+        
+        mech_key = self.data_saver.get_mech_key(nhcalc, rh)
+        print('mech_key', mech_key)
+        print('prop_chn_keys', getattr(self.data_saver, chn_name + '_prop').keys())
+
+        # check if data exists mech_key
+        if mech_key not in getattr(self.data_saver, chn_name + '_prop').keys(): # no corresponding prop data 
+            return
+
+        # get harmonics to plot
+        plt_harms = [str(i) for i in range(1, settings_init['max_harmonic']+2, 2) if self.settings['checkBox_nhplot' + str(i)]]
+        print('plt_harms', plt_harms)
+
+        if not plt_harms: # no harmonic selected
+            return
+
+        # get variables to plot
+        varplot = []
+        selrowidx = self.ui.tableWidget_spectra_mechanics_table.selectionModel().selectedRows() # fully selected rows
+        for idx in selrowidx:
+            print(idx.row())
+            vh = self.ui.tableWidget_spectra_mechanics_table.verticalHeaderItem(idx.row()).text()
+            print(vh)
+            for key, val in settings_init['mech_table_rowheaders'].items(): 
+                if vh == val:
+                    varplot.append(key)
+
+        if not varplot: # no variable selected
+            return
+        
+        # get data mode showall or marked
+        # from tabWidget_settings
+        if self.show_marked_data(): # show marked data only
+            if self.data_saver.with_marks(chn_name):
+                line_group = 'lm'
+                mark = True
+            else:
+                line_group = 'l'
+                mark = False
+        else: # show all data
+            mark = False
+            line_group = 'l'
+
+        if plot_type in ['t', 'temp']:
+            if plot_type == 't':
+                # get timeunit
+                timeunit = self.settings['comboBox_timeunit']
+                xdata = self.data_saver.get_t_marked_rows(chn_name, dropnanrow=False, unit=timeunit) # time
+                xlabel = settings_init['data_plt_axis_label']['t'] # r'Time (unit)
+                xlabel = self.time_str_unit_replace(xlabel) # replace unit by comboBox_timeunit
+
+            elif plot_type == 'temp':
+                # get tempunit
+                tempunit = self.settings['comboBox_tempunit']
+                xdata = self.data_saver.get_temp_by_uint_marked_rows(chn_name, dropnanrow=False, unit=tempunit) # temp
+                xlabel = settings_init['data_plt_axis_label']['t'] # r'Time (unit)
+                xlabel = self.temp_str_unit_replace(xlabel) # replace unit by comboBox_tempunit
+
+            for var in varplot:
+                ydata = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var, mark=mark, dropnanrow=False)
+                ydata = self.qcm.convert_mech_unit(ydata) # convert unit for plot
+                ylabel = settings_init['data_plt_axis_label'][var]
+                if '_rh' in var: # variable referenced to rh
+                    ylabel = ylabel.replace('{rh}', '{' + str(rh) + '}')
+                
+                ## make the plot
+                # create figure
+                self.prop_plot_list.append(
+                    MatplotlibWidget(
+                        parent=self.ui.scrollArea_data_mechanics_plots, 
+                        axtype='prop',
+                        showtoolbar=True,
+                        xlabel=xlabel,
+                        ylabel=ylabel,
+                        title=mech_key,
+                    )
+                )
+                
+                # check if data is harmonic dependent
+                if var.endswith('s'):
+                    figharms = plt_harms
+                else:
+                    figharms = [str(rh)]
+                # prepare data
+                data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, mark_lm_when_l=False)
+                
+                # update data in figure
+                self.prop_plot_list[-1].update_data(*data_list)
+                # add to scrollarea
+                self.add_mpl_to_prop_scrollarea(self.prop_plot_list)
+
+
+        elif plot_type in ['r1r2', 'r2r1']:
+            if len(varplot) < 2: # not enough variables selected
+                print('Not enough rows are selected! Please select 2 rows.')
+                return
+            elif len(varplot) > 2: # too many variables selected
+                print('Too many rows are selected! Please select 2 rows.')
+                return
+            
+            if plot_type == 'r2r1': 
+                varplot.reverse() # reverse varplot
+
+            # varplot[0] as y
+            ydata = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, varplot[0], mark=mark, dropnanrow=False)
+            ydata = self.qcm.convert_mech_unit(ydata) # convert unit for plot
+            ylabel = settings_init['data_plt_axis_label'][varplot[0]]
+            if '_rh' in varplot[0]: # variable referenced to rh
+                ylabel = ylabel.replace('{rh}', '{' + str(rh) + '}')
+
+            # varplot[1] as x
+            xdata = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, varplot[1], mark=mark, dropnanrow=False)
+            xdata = self.qcm.convert_mech_unit(xdata) # convert unit for plot
+            ylabel = settings_init['data_plt_axis_label'][varplot[1]]
+            if '_rh' in varplot[1]: # variable referenced to rh
+                ylabel = ylabel.replace('{rh}', '{' + str(rh) + '}')
+
+            ## make the plot
+            # create figure
+            self.prop_plot_list.append(
+                MatplotlibWidget(
+                    parent=self.ui.scrollArea_data_mechanics_plots, 
+                    axtype='prop',
+                    showtoolbar=True,
+                    xlabel=xlabel,
+                    ylabel=ylabel,
+                    title=mech_key,
+                )
+            )
+            # check if data is harmonic dependent
+            if var.endswith('s'):
+                figharms = plt_harms
+            else:
+                figharms = [str(rh)]
+            # prepare data
+            data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, mark_lm_when_l=False)
+            
+            # update data in figure
+            self.prop_plot_list[-1].update_data(*data_list)
+            # add to scrollarea
+            self.add_mpl_to_prop_scrollarea(self.prop_plot_list)
+
+
+    def add_mpl_to_prop_scrollarea(self, prop_plot_list):
+        '''
+        add mpl figure (prop_plot_list[-1]) into scrollArea_data_mechanics_plots
+        at the end of its layout
+        '''
+        n = len(prop_plot_list)
+        mpl = prop_plot_list[-1]
+
+        self.ui.gridLayout_propplot.addWidget(mpl, (n-1)//2, (n-1)%2)
+        return
+        self.ui.scrollArea_data_mechanics_plots.setWidget(mpl)
+        self.ui.scrollArea_data_mechanics_plots.show()
+        return
+        layout = self.ui.scrollArea_data_mechanics_plots.layout()
+        layout.insertWidget(layout.count() - 1, mpl)
+
+
+    def del_prop_plot(self):
+        '''
+        delete all prop plots in 
+        '''
+        pass
 
     def on_clicked_set_temp_sensor(self, checked):
         # below only runs when vna is available
@@ -3146,6 +3517,7 @@ class QCMApp(QMainWindow):
                 
             # update checkBox_settings_temp_sensor to self.settings
             # self.update_tempsensor()
+
 
     def statusbar_temp_update(self, curr_temp=None):
 

@@ -164,8 +164,6 @@ class MatplotlibWidget(QWidget):
         # self.fig.tight_layout()
 
 
-
-
     def initax_xy(self, *args, **kwargs):
         # axes
         ax1 = self.fig.add_subplot(111, facecolor='none')
@@ -185,6 +183,7 @@ class MatplotlibWidget(QWidget):
         
         # append to list
         self.ax.append(ax1)
+
 
     def initax_xyy(self):
         '''
@@ -211,6 +210,7 @@ class MatplotlibWidget(QWidget):
 
         # append ax2 to self.ax
         self.ax.append(ax2)
+
 
     def init_sp(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
@@ -341,10 +341,12 @@ class MatplotlibWidget(QWidget):
         self.t['harm'] = self.fig.text(0.01, 0.98, '', va='top',ha='left') # option: weight='bold'
         self.t['chi'] = self.fig.text(0.01, 0.01, '', va='bottom',ha='left', fontsize='7')
 
+
     def update_sp_text_harm(self, harm):
         if isinstance(harm, int):
             harm = str(harm)
         self.t['harm'].set_text(harm)
+
 
     def update_sp_text_chi(self, chi=None):
         '''
@@ -354,6 +356,7 @@ class MatplotlibWidget(QWidget):
             self.t['chi'].set_text('')
         else:
             self.t['chi'].set_text(r'$\chi^2$ = {:.4f}'.format(chi))
+
 
     def init_sp_fit(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
@@ -458,6 +461,7 @@ class MatplotlibWidget(QWidget):
             rectprops=dict(facecolor='blue', alpha=0.2)
         )        
 
+
     def sp_spanselect_zoomin_callback(self, xclick, xrelease): 
         '''
         callback of span_selector
@@ -487,8 +491,7 @@ class MatplotlibWidget(QWidget):
         # print('new', new_f1, new_f2)
         # set new xlim
         self.ax[0].set_xlim(new_f1, new_f2)
-
-        
+       
 
     def init_sp_polar(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
@@ -647,6 +650,7 @@ class MatplotlibWidget(QWidget):
             # reset
             self.sel_mode = 'none'
 
+
     def data_rectselector_callback(self, eclick, erelease):
         '''
         when rectangle selector is active
@@ -701,6 +705,7 @@ class MatplotlibWidget(QWidget):
         # plot the selected data
         self.update_data(*sel_list)
 
+
     def data_onpick_callback(self, event):
         '''
         callback function of mpl_data pick_event
@@ -730,6 +735,7 @@ class MatplotlibWidget(QWidget):
 
         # set
         self.sel_mode = 'picker'
+
 
     def init_contour(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         '''
@@ -798,6 +804,35 @@ class MatplotlibWidget(QWidget):
         # # print(dir(self.fig))
         # fsize = self.fig.get_figheight()
  
+
+    def init_prop(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
+        '''
+        initialize property plot
+        initialize plot: 
+            .l<nharm> 
+        '''
+        self.initax_xy()
+
+        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+            self.l['l' + str(i)] = self.ax[0].plot(
+                [], [], 
+                marker='o', 
+                markerfacecolor='none', 
+                # picker=5, # 5 points tolerance
+                label=str(i),
+                alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
+            ) # l
+            self.l['lm' + str(i)] = self.ax[0].plot(
+                [], [], 
+                marker='o', 
+                # markerfacecolor='none', 
+                # picker=5, # 5 points tolerance
+                label=str(i),
+                alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
+            ) # lm
+        
+        # set label of ax[1]
+        self.set_ax(self.ax[0], title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
 
     # def sizeHint(self):
     #     return QSize(*self.get_width_height())
@@ -895,6 +930,8 @@ class MatplotlibWidget(QWidget):
             self.init_contour(title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
         elif self.axtype == 'legend':
             self.init_legendfig()
+        elif self.axtype == 'prop':
+            self.init_prop(title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
         else:
             pass
 
@@ -931,6 +968,7 @@ class MatplotlibWidget(QWidget):
         # TODP the flush_events() makes the UI blury
         self.canvas.flush_events() # flush the GUI events 
 
+
     def get_data(self, ls=[]):
         '''
         get data of given ls (lis of string)
@@ -943,6 +981,7 @@ class MatplotlibWidget(QWidget):
             xdata, ydata = self.l[l][0].get_data()
             data.append((xdata, ydata))
         return data
+
 
     def del_templines(self, ax=None):
         ''' 
@@ -963,8 +1002,10 @@ class MatplotlibWidget(QWidget):
         self.canvas.draw()
         self.canvas.flush_events() # flush the GUI events 
 
+
     def clr_all_lines(self):
         self.clr_lines()
+
 
     def clr_lines(self, l_list=None):
         ''' 
@@ -990,6 +1031,7 @@ class MatplotlibWidget(QWidget):
         self.canvas.draw()
         self.canvas.flush_events() # flush the GUI events 
 
+
     def change_style(self, line_list, **kwargs):
         '''
         set style of artists in class
@@ -1001,6 +1043,7 @@ class MatplotlibWidget(QWidget):
         for key, val in kwargs.items():
             for l in line_list:
                 eval("self.l['{0}'][0].set_{1}('{2}')".format(l, key, val))
+
 
     def new_plt(self, xdata=[], ydata=[], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         ''' 
@@ -1021,6 +1064,7 @@ class MatplotlibWidget(QWidget):
             ) # l[i]
 
         self.ax[0].autoscale()
+
 
     def add_temp_lines(self, ax=None, xlist=[], ylist=[]):
         '''

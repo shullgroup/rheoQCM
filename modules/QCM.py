@@ -31,6 +31,12 @@ def nh2i(nh):
     '''
     return int((nh - 1) / 2)
     
+def nhcalc2nh(nhcalc):
+    '''
+    convert nhcalc (str) to list of harmonics (int) in nhcalc
+    '''
+    return [int(s) for s in nhcalc] 
+
 
 
 class QCM:
@@ -298,17 +304,31 @@ class QCM:
     
         # save back to mech_queue
         # single value
-        mech_queue['drho'] = [drho] # in kg/m2
-        mech_queue['drho_err'] = [err['drho']] # in kg/m2
-        mech_queue['grho_rh'] = [grho_rh] # in Pa kg/m3
-        mech_queue['grho_rh_err'] = [err['grho_rh']] # in Pa kg/m3
-        mech_queue['phi'] = [phi] # in rad
-        mech_queue['phi_err'] = [err['phi']] # in rad
-        mech_queue['dlam_rh'] = [dlam_rh] # in na
-        mech_queue['lamrho'] = [np.nan] # in kg/m2
-        mech_queue['delrho'] = [np.nan] # in kg/m2
-        mech_queue['delf_delfsns'] = [np.nan]
-        mech_queue['rh'] = [rh]
+        # mech_queue['drho'] = [drho] # in kg/m2
+        # mech_queue['drho_err'] = [err['drho']] # in kg/m2
+        # mech_queue['grho_rh'] = [grho_rh] # in Pa kg/m3
+        # mech_queue['grho_rh_err'] = [err['grho_rh']] # in Pa kg/m3
+        # mech_queue['phi'] = [phi] # in rad
+        # mech_queue['phi_err'] = [err['phi']] # in rad
+        # mech_queue['dlam_rh'] = [dlam_rh] # in na
+        # mech_queue['lamrho'] = [np.nan] # in kg/m2
+        # mech_queue['delrho'] = [np.nan] # in kg/m2
+        # mech_queue['delf_delfsn'] = [np.nan]
+        # mech_queue['rh'] = [rh]
+
+        # repeat values for single value
+        tot_harms = len(delf_calcs)
+        mech_queue['drho'] = [[drho] * tot_harms] # in kg/m2
+        mech_queue['drho_err'] = [[err['drho']] * tot_harms] # in kg/m2
+        mech_queue['grho_rh'] = [[grho_rh] * tot_harms] # in Pa kg/m3
+        mech_queue['grho_rh_err'] = [[err['grho_rh']] * tot_harms] # in Pa kg/m3
+        mech_queue['phi'] = [[phi] * tot_harms] # in rad
+        mech_queue['phi_err'] = [[err['phi']] * tot_harms] # in rad
+        mech_queue['dlam_rh'] = [[dlam_rh] * tot_harms] # in na
+        mech_queue['lamrho'] = [[np.nan] * tot_harms] # in kg/m2
+        mech_queue['delrho'] = [[np.nan] * tot_harms] # in kg/m2
+        mech_queue['delf_delfsn'] = [[np.nan] * tot_harms]
+        mech_queue['rh'] = [[rh] * tot_harms]
 
         # multiple values in list
         mech_queue['delf_calcs'] = [delf_calcs]
@@ -558,7 +578,7 @@ class QCM:
         '''
         calculate with qcm_df and save to mech_df
         '''
-        nh = [int(s) for s in nhcalc] # list of harmonics (int) in nhcalc
+        nh = nhcalc2nh(nhcalc) # list of harmonics (int) in nhcalc
         for queue_id in queue_ids: # iterate all ids
             print('queue_id', queue_id)
             # print('qcm_df', qcm_df)
@@ -587,6 +607,25 @@ class QCM:
                 # since the df already initialized with nan values, nothing todo
                 pass
         return mech_df
+
+
+    def convert_mech_unit(self, mech_df):
+        '''
+        convert unit of drho, grho, phi from IS to those convient to use
+        input: df or series 
+        '''
+        print(type(mech_df))
+        print(mech_df)
+        df = mech_df.copy()
+        cols = mech_df.columns
+        for col in cols:
+            if 'drho' in col:
+                df[col] = df[col].apply(lambda x: list(np.array(x) * 1000) if isinstance(x, list) else x * 1000) # from kg/m2 to g/cm2 (~ um)
+            elif 'grho' in col:
+                df[col] = df[col].apply(lambda x: list(np.array(x) / 1000) if isinstance(x, list) else x / 1000) # from Pa kg/m3 to Pa g/cm3 (~ Pa)
+            elif 'phi' in col:
+                df[col] = df[col].apply(lambda x: list(np.rad2deg(x)) if isinstance(x, list) else np.rad2deg(x)) # from rad to deg
+        return df
 
 
 if __name__ == '__main__':
