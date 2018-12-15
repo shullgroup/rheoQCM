@@ -3248,7 +3248,7 @@ class QCMApp(QMainWindow):
         n1 = self.settings['spinBox_settings_mechanics_nhcalc_n1']
         n2 = self.settings['spinBox_settings_mechanics_nhcalc_n2']
         n3 = self.settings['spinBox_settings_mechanics_nhcalc_n3']
-        return ''.join([n1, n2, n3])
+        return ''.join(map(str, [n1, n2, n3]))
 
 
     def gen_nhcalc_list(self):
