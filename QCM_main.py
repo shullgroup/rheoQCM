@@ -1457,7 +1457,7 @@ class QCMApp(QMainWindow):
         return fileName 
 
     def on_triggered_new_exp(self):
-        process = self.process_messagebox(message='Create a new experiment!')
+        process = self.process_messagebox(message=['Create a new experiment!'])
 
         if not process: 
             return
@@ -1484,7 +1484,7 @@ class QCMApp(QMainWindow):
 
     def on_triggered_load_exp(self): 
 
-        process = self.process_messagebox(message='Load new experiment data!')
+        process = self.process_messagebox(message=['Load new experiment data!'])
 
         if not process: 
             return
@@ -1512,7 +1512,7 @@ class QCMApp(QMainWindow):
     # 
     def on_triggered_load_settings(self):
 
-        process = self.process_messagebox(message='Load settings from other file!')
+        process = self.process_messagebox(message=['Load settings from other file!'])
 
         if not process: 
             return
@@ -1543,7 +1543,7 @@ class QCMApp(QMainWindow):
             self.load_settings()
 
     def on_triggered_export_settings(self):
-        process = self.process_messagebox(message='Export settings to a file!')
+        process = self.process_messagebox(message=['Export settings to a file!'])
         if not process: 
             return
 
@@ -1604,7 +1604,7 @@ class QCMApp(QMainWindow):
 
     def on_triggered_actionExport(self):
         ''' export data to a selected format '''
-        process = self.process_messagebox(message='Export data to a selected format!')
+        process = self.process_messagebox(message=['Export data to a selected format!'])
         if not process: 
             return
 
@@ -1710,7 +1710,7 @@ class QCMApp(QMainWindow):
         if not self.data_saver.path: # no data 
             return
 
-        process = self.process_messagebox(message='All data will be deleted!')
+        process = self.process_messagebox(message=['All data will be deleted!'])
 
         if not process: 
             return
