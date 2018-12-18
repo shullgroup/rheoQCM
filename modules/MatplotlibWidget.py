@@ -811,18 +811,21 @@ class MatplotlibWidget(QWidget):
         self.initax_xy()
 
         for i in range(1, int(settings_init['max_harmonic']+2), 2):
-            self.l['l' + str(i)] = self.ax[0].plot(
+            self.l['l' + str(i)] = self.ax[0].errorbar(
                 [], [], 
+                yerr=None,
                 marker='o', 
                 markerfacecolor='none', 
                 # picker=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
             ) # l
-            self.l['lm' + str(i)] = self.ax[0].plot(
+        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+            self.l['lm' + str(i)] = self.ax[0].errorbar(
                 [], [], 
+                yerr=None,
                 marker='o', 
-                # markerfacecolor='none', 
+                color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
                 # picker=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used

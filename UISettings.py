@@ -799,7 +799,7 @@ settings_default = {
     'comboBox_tempunit': 'C',
     'comboBox_xscale': 'linear',
     'comboBox_yscale': 'linear',
-    'checkBox_linkx': True,
+    'checkBox_linkx': False,
 
     ### default plot selections ###
     # default selections for spectra show

@@ -587,12 +587,14 @@ class QCMApp(QMainWindow):
 
 
         # move center pushButton_settings_harm_cntr to treeWidget_settings_settings_harmtree
-        self.move_to_col2(
-            self.ui.pushButton_settings_harm_cntr, 
-            self.ui.treeWidget_settings_settings_harmtree, 
-            'Scan', 
-            50
-        )
+        # comment it for now, this button is not using 
+        # move it to other place will disable the hide function ran above
+        # self.move_to_col2(
+        #     self.ui.pushButton_settings_harm_cntr, 
+        #     self.ui.treeWidget_settings_settings_harmtree, 
+        #     'Scan', 
+        #     50
+        # )
         
         # move center checkBox_settings_temp_sensor to treeWidget_settings_settings_hardware
         self.move_to_col2(
