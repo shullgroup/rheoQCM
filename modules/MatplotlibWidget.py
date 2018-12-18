@@ -156,8 +156,8 @@ class MatplotlibWidget(QWidget):
         #     self.fig.subplots_adjust(left=0.12, bottom=0.13, right=.97, top=.98, wspace=0, hspace=0)
         #     # self.fig.tight_layout()
         #     # self.fig.tight_layout(pad=0.5, h_pad=0, w_pad=0, rect=(0, 0, 1, 1))
-        self.canvas.draw()
-        self.canvas.flush_events() # flush the GUI events 
+
+        self.canvas_draw()
     
              
         # self.fig.set_constrained_layout_pads(w_pad=0., h_pad=0., hspace=0., wspace=0.) # for python >= 3.6
@@ -730,8 +730,7 @@ class MatplotlibWidget(QWidget):
         print(x_s.iloc[ind], y_s.iloc[ind])
         self.l['lp'][0].set_data(x_s.iloc[ind], y_s.iloc[ind])
         self.l['lp'][0].set_label(thisline.get_label() + '_' + str(ind)) # transfer the label of picked line and ind to 'lp'
-        self.canvas.draw()
-        self.canvas.flush_events() # flush the GUI events 
+        self.canvas_draw()
 
         # set
         self.sel_mode = 'picker'
@@ -759,8 +758,7 @@ class MatplotlibWidget(QWidget):
             X, Y, Z, levels, # X, Y, Z, N
         ) # l
         self.l['colorbar'] = plt.colorbar(self.l['C'], ax=self.ax[0]) # lm
-        self.canvas.draw()
-        self.canvas.flush_events() # flush the GUI events 
+        self.canvas_draw()
 
         # set label of ax[1]
         self.set_ax(self.ax[0], xlabel=r'$d/\lambda$',ylabel=r'$\Phi$ ($\degree$)')
@@ -789,8 +787,7 @@ class MatplotlibWidget(QWidget):
             labelspacing=0.0, 
             columnspacing=0.5
         )
-        self.canvas.draw()
-        self.canvas.flush_events() # flush the GUI events 
+        self.canvas_draw()
         
         # set label of ax[1]
         self.set_ax(self.ax[0], title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs)
@@ -959,14 +956,9 @@ class MatplotlibWidget(QWidget):
             # self.canvas.blit(ax.bbox)
 
         for ax in axs:
-            ax.relim()
-            ax.autoscale_view(True,True,True)
-        self.canvas.draw()
-        # self.canvas.draw_idle()
-        # self.canvas.draw_event()
-        # self.canvas.draw_cursor()
-        # TODP the flush_events() makes the UI blury
-        self.canvas.flush_events() # flush the GUI events 
+            self.reset_ax_lim(ax)
+
+        self.canvas_draw()
 
 
     def get_data(self, ls=[]):
@@ -999,8 +991,8 @@ class MatplotlibWidget(QWidget):
             ax.lines.remove(l_temp[0]) # remove from ax
             self.l['temp'].remove(l_temp) # remove from list .l['temp']
 
-        self.canvas.draw()
-        self.canvas.flush_events() # flush the GUI events 
+        self.reset_ax_lim(ax)
+        self.canvas_draw()
 
 
     def clr_all_lines(self):
@@ -1028,8 +1020,8 @@ class MatplotlibWidget(QWidget):
                 for ax in self.ax:
                     self.del_templines(ax=ax)
 
-        self.canvas.draw()
-        self.canvas.flush_events() # flush the GUI events 
+        self.reset_ax_lim(ax)
+        self.canvas_draw()
 
 
     def change_style(self, line_list, **kwargs):
@@ -1090,8 +1082,28 @@ class MatplotlibWidget(QWidget):
                     color=color[-1],
                     )
                 )
+        self.canvas_draw()
+
+
+    def canvas_draw(self):
+        '''
+        redraw canvas after data changed
+        '''
         self.canvas.draw()
+        # self.canvas.draw_idle()
+        # self.canvas.draw_event()
+        # self.canvas.draw_cursor()
         self.canvas.flush_events() # flush the GUI events 
+
+
+    def reset_ax_lim(self, ax):
+        '''
+        reset the lim of ax
+        this change the display and where home button goes back to
+        '''
+        ax.relim(visible_only=True)
+        ax.autoscale_view(True,True,True)
+        # ax.autoscale(True, 'both', False) # the same as autoscale_view
 
 def press_zoomX(obj, event):
     event.key = 'x'

@@ -532,9 +532,9 @@ class DataSaver:
         '''
         df_chn = getattr(self, chn_name).copy()
         if col == '':
-            return df_chn.loc[queue_id, :]
+            return df_chn.loc[df_chn.queue_id == queue_id, :]
         elif col in df_chn.keys(): # col is a column name
-            return df_chn.loc[queue_id, col]
+            return df_chn.loc[df_chn.queue_id == queue_id, col]
 
 
     def update_queue_col(self, chn_name, queue_id, col, val):
