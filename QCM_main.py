@@ -1724,6 +1724,8 @@ class QCMApp(QMainWindow):
             'pushButton_appendfile_disable_list',
         )
 
+        # delete prop plot
+        self.del_prop_plot()
         # clear all mpl objects
         self.clear_all_mpl()
 
