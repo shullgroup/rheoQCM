@@ -353,6 +353,8 @@ settings_init = {
     'mpl_sp_legfontsize': 5,
     # legend font size for normal figures
     'mpl_legfontsize': 8,
+    # cap size for prop figures
+    'mpl_capsize': 8,
 
     # progressBar settings
     # the programe will try to separate the scan_interval to 

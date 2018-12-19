@@ -31,6 +31,7 @@ from matplotlib.backend_tools import ToolBase, ToolToggleBase
 from matplotlib.projections import register_projection
 from matplotlib.widgets import RectangleSelector, SpanSelector
 import matplotlib.ticker as ticker
+from matplotlib.container import ErrorbarContainer # for checking if l[ln] is ErrorbarContainer
 
 import types
 
@@ -685,7 +686,7 @@ class MatplotlibWidget(QWidget):
                     sel_bool = harm_x.between(x1, x2) & harm_y.between(y1, y2)
 
                     # save data for plotting selected data
-                    sel_list.append(('ls'+harm, harm_x[sel_bool], harm_y[sel_bool]))
+                    sel_list.append({'ln': 'ls'+harm, 'x': harm_x[sel_bool], 'y': harm_y[sel_bool]})
 
                     # # save indices for later process
                     # sel_idx = harm_x[sel_bool].index
@@ -813,22 +814,27 @@ class MatplotlibWidget(QWidget):
         for i in range(1, int(settings_init['max_harmonic']+2), 2):
             self.l['l' + str(i)] = self.ax[0].errorbar(
                 [], [], 
-                yerr=None,
+                yerr=np.nan,
+                xerr=np.nan,
                 marker='o', 
                 markerfacecolor='none', 
                 # picker=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
+                capsize=settings_init['mpl_capsize'],
             ) # l
+
         for i in range(1, int(settings_init['max_harmonic']+2), 2):
             self.l['lm' + str(i)] = self.ax[0].errorbar(
                 [], [], 
                 yerr=None,
+                xerr=None,
                 marker='o', 
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
                 # picker=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
+                capsize=settings_init['mpl_capsize'],
             ) # lm
         
         # set label of ax[1]
@@ -937,20 +943,56 @@ class MatplotlibWidget(QWidget):
 
     def update_data(self, *args):
         ''' 
-        update data of given in args (tuple)
-        arg = (l, x, y)
+        update data of given in args (dict)
+        arg = {'ln':, 'x':, 'y':, 'xerr':, 'yerr':, 'label':,}
             ln: string of line name
             x : x data
             y : y data
+            yerr: y error
         '''
         axs = set() # initialize a empty set
-        for ln, x, y in args:
-            # print(len(x), len(y))
-            # self.l[ln][0].set_xdata(x)
-            # self.l[ln][0].set_ydata(y)
-            self.l[ln][0].set_data(x, y)
-            axs.add(self.l[ln][0].axes)
+        
+        for arg in args:
+            keys = arg.keys()
+
+            if ('xerr' in keys) or ('yerr' in keys): # errorbar with caps and barlines
+                if isinstance(self.l[ln], ErrorbarContainer): # type match 
+                    # since we initialize the errorbar plots with xerr and yerr, we don't check if they exist here. If you want, use self.l[ln].has_yerr
+                    ln = arg['ln'] 
+                    x = arg['x'] 
+                    y = arg['y'] 
+                    xerr = arg['xerr'] 
+                    yerr = arg['yerr']
+
+                    line, caplines, barlinecols = self.l[ln]
+                    line.set_data(x, y)
+                    # Find the ending points of the errorbars 
+                    error_positions = (x-xerr,y), (x+xerr,y), (x,y-yerr), (x,y+yerr) 
+                    # Update the caplines 
+                    for i, pos in enumerate(error_positions): 
+                        caplines[i].set_data(pos) 
+                    # Update the error bars 
+                    barlinecols[0].set_segments(zip(zip(x-xerr,y), zip(x+xerr,y))) 
+                    barlinecols[1].set_segments(zip(zip(x,y-yerr), zip(x,y+yerr))) 
+                    
+                    # barlinecols[0].set_segments(
+                    #     np.array([[x - xerr, y], 
+                    #     [x + xerr, y]]).transpose((2, 0, 1))
+                    # ) 
+                    axs.add(line.axes)
+            else: # not errorbar
+                ln = arg['ln'] 
+                x = arg['x'] 
+                y = arg['y']
+                # print(len(x), len(y))
+                # self.l[ln][0].set_xdata(x)
+                # self.l[ln][0].set_ydata(y)
+                self.l[ln][0].set_data(x, y)
+                axs.add(self.l[ln][0].axes)
             
+            if 'label' in keys: # with label
+                self.l[ln][0].set_label(arg['label'])
+
             # ax = self.l[ln][0].axes
             # axbackground = self.canvas.copy_from_bbox(ax.bbox)
             # print(ax)
@@ -1061,12 +1103,12 @@ class MatplotlibWidget(QWidget):
         self.ax[0].autoscale()
 
 
-    def add_temp_lines(self, ax=None, xlist=[], ylist=[]):
+    def add_temp_lines(self, ax=None, xlist=[], ylist=[], label_list=[]):
         '''
         add line in self.l['temp'][i]
         all the lines share the same xdata
         '''
-        for (x, y) in zip(xlist, ylist):
+        for (x, y, label) in zip(xlist, ylist, label_list):
             # print('len x: ', len(x))
             # print('len y: ', len(y))
             # print(x)
@@ -1085,6 +1127,9 @@ class MatplotlibWidget(QWidget):
                     color=color[-1],
                     )
                 )
+            if label:
+                self.l['temp'][-1][0].set_label(label)
+        
         self.canvas_draw()
 
 
