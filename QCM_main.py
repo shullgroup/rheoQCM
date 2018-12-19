@@ -2569,7 +2569,7 @@ class QCMApp(QMainWindow):
         # getattr(self.ui, 'mpl_' + plt_str).clr_lines(clr_list)
 
 
-    def prepare_harm_data_for_mpl_update(self, plt_chnname, plt_harms, line_group, xdata, ydata, show_marked_when_all=True):
+    def prepare_harm_data_for_mpl_update(self, plt_chnname, plt_harms, line_group, xdata, ydata, xerr=None, yerr=None, show_marked_when_all=True):
         '''
         devide xdata/ydata by harmonics and return a list of tuples for data_saver.update_data
         '''
@@ -2585,12 +2585,32 @@ class QCMApp(QMainWindow):
                 harm_xdata = xdata
             else: # multiple columns
                 harm_xdata = xdata.filter(like=harm, axis=1).squeeze() # convert to series
+            if xerr is not None: # there is err data
+                if len(xdata.shape) == 1: # one column e.g.: tuple (1,) is series
+                    harm_xerr = xerr
+                else: # multiple columns
+                    harm_xerr = xerr.filter(like=harm, axis=1).squeeze() # convert to series
             # set ydata for harm
             if len(ydata.shape) == 1: # series
                 harm_ydata = ydata
             else: # multiple columns
                 harm_ydata = ydata.filter(like=harm, axis=1).squeeze() # convert to series
-            data_list.append({'ln': line_group+harm, 'x': harm_xdata, 'y': harm_ydata})
+            if yerr is not None: # there is err data
+                if len(ydata.shape) == 1: # series
+                    harm_yerr = yerr
+                else: # multiple columns
+                    harm_yerr = yerr.filter(like=harm, axis=1).squeeze() # convert to series
+
+            if (xerr is not None) or (yerr is not None): # exist error
+                # change None to np.nan
+                if xerr is None:
+                    harm_xerr = np.nan
+                if yerr is None:
+                    harm_yerr = np.nan
+                data_list.append({'ln': line_group+harm, 'x': harm_xdata, 'y': harm_ydata, 'xerr': harm_xerr, 'yerr': harm_yerr})
+            else: # no error
+                data_list.append({'ln': line_group+harm, 'x': harm_xdata, 'y': harm_ydata})
+
 
             if show_marked_when_all:
                 ## display marked data (solid) along with all data (open) (can be removed if don't like)
@@ -2601,7 +2621,10 @@ class QCMApp(QMainWindow):
                     else: 
                         mark_list = []
                     if isinstance(mark_list, pd.Series):
-                        data_list.append({'ln': 'lm'+harm, 'x': harm_xdata[mark_list], 'y': harm_ydata[mark_list]})
+                        if (xerr is not None) or (yerr is not None): # exist error
+                            data_list.append({'ln': 'lm'+harm, 'x': harm_xdata[mark_list], 'y': harm_ydata[mark_list],'xerr': harm_xerr[mark_list], 'yerr': harm_yerr[mark_list]})
+                        else:
+                            data_list.append({'ln': 'lm'+harm, 'x': harm_xdata[mark_list], 'y': harm_ydata[mark_list]})
         return data_list
 
 
@@ -3359,7 +3382,13 @@ class QCMApp(QMainWindow):
                 ylabel = settings_init['data_plt_axis_label'][var]
                 if '_rh' in var: # variable referenced to rh
                     ylabel = ylabel.replace('{rh}', '{' + str(rh) + '}')
-                
+
+                if self.settings['checkBox_settings_mechanics_witherror'] and (var + '_err' in getattr(self.data_saver, chn_name + '_prop')[mech_key].keys()): # corresponding error exists
+                    yerr = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var + '_err', mark=mark, dropnanrow=False)
+                    yerr = self.qcm.convert_mech_unit(yerr)
+                else:
+                    yerr = None
+
                 ## make the plot
                 # create figure
                 self.prop_plot_list.append(
@@ -3378,8 +3407,10 @@ class QCMApp(QMainWindow):
                     figharms = plt_harms
                 else:
                     figharms = [str(rh)]
+
+
                 # prepare data
-                data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, show_marked_when_all=False)
+                data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, yerr=yerr, show_marked_when_all=False)
                 
                 # update data in figure
                 self.prop_plot_list[-1].update_data(*data_list)
@@ -3404,6 +3435,12 @@ class QCMApp(QMainWindow):
             ylabel = settings_init['data_plt_axis_label'][varplot[0]]
             if '_rh' in varplot[0]: # variable referenced to rh
                 ylabel = ylabel.replace('{rh}', '{' + str(rh) + '}')
+            # get yerr
+            if self.settings['checkBox_settings_mechanics_witherror'] and (varplot[0] + '_err' in getattr(self.data_saver, chn_name + '_prop')[mech_key].keys()): # corresponding error exists
+                yerr = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, varplot[0] + '_err', mark=mark, dropnanrow=False)
+                yerr = self.qcm.convert_mech_unit(yerr)
+            else:
+                yerr = None
 
             # varplot[1] as x
             xdata = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, varplot[1], mark=mark, dropnanrow=False)
@@ -3411,7 +3448,12 @@ class QCMApp(QMainWindow):
             xlabel = settings_init['data_plt_axis_label'][varplot[1]]
             if '_rh' in varplot[1]: # variable referenced to rh
                 xlabel = xlabel.replace('{rh}', '{' + str(rh) + '}')
-
+            # get xerr
+            if self.settings['checkBox_settings_mechanics_witherror'] and (varplot[1] + '_err' in getattr(self.data_saver, chn_name + '_prop')[mech_key].keys()): # corresponding error exists
+                xerr = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, varplot[1] + '_err', mark=mark, dropnanrow=False)
+                xerr = self.qcm.convert_mech_unit(xerr)
+            else:
+                xerr = None
             ## make the plot
             # create figure
             self.prop_plot_list.append(
@@ -3430,7 +3472,7 @@ class QCMApp(QMainWindow):
             else:
                 figharms = [str(rh)]
             # prepare data
-            data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, show_marked_when_all=False)
+            data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, xerr, yerr, show_marked_when_all=False)
             
             # update data in figure
             self.prop_plot_list[-1].update_data(*data_list)
@@ -4835,10 +4877,13 @@ class QCMApp(QMainWindow):
                         x=cen_rec_freq
                     )     
 
-                    getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'lP', G, B),
-                        ('lPfit', fit_result['fit_g'], fit_result['fit_b']),
-                        ('lsp', fit_result['fit_g'][idx], fit_result['fit_b'][idx]),
-                        ('srec', cen_rec_G, cen_rec_B),
+                    getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'lP', 'x': G, 'y': B},
+                        {'ln': 
+                        'lPfit', 'x': fit_result['fit_g'], 'y': fit_result['fit_b']},
+                        {'ln': 
+                        'lsp', 'x': fit_result['fit_g'][idx], 'y': fit_result['fit_b'][idx]},
+                        {'ln': 
+                        'srec', 'x': cen_rec_G, 'y': cen_rec_B},
                     )
 
                 if self.settings['checkBox_spectra_showchi']: # show chi square

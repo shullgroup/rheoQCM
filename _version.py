@@ -1,7 +1,6 @@
-__version_info__ = ('0', '3', '0') # major, minor, micro
+__version_info__ = ('0', '4', '0') # major, minor, micro
 
 __projectname__ = 'QCM Rheology'
-__author__ = 'Qifeng Wang'
 __authors__ = ['Qifeng Wang', 'Megan Yang', 'Kenneth R. Shull']
 __contact__ = ''
 __copyright__ = 'Shull Research Group @ Northwestern University'

@@ -956,7 +956,8 @@ class MatplotlibWidget(QWidget):
             keys = arg.keys()
 
             if ('xerr' in keys) or ('yerr' in keys): # errorbar with caps and barlines
-                if isinstance(self.l[ln], ErrorbarContainer): # type match 
+                if isinstance(self.l[arg['ln']], ErrorbarContainer): # type match 
+                    print(arg)
                     # since we initialize the errorbar plots with xerr and yerr, we don't check if they exist here. If you want, use self.l[ln].has_yerr
                     ln = arg['ln'] 
                     x = arg['x'] 
