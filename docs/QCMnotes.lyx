@@ -441,7 +441,7 @@ For thicker films, the complex resonant frequency deviates from the Sauerbrey
  of a bulk material: 
 \begin_inset Formula 
 \begin{equation}
-Z_{n}^{*}=(\rho G_{n}^{*})^{1/2}\label{eq:Zn}
+Z_{n,bulk}^{*}=(\rho G_{n}^{*})^{1/2}\label{eq:Zn}
 \end{equation}
 
 \end_inset
@@ -678,37 +678,30 @@ D_{n}^{*}=k_{n}^{*}d=\frac{2\pi d}{\lambda_{n}}\left(1-i\tan\left(\phi_{n}/2\rig
 \end_layout
 
 \begin_layout Standard
-The properties appearing in Eqs.
+The impedance of a layer (which we refer to hear as layer 1) of mass thickness
  
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "eq:Zn"
-
+\begin_inset Formula $d\rho$
 \end_inset
 
--
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "eq:Dn star"
-
-\end_inset
-
- are properties of a single, homogeneous material.
- We can also write 
-\begin_inset Formula $Z_{n}^{*}$
-\end_inset
-
- in terms of 
-\begin_inset Formula $D_{n}^{*}$
-\end_inset
-
-:
+ is given by the following expression:
 \end_layout
 
 \begin_layout Standard
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
 \begin_inset Formula 
 \begin{equation}
-Z_{n}^{*}=\frac{2\pi f_{n}d\rho}{D_{n}^{*}}\label{eq:Dn star-1}
+Z_{ni,film}^{*}=iZ_{ni,bulk}^{*}\tan(D_{n1}^{*})\label{eq:film zstar-1}
 \end{equation}
 
 \end_inset
@@ -716,7 +709,24 @@ Z_{n}^{*}=\frac{2\pi f_{n}d\rho}{D_{n}^{*}}\label{eq:Dn star-1}
 
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Standard
+Some expressions for quartz:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+k_{q}=\frac{2\pi f_{n}\rho_{q}}{Z_{q}};\,\,\,2\pi f_{n}^{*}=Z_{q}^{*}k_{q}^{*}/\rho_{q}
+\]
+
+\end_inset
+
+/
+\backslash
+
+\end_layout
+
+\begin_layout Subsection
 Extension to 2 Layers
 \end_layout
 
@@ -729,7 +739,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename figures/2layer.svg
+	filename /home/ken/Mydocs/Python/QCM_py/doc/figures/2layer.svg
 	lyxscale 20
 	width 50text%
 
@@ -836,12 +846,35 @@ literal "true"
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-Z_{nfm}^{*}=Z_{nf}^{*}\frac{iZ_{nf}^{*}\tan(k_{nf}^{*}d_{f})+iZ_{nm}^{*}\tan(k_{nm}^{*}d_{m}))}{Z_{nf}^{*}-Z_{nm}^{*}\tan(k_{nm}^{*}d)\tan(k_{nf}^{*}d)}
+Z_{n12}^{*}=iZ_{n1}^{*}\frac{Z_{n1}^{*}\tan(D_{n1}^{*})+Z_{n2}^{*}\tan(D_{n2}^{*})}{Z_{n1}^{*}-Z_{n2}^{*}\tan(D_{n1}^{*})\tan(D_{n2}^{*})}
 \end{equation}
 
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Note: what happens when 
+\begin_inset Formula $D_{1n}=0:$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+Z_{n12}^{*}=i\frac{Z_{n2}^{*}\tan(D_{n2}^{*})}{}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+checks out.
 \end_layout
 
 \begin_layout Standard
@@ -888,7 +921,7 @@ The difference between the 2-layer impedance and the impedance of the membrane
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\Delta Z_{nfm}^{*}\equiv Z_{nf}^{*}\frac{iZ_{nf}^{*}\tan(k_{nf}^{*}d)+Z_{nm,0}^{*}}{Z_{nf}^{*}+iZ_{nm,0}^{*}\tan(k_{nf}^{*}d)}-Z_{nm,0}^{*}
+\Delta Z_{nfm}^{*}\equiv Z_{nf}^{*}\frac{iZ_{n1,bulk}^{*}\tan(D_{n1}^{*})+Z_{n2,film}^{*}}{Z_{n1,bulk}^{*}+iZ_{n2,film}^{*}\tan(D_{n1}^{*})}-Z_{n2,film}^{*}
 \end{equation}
 
 \end_inset
@@ -940,7 +973,7 @@ reference "eq:SLA"
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\frac{\Delta f_{n}^{*}}{f_{sn}}=-\frac{\tan(D_{nf}^{*})}{D_{nf}^{*}}\left[\frac{1-\left(r_{nfm}^{*}\right)^{2}}{1+ir_{nfm}^{*}\tan(D_{nf}^{*})}\right]\label{eq:2-layer master}
+\frac{\Delta f_{n}^{*}}{f_{sn}}=-\frac{\tan(D_{n1}^{*})}{D_{n1}^{*}}\left[\frac{1-\left(r_{nfm}^{*}\right)^{2}}{1+ir_{n12}^{*}\tan(D_{nf}^{*})}\right]\label{eq:2-layer master}
 \end{equation}
 
 \end_inset
@@ -960,7 +993,7 @@ Where
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-r_{nfm}^{*}=\frac{Z_{nm,0}^{*}}{Z_{nf}^{*}}=D_{nf}^{*}\frac{Z_{nm,0}^{*}}{2\pi f_{n}d\rho}\label{eq:rstar}
+r_{n12}^{*}=\frac{Z_{n2,film}^{*}}{Z_{n1,bulk}^{*}}
 \end{equation}
 
 \end_inset
@@ -1013,7 +1046,7 @@ reference "eq:Sauerbrey"
  
 \end_layout
 
-\begin_layout Paragraph
+\begin_layout Subsubsection
 Special Case - Film Immersed in Liquid
 \end_layout
 
@@ -1203,7 +1236,7 @@ R_{n\ell}^{*}=\frac{\Delta f_{n\ell}+i\Delta\Gamma_{n\ell}}{\Delta f_{sn}}
 
 \begin_layout Standard
 \begin_inset Note Note
-status open
+status collapsed
 
 \begin_layout Subsection
 Derivation of the two-layer master equation:
@@ -1617,6 +1650,253 @@ f_{sn}=\frac{2nf_{1}^{2}}{Z_{q}}\rho d
 \end_inset
 
 
+\end_layout
+
+\begin_layout Subsection
+Extension to 3 layers
+\end_layout
+
+\begin_layout Standard
+In some cases we are interested in an extension to 3 layers.
+ The generalization here is:
+\end_layout
+
+\begin_layout Standard
+Eq.
+ 10.6.1 from Diethelm's book is:
+\end_layout
+
+\begin_layout Standard
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\frac{\Delta f^{*}}{f_{1}}=\frac{-1}{\pi Z_{q}}\frac{Z_{1n}^{*}Z_{2n}^{*}\left(Z_{1n}^{*}\tan\left(D_{1n}^{*}\right)+Z_{2}^{*}\tan\left(D_{2n}^{*}\right)\right)+iZ_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)\tan\left(D_{2n}^{*}\right)-Z_{2n}^{*}\right)}{Z_{2n}^{*}\left(Z_{1n}^{*}-Z{}_{2n}^{*}\tan\left(D_{1n}^{*}\right)\tan\left(D_{2n}^{*}\right)\right)+iZ_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)+Z_{2n}^{*}\tan\left(D_{1n}^{*}\right)\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If we now we use the following version of the small load approximation to
+ turn this into an expression for the load impedance:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\Delta Z_{nL}^{*}=\frac{\pi Z_{q}\Delta f_{n}^{*}}{if_{1}}=-\frac{\pi iZ_{q}\Delta f_{n}^{*}}{f_{1}}\label{eq:SLA-1}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+which gives: 
+\end_layout
+
+\begin_layout Standard
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\Delta Z_{nL}^{*}=-\pi iZ_{q}\left[\frac{-1}{\pi Z_{q}}\frac{Z_{1n}^{*}Z_{2n}^{*}\left(Z_{1n}^{*}\tan\left(D_{1n}^{*}\right)+Z_{2}^{*}\tan\left(D_{2n}^{*}\right)\right)+iZ_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)\tan\left(D_{2n}^{*}\right)-Z_{2n}^{*}\right)}{Z_{2n}^{*}\left(Z_{1n}^{*}-Z{}_{2n}^{*}\tan\left(D_{1n}^{*}\right)\tan\left(D_{2n}^{*}\right)\right)+iZ_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)+Z_{2n}^{*}\tan\left(D_{1n}^{*}\right)\right)}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\Delta Z_{nL}^{*}=\left[\frac{iZ_{1n}^{*}Z_{2n}^{*}\left(Z_{1n}^{*}\tan\left(D_{1n}^{*}\right)+Z_{2}^{*}\tan\left(D_{2n}^{*}\right)\right)-Z_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)\tan\left(D_{2n}^{*}\right)-Z_{2n}^{*}\right)}{Z_{2n}^{*}\left(Z_{1n}^{*}-Z{}_{2n}^{*}\tan\left(D_{1n}^{*}\right)\tan\left(D_{2n}^{*}\right)\right)+iZ_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)+Z_{2n}^{*}\tan\left(D_{1n}^{*}\right)\right)}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Now we need to figure out how to adapt this to the case where third layer
+ has a finite thickness.
+ One of the terms involving 
+\begin_inset Formula $Z_{3n}^{*}$
+\end_inset
+
+ must get multiplied by 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\tan\left(D_{2n}^{*}\right)$
+\end_inset
+
+.
+ To figure out which one, we can set 
+\begin_inset Formula $D_{2n}^{*}$
+\end_inset
+
+ to zero and make sure we recover the correct two layer equation.
+ Doing this gives:
+\end_layout
+
+\begin_layout Standard
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\Delta Z_{nL}^{*}=\left[\frac{iZ_{1n}^{*}Z_{2n}^{*}\left(Z_{1n}^{*}\tan\left(D_{1n}^{*}\right)\right)+Z_{3n}^{*}}{iZ_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)+Z_{2n}^{*}\tan\left(D_{1n}^{*}\right)\right)}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Something seems wrong with this.
+ Our python code gives the following:
+\end_layout
+
+\begin_layout Standard
+I*Z0*(Z0*Z1*sin(D0)*cos(D1)*cos(D2) - Z0*Z2*sin(D0)*sin(D1)*sin(D2) + Z1**2*sin(
+D1)*cos(D0)*cos(D2) + Z1*Z2*sin(D2)*cos(D0)*cos(D1))/(Z0*Z1*cos(D0)*cos(D1)*cos(
+D2) - Z0*Z2*sin(D1)*sin(D2)*cos(D0) - Z1**2*sin(D0)*sin(D1)*cos(D2) - Z1*Z2*sin(
+D0)*sin(D2)*cos(D1))
+\end_layout
+
+\begin_layout Standard
+dividing through by the product of the cosine terms gives:
+\end_layout
+
+\begin_layout Standard
+I*Z0*(Z0*Z1*tan(D0) - Z0*Z2*tan(D0)*tan(D1)*tan(D2) + Z1**2*tan(D1) + Z1*Z2*tan(
+D2))/(Z0*Z1*- Z0*Z2*tan(D1)*tan(D2)-Z1**2*tan(D0)*tan(D1) - Z1*Z2*tan(D0)*tan(D2
+))
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+iZ_{0}\frac{Z0Z1tan(D0)-Z0Z2tan(D0)tan(D1)tan(D2)+Z1**2*tan(D1)+Z1*Z2*tan(D2)}{Z0Z1-Z0Z2tan(D1)tan(D2)-Z1**2tan(D0)tan(D1)-Z1Z2tan(D0)tan(D2)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+incrementi
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+i\frac{\left(Z_{1n}^{*}\right)^{2}Z_{2n}^{*}\tan(D_{1n}^{*})-Z_{1n}^{*}Z_{3n}^{*}\tan(D_{1n}^{*})\tan(D_{2n}^{*})\tan(D_{3n}^{*})+\left(Z_{2n}^{*}\right)^{2}\tan(D_{2n}^{*})+Z_{2n}^{*}Z_{3n}^{*}\tan(D_{3n}^{*})}{Z_{1n}^{*}Z_{2n}^{*}-Z_{1n}^{*}Z_{3n}^{*}\tan(D_{2n}^{*})\tan(D_{3n}^{*})-\left(Z_{2n}^{*}\right)^{2}\tan(D_{1n}^{*})\tan(D_{2n}^{*})-Z_{2n}^{*}Z_{3n}^{*}\tan(D_{1n}^{*})\tan(D_{3n}^{*})}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Let's check this out.
+ What happens if 
+\begin_inset Formula $D_{2n}^{*}=0:$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+i\frac{\left(Z_{1n}^{*}\right)^{2}Z_{2n}^{*}\tan(D_{1n}^{*})+Z_{2n}^{*}Z_{3n}^{*}\tan(D_{3n}^{*})}{Z_{1n}^{*}Z_{2n}^{*}--Z_{2n}^{*}Z_{3n}^{*}\tan(D_{1n}^{*})\tan(D_{3n}^{*})}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+i\frac{\left(Z_{1n}^{*}\right)^{2}\tan(D_{1n}^{*})+Z_{3n}^{*}\tan(D_{3n}^{*})}{Z_{1n}^{*}-Z_{3n}^{*}\tan(D_{1n}^{*})\tan(D_{3n}^{*})}
+\]
+
+\end_inset
+
+looks okay.
+ 
+\end_layout
+
+\begin_layout Standard
+()/()
 \end_layout
 
 \begin_layout Section
@@ -2362,6 +2642,49 @@ Z_{n,0}^{*}=iZ_{n}^{*}\tan\left(\frac{2\pi nf_{1}\rho d}{Z_{n}^{*}}\right)
 \end_layout
 
 \begin_layout Standard
+We can also relate the resonance frequency to the crystal thickness, starting
+ with the shear wave velocity in quartz.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+c_{q}=\left(\frac{G_{q}}{\rho_{q}}\right)^{1/2}=\frac{1}{\rho_{q}}\left(G_{q}\rho_{q}\right)^{1/2}=\frac{Z_{q}}{\rho_{q}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This velocity is then related to the fundamental resonant frequency and
+ the thickness through the following expression:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+d_{q}=\frac{c_{q}}{2f_{1}}=\frac{Z_{q}}{2\rho_{q}f_{1}};\,\,\,\,d_{q}\rho_{q}=\frac{Z_{q}}{2f_{1}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+D_{nq}^{*}=\frac{2\pi nf_{1}d_{q}\rho_{q}}{Z_{q}}=\pi n
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 \begin_inset Note Note
 status collapsed
 
@@ -2581,7 +2904,7 @@ reference "eq:d over lambda vs Gstar"
 
 \begin_layout Standard
 \begin_inset Note Note
-status open
+status collapsed
 
 \begin_layout Plain Layout
 \begin_inset Formula 

@@ -24,10 +24,10 @@ settings_init = {
 
     'analysis_mode_disable_list':[
         'pushButton_runstop',
-        'actionOpen_MyVNA',
-        'actionNew_Exp',
-        'actionClear_All',
-        'actionLoad_Settings',
+        # 'actionOpen_MyVNA',
+        # 'actionNew_Exp',
+        # 'actionClear_All',
+        # 'actionLoad_Settings',
 
         'comboBox_samp_channel',
         'comboBox_ref_channel',
