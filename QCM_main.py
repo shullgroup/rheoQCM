@@ -793,6 +793,8 @@ class QCMApp(QMainWindow):
         ######### 
         self.ui.tabWidget_mechanics_chn.currentChanged.connect(self.update_mechanics_chn)
 
+        self.ui.checkBox_settings_mech_liveupdate.toggled.connect(self.update_widget)
+
         for harm in range(1, settings_init['max_harmonic']+2, 2):
             getattr(self.ui, 'checkBox_nhplot' + str(harm)).toggled.connect(self.update_widget)
 

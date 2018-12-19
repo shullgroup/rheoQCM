@@ -827,8 +827,8 @@ class MatplotlibWidget(QWidget):
         for i in range(1, int(settings_init['max_harmonic']+2), 2):
             self.l['lm' + str(i)] = self.ax[0].errorbar(
                 [], [], 
-                yerr=None,
-                xerr=None,
+                yerr=np.nan,
+                xerr=np.nan,
                 marker='o', 
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
                 # picker=5, # 5 points tolerance
@@ -957,7 +957,7 @@ class MatplotlibWidget(QWidget):
 
             if ('xerr' in keys) or ('yerr' in keys): # errorbar with caps and barlines
                 if isinstance(self.l[arg['ln']], ErrorbarContainer): # type match 
-                    print(arg)
+                    # print(arg)
                     # since we initialize the errorbar plots with xerr and yerr, we don't check if they exist here. If you want, use self.l[ln].has_yerr
                     ln = arg['ln'] 
                     x = arg['x'] 
@@ -971,6 +971,9 @@ class MatplotlibWidget(QWidget):
                     error_positions = (x-xerr,y), (x+xerr,y), (x,y-yerr), (x,y+yerr) 
                     # Update the caplines 
                     for i, pos in enumerate(error_positions): 
+                        # print('i', i)
+                        # print(caplines)
+                        # print('caplines_len', len(caplines))
                         caplines[i].set_data(pos) 
                     # Update the error bars 
                     barlinecols[0].set_segments(zip(zip(x-xerr,y), zip(x+xerr,y))) 
