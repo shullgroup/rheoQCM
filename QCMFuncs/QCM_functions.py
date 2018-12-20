@@ -214,11 +214,11 @@ def calc_delfstar(n, layers, calctype):
         
 def calc_Zmot(n, layers, delfstar):
     om = 2 * np.pi *(n*f1 + delfstar)
-    g0 = 10; # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
-    Zqc = Zq * (1 + 1j*2*g0/(n*f1));
+    g0 = 10 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
+    Zqc = Zq * (1 + 1j*2*g0/(n*f1))
     dq = 330e-6  # only needed for piezoelectric stiffening calc.
     epsq = 4.54; eps0 = 8.8e-12; C0byA = epsq * eps0 / dq; ZC0byA = C0byA / (1j*om)
-    ZPE = -(e26/dq)**2*ZC0byA;  # ZPE accounts for oiezoelectric stiffening anc
+    ZPE = -(e26/dq)**2*ZC0byA  # ZPE accounts for oiezoelectric stiffening anc
     # can always be neglected as far as I can tell
     
     Dq = om*drho_q/Zq
@@ -282,8 +282,8 @@ def solve_for_props(soln_input):
     rd_exp = -delfstar[n3].imag/delfstar[n3].real
     rh_exp = (n2/n1)*delfstar[n1].real/delfstar[n2].real
 
-    rd_exp = -imag(delfstar[n3])/real(delfstar[n3])
-    rh_exp = (n2/n1)*real(delfstar[n1])/real(delfstar[n2])
+    rd_exp = -delfstar[n3].imag/delfstar[n3].real
+    rh_exp = (n2/n1)*delfstar[n1].real/delfstar[n2].real
     
     if 'prop_guess' in soln_input:
         soln1_guess = guess_from_props(soln_input['propguess'])
@@ -1115,7 +1115,7 @@ def bulk_guess(delfstar):
 
 
 def guess_from_props(film):
-    dlam3 = calc_dlam(film)
+    dlam3 = calc_dlam(3, film)
     return [dlam3, film['phi']]
 
 
