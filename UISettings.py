@@ -151,11 +151,10 @@ settings_init = {
 
     # export  data file type
     'export_datafiletype': ';;'.join([
-        'csv file (*.csv)',
+        # 'csv file (*.csv)',
         'excel file (*.xlsx)',
-        'json file (*.json)',
+        # 'json file (*.json)',
         # 'hdf5 file (*.h5)',
-        # 'Python file (*.py)',
         # 'Matlab file (*.mat)',
 
     ]),
@@ -224,6 +223,27 @@ settings_init = {
         'rh':                r'r$_h$',
         'rd_exps':           r'r$_{d,exp}$',
         'rd_calcs':          r'r$_d$',
+    },
+
+    # rowheader for tableWidget_spectra_mechanics_table
+    # DON't change the value of this key
+    'mech_table_rowheaders':{
+        'delf_exps':         u'\u0394' + 'f (Hz)', # Δf (Hz)
+        'delf_calcs':        u'\u0394' + 'fcalc (Hz)', # Δfcalc (Hz)
+        'delg_exps':         u'\u0394\u0393' + ' (Hz)', # ΔΓ (Hz)
+        'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
+        'drho':              'd' + u'\u03C1' + ' (g/cm'+ u'\u00B2' + ')', # dρ (g/cm²)
+        'grho_rh':           '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
+        'phi':                u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
+        'dlam_rh':           'd/' + u'\u03BB\u2099', # d/λₙ
+        'lamrho':            u'\u03BB\u03C1' + ' (g/cm' + u'\u00B2' + ')', # λρ (g/cm²)
+        'delrho':            u'\u03B4\u03C1' + ' (g/cm' + u'\u00B2' + ')', # δρ (g/cm²)
+        'delf_delfsn':       u'\u0394' + 'f/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
+        'delg_delfsn_calcs': u'\u0394\u0393' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓ/Δfₛₙ
+        'rh':                'rh',
+        'rd_calcs':          'rd',
+        # 't':                 'Time (s)', # Time (s)
+        # 'temp':              'Temp. (' + u'\u00B0' + 'C)', # Temp. (°C)
     },
 
     # spinBox_harmfitfactor max value
@@ -369,26 +389,6 @@ settings_init = {
     'progressbar_min_interval': 100, # in ms
     'progressbar_max_interval': 1000, # in ms
 
-    # rowheader for tableWidget_spectra_mechanics_table
-    # DON't change the value of this key
-    'mech_table_rowheaders':{
-        'delf_exps':         u'\u0394' + 'f (Hz)', # Δf (Hz)
-        'delf_calcs':        u'\u0394' + 'fcalc (Hz)', # Δfcalc (Hz)
-        'delg_exps':         u'\u0394\u0393' + ' (Hz)', # ΔΓ (Hz)
-        'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
-        'drho':              'd' + u'\u03C1' + ' (g/cm'+ u'\u00B2' + ')', # dρ (g/cm²)
-        'grho_rh':           '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
-        'phi':                u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
-        'dlam_rh':           'd/' + u'\u03BB\u2099', # d/λₙ
-        'lamrho':            u'\u03BB\u03C1' + ' (g/cm' + u'\u00B2' + ')', # λρ (g/cm²)
-        'delrho':            u'\u03B4\u03C1' + ' (g/cm' + u'\u00B2' + ')', # δρ (g/cm²)
-        'delf_delfsn':       u'\u0394' + 'f/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
-        'delg_delfsn_calcs': u'\u0394\u0393' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓ/Δfₛₙ
-        'rh':                'rh',
-        'rd_calcs':          'rd',
-        # 't':                 'Time (s)', # Time (s)
-        # 'temp':              'Temp. (' + u'\u00B0' + 'C)', # Temp. (°C)
-    },
 
     'prop_plot_minmum_row_height': 300, # height of property figure when plotted in line
 

@@ -602,7 +602,7 @@ class DataSaver:
     ##  converting data.
     ####################################################
 
-    def data_exporter(self, fileName, mark=False, dropnanrow=True, dropnancolumn=True, unit_t=None, unit_temp=None):
+    def data_exporter(self, fileName, mark=False, dropnanrow=False, dropnancolumn=True, unit_t='s', unit_temp='C'):
         '''
         this function export the self.data.samp and ...ref 
         in the ext form
@@ -612,7 +612,9 @@ class DataSaver:
 
         # get df of samp and ref channel
         df_samp = pd.merge(
+            # f
             self.reshape_data_df('samp', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp),
+            # delf
             self.reshape_data_df('samp', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp),
             on=['queue_id', 't', 'temp']
         )
@@ -634,17 +636,23 @@ class DataSaver:
         # export by ext
         if ext.lower() == '.xlsx':
             with pd.ExcelWriter(fileName) as writer:
-                df_samp.to_excel(writer, sheet_name='samp_channel')
-                df_samp_ref.to_excel(writer, sheet_name='sample_reference')
+                df_samp.to_excel(writer, sheet_name='S_channel')
+                df_samp_ref.to_excel(writer, sheet_name='S_reference')
                 if self.ref.shape[0] > 0:
-                    df_ref.to_excel(writer, sheet_name='ref_channel')
-                    df_ref_ref.to_excel(writer, sheet_name='ref_reference')
+                    df_ref.to_excel(writer, sheet_name='R_channel')
+                    df_ref_ref.to_excel(writer, sheet_name='R_reference')
+                # time reference
                 t_ref = {key: self.exp_ref[key] for key in self.exp_ref.keys() if 't0' in key}
-
                 pd.DataFrame.from_dict(t_ref, orient='index').to_excel(writer, sheet_name='time_reference', header=False)
+                # property
+                for chn_name in self._chn_keys:
+                    if getattr(self, chn_name + '_prop'): 
+                        for mech_key in getattr(self, chn_name + '_prop').keys(): 
+                            mech_df = self.reshape_mech_df(chn_name, mech_key, mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn)
+                            mech_df.to_excel(writer, sheet_name=chn_name[0].upper() + '_' + mech_key)
 
 
-        elif ext.lower() == '.csv':
+        elif ext.lower() == '.csv': # TODO add prop
             # add chn_name to samp and ref df
             # and append ref to samp
             with open(fileName, 'w') as f:
@@ -656,7 +664,7 @@ class DataSaver:
             else:
                 df_samp.assign(chn='samp').append(df_samp_ref.assign(chn='samp_ref')).to_csv(fileName, mode='a')
 
-        elif ext.lower() == '.json':
+        elif ext.lower() == '.json': # TODO add prop
             with open(fileName, 'w') as f:
                 ## lines with indent (this will make the file larger)
                 # lines = json.dumps({'samp': self.samp.to_dict(), 'ref': self.ref.to_dict()}, indent=4) + '\n'
@@ -712,6 +720,7 @@ class DataSaver:
 
         if dropnanrow == True: # rows with marks only
             # select rows with marks
+            print('reshape_data_df: dropnanrow = True')
             df = df[self.rows_with_marks(chn_name)][:]
             print(df)
             if 'marks' in df.columns:
@@ -725,6 +734,38 @@ class DataSaver:
             df = df.assign(**self.get_list_column_to_columns(chn_name, 'marks', mark=mark, norm=False))
             # finally drop the marks column
             df = df.drop(columns='marks') # drop marks column
+
+        return df
+
+
+    def reshape_mech_df(self, chn_name, mech_key, mark=False, dropnanrow=True, dropnancolumn=True):
+        '''
+        reshape and tidy mech df (mech_key in samp_prop and ref_prop) for exporting
+        '''
+        print(chn_name)
+        print(mech_key)
+        df = getattr(self, chn_name + '_prop')[mech_key].copy()
+        cols = list(df.columns)
+        cols.remove('queue_id')
+        for col in cols:
+            df = df.assign(**self.get_mech_column_to_columns(chn_name, mech_key, col, mark=mark)) # split columns: fs and gs
+            df = df.drop(columns=col) # drop columns: fs and gs
+
+        print(df.head())
+
+        # drop columns with all 
+        if dropnancolumn == True:
+            df = df.dropna(axis='columns', how='all')
+        print(df.head())
+
+        if dropnanrow == True: # rows with marks only
+            # select rows with marks
+            df = df[self.rows_with_marks(chn_name)][:]
+            print(df)
+            if 'marks' in df.columns:
+                df = df.drop(columns='marks') # drop marks column
+        else:
+            print('there is no marked data.\n no data will be deleted.')
 
         return df
 

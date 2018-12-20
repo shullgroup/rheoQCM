@@ -1575,7 +1575,7 @@ class QCMApp(QMainWindow):
         if self.data_saver.path: # there is file 
             self.data_saver.save_data_settings(settings=self.settings)
             print('Data has been saved to file!')
-        elif not self.data_saver.path & self.tempPath: # name given but file not been created (no data)
+        elif (not self.data_saver.path) & len(self.tempPath)>0: # name given but file not been created (no data)
             print('No data collected!')
         else:
             print('No file information!')
@@ -1615,7 +1615,7 @@ class QCMApp(QMainWindow):
         fileName = self.saveFileDialog(title='Choose a file and data type', filetype=settings_init['export_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
         # codes for data exporting
         if fileName:
-            self.data_saver_data_exporter(fileName) # do the export
+            self.data_saver.data_exporter(fileName) # do the export
 
     def process_messagebox(self, message=[]):
         '''
