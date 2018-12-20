@@ -3046,7 +3046,7 @@ class Ui_MainWindow(object):
         self.actionRow_s2_Row_s1.setText(_translate("MainWindow", "Row[s2] - Row[s1]"))
         self.actionRow_s2_Row_s1.setToolTip(_translate("MainWindow", "Plot selected two rows (Row[s2] vs. Row[s1])"))
 
-import QCM_GUI_source_rc
+import UI_source_rc
 
 if __name__ == "__main__":
     import sys

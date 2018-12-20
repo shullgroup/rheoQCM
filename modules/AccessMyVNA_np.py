@@ -862,6 +862,12 @@ class AccessMyVNA():
         self._chn = np.array(0, dtype=int) # avtive channel
         self._f = [np.nan, np.nan] # start & stop  frequencies [start, stop]
         _, self._speed, self._step_delay, self._start_delay, self._phase_delay = self.get_speed_delays()
+        print(self._nsteps)
+        print(self._naverage)
+        print(self._instrmode)
+        print(self._displaymode)
+        print(self._chn)
+        print(self._f)
         print(self._speed)
         print(self._step_delay)
         print(self._start_delay)
@@ -1362,16 +1368,18 @@ class AccessMyVNA():
 
 # exit(0)
 if __name__ == '__main__':
-    # accvna = AccessMyVNA()
+    accvna = AccessMyVNA()
+    # exit(0)
     # ret = accvna.GetDoubleArray()
     # ret, f, G, B = accvna.single_scan()
     # accvna = AccessMyVNA()
     # print('acc', accvna._naverage)
     with accvna:
-        print('acc', accvna._naverage)
-        print(11111)
+        pass
+        # print('acc', accvna._naverage)
+        # print(11111)
 
-    print('acc', accvna._naverage)
+    # print('acc', accvna._naverage)
     exit(0)
     with AccessMyVNA() as accvna:
         # print(accvna._get_wait_time())

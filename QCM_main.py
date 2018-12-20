@@ -587,12 +587,14 @@ class QCMApp(QMainWindow):
 
 
         # move center pushButton_settings_harm_cntr to treeWidget_settings_settings_harmtree
-        self.move_to_col2(
-            self.ui.pushButton_settings_harm_cntr, 
-            self.ui.treeWidget_settings_settings_harmtree, 
-            'Scan', 
-            50
-        )
+        # comment it for now, this button is not using 
+        # move it to other place will disable the hide function ran above
+        # self.move_to_col2(
+        #     self.ui.pushButton_settings_harm_cntr, 
+        #     self.ui.treeWidget_settings_settings_harmtree, 
+        #     'Scan', 
+        #     50
+        # )
         
         # move center checkBox_settings_temp_sensor to treeWidget_settings_settings_hardware
         self.move_to_col2(
@@ -1724,6 +1726,8 @@ class QCMApp(QMainWindow):
             'pushButton_appendfile_disable_list',
         )
 
+        # delete prop plot
+        self.del_prop_plot()
         # clear all mpl objects
         self.clear_all_mpl()
 
@@ -2028,8 +2032,8 @@ class QCMApp(QMainWindow):
         ## disconnect axes event
         self.mpl_disconnect_cid(self.ui.mpl_spectra_fit) 
                
-        self.ui.mpl_spectra_fit.update_data(('lG', f, G))
-        self.ui.mpl_spectra_fit.update_data(('lB', f, B))
+        self.ui.mpl_spectra_fit.update_data({'ln': 'lG', 'x': f, 'y': G})
+        self.ui.mpl_spectra_fit.update_data({'ln': 'lB', 'x': f, 'y': B})
 
         # constrain xlim
         self.ui.mpl_spectra_fit.ax[0].set_xlim(f[0], f[-1])
@@ -2042,7 +2046,7 @@ class QCMApp(QMainWindow):
 
         self.ui.mpl_spectra_fit.canvas.draw()
 
-        self.ui.mpl_spectra_fit_polar.update_data(('l', G, B))
+        self.ui.mpl_spectra_fit_polar.update_data({'ln': 'l', 'x': G, 'y': B})
         
         # set xlabel
         # self.mpl_set_faxis(self.ui.mpl_spectra_fit.ax[0])
@@ -2250,8 +2254,8 @@ class QCMApp(QMainWindow):
         print(fit_result['v_fit'])
         # print(fit_result['comp_g'])
         # plot fitted data
-        self.ui.mpl_spectra_fit.update_data(('lGfit',data_lG[0], fit_result['fit_g']), ('lBfit',data_lB[0], fit_result['fit_b']))
-        self.ui.mpl_spectra_fit_polar.update_data(('lfit',fit_result['fit_g'], fit_result['fit_b']))
+        self.ui.mpl_spectra_fit.update_data({'ln': 'lGfit', 'x': data_lG[0], 'y': fit_result['fit_g']}, {'ln': 'lBfit','x': data_lB[0], 'y': fit_result['fit_b']})
+        self.ui.mpl_spectra_fit_polar.update_data({'ln': 'lfit', 'x': fit_result['fit_g'], 'y': fit_result['fit_b']})
 
         # clear l.['temp'][:]
         self.ui.mpl_spectra_fit.del_templines()
@@ -2268,14 +2272,14 @@ class QCMApp(QMainWindow):
         print(gc_list)
 
         # sp_fit
-        self.ui.mpl_spectra_fit.update_data(('lsp', factor_span, gc_list))
+        self.ui.mpl_spectra_fit.update_data({'ln': 'lsp', 'x': factor_span, 'y': gc_list})
 
         # sp_polar
         print(len(data_lG[0]))
         print(factor_span)
         idx = np.where((data_lG[0] >= factor_span[0]) & (data_lG[0] <= factor_span[1])) # determine the indices by f (data_lG[0])
         
-        self.ui.mpl_spectra_fit_polar.update_data(('lsp', fit_result['fit_g'][idx], fit_result['fit_b'][idx]))
+        self.ui.mpl_spectra_fit_polar.update_data({'ln': 'lsp', 'x': fit_result['fit_g'][idx], 'y': fit_result['fit_b'][idx]})
 
         if self.get_spectraTab_mode() == 'center': # center mode
             # update strk
@@ -2288,7 +2292,7 @@ class QCMApp(QMainWindow):
             print(cen_trk_freq)
             print(cen_trk_G)
 
-            self.ui.mpl_spectra_fit.update_data(('strk', cen_trk_freq, cen_trk_G))
+            self.ui.mpl_spectra_fit.update_data({'ln': 'strk', 'x': cen_trk_freq, 'y': cen_trk_G})
 
         # update srec
         cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
@@ -2300,7 +2304,7 @@ class QCMApp(QMainWindow):
         print(cen_rec_freq)
         print(cen_rec_G)
 
-        self.ui.mpl_spectra_fit.update_data(('srec', cen_rec_freq, cen_rec_G))
+        self.ui.mpl_spectra_fit.update_data({'ln': 'srec', 'x': cen_rec_freq, 'y': cen_rec_G})
 
         # add results to textBrowser_spectra_fit_result
         if self.get_spectraTab_mode() == 'refit': # refit mode
@@ -2565,7 +2569,7 @@ class QCMApp(QMainWindow):
         # getattr(self.ui, 'mpl_' + plt_str).clr_lines(clr_list)
 
 
-    def prepare_harm_data_for_mpl_update(self, plt_chnname, plt_harms, line_group, xdata, ydata, show_marked_when_all=True):
+    def prepare_harm_data_for_mpl_update(self, plt_chnname, plt_harms, line_group, xdata, ydata, xerr=None, yerr=None, show_marked_when_all=True):
         '''
         devide xdata/ydata by harmonics and return a list of tuples for data_saver.update_data
         '''
@@ -2581,12 +2585,32 @@ class QCMApp(QMainWindow):
                 harm_xdata = xdata
             else: # multiple columns
                 harm_xdata = xdata.filter(like=harm, axis=1).squeeze() # convert to series
+            if xerr is not None: # there is err data
+                if len(xdata.shape) == 1: # one column e.g.: tuple (1,) is series
+                    harm_xerr = xerr
+                else: # multiple columns
+                    harm_xerr = xerr.filter(like=harm, axis=1).squeeze() # convert to series
             # set ydata for harm
             if len(ydata.shape) == 1: # series
                 harm_ydata = ydata
             else: # multiple columns
                 harm_ydata = ydata.filter(like=harm, axis=1).squeeze() # convert to series
-            data_list.append((line_group+harm, harm_xdata, harm_ydata))
+            if yerr is not None: # there is err data
+                if len(ydata.shape) == 1: # series
+                    harm_yerr = yerr
+                else: # multiple columns
+                    harm_yerr = yerr.filter(like=harm, axis=1).squeeze() # convert to series
+
+            if (xerr is not None) or (yerr is not None): # exist error
+                # change None to np.nan
+                if xerr is None:
+                    harm_xerr = np.nan
+                if yerr is None:
+                    harm_yerr = np.nan
+                data_list.append({'ln': line_group+harm, 'x': harm_xdata, 'y': harm_ydata, 'xerr': harm_xerr, 'yerr': harm_yerr})
+            else: # no error
+                data_list.append({'ln': line_group+harm, 'x': harm_xdata, 'y': harm_ydata})
+
 
             if show_marked_when_all:
                 ## display marked data (solid) along with all data (open) (can be removed if don't like)
@@ -2597,7 +2621,10 @@ class QCMApp(QMainWindow):
                     else: 
                         mark_list = []
                     if isinstance(mark_list, pd.Series):
-                        data_list.append(('lm'+harm, harm_xdata[mark_list], harm_ydata[mark_list]))
+                        if (xerr is not None) or (yerr is not None): # exist error
+                            data_list.append({'ln': 'lm'+harm, 'x': harm_xdata[mark_list], 'y': harm_ydata[mark_list],'xerr': harm_xerr[mark_list], 'yerr': harm_yerr[mark_list]})
+                        else:
+                            data_list.append({'ln': 'lm'+harm, 'x': harm_xdata[mark_list], 'y': harm_ydata[mark_list]})
         return data_list
 
 
@@ -3355,7 +3382,13 @@ class QCMApp(QMainWindow):
                 ylabel = settings_init['data_plt_axis_label'][var]
                 if '_rh' in var: # variable referenced to rh
                     ylabel = ylabel.replace('{rh}', '{' + str(rh) + '}')
-                
+
+                if self.settings['checkBox_settings_mechanics_witherror'] and (var + '_err' in getattr(self.data_saver, chn_name + '_prop')[mech_key].keys()): # corresponding error exists
+                    yerr = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var + '_err', mark=mark, dropnanrow=False)
+                    yerr = self.qcm.convert_mech_unit(yerr)
+                else:
+                    yerr = None
+
                 ## make the plot
                 # create figure
                 self.prop_plot_list.append(
@@ -3374,8 +3407,10 @@ class QCMApp(QMainWindow):
                     figharms = plt_harms
                 else:
                     figharms = [str(rh)]
+
+
                 # prepare data
-                data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, show_marked_when_all=False)
+                data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, yerr=yerr, show_marked_when_all=False)
                 
                 # update data in figure
                 self.prop_plot_list[-1].update_data(*data_list)
@@ -3400,6 +3435,12 @@ class QCMApp(QMainWindow):
             ylabel = settings_init['data_plt_axis_label'][varplot[0]]
             if '_rh' in varplot[0]: # variable referenced to rh
                 ylabel = ylabel.replace('{rh}', '{' + str(rh) + '}')
+            # get yerr
+            if self.settings['checkBox_settings_mechanics_witherror'] and (varplot[0] + '_err' in getattr(self.data_saver, chn_name + '_prop')[mech_key].keys()): # corresponding error exists
+                yerr = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, varplot[0] + '_err', mark=mark, dropnanrow=False)
+                yerr = self.qcm.convert_mech_unit(yerr)
+            else:
+                yerr = None
 
             # varplot[1] as x
             xdata = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, varplot[1], mark=mark, dropnanrow=False)
@@ -3407,7 +3448,12 @@ class QCMApp(QMainWindow):
             xlabel = settings_init['data_plt_axis_label'][varplot[1]]
             if '_rh' in varplot[1]: # variable referenced to rh
                 xlabel = xlabel.replace('{rh}', '{' + str(rh) + '}')
-
+            # get xerr
+            if self.settings['checkBox_settings_mechanics_witherror'] and (varplot[1] + '_err' in getattr(self.data_saver, chn_name + '_prop')[mech_key].keys()): # corresponding error exists
+                xerr = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, varplot[1] + '_err', mark=mark, dropnanrow=False)
+                xerr = self.qcm.convert_mech_unit(xerr)
+            else:
+                xerr = None
             ## make the plot
             # create figure
             self.prop_plot_list.append(
@@ -3426,7 +3472,7 @@ class QCMApp(QMainWindow):
             else:
                 figharms = [str(rh)]
             # prepare data
-            data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, show_marked_when_all=False)
+            data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, xerr, yerr, show_marked_when_all=False)
             
             # update data in figure
             self.prop_plot_list[-1].update_data(*data_list)
@@ -4598,11 +4644,11 @@ class QCMApp(QMainWindow):
 
                     # plot data in sp<harm>
                     if self.settings['radioButton_spectra_showGp']: # checked
-                        getattr(self.ui, 'mpl_sp' + str(harm)).update_data(('lG', f[chn_name][harm], G[chn_name][harm]))
+                        getattr(self.ui, 'mpl_sp' + str(harm)).update_data({'ln': 'lG', 'x': f[chn_name][harm], 'y': G[chn_name][harm]})
                     elif self.settings['radioButton_spectra_showBp']: # checked
-                        getattr(self.ui, 'mpl_sp' + str(harm)).update_data(('lG', f[chn_name][harm], G[chn_name][harm]), ('lB', f[chn_name][harm], B[chn_name][harm]))
+                        getattr(self.ui, 'mpl_sp' + str(harm)).update_data({'ln': 'lG', 'x': f[chn_name][harm], 'y': G[chn_name][harm]}, {'ln': 'lB', 'x': f[chn_name][harm], 'y': B[chn_name][harm]})
                     elif self.settings['radioButton_spectra_showpolar']: # checked
-                        getattr(self.ui, 'mpl_sp' + str(harm)).update_data(('lP', G[chn_name][harm], B[chn_name][harm]))
+                        getattr(self.ui, 'mpl_sp' + str(harm)).update_data({'ln': 'lP', 'x': G[chn_name][harm], 'y': B[chn_name][harm]})
 
             # set xticks
             # self.mpl_set_faxis(getattr(self.ui, 'mpl_sp' + str(harm)).ax[0])
@@ -4620,11 +4666,11 @@ class QCMApp(QMainWindow):
 
                     # plot fitted data
                     if self.settings['radioButton_spectra_showGp']: # checked
-                        getattr(self.ui, 'mpl_sp' + harm).update_data(('lGfit',f[chn_name][harm], fit_result['fit_g']))
+                        getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'lGfit', 'x': f[chn_name][harm], 'y': fit_result['fit_g']})
                     elif self.settings['radioButton_spectra_showBp']: # checked
-                        getattr(self.ui, 'mpl_sp' + harm).update_data(('lGfit',f[chn_name][harm], fit_result['fit_g']), ('lBfit',f[chn_name][harm], fit_result['fit_b']))
+                        getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'lGfit', 'x': f[chn_name][harm], 'y': fit_result['fit_g']}, {'ln': 'lBfit', 'x': f[chn_name][harm], 'y': fit_result['fit_b']})
                     elif self.settings['radioButton_spectra_showpolar']: # checked
-                        getattr(self.ui, 'mpl_sp' + harm).update_data(('lPfit', fit_result['fit_g'], fit_result['fit_b']))
+                        getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'lPfit', 'x': fit_result['fit_g'], 'y': fit_result['fit_b']})
 
 
                     # update lsp
@@ -4636,11 +4682,11 @@ class QCMApp(QMainWindow):
                     print(gc_list)
                     if self.settings['radioButton_spectra_showGp'] or self.settings['radioButton_spectra_showBp']: # show G or GB
 
-                        getattr(self.ui, 'mpl_sp' + harm).update_data(('lsp', factor_span, gc_list))
+                        getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'lsp', 'x':factor_span, 'y': gc_list})
                     elif self.settings['radioButton_spectra_showpolar']: # polar plot
                         idx = np.where((f[chn_name][harm] >= factor_span[0]) & (f[chn_name][harm] <= factor_span[1]))
 
-                        getattr(self.ui, 'mpl_sp' + harm).update_data(('lsp', fit_result['fit_g'][idx], fit_result['fit_b'][idx]))
+                        getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'lsp', 'x':fit_result['fit_g'][idx], 'y': fit_result['fit_b'][idx]})
 
 
                     # update srec
@@ -4657,14 +4703,14 @@ class QCMApp(QMainWindow):
                     print(cen_rec_G)
 
                     if self.settings['radioButton_spectra_showGp'] or self.settings['radioButton_spectra_showBp']: # show G or GB
-                        getattr(self.ui, 'mpl_sp' + harm).update_data(('srec', cen_rec_freq, cen_rec_G))
+                        getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'srec', 'x': cen_rec_freq, 'y': cen_rec_G})
                     elif self.settings['radioButton_spectra_showpolar']: # polar plot
                         cen_rec_B = self.peak_tracker.get_output(key='bmod', chn_name=chn_name, harm=harm).eval(
                             self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
                             x=cen_rec_freq
                         )                        
 
-                        getattr(self.ui, 'mpl_sp' + harm).update_data(('srec', cen_rec_G, cen_rec_B))
+                        getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'srec', 'x': cen_rec_G, 'y': cen_rec_B})
                     
                     if self.settings['checkBox_spectra_showchi']: # show chi square
                         getattr(self.ui, 'mpl_sp' + harm).update_sp_text_chi(fit_result['v_fit']['chisqr'])
@@ -4690,13 +4736,13 @@ class QCMApp(QMainWindow):
 
                 
                 if self.settings['radioButton_spectra_showGp'] or self.settings['radioButton_spectra_showBp']: # show G or GB
-                    getattr(self.ui, 'mpl_sp' + harm).update_data(('strk', cen_trk_freq, cen_trk_G))
+                    getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'strk', 'x': cen_trk_freq, 'y': cen_trk_G})
                 elif self.settings['radioButton_spectra_showpolar']: # polar plot
                     cen_trk_B = B[chn_name][harm][
                     np.argmin(np.abs(f[chn_name][harm] - cen_trk_freq))
                     ]                        
 
-                    getattr(self.ui, 'mpl_sp' + harm).update_data(('strk', cen_trk_G, cen_trk_B))
+                    getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'strk', 'x': cen_trk_G, 'y': cen_trk_B})
 
                 # set xticks
                 # self.mpl_set_faxis(getattr(self.ui, 'mpl_sp' + str(harm)).ax[0])
@@ -4803,19 +4849,25 @@ class QCMApp(QMainWindow):
                 # plot data in sp<harm> and fitting
                 if self.settings['radioButton_spectra_showGp']: # checked
                     getattr(self.ui, 'mpl_sp' + harm).update_data(
-                        ('lG', f, G), 
-                        ('lGfit',f, fit_result['fit_g']),
-                        ('lsp', factor_span, gc_list),
-                        ('srec', cen_rec_freq, cen_rec_G)
+                        {'ln': 'lG', 'x': f, 'y': G}, 
+                        {'ln': 'lGfit','x': f, 'y': fit_result['fit_g']},
+                        {'ln': 'lsp', 'x': factor_span, 'y': gc_list},
+                        {'ln': 'srec', 'x': cen_rec_freq, 'y': cen_rec_G}
                     )
                 elif self.settings['radioButton_spectra_showBp']: # checked
                     getattr(self.ui, 'mpl_sp' + harm).update_data(
-                        ('lG', f, G), 
-                        ('lB', f, B),
-                        ('lGfit',f, fit_result['fit_g']),
-                        ('lBfit',f, fit_result['fit_b']), 
-                        ('lsp', factor_span, gc_list),
-                        ('srec', cen_rec_freq, cen_rec_G),
+                        {'ln':
+                         'lG', 'x': f, 'y': G}, 
+                        {'ln':
+                         'lB', 'x': f, 'y': B},
+                        {'ln':
+                         'lGfit','x': f, 'y': fit_result['fit_g']},
+                        {'ln':
+                         'lBfit','x': f, 'y': fit_result['fit_b']}, 
+                        {'ln':
+                         'lsp', 'x': factor_span, 'y': gc_list},
+                        {'ln':
+                         'srec', 'x': cen_rec_freq, 'y': cen_rec_G},
                     )
                 elif self.settings['radioButton_spectra_showpolar']: # checked
                     idx = np.where(f >= factor_span[0] & f <= factor_span[1])
@@ -4825,10 +4877,13 @@ class QCMApp(QMainWindow):
                         x=cen_rec_freq
                     )     
 
-                    getattr(self.ui, 'mpl_sp' + harm).update_data(('lP', G, B),
-                        ('lPfit', fit_result['fit_g'], fit_result['fit_b']),
-                        ('lsp', fit_result['fit_g'][idx], fit_result['fit_b'][idx]),
-                        ('srec', cen_rec_G, cen_rec_B),
+                    getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'lP', 'x': G, 'y': B},
+                        {'ln': 
+                        'lPfit', 'x': fit_result['fit_g'], 'y': fit_result['fit_b']},
+                        {'ln': 
+                        'lsp', 'x': fit_result['fit_g'][idx], 'y': fit_result['fit_b'][idx]},
+                        {'ln': 
+                        'srec', 'x': cen_rec_G, 'y': cen_rec_B},
                     )
 
                 if self.settings['checkBox_spectra_showchi']: # show chi square
