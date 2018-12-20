@@ -807,35 +807,59 @@ class MatplotlibWidget(QWidget):
         '''
         initialize property plot
         initialize plot: 
-            .l<nharm> 
+            .l<ln>
+            ln = l, lm, p, pm 
         '''
         self.initax_xy()
 
         for i in range(1, int(settings_init['max_harmonic']+2), 2):
-            self.l['l' + str(i)] = self.ax[0].errorbar(
+            self.l['l' + str(i)] = self.ax[0].plot(
+                [], [], 
+                # marker='o', 
+                markerfacecolor='none', 
+                picker=5, # 5 points tolerance
+                label='l'+str(i),
+                alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
+            ) # l
+        
+        # for i in range(1, int(settings_init['max_harmonic']+2), 2):
+        #     self.l['lm' + str(i)] = self.ax[0].plot(
+        #         [], [], 
+        #         # marker='o', 
+        #         color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
+        #         picker=5, # 5 points tolerance
+        #         label='lm'+str(i),
+        #         alpha=0.75,
+        #     ) # maked points of line
+
+        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+            self.l['p' + str(i)] = self.ax[0].errorbar(
                 [], [], 
                 yerr=np.nan,
                 xerr=np.nan,
                 marker='o', 
                 markerfacecolor='none', 
-                # picker=5, # 5 points tolerance
-                label=str(i),
-                alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
-                capsize=settings_init['mpl_capsize'],
-            ) # l
-
-        for i in range(1, int(settings_init['max_harmonic']+2), 2):
-            self.l['lm' + str(i)] = self.ax[0].errorbar(
-                [], [], 
-                yerr=np.nan,
-                xerr=np.nan,
-                marker='o', 
+                linestyle='none',
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
                 # picker=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
                 capsize=settings_init['mpl_capsize'],
-            ) # lm
+            ) # prop
+
+        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+            self.l['pm' + str(i)] = self.ax[0].errorbar(
+                [], [], 
+                yerr=np.nan,
+                xerr=np.nan,
+                marker='o', 
+                linestyle='none',
+                color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
+                # picker=5, # 5 points tolerance
+                label=str(i),
+                alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
+                capsize=settings_init['mpl_capsize'],
+            ) # prop marked
         
         # set label of ax[1]
         self.set_ax(self.ax[0], title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)

@@ -32,8 +32,9 @@ parms['imagetype'] = 'png'  # default is 'svg'
 ######### run samples below ##########
 
 #%% 2:1 20181029 
-# qcm.analyze(sample['DGEBA-PACM_RT_2_cured'], parms)
+qcm.analyze(sample['DGEBA-PACM_RT_2_cured'], parms)
 
+exit(0)
 #%% 2:1 20181029 
 # qcm.analyze(sample['DGEBA-PACM_RT_cured'], parms)
 

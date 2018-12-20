@@ -281,10 +281,12 @@ class QCM:
         # now back calculate delfstar, rh and rd from the solution
         delfstar_calc = {}
         rh = {}
-        rd = {}
+        rd_exp = {}
+        rd_calc = {}
         delf_calcs = mech_queue.delf_calcs.iloc[0].copy()
         delg_calcs = mech_queue.delg_calcs.iloc[0].copy()
-        rds = mech_queue.rds.iloc[0]
+        rd_exps = mech_queue.rd_exps.iloc[0]
+        rd_calcs = mech_queue.rd_calcs.iloc[0]
         print('delf_calcs', delf_calcs)
         print(type(delf_calcs))
         for n in nhplot:
@@ -292,8 +294,10 @@ class QCM:
             delf_calcs[nh2i(n)] = np.real(delfstar_calc[n])
             delg_calcs[nh2i(n)] = np.imag(delfstar_calc[n])
             
-            rd[n] = self.rd_from_delfstar(n, delfstar_calc)
-            rds[nh2i(n)] = rd[n]
+            rd_calc[n] = self.rd_from_delfstar(n, delfstar_calc)
+            rd_calcs[nh2i(n)] = rd_calc[n]
+            rd_exp[n] = self.rd_from_delfstar(n, delfstar)
+            rd_exps[nh2i(n)] = rd_exp[n]
         rh = self.rh_from_delfstar(nh, delfstar_calc)
         print('delf_calcs', delf_calcs)
         print('delg_calcs', delg_calcs)
@@ -331,10 +335,14 @@ class QCM:
         mech_queue['rh'] = [[rh] * tot_harms]
 
         # multiple values in list
+        mech_queue['delf_exps'] = qcm_queue['delfs']
         mech_queue['delf_calcs'] = [delf_calcs]
+        mech_queue['delg_exps'] = qcm_queue['delgs']
         mech_queue['delg_calcs'] = [delg_calcs]
-        mech_queue['delg_delfsns'] =[[np.nan] * len(delf_calcs)]
-        mech_queue['rds'] = [rds]
+        mech_queue['delg_delfsn_exps'] =[[np.nan] * tot_harms]
+        mech_queue['delg_delfsn_clacs'] =[[np.nan] * tot_harms]
+        mech_queue['rd_exps'] = [rd_exps]
+        mech_queue['rd_calcs'] = [rd_calcs]
 
         print(mech_queue['delf_calcs'])
         print(mech_queue['delg_calcs'])
@@ -626,6 +634,27 @@ class QCM:
             elif 'phi' in col:
                 df[col] = df[col].apply(lambda x: list(np.rad2deg(x)) if isinstance(x, list) else np.rad2deg(x)) # from rad to deg
         return df
+
+
+    def single_harm_data(self, var, qcm_df):
+        '''
+        get variables calculate from single harmonic
+        variables listed in DataSaver.mech_keys_multiple
+        to keep QCM and DataSaver independently, we don't use import for each other
+        ['delf_calcs', 'delg_calcs', 'delg_delfsns', 'rds']
+        '''
+        print(var)
+        if var == 'delf_calcs':
+            return qcm_df.delfs
+        if var == 'delg_calcs':
+            return qcm_df.delgs
+        if var == 'delg_delfsns':
+            return None # TODO
+        if var == 'rds':
+            # rd_from_delfstar(self, n, delfstar)
+            s = qcm_df.delfstars.copy()
+            s.apply(lambda delfstars: [self.rd_from_delfstar(n, delfstars) for n in range(len(delfstars))])
+            return s
 
 
 if __name__ == '__main__':

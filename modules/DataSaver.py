@@ -132,6 +132,8 @@ class DataSaver:
         '''
         # data_keys = ['queue_id', 't', 'temp', 'marks', 'delfs', 'delgs',]
         data_keys = ['queue_id']
+
+        # column names with single value for prop df
         mech_keys_single = [
             'drho',
             'drho_err',
@@ -145,11 +147,17 @@ class DataSaver:
             'delf_delfsn',
             'rh',
         ]
+
+        # column names with multiple value for prop df
         mech_keys_multiple = [
+            'delf_exps',
             'delf_calcs', # n
+            'delg_exps',
             'delg_calcs', # n
-            'delg_delfsns',
-            'rds', # n
+            'delg_delfsn_exps', # n
+            'delg_delfsn_calcs', # n
+            'rd_exps', # n
+            'rd_calcs', # n
         ]
 
         mech_key = self.get_mech_key(nhcalc, rh)
@@ -266,9 +274,9 @@ class DataSaver:
                 setattr(self, chn_name + '_ref', pd.read_json(fh['data/' + chn_name + '_ref'][()]).sort_values(by=['queue_id'])) 
 
                 # load prop
-                if 'prop' in fh.keys() and fh['prop/' + chn_name].keys(): # prop exists
+                if ('prop' in fh.keys()) and (chn_name in fh['prop'].keys()): # prop exists
                     for mech_key in fh['prop/' + chn_name].keys():
-                        getattr(self, chn_name + '_prop')[mech_key] = pd.read_json(fh['prop/' + chn_name + mech_key][()]).sort_values(by=['queue_id']) 
+                        getattr(self, chn_name + '_prop')[mech_key] = pd.read_json(fh['prop/' + chn_name + '/' + mech_key][()]).sort_values(by=['queue_id']) 
                 
                 
             # replace None with nan in self.samp and self.ref
@@ -479,11 +487,14 @@ class DataSaver:
         with h5py.File(self.path, 'a') as fh:
             for chn_name in self._chn_keys:
                 for mech_key, mech_df in getattr(self, chn_name + '_prop').items():
-                    if mech_key in fh['prop/' + chn_name]:
-                        del fh['prop/' + chn_name + mech_key]
+                    if ('prop' not in fh.keys()) or (chn_name not in fh['prop'].keys()):
+                        fh.create_dataset('prop/' + chn_name + '/' + mech_key, data=mech_df.to_json(), dtype=h5py.special_dtype(vlen=str))
+                    else: 
+                        if mech_key in fh['prop/' + chn_name].keys():
+                            del fh['prop/' + chn_name + mech_key]
 
-                    # create data_set for mech_df
-                    fh.create_dataset('prop/' + chn_name + mech_key, data=mech_df.to_json(), dtype=h5py.special_dtype(vlen=str))
+                        # create data_set for mech_df
+                        fh.create_dataset('prop/' + chn_name + '/' + mech_key, data=mech_df.to_json(), dtype=h5py.special_dtype(vlen=str))
 
 
     def save_exp_ref(self):

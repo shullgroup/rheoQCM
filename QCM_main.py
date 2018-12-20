@@ -2571,7 +2571,46 @@ class QCMApp(QMainWindow):
         # getattr(self.ui, 'mpl_' + plt_str).clr_lines(clr_list)
 
 
-    def prepare_harm_data_for_mpl_update(self, plt_chnname, plt_harms, line_group, xdata, ydata, xerr=None, yerr=None, show_marked_when_all=True):
+    def prepare_harm_data_for_mpl_update(self, plt_chnname, plt_harms, line_group, xdata, ydata, show_marked_when_all=True):
+        '''
+        devide xdata/ydata by harmonics and return a list of tuples for data_saver.update_data
+        This is for data update (also live update). So, keep it simple and fast 
+        the function for prop plot update can be found separately
+        '''
+        data_list = []
+
+        if show_marked_when_all: 
+            mark_df = self.data_saver.get_list_column_to_columns_marked_rows(plt_chnname, 'marks', mark=False, dropnanrow=False, deltaval=False, norm=False)            
+        for harm in plt_harms: # selected
+            harm = str(harm)
+            # set xdata for harm
+            print(xdata.shape)
+            if len(xdata.shape) == 1: # one column e.g.: tuple (1,) is series
+                harm_xdata = xdata
+            else: # multiple columns
+                harm_xdata = xdata.filter(like=harm, axis=1).squeeze() # convert to series
+
+            # set ydata for harm
+            if len(ydata.shape) == 1: # series
+                harm_ydata = ydata
+            else: # multiple columns
+                harm_ydata = ydata.filter(like=harm, axis=1).squeeze() # convert to series
+
+            data_list.append({'ln': line_group+harm, 'x': harm_xdata, 'y': harm_ydata})
+
+            if show_marked_when_all:
+                ## display marked data (solid) along with all data (open) (can be removed if don't like)
+                if self.settings['radioButton_data_showall']:
+                    if self.data_saver.with_marks(plt_chnname):
+                        mark_list = mark_df['mark'+harm] == 1
+                        print('mark_list', mark_list)
+                    else: 
+                        mark_list = []
+                    if isinstance(mark_list, pd.Series):
+                        data_list.append({'ln': 'lm'+harm, 'x': harm_xdata[mark_list], 'y': harm_ydata[mark_list]})
+        return data_list
+
+    def prepare_harm_data_for_mpl_prop_update(self, plt_chnname, plt_harms, line_group, xdata, ydata, xerr=None, yerr=None, show_marked_when_all=True):
         '''
         devide xdata/ydata by harmonics and return a list of tuples for data_saver.update_data
         '''
@@ -2624,9 +2663,9 @@ class QCMApp(QMainWindow):
                         mark_list = []
                     if isinstance(mark_list, pd.Series):
                         if (xerr is not None) or (yerr is not None): # exist error
-                            data_list.append({'ln': 'lm'+harm, 'x': harm_xdata[mark_list], 'y': harm_ydata[mark_list],'xerr': harm_xerr[mark_list], 'yerr': harm_yerr[mark_list]})
+                            data_list.append({'ln': line_group+'m'+harm, 'x': harm_xdata[mark_list], 'y': harm_ydata[mark_list],'xerr': harm_xerr[mark_list], 'yerr': harm_yerr[mark_list]})
                         else:
-                            data_list.append({'ln': 'lm'+harm, 'x': harm_xdata[mark_list], 'y': harm_ydata[mark_list]})
+                            data_list.append({'ln': line_group+'m'+harm, 'x': harm_xdata[mark_list], 'y': harm_ydata[mark_list]})
         return data_list
 
 
@@ -2639,12 +2678,12 @@ class QCMApp(QMainWindow):
         '''
 
         print(typestr)
-        if typestr in ['df', 'delfs']: # get delf
+        if typestr in ['df', 'delf_exps']: # get delf
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
         elif 'mdf' == typestr: # get delf
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
             data = self.data_saver.minus_columns(data)
-        elif typestr in ['dg', 'delgs']: # get delg
+        elif typestr in ['dg', 'delg_exps']: # get delg
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
         elif 'dfn' == typestr: # get delfn
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=True)
@@ -2760,7 +2799,6 @@ class QCMApp(QMainWindow):
         '''
         if self.settings['radioButton_data_showall']: # show all data
             mark = False
-            line_group = 'l'
         elif self.settings['radioButton_data_showmarked']: # show marked data only
             mark = True
 
@@ -3354,71 +3392,21 @@ class QCMApp(QMainWindow):
         # from tabWidget_settings
         if self.show_marked_data(): # show marked data only
             if self.data_saver.with_marks(chn_name):
-                line_group = 'lm'
+                prop_group = 'pm'
+                line_group = 'l'
                 mark = True
             else:
+                prop_group = 'p'
                 line_group = 'l'
                 mark = False
         else: # show all data
             mark = False
+            prop_group = 'p'
             line_group = 'l'
 
-        if plot_type in ['t', 'temp']:
-            if plot_type == 't':
-                # get timeunit
-                timeunit = self.settings['comboBox_timeunit']
-                xdata = self.data_saver.get_t_marked_rows(chn_name, dropnanrow=False, unit=timeunit) # time
-                xlabel = settings_init['data_plt_axis_label']['t'] # r'Time (unit)
-                xlabel = self.time_str_unit_replace(xlabel) # replace unit by comboBox_timeunit
-
-            elif plot_type == 'temp':
-                # get tempunit
-                tempunit = self.settings['comboBox_tempunit']
-                xdata = self.data_saver.get_temp_by_uint_marked_rows(chn_name, dropnanrow=False, unit=tempunit) # temp
-                xlabel = settings_init['data_plt_axis_label']['t'] # r'Time (unit)
-                xlabel = self.temp_str_unit_replace(xlabel) # replace unit by comboBox_tempunit
-
-            for var in varplot:
-                ydata = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var, mark=mark, dropnanrow=False)
-                ydata = self.qcm.convert_mech_unit(ydata) # convert unit for plot
-                ylabel = settings_init['data_plt_axis_label'][var]
-                if '_rh' in var: # variable referenced to rh
-                    ylabel = ylabel.replace('{rh}', '{' + str(rh) + '}')
-
-                if self.settings['checkBox_settings_mechanics_witherror'] and (var + '_err' in getattr(self.data_saver, chn_name + '_prop')[mech_key].keys()): # corresponding error exists
-                    yerr = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var + '_err', mark=mark, dropnanrow=False)
-                    yerr = self.qcm.convert_mech_unit(yerr)
-                else:
-                    yerr = None
-
-                ## make the plot
-                # create figure
-                self.prop_plot_list.append(
-                    MatplotlibWidget(
-                        parent=self.ui.scrollArea_data_mechanics_plots, 
-                        axtype='prop',
-                        showtoolbar=True,
-                        xlabel=xlabel,
-                        ylabel=ylabel,
-                        title=mech_key,
-                    )
-                )
-                
-                # check if data is harmonic dependent
-                if var.endswith('s'):
-                    figharms = plt_harms
-                else:
-                    figharms = [str(rh)]
-
-
-                # prepare data
-                data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, yerr=yerr, show_marked_when_all=False)
-                
-                # update data in figure
-                self.prop_plot_list[-1].update_data(*data_list)
-                # add to scrollarea
-                self.update_mpl_to_prop_scrollarea()
-
+        # create varplots (list of [var_y, var_x] for plots)
+        if plot_type in ['t', 'temp']: # y vs. time/temp
+            varplots = [[var, plot_type] for var in varplot]
 
         elif plot_type in ['r1r2', 'r2r1']:
             if len(varplot) < 2: # not enough variables selected
@@ -3430,32 +3418,18 @@ class QCMApp(QMainWindow):
             
             if plot_type == 'r2r1': 
                 varplot.reverse() # reverse varplot
+            
+            varplots = [varplot] # list of plots to plot
 
-            # varplot[0] as y
-            ydata = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, varplot[0], mark=mark, dropnanrow=False)
-            ydata = self.qcm.convert_mech_unit(ydata) # convert unit for plot
-            ylabel = settings_init['data_plt_axis_label'][varplot[0]]
-            if '_rh' in varplot[0]: # variable referenced to rh
-                ylabel = ylabel.replace('{rh}', '{' + str(rh) + '}')
-            # get yerr
-            if self.settings['checkBox_settings_mechanics_witherror'] and (varplot[0] + '_err' in getattr(self.data_saver, chn_name + '_prop')[mech_key].keys()): # corresponding error exists
-                yerr = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, varplot[0] + '_err', mark=mark, dropnanrow=False)
-                yerr = self.qcm.convert_mech_unit(yerr)
-            else:
-                yerr = None
+        for var_yx in varplots: # for each plot to plot
+            # var_yx[0] as y
+            ydata, yerr = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[0], mark)
+            ylabel = self.get_label_replace_rh_unit(var_yx[0], rh)
 
-            # varplot[1] as x
-            xdata = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, varplot[1], mark=mark, dropnanrow=False)
-            xdata = self.qcm.convert_mech_unit(xdata) # convert unit for plot
-            xlabel = settings_init['data_plt_axis_label'][varplot[1]]
-            if '_rh' in varplot[1]: # variable referenced to rh
-                xlabel = xlabel.replace('{rh}', '{' + str(rh) + '}')
-            # get xerr
-            if self.settings['checkBox_settings_mechanics_witherror'] and (varplot[1] + '_err' in getattr(self.data_saver, chn_name + '_prop')[mech_key].keys()): # corresponding error exists
-                xerr = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, varplot[1] + '_err', mark=mark, dropnanrow=False)
-                xerr = self.qcm.convert_mech_unit(xerr)
-            else:
-                xerr = None
+            # var_yx[1] as x
+            xdata, xerr = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[1], mark)
+            xlabel = self.get_label_replace_rh_unit(var_yx[1], rh)
+
             ## make the plot
             # create figure
             self.prop_plot_list.append(
@@ -3469,17 +3443,77 @@ class QCMApp(QMainWindow):
                 )
             )
             # check if data is harmonic dependent
-            if varplot[0].endswith('s') or varplot[1].endswith('s'):
+            if var_yx[0].endswith('s') or var_yx[1].endswith('s'):
                 figharms = plt_harms
             else:
                 figharms = [str(rh)]
             # prepare data
-            data_list = self.prepare_harm_data_for_mpl_update(chn_name, figharms, line_group, xdata, ydata, xerr, yerr, show_marked_when_all=False)
+            prop_list = self.prepare_harm_data_for_mpl_prop_update(chn_name, figharms, prop_group, xdata, ydata, xerr, yerr, show_marked_when_all=False)
+
+            # calc value from single harm for line_grop
+            if '_calcs' in var_yx[0] or '_calcs' in var_yx[1]: # var in mech_keys_multiple
+                line_xdata = xdata
+                line_ydata = ydata
+                if '_calcs' in var_yx[0]:
+                    line_ydata, _ = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[0].replace('calc', 'exp'), mark)
+                if '_calcs' in var_yx[1]:
+                    line_xdata, _ = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[1].replace('calc', 'exp'), mark)
+                line_list = self.prepare_harm_data_for_mpl_prop_update(chn_name, figharms, line_group, line_xdata, line_ydata, show_marked_when_all=False) # use the same value
+
+            else: 
+                line_list = self.prepare_harm_data_for_mpl_prop_update(chn_name, figharms, line_group, xdata, ydata, show_marked_when_all=False) # use the same value
             
+            print('line_list', line_list)
             # update data in figure
-            self.prop_plot_list[-1].update_data(*data_list)
+            self.prop_plot_list[-1].update_data(*prop_list, *line_list)
             # add to scrollarea
             self.update_mpl_to_prop_scrollarea()
+
+
+    def get_label_replace_rh_unit(self, var, rh):
+        '''
+        get label from settings_init and replace '_rh' and 'unit' in it
+        '''
+        label = settings_init['data_plt_axis_label'][var]
+        if '_rh' in var: # variable referenced to rh
+            label = label.replace('{rh}', '{' + str(rh) + '}')
+        if var == 't':
+            label = self.time_str_unit_replace(label)
+        elif var == 'temp':
+            label = self.temp_str_unit_replace(label)
+        return label
+
+
+    def get_data_from_data_or_prop(self, chn_name, mech_key, var, mark):
+        '''
+        get data from data_saver.chn_name or data_saver.<chn_name + _prop>[mech_key]
+        '''
+        data, err = None, None # inintiate value
+
+        # get keys
+        data_cols = list(getattr(self.data_saver, chn_name).columns)
+        prop_cols = list(getattr(self.data_saver, chn_name+'_prop')[mech_key].columns)
+
+        if var in data_cols + ['delf_exps', 'delg_exps']: # delg delf is in data, so add them to the check list
+            # get timeunit 
+            timeunit = self.settings['comboBox_timeunit']
+            # get tempunit
+            tempunit = self.settings['comboBox_tempunit']
+            
+            data = self.get_data_by_typestr(var, chn_name, mark=mark, unit_t=timeunit, unit_temp=tempunit)
+
+        elif var in prop_cols: # delg delf is in data, so add them to the check list
+            data = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var, mark=mark, dropnanrow=False)
+            data = self.qcm.convert_mech_unit(data) # convert unit for plot
+            # get yerr
+            if self.settings['checkBox_settings_mechanics_witherror'] and (var + '_err' in getattr(self.data_saver, chn_name + '_prop')[mech_key].keys()): # corresponding error exists
+                err = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var + '_err', mark=mark, dropnanrow=False)
+                err = self.qcm.convert_mech_unit(err)
+            else:
+                err = None
+        
+        return data, err
+
 
 
     def update_mpl_to_prop_scrollarea(self):
