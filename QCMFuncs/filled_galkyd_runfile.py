@@ -7,6 +7,31 @@ import QCM_functions as qcm
 import DMA_functions as dma
 import legacy_functions as legacy
 import DMA_sampledefs
+import hdf5storage
+
+def convert_to_delfstar(data_in, idx):
+    # convert Lauren's values of delf and delg to the version of delfstar 
+    # used by our solver
+    delfstar = {}
+    for i in np.arange(len(idx)):
+        delfstar[i]={}
+        for n in [1, 3, 5]:
+            delfstar[i][n] = (data_in['delf'][idx[i], n-1] + 1j*
+                              data_in['delg'][idx[i], n-1])     
+    return delfstar
+
+def find_nearest_idx(value, array):
+    # find index of a point with value closest to the one specified
+    idx = np.searchsorted(array, value, side="left")
+    if idx > 0 and (idx == len(array) or np.abs(value - array[idx-1]) < 
+                    np.abs(value - array[idx])):
+        return idx-1
+    else:
+        return idx
+    
+parms = {}
+
+
 
 parms = {}
 # define locations of the QCM data files
@@ -29,6 +54,10 @@ phi_ZnO = (w_dry/5.6)/(w_dry/5.6+(1-w_dry)/1.2)
 rho=5.6*phi_ZnO+(1-phi_ZnO)*1.2
 
 parms['dmadir'] = '/home/ken/Mydocs/People/Sturdy/Filled_Galkyd_Paper/data/DMA'
+  
+#%% re-analyze some of the QCM data
+input_file = w40_1+'_calc.mat'
+data = hdf5storage.loadmat(input_file)
 
 #%% now compare results for increasing volume fractions, all using 353
 fig1 = qcm.make_prop_axes('fig1', 'time')
