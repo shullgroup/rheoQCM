@@ -8,6 +8,8 @@ lmfit
 # openypyxl or xlsxwriter (may depend on system)
 xlsxwriter
 h5py
+# hdf5storage is for QCMFuncs
+hdf5storage 
 nidaqmx
 win32ui
 win32process

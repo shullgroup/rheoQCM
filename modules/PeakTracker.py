@@ -783,7 +783,7 @@ class PeakTracker:
                 max=np.amax(f),         # ub: assume peak is in the range of f
             )
             params.add(
-                'p'+str(i)+'_wid',                 # width (fwhm)
+                'p'+str(i)+'_wid',                 # width (hwhm)
                 value=wid,                         # init: half range
                 min= settings_init['peak_min_width_Hz'] / 2,         # lb in Hz
                 max=(np.amax(f) - np.amin(f)) * 2, # ub in Hz: assume peak is in the range of f

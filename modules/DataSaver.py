@@ -22,6 +22,9 @@ don't want to extract the data with code
      |                --...
      |
      -- data-|-samp (json)
+     |       |-ref  (json)
+     |       --...
+     -- prop-|-samp (json)
              |-ref  (json)
              --...
 '''
@@ -68,9 +71,8 @@ class DataSaver:
         self.ref_ref = self._make_df() # df for ref chn reference
         self.raw  = {} # raw data from last queue
         self.exp_ref  = self._make_exp_ref() # experiment reference setup in dict
-        self.samp_mech = {} # a dict for calculated mechanical results keys: '131'... values: pd.dataframe
-        self.ref_mech = {}
-        
+        self.samp_prop = {} # a dict for calculated mechanical results keys: '131'... values: pd.dataframe
+        self.ref_prop = {}
         
 
     def _make_df(self):
@@ -86,7 +88,6 @@ class DataSaver:
             'fs',
             'gs',
         ])
-
 
 
     def _make_exp_ref(self):
@@ -120,26 +121,28 @@ class DataSaver:
         } # experiment reference setup in dict
 
 
-    def update_mech_df_shape(self, chn_name, nhcalc):
+    def update_mech_df_shape(self, chn_name, nhcalc, rh):
         '''
-        initiate an empty df for storing the mechanic data in self.mech with nhcalc as a key
+        initiate an empty df for storing the mechanic data in self.mech with nhcalc_rh as a key
         if there is a key with the same name, check and add missed rows (queue_id)
         nhcalc: str '133'
+        rh: in, reference harmonit
+        the df will be saved/updated as nhcalc_str(rh)
         return the updated df
         '''
         # data_keys = ['queue_id', 't', 'temp', 'marks', 'delfs', 'delgs',]
         data_keys = ['queue_id']
         mech_keys_single = [
             'drho',
-            'drho_err'
+            'drho_err',
             'grho_rh',
-            'grho_rh_err'
+            'grho_rh_err',
             'phi',
-            'phi_err'
+            'phi_err',
             'dlam_rh',
             'lamrho',
             'delrho',
-            'delf_delfsns',
+            'delf_delfsn',
             'rh',
         ]
         mech_keys_multiple = [
@@ -148,42 +151,52 @@ class DataSaver:
             'delg_delfsns',
             'rds', # n
         ]
-        # nhcalc_str = ''.join(nhcalc)
-        if nhcalc in getattr(self, chn_name + '_mech').keys():
-            df_mech = getattr(self, chn_name + '_mech')
+
+        mech_key = self.get_mech_key(nhcalc, rh)
+        print(mech_key)
+
+        if mech_key in getattr(self, chn_name + '_prop').keys():
+            df_mech = getattr(self, chn_name + '_prop')[mech_key].copy()
+            print(df_mech)
+            print(df_mech.columns)
             mech_queue_id = df_mech['queue_id']
             data_queue_id = getattr(self, chn_name)['queue_id']
+            print(mech_queue_id)
+            print(data_queue_id)
             # check if queue_id is the same as self.chn_name
-            if mech_queue_id != data_queue_id:
+            if (mech_queue_id == data_queue_id).all():
+                return df_mech
+            else:
                 # delete the extra queue_id
                 df_mech = df_mech[df_mech['queue_id'] in (set(mech_queue_id) & set(data_queue_id))]
                 # add the missed queue_id, this will leave other columns as NA
                 df_mech.append(pd.DataFrame.from_dict(dict(queue_id=list(set(data_queue_id) - set(mech_queue_id)))), ignore_index = True)
                 # replace na with self.nan_harm_list
-                df_mech.loc[mech_keys_single] = df_mech.loc[mech_keys_single].fillna(np.nan)
+                # df_mech.loc[mech_keys_single] = df_mech.loc[mech_keys_single].fillna(np.nan) # set a single value
+                df_mech.loc[mech_keys_single] = df_mech.loc[mech_keys_single].fillna(self.nan_harm_list()) # set multiple value. this make it easer for plotting
                 df_mech.loc[mech_keys_multiple] = df_mech.loc[mech_keys_multiple].fillna(self.nan_harm_list())
-
-                # save back to class
-                getattr(self, chn_name + '_mech')[nhcalc] = df_mech
-
+            
         else: # not exist, make a new dataframe
             df_mech = pd.DataFrame(columns=data_keys+mech_keys_single+mech_keys_multiple)
 
             # set values
             nrows = len(getattr(self, chn_name)['queue_id'])
-            nan_list = [self.nan_harm_list]* nrows 
+            nan_list = [self.nan_harm_list()] * nrows 
             df_mech['queue_id'] = getattr(self, chn_name)['queue_id']
             # df_mech['t'] = getattr(self, chn_name)['t']
             # df_mech['temp'] = getattr(self, chn_name)['temp']
-            for key in mech_keys_single:
-                df_mech[key] = np.nan
-            for key in mech_keys_multiple:
-                df_mech[key] = nan_list
+            for df_key in mech_keys_single:
+                # df_mech[df_key] = np.nan
+                df_mech[df_key] = nan_list
+            for df_key in mech_keys_multiple:
+                df_mech[df_key] = nan_list
 
-            # set it to class
-            getattr(self, chn_name + '_mech')[nhcalc_str] = df_mech
+        print(df_mech)
 
-        return getattr(self, chn_name + '_mech')[nhcalc]
+        # set it to class
+        self.update_mech_df_in_prop(chn_name, nhcalc, rh, df_mech)
+
+        return getattr(self, chn_name + '_prop')[mech_key].copy()
 
 
     def init_file(self, path, settings, t0):
@@ -206,6 +219,7 @@ class DataSaver:
         with h5py.File(self.path, 'w') as fh:
             fh.create_group('data')
             fh.create_group('raw')
+            fh.create_group('prop')
         
         # save version information
         self._save_ver()
@@ -241,16 +255,43 @@ class DataSaver:
             print(self.exp_ref)
             # get queue_list
             # self.queue_list = list(fh['raw/samp'].keys())
-            self.queue_list = [int(s) for s in fh['raw/samp'].keys()]
+            # self.queue_list = [int(s) for s in fh['raw/samp'].keys()]
 
             print(fh['data/samp'][()])
-            for key in self._chn_keys:
-                setattr(self, key, pd.read_json(fh['data/' + key][()]).sort_values(by=['queue_id'])) # df for data form samp/ref chn
-                setattr(self, key + '_ref', pd.read_json(fh['data/' + key + '_ref'][()]).sort_values(by=['queue_id'])) # df for data form samp_ref/ref_ref chn
+            for chn_name in self._chn_keys:
+                # df for data from samp/ref chn
+                setattr(self, chn_name, pd.read_json(fh['data/' + chn_name][()]).sort_values(by=['queue_id'])) 
+                
+                # df for data form samp_ref/ref_ref chn
+                setattr(self, chn_name + '_ref', pd.read_json(fh['data/' + chn_name + '_ref'][()]).sort_values(by=['queue_id'])) 
+
+                # load prop
+                if 'prop' in fh.keys() and fh['prop/' + chn_name].keys(): # prop exists
+                    for mech_key in fh['prop/' + chn_name].keys():
+                        getattr(self, chn_name + '_prop')[mech_key] = pd.read_json(fh['prop/' + chn_name + mech_key][()]).sort_values(by=['queue_id']) 
+                
+                
+            # replace None with nan in self.samp and self.ref
+            self.replace_none_with_nan_after_loading() 
+
+            # get queue_list for each channel
+            # method 1: from raw. problem of this method is repeat queue_id may be created after deleting data points. 
+            # queue_samp = []
+            # queue_ref = []
+            # if 'samp' in fh['raw'].keys():
+            #     queue_samp = [int(s) for s in fh['raw/samp'].keys()]
+            # if 'ref' in fh['raw'].keys():
+            #     queue_ref = [int(s) for s in fh['raw/ref'].keys()]
+            # method 2: from data
+            queue_samp = self.samp.queue_id.values # TODO add checking marker != -1
+            queue_ref = self.ref.queue_id.values
+            self.queue_list = list(set(queue_samp) | set(queue_ref))
 
             self.raw  = {} # raw data from last queue
 
             self.saveflg = True
+
+            # print(self.samp)
 
 
     def load_settings(self, path):
@@ -425,9 +466,24 @@ class DataSaver:
         wrap up of save_data and save_settings and save_exp_ref
         '''
         self.save_data()
-        self.save_settings(settings={}, settings_init={})
+        self.save_settings(settings=settings, settings_init=settings_init)
+        self.save_prop()
         self.save_exp_ref()
         self.saveflg = True
+
+
+    def save_prop(self):
+        '''
+        save prop data to file
+        '''
+        with h5py.File(self.path, 'a') as fh:
+            for chn_name in self._chn_keys:
+                for mech_key, mech_df in getattr(self, chn_name + '_prop').items():
+                    if mech_key in fh['prop/' + chn_name]:
+                        del fh['prop/' + chn_name + mech_key]
+
+                    # create data_set for mech_df
+                    fh.create_dataset('prop/' + chn_name + mech_key, data=mech_df.to_json(), dtype=h5py.special_dtype(vlen=str))
 
 
     def save_exp_ref(self):
@@ -493,6 +549,40 @@ class DataSaver:
         print(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col])
 
         self.saveflg = False
+
+
+    def replace_none_with_nan_after_loading(self):
+        '''
+        replace the None with nan in marks, fs, gs
+        '''
+        for chn_name in self._chn_keys:
+            for ext in ['', '_ref']: # samp/ref and samp_ref/ref_ref
+                df = getattr(self, chn_name + ext)
+                col_endswith_s = [col for col in df.columns if col.endswith('s')]
+                print(col_endswith_s)
+                
+                for col in col_endswith_s:
+                    df[col] = df[col].apply(lambda row: [np.nan if x is None else x for x in row])
+
+
+    def update_mech_df_in_prop(self, chn_name, nhcalc, rh, mech_df):
+        '''
+        save mech_df to self.'chn_nam'_mech[nhcalc]
+        '''
+        # set queue_id as int
+        mech_df['queue_id'] = mech_df.queue_id.astype(int)
+
+        getattr(self, chn_name + '_prop')[self.get_mech_key(nhcalc, rh)] = mech_df
+        print('mech_df in data_saver')
+        print(getattr(self, chn_name + '_prop')[self.get_mech_key(nhcalc, rh)])
+        self.saveflg = False
+    
+
+    def get_mech_df_in_prop(self, chn_name, nhcalc, rh):
+        '''
+        get mech_df from self.'chn_nam'_mech[nhcalc]
+        '''
+        return getattr(self, chn_name + '_prop')[nhcalc].copy()
 
 
     ####################################################
@@ -633,7 +723,7 @@ class DataSaver:
         return rows with marks of df from self.get_t_s
         '''
         if dropnanrow == True:
-            return self.get_t_by_unit(chn_name, unit=unit)[self.rows_with_marks(chn_name)]
+            return self.get_t_by_unit(chn_name, unit=unit)[[self.rows_with_marks(chn_name)]]
         else:
             return self.get_t_by_unit(chn_name, unit=unit)
 
@@ -682,7 +772,7 @@ class DataSaver:
         return getattr(self, chn_name)['queue_id'].copy()
 
 
-    def get_temp_by_uint_marked_rows(self, chn_name, dropnanrow=False, unit=None):
+    def get_temp_by_uint_marked_rows(self, chn_name, dropnanrow=False, unit='C'):
         '''
         return rows with marks of df from self.get_temp_C
         '''
@@ -692,7 +782,7 @@ class DataSaver:
             return self.get_temp_by_unit(chn_name, unit=unit)
 
 
-    def get_temp_by_unit(self, chn_name, unit=None):
+    def get_temp_by_unit(self, chn_name, unit='C'):
         '''
         return temp by given unit
         '''
@@ -734,13 +824,20 @@ class DataSaver:
         return t0
 
 
+    def get_cols(self, chn_name, cols=[]):
+        '''
+        return a copy of df with all rows and giving columns list
+        '''
+        return getattr(self, chn_name).loc[:, cols].copy()
+
+
     def get_list_column_to_columns_marked_rows(self, chn_name, col, mark=False, dropnanrow=False, deltaval=False, norm=False):
         '''        
         return rows with marks of df from self.get_list_column_to_columns
         '''
         cols_df = self.get_list_column_to_columns(chn_name, col, mark=mark, deltaval=deltaval, norm=norm)
         if dropnanrow == True:
-            return cols_df[self.rows_with_marks(chn_name)][:]
+            return cols_df[[self.rows_with_marks(chn_name)]][:]
         else:
             return cols_df
 
@@ -788,6 +885,53 @@ class DataSaver:
                 return pd.DataFrame(data=arr_s, index=idx).rename(columns=lambda x: col[:-1] + str(x * 2 + 1))
             else: # there is no marks(1)
                 return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col[:-1] + str(x * 2 + 1))
+            
+
+    def get_mech_column_to_columns_marked_rows(self, chn_name, mech_key, col, mark=False, dropnanrow=False):
+        '''        
+        return rows with marks of mech_df from self.get_mech_column_to_columns
+        '''
+        cols_df = self.get_mech_column_to_columns(chn_name, mech_key, col, mark=mark)
+        if dropnanrow == True:
+            return cols_df[[self.rows_with_marks(chn_name)]][:]
+        else:
+            return cols_df
+
+
+    def get_mech_column_to_columns(self, chn_name, mech_key, col, mark=False):
+        '''
+        make a df of given column (col) in mech_df (all with list) to colums by harmonics
+        chn_name: str of channel name ('sam', 'ref')
+        col: str of column name ('drho', 'grho', etc.)
+        mark: if True, show marked data only by masking others to nan
+        return: df with columns = ['1', '3', '5', '7', '9]
+        NOTE: The end 's' in column names will not be removed here because the 's' in mech_df shows the value is harmonic dependent.
+        '''
+
+        s = getattr(self, chn_name + '_prop')[mech_key][col].copy()
+        print('sssss', s)
+
+        if mark == False:
+            return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col + str(x * 2 + 1))
+        else:
+            m = getattr(self, chn_name)['marks'].copy() # marks from data
+            idx = s.index
+            # convert s and m to ndarray
+            arr_s = np.array(s.values.tolist(), dtype=np.float) # the dtype=np.float replace None with np.nan
+            print(arr_s)
+            arr_m = np.array(m.values.tolist(), dtype=np.float) # the dtype=np.float replace None with np.nan
+            print(arr_m)
+            print(np.any(arr_m == 1))
+            if np.any(arr_m == 1): # there are marks (1)
+                print('there are marks (1) in df')
+                # replace None with np.nan
+                arr_s = arr_s * arr_m # leave values where only marks == 1
+                # replace unmarked (marks == 0) with np.nan
+                arr_s[arr_s == 0] = np.nan
+
+                return pd.DataFrame(data=arr_s, index=idx).rename(columns=lambda x: col + str(x * 2 + 1))
+            else: # there is no marks(1)
+                return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col + str(x * 2 + 1))
             
 
     def convert_col_to_delta_val(self, chn_name, col, norm=False):
@@ -980,10 +1124,12 @@ class DataSaver:
             return self.exp_ref[chn_name]
         else:
             idx = [(int(harm)-1)/2 for harm in harms]
-            exp_ref = self.exp_ref.copy() # make a copy to make sure not change the original one
-            exp_ref['f0'] =  [val for i, val in enumerate(exp_ref['f0']) if i in idx]
-            exp_ref['g0'] =  [val for i, val in enumerate(exp_ref['g0']) if i in idx]
-            return exp_ref
+            ref_dict = self.exp_ref[chn_name].copy() # make a copy to make sure not change the original one
+            ref_dict['f0'] =  [val for i, val in enumerate(ref_dict['f0']) if i in idx]
+            ref_dict['g0'] =  [val for i, val in enumerate(ref_dict['g0']) if i in idx]
+            # print(ref_dict)
+            # print(self.exp_ref[chn_name])
+            return ref_dict
 
 
     def get_marks(self, chn_name):
@@ -1168,21 +1314,23 @@ class DataSaver:
     #     return [abs_val - ref_val for abs_val, ref_val in zip(abs_list, ref_list)]
 
 
-
     def df_qcm(self, chn_name):
         '''
         convert delfs and delgs in df to delfstar for calculation and 
         return a df with ['queue_id', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs']
         '''
-        df = self.get_queue_id(chn_name)
+        df = self.get_queue_id(chn_name).astype('int64').to_frame()
+        df['t'] = self.get_t_marked_rows(chn_name, dropnanrow=False, unit=None)
+        df['temp'] = self.get_temp_by_uint_marked_rows( chn_name, dropnanrow=False, unit=
+        'C')
         df['marks'] = self.get_marks(chn_name)
 
         # get freqs and gamms in form of [n1, n3, n5, ...]
-        fs = getattr(self, chn_name).loc['fs'].copy()
-        gs = getattr(self, chn_name).loc['gs'].copy()
+        fs = self.get_cols(chn_name, cols=['fs'])
+        gs = self.get_cols(chn_name, cols=['gs'])
         # get delf and delg in form of [n1, n3, n5, ...]
-        delfs = convert_col_to_delta_val(chn_name, 'fs', norm=False)
-        delgs = convert_col_to_delta_val(chn_name, 'gs', norm=False)
+        delfs = self.convert_col_to_delta_val(chn_name, 'fs', norm=False)
+        delgs = self.convert_col_to_delta_val(chn_name, 'gs', norm=False)
 
         # convert to array
         f_arr = np.array(fs.values.tolist())
@@ -1195,7 +1343,7 @@ class DataSaver:
         fstar_arr = f_arr + 1j * g_arr
         delfstar_arr = delf_arr + 1j * delg_arr
 
-        df['fstars'] = list(delfstar_arr)
+        df['fstars'] = list(fstar_arr)
         df['delfstars'] = list(delfstar_arr)
         df['fs'] = fs
         df['gs'] = gs
@@ -1205,8 +1353,8 @@ class DataSaver:
         return df
 
 
-    def save_mech_df(self, chn_name, nhcalc, mech_df):
+    def get_mech_key(self, nhcalc, rh):
         '''
-        save mech_df to self.'chn_nam'_mech[nhcalc]
+        return a str which represents the key in self.<chn_name>_mech[key]
         '''
-        getattr(self, chn_name + '_mech')[nhcalc] = mech_df 
+        return nhcalc + '_' + str(rh)

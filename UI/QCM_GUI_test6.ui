@@ -27,8 +27,8 @@
    <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_37">
-    <item>
+   <layout class="QGridLayout" name="gridLayout_6">
+    <item row="0" column="0">
      <widget class="QSplitter" name="splitter">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
@@ -606,7 +606,7 @@ background-color: red;
                    <item>
                     <widget class="QLabel" name="label_settings_control_samp">
                      <property name="text">
-                      <string>Samp. Scan (MHz)</string>
+                      <string>S Channel (MHz)</string>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>
@@ -616,7 +616,7 @@ background-color: red;
                    <item>
                     <widget class="QLabel" name="label_settings_control_ref">
                      <property name="text">
-                      <string>Ref. Scan (MHz)</string>
+                      <string>R Channel (MHz)</string>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>
@@ -1299,7 +1299,7 @@ background-color: red;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>2</number>
                    </property>
                    <property name="documentMode">
                     <bool>false</bool>
@@ -1309,12 +1309,12 @@ background-color: red;
                    </property>
                    <widget class="QWidget" name="tab_settings_settings_harmchnsamp">
                     <attribute name="title">
-                     <string>Sample Channel</string>
+                     <string>S Channel</string>
                     </attribute>
                    </widget>
                    <widget class="QWidget" name="tab_settings_settings_harmchnref">
                     <attribute name="title">
-                     <string>Reference Channel</string>
+                     <string>R Channel</string>
                     </attribute>
                    </widget>
                    <widget class="QWidget" name="tab_settings_settings_harmchnrefit">
@@ -1342,7 +1342,7 @@ background-color: red;
                     <enum>QTabWidget::Rounded</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>3</number>
+                    <number>2</number>
                    </property>
                    <property name="iconSize">
                     <size>
@@ -1730,12 +1730,12 @@ background-color: red;
                      </property>
                      <item>
                       <property name="text">
-                       <string>Sample Channel</string>
+                       <string>S Channel</string>
                       </property>
                      </item>
                      <item>
                       <property name="text">
-                       <string>Ref. Channel</string>
+                       <string>R Channel</string>
                       </property>
                      </item>
                     </item>
@@ -1783,7 +1783,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>83</width>
+                   <width>98</width>
                    <height>71</height>
                   </rect>
                  </property>
@@ -2401,7 +2401,7 @@ border: none;
                     </property>
                     <item>
                      <property name="text">
-                      <string>samp chn.</string>
+                      <string>S chn.</string>
                      </property>
                      <property name="text">
                       <string/>
@@ -2412,7 +2412,7 @@ border: none;
                     </item>
                     <item>
                      <property name="text">
-                      <string>ref chn.</string>
+                      <string>R chn.</string>
                      </property>
                      <property name="text">
                       <string/>
@@ -2817,18 +2817,31 @@ border: none;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <widget class="QWidget" name="tab_settings_mechanis_sampchn">
                     <attribute name="title">
-                     <string>Sample Channel</string>
+                     <string>S Channel</string>
                     </attribute>
                    </widget>
                    <widget class="QWidget" name="tab_settings_mechanis_refchn">
                     <attribute name="title">
-                     <string>Reference Channel</string>
+                     <string>R Channel</string>
                     </attribute>
                    </widget>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_settings_mech_liveupdate">
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Live update solving results in table. This may make the solving process slower!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
+                   <property name="text">
+                    <string>live update</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
                   </widget>
                  </item>
                  <item>
@@ -2973,7 +2986,7 @@ border: none;
                     <number>0</number>
                    </property>
                    <item>
-                    <widget class="QSpinBox" name="spinBoxsettings_mechanics_nhcalc_n1">
+                    <widget class="QSpinBox" name="spinBox_settings_mechanics_nhcalc_n1">
                      <property name="maximumSize">
                       <size>
                        <width>20</width>
@@ -3357,6 +3370,9 @@ border-image: url(:/button/rc/plus_p.svg);
               </item>
               <item>
                <widget class="QGroupBox" name="groupBox_settings_mechanics_contour">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="title">
                  <string>Contour</string>
                 </property>
@@ -3367,7 +3383,7 @@ border-image: url(:/button/rc/plus_p.svg);
                  <bool>true</bool>
                 </property>
                 <property name="checked">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_32">
                  <property name="leftMargin">
@@ -4867,6 +4883,13 @@ p, li { white-space: pre-wrap; }
                    <number>6</number>
                   </property>
                   <item>
+                   <widget class="QLabel" name="label_spectra_mechanics_currmechkey">
+                    <property name="text">
+                     <string/>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
                    <spacer name="horizontalSpacer_17">
                     <property name="orientation">
                      <enum>Qt::Horizontal</enum>
@@ -5048,16 +5071,6 @@ p, li { white-space: pre-wrap; }
                   <row>
                    <property name="text">
                     <string>rd</string>
-                   </property>
-                  </row>
-                  <row>
-                   <property name="text">
-                    <string>Time (s)</string>
-                   </property>
-                  </row>
-                  <row>
-                   <property name="text">
-                    <string>Temp.  (°C)</string>
                    </property>
                   </row>
                   <column>
@@ -5398,7 +5411,7 @@ border: 1px solid blue;
         <item>
          <widget class="QStackedWidget" name="stackedWidget_data">
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="page_data_data">
            <layout class="QVBoxLayout" name="verticalLayout_22">
@@ -5882,13 +5895,40 @@ border: 1px solid blue;
              <number>0</number>
             </property>
             <item>
-             <widget class="QFrame" name="frame_data_mechanics_plots">
-              <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
+             <widget class="QScrollArea" name="scrollArea_data_mechanics_plots">
+              <property name="widgetResizable">
+               <bool>true</bool>
               </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
-              </property>
+              <widget class="QWidget" name="scrollAreaWidgetContents">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>468</width>
+                 <height>728</height>
+                </rect>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_38">
+                <property name="spacing">
+                 <number>2</number>
+                </property>
+                <property name="leftMargin">
+                 <number>2</number>
+                </property>
+                <property name="topMargin">
+                 <number>2</number>
+                </property>
+                <property name="rightMargin">
+                 <number>2</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>2</number>
+                </property>
+                <item>
+                 <layout class="QGridLayout" name="gridLayout_propplot"/>
+                </item>
+               </layout>
+              </widget>
              </widget>
             </item>
            </layout>
@@ -6243,9 +6283,9 @@ border: 1px solid blue;
     <string>Solve marked data</string>
    </property>
   </action>
-  <action name="actionRows_time">
+  <action name="actionRows_Time">
    <property name="text">
-    <string>Rows - time</string>
+    <string>Rows - Time</string>
    </property>
    <property name="toolTip">
     <string>Plot selected rows vs. time</string>
@@ -6269,6 +6309,22 @@ border: 1px solid blue;
    </property>
    <property name="toolTip">
     <string>Export Settings to a file</string>
+   </property>
+  </action>
+  <action name="actionRows_Temp">
+   <property name="text">
+    <string>Rows - Temp</string>
+   </property>
+   <property name="toolTip">
+    <string>Plot variables vs. temperature</string>
+   </property>
+  </action>
+  <action name="actionRow_s2_Row_s1">
+   <property name="text">
+    <string>Row[s2] - Row[s1]</string>
+   </property>
+   <property name="toolTip">
+    <string>Plot selected two rows (Row[s2] vs. Row[s1])</string>
    </property>
   </action>
  </widget>

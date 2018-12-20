@@ -205,7 +205,23 @@ settings_init = {
         'g':    r'$\Gamma$ (Hz)',
         'temp': r'Temp. (unit)', # unit is going to be replaced by temperature unit
         't':    r'Time (unit)', # unit is going to be replaced by time unit
-        'idx':    r'Index', 
+        'idx':  r'Index', 
+
+        # for property
+        'delfs':        r'$\Delta$f (Hz)',
+        'delf_calcs':   r'$\Delta$f$_{calc}$ (Hz)',
+        'delgs':        r'$\Delta\Gamma$ (Hz)',
+        'delg_calcs':   r'$\Delta\Gamma_{calc}$ (Hz)',
+        'drho':         r'd$\rho$ (g/cm$^2$)',
+        'grho_rh':      r'$|G_{rh}^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
+        'phi':          r'$\phi$ ($\degree$)',
+        'dlam_rh':      r'd/$\lambda_{rh}$',
+        'lamrho':       r'$\lambda\rho$ (g/cm$^2$)',
+        'delrho':       r'$\delta\rho$ (g/cm$^2$)',
+        'delf_delfsn':  r'$\Delta$f/$\Delta$f$_{sn}$',
+        'delg_delfsns': r'$\Delta\Gamma$/$\Delta$f$_{sn}$',
+        'rh':           r'r$_h$',
+        'rds':          r'r$_d$',
     },
 
     # spinBox_harmfitfactor max value
@@ -241,8 +257,8 @@ settings_init = {
     'ref_channel_opts': OrderedDict([
     # key: str(number); val: for display in combobox
         # ('none', 'none'),
-        ('samp', 'samp'),
-        ('ref', 'ref'),
+        ('samp', 'S chn.'),
+        ('ref', 'R chn.'),
         ('ext', 'ext'), # always read from the reference channel
     ]),
 
@@ -263,7 +279,7 @@ settings_init = {
         ('s', r's'),
         ('m', r'min'),
         ('h', r'h'),
-        # ('d', r'day'),
+        ('d', r'day'),
     ]),
 
     'temp_unit_opts': OrderedDict([
@@ -348,6 +364,30 @@ settings_init = {
     'progressbar_update_steps': 100, 
     'progressbar_min_interval': 100, # in ms
     'progressbar_max_interval': 1000, # in ms
+
+    # rowheader for tableWidget_spectra_mechanics_table
+    # DON't change the value of this key
+    'mech_table_rowheaders':{
+        'delfs':         u'\u0394' + 'f (Hz)', # Δf (Hz)
+        'delf_calcs':     u'\u0394' + 'fcalc (Hz)', # Δfcalc (Hz)
+        'delgs':         u'\u0394\u0393' + ' (Hz)', # ΔΓ (Hz)
+        'delg_calcs':    u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
+        'drho':         'd' + u'\u03C1' + ' (g/cm'+ u'\u00B2' + ')', # dρ (g/cm²)
+        'grho_rh':      '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
+        'phi':          u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
+        'dlam_rh':      'd/' + u'\u03BB\u2099', # d/λₙ
+        'lamrho':       u'\u03BB\u03C1' + ' (g/cm' + u'\u00B2' + ')', # λρ (g/cm²)
+        'delrho':       u'\u03B4\u03C1' + ' (g/cm' + u'\u00B2' + ')', # δρ (g/cm²)
+        'delf_delfsn':  u'\u0394' + 'f/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
+        'delg_delfsns': u'\u0394\u0393' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓ/Δfₛₙ
+        'rh':           'rh',
+        'rds':           'rd',
+        # 't':         'Time (s)', # Time (s)
+        # 'temp':         'Temp. (' + u'\u00B0' + 'C)', # Temp. (°C)
+    },
+
+    'prop_plot_minmum_row_height': 300, # height of property figure when plotted in line
+
 
     ############ params for temperature modules ###########
     # temperature modules path
@@ -799,5 +839,23 @@ settings_default = {
     'lineEdit_settings_data_samprefidx': [0],
     'comboBox_settings_data_refrefsource': 'ref',
     'lineEdit_settings_data_refrefidx': [0],
+
+    ### settings_mech
+    'checkBox_settings_mech_liveupdate': True,
+    'checkBox_nhplot1': True,
+    'checkBox_nhplot3': True,
+    'checkBox_nhplot5': True,
+    'checkBox_nhplot7': False,
+    'checkBox_nhplot9': False,
+
+    'spinBox_settings_mechanics_nhcalc_n1': 3,
+    'spinBox_settings_mechanics_nhcalc_n2': 5,
+    'spinBox_settings_mechanics_nhcalc_n3': 3,
+
+    'comboBox_settings_mechanics_refG': '3', # reference harmonic for property
+    'checkBox_settings_mechanics_witherror': True, # errorbar
+
+    'comboBox_settings_mechanics_selectmodel': 'onelayer',
+    
 }
 
