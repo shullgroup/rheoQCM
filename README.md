@@ -1,6 +1,6 @@
 # QCM Data Collection and Analysis Software
 
-This is the Python project page for the QCM data collection and analysis software used by the Shull research group at Northwestern University. The data collection and analysis are at the testing point. Curentlly, it is using it's own data format (hdf5). The data importing function will be added soon which will be useful to the community doing QCM-D test. Some of the analysis routines are potentially useful for the data in Matlab version, however, and these are described below.
+This is the Python project page for the QCM data collection and analysis software used by the Shull research group at Northwestern University. The data collection and analysis are at the testing point. The data importing function will be added soon which will be useful to the community doing QCM-D tests. Some of the analysis routines are potentially useful for the data in Matlab version, however, and these are described below.
 
 ## Getting Started
 
@@ -8,21 +8,21 @@ The analysis portions of the software should work on Windows/Mac/Linux platforms
 
 ### Functions
 
-* Collecting data interfaces with network analyzers.  
-* Communicate with analysers directy. Fast recording without openning the dependent external software. Less resources are required.  
+* Collecting QCM data interfaces with network analyzers.  
+* Communicating with analysers directy. Fast recording without openning the dependent external software. Less resources are required.  
 * Combine data collection and analysis in one software.  
 * Functioned with temperature recording. (with NI devices)
 
 ### Prerequisites
 
-* Python 3.5+ is required. For data analysis only, it can run with both 32-bit and 64-bit Python. If you want the data collection with myVNA, 32-bit Python and Windows are required.  
+* Python 3.5+ is required. For data analysis only, it can run with both 32-bit and 64-bit Python. If you want the data collection with myVNA, 32-bit Python and Windows system are required.  
 
 * Hardware and external software for data collection: The AccessMyVNA and myVNA programs were obtained from <http://g8kbb.co.uk/html/downloads.html>.
 * Python labroaries needed to run the software is listed in the `requirements.txt` file.  
   
-* Anaconda platform is suggested Download and install the Anaconda distribution of python from [anaconda.com](https://anaconda.com/download).  
+* Anaconda platform is suggested. Download and install the Anaconda distribution of python from [anaconda.com](https://anaconda.com/download).  
 
-* QCM data files are currently stored in a MATLAB-compatible .mat files.  In order to read and write these and get the analysis scripts to work, you need to install the hdf5storage package, which you can add with the following command (assuming you have already added the conda python distribution):  
+* Functions in QCMFuncs folder are for the QCM data files in .mat format from our Matlab version program. In order to read and write these and get the analysis scripts to work, you need to install the hdf5storage package, which you can add with the following command (assuming you have already added the conda python distribution):  
 
 ```bash
 conda install -c conda-forge hdf5storage  
@@ -36,19 +36,25 @@ To install everything you need from this repository, run the following command f
 git clone https://github.com/zhczq/QCM_py
 ```
 
-If you just need the updated analysis software (which currently the only software that actually works) everything you really need is in QCMFuncs/QCM_functions.py.  In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py.  You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
+If you just need the updated analysis software for .mat files, everything you really need is in QCMFuncs/QCM_functions.py.  In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py.  You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
 
 ## Using the Analysis Program
 
 To see an example of how the program works, run example_runfile.py, which will act on some of the data in the example_data directory and generate some figures representing the analyzed data in a figures folder.  
 
+## Using the Data Collection/Analysis Program (UI)
+
+All the modules needed for the data collection program are in the QCM_main/ folder. Go to that folder and run QCM_main.py will open the program.  
+
 ## Documentation
 
 The QCMnotes.pdf file has some background information on the rheometric mode of the QCM that we utilize, with some useful references include.
 
-Modules `DataSaver` and `QCM` in Modules/ folder are availabe for dealing with the data and doing ananlysis manually. Those modules include functions run out of the software. You can simply import those modules and you can do almost the same thing in the software by running your own codes.
+Modules `DataSaver` and `QCM` in Modules/ folder are availabe for dealing with the data and doing ananlysis manually. Those modules include functions run out of the software. You can simply import those modules and do almost the same thing in the software by running your own codes.
 
 The functions for Matlab version data are locoalized in QCMFuncs/ folder.  
+
+The data is stored as hdf5 format. And you can export all the relative data to other formats (e.g. excel).
 
 ## To Do
 
