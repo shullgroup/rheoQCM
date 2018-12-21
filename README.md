@@ -24,12 +24,6 @@ The analysis portions of the software should work on Windows/Mac/Linux platforms
   
 * Anaconda platform is suggested. Download and install the Anaconda distribution of python from [anaconda.com](https://anaconda.com/download).  
 
-* Functions in QCMFuncs folder are for the QCM data files in .mat format from our Matlab version program. In order to read and write these and get the analysis scripts to work, you need to install the hdf5storage package, which you can add with the following command (assuming you have already added the conda python distribution):  
-
-```bash
-conda install -c conda-forge hdf5storage  
-```
-
 ### Installation
 
 To install everything you need from this repository, run the following command from a command window in the directory where you want everthing to be installed:
@@ -42,7 +36,6 @@ git clone https://github.com/zhczq/QCM_py
 
 The stand-alone file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously.  
 
-
 ## Using Data Collection/Analysis Program (UI)
 
 All the modules needed for the data collection program are in the `QCM_main/` folder. Go to that folder and run QCM_main.py will open the program.  
@@ -51,8 +44,15 @@ All the modules needed for the data collection program are in the `QCM_main/` fo
 
 To see an example of how the program works, run example_runfile.py, which will act on some of the data in the example_data directory and generate some figures representing the analyzed data in a figures folder.  
 
-## Using Analysis Code for Mat File
-If you just need the updated analysis software for .mat files, everything you really need is in QCMFuncs/QCM_functions.py.  In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py.  You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
+## Using Analysis Code for Mat File  
+
+If you just need the updated analysis code for .mat files, everything you really need is in `QCMFuncs/QCM_functions.py`. In order to read and write these and get the analysis scripts to work, you need to install the hdf5storage package, which you can add with the following command (assuming you have already added the conda python distribution):  
+
+```bash
+conda install -c conda-forge hdf5storage  
+```
+
+In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py. You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
 
 ## Documentation
 
