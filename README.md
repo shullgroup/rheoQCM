@@ -79,9 +79,9 @@ The data is stored as hdf5 format. And you can export all the relative data to o
 
 ## Other Versions
 
-If you are a Matlab user, our long-term developed Matlab version software can be found here: <https://github.com/Shull-Research-Group/QCM_Data_Acquisition_Program>. It is developed and being maintained by Josh Yeh. This Python project is developed based on the Matlab version.  
+* If you are a Matlab user, our long-term developed Matlab version software can be found here: <https://github.com/Shull-Research-Group/QCM_Data_Acquisition_Program>. It is developed and being maintained by Josh Yeh. This Python project is developed based on the Matlab version.  
 
-A currently running Matlab version of data analysis with QCM-D data can be found here: <https://github.com/sadmankazi/QCM-D-Analysis-GUI>. It is writen by Kazi Sadman from our group.
+* A currently running Matlab version of data analysis with QCM-D data can be found here: <https://github.com/sadmankazi/QCM-D-Analysis-GUI>. It is writen by Kazi Sadman from our group.
 
 ## Acknowledgments
 
