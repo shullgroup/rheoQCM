@@ -15,20 +15,11 @@ import win32process
 
 import ctypes
 
-try: # run from main
-    from modules.retrying import retry
-except: # run by itself
-    from retrying import retry
-
 
 # constant
 WM_USER = 0x0400                 # WM_USER   0x0400
 WM_COMMAND = 0x0111                # WM_COMMAND 0x0111
 MESSAGE_SCAN_ENDED = WM_USER + 0x1234  # MESSAGE_SCAN_ENDED (WM_USER+0x1234)
-# retry decorator
-wait_fixed = 10
-stop_max_attempt_number = 100
-stop_max_delay = 10000
 
 # window name
 win_names = [
@@ -66,7 +57,7 @@ def get_hWnd(win_name=win_names[0]):
 
 def get_pid(hWnd):
     if not hWnd:
-        print('PID did not find!')
+        # print('PID did not find!')
         pid = None        
     else:
         pid = win32process.GetWindowThreadProcessId(hWnd)[1]

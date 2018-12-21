@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1141</width>
-    <height>877</height>
+    <height>941</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -195,7 +195,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1342,7 +1342,7 @@ background-color: red;
                     <enum>QTabWidget::Rounded</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>2</number>
+                    <number>4</number>
                    </property>
                    <property name="iconSize">
                     <size>
@@ -1654,7 +1654,7 @@ background-color: red;
                    <x>0</x>
                    <y>0</y>
                    <width>286</width>
-                   <height>110</height>
+                   <height>142</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1783,7 +1783,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>83</width>
+                   <width>98</width>
                    <height>71</height>
                   </rect>
                  </property>
@@ -3163,7 +3163,7 @@ border-image: url(:/button/rc/plus_p.svg);
                    <number>200</number>
                   </attribute>
                   <attribute name="verticalHeaderDefaultSectionSize">
-                   <number>20</number>
+                   <number>21</number>
                   </attribute>
                   <row>
                    <property name="text">
@@ -3373,7 +3373,7 @@ border-image: url(:/button/rc/plus_p.svg);
                       <enum>QAbstractScrollArea::AdjustToContents</enum>
                      </property>
                      <attribute name="verticalHeaderDefaultSectionSize">
-                      <number>20</number>
+                      <number>21</number>
                      </attribute>
                      <row>
                       <property name="text">
@@ -3540,7 +3540,7 @@ border-image: url(:/button/rc/plus_p.svg);
                     <number>40</number>
                    </attribute>
                    <attribute name="verticalHeaderDefaultSectionSize">
-                    <number>20</number>
+                    <number>21</number>
                    </attribute>
                    <row>
                     <property name="text">
@@ -3749,7 +3749,7 @@ border-image: url(:/button/rc/plus_p.svg);
                       <bool>false</bool>
                      </attribute>
                      <attribute name="verticalHeaderDefaultSectionSize">
-                      <number>20</number>
+                      <number>21</number>
                      </attribute>
                      <row>
                       <property name="text">
@@ -3802,7 +3802,7 @@ border-image: url(:/button/rc/plus_p.svg);
                       <number>48</number>
                      </attribute>
                      <attribute name="verticalHeaderDefaultSectionSize">
-                      <number>20</number>
+                      <number>21</number>
                      </attribute>
                      <row>
                       <property name="text">
@@ -5959,7 +5959,7 @@ border: 1px solid blue;
                  <x>0</x>
                  <y>0</y>
                  <width>468</width>
-                 <height>728</height>
+                 <height>792</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_38">

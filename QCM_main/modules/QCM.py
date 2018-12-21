@@ -366,7 +366,7 @@ class QCM:
 
         # solve the problem
         if ~np.isnan(rd_exp) or ~np.isnan(rh_exp):
-            print('rd_exp, rh_exp is not nan')
+            # print('rd_exp, rh_exp is not nan')
             # TODO change here for the model selection
             if prop_guess: # value{'drho', 'grho_rh', 'phi'}
                 dlam_rh, phi = self.guess_from_props(**prop_guess)
@@ -445,12 +445,12 @@ class QCM:
                         # xtol=1e-7,
                         # ftol=1e-7,
                     )
-                    print(soln2.params.keys())
-                    print(soln2.params['drho'])
-                    print(fit_report(soln2)) 
-                    print('success', soln2.success)
-                    print('message', soln2.message)
-                    print('lmdif_message', soln1.lmdif_message)
+                    # print(soln2.params.keys())
+                    # print(soln2.params['drho'])
+                    # print(fit_report(soln2)) 
+                    # print('success', soln2.success)
+                    # print('message', soln2.message)
+                    # print('lmdif_message', soln1.lmdif_message)
 
                     # put the input uncertainties into a 3 element vector
                     delfstar_err = np.zeros(3)

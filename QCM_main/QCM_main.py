@@ -23,7 +23,7 @@ from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, 
 # packages
 from MainWindow import Ui_MainWindow
 from UISettings import settings_init, settings_default
-from modules import UIModules, GBFitting, PeakTracker, DataSaver, QCM
+from modules import UIModules, PeakTracker, DataSaver, QCM
 from modules.MatplotlibWidget import MatplotlibWidget
 
 import _version
@@ -197,8 +197,7 @@ class QCMApp(QMainWindow):
                     getattr(self.ui, 'tab_settings_settings_harm' + str(i))
                 ), 
                 QTabBar.LeftSide, 
-                getattr(self.ui, 'checkBox_tree_harm' + str(i)
-                )
+                getattr(self.ui, 'checkBox_tree_harm' + str(i))
             )
 
             # set signal
@@ -627,10 +626,10 @@ class QCMApp(QMainWindow):
             "QTabBar::tab { border: 1px solid #9B9B9B; border-top-left-radius: 1px; border-top-right-radius: 1px;}"
             "QTabBar::tab { height: 20px; width: 42px; padding: 0px; }" 
             "QTabBar::tab:selected, QTabBar::tab:hover { background: white; }"
-            "QTabBar::tab:selected { height: 22px; width: 44px; border-bottom-color: none; }"
+            "QTabBar::tab:selected { height: 22px; width: 46px; border-bottom-color: none; }"
             "QTabBar::tab:selected { margin-left: -2px; margin-right: -2px; }"
-            "QTabBar::tab:first:selected { margin-left: 0; width: 40px; }"
-            "QTabBar::tab:last:selected { margin-right: 0; width: 40px; }"
+            "QTabBar::tab:first:selected { margin-left: 0; width: 42px; }"
+            "QTabBar::tab:last:selected { margin-right: 0; width: 42px; }"
             "QTabBar::tab:!selected { margin-top: 2px; }"
             )
 
@@ -1413,6 +1412,7 @@ class QCMApp(QMainWindow):
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self, title, path, filetype, options=options)
         if fileName:
+            print(type(fileName))
         else:
             fileName = ''
         return fileName
@@ -1428,6 +1428,7 @@ class QCMApp(QMainWindow):
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(self,title, path, filetype, options=options)
         if fileName:
+            print(fileName)
         else:
             fileName = ''
         return fileName 
@@ -1892,6 +1893,8 @@ class QCMApp(QMainWindow):
         G = None
         B = None
         if self.get_spectraTab_mode() == 'center': # for peak centering
+            if not self.vna: 
+                return
             # get harmonic from self.settings_harm
             harm = self.settings_harm
             chn = self.settings_chn['chn']
@@ -1911,7 +1914,8 @@ class QCMApp(QMainWindow):
             idx = np.where((f >= freq_span[0]) & (f <= freq_span[1]))
             f, G, B = f[idx], G[idx], B[idx]
         else:
-        
+            print('Change Tab to Settings or Data to active the function.')
+
         return f, G, B
 
     def get_vna_data(self, harm=None, chn_name=None):
@@ -1939,6 +1943,7 @@ class QCMApp(QMainWindow):
                 ret, f, G, B = self.vna.single_scan()
                 return f, G, B
             else:
+                print('There is an error while setting VNA!')
         return f, G, B
 
     def get_vna_data_no_with(self, harm=None, chn_name=None):
@@ -1967,6 +1972,7 @@ class QCMApp(QMainWindow):
         if ret == 0:
             ret, f, G, B = vna.single_scan()
         else:
+            print('There is an error while setting VNA!')
         return f, G, B
 
     def tab_spectra_fit_update_mpls(self, f, G, B):
@@ -4157,6 +4163,8 @@ class QCMApp(QMainWindow):
 
         self.load_comboBox(self.ui.comboBox_settings_mechanics_selectmodel, 'qcm_model_opts')
 
+
+
     def update_refsource(self):
         '''
         update widgets related to reference source
@@ -4165,6 +4173,7 @@ class QCMApp(QMainWindow):
         self.load_comboBox(self.ui.comboBox_settings_data_refrefsource, 'ref_channel_opts')
         self.ui.lineEdit_settings_data_samprefidx.setText(str(self.settings['lineEdit_settings_data_samprefidx']))
         self.ui.lineEdit_settings_data_refrefidx.setText(str(self.settings['lineEdit_settings_data_refrefidx']))
+
 
     def load_refsource(self):
         '''
