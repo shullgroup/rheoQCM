@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/138771761.svg)](https://zenodo.org/badge/latestdoi/138771761)
+
 # QCM Data Collection and Analysis Software
 
 This is the Python project page for the QCM data collection and analysis software used by the Shull research group at Northwestern University. The data collection and analysis are at the testing point. The data importing function will be added soon which will be useful to the community doing QCM-D tests. Some of the analysis routines are potentially useful for the data in Matlab version, however, and these are described below.
