@@ -15,6 +15,8 @@ The analysis portions of the software should work on Windows/Mac/Linux platforms
 
 ### Prerequisites
 
+* The stand-alone file (exe) runs without installation (On Windows only). No Python distribution is needed.
+
 * Python 3.5+ is required. For data analysis only, it can run with both 32-bit and 64-bit Python. If you want the data collection with myVNA, 32-bit Python and Windows system are required.  
 
 * Hardware and external software for data collection: The AccessMyVNA and myVNA programs were obtained from <http://g8kbb.co.uk/html/downloads.html>.
@@ -36,23 +38,29 @@ To install everything you need from this repository, run the following command f
 git clone https://github.com/zhczq/QCM_py
 ```
 
-If you just need the updated analysis software for .mat files, everything you really need is in QCMFuncs/QCM_functions.py.  In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py.  You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
+## Using the Stand-alone Program (exe)
 
-## Using the Analysis Program
+The stand-alone file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously.  
+
+
+## Using Data Collection/Analysis Program (UI)
+
+All the modules needed for the data collection program are in the `QCM_main/` folder. Go to that folder and run QCM_main.py will open the program.  
+
+## Using Analysis Program
 
 To see an example of how the program works, run example_runfile.py, which will act on some of the data in the example_data directory and generate some figures representing the analyzed data in a figures folder.  
 
-## Using the Data Collection/Analysis Program (UI)
-
-All the modules needed for the data collection program are in the QCM_main/ folder. Go to that folder and run QCM_main.py will open the program.  
+## Using Analysis Code for Mat File
+If you just need the updated analysis software for .mat files, everything you really need is in QCMFuncs/QCM_functions.py.  In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py.  You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
 
 ## Documentation
 
 The QCMnotes.pdf file has some background information on the rheometric mode of the QCM that we utilize, with some useful references include.
 
-Modules `DataSaver` and `QCM` in Modules/ folder are availabe for dealing with the data and doing ananlysis manually. Those modules include functions run out of the software. You can simply import those modules and do almost the same thing in the software by running your own codes.
+Modules `DataSaver` and `QCM` in `Modules/` folder are availabe for dealing with the data and doing ananlysis manually. Those modules include functions run out of the software. You can simply import those modules and do almost the same thing in the software by running your own codes.
 
-The functions for Matlab version data are locoalized in QCMFuncs/ folder.  
+The functions for Matlab version data are locoalized in `QCMFuncs/` folder.  
 
 The data is stored as hdf5 format. And you can export all the relative data to other formats (e.g. excel).
 
@@ -61,7 +69,6 @@ The data is stored as hdf5 format. And you can export all the relative data to o
 * Documentation.
 * Property results plotting and exporting.
 * Data analysis with QCM-D data.
-* Compile to runnable single file for those who doesn't want to run commond lines.
 * Interface with other hardware. (If you have a hardware and interested in interfacing with our software, please feel free to contact us.)
 
 ## Authors
