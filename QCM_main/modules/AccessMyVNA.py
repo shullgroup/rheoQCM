@@ -1202,6 +1202,7 @@ class AccessMyVNA():
         delta t = npt * phase delay 
         delta t = npt * step delay 
         '''
+        extra_time = 0.1 # in s
         nsteps= self._nsteps
         naverage = self._naverage
         step_delay = self._step_delay
@@ -1235,7 +1236,7 @@ class AccessMyVNA():
 
         total_time = dds_load * 1e-6 + start_delay * 1e-6 + num_conversions / conversion_rate + delay * 1e-6 # get total time in seconds
 
-        return total_time * naverage + average_delay * (naverage - 1) * 1e-6
+        return total_time * naverage + average_delay * (naverage - 1) * 1e-6 + extra_time
         
             
             
