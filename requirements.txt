@@ -11,5 +11,6 @@ h5py
 # hdf5storage is for QCMFuncs
 hdf5storage 
 nidaqmx
-win32ui
-win32process
+pypiwin32
+openpyxl
+tkinter
