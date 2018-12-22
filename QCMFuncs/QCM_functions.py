@@ -705,20 +705,20 @@ def solve_from_delfstar(sample, parms):
                    delimiter=',', header='xdata,drho,grho,phi', comments='')
         
         # add values of d/lam3 to the film raw data figure
-        if plt.fignum_exists('rawfig'):
+        if 'rawfig' in sample['film']:
             sample['film']['dlam3_ax'].plot(xdata, results[nh]['dlam3'],'+', label=nh)
 
-    # add legend to the the dlam3 figure
-    if plt.fignum_exists('rawfig'):
+    # add legend to the the dlam3 figure and set the x axis label
+    if 'rawfig' in sample['film']:
         sample['film']['dlam3_ax'].legend()
+        sample['film']['dlam3_ax'].set_xlabel(sample['xlabel'])
 
-    # tidy up the raw data figure 
     print('done with ', base_fig_name, 'press any key to close plots and continue')
     
     if close_on_click_switch and not run_from_ipython(): 
         # when code is run with IPython, don't use the event
         propfig['figure'].canvas.mpl_connect('key_press_event', close_on_click)
-        if plt.fignum_exists('rawfig'):
+        if 'rawfig' in sample['film']:
             sample['film']['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
             sample['bare']['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
         
