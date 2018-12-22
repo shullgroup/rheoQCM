@@ -2,11 +2,8 @@
 
 # QCM Data Collection and Analysis Software
 
-<<<<<<< HEAD
 This is the Python project page for the QCM data collection and analysis software used by the Shull research group at Northwestern University. The data collection and analysis are at the testing point. Curentlly, it is using its own data format (hdf5). The data importing function will be added soon which will be useful to the community doing QCM-D tests. Some of the analysis routines are generally useful, regardless of how the QCM data were generated.
-=======
-This is the Python project page for the QCM data collection and analysis software used by the Shull research group at Northwestern University. The data collection and analysis are at the testing point. The data importing function will be added soon which will be useful to the community doing QCM-D tests. Some of the analysis routines are potentially useful for the data in Matlab version, however, and these are described below.
->>>>>>> 4e94927561dc287ebacbb787d16294576b63ae43
+
 
 ## Getting Started
 
@@ -14,7 +11,6 @@ The analysis portions of the software should work on Windows/Mac/Linux platforms
 
 ### Capabilities
 
-<<<<<<< HEAD
 * Graphical data interface to collect QCM data with network analyzers.  
 * Fast data recording without openning the dependent external software. Fewer resources are required than in previous MATLAB-based versions of the software.  
 * Data collection and analysis are combined in one package.  
@@ -23,23 +19,10 @@ The analysis portions of the software should work on Windows/Mac/Linux platforms
 ### Prerequisites
 
 * Python 3.5+ is required. For data analysis only, it can run with both 32-bit and 64-bit Python. If you want to use the data collection portion with myVNA, 32-bit Python and Windows are required.  
-=======
-* Collecting QCM data interfaces with network analyzers.  
-* Communicating with analysers directy. Fast recording without openning the dependent external software. Less resources are required.  
-* Combine data collection and analysis in one software.  
-* Functioned with temperature recording. (with NI devices)
-
-### Prerequisites
-
-* The stand-alone file (exe) runs without installation (On Windows only). No Python distribution is needed.
-
-* Python 3.5+ is required. For data analysis only, it can run with both 32-bit and 64-bit Python. If you want the data collection with myVNA, 32-bit Python and Windows system are required.  
->>>>>>> 4e94927561dc287ebacbb787d16294576b63ae43
 
 * Hardware and external software for data collection: The AccessMyVNA and myVNA programs were obtained from <http://g8kbb.co.uk/html/downloads.html>.
 * Python labroaries needed to run the software are listed in the `requirements.txt` file.  
   
-<<<<<<< HEAD
 * The Anaconda python environment is suggested.  You can  download and install the Anaconda distribution of python from [anaconda.com](https://anaconda.com/download).  
 
 * QCM data files are currently stored in a MATLAB-compatible .mat files.  In order to read and write these and get the analysis scripts to work, you need to install the hdf5storage package, which you can add with the following command (assuming you have already added the conda python distribution):  
@@ -47,9 +30,6 @@ The analysis portions of the software should work on Windows/Mac/Linux platforms
 ```bash
 conda install -c conda-forge hdf5storage  
 ```
-=======
-* Anaconda platform is suggested. Download and install the Anaconda distribution of python from [anaconda.com](https://anaconda.com/download).  
->>>>>>> 4e94927561dc287ebacbb787d16294576b63ae43
 
 ### Installation
 
@@ -59,15 +39,7 @@ To install everything you need from this repository, run the following command f
 git clone https://github.com/zhczq/QCM_py
 ```
 
-<<<<<<< HEAD
 If you just need the updated analysis software, everything you need is in QCMFuncs/QCM_functions.py.  In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py.  You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
-=======
-## Using the Stand-alone Program (exe)
-
-The stand-alone file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (<span style="color:red">NOTE: the stand-alone file is compiled on a test computer, the parameters may not fit them on your computer. And you cannot customize the setup with it.</span>)  
-
-## Using Data Collection/Analysis Program (UI)
->>>>>>> 4e94927561dc287ebacbb787d16294576b63ae43
 
 All the modules needed for the data collection program are in the `QCM_main/` folder. Go to that folder and run QCM_main.py will open the program.  
 
@@ -93,21 +65,12 @@ Modules `DataSaver` and `QCM` in `Modules/` folder are availabe for dealing with
 
 The functions for Matlab version data are locoalized in `QCMFuncs/` folder.  
 
-<<<<<<< HEAD
 ## To Do List (work in Progress)
-=======
-The data is stored as hdf5 format. And you can export all the relative data to other formats (e.g. excel).
-
-## To Do
->>>>>>> 4e94927561dc287ebacbb787d16294576b63ae43
 
 * Documentation.
 * Property results plotting and exporting.
 * Data analysis with QCM-D data.
-<<<<<<< HEAD
 * Compile to a single executable file for those who don't want to run programs from the command line.
-=======
->>>>>>> 4e94927561dc287ebacbb787d16294576b63ae43
 * Interface with other hardware. (If you have a hardware and interested in interfacing with our software, please feel free to contact us.)
 
 ## Authors
@@ -118,15 +81,9 @@ The data is stored as hdf5 format. And you can export all the relative data to o
 
 ## Other Versions
 
-<<<<<<< HEAD
 If you are a MATLAB user, our previously developed MATLAB version software can be found here: <https://github.com/Shull-Research-Group/QCM_Data_Acquisition_Program>. It was developed Josh Yeh. This Python project is based on this previous MATLAB version developed by Josh.  
 
 A MATLAB version of our data analysis software, written by Kazi Sadman can be found here: <https://github.com/sadmankazi/QCM-D-Analysis-GUI>.
-=======
-* If you are a Matlab user, our long-term developed Matlab version software can be found here: <https://github.com/Shull-Research-Group/QCM_Data_Acquisition_Program>. It is developed and being maintained by Josh Yeh. This Python project is developed based on the Matlab version.  
-
-* A currently running Matlab version of data analysis with QCM-D data can be found here: <https://github.com/sadmankazi/QCM-D-Analysis-GUI>. It is writen by Kazi Sadman from our group.
->>>>>>> 4e94927561dc287ebacbb787d16294576b63ae43
 
 ## Acknowledgments
 
