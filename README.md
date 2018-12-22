@@ -36,7 +36,7 @@ git clone https://github.com/zhczq/QCM_py
 
 ## Using the Stand-alone Program (exe)
 
-The stand-alone file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously.  
+The stand-alone file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (<span style="color:red">NOTE: the stand-alone file is compiled on a test computer, the parameters may not fit them on your computer. And you cannot customize the setup with it.</span>)  
 
 ## Using Data Collection/Analysis Program (UI)
 

@@ -1202,7 +1202,7 @@ class AccessMyVNA():
         delta t = npt * phase delay 
         delta t = npt * step delay 
         '''
-        extra_time = 0.1 # in s
+        extra_time = 0.05 # in s
         nsteps= self._nsteps
         naverage = self._naverage
         step_delay = self._step_delay
