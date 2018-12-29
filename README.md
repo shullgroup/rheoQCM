@@ -43,6 +43,10 @@ If you just need the updated analysis software, everything you need is in QCMFun
 
 All the modules needed for the data collection program are in the `QCM_main/` folder. Go to that folder and run QCM_main.py will open the program.  
 
+## Using the Stand-alone Program (exe)
+
+The single executable file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (<span style="color:red">NOTE: the single executable file is compiled on a test computer, the parameters may not fit them on your computer. And you cannot customize the setup with it.</span>)  
+
 ## Using Analysis Program
 
 To see an example of how the program works, run example_runfile.py, which will act on some of the data in the example_data directory and generate some figures representing the analyzed data in a figures folder.  
@@ -70,7 +74,6 @@ The functions for Matlab version data are locoalized in `QCMFuncs/` folder.
 * Documentation.
 * Property results plotting and exporting.
 * Data analysis with QCM-D data.
-* Compile to a single executable file for those who don't want to run programs from the command line.
 * Interface with other hardware. (If you have a hardware and interested in interfacing with our software, please feel free to contact us.)
 
 ## Authors
