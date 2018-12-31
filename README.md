@@ -7,7 +7,7 @@ This is the Python project page for the QCM data collection and analysis softwar
 
 ## Getting Started
 
-The analysis portions of the software should work on Windows/Mac/Linux platforms. In all cases you'll need some familiarity with running commands from the terminal, however.  It's assumed in the following that you know how to do this on your platform.  The software to interface with network analyzers and collect the QCM data only runs on Windows-based computers.
+The analysis portions of the software should work on Windows/Mac/Linux platforms. In all cases you'll need some familiarity with running commands from the terminal, however. It's assumed in the following that you know how to do this on your platform. The software to interface with network analyzers and collect the QCM data only runs on Windows-based computers (The analyser currently interfaced with only works on Windows).
 
 ### Capabilities
 
@@ -25,7 +25,7 @@ The analysis portions of the software should work on Windows/Mac/Linux platforms
   
 * The Anaconda python environment is suggested.  You can  download and install the Anaconda distribution of python from [anaconda.com](https://anaconda.com/download).  
 
-* QCM data files are currently stored in a MATLAB-compatible .mat files.  In order to read and write these and get the analysis scripts to work, you need to install the hdf5storage package, which you can add with the following command (assuming you have already added the conda python distribution):  
+* Separated scripts works with data stored in a MATLAB-compatible .mat files (collected by our [Matlab data collecting program](https://github.com/Shull-Research-Group/QCM_Data_Acquisition_Program)).  In order to read and write these and get the analysis scripts to work, you need to install the hdf5storage package, which you can add with the following command (assuming you have already added the conda python distribution):  
 
 ```bash
 conda install -c conda-forge hdf5storage  
@@ -39,7 +39,7 @@ To install everything you need from this repository, run the following command f
 git clone https://github.com/zhczq/QCM_py
 ```
 
-If you just need the updated analysis software, everything you need is in QCMFuncs/QCM_functions.py.  In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py.  You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
+If you just need the updated analysis script, everything you need is in QCMFuncs/QCM_functions.py. In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py. You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
 
 All the modules needed for the data collection program are in the `QCM_main/` folder. Go to that folder and run QCM_main.py will open the program.  
 
@@ -65,7 +65,7 @@ In this same directory you will also find some example data obtained with polyst
 
 The QCMnotes.pdf file has some background information on the rheometric mode of the QCM that we utilize, with some useful references included.
 
-Modules `DataSaver` and `QCM` in `Modules/` folder are availabe for dealing with the data and doing ananlysis manually. Those modules include functions run out of the software. You can simply import those modules and do almost the same thing in the software by running your own codes.
+Modules `DataSaver` and `QCM` in `Modules/` folder are availabe for dealing with the data and doing ananlysis manually. Those modules include functions run out of the software. You can simply import those modules and do almost the same thing in the software by running your own codes. An example code of extrating data from data file can be found in `example/` folder.
 
 The functions for Matlab version data are locoalized in `QCMFuncs/` folder.  
 
