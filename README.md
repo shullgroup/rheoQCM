@@ -68,6 +68,10 @@ conda install -c conda-forge hdf5storage
 
 In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py. You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
 
+## Using Analysis Code for h5 File  
+
+The `QCM_functions.py` code also works with .h5 data file collected by the UI of this project. The way to define the samples is similar as it of .mat files. Example files (`example_plot.py` and `example_sampledefs.py`) which demostrate both .mat and .h5 analysis with `QCM_functions.py` can be found in  `QCMFuncs/`.
+
 ## Documentation
 
 The QCMnotes.pdf file has some background information on the rheometric mode of the QCM that we utilize, with some useful references included.
