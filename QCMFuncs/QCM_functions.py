@@ -281,9 +281,6 @@ def solve_for_props(soln_input):
     # first pass at solution comes from rh and rd
     rd_exp = -delfstar[n3].imag/delfstar[n3].real
     rh_exp = (n2/n1)*delfstar[n1].real/delfstar[n2].real
-
-    rd_exp = -delfstar[n3].imag/delfstar[n3].real
-    rh_exp = (n2/n1)*delfstar[n1].real/delfstar[n2].real
     
     if 'prop_guess' in soln_input:
         soln1_guess = guess_from_props(soln_input['propguess'])

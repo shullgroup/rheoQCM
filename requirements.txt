@@ -14,3 +14,5 @@ nidaqmx
 pypiwin32
 openpyxl
 tkinter
+# for pandas read execl file
+xlrd >= 0.9.0

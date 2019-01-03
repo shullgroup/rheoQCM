@@ -195,7 +195,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1299,7 +1299,7 @@ background-color: red;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>2</number>
+                    <number>0</number>
                    </property>
                    <property name="documentMode">
                     <bool>false</bool>
@@ -1342,7 +1342,7 @@ background-color: red;
                     <enum>QTabWidget::Rounded</enum>
                    </property>
                    <property name="currentIndex">
-                    <number>4</number>
+                    <number>0</number>
                    </property>
                    <property name="iconSize">
                     <size>
@@ -3163,7 +3163,7 @@ border-image: url(:/button/rc/plus_p.svg);
                    <number>200</number>
                   </attribute>
                   <attribute name="verticalHeaderDefaultSectionSize">
-                   <number>21</number>
+                   <number>20</number>
                   </attribute>
                   <row>
                    <property name="text">
@@ -3373,7 +3373,7 @@ border-image: url(:/button/rc/plus_p.svg);
                       <enum>QAbstractScrollArea::AdjustToContents</enum>
                      </property>
                      <attribute name="verticalHeaderDefaultSectionSize">
-                      <number>21</number>
+                      <number>20</number>
                      </attribute>
                      <row>
                       <property name="text">
@@ -3540,7 +3540,7 @@ border-image: url(:/button/rc/plus_p.svg);
                     <number>40</number>
                    </attribute>
                    <attribute name="verticalHeaderDefaultSectionSize">
-                    <number>21</number>
+                    <number>20</number>
                    </attribute>
                    <row>
                     <property name="text">
@@ -3749,7 +3749,7 @@ border-image: url(:/button/rc/plus_p.svg);
                       <bool>false</bool>
                      </attribute>
                      <attribute name="verticalHeaderDefaultSectionSize">
-                      <number>21</number>
+                      <number>20</number>
                      </attribute>
                      <row>
                       <property name="text">
@@ -3802,7 +3802,7 @@ border-image: url(:/button/rc/plus_p.svg);
                       <number>48</number>
                      </attribute>
                      <attribute name="verticalHeaderDefaultSectionSize">
-                      <number>21</number>
+                      <number>20</number>
                      </attribute>
                      <row>
                       <property name="text">
@@ -4268,7 +4268,7 @@ border: 1px solid blue;
            </size>
           </property>
           <property name="currentIndex">
-           <number>2</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="page_spectra_show">
            <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -5029,7 +5029,7 @@ p, li { white-space: pre-wrap; }
                    <bool>true</bool>
                   </property>
                   <attribute name="horizontalHeaderVisible">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </attribute>
                   <attribute name="horizontalHeaderCascadingSectionResizes">
                    <bool>true</bool>
@@ -6020,6 +6020,8 @@ border: 1px solid blue;
     <addaction name="separator"/>
     <addaction name="actionClear_All"/>
     <addaction name="separator"/>
+    <addaction name="actionImport_QCM_D"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuSetting">
@@ -6379,6 +6381,18 @@ border: 1px solid blue;
    </property>
    <property name="toolTip">
     <string>Plot selected two rows (Row[s2] vs. Row[s1])</string>
+   </property>
+  </action>
+  <action name="actionImport_QCM_D">
+   <property name="icon">
+    <iconset resource="UI_source.qrc">
+     <normaloff>:/icon/rc/import_qcmd.svg</normaloff>:/icon/rc/import_qcmd.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Import QCM-D</string>
+   </property>
+   <property name="toolTip">
+    <string>Import QCM-D data</string>
    </property>
   </action>
  </widget>
