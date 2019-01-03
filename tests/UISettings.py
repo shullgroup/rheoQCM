@@ -532,20 +532,20 @@ settings_default = {
 
         },
         'peaks_threshold': {
-            1:  0.001, 
-            3:  0.001, 
-            5:  0.001, 
-            7:  0.001, 
-            9:  0.001, 
-            11: 0.001, 
+            1:  0.0001, 
+            3:  0.0001, 
+            5:  0.0001, 
+            7:  0.0001, 
+            9:  0.0001, 
+            11: 0.0001, 
         },
         'peaks_prominence': {
-            1:  0.001, 
-            3:  0.001, 
-            5:  0.001, 
-            7:  0.001, 
-            9:  0.001, 
-            11: 0.001, 
+            1:  0.0001, 
+            3:  0.0001, 
+            5:  0.0001, 
+            7:  0.0001, 
+            9:  0.0001, 
+            11: 0.0001, 
         },
     },
 
@@ -584,8 +584,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '3': {
@@ -602,8 +602,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '5': {
@@ -620,8 +620,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '7': {
@@ -638,8 +638,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '9': {
@@ -656,8 +656,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             # 11: {
@@ -674,8 +674,8 @@ settings_default = {
             #     'radioButton_peaks_num_fixed': False,
             #     'radioButton_peaks_policy_minf': False,
             #     'radioButton_peaks_policy_maxamp': True,
-            #     'lineEdit_peaks_threshold': 0.001,
-            #     'lineEdit_peaks_prominence': 0.001,
+            #     'lineEdit_peaks_threshold': 0.0001,
+            #     'lineEdit_peaks_prominence': 0.0001,
             # },
         },
 
@@ -695,8 +695,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '3': {
@@ -713,8 +713,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '5': {
@@ -731,8 +731,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '7': {
@@ -749,8 +749,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '9': {
@@ -767,8 +767,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             # 11: {
@@ -785,8 +785,8 @@ settings_default = {
             #     'radioButton_peaks_num_fixed': False,
             #     'radioButton_peaks_policy_minf': False,
             #     'radioButton_peaks_policy_maxamp': True,
-            #     'lineEdit_peaks_threshold': 0.001,
-            #     'lineEdit_peaks_prominence': 0.001,
+            #     'lineEdit_peaks_threshold': 0.0001,
+            #     'lineEdit_peaks_prominence': 0.0001,
             # },
         },
     },
