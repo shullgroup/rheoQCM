@@ -2,8 +2,7 @@
 
 # QCM Data Collection and Analysis Software
 
-This is the Python project page for the QCM data collection and analysis software used by the Shull research group at Northwestern University. The data collection and analysis are at the testing point. Curentlly, it is using its own data format (hdf5). The data importing function will be added soon which will be useful to the community doing QCM-D tests. Some of the analysis routines are generally useful, regardless of how the QCM data were generated.
-
+This is the Python project page for the QCM data collection and analysis software used by the Shull research group at Northwestern University. The data collection and analysis are at the testing point. Curentlly, it is using its own data format (hdf5). The data importing function with QCM-D data is useful to the community doing QCM-D tests. Some of the analysis routines are generally useful, regardless of how the QCM data were generated.
 
 ## Getting Started
 
@@ -47,9 +46,17 @@ All the modules needed for the data collection program are in the `QCM_main/` fo
 
 The single executable file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (<span style="color:red">NOTE: the single executable file is compiled on a test computer, the parameters may not fit them on your computer. And you cannot customize the setup with it.</span>)  
 
-## Using Analysis Program
+## Running the UI from Terminal
 
-To see an example of how the program works, run example_runfile.py, which will act on some of the data in the example_data directory and generate some figures representing the analyzed data in a figures folder.  
+Go to the `QCM_mani/` folder and run `QCM_main.py` will start the UI and it will check the environment by itself.  
+
+## Using UI with QCM-D Data
+
+* Export the QCM-D data as .xlsx file. column names: t(s), delf1, delg1, delf3, delg3, ... The time column name could also be time(s).
+* Start the UI and from the manu bar select `File>Import QCM-D data` will import the QCM-D data and save a .h5 file with the same name in * the same folder. This will save all the calculated property data for the future using.  
+* Now the UI can display your data and do the analysis the same as the data generated with the UI.
+* Don't forget save the data when you finish the calculation.
+* Click export to exprot a .xlsx file with all the data in it.
 
 ## Using Analysis Code for Mat File  
 
@@ -73,7 +80,6 @@ The functions for Matlab version data are locoalized in `QCMFuncs/` folder.
 
 * Documentation.
 * Property results plotting and exporting.
-* Data analysis with QCM-D data.
 * Interface with other hardware. (If you have a hardware and interested in interfacing with our software, please feel free to contact us.)
 
 ## Authors

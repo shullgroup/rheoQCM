@@ -149,7 +149,7 @@ settings_init = {
         'Json file (*.json)',
     ]),
 
-    # export  data file type
+    # export data file type
     'export_datafiletype': ';;'.join([
         # 'csv file (*.csv)',
         'excel file (*.xlsx)',
@@ -157,6 +157,13 @@ settings_init = {
         # 'hdf5 file (*.h5)',
         # 'Matlab file (*.mat)',
 
+    ]),
+
+    # import QCM-D data file type
+    'qcmd_datafiletype': ';;'.join([
+        # 'csv file (*.csv)',
+        'excel file (*.xlsx)',
+        # 'json file (*.json)',
     ]),
 
     # scan mode
