@@ -24,6 +24,7 @@ except ImportError: # in case running Jupyter in the QCM_py folder
 parms = {}  # parameters to pass to qcm.analyze
 parms['dataroot'] = qcm.find_dataroot('qifeng')
 parms['figlocation'] = 'datadir' # save data in 
+parms['close_on_click_switch'] = False
 sample = sample_dict()  # read sample dictionary
 
 # specify any non-default parameters  

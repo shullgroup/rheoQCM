@@ -19,7 +19,7 @@ data_saver.load_file(path)
 
 ########## get single varible #########
 
-# set the data channel you want to access
+# get frequency, dissipation and marks
 chn_name = 'samp' # 'samp' for chnnel 'S'; 'ref' for channel 'R'
 data_col = 'fs' # column name in data dataframe 'fs', 'gs', 'marks'
 mark = False # False: all data; True: only marked rows
@@ -33,7 +33,7 @@ print(col_data.columns)
 # col_data has columns for each harmonic
 
 # get time (referenced to reference time, t0)
-chn_name = 'samp' # 'samp' for chnnel 'S'; 'ref' for channel 'R'
+chn_name = 'samp' # 'samp' for channel 'S'; 'ref' for channel 'R'; 'samp_ref': reference for 'S'; 'ref_ref': reference for 'R'
 dropnanrow = False # False: leave the row with all nan as it is; True: remove the rows with no marks
 unit_t = 's' # unit for the temperature data. It can be one from ['s', 'm', 'h', 'd'] for second, min, hour, day, respectively
 t = data_saver.get_t_marked_rows(chn_name, dropnanrow=dropnanrow, unit=unit_t)
@@ -62,7 +62,7 @@ prop_data = data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key
 ########## get full dataframe ##########
 
 # get QCM data
-chn_name = 'samp' # 'samp' for chnnel 'S'; 'ref' for channel 'R'
+chn_name = 'samp' # 'samp' for channel 'S'; 'ref' for channel 'R'; 'samp_ref': reference for 'S'; 'ref_ref': reference for 'R'
 mark = False # False: all data; True: only marked rows
 dropnanrow = False # False: leave the row with all nan as it is; True: remove the rows with no marks
 dropnancolumn = True # True: delete the harmonics didn't tested; False: keep all harmonics with untested ones
