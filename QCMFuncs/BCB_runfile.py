@@ -28,7 +28,12 @@ parms['imagetype'] = 'png'  # default is 'svg'
 qcm.analyze(sample['BCB_4'], parms)
 
 #%% 2:1 20181210
+qcm.analyze(sample['BCB_4_h5'], parms)
+
+#%% 2:1 20181210
 qcm.analyze(sample['BCB_3'], parms)
+#%% 2:1 20181210
+qcm.analyze(sample['BCB_3_h5'], parms)
 
 #%% 2:1 20180327
 qcm.analyze(sample['BCB_2_20180406_refit'], parms)

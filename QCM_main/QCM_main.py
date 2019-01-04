@@ -139,7 +139,6 @@ class QCMApp(QMainWindow):
                         pass
             except:
                 print('Initiating MyVNA failed!\nMake sure analyser is connected and MyVNA is correctly installed!')
-
         else: # other system, data analysis only
             # self.vna = AccessMyVNA() # for test only
             pass
@@ -1428,7 +1427,7 @@ class QCMApp(QMainWindow):
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self, title, path, filetype, options=options)
         if fileName:
-            pass
+            print(fileName)
         else:
             fileName = ''
         return fileName
@@ -1444,7 +1443,7 @@ class QCMApp(QMainWindow):
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(self,title, path, filetype, options=options)
         if fileName:
-            pass
+            print(fileName) 
         else:
             fileName = ''
         return fileName 
@@ -1599,17 +1598,19 @@ class QCMApp(QMainWindow):
         if fileName:
             self.data_saver.data_exporter(fileName) # do the export
 
-    def process_messagebox(self, message=[]):
+    def process_messagebox(self, message=[], forcepop=False):
         '''
         check is the experiment is ongoing (self.timer.isActive()) and if data is saved (self.data_saver.saveflg)
         and pop up a messageBox to ask if process
-
+        message: list of strings
+        forcepop: True, the message will popup anyway
+        
         return process: Ture/False for checking
         '''
 
         process = True
 
-        if self.timer.isActive() or self.data_saver.saveflg == False:
+        if self.timer.isActive() or (self.data_saver.saveflg == False) or forcepop:
             if self.data_saver.saveflg == False:
                 message.append('There is data unsaved!')
             if self.timer.isActive():
@@ -1633,6 +1634,8 @@ class QCMApp(QMainWindow):
                     self.ui.pushButton_runstop.setChecked(False)
                 
                 process = True
+            else:
+                process = False
 
         if process:
             # turn off manual refit mode
@@ -1696,7 +1699,7 @@ class QCMApp(QMainWindow):
         if not self.data_saver.path: # no data 
             return
 
-        process = self.process_messagebox(message=['All data will be deleted!'])
+        process = self.process_messagebox(message=['All data in the file will be deleted!'], forcepop=True)
 
         if not process: 
             return
