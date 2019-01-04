@@ -210,7 +210,7 @@ _MyVNAGetScanSteps = wfunc(
 # int nRet = MyVNASetScanSteps(nTemp);
 _MyVNASetScanSteps = wfunc(
     '?MyVNASetScanSteps@@YGHH@Z', vna, c_int,
-    (c_int, (1, 'nSteps', 200))
+    (c_int, (1, 'nSteps', 400))
 )
 
 ##########################################
@@ -922,6 +922,9 @@ class AccessMyVNA():
         #     nSteps = np.array(nSteps, dtype=int)
         ret = _MyVNASetScanSteps(nSteps)
         # ret = MyVNASetScanSteps(nSteps)
+        # if not ret:
+        #     self._nsteps = nSteps # save to class
+
         print('MyVNASetScanSteps\n', ret, nSteps) #testprint
         return ret, nSteps
 
@@ -942,11 +945,13 @@ class AccessMyVNA():
         ret = _MyVNASetScanAverage(nAverage)
         # ret = MyVNASetScanAverage(nAverage)
         print('MyVNASetScanAverage\n', ret, nAverage) #testprint
+        # if not ret:
+        #     self._naverage = nAverage
         return ret, nAverage
 
     def GetScanAverage(self):
         # nAverage = c_int()
-        nAverage = np.array(0, dtype=int)
+        nAverage = np.array(1, dtype=int)
         ret = _MyVNAGetScanAverage(nAverage.ctypes.data_as(POINTER(c_int)))
         print('MyVNAGetScanAverage\n', ret, nAverage) #testprint
 
@@ -974,7 +979,7 @@ class AccessMyVNA():
     '''
     #endregion
 
-    @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
+    # @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
     def GetDoubleArray(self, nWhat=0, nIndex=0, nArraySize=9):
         '''
         Get frequency nWhat = GET_SCAN_FREQ_DATA 0
@@ -1024,7 +1029,7 @@ class AccessMyVNA():
 
         return rt, nD
 
-    @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
+    # @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
     def GetIntegerArray(self, nWhat=5, nIndex=0, nArraySize=4):
         '''
         get hardware setup
@@ -1089,6 +1094,8 @@ class AccessMyVNA():
         '''
         ret = _MyVNASetInstrumentMode(nMode)
         print('MyVNASetInstrumentMode\n', ret, nMode) #testprint
+        # if not ret:
+        #     self._instrmode = nMode        
         return ret, nMode
 
 
@@ -1101,6 +1108,8 @@ class AccessMyVNA():
     def Setdisplaymode(self, nMode=0):
         ret = _MyVNASetDisplayMode(nMode)
         print('MyVNASetDisplayMode\n', ret, nMode) #testprint
+        # if not ret:
+        #     self._displaymode = nMode        
         return ret, nMode
         # __declspec(dllexport) int _stdcall MyVNASetDisplayMode(int nMode)
         # int nRet = MyVNASetDisplayMode( nDisplayMode);
@@ -1127,6 +1136,8 @@ class AccessMyVNA():
         '''
         ret = _MyVNASetFequencies(f1, f2, 1)
         print('MyVNASetFequencies\n', ret, f1, f2) #MyVNASetFequencies #testprint
+        # if not ret:
+        #     self._f = [f1, f2]
         return ret, f1, f2
     
     # @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay)
@@ -1176,19 +1187,26 @@ class AccessMyVNA():
     ################ combined functions #################
     def single_scan(self):
         print('single_scan') #testprint
+        print('self._nsteps', self._nsteps) #testprint
         # self.Init()
         self.SingleScan()
+        print('self._nsteps', self._nsteps) #testprint
         self.Autoscale()
+        print('self._nsteps', self._nsteps) #testprint
         # wait for some time
         t_wait = time.time() + self._get_wait_time()
 
         while time.time() < t_wait:
+            print('wait...') #testprint
             time.sleep(0.1)
+        print('self._nsteps', self._nsteps) #testprint
         # ret, nSteps = self.GetScanSteps()
-        ret, f, G = self.GetScanData(nStart=0, nEnd=self._nsteps-1, nWhata=-1, nWhatb=15)
+        ret, f, G = self.GetScanData(nStart=0, nEnd=int(self._nsteps-1), nWhata=-1, nWhatb=15)
         # time.sleep(1)
-        ret, f, B = self.GetScanData(nStart=0, nEnd=self._nsteps-1, nWhata=-1, nWhatb=16)
+        print('self._nsteps', self._nsteps) #testprint
+        ret, f, B = self.GetScanData(nStart=0, nEnd=int(self._nsteps-1), nWhata=-1, nWhatb=16)
         # self.Close()
+        print('self._nsteps', self._nsteps) #testprint
         return ret, f, G * 1e3, B * 1e3 # f in Hz; G & B in mS
     
     def change_settings(self, refChn=1, nMode=0, nSteps=400, nAverage=1):
@@ -1213,6 +1231,8 @@ class AccessMyVNA():
             nData = np.array([1., 2.])
 
         ret, nData = self.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=nData)
+        # if not ret:
+        #     self._chn = reflectchn        
         return ret, reflectchn
 
     def set_vna(self, setflg):
@@ -1359,7 +1379,7 @@ class AccessMyVNA():
         print(num_conversions / conversion_rate) #testprint
         total_time = dds_load * 1e-6 + start_delay * 1e-6 + num_conversions / conversion_rate + delay * 1e-6 # get total time in seconds
         print(total_time) #testprint
-
+        print(total_time * naverage + average_delay * (naverage - 1) * 1e-6 + extra_time)  #testprint
         return total_time * naverage + average_delay * (naverage - 1) * 1e-6 + extra_time
         
             
@@ -1371,13 +1391,16 @@ class AccessMyVNA():
 # exit(0)
 if __name__ == '__main__':
     accvna = AccessMyVNA()
-    # exit(0)
+    exit(0)
+
     # ret = accvna.GetDoubleArray()
     # ret, f, G, B = accvna.single_scan()
     # accvna = AccessMyVNA()
     # print('acc', accvna._naverage) 
     with accvna:
-        pass
+        ret, nSteps = accvna.SetScanSteps(nSteps=300)
+        accvna._get_wait_time()
+        # pass
         # print('acc', accvna._naverage) 
         # print(11111) 
 
@@ -1386,16 +1409,17 @@ if __name__ == '__main__':
     with AccessMyVNA() as accvna:
         # print(accvna._get_wait_time())
         print('acc', accvna._naverage)
-        exit(0)
+        ret, nSteps = accvna.SetScanSteps(nSteps=300)
+        print(accvna._nsteps)
+        # exit(0)
         ret = accvna.ShowWindow(1)
         ret, delays = accvna.GetIntegerArray(nWhat=5, nIndex=0, nArraySize=4)
 
         ADC_speed, ADC_step_delay, sweep_start_delay, phase_change_delay = delays
 
         accvna._get_wait_time()
-        accvna._get_wait_time()
     
-    accvna.GetIntegerArray(nWhat=6, nIndex=0, nArraySize=4)
+    # accvna.GetIntegerArray(nWhat=6, nIndex=0, nArraySize=4)
     exit(0)
     import inspect
     import AccessMyVNA

@@ -137,13 +137,14 @@ class QCMApp(QMainWindow):
                 # test if MyVNA program is available
                 with AccessMyVNA() as vna:
                     if vna.Init() == 0: # is available
-                        self.vna = AccessMyVNA() # save class AccessMyVNA to vna
+                        # self.vna = AccessMyVNA() # save class AccessMyVNA to vna
+                        self.vna = vna # save class AccessMyVNA to vna
                     else: # not available
                         pass
                 print(vna) #testprint
+                print(vna._nsteps) #testprint
             except:
                 print('Initiating MyVNA failed!\nMake sure analyser is connected and MyVNA is correctly installed!')
-
         else: # other system, data analysis only
             # self.vna = AccessMyVNA() # for test only
             pass
@@ -2025,8 +2026,9 @@ class QCMApp(QMainWindow):
         setflg = self.vna_tracker.set_check(f=freq_span, steps=steps, chn=self.get_chn_by_name(chn_name))
         print(setflg) #testprint
         ret = self.vna.set_vna(setflg)
+        print('self.vna._nstep', self.vna._nsteps) #testprint
         if ret == 0:
-            ret, f, G, B = vna.single_scan()
+            ret, f, G, B = self.vna.single_scan()
         else:
             print('There is an error while setting VNA!')
         return f, G, B
