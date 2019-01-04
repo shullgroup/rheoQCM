@@ -240,9 +240,15 @@ class DataSaver:
         # self.exp_ref = self._make_exp_ref() # use the settings_int values to format referene dict
         self.exp_ref['t0'] = t0
 
+        # get directory
+        direct = os.path.dirname(path)
+        # check if folder exist
+        if not os.path.isdir(direct): # directory doesn't exist
+            os.makedirs(direct) # create directory
+
         # create groups for raw data
         # dt = h5py.special_dtype(vlen=str)
-        with h5py.File(self.path, 'w') as fh:
+        with h5py.File(path, 'w') as fh:
             fh.create_group('data')
             fh.create_group('raw')
             fh.create_group('prop')
