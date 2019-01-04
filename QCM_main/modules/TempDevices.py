@@ -49,6 +49,9 @@ def device_info(devtype):
     '''
     devices = list_devices()
     for device in devices:
-        if device.product_type != devtype:
-            devices.remove(device)
-    return devices[0]
+    #     if device.product_type != devtype:
+    #         devices.remove(device)
+    # return devices[0]
+        if device.product_type == devtype:
+            return device
+    return None

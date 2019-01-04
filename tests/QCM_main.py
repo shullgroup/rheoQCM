@@ -1446,7 +1446,7 @@ class QCMApp(QMainWindow):
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self, title, path, filetype, options=options)
         if fileName:
-            print(type(fileName)) #testprint
+            print(fileName)
         else:
             fileName = ''
         return fileName
@@ -1463,7 +1463,7 @@ class QCMApp(QMainWindow):
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(self,title, path, filetype, options=options)
         if fileName:
-            print(fileName) #testprint
+            print(fileName) 
         else:
             fileName = ''
         return fileName 
