@@ -13,6 +13,9 @@ settings_init = {
     # window default size
     'window_size': [1200, 800], # px
 
+    # UI will looking for the file to load the default setup
+    'default_settings_file_name': 'settings_default.json',
+
     # myVNA path
     'vna_path': r'C:\Program Files (x86)\G8KBB\myVNA\myVNA.exe',
 

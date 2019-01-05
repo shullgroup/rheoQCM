@@ -80,6 +80,16 @@ Modules `DataSaver` and `QCM` in `Modules/` folder are availabe for dealing with
 
 The functions for Matlab version data are locoalized in `QCMFuncs/` folder.  
 
+Export the current settings as a json file named `settings_default.json` and save in `QCM_main/` folder. The UI will use the settings you saved as default after the next time you opend it.  
+
+There is a `QCM_main.bat` file in  `QCM_main/` for running the program with Python by just double clicking it. You need to change the path of python and QCM_main.py to them on your computer to make it work. Meanwhile, you can make a shortcut of this bat file and put the shortcut somewhere you want.
+
+### Knowing Issues
+
+* Please set MyVNA to `Basic Mode` from the left pannel of MyVNA software by selecting VNA Hardware>Configure CSD / Harmonic Mode and checking Basic Mode in Select Mode. This will make sure the time counting in the Python program fits the hardware scanning time. You will not loose any precision as far as we know.  
+
+* The data analysis in the UI only work with `one layer` mode. Other modes will be add in the near future.
+
 ## To Do List (work in Progress)
 
 * Documentation.
