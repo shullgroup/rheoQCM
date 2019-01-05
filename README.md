@@ -44,7 +44,7 @@ All the modules needed for the data collection program are in the `QCM_main/` fo
 
 ## Using the Stand-alone Program (exe)
 
-The single executable file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (<span style="color:red">NOTE: the single executable file is compiled on a test computer, the parameters may not fit them on your computer. And you cannot customize the setup with it.</span>)  
+The single executable file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (<span style="color:red">NOTE: You can customize the program with `settings_default.json`  file come comes with the executable file (See below about the way it works.)</span>)  
 
 ## Running the UI from Terminal
 
