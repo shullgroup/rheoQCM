@@ -44,7 +44,7 @@ All the modules needed for the data collection program are in the `QCM_main/` fo
 
 ## Using the Stand-alone Program (exe)
 
-The single executable file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (<span style="color:red">NOTE: You can customize the program with `settings_default.json`  file come comes with the executable file (See below about the way it works.)</span>)  
+A single executable file (exe file) which is precompiled from source code under 32-bit Python is located in the `stand_alone/` folder. It can be run without any additional installation on a Windows system, without the need to install a Python distribution. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (<span style="color:red">NOTE: You can customize the program with the  `settings_default.json`  file that comes with the executable file (See below about the way it works.)</span>)  
 
 ## Running the UI from Terminal
 
@@ -53,10 +53,10 @@ Go to the `QCM_mani/` folder and run `QCM_main.py` will start the UI and it will
 ## Using UI with QCM-D Data
 
 * Export the QCM-D data as .xlsx file. column names: t(s), delf1, delg1, delf3, delg3, ... The time column name could also be time(s).
-* Start the UI and from the manu bar select `File>Import QCM-D data` will import the QCM-D data and save a .h5 file with the same name in * the same folder. This will save all the calculated property data for the future using.  
+* Start the UI and from the menu bar and select `File>Import QCM-D data`.  This will import the QCM-D data and save a .h5 file with the same name in * the same folder. This will save all the calculated property data for future use.  
 * Now the UI can display your data and do the analysis the same as the data generated with the UI.
-* Don't forget save the data when you finish the calculation.
-* Click export to exprot a .xlsx file with all the data in it.
+* Don't forget to save the data when you finish the calculation.
+* Click export to export a .xlsx file with all the data in it.
 
 ## Using Analysis Code for Mat File  
 
@@ -82,13 +82,13 @@ The functions for Matlab version data are locoalized in `QCMFuncs/` folder.
 
 Export the current settings as a json file named `settings_default.json` and save in the same folder as `QCM_main.py` or `QCM_main.exe`. The UI will use the settings you saved as default after the next time you opend it. If you want the setup go back the original one, just simply delete or rename that file.  
 
-There is a `QCM_main.bat` file in  `QCM_main/` for running the program with Python by just double clicking it. You need to change the path of python and QCM_main.py to them on your computer to make it work. Meanwhile, you can make a shortcut of this bat file and put the shortcut somewhere you want.
+There is a `QCM_main.bat` file in  `QCM_main/` for running the program with Python by just double clicking it. You need to change the path of python and QCM_main.py to them on your computer to make it work. Meanwhile, you can make a shortcut of this bat file and put the shortcut in a location of your choosing.
 
-### Knowing Issues
+### Known Issues
 
 * Please set MyVNA to `Basic Mode` from the left pannel of MyVNA software by selecting VNA Hardware>Configure CSD / Harmonic Mode and checking Basic Mode in Select Mode. This will make sure the time counting in the Python program fits the hardware scanning time. You will not loose any precision as far as we know.  
 
-* The data analysis in the UI only work with `one layer` mode. Other modes will be add in the near future.
+* The data analysis in the UI only works with `one layer` mode. Other modes, including films immersed in a liquid medium, will be added in the near future.
 
 ## To Do List (work in Progress)
 
