@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\UI\QCM_GUI_test6.ui'
+# Form implementation generated from reading ui file '.\UI\QCM_GUI.ui'
 #
 # Created by: PyQt5 UI code generator 5.9.2
 #
@@ -2079,7 +2079,7 @@ class Ui_MainWindow(object):
         self.tableWidget_spectra_mechanics_table.setHorizontalHeaderItem(4, item)
         item = QtWidgets.QTableWidgetItem()
         self.tableWidget_spectra_mechanics_table.setItem(0, 0, item)
-        self.tableWidget_spectra_mechanics_table.horizontalHeader().setVisible(True)
+        self.tableWidget_spectra_mechanics_table.horizontalHeader().setVisible(False)
         self.tableWidget_spectra_mechanics_table.horizontalHeader().setCascadingSectionResizes(True)
         self.tableWidget_spectra_mechanics_table.horizontalHeader().setDefaultSectionSize(72)
         self.tableWidget_spectra_mechanics_table.horizontalHeader().setStretchLastSection(False)
@@ -2583,6 +2583,11 @@ class Ui_MainWindow(object):
         self.actionRows_Temp.setObjectName("actionRows_Temp")
         self.actionRow_s2_Row_s1 = QtWidgets.QAction(MainWindow)
         self.actionRow_s2_Row_s1.setObjectName("actionRow_s2_Row_s1")
+        self.actionImport_QCM_D = QtWidgets.QAction(MainWindow)
+        icon21 = QtGui.QIcon()
+        icon21.addPixmap(QtGui.QPixmap(":/icon/rc/import_qcmd.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionImport_QCM_D.setIcon(icon21)
+        self.actionImport_QCM_D.setObjectName("actionImport_QCM_D")
         self.menuFile.addAction(self.actionNew_Exp)
         self.menuFile.addAction(self.actionLoad_Exp)
         self.menuFile.addAction(self.actionLoad_Settings)
@@ -2594,6 +2599,8 @@ class Ui_MainWindow(object):
         self.menuFile.addAction(self.actionExport_Settings)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionClear_All)
+        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.actionImport_QCM_D)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionExit)
         self.menuSetting.addAction(self.actionOpen_MyVNA)
@@ -2626,8 +2633,8 @@ class Ui_MainWindow(object):
         self.label_5.setBuddy(self.lineEdit_spectra_fit_span)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget_settings.setCurrentIndex(1)
-        self.tabWidget_settings_settings_samprefchn.setCurrentIndex(2)
+        self.tabWidget_settings.setCurrentIndex(0)
+        self.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
         self.tabWidget_settings_settings_harm.setCurrentIndex(0)
         self.toolBox.setCurrentIndex(0)
         self.toolBox.layout().setSpacing(6)
@@ -2635,7 +2642,7 @@ class Ui_MainWindow(object):
         self.tabWidget_mechanics_chn.setCurrentIndex(1)
         self.comboBox_settings_mechanics_refG.setCurrentIndex(-1)
         self.stackedWidget_spetratop.setCurrentIndex(1)
-        self.stackedWidget_spectra.setCurrentIndex(2)
+        self.stackedWidget_spectra.setCurrentIndex(1)
         self.stackedWidget_data.setCurrentIndex(1)
         self.pushButton_settings_mechanics_simulator.toggled['bool'].connect(self.groupBox_settings_mechanics_simulator.setVisible)
         self.pushButton_settings_mechanics_countoursettings.toggled['bool'].connect(self.tableWidget_settings_mechanics_contoursettings.setVisible)
@@ -3060,6 +3067,8 @@ class Ui_MainWindow(object):
         self.actionRows_Temp.setToolTip(_translate("MainWindow", "Plot variables vs. temperature"))
         self.actionRow_s2_Row_s1.setText(_translate("MainWindow", "Row[s2] - Row[s1]"))
         self.actionRow_s2_Row_s1.setToolTip(_translate("MainWindow", "Plot selected two rows (Row[s2] vs. Row[s1])"))
+        self.actionImport_QCM_D.setText(_translate("MainWindow", "Import QCM-D"))
+        self.actionImport_QCM_D.setToolTip(_translate("MainWindow", "Import QCM-D data"))
 
 import UI_source_rc
 

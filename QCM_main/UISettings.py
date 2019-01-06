@@ -13,6 +13,9 @@ settings_init = {
     # window default size
     'window_size': [1200, 800], # px
 
+    # UI will looking for the file to load the default setup
+    'default_settings_file_name': 'settings_default.json',
+
     # myVNA path
     'vna_path': r'C:\Program Files (x86)\G8KBB\myVNA\myVNA.exe',
 
@@ -149,7 +152,7 @@ settings_init = {
         'Json file (*.json)',
     ]),
 
-    # export  data file type
+    # export data file type
     'export_datafiletype': ';;'.join([
         # 'csv file (*.csv)',
         'excel file (*.xlsx)',
@@ -157,6 +160,13 @@ settings_init = {
         # 'hdf5 file (*.h5)',
         # 'Matlab file (*.mat)',
 
+    ]),
+
+    # import QCM-D data file type
+    'qcmd_datafiletype': ';;'.join([
+        # 'csv file (*.csv)',
+        'excel file (*.xlsx)',
+        # 'json file (*.json)',
     ]),
 
     # scan mode
@@ -426,7 +436,7 @@ settings_init = {
     'ftol': 1e-10, # -18
 
     ######### params for DataSaver module #########
-    'unsaved_path': r'.\unsaved_data', 
+    'unsaved_path': r'.\unsaved', 
 
 }
 
@@ -525,20 +535,20 @@ settings_default = {
 
         },
         'peaks_threshold': {
-            1:  0.001, 
-            3:  0.001, 
-            5:  0.001, 
-            7:  0.001, 
-            9:  0.001, 
-            11: 0.001, 
+            1:  0.0001, 
+            3:  0.0001, 
+            5:  0.0001, 
+            7:  0.0001, 
+            9:  0.0001, 
+            11: 0.0001, 
         },
         'peaks_prominence': {
-            1:  0.001, 
-            3:  0.001, 
-            5:  0.001, 
-            7:  0.001, 
-            9:  0.001, 
-            11: 0.001, 
+            1:  0.0001, 
+            3:  0.0001, 
+            5:  0.0001, 
+            7:  0.0001, 
+            9:  0.0001, 
+            11: 0.0001, 
         },
     },
 
@@ -577,8 +587,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '3': {
@@ -595,8 +605,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '5': {
@@ -613,8 +623,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '7': {
@@ -631,8 +641,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '9': {
@@ -649,8 +659,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             # 11: {
@@ -667,8 +677,8 @@ settings_default = {
             #     'radioButton_peaks_num_fixed': False,
             #     'radioButton_peaks_policy_minf': False,
             #     'radioButton_peaks_policy_maxamp': True,
-            #     'lineEdit_peaks_threshold': 0.001,
-            #     'lineEdit_peaks_prominence': 0.001,
+            #     'lineEdit_peaks_threshold': 0.0001,
+            #     'lineEdit_peaks_prominence': 0.0001,
             # },
         },
 
@@ -688,8 +698,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '3': {
@@ -706,8 +716,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '5': {
@@ -724,8 +734,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '7': {
@@ -742,8 +752,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             '9': {
@@ -760,8 +770,8 @@ settings_default = {
                 'radioButton_peaks_num_fixed': False,
                 'radioButton_peaks_policy_minf': False,
                 'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.001,
-                'lineEdit_peaks_prominence': 0.001,
+                'lineEdit_peaks_threshold': 0.0001,
+                'lineEdit_peaks_prominence': 0.0001,
             },
 
             # 11: {
@@ -778,8 +788,8 @@ settings_default = {
             #     'radioButton_peaks_num_fixed': False,
             #     'radioButton_peaks_policy_minf': False,
             #     'radioButton_peaks_policy_maxamp': True,
-            #     'lineEdit_peaks_threshold': 0.001,
-            #     'lineEdit_peaks_prominence': 0.001,
+            #     'lineEdit_peaks_threshold': 0.0001,
+            #     'lineEdit_peaks_prominence': 0.0001,
             # },
         },
     },

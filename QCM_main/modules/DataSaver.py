@@ -9,9 +9,15 @@ reading dataset
 Data format: HDF5
 This module use a h5py library to store the data in group and dataset
 You can browse the data with hdf5 UI software e.g. HDFCompass if you
-don't want to extract the data with code
+don't want to extract the data with code.
+dictionaries and dataframes are converted to json and are saved as text in the file
 
-.h5 --- raw --- samp ---0
+.h5 --- raw --- samp ---0---1(harmonic)---column 1: frequency   (f)
+     |       |        |   |             |-column 2: conductance (G)
+     |       |        |   |             --column 3: susceptance (B)
+     |       |        |   |-3
+     |       |        |   |-5
+     |       |        |   --...
      |       |        |-1
      |       |        |-2
      |       |        --...
@@ -21,12 +27,21 @@ don't want to extract the data with code
      |                |-2
      |                --...
      |
-     -- data-|-samp (json)
+     |- data-|-samp (json)
      |       |-ref  (json)
      |       --...
-     -- prop-|-samp (json)
-             |-ref  (json)
-             --...
+     |
+     |- prop-|-samp--<e.g. 353_3 (named by solving combination and reference harmonic)> (json)
+     |       |     |
+     |       |     --...
+     |       |     
+     |       --ref--...
+     |
+     |-exp_ref       (json) # reference setting information
+     |
+     |-settings      (json) # UI settings (it can be loaded to set the UI)
+     |
+     --settings_init (json) # maximum harmonic and time string format for the collected data
 '''
 
 import os
@@ -41,7 +56,10 @@ import csv
 
 
 class DataSaver:
-    def __init__(self, ver, settings_init):
+    def __init__(self, ver='', settings_init={'max_harmonic': None, 'time_str_format': None}):
+        '''
+        initial values are for initialize the module outside of UI
+        '''
 
         self._chn_keys = ['samp', 'ref'] # raw data groups
         self._ref_keys = {'fs': 'f0', 'gs': 'g0'} # corresponding keys storing the reference
@@ -194,6 +212,7 @@ class DataSaver:
             for df_key in mech_keys_multiple:
                 df_mech[df_key] = nan_list
 
+
         # set it to class
         self.update_mech_df_in_prop(chn_name, nhcalc, rh, df_mech)
 
@@ -215,9 +234,15 @@ class DataSaver:
         # self.exp_ref = self._make_exp_ref() # use the settings_int values to format referene dict
         self.exp_ref['t0'] = t0
 
+        # get directory
+        direct = os.path.dirname(path)
+        # check if folder exist
+        if not os.path.isdir(direct): # directory doesn't exist
+            os.makedirs(direct) # create directory
+
         # create groups for raw data
         # dt = h5py.special_dtype(vlen=str)
-        with h5py.File(self.path, 'w') as fh:
+        with h5py.File(path, 'w') as fh:
             fh.create_group('data')
             fh.create_group('raw')
             fh.create_group('prop')
@@ -250,6 +275,9 @@ class DataSaver:
             self.settings_init = json.loads(fh['settings_init'][()])
             self.exp_ref = json.loads(fh['exp_ref'][()])
             self.ver = fh.attrs['ver']
+            # get queue_list
+            # self.queue_list = list(fh['raw/samp'].keys())
+            # self.queue_list = [int(s) for s in fh['raw/samp'].keys()]
 
             for chn_name in self._chn_keys:
                 # df for data from samp/ref chn
@@ -283,6 +311,7 @@ class DataSaver:
             self.raw  = {} # raw data from last queue
 
             self.saveflg = True
+
 
 
     def load_settings(self, path):
@@ -394,6 +423,7 @@ class DataSaver:
         marks: [0]. by default all will be marked as 0
         '''
 
+        t0 = time.time()
         with h5py.File(self.path, 'a') as fh:
             for chn_name in chn_names:
                 # creat group for test
@@ -407,6 +437,7 @@ class DataSaver:
                 for harm in harm_list:
                     # create data_set for f, G, B of the harm
                     g_queue.create_dataset(harm, data=np.stack((f[chn_name][harm], G[chn_name][harm], B[chn_name][harm]), axis=0))
+        t1 = time.time()
 
 
     def save_data(self):
@@ -418,6 +449,7 @@ class DataSaver:
                 if key in fh['data']:
                     del fh['data/' + key]
                     del fh['data/' + key + '_ref']
+                # fh['data/' + key] = json.dumps(getattr(self, key).to_dict())        
                 fh.create_dataset('data/' + key, data=getattr(self, key).to_json(), dtype=h5py.special_dtype(vlen=str))  
                 fh.create_dataset('data/' + key + '_ref', data=getattr(self, key + '_ref').to_json(), dtype=h5py.special_dtype(vlen=str))  
 
@@ -573,11 +605,12 @@ class DataSaver:
         # TODO add exp_ref
 
         # get df of samp and ref channel
+        on_cols = ['queue_id', 't', 'temp']
         df_samp = pd.merge(
             # f
-            self.reshape_data_df('samp', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp),
+            self.reshape_data_df('samp', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp, keep_mark=False),
             # delf
-            self.reshape_data_df('samp', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp),
+            self.reshape_data_df('samp', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp, keep_mark=True), # keep only on marks
             on=['queue_id', 't', 'temp']
         )
 
@@ -585,8 +618,8 @@ class DataSaver:
 
         if self.ref.shape[0] > 0:
             df_ref = pd.merge(
-                self.reshape_data_df('ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp),
-                self.reshape_data_df('ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp),
+                self.reshape_data_df('ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp, keep_mark=False),
+                self.reshape_data_df('ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp, keep_mark=True), # keep only one marks
                 on=['queue_id', 't', 'temp']
             )
 
@@ -657,9 +690,10 @@ class DataSaver:
                 # json.dump(data, f)
 
             
-    def reshape_data_df(self, chn_name, mark=False, dropnanrow=True, dropnancolumn=True, deltaval=False, norm=False, unit_t=None, unit_temp=None):
+    def reshape_data_df(self, chn_name, mark=False, dropnanrow=True, dropnancolumn=True, deltaval=False, norm=False, unit_t=None, unit_temp=None, keep_mark=True):
         '''
         reshape and tidy data df (samp and ref) for exporting
+        keep_mark works when dropnanrow == False
         '''
         cols = ['fs', 'gs']
         df = getattr(self, chn_name).copy()
@@ -672,9 +706,12 @@ class DataSaver:
             df = df.assign(**self.get_list_column_to_columns(chn_name, col, mark=mark, deltaval=deltaval, norm=norm)) # split columns: fs and gs
             df = df.drop(columns=col) # drop columns: fs and gs
 
+
         # drop columns with all 
         if dropnancolumn == True:
             df = df.dropna(axis='columns', how='all')
+            if 'temp' not in df.columns: # no temperature data
+                df['temp'] = np.nan # add temp column back
 
         if dropnanrow == True: # rows with marks only
             # select rows with marks
@@ -682,12 +719,13 @@ class DataSaver:
             if 'marks' in df.columns:
                 df = df.drop(columns='marks') # drop marks column
         else:
-            print('there is no marked data.\n no data will be deleted.')
+            print('there is no marked data.\n no data will be deleted.') 
 
 
         if 'marks' in df.columns:
             # split marks column
-            df = df.assign(**self.get_list_column_to_columns(chn_name, 'marks', mark=mark, norm=False))
+            if keep_mark:
+                df = df.assign(**self.get_list_column_to_columns(chn_name, 'marks', mark=mark, norm=False))
             # finally drop the marks column
             df = df.drop(columns='marks') # drop marks column
 
@@ -900,6 +938,7 @@ class DataSaver:
         return: df with columns = ['1', '3', '5', '7', '9]
         NOTE: The end 's' in column names will not be removed here because the 's' in mech_df shows the value is harmonic dependent.
         '''
+
         s = getattr(self, chn_name + '_prop')[mech_key][col].copy()
 
         if mark == False:
@@ -936,7 +975,7 @@ class DataSaver:
         if all(np.isnan(np.array(self.exp_ref[chn_name][self._ref_keys[col]]))): # no reference or no constant reference exist
             # check col+'_ref'
             if self.exp_ref[chn_name + '_ref'][1][0] is None or len(self.exp_ref[chn_name + '_ref'][1]) == 0: #start index is None or [], dynamic reference
-                print('dynamic reference')
+                print('dynamic reference') 
                 ref_s=getattr(self, self.exp_ref[chn_name + '_ref'][0]).copy()
 
                 # convert series value to ndarray
@@ -958,11 +997,17 @@ class DataSaver:
                 print('ref still not set')
                 return col_s.apply(lambda x: list(np.array(x, dtype=np.float) * np.nan)) # return all nan
 
+                # set the ref
+                # self.set_ref_set(chn_name, *self.exp_ref[chn_name + '_ref'])
+
+                # np.isnan(np.array(self.exp_ref[chn_name][self._ref_keys[col]]))
+
         else: # there is a constant reference exist
             print('constant reference')
             # get ref
             ref = self.exp_ref[chn_name][self._ref_keys[col]] # return a ndarray
             # return
+            
             col_s = col_s.apply(lambda x: list(np.array(x, dtype=np.float) - np.array(ref, dtype=np.float)))
             if norm:
                 return self._norm_by_harm(col_s)
@@ -1066,6 +1111,7 @@ class DataSaver:
                 self.refflg[chn_name] = False
 
 
+
     def set_t0(self, t0=None, t0_shifted=None):
         '''
         set reference time (t0) to self.exp_ref
@@ -1116,6 +1162,7 @@ class DataSaver:
         '''
         marked_rows = getattr(self, chn_name).marks.apply(lambda x: True if 1 in x else False)
         if marked_rows.any(): # there are marked rows
+            print('There are marked rows')
             return marked_rows
         else: # no amrked rows, return all
             print('There is no marked row.\nReturn all')
@@ -1319,3 +1366,117 @@ class DataSaver:
         return a str which represents the key in self.<chn_name>_mech[key]
         '''
         return nhcalc + '_' + str(rh)
+
+
+    ######## Following functions are for QCM-D 
+
+    def convert_D_to_gamma(self, D, harm):
+        '''
+        this function convert given D (from QCM-D) to gamma used in this program
+        D: dissipation from QCM-D
+        harm: str. 
+        '''
+        return 0.5 * int(harm) * 5 * D
+
+
+    def import_qcmd(self, path, f1=None, settings=None, t0=None, init_file=True):
+        '''
+        import QCM-D data to data_saver
+        path: excel file path
+        f1: base frequency in MHz
+        settings: UI settings (dict)
+        init_file: True, intialize h5 file for storing the data. By default the UI will save the h5 file with the same name as excel file.
+        NOTE: f1 and settings should be given one at least. If both are given, the function will use the settings fist.
+        '''
+        self.mode = 'qcmd'
+        name, ext = os.path.splitext(path)
+
+        # make a fake reference time t0
+        if settings:
+            t0_str = settings['dateTimeEdit_reftime']
+            t0 = datetime.datetime.strptime(t0_str, self.settings_init['time_str_format'])
+        else:
+            if not t0:
+                t0 = datetime.datetime.now()
+            t0_str = t0.strftime(self.settings_init['time_str_format'])
+
+        # initialize file
+        if init_file and settings:
+            self.init_file(name + '.h5', settings=settings, t0=t0_str)
+            f1 = self.settings['comboBox_base_frequency'] * 1e6 # in Hz
+        elif f1:
+            f1 = f1 * 1e6 # in Hz
+            self.path = name + '.h5'  # convert xlsx file to h5
+            self.set_t0(t0=t0_str) # save t0 (str)
+
+        g1 = 0 # in Hz
+
+        # read QCM-D data
+        df = pd.read_excel(path)
+
+        # rename time column (it could be ['time(s)', 't(s)'])
+        # df = df.rename(columns={'t(s)': 't'})
+        df['t'] = df.filter(regex='(s)')
+        df = df.drop(columns=df.filter(regex='(s)').columns)
+        # save t as (delt + t0) 
+        # df['t'] = (df['t'] + t0).strftime(self.settings_init['time_str_format'])
+        df['t'] = df['t'].apply(lambda x: (t0 + datetime.timedelta(seconds=x)).strftime(self.settings_init['time_str_format']))
+
+        harm_list = []
+        ref_fs = {'ref':[]}
+        ref_gs = {'ref':[]}
+        fGB = {'samp': {}, 'ref': {}} # a make up dict for f, G, B
+        fgcol_list = df.filter(regex='del').columns
+        if len(fgcol_list) % 2: # odd columns
+            print('delf and delg column number is not the same!\nPlease check the column name!')
+            return
+        for harm in range(1, len(fgcol_list), 2):
+            harm_list.append(str(harm))
+            ref_fs['ref'].append(f1 * harm)
+            ref_gs['ref'].append(g1 * harm)
+            fGB['samp'][str(harm)] = np.nan
+            fGB['ref'][str(harm)] = np.nan
+
+            # convert delf to f
+            df['delf' + str(harm)] = df['delf' + str(harm)] + f1 * harm
+            # convert D to gamma
+            df['delg' + str(harm)] = self.convert_D_to_gamma(df['delg' + str(harm)], harm)
+            # convert delg to g
+            df['delg' + str(harm)] = df['delg' + str(harm)] + g1 * harm
+        
+        # f/g to one column fs/gs
+        df['fs'] = df.filter(regex='delf').values.tolist()
+        df['gs'] = df.filter(regex='delg').values.tolist()
+        # delete delf<n> and deg<n>
+        df = df.drop(columns=fgcol_list)
+        # queue_list 
+        df['queue_id'] = list(df.index.astype(int))
+        # marks
+        single_marks = [0 for _ in harm_list]
+        # for i in range(1, self.settings_init['max_harmonic']+2, 2):
+        #     if str(i) not in harm_list: # tested harmonic
+        #         single_marks.insert(int((i-1)/2), np.nan)
+        # df['marks'] = [single_marks] * df.shape[0]
+
+        ## save to self.samp 
+        # self.samp = self.samp.append(df, ignore_index=True, sort=False)
+
+        ## ANOTHER WAY to save is use self.dynamic_save and save the data to self.samp row by row
+        for i in df.index: # loop each row
+            self.dynamic_save(['samp'], harm_list, t={'samp': df.t[i]}, temp={'samp': np.nan}, f=fGB, G=fGB, B=fGB, fs={'samp': df.fs[i]}, gs={'samp': df.gs[i]}, marks=[0 for _ in harm_list])
+
+
+        self.queue_list = list(self.samp.index)
+
+        # set ref
+        # save ref_fs ref_gs to self.ref as reference
+        self.dynamic_save(['ref'], harm_list, t={'ref': t0_str}, temp={'ref': np.nan}, f=fGB, G=fGB, B=fGB, fs=ref_fs, gs=ref_gs, marks=[0 for _ in harm_list])
+        
+        # set reference
+        self.set_ref_set('samp', 'ref', idx_list=[0])
+
+
+        self.raw = {}
+
+        self.saveflg = False
+

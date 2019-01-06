@@ -15,6 +15,15 @@ from pathlib import Path
 import pandas as pd
 import pdb
 
+# for reading h5 data file
+try:
+    from DataSaver_copy import DataSaver
+except:
+    from QCMFuncs.DataSaver_copy import DataSaver
+
+data_saver = DataSaver()
+
+
 Zq = 8.84e6  # shear acoustic impedance of at cut quartz
 f1 = 5e6  # fundamental resonant frequency
 openplots = 4
@@ -280,9 +289,6 @@ def solve_for_props(soln_input):
     delfstar = soln_input['delfstar']
 
     # first pass at solution comes from rh and rd
-    rd_exp = -delfstar[n3].imag/delfstar[n3].real
-    rh_exp = (n2/n1)*delfstar[n1].real/delfstar[n2].real
-
     rd_exp = -delfstar[n3].imag/delfstar[n3].real
     rh_exp = (n2/n1)*delfstar[n1].real/delfstar[n2].real
     
@@ -861,32 +867,62 @@ def process_raw(sample, data_type):
     nhplot = sample.get('nhplot', [1, 3, 5])
     trange = sample.get(data_type+'trange', [0, 0])
     datadir = sample.get('datadir', '')
-    data_dict = {} 
-    data_dict['file'] = os.path.join(sample['dataroot'], datadir, sample[data_type+'file'] + '.mat')
-    data_dict['data'] = hdf5storage.loadmat(data_dict['file'])
+
+    data_dict = {}
+
+    filetype = sample.get('filetype', 'mat') # mat or h5
+    if filetype == 'mat': # mat file to read
+        data_dict['file'] = os.path.join(sample['dataroot'], datadir, sample[data_type+'file'] + '.' + filetype)
+        data_dict['data'] = hdf5storage.loadmat(data_dict['file'])
+
+        # extract the frequency data from the appropriate file
+        freq = data_dict['data']['abs_freq'][firstline:, 0:7]
+        # get rid of all the rows that don't have any data
+        freq = freq[~np.isnan(freq[:, 1:]).all(axis=1)]
+        # reference frequencies are the first data points for the bare crystal data
+        sample['freqref'] = sample.get('freqref', freq[0, :])
+
+        # extract frequency information
+        data_dict['t'] = freq[:, 0]
+        data_dict['fstar'] = {}
+
+        for n in nhplot:        
+            data_dict['fstar'][n] = freq[:, n] +1j*freq[:, n+1] - sample['freqref'][n]
+
+        # set key for getting index to plot from txt file
+        data_dict['idx_file'] = os.path.join(sample['dataroot'], datadir, sample[data_type+'file']+'_film_idx.txt')
+
+    elif filetype == 'h5': # h5 file to read
+        data_dict['file'] = os.path.join(sample['dataroot'], datadir, sample['filmfile'] + '.' + filetype)
+        filmchn = sample.get('filmchn', 'samp') # default is samp
+        # load file
+        data_saver.load_file(data_dict['file'])
+        
+        # read data from file
+        if data_type == 'film': # get film data
+            df = data_saver.reshape_data_df(filmchn, mark=False, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
+        elif data_type == 'bare': # get bare data
+            df = data_saver.reshape_data_df(filmchn+'_ref', mark=False, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
+            pass
+        
+        # reference frequencies are the first data points for the bare crystal data
+        # get t
+        data_dict['t'] = df.t.values # make it as ndarray, unit in min
+        data_dict['fstar'] = {}
+        for n in nhplot:        
+            data_dict['fstar'][n] = df['f'+str(n)].values +1j*df['g'+str(n)].values
+
+        # set key for getting index to plot from txt file
+        data_dict['idx_file'] = os.path.join(sample['dataroot'], datadir, sample['filmfile']+'_film_idx.txt')
+    
     # get index to plot from *_sampledefs.py
     if 'filmindex' in sample:
         data_dict['filmindex'] = np.array(sample['filmindex'], dtype=int)
     else:
         data_dict['filmindex'] = None
         
-    # set key for getting index to plot from txt file
-    data_dict['idx_file'] = os.path.join(sample['dataroot'], datadir, sample[data_type+'file']+'_film_idx.txt')
-
-    # extract the frequency data from the appropriate file
-    freq = data_dict['data']['abs_freq'][firstline:, 0:7]
-    # get rid of all the rows that don't have any data
-    freq = freq[~np.isnan(freq[:, 1:]).all(axis=1)]
-    # reference frequencies are the first data points for the bare crystal data
-    sample['freqref'] = sample.get('freqref', freq[0, :])
-
-    # extract frequency information
-    data_dict['t'] = freq[:, 0]
-    data_dict['fstar'] = {}
-
-    for n in nhplot:        
-        data_dict['fstar'][n] = freq[:, n] +1j*freq[:, n+1] - sample['freqref'][n]
         
+
     # figure out how man total points we have
     data_dict['n_all'] = data_dict['t'].shape[0]
 

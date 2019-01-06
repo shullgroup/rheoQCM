@@ -9,8 +9,12 @@ lmfit
 xlsxwriter
 h5py
 # hdf5storage is for QCMFuncs
-hdf5storage 
+hdf5storage
+# nidaqmx for temperature senser 
 nidaqmx
+# pypiwin32 for AccessMyVNA module
 pypiwin32
 openpyxl
 tkinter
+# for reading excel with pandas
+xlrd >= 0.9.0

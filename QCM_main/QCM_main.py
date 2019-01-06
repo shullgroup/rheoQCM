@@ -22,7 +22,9 @@ from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, 
 
 # packages
 from MainWindow import Ui_MainWindow
-from UISettings import settings_init, settings_default
+from UISettings import settings_init
+from UISettings import settings_default as settings_default_org
+
 from modules import UIModules, PeakTracker, DataSaver, QCM
 from modules.MatplotlibWidget import MatplotlibWidget
 
@@ -98,7 +100,20 @@ class QCMApp(QMainWindow):
         self.ui.setupUi(self)
 
         self.tempPath = '' # to store the file name before it is initiated
-        self.settings = settings_default.copy() # import default settings. It will be initalized latter
+
+        # check default settings file
+        print(os.getcwd())
+        fileName = os.path.join(os.getcwd(), settings_init['default_settings_file_name'])
+        if os.path.exists(fileName):
+            with open(fileName, 'r') as f:
+                    self.settings = json.load(f) # read user default settings
+                    settings_default = self.settings.copy()
+            print('use user default settings')
+        else:
+            print('use default settings')
+            settings_default = settings_default_org
+            self.settings = settings_default.copy() # import default settings. It will be initalized later
+
         self.peak_tracker = PeakTracker.PeakTracker()
         self.vna_tracker = VNATracker()
         self.qcm = QCM.QCM()
@@ -133,12 +148,12 @@ class QCMApp(QMainWindow):
                 # test if MyVNA program is available
                 with AccessMyVNA() as vna:
                     if vna.Init() == 0: # is available
-                        self.vna = AccessMyVNA() # save class AccessMyVNA to vna
+                        # self.vna = AccessMyVNA() # save class AccessMyVNA to vna
+                        self.vna = vna # save class AccessMyVNA to vna
                     else: # not available
                         pass
             except:
                 print('Initiating MyVNA failed!\nMake sure analyser is connected and MyVNA is correctly installed!')
-
         else: # other system, data analysis only
             # self.vna = AccessMyVNA() # for test only
             pass
@@ -197,7 +212,8 @@ class QCMApp(QMainWindow):
                     getattr(self.ui, 'tab_settings_settings_harm' + str(i))
                 ), 
                 QTabBar.LeftSide, 
-                getattr(self.ui, 'checkBox_tree_harm' + str(i))
+                getattr(self.ui, 'checkBox_tree_harm' + str(i)
+                )
             )
 
             # set signal
@@ -1065,16 +1081,6 @@ class QCMApp(QMainWindow):
         # add menu to toolbutton
         self.ui.toolButton_spectra_mechanics_plotrows.setMenu(self.ui.menu_spectra_mechanics_plotrows)
 
-        # # set action group channel
-        # self.ui.group_channel = QActionGroup(self, exclusive=True)
-        # self.ui.group_channel.addAction(self.ui.actionADC_1)
-        # self.ui.group_channel.addAction(self.ui.actionADC_2)
-
-        # # set action group refType
-        # self.ui.group_refType = QActionGroup(self, exclusive=True)
-        # self.ui.group_refType.addAction(self.ui.actionData_File)
-        # self.ui.group_refType.addAction(self.ui.actionSingle_Point)
-        # self.ui.group_refType.addAction(self.ui.actionExternal)
 
         # set QAction
         self.ui.actionLoad_Settings.triggered.connect(self.on_triggered_load_settings)
@@ -1087,6 +1093,8 @@ class QCMApp(QMainWindow):
         self.ui.actionReset.triggered.connect(self.on_triggered_actionReset)
         self.ui.actionClear_All.triggered.connect(self.on_triggered_actionClear_All)
         self.ui.actionOpen_MyVNA.triggered.connect(self.on_triggered_actionOpen_MyVNA)
+        # import QCM-D
+        self.ui.actionImport_QCM_D.triggered.connect(self.on_triggered_actionImport_QCM_D)
 
 
         #endregion
@@ -1258,6 +1266,12 @@ class QCMApp(QMainWindow):
             # reset progressbar
             self.updat_progressbar(val=0, text='')
 
+            # # wait for data_collection fun finish (self.idle == True)
+            # while self.idle == False:
+            #     loop = QEventLoop()
+            #     QTimer.singleShot(1000, loop.quit)
+            #     loop.exec_()
+
             # write dfs and settings to file
             if self.idle == True: # Timer stopped while timeout func is not running
                 self.process_saving_when_stop()
@@ -1274,6 +1288,7 @@ class QCMApp(QMainWindow):
         self.data_saver.save_data_settings(settings=self.settings) # TODO add exp_ref
 
         self.counter = 0 # reset counter
+
 
         # enable features
         self.enable_widgets(
@@ -1327,6 +1342,7 @@ class QCMApp(QMainWindow):
         '''
         self.save_data_saver_refsource('ref')
 
+
     def save_data_saver_refsource(self, chn_name):
         '''
         set the data_saver.exp_ref[chn_name]
@@ -1354,12 +1370,14 @@ class QCMApp(QMainWindow):
         # refresh mpl_plt<n>
         self.update_mpl_plt12()
 
+
     def recalc_refs(self):
         '''
         recalculate delf and delg by reference set saved in data_saver
         '''
         self.data_saver.calc_fg_ref('samp', mark=True)
         self.data_saver.calc_fg_ref('ref', mark=True)
+
 
     def on_triggered_actionOpen_MyVNA(self):
         '''
@@ -1368,8 +1386,19 @@ class QCMApp(QMainWindow):
         subprocess.Popen(settings_init['vna_path'])
 
 
+    def on_triggered_actionImport_QCM_D(self):
+        '''
+        import QCM-D data for calculation
+        '''
+        process = self.process_messagebox(message=['Load QCM-D data!'])
 
+        if not process: 
+            return
 
+        fileName = self.openFileNameDialog(title='Choose an existing file to append', filetype=settings_init['qcmd_datafiletype']) # !! add path of last opened folder   
+
+        if fileName:
+            self.data_saver.import_qcmd(fileName, settings=self.settings)
 
 
     # @pyqtSlot()
@@ -1406,13 +1435,14 @@ class QCMApp(QMainWindow):
             self.settings['lineEdit_scaninterval'] = 1
             self.ui.lineEdit_scaninterval.setText('{0:.3g}'.format(math.inf)) # python < 3.5
 
+
     ## functions for open and save file
     def openFileNameDialog(self, title, path='', filetype=settings_init['default_datafiletype']):  
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self, title, path, filetype, options=options)
         if fileName:
-            print(type(fileName))
+            print(fileName)
         else:
             fileName = ''
         return fileName
@@ -1428,7 +1458,7 @@ class QCMApp(QMainWindow):
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(self,title, path, filetype, options=options)
         if fileName:
-            print(fileName)
+            print(fileName) 
         else:
             fileName = ''
         return fileName 
@@ -1583,17 +1613,19 @@ class QCMApp(QMainWindow):
         if fileName:
             self.data_saver.data_exporter(fileName) # do the export
 
-    def process_messagebox(self, message=[]):
+    def process_messagebox(self, message=[], forcepop=False):
         '''
         check is the experiment is ongoing (self.timer.isActive()) and if data is saved (self.data_saver.saveflg)
         and pop up a messageBox to ask if process
-
+        message: list of strings
+        forcepop: True, the message will popup anyway
+        
         return process: Ture/False for checking
         '''
 
         process = True
 
-        if self.timer.isActive() or self.data_saver.saveflg == False:
+        if self.timer.isActive() or (self.data_saver.saveflg == False) or forcepop:
             if self.data_saver.saveflg == False:
                 message.append('There is data unsaved!')
             if self.timer.isActive():
@@ -1617,6 +1649,8 @@ class QCMApp(QMainWindow):
                     self.ui.pushButton_runstop.setChecked(False)
                 
                 process = True
+            else:
+                process = False
 
         if process:
             # turn off manual refit mode
@@ -1680,7 +1714,7 @@ class QCMApp(QMainWindow):
         if not self.data_saver.path: # no data 
             return
 
-        process = self.process_messagebox(message=['All data will be deleted!'])
+        process = self.process_messagebox(message=['All data in the file will be deleted!'], forcepop=True)
 
         if not process: 
             return
@@ -1915,7 +1949,7 @@ class QCMApp(QMainWindow):
             f, G, B = f[idx], G[idx], B[idx]
         else:
             print('Change Tab to Settings or Data to active the function.')
-
+        
         return f, G, B
 
     def get_vna_data(self, harm=None, chn_name=None):
@@ -1970,7 +2004,7 @@ class QCMApp(QMainWindow):
         setflg = self.vna_tracker.set_check(f=freq_span, steps=steps, chn=self.get_chn_by_name(chn_name))
         ret = self.vna.set_vna(setflg)
         if ret == 0:
-            ret, f, G, B = vna.single_scan()
+            ret, f, G, B = self.vna.single_scan()
         else:
             print('There is an error while setting VNA!')
         return f, G, B
@@ -2030,11 +2064,22 @@ class QCMApp(QMainWindow):
     def on_fit_lims_change(self, axes):
         axG = self.ui.mpl_spectra_fit.ax[0]
 
+
+        # data lims [min, max]
+        # df1, df2 = UIModules.datarange(self.ui.mpl_spectra_fit.l['lB'][0].get_xdata())
         # get axes lims
         f1, f2 = axG.get_xlim()
         # check lim with BW
         f1, f2 = self.span_check(harm=self.settings_harm, f1=f1, f2=f2)
         
+        # if axG.get_navigate_mode() == 'PAN': # pan
+        #     # set a new x range: combine span of dflims and flims
+        #     f1 = min([f1, df1])
+        #     f2 = max([f2, df2])
+        # elif axG.get_navigate_mode() == 'ZOOM': # zoom
+        #     pass
+        # else: # axG.get_navigate_mode() == 'None'
+        #     pass
 
         # set lineEdit_scan_harmstart & lineEdit_scan_harmend
         self.ui.lineEdit_scan_harmstart.setText(str(f1*1e-6)) # in MHz
@@ -2060,6 +2105,16 @@ class QCMApp(QMainWindow):
         # update 
         self.ui.lineEdit_spectra_fit_span.setText(UIModules.num2str((span / 1000), precision=5)) # in kHz
 
+    # def spectra_fit_axesevent_disconnect(self, event):
+    #     self.mpl_disconnect_cid(self.ui.mpl_spectra_fit)
+
+    # def spectra_fit_axesevent_connect(self, event):
+    #     self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
+    #     # since pan changes xlim before button up, change ylim a little to trigger ylim_changed
+    #     ax = self.ui.mpl_spectra_fit.ax[0]
+    #     if ax.get_navigate_mode() == 'PAN':
+    #         ylim = ax.get_ylim()
+    #         ax.set_ylim(ylim[0], ylim[1] * 1.01)
 
     def mpl_disconnect_cid(self, mpl, axis='xy'):
 
@@ -2194,6 +2249,7 @@ class QCMApp(QMainWindow):
                 x=cen_trk_freq
             ) 
 
+
             self.ui.mpl_spectra_fit.update_data({'ln': 'strk', 'x': cen_trk_freq, 'y': cen_trk_G})
 
         # update srec
@@ -2202,6 +2258,7 @@ class QCMApp(QMainWindow):
             self.peak_tracker.get_output(key='params', chn_name=self.settings_chn['name'], harm=self.settings_harm),
             x=cen_rec_freq
         ) 
+
 
         self.ui.mpl_spectra_fit.update_data({'ln': 'srec', 'x': cen_rec_freq, 'y': cen_rec_G})
 
@@ -2268,10 +2325,8 @@ class QCMApp(QMainWindow):
         '''
         initiate widgets for manual refit
         '''
-        print('refit isChecked', self.ui.pushButton_manual_refit.isChecked())
         if self.ui.pushButton_manual_refit.isChecked():
             # make a copy of self.freq_span and self.harmdata for refit
-            print('copy to active')
             self.settings['freq_span']['refit'] = self.settings['freq_span'][self.active['chn_name']]
             self.settings['harmdata']['refit'] = self.settings['harmdata'][self.active['chn_name']]
 
@@ -2298,6 +2353,8 @@ class QCMApp(QMainWindow):
             # clear mpl
             self.ui.mpl_spectra_fit.clr_lines()
             self.ui.mpl_spectra_fit_polar.clr_lines()
+
+
 
 
 
@@ -2392,6 +2449,7 @@ class QCMApp(QMainWindow):
         plt_str: str of 'plt1' or 'plt2'
         '''
 
+
         if plt_str != 'plt1' and plt_str != 'plt2': # n is not in the UI
             # do nothing
             return
@@ -2437,6 +2495,7 @@ class QCMApp(QMainWindow):
 
         # get x data. normally t
         xdata = self.get_data_by_typestr(plt_opt[1], plt_chnname, mark=mark, unit_t=timeuint, unit_temp=tempunit)
+
 
         # prepare data for plotting
         data_list = self.prepare_harm_data_for_mpl_update(plt_chnname, plt_harms, line_group, xdata, ydata, show_marked_when_all=True)
@@ -2551,6 +2610,7 @@ class QCMApp(QMainWindow):
         str: 'df', 'dfn', 'mdf', 'mdfn', 'dg', 'dgn', 'f', 'g', 'temp', 't'
         return: data
         '''
+
         if typestr in ['df', 'delf_exps']: # get delf
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
         elif 'mdf' == typestr: # get delf
@@ -2651,6 +2711,17 @@ class QCMApp(QMainWindow):
             self.ui.mpl_plt1.canvas.draw()
             self.ui.mpl_plt2.canvas.draw()
 
+    # def set_plt2_on_plt1_xlim_change(self):
+    #     # get mpl_plt1 xlims
+    #     xlim = self.ui.mpl_plt1.ax[0].get_xlim()
+    #     # set mpl_plt2 xlim
+    #     self.ui.mpl_plt2.ax[0].set_xlim(xlim)
+
+    # def set_plt1_on_plt2_xlim_change(self):
+    #     # get mpl_plt2 xlims
+    #     xlim = self.ui.mpl_plt2.ax[0].get_xlim()
+    #     # set mpl_plt1 xlim
+    #     self.ui.mpl_plt1.ax[0].set_xlim(xlim)
 
 
     def show_marked_data(self):
@@ -2781,6 +2852,7 @@ class QCMApp(QMainWindow):
         '''
         check which menu to open: mpl_data_open_selector_menu or mpl_data_pen_picker_menu
         '''
+
         if not self.data_saver.path:
             return
 
@@ -2792,6 +2864,7 @@ class QCMApp(QMainWindow):
         #     self.mpl_data_open_selector_menu(position, mpl, plt_str)
 
         # # update display
+        # mpl.canvas.draw()
         self.update_mpl_plt12()
  
     def mpl_data_open_selector_menu(self, position, mpl, plt_str):
@@ -2806,6 +2879,7 @@ class QCMApp(QMainWindow):
         plt_harms = self.get_plt_harms(plt_str) # get checked harmonics
         for harm in plt_harms:
             harm = str(harm)
+            # print(mpl.get_data(ls=['ls'+harm]))
             harm_sel_data, = mpl.get_data(ls=['ls'+harm]) # (xdata, ydata)
             if isinstance(harm_sel_data[0], pd.Series) and harm_sel_data[0].shape[0] > 0: # data is not empty
                 harm_sel_idx = harm_sel_data[0].index # get indices from xdata
@@ -2815,6 +2889,7 @@ class QCMApp(QMainWindow):
         if not selflg:
             # pass
             return
+
 
         # get channel name
         chn_name = self.get_plt_chnname(plt_str)
@@ -2904,10 +2979,9 @@ class QCMApp(QMainWindow):
         '''
         function to execute the picker custom context menu for selector
         '''
-
+        
         # get .l['lp'] data
         pk_data, = mpl.get_data(ls=['lp']) # (xdata, ydata)
-
         if isinstance(pk_data[0], float): # data is not empty
             label = mpl.l['lp'][0].get_label()
             line, ind = label.split('_')
@@ -2918,6 +2992,7 @@ class QCMApp(QMainWindow):
             self.active['plt_str'] = plt_str
             self.active['l_str'] = l
             self.active['ind'] = int(ind)
+
 
             # get channel name
             chn_name = self.get_plt_chnname(plt_str)
@@ -2995,6 +3070,7 @@ class QCMApp(QMainWindow):
         for nhcalc in nhcalc_list:
             mech_df = self.data_saver.update_mech_df_shape(chn_name, nhcalc, rh)
 
+
             # if live update is not needed, use QCM.analyze to replace. the codes should be the same
             nh = QCM.nhcalc2nh(nhcalc)
             for queue_id in queue_ids: # iterate all ids
@@ -3026,7 +3102,7 @@ class QCMApp(QMainWindow):
             # save back to data_saver
             self.data_saver.update_mech_df_in_prop(chn_name, nhcalc, rh, mech_df)
 
-            print('{} calculation finished'.format(nhcalc))
+            print('{} calculation finished.'.format(nhcalc))
 
 
     def update_spectra_mechanics_table(self, chn_name, nhcalc, rh, queue_id,qcm_queue, mech_queue):
@@ -3071,6 +3147,10 @@ class QCMApp(QMainWindow):
             if df_colname:
                 row_data = df_queue[df_colname].iloc[0]
                 for tb_col in range(tb_cols):
+                    # if df_colname.endswith('s'): # multiple values
+                    #     data = df_queue[df_colname].iloc[0][tb_col]
+                    # else:
+                    #     data = df_queue[df_colname].iloc[0]
                     if isinstance(row_data, list):
                         data = df_queue[df_colname].iloc[0][tb_col]
                     else:
@@ -3078,7 +3158,6 @@ class QCMApp(QMainWindow):
 
                     tableitem = self.ui.tableWidget_spectra_mechanics_table.item(tb_row, tb_col)
                     if tableitem: # tableitem != 0
-                        print('item not set')
                         tableitem.setText(str(data))
                     else: # item is not set
                         self.ui.tableWidget_spectra_mechanics_table.setItem(tb_row, tb_col, QTableWidgetItem(str(data)))
@@ -3126,6 +3205,7 @@ class QCMApp(QMainWindow):
         make plot by plot_type
         variable is given by row selection of tableWidget_spectra_mechanics_table
         '''
+
         # get chn_name
         chn_name = self.mech_chn
 
@@ -3255,7 +3335,7 @@ class QCMApp(QMainWindow):
 
     def get_data_from_data_or_prop(self, chn_name, mech_key, var, mark):
         '''
-        get data from data_saver.chn_name or data_saver.<chn_name + _prop>[mech_key]
+        get data from data_saver.<chn_name> or data_saver.<chn_name + _prop>[mech_key]
         '''
         data, err = None, None # inintiate value
 
@@ -3432,7 +3512,6 @@ class QCMApp(QMainWindow):
     
     def update_widget(self, signal):
         #  of the signal isA QLineEdit object, update QLineEdit vals in dict
-        print('update', self.sender().objectName(), signal)
         if isinstance(self.sender(), QLineEdit):
             # self.settings[self.sender().objectName()] = signal
             if UIModules.isint(signal): # is int
@@ -3474,7 +3553,6 @@ class QCMApp(QMainWindow):
         except lineEdit_harmstart & lineEdit_harmend
         '''
         #  of the signal isA QLineEdit object, update QLineEdit vals in dict
-        print('update', signal)
         harm = self.settings_harm
 
         if isinstance(self.sender(), QLineEdit):
@@ -3503,6 +3581,7 @@ class QCMApp(QMainWindow):
         if self.sender().objectName() == 'tabWidget_settings_settings_samprefchn': # switched to samp
             idx = self.ui.tabWidget_settings_settings_samprefchn.currentIndex()
             
+            print(self.ui.pushButton_manual_refit.isChecked() & (idx < 2))
             if self.ui.pushButton_manual_refit.isChecked() & (idx < 2): # current idx changed out of refit (2)
                 # disable refit widgets
                 self.ui.pushButton_manual_refit.setChecked(False)
@@ -4013,6 +4092,23 @@ class QCMApp(QMainWindow):
         # set lineEdit_datafilestr
         self.ui.lineEdit_datafilestr.setText(self.data_saver.path)
 
+
+
+        ## following data is read from self.settings
+        # # hide harmonic related widgets which > max_disp_harmonic & < max_harmonic
+        # for i in range(self.settings['max_disp_harmonic']+2, settings_init['max_harmonic']+2, 2):
+        #     getattr(self.ui, 'checkBox_harm' +str(i)).setVisible(False)
+        #     getattr(self.ui, 'lineEdit_startf' +str(i)).setVisible(False)
+        #     getattr(self.ui, 'lineEdit_endf' +str(i)).setVisible(False)
+        #     getattr(self.ui, 'lineEdit_startf' +str(i) + '_r').setVisible(False)
+        #     getattr(self.ui, 'lineEdit_endf' +str(i) + '_r').setVisible(False)
+        #     getattr(self.ui, 'tab_settings_settings_harm' +str(i)).setVisible(False)
+        #     getattr(self.ui, 'checkBox_plt1_h' +str(i)).setVisible(False)
+        #     getattr(self.ui, 'checkBox_plt2_h' +str(i)).setVisible(False)
+        #     getattr(self.ui, 'tab_settings_data_harm_' +str(i)).setVisible(False)
+        #     # more to be added here
+
+
         # load display_mode
         self.load_comboBox(self.ui.comboBox_settings_control_dispmode, 'display_opts')
 
@@ -4030,6 +4126,7 @@ class QCMApp(QMainWindow):
 
         # load reference time
         if 'dateTimeEdit_reftime' in self.settings.keys(): # reference time has been defined
+            # exit(0)
             self.ui.dateTimeEdit_reftime.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], settings_init['time_str_format']))
 
         else: # reference time is not defined
@@ -4163,8 +4260,6 @@ class QCMApp(QMainWindow):
 
         self.load_comboBox(self.ui.comboBox_settings_mechanics_selectmodel, 'qcm_model_opts')
 
-
-
     def update_refsource(self):
         '''
         update widgets related to reference source
@@ -4173,7 +4268,6 @@ class QCMApp(QMainWindow):
         self.load_comboBox(self.ui.comboBox_settings_data_refrefsource, 'ref_channel_opts')
         self.ui.lineEdit_settings_data_samprefidx.setText(str(self.settings['lineEdit_settings_data_samprefidx']))
         self.ui.lineEdit_settings_data_refrefidx.setText(str(self.settings['lineEdit_settings_data_refrefidx']))
-
 
     def load_refsource(self):
         '''
@@ -4304,6 +4398,7 @@ class QCMApp(QMainWindow):
                     self.peak_tracker.B = 1e3 * rawdata[num_pts:]
                     self.peak_tracker.f = np.arange(start1,end1-(end1-start1)/num_pts+1,(end1-start1)/num_pts)
                     flag = 1
+                    print('Status: Scan successful.')
         #TODO refit loaded raw spectra data
         else:
             pass
@@ -4333,6 +4428,7 @@ class QCMApp(QMainWindow):
         elif bar_interval > settings_init['progressbar_min_interval']: # interval is to big
             bar_interval = settings_init['progressbar_max_interval']
 
+
         self.bartimer.setInterval(bar_interval)
         self.bartimer.start()
 
@@ -4347,6 +4443,7 @@ class QCMApp(QMainWindow):
             chn_name_list.append('ref')
 
         harm_list = [str(i) for i in range(1, settings_init['max_harmonic']+2, 2) if self.settings['checkBox_harm' + str(i)]] # get all checked harmonic into a list
+
 
         f, G, B = {}, {}, {}
         fs = {} # peak centers
@@ -4364,6 +4461,7 @@ class QCMApp(QMainWindow):
             self.reading = True
             # read time
             curr_time[chn_name] = datetime.datetime.now().strftime(settings_init['time_str_format'])
+            print(curr_time)
 
             # read temp if checked 
             if self.settings['checkBox_settings_temp_sensor'] == True: # record temperature data
@@ -4461,6 +4559,7 @@ class QCMApp(QMainWindow):
                 cen_trk_G = G[chn_name][harm][
                     np.argmin(np.abs(f[chn_name][harm] - cen_trk_freq))
                     ]
+
 
                 
                 if self.settings['radioButton_spectra_showGp'] or self.settings['radioButton_spectra_showBp']: # show G or GB
@@ -4638,6 +4737,10 @@ class QCMApp(QMainWindow):
             val=min(round((1 - timer_remain / timer_interval) * 100), 100), 
             text='{:.1f} s'.format(timer_remain)
         )
+
+
+
+
 
 #endregion
 

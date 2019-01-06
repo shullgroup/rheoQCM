@@ -84,7 +84,7 @@ def index_from_str(idx_str, chn_queue_list):
         segs = re.findall(r'\[([0-9\:][^]]*)\]', idx_str) # get [] as seg
         if segs:
             for seg in segs:
-                new_idx = eval('data' +'[' + seg + ']')
+                new_idx = eval('data' +'[' + seg + ']') 
                 if isinstance(new_idx, int):
                     idx.append(new_idx)
                 elif isinstance(new_idx, list):

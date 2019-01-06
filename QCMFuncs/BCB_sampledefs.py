@@ -16,13 +16,44 @@ def sample_dict():
     'nhcalc': ['353', '355'],
     'nhplot': [1, 3, 5]
     }
+    # 20181210 BCB_4 (h5)
+    samplename = 'BCB_4_h5'
+    sample[samplename] = {
+    'samplename': 'BCB_4',
+    'datadir': '20181210',
+    'filetype': 'h5',
+    'filmchn': 'samp',
+    'filmfile': 'BCB_4',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['353', '355'],
+    'nhplot': [1, 3, 5]
+    }
 
-    # 20181210 BCB_4
+    # 20181210 BCB_3
     samplename = 'BCB_3'
     sample[samplename] = {
     'samplename': 'BCB_3',
     'datadir': '20181210',
     'barefile': 'BCB_3_bare',
+    'filmfile': 'BCB_3',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['353', '355'],
+    'nhplot': [1, 3, 5]
+    }
+
+    # 20181210 BCB_3
+    samplename = 'BCB_3_h5'
+    sample[samplename] = {
+    'samplename': 'BCB_3',
+    'datadir': '20181210',
+    'filetype': 'h5',
+    'filmchn': 'samp',
     'filmfile': 'BCB_3',
     'firstline': 0,
     # 'filmtrange': [1, 10],

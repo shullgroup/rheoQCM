@@ -227,6 +227,7 @@ def findpeaks_py(x, resonance, output=None, sortstr=None, threshold=None, promin
         width=max(1, width / (x[1] - x[0])), # make it >= 1
     )
 
+    
     indices = np.copy(peaks)
     values = resonance[indices]
     heights = np.array([])
@@ -331,6 +332,7 @@ class PeakTracker:
         else:
             harm_dict = harmdata[chn_name][harm]
         
+
         # setattr(self.harminput, chn_name, setattr())
         self.harminput[chn_name][harm]['isfitted'] = False # if the data has been fitted
         self.harminput[chn_name][harm]['f'] = f
@@ -540,6 +542,20 @@ class PeakTracker:
         'gmax': use max conductance
         'derivative': use modulus
         '''
+        # # determine the structure field that should be used to extract out the initial-guessing method
+        # if method == 'bmax': # use max susceptance
+        #     resonance = B
+        #     x = f
+        # elif method == 'derv': # use derivative
+        #     resonance = np.sqrt(np.diff(G)**2 + np.diff(B)**2) # use modulus
+        #     x = f[:-1] + np.diff(f) # change f size and shift
+        # elif method == 'prev': # use previous value
+        #     # this conditin should not go to this function
+        #     return
+        # else:
+        #     resonance = G
+        #     x = f
+
         phi = 0
         # peak_guess = {}
 
@@ -573,10 +589,22 @@ class PeakTracker:
             # guess phase angle if derivatave method used
             phi = np.arcsin(self.harminput[chn_name][harm]['G'][0] / np.sqrt(self.harminput[chn_name][harm]['G'][0]**2 + self.harminput[chn_name][harm]['B'][0]**2))
 
+        # # for fixed number of peaks (might be added in future) 
+        # if n > len(indices):
+        #     if n_policy.lower() == 'max':
+        #         n = len(indices) # change n to detected number of peaks
+        #     elif n_policy.lower() == 'fixed':
+        #         # n doesn't need to be changed
+        #         pass
+        # elif n < len(indices):
+        #     # since 'max' and 'fixed' both limited the number not exceeding n, n doesn't need to be changed
+        #     pass
+
         if n_policy == 'max':
             self.found_n = min(len(indices), self.harminput[chn_name][harm]['n'])
         elif n_policy == 'fixed':
             self.found_n = self.harminput[chn_name][harm]['n']
+
 
         for i in range(self.found_n):
             if i+1 <= len(indices):
@@ -597,7 +625,6 @@ class PeakTracker:
                     'phi': phi
                 }
         self.update_output(found_n=self.found_n)
-
 
     def prev_guess(self, chn_name=None, harm=None):
         '''
@@ -689,6 +716,7 @@ class PeakTracker:
         wid_rough = (np.amax(f) - np.amin(f)) / 6
         phi_rough = 0
 
+
         if self.found_n == 0: # no peak found by find_peak_py
             self.found_n = 1 # force it to at list 1 for fitting
             self.update_output(found_n=1) # force it to at list 1 for fitting
@@ -753,6 +781,7 @@ class PeakTracker:
         self.auto_guess()
         self.set_params()
 
+
         # set the models
         gmod, bmod = make_gbmodel(self.found_n)
         self.update_output(gmod=gmod)
@@ -786,6 +815,10 @@ class PeakTracker:
             G = G[min_idx: max_idx]
             B = B[min_idx: max_idx]
 
+
+        # minimize with leastsq
+        # mini = Minimizer(residual, params, fcn_args=(f, G, B))
+        # result = mini.leastsq(xtol=1.e-10, ftol=1.e-10)
         eps = None
         # eps = pow((G - np.amin(G)*1.001), 1/2) # residual weight
         try:
@@ -991,3 +1024,109 @@ class PeakTracker:
             }
             
 
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    try:
+        from AccessMyVNA_dummy import AccessMyVNA
+    except:
+        from Modules.AccessMyVNA_dummy import AccessMyVNA 
+
+    # gbfitting = GBFitting()
+    # # print(gbfitting.gmodel.param_names)
+    # # print(gbfitting.bmodel.param_names)
+    # # print(gbfitting.gpars)
+    # # print(gbfitting.bpars)
+
+    # gmod = gbfitting.gmodel
+    # bmod = gbfitting.bmodel
+    accvna = AccessMyVNA()
+    _, f, G = accvna.GetScanData(nWhata=-1, nWhatb=15)
+    _, _, B = accvna.GetScanData(nWhata=-1, nWhatb=16)
+    # G = G * 1e3
+    # B = B * 1e3
+
+    n = 2
+
+    # result = minimize_GB(f, G, B, n, )
+    # params = set_params(f, G, B, n)
+    # result = minimize(res_GB, params, method='leastsq', args=(f, G, B), kws={'eps': pow((G - np.amin(G)*1.001), 1/2), 'n': n}, xtol=1.e-10, ftol=1.e-10)
+    # eixt(0)
+    # print(fit_report(result)) 
+    # print('success', result.success)
+    # print('message', result.message)
+    # print('lmdif_message', result.lmdif_message)
+    print('params', result.params.get('p0_cen').value)
+    print('params', result.params.get('p0_cen').stderr)
+    print('params', result.params.valuesdict())
+    # print(result.params)
+    # print(params['p1_amp'].vary)
+
+    # exit(0)
+    gmod, bmod = make_gbmodel(n)
+    gmods, bmods = make_models(n)
+    # gpars = gmod.guess(G, x=f) #guess() not implemented for CompositeModel
+    plt.figure()
+    plt.plot(f, G, 'bo')
+    plt.plot(f, gmod.eval(result.params, x=f), 'k--')
+    if n > 1:
+        for i in range(n):
+            plt.plot(f, gmods[i].eval(result.params, x=f))
+    plt.twinx()
+    plt.plot(f, B, 'go')
+    plt.plot(f, bmod.eval(result.params, x=f), 'k--')
+    if n > 1:
+        for i in range(n):
+            plt.plot(f, bmods[i].eval(result.params, x=f))
+
+    plt.figure()
+    plt.plot(G, B, 'bo')
+    plt.plot(gmod.eval(result.params, x=f), bmod.eval(result.params, x=f), 'k--')
+    if n > 1:
+        for i in range(n):
+            plt.plot(gmods[i].eval(result.params, x=f), bmods[i].eval(result.params, x=f))
+
+    plt.figure()
+    Y = np.sqrt(np.diff(G)**2 + np.diff(B)**2)
+    Y_fit = np.sqrt(np.diff(gmod.eval(result.params, x=f))**2 + np.diff(bmod.eval(result.params, x=f))**2)
+    print(len(f[0:-1]), len(np.diff(f)))
+    df = f[0:-1] + np.diff(f)
+    plt.plot(df, Y, 'bo')
+    plt.plot(df, Y_fit, 'k--')
+    if n > 1:
+        for i in range(n):
+            Y_fit = np.sqrt(np.diff(gmods[i].eval(result.params, x=f))**2 + np.diff(bmods[i].eval(params, x=f))**2)
+            plt.plot(df, Y)
+
+    plt.show()
+    exit(0)
+
+    plot_components = True
+    # plot results
+    fig = plt.figure()
+    plt.plot(f, G, 'bo')
+    if plot_components:
+        # generate components
+        comps = result.eval_components(x=f)
+        plt.plot(f, 10*comps['cg'], 'k--')
+        plt.plot(f, 10*comps['cb'], 'r-')
+    else:
+        plt.plot(f, result.init_fit, 'k--')
+        plt.plot(f, result.best_fit, 'r-')
+
+    result = bmod.fit(B, params=params, x=f)
+    print(result.fit_report())
+    plt.show()
+    exit(1)
+    plot_components = False
+    # plot results
+    fig = plt.figure()
+    plt.plot(f, B, 'bo')
+    if plot_components:
+        # generate components
+        comps = result.eval_components(x=f)
+        plt.plot(f, 10*comps['jump'], 'k--')
+        plt.plot(f, 10*comps['gaussian'], 'r-')
+    else:
+        plt.plot(f, result.init_fit, 'k--')
+        plt.plot(f, result.best_fit, 'r-')
+    plt.show()

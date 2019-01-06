@@ -366,7 +366,6 @@ class QCM:
 
         # solve the problem
         if ~np.isnan(rd_exp) or ~np.isnan(rh_exp):
-            # print('rd_exp, rh_exp is not nan')
             # TODO change here for the model selection
             if prop_guess: # value{'drho', 'grho_rh', 'phi'}
                 dlam_rh, phi = self.guess_from_props(**prop_guess)
@@ -375,6 +374,7 @@ class QCM:
             else:
                 dlam_rh, phi = self.thinfilm_guess(delfstar)
 
+            
             if fit_method == 'lmfit':
                 params1 = Parameters()
                 params1.add('dlam_rh', value=dlam_rh, min=dlam_rh_range[0], max=dlam_rh_range[1])
@@ -396,6 +396,7 @@ class QCM:
                     # ftol=1e-7,
                 )
 
+
                 dlam_rh = soln1.params.get('dlam_rh').value
                 phi =soln1.params.get('phi').value
                 drho = self.drho(n1, delfstar, dlam_rh, phi)
@@ -413,6 +414,7 @@ class QCM:
                 phi =soln1['x'][1]
                 drho = self.drho(n1, delfstar, dlam_rh, phi)
                 grho_rh = self.grho_from_dlam(self.rh, drho, dlam_rh, phi)
+
 
             # we solve it again to get the Jacobian with respect to our actual
             if drho_range[0]<=drho<=drho_range[1] and grho_rh_range[0]<=grho_rh<=grho_rh_range[1] and phi_range[0]<=phi<=phi_range[1]:
@@ -445,12 +447,10 @@ class QCM:
                         # xtol=1e-7,
                         # ftol=1e-7,
                     )
-                    # print(soln2.params.keys())
-                    # print(soln2.params['drho'])
-                    # print(fit_report(soln2)) 
-                    # print('success', soln2.success)
-                    # print('message', soln2.message)
-                    # print('lmdif_message', soln1.lmdif_message)
+                    print(fit_report(soln2)) 
+                    print('success', soln2.success)
+                    print('message', soln2.message)
+                    print('lmdif_message', soln1.lmdif_message)
 
                     # put the input uncertainties into a 3 element vector
                     delfstar_err = np.zeros(3)
@@ -509,6 +509,7 @@ class QCM:
                                 (jac_inv[i, 2]*delfstar_err[2])**2)**0.5
 
         if np.isnan(rd_exp) or np.isnan(rh_exp) or not deriv or not err: # failed to solve the problem
+            print('2nd solving failed') 
             # assign the default value first
             drho = np.nan
             grho_rh = np.nan
@@ -516,6 +517,7 @@ class QCM:
             dlam_rh = np.nan
             for k in err_names:
                 err[k] = np.nan
+
 
         return drho, grho_rh, phi, dlam_rh, err
 
