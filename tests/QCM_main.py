@@ -21,8 +21,9 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, QDoubleValidator, QRegExpValidator
 
 # packages
-from MainWindow import Ui_MainWindow
-from UISettings import settings_init, settings_default
+from MainWindow import Ui_MainWindow # UI from QT5
+from UISettings import settings_init # UI basic settings
+from UISettings import settings_default as settings_default_org # UI value settings
 
 from modules import UIModules, PeakTracker, DataSaver, QCM
 from modules.MatplotlibWidget import MatplotlibWidget
@@ -110,10 +111,12 @@ class QCMApp(QMainWindow):
         if os.path.exists(fileName):
             with open(fileName, 'r') as f:
                     self.settings = json.load(f) # read user default settings
+                    settings_default = self.settings.copy()
             print('use user default settings')
         else:
             print('use default settings')
-            self.settings = settings_default.copy() # import default settings. It will be initalized latter
+            settings_default = settings_default_org
+            self.settings = settings_default.copy() # import default settings. It will be initalized later
 
         self.peak_tracker = PeakTracker.PeakTracker()
         self.vna_tracker = VNATracker()
@@ -3763,7 +3766,7 @@ class QCMApp(QMainWindow):
             print(idx) #testprint
             print(self.ui.pushButton_manual_refit.isChecked()) #testprint
             print(idx < 2) #testprint
-            print(self.ui.pushButton_manual_refit.isChecked() & (idx < 2))
+            print(self.ui.pushButton_manual_refit.isChecked() & (idx < 2)) #testprint
             if self.ui.pushButton_manual_refit.isChecked() & (idx < 2): # current idx changed out of refit (2)
                 print('samprefchn move out of 2') #testprint
                 # disable refit widgets
