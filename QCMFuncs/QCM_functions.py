@@ -67,7 +67,7 @@ def find_dataroot(owner):
 def fstar_err_calc(fstar):
     # calculate the error in delfstar
     g_err_min = 10 # error floor for gamma
-    f_err_min = 50 # error floor for f
+    f_err_min = 50 # error floor for fd
     err_frac = 3e-2 # error in f or gamma as a fraction of gamma
     # start by specifying the error input parameters
     fstar_err = np. zeros(1, dtype=np.complex128)
@@ -114,7 +114,7 @@ def calc_D(n, material, delfstar):
 
 def zstar_bulk(n, material):
     grho3 = material['grho3']
-    grho = grho3*n**(material['phi']/90)
+    grho = grho3*(n/3)**(material['phi']/90)  #check for error here
     grhostar = grho*np.exp(1j*np.pi*material['phi']/180)
     return grhostar ** 0.5
    
@@ -169,12 +169,13 @@ def calc_delfstar(n, layers, calctype):
         del_ZL = calc_ZL(n, {1:layers['film']}, 0)
         
     if calctype != 'LL':
+        # use the small load approximation in all cases where calctype
+        # is not explicitly set to 'LL'
         return calc_delfstar_sla(del_ZL)
         
     else:
         # this is the most general calculation
-        # layers must include electrode, film and overlayer
-        # use defaut electorde if it's not specified
+        # use defaut electrode if it's not specified
         if 'electrode' not in layers:
             layers['electrode'] = electrode_default
             
@@ -379,8 +380,11 @@ def solve_for_props(soln_input):
 
 
 def null_solution(nhplot):
-    soln_output = {'drho':np.nan, 'grho3':np.nan, 'phi':np.nan, 'dlam3':np.nan,
+    film = {'drho':np.nan, 'grho3':np.nan, 'phi':np.nan, 'dlam3':np.nan}
+
+    soln_output = {'film':film, 'dlam3':np.nan,
             'err':{'drho':np.nan, 'grho3':np.nan, 'phi': np.nan}}
+
     delfstar_calc = {}
     rh = {}
     rd = {}
@@ -571,6 +575,8 @@ def solve_from_delfstar(sample, parms):
     markers = {'131': '>', '133': '^', '353': '+', '355': 'x', '3': 'x'}
     colors = parms['colors']
     imagetype = parms.get('imagetype', 'svg')
+    # get film info (containing raw data plot, etc. if it exists)
+    sample['film']=sample.get('film',{})
     close_on_click_switch = parms.get('close_on_click_switch', True)
     
     base_fig_name = find_base_fig_name(sample, parms)
@@ -593,15 +599,15 @@ def solve_from_delfstar(sample, parms):
 
     # now do all of the calculations and plot the data
     soln_input = {'nhplot': nhplot}
-    soln_input['layers']=sample['layers']
+    soln_input['layers']=sample.get('layers',{})
     results = {}
     for nh in sample['nhcalc']:
         # initialize all the dictionaries
-        results[nh] = {'drho': np.zeros(nx), 'grho3': np.zeros(nx),
-                       'phi': np.zeros(nx), 'dlam3': np.zeros(nx),
-                       'lamrho3': np.zeros(nx), 'rd': {}, 'rh': {},
-                       'delfstar_calc': {}, 'drho_err': np.zeros(nx),
-                       'grho3_err': np.zeros(nx), 'phi_err': np.zeros(nx)}
+        results[nh] = {'film':{'drho':np.zeros(nx), 'drho_err':np.zeros(nx), 
+                              'grho3':np.zeros(nx), 'grho3_err':np.zeros(nx),
+                              'phi':np.zeros(nx), 'phi_err':np.zeros(nx)}, 
+                       'dlam3':np.zeros(nx),
+                       'rd': {}, 'rh': {}, 'delfstar_calc': {}}
         for n in nhplot:
             results[nh]['delfstar_calc'][n] = (np.zeros(nx,
                                                dtype=np.complex128))
@@ -620,14 +626,14 @@ def solve_from_delfstar(sample, parms):
             else:
                 soln = solve_for_props(soln_input)
 
-            results[nh]['drho'][i] = soln['film']['drho']
-            results[nh]['grho3'][i] = soln['film']['grho3']
-            results[nh]['phi'][i] = soln['film']['phi']
+            results[nh]['film']['drho'][i] = soln['film']['drho']
+            results[nh]['film']['grho3'][i] = soln['film']['grho3']
+            results[nh]['film']['phi'][i] = soln['film']['phi']
+            results[nh]['film']['drho_err'][i] = soln['err']['drho']
+            results[nh]['film']['grho3_err'][i] = soln['err']['grho3']
+            results[nh]['film']['phi_err'][i] = soln['err']['phi']
             results[nh]['dlam3'][i] = soln['dlam3']
-            results[nh]['drho_err'][i] = soln['err']['drho']
-            results[nh]['grho3_err'][i] = soln['err']['grho3']
-            results[nh]['phi_err'][i] = soln['err']['phi']
-
+            
             for n in nhplot:
                 results[nh]['delfstar_calc'][n][i] = (
                  soln['delfstar_calc'][n])
@@ -681,12 +687,12 @@ def solve_from_delfstar(sample, parms):
                                        '.' + imagetype)
 
         # get the property data to add to the property figure
-        drho = 1000*results[nh]['drho']
-        grho3 = results[nh]['grho3']/1000
-        phi = results[nh]['phi']
-        drho_err = 1000*results[nh]['drho_err']
-        grho3_err = results[nh]['grho3_err']/1000
-        phi_err = results[nh]['phi_err']
+        drho = 1000*results[nh]['film']['drho']
+        grho3 = results[nh]['film']['grho3']/1000
+        phi = results[nh]['film']['phi']
+        drho_err = 1000*results[nh]['film']['drho_err']
+        grho3_err = results[nh]['film']['grho3_err']/1000
+        phi_err = results[nh]['film']['phi_err']
         
         # this is where we determine what marker to use.  We change it if
         # we have specified a different marker in the sample dictionary
@@ -753,8 +759,9 @@ def cleanup_propfig(sample, parms):
     if 'grho3scale' in sample:
         propfig['grho3_ax'].set_yscale(sample['grho3scale'])
     propfig['figure'].tight_layout()
+    # write to standard location specified in sample definition
     propfig['figure'].savefig(find_base_fig_name(sample, parms)+
-           '_prop.'+parms.get('imagetype', 'svg'))
+          '_prop.'+parms.get('imagetype', 'svg'))
 
 
 
