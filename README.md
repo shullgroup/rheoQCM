@@ -84,7 +84,7 @@ The functions for Matlab version data are locoalized in `QCMFuncs/` folder.
 
 Export the current settings as a json file named `settings_default.json` and save in the same folder as `QCM_main.py` or `QCM_main.exe`. The UI will use the settings you saved as default after the next time you opend it. If you want the setup go back the original one, just simply delete or rename that file.  
 
-There is a `QCM_main.bat` file in  `QCM_main/` for running the program with Python by just double clicking it. You need to change the path of python and QCM_main.py to them on your computer to make it work. Meanwhile, you can make a shortcut of this bat file and put the shortcut somewhere you want.
+There is a `QCM_main.bat` file in  `QCM_main/` for running the program with Python by just double clicking it on Windows. You need to change the path of python and QCM_main.py to them on your computer to make it work. Meanwhile, you can make a shortcut of this bat file and put the shortcut somewhere you want.
 
 ### Knowing Issues
 
