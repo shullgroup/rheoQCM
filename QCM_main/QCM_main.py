@@ -2663,7 +2663,7 @@ class QCMApp(QMainWindow):
                 getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
 
             if plt_opt[1] not in ['t', 'temp']: # other type in x-axis w/o changing the unit
-                xlabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
+                xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
                 # set x labels
                 getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
                 getattr(self.ui, 'mpl_' + plt_str).canvas.draw()

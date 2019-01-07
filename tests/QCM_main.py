@@ -2735,7 +2735,7 @@ class QCMApp(QMainWindow):
         print(sender_name) #testprint
 
         # check which plot to update
-        if 'plt1' in sender_name or 'plt2' in sender_name:# signal sent from one of the plots
+        if ('plt1' in sender_name) or ('plt2' in sender_name):# signal sent from one of the plots
             plt_str = sender_name.split('_')[1] # plt1 or plt2
 
             # plot option str in list [y, x]
@@ -2755,7 +2755,7 @@ class QCMApp(QMainWindow):
                 getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
 
             if plt_opt[1] not in ['t', 'temp']: # other type in x-axis w/o changing the unit
-                xlabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
+                xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
                 # set x labels
                 getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
                 getattr(self.ui, 'mpl_' + plt_str).canvas.draw()

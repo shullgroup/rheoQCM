@@ -1197,7 +1197,7 @@ class AccessMyVNA():
         t_wait = time.time() + self._get_wait_time()
 
         while time.time() < t_wait:
-            print('wait...') #testprint
+            # print('wait...') #testprint
             time.sleep(0.1)
         print('self._nsteps', self._nsteps) #testprint
         # ret, nSteps = self.GetScanSteps()
