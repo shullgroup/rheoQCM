@@ -201,6 +201,7 @@ settings_init = {
         ('temp', 'temp.'),
         ('t', 'time'),
         ('idx', 'index'),
+        ('id', 'test ID')
     ]),
 
     'data_plt_axis_label': {
@@ -214,7 +215,8 @@ settings_init = {
         'g':    r'$\Gamma$ (Hz)',
         'temp': r'Temp. (unit)', # unit is going to be replaced by temperature unit
         't':    r'Time (unit)', # unit is going to be replaced by time unit
-        'idx':  r'Index', 
+        'id':  r'Test ID', # queue_id
+        'idx':  r'Index', # dataframe index
 
         # for property
         'delf_calcs':        r'$\Delta$f (Hz)',

@@ -775,7 +775,7 @@ class QCMApp(QMainWindow):
 
         # NOTE: following two only emitted when value manually edited (activated)
         self.ui.comboBox_settings_data_samprefsource.activated.connect(self.save_data_saver_sampref)
-        self.ui.lineEdit_settings_data_samprefidx.textEdited.connect(self.save_data_saver_sampref)
+        self.ui.lineEdit_settings_data_samprefidx.editingFinished.connect(self.save_data_saver_sampref)
 
         # move frame_settings_data_refref
         self.move_to_col2(
@@ -789,7 +789,7 @@ class QCMApp(QMainWindow):
 
         # NOTE: following two only emitted when value manually edited (activated)
         self.ui.comboBox_settings_data_refrefsource.activated.connect(self.save_data_saver_refref)
-        self.ui.lineEdit_settings_data_refrefidx.textEdited.connect(self.save_data_saver_refref)
+        self.ui.lineEdit_settings_data_refrefidx.editingFinished.connect(self.save_data_saver_refref)
 
         
        # set treeWidget_settings_data_refs expanded
@@ -1361,7 +1361,7 @@ class QCMApp(QMainWindow):
         # convert ref_idx from str to a list of int
         ref_idx = UIModules.index_from_str(ref_idx, chn_queue_list)
         # if the list is [] set it to [0], which mean the first data of the channel
-        if (not ref_idx) and (list(self.data_saver.get_queue_id('samp')) !=  list(self.data_saver.get_queue_id('ref'))): # samp and ref were not collected together
+        if (not ref_idx) and ((list(self.data_saver.get_queue_id('samp')) !=  list(self.data_saver.get_queue_id('ref')))): # samp and ref were not collected together
             ref_idx = [0]
             getattr(self.ui, 'lineEdit_settings_data_'+ chn_name + 'refidx').setText('[0]') 
             self.settings['lineEdit_settings_data_'+ chn_name + 'refidx'] = '[0]' 
@@ -1463,7 +1463,7 @@ class QCMApp(QMainWindow):
     def saveFileDialog(self, title, path='', filetype=settings_init['default_datafiletype']):    
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(self,title, path, filetype, options=options)
+        fileName, _ = QFileDialog.getSaveFileName(self,title, os.path.splitext(path), filetype, options=options)
         if fileName:
             print(fileName) 
         else:
@@ -2651,8 +2651,10 @@ class QCMApp(QMainWindow):
             data = self.data_saver.get_t_marked_rows(chn_name, dropnanrow=False, unit=unit_t)
         elif 'temp' == typestr: # get temp
             data = self.data_saver.get_temp_by_uint_marked_rows(chn_name, dropnanrow=False, unit=unit_temp)
-        elif 'idx' == typestr: # get indices
+        elif 'id' == typestr: # get queue_id
             data = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanrow=False)
+        elif 'idx' == typestr: # get indices
+            data = self.data_saver.get_idx_marked_rows(chn_name, dropnanrow=False)
         
         return data
 

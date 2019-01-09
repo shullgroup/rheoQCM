@@ -812,6 +812,24 @@ class DataSaver:
         return getattr(self, chn_name)['queue_id'].copy()
 
 
+    def get_idx_marked_rows(self, chn_name, dropnanrow=False):
+        '''
+        return rows with marks of df from self.get_queue_id
+        '''
+        if dropnanrow == True:
+            return self.get_idx(chn_name)[self.rows_with_marks(chn_name)]
+        else:
+            return self.get_idx(chn_name)
+
+
+    def get_idx(self, chn_name):
+        '''
+        get indices as pd.series
+        '''
+        idx = getattr(self, chn_name).index
+        return pd.Series(idx)
+
+
     def get_temp_by_uint_marked_rows(self, chn_name, dropnanrow=False, unit='C'):
         '''
         return rows with marks of df from self.get_temp_C
