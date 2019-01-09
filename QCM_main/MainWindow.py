@@ -2562,10 +2562,10 @@ class Ui_MainWindow(object):
         icon19.addPixmap(QtGui.QPixmap(":/icon/rc/delete_selected.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionDelete_Selected.setIcon(icon19)
         self.actionDelete_Selected.setObjectName("actionDelete_Selected")
-        self.actionFit_all = QtWidgets.QAction(MainWindow)
-        self.actionFit_all.setObjectName("actionFit_all")
-        self.actionFit_marked = QtWidgets.QAction(MainWindow)
-        self.actionFit_marked.setObjectName("actionFit_marked")
+        self.actionFit_allsamp = QtWidgets.QAction(MainWindow)
+        self.actionFit_allsamp.setObjectName("actionFit_allsamp")
+        self.actionFit_markedsamp = QtWidgets.QAction(MainWindow)
+        self.actionFit_markedsamp.setObjectName("actionFit_markedsamp")
         self.actionSolve_all = QtWidgets.QAction(MainWindow)
         self.actionSolve_all.setObjectName("actionSolve_all")
         self.actionSolve_marked = QtWidgets.QAction(MainWindow)
@@ -2588,6 +2588,10 @@ class Ui_MainWindow(object):
         icon21.addPixmap(QtGui.QPixmap(":/icon/rc/import_qcmd.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionImport_QCM_D.setIcon(icon21)
         self.actionImport_QCM_D.setObjectName("actionImport_QCM_D")
+        self.actionFit_allref = QtWidgets.QAction(MainWindow)
+        self.actionFit_allref.setObjectName("actionFit_allref")
+        self.actionFit_markedref = QtWidgets.QAction(MainWindow)
+        self.actionFit_markedref.setObjectName("actionFit_markedref")
         self.menuFile.addAction(self.actionNew_Exp)
         self.menuFile.addAction(self.actionLoad_Exp)
         self.menuFile.addAction(self.actionLoad_Settings)
@@ -2633,7 +2637,7 @@ class Ui_MainWindow(object):
         self.label_5.setBuddy(self.lineEdit_spectra_fit_span)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget_settings.setCurrentIndex(0)
+        self.tabWidget_settings.setCurrentIndex(2)
         self.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
         self.tabWidget_settings_settings_harm.setCurrentIndex(0)
         self.toolBox.setCurrentIndex(0)
@@ -2770,7 +2774,7 @@ class Ui_MainWindow(object):
         self.label_status_f0BW.setText(_translate("MainWindow", "f0/BW..."))
         self.label_status_pts.setText(_translate("MainWindow", "pts"))
         self.tabWidget_settings.setTabText(self.tabWidget_settings.indexOf(self.tab_settings_settings), _translate("MainWindow", "Settings"))
-        self.toolButton_settings_data_refit.setText(_translate("MainWindow", "Refit"))
+        self.toolButton_settings_data_refit.setText(_translate("MainWindow", "Auto Refit"))
         self.groupBox_settings_data_settings.setTitle(_translate("MainWindow", "Settings for data refit"))
         self.treeWidget_settings_data_refs.headerItem().setText(0, _translate("MainWindow", "Parameter"))
         self.treeWidget_settings_data_refs.headerItem().setText(1, _translate("MainWindow", "Value"))
@@ -2784,8 +2788,18 @@ class Ui_MainWindow(object):
         self.treeWidget_settings_data_refs.topLevelItem(1).child(1).setText(0, _translate("MainWindow", "R chn."))
         self.treeWidget_settings_data_refs.setSortingEnabled(__sortingEnabled)
         self.groupBox.setTitle(_translate("MainWindow", "Mark Index"))
-        self.tabWidget_settings_data_markindex.setTabText(self.tabWidget_settings_data_markindex.indexOf(self.tab_sampmarks), _translate("MainWindow", "Samp. Marks"))
-        self.tabWidget_settings_data_markindex.setTabText(self.tabWidget_settings_data_markindex.indexOf(self.tab_refmarks), _translate("MainWindow", "Ref. Marks"))
+        self.textEdit_settings_data_sampmarks.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">To be added!</p></body></html>"))
+        self.tabWidget_settings_data_markindex.setTabText(self.tabWidget_settings_data_markindex.indexOf(self.tab_sampmarks), _translate("MainWindow", "S Marks"))
+        self.textEdit_settings_data_refmarks.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">To be added!</p></body></html>"))
+        self.tabWidget_settings_data_markindex.setTabText(self.tabWidget_settings_data_markindex.indexOf(self.tab_refmarks), _translate("MainWindow", "R Marks"))
         self.pushButton_settings_data_marksadd.setText(_translate("MainWindow", "1"))
         self.pushButton_settings_data_marksdel.setText(_translate("MainWindow", "0"))
         self.pushButton_settings_data_marksclear.setText(_translate("MainWindow", "Clr"))
@@ -3049,10 +3063,10 @@ class Ui_MainWindow(object):
         self.actionClear_All.setText(_translate("MainWindow", "Clear Data"))
         self.actionRepositroy.setText(_translate("MainWindow", "Repositroy"))
         self.actionDelete_Selected.setText(_translate("MainWindow", "Delete Selected"))
-        self.actionFit_all.setText(_translate("MainWindow", "Fit all"))
-        self.actionFit_all.setToolTip(_translate("MainWindow", "Fit all data"))
-        self.actionFit_marked.setText(_translate("MainWindow", "Fit marked"))
-        self.actionFit_marked.setToolTip(_translate("MainWindow", "Fit marked data"))
+        self.actionFit_allsamp.setText(_translate("MainWindow", "Refit S chn. all"))
+        self.actionFit_allsamp.setToolTip(_translate("MainWindow", "Refit all data in S chn."))
+        self.actionFit_markedsamp.setText(_translate("MainWindow", "Refit S chn. marked"))
+        self.actionFit_markedsamp.setToolTip(_translate("MainWindow", "refiit marked data in S chn."))
         self.actionSolve_all.setText(_translate("MainWindow", "Solve all"))
         self.actionSolve_all.setToolTip(_translate("MainWindow", "Solve all data"))
         self.actionSolve_marked.setText(_translate("MainWindow", "Solve marked"))
@@ -3069,6 +3083,10 @@ class Ui_MainWindow(object):
         self.actionRow_s2_Row_s1.setToolTip(_translate("MainWindow", "Plot selected two rows (Row[s2] vs. Row[s1])"))
         self.actionImport_QCM_D.setText(_translate("MainWindow", "Import QCM-D"))
         self.actionImport_QCM_D.setToolTip(_translate("MainWindow", "Import QCM-D data"))
+        self.actionFit_allref.setText(_translate("MainWindow", "Refit R chn. all"))
+        self.actionFit_allref.setToolTip(_translate("MainWindow", "Refit all data in R chn."))
+        self.actionFit_markedref.setText(_translate("MainWindow", "Refit S chn. marked"))
+        self.actionFit_markedref.setToolTip(_translate("MainWindow", "refiit marked data in R chn."))
 
 import UI_source_rc
 

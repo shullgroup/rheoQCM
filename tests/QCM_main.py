@@ -1058,9 +1058,16 @@ class QCMApp(QMainWindow):
         # toolButton_settings_data_refit
         # create menu: menu_settings_data_refit
         self.ui.menu_settings_data_refit = QMenu(self.ui.toolButton_settings_data_refit)
-        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_all)
-        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_marked)
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_allsamp)
+        self.ui.actionFit_allsamp.triggered.connect(lambda: self.autorefit_data(chn_name='samp', mark=False))
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedsamp)
+        self.ui.actionFit_allsamp.triggered.connect(lambda: self.autorefit_data(chn_name='samp', mark=True))
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_allref)
+        self.ui.actionFit_allref.triggered.connect(lambda: self.autorefit_data(chn_name='ref', mark=False))
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedref)
+        self.ui.actionFit_allref.triggered.connect(lambda: self.autorefit_data(chn_name='ref', mark=True))
         # self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_selected)
+        # self.ui.actionFit_all.triggered.connect(self.)
         # add menu to toolbutton
         self.ui.toolButton_settings_data_refit.setMenu(self.ui.menu_settings_data_refit)
 
@@ -2363,7 +2370,18 @@ class QCMApp(QMainWindow):
         self.tab_spectra_fit_update_mpls(f, G, B)
 
 
+    def autorefit_data(chn_name, mark=False):
+        '''
+        This function is to auto refit all or marked data from raw of given chn_name
+        '''
+        # get harms with data
 
+        # get queue_list
+        chn_queue_list = list(self.data_saver.get_queue_id_marked_rows(chn_name, dropnanrow=mark))
+
+        UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list)
+        # TOOOOOOOODO
+        self.data_refit(chn_name, sel_idx_dict)
 
 
 
@@ -3223,6 +3241,7 @@ class QCMApp(QMainWindow):
                 idx = qcm_df[qcm_df.queue_id == queue_id].index.astype(int)[0]
                 # idx = qcm_df[qcm_df.queue_id == queue_id].index
                 print('index', qcm_df.index) #testprint
+                print('index', mech_df.index) #testprint
                 print('idx', idx) #testprint
                 # qcm data of queue_id
                 qcm_queue = qcm_df.loc[[idx], :].copy() # as a dataframe

@@ -195,7 +195,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>0</number>
+             <number>2</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -2274,7 +2274,7 @@ border: none;
                  </size>
                 </property>
                 <property name="text">
-                 <string>Refit</string>
+                 <string>Auto Refit</string>
                 </property>
                 <property name="popupMode">
                  <enum>QToolButton::InstantPopup</enum>
@@ -2460,7 +2460,7 @@ border: none;
                      </property>
                      <widget class="QWidget" name="tab_sampmarks">
                       <attribute name="title">
-                       <string>Samp. Marks</string>
+                       <string>S Marks</string>
                       </attribute>
                       <layout class="QVBoxLayout" name="verticalLayout_48">
                        <property name="spacing">
@@ -2479,13 +2479,21 @@ border: none;
                         <number>0</number>
                        </property>
                        <item>
-                        <widget class="QTextEdit" name="textEdit_settings_data_sampmarks"/>
+                        <widget class="QTextEdit" name="textEdit_settings_data_sampmarks">
+                         <property name="html">
+                          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;To be added!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
+                        </widget>
                        </item>
                       </layout>
                      </widget>
                      <widget class="QWidget" name="tab_refmarks">
                       <attribute name="title">
-                       <string>Ref. Marks</string>
+                       <string>R Marks</string>
                       </attribute>
                       <layout class="QVBoxLayout" name="verticalLayout_49">
                        <property name="spacing">
@@ -2504,7 +2512,15 @@ border: none;
                         <number>0</number>
                        </property>
                        <item>
-                        <widget class="QTextEdit" name="textEdit_settings_data_refmarks"/>
+                        <widget class="QTextEdit" name="textEdit_settings_data_refmarks">
+                         <property name="html">
+                          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;To be added!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
+                        </widget>
                        </item>
                       </layout>
                      </widget>
@@ -6307,20 +6323,20 @@ border: 1px solid blue;
     <string>Delete Selected</string>
    </property>
   </action>
-  <action name="actionFit_all">
+  <action name="actionFit_allsamp">
    <property name="text">
-    <string>Fit all</string>
+    <string>Refit S chn. all</string>
    </property>
    <property name="toolTip">
-    <string>Fit all data</string>
+    <string>Refit all data in S chn.</string>
    </property>
   </action>
-  <action name="actionFit_marked">
+  <action name="actionFit_markedsamp">
    <property name="text">
-    <string>Fit marked</string>
+    <string>Refit S chn. marked</string>
    </property>
    <property name="toolTip">
-    <string>Fit marked data</string>
+    <string>refiit marked data in S chn.</string>
    </property>
   </action>
   <action name="actionSolve_all">
@@ -6393,6 +6409,22 @@ border: 1px solid blue;
    </property>
    <property name="toolTip">
     <string>Import QCM-D data</string>
+   </property>
+  </action>
+  <action name="actionFit_allref">
+   <property name="text">
+    <string>Refit R chn. all</string>
+   </property>
+   <property name="toolTip">
+    <string>Refit all data in R chn.</string>
+   </property>
+  </action>
+  <action name="actionFit_markedref">
+   <property name="text">
+    <string>Refit S chn. marked</string>
+   </property>
+   <property name="toolTip">
+    <string>refiit marked data in R chn.</string>
    </property>
   </action>
  </widget>

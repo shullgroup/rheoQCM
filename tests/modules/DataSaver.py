@@ -190,18 +190,23 @@ class DataSaver:
             print(mech_queue_id) #testprint
             print(data_queue_id) #testprint
             # check if queue_id is the same as self.chn_name
-            if (mech_queue_id == data_queue_id).all():
+            if mech_queue_id.equals(data_queue_id):
                 return df_mech
             else:
                 # delete the extra queue_id
-                df_mech = df_mech[df_mech['queue_id'] in (set(mech_queue_id) & set(data_queue_id))]
+                df_mech = df_mech[df_mech['queue_id'].isin(set(mech_queue_id) & set(data_queue_id))]
                 # add the missed queue_id, this will leave other columns as NA
-                df_mech.append(pd.DataFrame.from_dict(dict(queue_id=list(set(data_queue_id) - set(mech_queue_id)))), ignore_index = True)
+                # df_mech = df_mech.append(pd.DataFrame.from_dict(dict(queue_id=list(set(data_queue_id) - set(mech_queue_id)))), ignore_index = True)
+                # print(df_mech) #testprint
+                # print(data_queue_id[data_queue_id.isin(set(data_queue_id) - set(mech_queue_id))].to_frame()) #testprint
+                df_mech = df_mech.merge(data_queue_id[data_queue_id.isin(set(data_queue_id) - set(mech_queue_id))].to_frame(), how='outer')
+                print(df_mech) #testprint
                 # replace na with self.nan_harm_list
-                # df_mech.loc[mech_keys_single] = df_mech.loc[mech_keys_single].fillna(np.nan) # set a single value
-                df_mech.loc[mech_keys_single] = df_mech.loc[mech_keys_single].fillna(self.nan_harm_list()) # set multiple value. this make it easer for plotting
-                df_mech.loc[mech_keys_multiple] = df_mech.loc[mech_keys_multiple].fillna(self.nan_harm_list())
-            
+                for col in mech_keys_single:
+                    df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list() if isinstance(x, list) or pd.isnull(x) else x) # add list of nan to all null
+                for col in mech_keys_multiple:
+                    df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list() if isinstance(x, list) or pd.isnull(x) else x) # add list of nan to all null
+                print(df_mech) # testprint
         else: # not exist, make a new dataframe
             df_mech = pd.DataFrame(columns=data_keys+mech_keys_single+mech_keys_multiple)
 
@@ -515,7 +520,7 @@ class DataSaver:
                         fh.create_dataset('prop/' + chn_name + '/' + mech_key, data=mech_df.to_json(), dtype=h5py.special_dtype(vlen=str))
                     else: 
                         if mech_key in fh['prop/' + chn_name].keys():
-                            del fh['prop/' + chn_name + mech_key]
+                            del fh['prop/' + chn_name + '/' + mech_key]
 
                         # create data_set for mech_df
                         fh.create_dataset('prop/' + chn_name + '/' + mech_key, data=mech_df.to_json(), dtype=h5py.special_dtype(vlen=str))

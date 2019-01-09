@@ -21,9 +21,9 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, QDoubleValidator, QRegExpValidator
 
 # packages
-from MainWindow import Ui_MainWindow
-from UISettings import settings_init
-from UISettings import settings_default as settings_default_org
+from MainWindow import Ui_MainWindow # UI from QT5
+from UISettings import settings_init # UI basic settings
+from UISettings import settings_default as settings_default_org # UI value settings
 
 from modules import UIModules, PeakTracker, DataSaver, QCM
 from modules.MatplotlibWidget import MatplotlibWidget
@@ -1051,9 +1051,16 @@ class QCMApp(QMainWindow):
         # toolButton_settings_data_refit
         # create menu: menu_settings_data_refit
         self.ui.menu_settings_data_refit = QMenu(self.ui.toolButton_settings_data_refit)
-        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_all)
-        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_marked)
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_allsamp)
+        self.ui.actionFit_allsamp.triggered.connect(lambda: self.autorefit_data(chn_name='samp', mark=False))
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedsamp)
+        self.ui.actionFit_allsamp.triggered.connect(lambda: self.autorefit_data(chn_name='samp', mark=True))
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_allref)
+        self.ui.actionFit_allref.triggered.connect(lambda: self.autorefit_data(chn_name='ref', mark=False))
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedref)
+        self.ui.actionFit_allref.triggered.connect(lambda: self.autorefit_data(chn_name='ref', mark=True))
         # self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_selected)
+        # self.ui.actionFit_all.triggered.connect(self.)
         # add menu to toolbutton
         self.ui.toolButton_settings_data_refit.setMenu(self.ui.menu_settings_data_refit)
 
@@ -2293,7 +2300,18 @@ class QCMApp(QMainWindow):
         self.tab_spectra_fit_update_mpls(f, G, B)
 
 
+    def autorefit_data(chn_name, mark=False):
+        '''
+        This function is to auto refit all or marked data from raw of given chn_name
+        '''
+        # get harms with data
 
+        # get queue_list
+        chn_queue_list = list(self.data_saver.get_queue_id_marked_rows(chn_name, dropnanrow=mark))
+
+        UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list)
+        # TOOOOOOOODO
+        self.data_refit(chn_name, sel_idx_dict)
 
 
 
@@ -2644,7 +2662,7 @@ class QCMApp(QMainWindow):
         sender_name = self.sender().objectName()
 
         # check which plot to update
-        if 'plt1' in sender_name or 'plt2' in sender_name:# signal sent from one of the plots
+        if ('plt1' in sender_name) or ('plt2' in sender_name):# signal sent from one of the plots
             plt_str = sender_name.split('_')[1] # plt1 or plt2
 
             # plot option str in list [y, x]
@@ -3581,7 +3599,6 @@ class QCMApp(QMainWindow):
         if self.sender().objectName() == 'tabWidget_settings_settings_samprefchn': # switched to samp
             idx = self.ui.tabWidget_settings_settings_samprefchn.currentIndex()
             
-            print(self.ui.pushButton_manual_refit.isChecked() & (idx < 2))
             if self.ui.pushButton_manual_refit.isChecked() & (idx < 2): # current idx changed out of refit (2)
                 # disable refit widgets
                 self.ui.pushButton_manual_refit.setChecked(False)
