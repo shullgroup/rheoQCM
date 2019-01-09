@@ -1483,7 +1483,7 @@ class QCMApp(QMainWindow):
     def saveFileDialog(self, title, path='', filetype=settings_init['default_datafiletype']):    
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(self,title, os.path.splitext(path), filetype, options=options)
+        fileName, _ = QFileDialog.getSaveFileName(self,title, os.path.splitext(path)[0], filetype, options=options)
         if fileName:
             print(fileName) 
         else:
