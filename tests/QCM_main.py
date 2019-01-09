@@ -23,8 +23,18 @@ from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, 
 # packages
 from MainWindow import Ui_MainWindow # UI from QT5
 from UISettings import settings_init # UI basic settings
-from UISettings import settings_default as settings_default_org # UI value settings
+from UISettings import settings_default 
 
+# check default settings file
+print(os.getcwd())
+fileName = os.path.join(os.getcwd(), settings_init['default_settings_file_name'])
+if os.path.exists(fileName):
+    with open(fileName, 'r') as f:
+        settings_default = json.load(f) # read user default settings
+    print('use user default settings')
+else:
+    print('use default settings')
+del fileName, f
 from modules import UIModules, PeakTracker, DataSaver, QCM
 from modules.MatplotlibWidget import MatplotlibWidget
 
@@ -105,18 +115,7 @@ class QCMApp(QMainWindow):
 
         self.tempPath = '' # to store the file name before it is initiated
 
-        # check default settings file
-        print(os.getcwd())
-        fileName = os.path.join(os.getcwd(), settings_init['default_settings_file_name'])
-        if os.path.exists(fileName):
-            with open(fileName, 'r') as f:
-                    self.settings = json.load(f) # read user default settings
-                    settings_default = self.settings.copy()
-            print('use user default settings')
-        else:
-            print('use default settings')
-            settings_default = settings_default_org
-            self.settings = settings_default.copy() # import default settings. It will be initalized later
+        self.settings = settings_default.copy() # import default settings. It will be initalized later
 
         self.peak_tracker = PeakTracker.PeakTracker()
         self.vna_tracker = VNATracker()
