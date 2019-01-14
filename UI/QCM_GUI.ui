@@ -6053,8 +6053,7 @@ border: 1px solid blue;
      <string>Help</string>
     </property>
     <addaction name="actionHelp_Manual"/>
-    <addaction name="actionAbout_QCM_r"/>
-    <addaction name="actionRepositroy"/>
+    <addaction name="actionAbout_QCM_py"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSetting"/>
@@ -6280,9 +6279,12 @@ border: 1px solid blue;
     <string>Help Manual</string>
    </property>
   </action>
-  <action name="actionAbout_QCM_r">
+  <action name="actionAbout_QCM_py">
    <property name="text">
-    <string>About QCM-r</string>
+    <string>About QCMpy</string>
+   </property>
+   <property name="toolTip">
+    <string>About QCMpy</string>
    </property>
   </action>
   <action name="actionNew_Exp">
@@ -6307,11 +6309,6 @@ border: 1px solid blue;
    </property>
    <property name="text">
     <string>Clear Data</string>
-   </property>
-  </action>
-  <action name="actionRepositroy">
-   <property name="text">
-    <string>Repositroy</string>
    </property>
   </action>
   <action name="actionDelete_Selected">

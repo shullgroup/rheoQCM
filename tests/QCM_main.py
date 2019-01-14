@@ -26,7 +26,6 @@ from UISettings import settings_init # UI basic settings
 from UISettings import settings_default 
 
 # check default settings file
-print(os.path.dirname(os.path.realpath(__file__)))
 print(os.getcwd())
 fileName = os.path.join(os.getcwd(), settings_init['default_settings_file_name'])
 if os.path.exists(fileName):

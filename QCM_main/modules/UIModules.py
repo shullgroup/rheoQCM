@@ -104,31 +104,38 @@ def index_from_str(idx_str, chn_queue_list):
         return idx
 
 
-def sel_ind_dict(harms, sel_idx_dict, mode, chn_queue_list):
+def sel_ind_dict(harms, sel_idx_dict, mode, marks):
     '''
     recalculate the indices in sel_idx_dict (from selector of main UI) by mode
     sel_idx_dict = {
         'harm': [index]
     }
     harms: list of harms for recalculating
-    mode: 'all', 'selpts', 'selidx', 'selharm'
+    mode: 'all', 'marked', 'selpts', 'selidx', 'selharm'
+    marks: df of marks in columns
     '''
+    data_idx_dict = {}
+    for harm in harms:
+        data_idx_dict[harm] = list(marks[marks['mark' + harm].notna()].index) # all the indices with data for each harm
 
     if mode == 'all':
+        sel_idx_dict = data_idx_dict  
+    if mode == 'marked':
         for harm in harms:
-            sel_idx_dict[harm] = list(chn_queue_list)       
+            data_idx_dict[harm] = list(marks[marks['mark' + harm] == 1].index) # all the indices with data for each harm
+        sel_idx_dict = data_idx_dict  
+            
     if mode == 'selpts':
         pass
     elif mode == 'selidx':
         idx_set = set()
         for idx in sel_idx_dict.values():
             idx_set |= set(idx)
-        idx = list(idx_set)
         for harm in harms:
-            sel_idx_dict[harm] = idx
+            sel_idx_dict[harm] = list(idx_set & set(data_idx_dict[harm]))
     elif mode == 'selharm':
         for harm in sel_idx_dict.keys():
-            sel_idx_dict[harm] = list(chn_queue_list)
+            sel_idx_dict[harm] = data_idx_dict[harm]
     else:
         pass
     return sel_idx_dict
