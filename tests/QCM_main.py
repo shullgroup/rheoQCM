@@ -26,6 +26,7 @@ from UISettings import settings_init # UI basic settings
 from UISettings import settings_default 
 
 # check default settings file
+print(os.path.dirname(os.path.realpath(__file__)))
 print(os.getcwd())
 fileName = os.path.join(os.getcwd(), settings_init['default_settings_file_name'])
 if os.path.exists(fileName):
@@ -34,7 +35,10 @@ if os.path.exists(fileName):
     print('use user default settings')
 else:
     print('use default settings')
-del fileName, f
+del fileName
+if 'f' in locals():
+    del f
+
 from modules import UIModules, PeakTracker, DataSaver, QCM
 from modules.MatplotlibWidget import MatplotlibWidget
 
@@ -1108,6 +1112,8 @@ class QCMApp(QMainWindow):
         self.ui.actionOpen_MyVNA.triggered.connect(self.on_triggered_actionOpen_MyVNA)
         # import QCM-D
         self.ui.actionImport_QCM_D.triggered.connect(self.on_triggered_actionImport_QCM_D)
+        # about QCM_py
+        self.ui.actionAbout_QCM_py.triggered.connect(self.msg_about)
 
 
         #endregion
@@ -1424,6 +1430,32 @@ class QCMApp(QMainWindow):
 
         if fileName:
             self.data_saver.import_qcmd(fileName, settings=self.settings)
+
+
+    def msg_about(self):
+        '''
+        This function opens a message box to display the version information
+        '''
+        msg_text = []
+        msg_text.append('Version: {}'.format(_version.__version__))
+        msg_text.append('Authors: {}'.format(' ,'.join(_version.__authors__)))
+        msg_text.append('Contact: {}'.format(_version.__contact__))
+        msg_text.append('Copyright: {}'.format(_version.__copyright__))
+        msg_text.append("Source: <a href='{0}'>{0}</a>".format(_version.__source__))
+        msg_text.append("Report issues: <a href='{0}'>{0}</a>".format(_version.__report__))
+        msg_text.append('License: {}'.format(_version.__license__))
+        msg_text.append('Date: {}'.format(_version.__date__))
+
+        buttons = QMessageBox.Ok
+
+        msg = QMessageBox()
+        msg.setTextFormat(Qt.RichText)
+        # msg.setIcon(QMessageBox.Information)
+        msg.setWindowTitle('About ' + _version.__projectname__)
+        msg.setText('<b>{} {}<\b>'.format(_version.__projectname__, _version.__version__))
+        msg.setInformativeText('<P>'.join(msg_text))
+        msg.setStandardButtons(buttons)
+        msg.exec_()
 
 
     # @pyqtSlot()
