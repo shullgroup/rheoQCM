@@ -50,7 +50,7 @@ The single executable file version might not be updated as frequently as the sou
 
 ## Running the UI from Terminal
 
-Go to the `QCM_mani/` folder and run `QCM_main.py` will start the UI and it will check the environment by itself.  
+Go to the `QCM_main/` folder and run `QCM_main.py` will start the UI and it will check the environment by itself.  
 
 ## Using UI with QCM-D Data
 
