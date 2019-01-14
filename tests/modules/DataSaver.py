@@ -313,16 +313,16 @@ class DataSaver:
 
             # get queue_list for each channel
             # method 1: from raw. problem of this method is repeat queue_id may be created after deleting data points. 
-            # queue_samp = []
-            # queue_ref = []
-            # if 'samp' in fh['raw'].keys():
-            #     queue_samp = [int(s) for s in fh['raw/samp'].keys()]
-            # if 'ref' in fh['raw'].keys():
-            #     queue_ref = [int(s) for s in fh['raw/ref'].keys()]
+            queue_samp_raw = []
+            queue_ref_raw = []
+            if 'samp' in fh['raw'].keys():
+                queue_samp_raw = [int(s) for s in fh['raw/samp'].keys()]
+            if 'ref' in fh['raw'].keys():
+                queue_ref_raw = [int(s) for s in fh['raw/ref'].keys()]
             # method 2: from data
-            queue_samp = self.samp.queue_id.values # TODO add checking marker != -1
-            queue_ref = self.ref.queue_id.values
-            self.queue_list = list(set(queue_samp) | set(queue_ref))
+            queue_samp_data = self.samp.queue_id.values # TODO add checking marker != -1
+            queue_ref_data = self.ref.queue_id.values
+            self.queue_list = sorted(list(set(queue_samp_data) | set(queue_ref_data) | set(queue_samp_raw) | set(queue_ref_raw)))
 
             self.raw  = {} # raw data from last queue
 
@@ -631,7 +631,7 @@ class DataSaver:
     ##  converting data.
     ####################################################
 
-    def data_exporter(self, fileName, mark=False, dropnanrow=False, dropnancolumn=True, unit_t='s', unit_temp='C'):
+    def data_exporter(self, fileName, mark=False, dropnanmarkrow=False, dropnancolumn=True, unit_t='s', unit_temp='C'):
         '''
         this function export the self.data.samp and ...ref 
         in the ext form
@@ -643,22 +643,22 @@ class DataSaver:
         on_cols = ['queue_id', 't', 'temp']
         df_samp = pd.merge(
             # f
-            self.reshape_data_df('samp', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp, keep_mark=False),
+            self.reshape_data_df('samp', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp, keep_mark=False),
             # delf
-            self.reshape_data_df('samp', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp, keep_mark=True), # keep only on marks
+            self.reshape_data_df('samp', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp, keep_mark=True), # keep only on marks
             on=['queue_id', 't', 'temp']
         )
 
-        df_samp_ref = self.reshape_data_df('samp_ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp)
+        df_samp_ref = self.reshape_data_df('samp_ref', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp)
 
         if self.ref.shape[0] > 0:
             df_ref = pd.merge(
-                self.reshape_data_df('ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp, keep_mark=False),
-                self.reshape_data_df('ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp, keep_mark=True), # keep only one marks
+                self.reshape_data_df('ref', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp, keep_mark=False),
+                self.reshape_data_df('ref', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp, keep_mark=True), # keep only one marks
                 on=['queue_id', 't', 'temp']
             )
 
-            df_ref_ref = self.reshape_data_df('ref_ref', mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp)
+            df_ref_ref = self.reshape_data_df('ref_ref', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp)
 
          # get ext
         name, ext = os.path.splitext(fileName)
@@ -678,7 +678,7 @@ class DataSaver:
                 for chn_name in self._chn_keys:
                     if getattr(self, chn_name + '_prop'): 
                         for mech_key in getattr(self, chn_name + '_prop').keys(): 
-                            mech_df = self.reshape_mech_df(chn_name, mech_key, mark=mark, dropnanrow=dropnanrow, dropnancolumn=dropnancolumn)
+                            mech_df = self.reshape_mech_df(chn_name, mech_key, mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn)
                             mech_df.to_excel(writer, sheet_name=chn_name[0].upper() + '_' + mech_key)
 
 
@@ -725,10 +725,10 @@ class DataSaver:
                 # json.dump(data, f)
 
             
-    def reshape_data_df(self, chn_name, mark=False, dropnanrow=True, dropnancolumn=True, deltaval=False, norm=False, unit_t=None, unit_temp=None, keep_mark=True):
+    def reshape_data_df(self, chn_name, mark=False, dropnanmarkrow=True, dropnancolumn=True, deltaval=False, norm=False, unit_t=None, unit_temp=None, keep_mark=True):
         '''
         reshape and tidy data df (samp and ref) for exporting
-        keep_mark works when dropnanrow == False
+        keep_mark works when dropnanmarkrow == False
         '''
         cols = ['fs', 'gs']
         df = getattr(self, chn_name).copy()
@@ -751,9 +751,9 @@ class DataSaver:
                 df['temp'] = np.nan # add temp column back
         print(df.head()) #testprint
 
-        if dropnanrow == True: # rows with marks only
+        if dropnanmarkrow == True: # rows with marks only
             # select rows with marks
-            print('reshape_data_df: dropnanrow = True') #testprint
+            print('reshape_data_df: dropnanmarkrow = True') #testprint
             df = df[self.rows_with_marks(chn_name)][:]
             print(df) #testprint
             if 'marks' in df.columns:
@@ -772,7 +772,7 @@ class DataSaver:
         return df
 
 
-    def reshape_mech_df(self, chn_name, mech_key, mark=False, dropnanrow=True, dropnancolumn=True):
+    def reshape_mech_df(self, chn_name, mech_key, mark=False, dropnanmarkrow=True, dropnancolumn=True):
         '''
         reshape and tidy mech df (mech_key in samp_prop and ref_prop) for exporting
         '''
@@ -792,7 +792,7 @@ class DataSaver:
             df = df.dropna(axis='columns', how='all')
         print(df.head()) #testprint
 
-        if dropnanrow == True: # rows with marks only
+        if dropnanmarkrow == True: # rows with marks only
             # select rows with marks
             df = df[self.rows_with_marks(chn_name)][:]
             print(df) #testprint
@@ -804,11 +804,11 @@ class DataSaver:
         return df
 
 
-    def get_t_marked_rows(self, chn_name, dropnanrow=False, unit=None):
+    def get_t_marked_rows(self, chn_name, dropnanmarkrow=False, unit=None):
         '''
         return rows with marks of df from self.get_t_s
         '''
-        if dropnanrow == True:
+        if dropnanmarkrow == True:
             return self.get_t_by_unit(chn_name, unit=unit)[[self.rows_with_marks(chn_name)]]
         else:
             return self.get_t_by_unit(chn_name, unit=unit)
@@ -841,11 +841,11 @@ class DataSaver:
             return t
 
 
-    def get_queue_id_marked_rows(self, chn_name, dropnanrow=False):
+    def get_queue_id_marked_rows(self, chn_name, dropnanmarkrow=False):
         '''
         return rows with marks of df from self.get_queue_id
         '''
-        if dropnanrow == True:
+        if dropnanmarkrow == True:
             return self.get_queue_id(chn_name)[self.rows_with_marks(chn_name)]
         else:
             return self.get_queue_id(chn_name)
@@ -858,11 +858,11 @@ class DataSaver:
         return getattr(self, chn_name)['queue_id'].copy()
 
 
-    def get_idx_marked_rows(self, chn_name, dropnanrow=False):
+    def get_idx_marked_rows(self, chn_name, dropnanmarkrow=False):
         '''
         return rows with marks of df from self.get_queue_id
         '''
-        if dropnanrow == True:
+        if dropnanmarkrow == True:
             return self.get_idx(chn_name)[self.rows_with_marks(chn_name)]
         else:
             return self.get_idx(chn_name)
@@ -876,11 +876,11 @@ class DataSaver:
         return pd.Series(idx)
 
 
-    def get_temp_by_uint_marked_rows(self, chn_name, dropnanrow=False, unit='C'):
+    def get_temp_by_uint_marked_rows(self, chn_name, dropnanmarkrow=False, unit='C'):
         '''
         return rows with marks of df from self.get_temp_C
         '''
-        if dropnanrow == True:
+        if dropnanmarkrow == True:
             return self.get_temp_by_unit(chn_name, unit=unit)[self.rows_with_marks(chn_name)]
         else:
             return self.get_temp_by_unit(chn_name, unit=unit)
@@ -935,12 +935,12 @@ class DataSaver:
         return getattr(self, chn_name).loc[:, cols].copy()
 
 
-    def get_list_column_to_columns_marked_rows(self, chn_name, col, mark=False, dropnanrow=False, deltaval=False, norm=False):
+    def get_list_column_to_columns_marked_rows(self, chn_name, col, mark=False, dropnanmarkrow=False, deltaval=False, norm=False):
         '''        
         return rows with marks of df from self.get_list_column_to_columns
         '''
         cols_df = self.get_list_column_to_columns(chn_name, col, mark=mark, deltaval=deltaval, norm=norm)
-        if dropnanrow == True:
+        if dropnanmarkrow == True:
             return cols_df[[self.rows_with_marks(chn_name)]][:]
         else:
             return cols_df
@@ -991,12 +991,12 @@ class DataSaver:
                 return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col[:-1] + str(x * 2 + 1))
             
 
-    def get_mech_column_to_columns_marked_rows(self, chn_name, mech_key, col, mark=False, dropnanrow=False):
+    def get_mech_column_to_columns_marked_rows(self, chn_name, mech_key, col, mark=False, dropnanmarkrow=False):
         '''        
         return rows with marks of mech_df from self.get_mech_column_to_columns
         '''
         cols_df = self.get_mech_column_to_columns(chn_name, mech_key, col, mark=mark)
-        if dropnanrow == True:
+        if dropnanmarkrow == True:
             return cols_df[[self.rows_with_marks(chn_name)]][:]
         else:
             return cols_df
@@ -1183,7 +1183,7 @@ class DataSaver:
                 # calculate f0 and g0 
                 for col, key in self._ref_keys.items():
                     print(chn_name, col, key) #testprint
-                    df = self.get_list_column_to_columns_marked_rows(chn_name + '_ref', col, mark=mark, dropnanrow=False, deltaval=False)
+                    df = self.get_list_column_to_columns_marked_rows(chn_name + '_ref', col, mark=mark, dropnanmarkrow=False, deltaval=False)
                     print(getattr(self, chn_name + '_ref')[col]) #testprint
                     print(df) #testprint
                     self.exp_ref[chn_name][key] = df.mean().values.tolist()
@@ -1239,16 +1239,49 @@ class DataSaver:
             return ref_dict
 
 
-    def get_marks(self, chn_name):
+    def get_marks(self, chn_name, tocolumns=False):
         '''
-        get a copy of marks column
+        if not tocolumns:
+        return a copy of marks column
+        if tocolunms:
+        return df with multiple columns
+        
         '''
-        return getattr(self, chn_name).marks.copy()
+        if tocolumns:
+            return self.get_list_column_to_columns(chn_name, 'marks', mark=False)
+        else:
+            return getattr(self, chn_name).marks.copy()
+
+
+    def get_harm_marks(self, chn_name, harm):
+        '''
+        return a df of marks for harm
+        '''
+        # get df of marks in separated colmns
+        df_mark = self.get_list_column_to_columns(chn_name, 'marks', mark=False)
+
+        # return the marks of given harm
+        return df_mark['mark' + harm]
+
+
+    def datadf_with_data(self, chn_name, tocolumns=False):
+        '''
+        df of boolean if corrensponding test with data
+        '''
+        pass
+        
+
+    def harm_with_data(self, chn_name, harm):
+        '''
+        return a series of booleans to show if the harm has data
+        '''
+        df_mark = self.get_harm_marks(chn_name, harm)
+        return df_mark.notna()
 
 
     def rows_with_marks(self, chn_name):
         '''
-        return list of booleans of rows with marked (1) harmonics
+        return a series of booleans of rows with marked (1) harmonics
         if no marked rows, return all
         '''
         marked_rows = getattr(self, chn_name).marks.apply(lambda x: True if 1 in x else False)
@@ -1271,6 +1304,14 @@ class DataSaver:
             return False
 
 
+    def rows_all_nan_marks(self, chn_name):
+        '''
+        return list of booleans of rows with nan in all harmonics of marks
+        This function can be used as ~self.rows_all_nan_marks() to return the rows with data
+        '''
+        return getattr(self, chn_name).marks.apply(lambda x: True if np.isnan(np.array(x)).all() else False)
+
+
     def reset_match_marks(self, df, mark_pair=(0, 1)):
         ''' 
         rest marks column in df. 
@@ -1279,6 +1320,8 @@ class DataSaver:
         new_mark, old_mark = mark_pair
         df_new = df.copy()
         print(type(df_new)) #testprint
+        print(df_new.tail()) #testprint
+        print(df_new.fs) #testprint
         print(df_new.marks) #testprint
         df_new.marks = df_new.marks.apply(lambda x: [new_mark if mark == old_mark else mark for mark in x])
         return df_new
@@ -1352,24 +1395,31 @@ class DataSaver:
         sel_idx_dict = {
             'harm': [index]
         }
+        This function changes the date (fs, gs) to [nan, ...], marks to nan, and delete the raw data
         '''
-        df_chn = getattr(self, chn_name)
+        df_chn = getattr(self, chn_name).copy()
 
         for harm, idx in sel_idx_dict.items():
             # set marks to -1
-            df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=-1)
+            df_chn = self.mark_data(df_chn, idx=idx, harm=harm, mark_val=np.nan) # set the marks to nan
             # set fs, gs to nan
             df_chn.fs[idx] = df_chn.fs[idx].apply(lambda x: [np.nan if str(i*2+1) in harm else val for i, val in enumerate(x)]) # set all to nan. May not necessary
             df_chn.gs[idx] = df_chn.gs[idx].apply(lambda x: [np.nan if str(i*2+1) in harm else val for i, val in enumerate(x)]) # set all to nan. May not necessary
+        
+        # delete rows marks are all nan
+        df_chn = df_chn[~self.rows_all_nan_marks(chn_name)]
+        # reindex df
+        df_chn = df_chn.reset_index(drop=True)
+        # save back to class
         setattr(self, chn_name, df_chn)
 
         with h5py.File(self.path, 'a') as fh:
             for harm, idxs in sel_idx_dict.items():
                 # delete from raw
                 for idx in idxs:
-                    print(fh['raw/' + chn_name + '/' + str(idx) + '/' + harm]) #testprint
-                    print(fh['raw/' + chn_name + '/' + str(idx) + '/' + harm]) #testprint
-                    del fh['raw/' + chn_name + '/' + str(idx) + '/' + harm]
+                    print(df_chn.queue_id[idx]) #testprint
+                    print(fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[idx])) + '/' + harm]) #testprint
+                    del fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[idx])) + '/' + harm]
 
 
     ######## functions for unit convertion #################
@@ -1428,8 +1478,8 @@ class DataSaver:
         return a df with ['queue_id', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs']
         '''
         df = self.get_queue_id(chn_name).astype('int64').to_frame()
-        df['t'] = self.get_t_marked_rows(chn_name, dropnanrow=False, unit=None)
-        df['temp'] = self.get_temp_by_uint_marked_rows( chn_name, dropnanrow=False, unit=
+        df['t'] = self.get_t_marked_rows(chn_name, dropnanmarkrow=False, unit=None)
+        df['temp'] = self.get_temp_by_uint_marked_rows( chn_name, dropnanmarkrow=False, unit=
         'C')
         df['marks'] = self.get_marks(chn_name)
 

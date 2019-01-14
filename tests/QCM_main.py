@@ -1058,13 +1058,13 @@ class QCMApp(QMainWindow):
         # create menu: menu_settings_data_refit
         self.ui.menu_settings_data_refit = QMenu(self.ui.toolButton_settings_data_refit)
         self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_allsamp)
-        self.ui.actionFit_allsamp.triggered.connect(lambda: self.autorefit_data(chn_name='samp', mark=False))
+        self.ui.actionFit_allsamp.triggered.connect(lambda: self.autorefit_data(chn_name='samp', mode='all'))
         self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedsamp)
-        self.ui.actionFit_allsamp.triggered.connect(lambda: self.autorefit_data(chn_name='samp', mark=True))
+        self.ui.actionFit_markedsamp.triggered.connect(lambda: self.autorefit_data(chn_name='samp', mode='marked'))
         self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_allref)
-        self.ui.actionFit_allref.triggered.connect(lambda: self.autorefit_data(chn_name='ref', mark=False))
+        self.ui.actionFit_allref.triggered.connect(lambda: self.autorefit_data(chn_name='ref', mode='all'))
         self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedref)
-        self.ui.actionFit_allref.triggered.connect(lambda: self.autorefit_data(chn_name='ref', mark=True))
+        self.ui.actionFit_markedref.triggered.connect(lambda: self.autorefit_data(chn_name='ref', mode='marked'))
         # self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_selected)
         # self.ui.actionFit_all.triggered.connect(self.)
         # add menu to toolbutton
@@ -2369,19 +2369,25 @@ class QCMApp(QMainWindow):
         self.tab_spectra_fit_update_mpls(f, G, B)
 
 
-    def autorefit_data(chn_name, mark=False):
+    def autorefit_data(self, chn_name='samp', mode='all'):
         '''
         This function is to auto refit all or marked data from raw of given chn_name
         '''
-        # get harms with data
+        print(chn_name) #testprint
+        print(mode) #testprint
+        # get marks df with harms in columns
+        marks = self.data_saver.get_marks(chn_name, tocolumns=True)
 
-        # get queue_list
-        chn_queue_list = list(self.data_saver.get_queue_id_marked_rows(chn_name, dropnanrow=mark))
-
-        UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list)
-        # TOOOOOOOODO
+        # use all harms. the harmonics without data will be [] in sel_idx_dict
+        harms = [str(harm) for harm in range(1, settings_init['max_harmonic']+2, 2)]
+        print(harms) #testprint
+        # initiate sel_idx_dict. Since will will use all data points overwrite, it can be any shape dict
+        sel_idx_dict = {}
+        sel_idx_dict = UIModules.sel_ind_dict(harms, sel_idx_dict, mode, marks)
+        print('sel_idx_dict from main', sel_idx_dict) #testprint
+        
+        # auto refit data
         self.data_refit(chn_name, sel_idx_dict)
-
 
 
     def get_active_queueid_from_l_harm_ind(self):
@@ -2393,9 +2399,9 @@ class QCMApp(QMainWindow):
         return queue_id
         '''
         if self.active['l_str'] == 'l': # showing all data
-            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanrow=False)
+            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=False)
         elif self.active['l_str'] == 'lm': # showing marked data
-            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanrow=True)
+            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=True)
         return queue_list[self.active['ind']]
 
     def get_active_raw(self):
@@ -2620,7 +2626,7 @@ class QCMApp(QMainWindow):
         data_list = []
 
         if show_marked_when_all: 
-            mark_df = self.data_saver.get_list_column_to_columns_marked_rows(plt_chnname, 'marks', mark=False, dropnanrow=False, deltaval=False, norm=False)            
+            mark_df = self.data_saver.get_list_column_to_columns_marked_rows(plt_chnname, 'marks', mark=False, dropnanmarkrow=False, deltaval=False, norm=False)            
         for harm in plt_harms: # selected
             harm = str(harm)
             # set xdata for harm
@@ -2657,7 +2663,7 @@ class QCMApp(QMainWindow):
         data_list = []
 
         if show_marked_when_all: 
-            mark_df = self.data_saver.get_list_column_to_columns_marked_rows(plt_chnname, 'marks', mark=False, dropnanrow=False, deltaval=False, norm=False)            
+            mark_df = self.data_saver.get_list_column_to_columns_marked_rows(plt_chnname, 'marks', mark=False, dropnanmarkrow=False, deltaval=False, norm=False)            
         for harm in plt_harms: # selected
             harm = str(harm)
             # set xdata for harm
@@ -2719,31 +2725,31 @@ class QCMApp(QMainWindow):
 
         print(typestr) #testprint
         if typestr in ['df', 'delf_exps']: # get delf
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanmarkrow=False, deltaval=True, norm=False)
         elif 'mdf' == typestr: # get delf
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanmarkrow=False, deltaval=True, norm=False)
             data = self.data_saver.minus_columns(data)
         elif typestr in ['dg', 'delg_exps']: # get delg
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanmarkrow=False, deltaval=True, norm=False)
         elif 'dfn' == typestr: # get delfn
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=True)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanmarkrow=False, deltaval=True, norm=True)
         elif 'mdfn' == typestr: # get delfn
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=True)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanmarkrow=False, deltaval=True, norm=True)
             data = self.data_saver.minus_columns(data)
         elif 'dgn' == typestr: # get delgn
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=False, deltaval=True, norm=True)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanmarkrow=False, deltaval=True, norm=True)
         elif 'f' == typestr: # get f
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=False, norm=False)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanmarkrow=False, deltaval=False, norm=False)
         elif 'g' == typestr: # get g
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=False, deltaval=False, norm=False)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanmarkrow=False, deltaval=False, norm=False)
         elif 't' == typestr: # get t
-            data = self.data_saver.get_t_marked_rows(chn_name, dropnanrow=False, unit=unit_t)
+            data = self.data_saver.get_t_marked_rows(chn_name, dropnanmarkrow=False, unit=unit_t)
         elif 'temp' == typestr: # get temp
-            data = self.data_saver.get_temp_by_uint_marked_rows(chn_name, dropnanrow=False, unit=unit_temp)
+            data = self.data_saver.get_temp_by_uint_marked_rows(chn_name, dropnanmarkrow=False, unit=unit_temp)
         elif 'id' == typestr: # get queue_id
-            data = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanrow=False)
+            data = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanmarkrow=False)
         elif 'idx' == typestr: # get indices
-            data = self.data_saver.get_idx_marked_rows(chn_name, dropnanrow=False)
+            data = self.data_saver.get_idx_marked_rows(chn_name, dropnanmarkrow=False)
         
         return data
 
@@ -3022,7 +3028,7 @@ class QCMApp(QMainWindow):
             print(harm_sel_data) #testprint
             print(harm_sel_data[0]) #testprint
             if isinstance(harm_sel_data[0], pd.Series) and harm_sel_data[0].shape[0] > 0: # data is not empty
-                harm_sel_idx = harm_sel_data[0].index # get indices from xdata
+                harm_sel_idx = list(harm_sel_data[0].index) # get indices from xdata
                 print(harm_sel_idx) #testprint
                 sel_idx_dict[harm] = harm_sel_idx
                 selflg = True
@@ -3036,21 +3042,21 @@ class QCMApp(QMainWindow):
 
         # get channel name
         chn_name = self.get_plt_chnname(plt_str)
-        chn_queue_list = list(self.data_saver.get_queue_id(chn_name).tolist()) # list of available index in the target chn
+        marks = self.data_saver.get_marks(chn_name, tocolumns=True) # df of boolean shows if has data
 
         # create contextMenu
         selmenu = QMenu('selmenu', self)
 
         menuMark = QMenu('Mark', self)
         actionMark_all = QAction('Mark all showing data', self)
-        actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list), 1))
+        actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', marks), 1))
         if selflg:
             actionMark_selpts = QAction('Mark selected points', self)
-            actionMark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', chn_queue_list), 1))
+            actionMark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', marks), 1))
             actionMark_selidx = QAction('Mark selected indices', self)
-            actionMark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', chn_queue_list), 1))
+            actionMark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', marks), 1))
             actionMark_selharm = QAction('Mark selected harmonics', self)
-            actionMark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', chn_queue_list), 1))
+            actionMark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', marks), 1))
 
         menuMark.addAction(actionMark_all)
         if selflg:
@@ -3060,14 +3066,14 @@ class QCMApp(QMainWindow):
 
         menuUnmark = QMenu('Unmark', self)
         actionUnmark_all = QAction('Unmark all showing data', self)
-        actionUnmark_all.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list), 0))
+        actionUnmark_all.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', marks), 0))
         if selflg:
             actionUnmark_selpts = QAction('Unmark selected points', self)
-            actionUnmark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', chn_queue_list), 0))
+            actionUnmark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', marks), 0))
             actionUnmark_selidx = QAction('Unmark selected indices', self)
-            actionUnmark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', chn_queue_list), 0))
+            actionUnmark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', marks), 0))
             actionUnmark_selharm = QAction('Unmark selected harmonics', self)
-            actionUnmark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', chn_queue_list), 0))
+            actionUnmark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', marks), 0))
 
         menuUnmark.addAction(actionUnmark_all)
         if selflg:
@@ -3077,14 +3083,14 @@ class QCMApp(QMainWindow):
 
         menuDel = QMenu('Delete', self)
         actionDel_all = QAction('Delete all showing data', self)
-        actionDel_all.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list)))
+        actionDel_all.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', marks)))
         if selflg:
             actionDel_selpts = QAction('Delete selected points', self)
-            actionDel_selpts.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', chn_queue_list)))
+            actionDel_selpts.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', marks)))
             actionDel_selidx = QAction('Delete selected indices', self)
-            actionDel_selidx.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', chn_queue_list)))
+            actionDel_selidx.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', marks)))
             actionDel_selharm = QAction('Delete selected harmonics', self)
-            actionDel_selharm.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', chn_queue_list)))
+            actionDel_selharm.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', marks)))
 
         menuDel.addAction(actionDel_all)
         if selflg:
@@ -3094,14 +3100,14 @@ class QCMApp(QMainWindow):
 
         menuRefit = QMenu('Refit', self)
         actionRefit_all = QAction('Refit all showing data', self)
-        actionRefit_all.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list)))
+        actionRefit_all.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', marks)))
         if selflg:
             actionRefit_selpts = QAction('Refit selected points', self)
-            actionRefit_selpts.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', chn_queue_list)))
+            actionRefit_selpts.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', marks)))
             actionRefit_selidx = QAction('Refit selected indices', self)
-            actionRefit_selidx.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', chn_queue_list)))
+            actionRefit_selidx.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', marks)))
             actionRefit_selharm = QAction('Refit selected harmonics', self)
-            actionRefit_selharm.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', chn_queue_list)))
+            actionRefit_selharm.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', marks)))
 
         menuRefit.addAction(actionRefit_all)
         if selflg:
@@ -3174,12 +3180,12 @@ class QCMApp(QMainWindow):
 
 
     def mech_solve_all(self):
-        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanrow=False)
+        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanmarkrow=False)
         self.mech_solve_chn(self.mech_chn, queue_ids)
 
 
     def mech_solve_marked(self):
-        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanrow=True)       
+        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanmarkrow=True)       
         self.mech_solve_chn(self.mech_chn, queue_ids)
 
 
@@ -3546,11 +3552,11 @@ class QCMApp(QMainWindow):
             data = self.get_data_by_typestr(var, chn_name, mark=mark, unit_t=timeunit, unit_temp=tempunit)
 
         elif var in prop_cols: # delg delf is in data, so add them to the check list
-            data = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var, mark=mark, dropnanrow=False)
+            data = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var, mark=mark, dropnanmarkrow=False)
             data = self.qcm.convert_mech_unit(data) # convert unit for plot
             # get yerr
             if self.settings['checkBox_settings_mechanics_witherror'] and (var + '_err' in getattr(self.data_saver, chn_name + '_prop')[mech_key].keys()): # corresponding error exists
-                err = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var + '_err', mark=mark, dropnanrow=False)
+                err = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var + '_err', mark=mark, dropnanmarkrow=False)
                 err = self.qcm.convert_mech_unit(err)
             else:
                 err = None
@@ -4877,12 +4883,14 @@ class QCMApp(QMainWindow):
         print('sel_idx_dict\n', sel_idx_dict) #testprint
         # reform dict
         sel_harm_dict = UIModules.idx_dict_to_harm_dict(sel_idx_dict)
-        queue_list = sel_harm_dict.keys()
+        # queue_list = self.data_saver.get_queue_id(chn_name)[sel_harm_dict.keys()] # df
+        indeces = sel_harm_dict.keys()
         print('sel_harm_dict\n', sel_harm_dict) #testprint
 
-        for queue_id in queue_list:
+        for idx in indeces:
             # initiate data of queue_id
 
+            queue_id = self.data_saver.get_queue_id(chn_name)[idx]
             # scan harmonics (1, 3, 5...)
             fs = []
             gs = []
@@ -4890,7 +4898,7 @@ class QCMApp(QMainWindow):
             self.reading = True
 
             # data reading and plot
-            harm_list = sel_harm_dict[queue_id]
+            harm_list = sel_harm_dict[idx]
             for harm in harm_list:
                 # get data
                 f, G, B = self.data_saver.get_raw(chn_name, queue_id, harm)
