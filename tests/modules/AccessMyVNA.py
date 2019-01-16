@@ -1390,16 +1390,17 @@ class AccessMyVNA():
 
 # exit(0)
 if __name__ == '__main__':
-    accvna = AccessMyVNA()
+    ret = _MyVNAInit()
+    ret = _MyVNAShowWindow(0)
+    ret = _MyVNAClose()
     exit(0)
-
     # ret = accvna.GetDoubleArray()
     # ret, f, G, B = accvna.single_scan()
-    # accvna = AccessMyVNA()
+    accvna = AccessMyVNA()
     # print('acc', accvna._naverage) 
     with accvna:
         ret, nSteps = accvna.SetScanSteps(nSteps=300)
-        accvna._get_wait_time()
+        # accvna._get_wait_time()
         # pass
         # print('acc', accvna._naverage) 
         # print(11111) 

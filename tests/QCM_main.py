@@ -696,7 +696,7 @@ class QCMApp(QMainWindow):
 
         # self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
         self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.on_clicked_set_temp_sensor)
-        self.ui.comboBox_thrmcpltype.currentIndexChanged.connect(self.update_tempdevice)
+        # self.ui.comboBox_thrmcpltype.currentIndexChanged.connect(self.update_tempdevice) # ??
         self.ui.comboBox_thrmcpltype.currentIndexChanged.connect(self.update_thrmcpltype)
 
         # set signals to update plots settings_settings
@@ -1411,9 +1411,41 @@ class QCMApp(QMainWindow):
 
     def on_triggered_actionOpen_MyVNA(self):
         '''
-        open myVNA
+        open myVNA.exe
         '''
-        subprocess.Popen(settings_init['vna_path'])
+        if UIModules.system_check() != 'win32': # not windows
+            return
+
+        myvna_path = self.settings.get('vna_path', '')
+        print('myvna_path', myvna_path) #testprint
+        if myvna_path and os.path.exists(myvna_path): # user defined myVNA.exe path exists and correct
+            print('vna_path in self.settings') #testprint
+            pass
+        else: # use default path list
+            print('vna_path try settings_init') #testprint
+            for myvna_path in settings_init['vna_path']:
+                if os.path.exists(myvna_path):
+                    print('vna_path in settings_init') #testprint
+                    break
+                else:
+                    print('vna_path not found') #testprint
+                    myvna_path = ''
+        
+        print('myvna_path', myvna_path) #testprint
+        if myvna_path:
+            print('vna_path to open exe') #testprint
+            subprocess.call(myvna_path) # open myVNA
+        else:
+            print('vna_path msg box') #testprint
+            process = self.process_messagebox(
+                text='Failed to open myVNA.exe',
+                message=['Cannot find myVNA.exe in: \n{}\nPlease add the path for "vna_path" in "settings_default.json"!'.format('\n'.join(settings_init['vna_path'])),
+                'The format of the path should like this:',
+                r'"C:\\Program Files (x86)\\G8KBB\\myVNA\\myVNA.exe"'
+                ],
+                opts=False, 
+                forcepop=True,
+            )
 
 
     def on_triggered_actionImport_QCM_D(self):
@@ -1613,6 +1645,7 @@ class QCMApp(QMainWindow):
                 with open(fileName, 'w') as f:
                     settings = self.settings.copy()
                     settings.pop('dateTimeEdit_reftime', None)
+                    settings.pop('dateTimeEdit_settings_data_t0shifted', None)
                     line = json.dumps(settings, indent=4) + "\n"
                     f.write(line)
                 print('Settings were exported as json file.')
@@ -1670,7 +1703,7 @@ class QCMApp(QMainWindow):
         if fileName:
             self.data_saver.data_exporter(fileName) # do the export
 
-    def process_messagebox(self, message=[], forcepop=False):
+    def process_messagebox(self, text='Your selection was paused!', message=[], opts=True, forcepop=False):
         '''
         check is the experiment is ongoing (self.timer.isActive()) and if data is saved (self.data_saver.saveflg)
         and pop up a messageBox to ask if process
@@ -1689,12 +1722,15 @@ class QCMApp(QMainWindow):
                 message.append('Test is Running!')
                 buttons = QMessageBox.Ok
             else:
-                message.append('Do you want to process?')
-                buttons = QMessageBox.Yes | QMessageBox.Cancel
+                if not opts:
+                    buttons = QMessageBox.Ok
+                else:
+                    message.append('Do you want to process?')
+                    buttons = QMessageBox.Yes | QMessageBox.Cancel
 
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Information)
-            msg.setText('Your selection was paused!')
+            msg.setText(text)
             msg.setInformativeText('\n'.join(message))
             msg.setWindowTitle(_version.__projectname__ + ' Message')
             msg.setStandardButtons(buttons)
