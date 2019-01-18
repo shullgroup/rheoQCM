@@ -80,12 +80,33 @@ class VNATracker:
         self.avg = None     # average of scans (int)
         self.speed = None   # vna speed set up (int 1 to 10)
         self.instrmode = 0  # instrument mode (0: reflection)
+        self.cal = self.get_cal_filenames()
         
         self.setflg = {} # if vna needs to reset (set with reset selections)
         self.setflg.update(self.__dict__) # get all attributes in a dict
         self.setflg.pop('setflg', None) # remove setflg itself
-        # print(self.setflg) #testprint
-    
+        print('setflg', self.setflg) #testprint
+           
+    def get_cal_filenames(self):
+        '''
+        find calc file for ADC1 and ADC2 separately
+        The fill should be stored in settings_init['vna_cal_file_path'] for each channel 
+        ''' 
+        cal = {'ADC1': '', 'ADC2': ''}
+        if (UIModules.system_check() == 'win32') and (struct.calcsize('P') * 8 == 32): # windows (if is win32, struct will already be imported above)
+            for key in cal.keys():
+                files = os.listdir(settings_init['vna_cal_file_path']) # list all file in the given folder
+                print(files) #testprint
+                for file in files:
+                    if (key + '.myVNA.cal').lower() in file.lower():
+                        cal[key] = os.path.abspath(os.path.join(settings_init['vna_cal_file_path'], file)) # use absolute path
+                        break
+            print(cal) #testprint            
+
+        return cal
+
+
+
     def set_check(self, **kwargs):
         for key, val in kwargs.items():
             print(key, val) #testprint
@@ -2082,9 +2103,9 @@ class QCMApp(QMainWindow):
         setflg = self.vna_tracker.set_check(f=freq_span, steps=steps, chn=self.get_chn_by_name(chn_name))
         print(setflg) #testprint
 
-        print(vna) #testprint
+        print(self.vna) #testprint
         with self.vna:
-            print(vna) #testprint
+            print(self.vna) #testprint
             print('vna._naverage', self.vna._naverage) #testprint
             ret = self.vna.set_vna(setflg)
             if ret == 0:
@@ -2134,10 +2155,15 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.update_data({'ln': 'lB', 'x': f, 'y': B})
 
         # constrain xlim
-        self.ui.mpl_spectra_fit.ax[0].set_xlim(f[0], f[-1])
-        self.ui.mpl_spectra_fit.ax[1].set_xlim(f[0], f[-1])
-        self.ui.mpl_spectra_fit.ax[0].set_ylim(min(G)-0.05*(max(G)-min(G)), max(G)+0.05*(max(G)-min(G)))
-        self.ui.mpl_spectra_fit.ax[1].set_ylim(min(B)-0.05*(max(B)-min(B)), max(B)+0.05*(max(B)-min(B)))
+        if (f is not None) and (f[0] != f[-1]): # f is available
+            self.ui.mpl_spectra_fit.ax[0].set_xlim(f[0], f[-1])
+            self.ui.mpl_spectra_fit.ax[1].set_xlim(f[0], f[-1])
+            self.ui.mpl_spectra_fit.ax[0].set_ylim(min(G)-0.05*(max(G)-min(G)), max(G)+0.05*(max(G)-min(G)))
+            self.ui.mpl_spectra_fit.ax[1].set_ylim(min(B)-0.05*(max(B)-min(B)), max(B)+0.05*(max(B)-min(B)))
+        elif f is None or (not f.any()): # vna error or f is all 0s
+            self.ui.mpl_spectra_fit.ax[0].autoscale()
+            self.ui.mpl_spectra_fit.ax[1].autoscale()
+
 
         ## connect axes event
         self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
@@ -3286,6 +3312,9 @@ class QCMApp(QMainWindow):
             return
         # get f1
         f1 = self.data_saver.get_fg_ref(chn_name, harms=[1])['f0'][0]
+        if np.isnan(f1): # no 1st harmonic data collected
+            # use base frequency in settings
+            f1 = float(self.settings['comboBox_base_frequency']) * 1e6 # in Hz
         # set f1 to qcm module
         self.qcm.f1 = f1
 
@@ -3672,9 +3701,9 @@ class QCMApp(QMainWindow):
                 thrmcpltype = self.settings['comboBox_thrmcpltype'] # get thermocouple type
                 tempdevice = TempDevices.device_info(self.settings['comboBox_tempdevice']) #get temp device info
 
-                # check senor availability
-                package_str = settings_init['tempmodules_path'][2:].replace('/', '.') + tempmodule_name
-                print(package_str) #testprint
+                # # check senor availability
+                # package_str = settings_init['tempmodules_path'][2:].replace('/', '.') + tempmodule_name
+                # print(package_str) #testprint
                 # import package
                 temp_sensor = getattr(TempModules, tempmodule_name)
 
@@ -4791,6 +4820,23 @@ class QCMApp(QMainWindow):
                     print(harm_list) #testprint
                     f[chn_name][harm], G[chn_name][harm], B[chn_name][harm] = self.get_vna_data_no_with(harm=harm, chn_name=chn_name)
                     
+                    print('check:')
+                    print(f[chn_name][harm] is None)
+                    print(f[chn_name][harm][0] == f[chn_name][harm][-1])
+                    if (f[chn_name][harm] is None) or (f[chn_name][harm][0] == f[chn_name][harm][-1]): # vna error
+                        print('Can''t find analyzer!')
+                        # stop test
+                        self.idle = True
+                        self.ui.pushButton_runstop.setChecked(False)
+                        # alert
+                        process = self.process_messagebox(
+                            text='Failed to connect with analyzer!',
+                            message=['Please checked the connection with analyzer or if it''s power is on.'],
+                            opts=False, 
+                            forcepop=True,
+                        )
+                        return
+
                     # put f, G, B to peak_tracker for later fitting and/or tracking
                     self.peak_tracker.update_input(chn_name, harm, f[chn_name][harm], G[chn_name][harm], B[chn_name][harm], self.settings['harmdata'], self.settings['freq_span'])
 
@@ -4922,10 +4968,6 @@ class QCMApp(QMainWindow):
 
 
         self.idle = True
-
-
-        self.writing = True
-        # save scans to file
 
         self.writing = False
 

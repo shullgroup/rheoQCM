@@ -22,6 +22,9 @@ settings_init = {
         r'C:\Program Files\G8KBB\myVNA\yVNA.exe',
     ],
 
+    # where the calibration files where save
+    'vna_cal_file_path': r'./dll/', 
+
     # highest harmonic can be shown in the UI. 
     'max_harmonic': 9, # do not change
     
@@ -409,8 +412,8 @@ settings_init = {
 
 
     ############ params for temperature modules ###########
-    # temperature modules path
-    'tempmodules_path': r'./modules/temp/', 
+    # # temperature modules path
+    # 'tempmodules_path': r'./modules/temp/', 
     
     # add NI sensors into the dict and the code will check if the devices in its keys.
     # the values are the number of samples per test for average
