@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.2] - 2019-01-23
+
+### Changed
+
+- Change the peak tracking strategy. The changing setp sometimes might be too big.
+  
 ## [0.15.1] - 2019-01-18
 
 ### Added

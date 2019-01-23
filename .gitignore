@@ -164,7 +164,7 @@ venv.bak/
 /site
 
 # myVNA calibration file
-.cal
+*.myVNA.cal
 
 
 # folder for temporary test Files
