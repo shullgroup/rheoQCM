@@ -1292,7 +1292,6 @@ class QCMApp(QMainWindow):
             # start the timer
             self.timer.start(0)
 
-
             self.ui.pushButton_runstop.setText('STOP')
         else:
             # set text on button for waitiong
@@ -1315,14 +1314,15 @@ class QCMApp(QMainWindow):
             #     print('looping') #testprint
 
             # write dfs and settings to file
-            if self.idle == True: # Timer stopped while timeout func is not running
+            if self.idle == True: # Timer stopped while timeout func is not running (test stopped while waiting)
                 self.process_saving_when_stop()
+                print('data saved while waiting') #testprint
 
 
 
     def process_saving_when_stop(self):
         '''
-        process saving fitted data when tested is stopped
+        process saving fitted data when test is stopped
         '''
         # save data
         self.data_saver.save_data()
@@ -4272,6 +4272,7 @@ class QCMApp(QMainWindow):
         # set visibility of samp & ref related widgets
         self.setvisible_samprefwidgets(samp_value=self.settings['comboBox_samp_channel'] != 'none', ref_value=self.settings['comboBox_ref_channel'] != 'none')
 
+
     def update_tempsensor(self, signal):
         # NOTUSING
         print("update_tempsensor was called") #testprint
@@ -4750,8 +4751,12 @@ class QCMApp(QMainWindow):
 
                     # update lsp
                     factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=chn_name, harm=harm)
-                    gc_list = [fit_result['v_fit']['g_c']['value']] * 2 # make its len() == 2
-                    bc_list = [fit_result['v_fit']['b_c']['value']] * 2 # make its len() == 2
+                    if 'g_c' in fit_result['v_fit']: # fitting successed
+                        gc_list = [fit_result['v_fit']['g_c']['value']] * 2 # make its len() == 2
+                        bc_list = [fit_result['v_fit']['b_c']['value']] * 2 # make its len() == 2
+                    else: # fitting failed
+                        gc_list = [np.nan, np.nan]
+                        bc_list = [np.nan, np.nan]
 
                     print(factor_span) #testprint
                     print(gc_list) #testprint
@@ -4826,7 +4831,11 @@ class QCMApp(QMainWindow):
         # Save scan data to file fitting data in RAM to file
         if int(self.counter) % int(self.settings['lineEdit_refreshresolution']) == 0: # check if to save by intervals
             self.writing = True
+            # save raw
             self.data_saver.dynamic_save(chn_name_list, harm_list, t=curr_time, temp=curr_temp, f=f, G=G, B=B, fs=fs, gs=gs, marks=marks)
+            
+            # save data (THIS MIGHT MAKE THE PROCESS SLOW)
+            self.data_saver.save_data()
         
             # plot data
             self.update_mpl_plt12()
@@ -4834,9 +4843,12 @@ class QCMApp(QMainWindow):
         # increase counter
         self.counter += 1
 
-        if not self.timer.isActive(): # if timer is stopped
+        if not self.timer.isActive(): # if timer is stopped (test stopped while collecting data)
             # save data
             self.process_saving_when_stop()
+            print('data saved while collecting') #testprint
+
+        self.idle = True
 
         self.writing = False
 
@@ -4844,9 +4856,7 @@ class QCMApp(QMainWindow):
         self.set_status_pts()
 
 
-        self.idle = True
 
-        self.writing = False
 
         # 
         # wait bar

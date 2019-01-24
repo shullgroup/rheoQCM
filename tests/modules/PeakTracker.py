@@ -489,7 +489,7 @@ class PeakTracker:
         track the peak and give the span for next scan
         NOTE: the returned span may out of span_range defined the the main UI!
         '''
-        def set_new_cen(freq, cen, current_span):
+        def set_new_cen(freq, cen, current_span, current_xlim):
             ''' set new center '''
             cen_range = settings_init['cen_range'] # cen of span +/- cen_range*span as the accessible range
             print('cen_diff', np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen)) #testprint
@@ -499,24 +499,37 @@ class PeakTracker:
                 return cen
             else: 
                 # use span center
-                return np.mean(np.array([freq[0],freq[-1]]))
+                # return np.mean(np.array([freq[0],freq[-1]]))
+                return np.mean(np.array(current_xlim))
 
 
         def set_new_span(current_span, half_wid):
             wid_ratio_range = settings_init['wid_ratio_range'] # width_ratio[0] <= span <= width_ratio[1]
-            change_thresh = settings_init['change_thresh'] # span change threshold current_span * change_thresh
+            change_thresh = settings_init['change_thresh'] # span change threshold current_span * change_thresh[0/1]
             ''' set new span '''
             wid_ratio = 0.5 * current_span / half_wid
             print('wid_ratio', wid_ratio) #testprint
             if wid_ratio < wid_ratio_range[0]: # too fat
                 return max(
-                    wid_ratio_range[0] * half_wid * 2, 
-                    current_span * (1 + change_thresh)
+                    min(
+                        wid_ratio_range[0] * half_wid * 2, 
+                        current_span * (1 + change_thresh[1]),
+                    ),
+                    current_span * (1 + change_thresh[0])
                 )
             elif wid_ratio > wid_ratio_range[1]: # too thin
+                print('peak too thin\n',
+                    half_wid,
+                    wid_ratio_range[1] * half_wid * 2,
+                    current_span * (1 - change_thresh[1]),
+                    current_span * (1 - change_thresh[0]) # 
+                )
                 return min(
-                    wid_ratio_range[1] * half_wid * 2, # lower bound of wid_ratio_range
-                    current_span * (1 - change_thresh) # 
+                    max(
+                        wid_ratio_range[1] * half_wid * 2,
+                        current_span * (1 - change_thresh[1]),
+                        ), # lower bound of wid_ratio_range
+                    current_span * (1 - change_thresh[0]) # 
                 )
             else:
                 return current_span
@@ -551,7 +564,7 @@ class PeakTracker:
 
         # find the starting and ending frequency of only the peak in Hz
         if track_condition == 'fixspan':
-            new_cen = set_new_cen(freq, cen, current_span)
+            new_cen = set_new_cen(freq, cen, current_span, current_xlim)
             new_xlim = set_new_xlim(new_cen, current_span)
             ''' if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > 0.1 * current_span:
                 # new start and end frequencies in Hz
@@ -567,7 +580,7 @@ class PeakTracker:
                 new_xlim = np.array(current_center-3*half_wid, current_center+3*half_wid) '''
 
         elif track_condition == 'auto':
-            new_cen = set_new_cen(freq, cen, current_span)
+            new_cen = set_new_cen(freq, cen, current_span, current_xlim)
             new_span = set_new_span(current_span, half_wid)
             new_xlim = set_new_xlim(new_cen, new_span)
 
