@@ -18,8 +18,8 @@ settings_init = {
 
     # myVNA path
     'vna_path': [
-        r'C:\Program Files (x86)\G8KBB\myVNA\yVNA.exe',
-        r'C:\Program Files\G8KBB\myVNA\yVNA.exe',
+        r'C:\Program Files (x86)\G8KBB\myVNA\myVNA.exe',
+        r'C:\Program Files\G8KBB\myVNA\myVNA.exe',
     ],
 
     # where the calibration files where save
@@ -446,7 +446,16 @@ settings_init = {
     ######### params for DataSaver module #########
     'unsaved_path': r'.\unsaved', 
 
+
+    ######### params for PeakTracker module #######
+    'cen_range': 0.05, # peak center limitation (cen of span +/- cen_range*span)
+    'wid_ratio_range': (8, 20), # width_ratio[0]*HWHM <= span <= width_ratio[1]*HWHM
+    'change_thresh': (0.05, 0.5), # span change threshold current_span * change_thresh. When the changing step of (current_span +/- 'wid_ratio_range' * 2 * current_span) > ( current_span * (1 +/- change_thresh)), former will be used 
+    # the value should be between (0, 1)
+
 }
+
+
 
 #####################################################
 
