@@ -123,10 +123,8 @@ if __name__ == "__main__":
     ai_channel = 'ai0'
     thrmpl = 'J'
     temp = get_temp(device, ai_channel, thrmpl)
-    print(temp) 
 
     tempsensor = TempSensor(device, ai_channel, thrmpl)
-    print(tempsensor.get_temp()) 
 
     def test():
         plt.ion()
@@ -150,4 +148,3 @@ if __name__ == "__main__":
                 plt.scatter(i, np.mean(data), c='r')
                 plt.pause(0.05)
                 i += 1
-            print(data)

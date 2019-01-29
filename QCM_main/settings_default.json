@@ -1,4 +1,5 @@
 {
+    "vna_path": "",
     "checkBox_harm1": true,
     "checkBox_harm3": true,
     "checkBox_harm5": true,
@@ -348,6 +349,5 @@
     "comboBox_settings_mechanics_refG": "3",
     "checkBox_settings_mechanics_witherror": true,
     "comboBox_tempmodule": "NITempSensor",
-    "comboBox_tempdevice": "PCIe-6321",
-    "dateTimeEdit_settings_data_t0shifted": "2019-01-04 17:38:46.611000"
+    "comboBox_tempdevice": "PCIe-6321"
 }

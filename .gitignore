@@ -163,6 +163,9 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# myVNA calibration file
+*.myVNA.cal
+
 
 # folder for temporary test Files
 test/

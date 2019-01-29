@@ -822,6 +822,54 @@ _MyVNAAutoscale = wfunc(
     '?MyVNAAutoscale@@YGHXZ', vna, c_int
 )
 
+
+# // MyVNALoadConfiguration()
+# // MyVNASaveConfiguration()
+# // MyVNALoadCalibration()
+# // MyVNASaveCalibration()
+# // Given a filename, attempt to load or save the current program configuration
+# // including calibration data or just load/save the calibration data
+# // finally, option exists to save current trace data to a file ( s2p only supported here)
+# // OLE equivalents:
+# // int LoadConfigurationAutomation(LPCTSTR fileName);
+# // int SaveConfigurationAutomation(LPCTSTR fileName);
+# // int LoadCalibrationAutomation(LPCTSTR fileName);
+# // int SaveCalibrationAutomation(LPCTSTR fileName);
+# // int SaveTraceDataAutomation(LPCTSTR fileName);
+
+# MyVNALoadConfiguration = vna[15]
+# __declspec(dllexport) int _stdcall MyVNALoadConfiguration(_TCHAR * fileName)
+_MyVNALoadConfiguration = wfunc(
+    '?MyVNALoadConfiguration@@YGHPA_W@Z', vna, c_int,
+    (c_wchar_p, (1, 'fileName')),
+)
+
+
+# MyVNASaveConfiguration = vna[18]
+# # __declspec(dllexport) int _stdcall MyVNASaveConfiguration(_TCHAR * fileName)
+_MyVNASaveConfiguration = wfunc(
+    '?MyVNASaveConfiguration@@YGHPA_W@Z', vna, c_int,
+    (c_wchar_p, (1, 'fileName')),
+)
+    
+
+# MyVNALoadCalibration = vna[14]
+# # __declspec(dllexport) int _stdcall MyVNALoadCalibration(_TCHAR * fileName)
+_MyVNALoadCalibration = wfunc(
+    '?MyVNALoadCalibration@@YGHPA_W@Z', vna, c_int,
+    (c_wchar_p, (1, 'fileName')),
+)
+
+
+# MyVNASaveCalibration = vna[17]
+# # __declspec(dllexport) int _stdcall MyVNASaveCalibration(_TCHAR * fileName)
+_MyVNASaveCalibration = wfunc(
+    '?MyVNASaveCalibration@@YGHPA_W@Z', vna, c_int,
+    (c_char_p, (1, 'fileName')),
+)
+    
+
+
 #endregion
 
 #region
@@ -1124,11 +1172,13 @@ class AccessMyVNA():
         print('MyVNASingleScan\n', ret, hWnd) #testprint
         return ret, hWnd
 
+
     def EqCctRefine(self):
         hWnd = get_hWnd()
         ret = _MyVNAEqCctRefine(WM_COMMAND, hWnd, MESSAGE_SCAN_ENDED, 0)
         print('MyVNAEqCctRefine\n', ret, hWnd) #testprint
         return ret, hWnd
+
 
     def SetFequencies(self, f1=4.95e6, f2=5.05e6, nFlags=1):
         '''
@@ -1139,10 +1189,10 @@ class AccessMyVNA():
         # if not ret:
         #     self._f = [f1, f2]
         return ret, f1, f2
-    
+
+
     # @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay)
     def GetScanData(self, nStart=0, nEnd=299, nWhata=-1, nWhatb=15):
-
         print('MyVNAGetScanData') #testprint
         nSteps = nEnd - nStart + 1
         # nSteps = nSteps * 2
@@ -1184,6 +1234,39 @@ class AccessMyVNA():
         print('MyVNAAutoscale\n', ret) #MyVNAAutoscale #testprint
         return ret
 
+
+    def LoadCalibration(self, fileName):
+        pfn = c_wchar_p(fileName)
+        ret = _MyVNALoadCalibration(pfn)
+        print('MyVNALoadCalibration\n', ret) #testprint
+        print(pfn.value)
+        return ret
+
+
+    def SaveCalibration(self, fileName):
+        pfn = c_wchar_p(fileName)
+        ret = _MyVNASaveCalibration(pfn)
+        print('MyVNASaveCalibration\n', ret) #testprint
+        print(pfn.value)
+        return ret
+
+
+    def LoadConfiguration(self, fileName):
+        pfn = c_wchar_p(fileName)
+        ret = _MyVNALoadCalibration(pfn)
+        print('MyVNALoadConfiguration\n', ret) #testprint
+        print(pfn.value)
+        return ret
+
+
+    def SaveConfiguration(self, fileName):
+        pfn = c_wchar_p(fileName)
+        ret = _MyVNASaveConfiguration(pfn)
+        print('MyVNASaveConfiguration\n', ret) #testprint
+        print(pfn.value)
+        return ret
+
+
     ################ combined functions #################
     def single_scan(self):
         print('single_scan') #testprint
@@ -1191,13 +1274,14 @@ class AccessMyVNA():
         # self.Init()
         self.SingleScan()
         print('self._nsteps', self._nsteps) #testprint
+        self.setDisplayFreq()
         self.Autoscale()
         print('self._nsteps', self._nsteps) #testprint
         # wait for some time
         t_wait = time.time() + self._get_wait_time()
 
         while time.time() < t_wait:
-            print('wait...') #testprint
+            # print('wait...') #testprint
             time.sleep(0.1)
         print('self._nsteps', self._nsteps) #testprint
         # ret, nSteps = self.GetScanSteps()
@@ -1208,7 +1292,18 @@ class AccessMyVNA():
         # self.Close()
         print('self._nsteps', self._nsteps) #testprint
         return ret, f, G * 1e3, B * 1e3 # f in Hz; G & B in mS
-    
+
+
+    def setDisplayFreq(self):
+        '''
+        set x/y axis in myVNA
+        This is setup will make it convient to view in myVNA.
+        It is not necessary for the Python program
+        '''
+        # set x axis
+        ret, nData = self.SetDoubleArray(nWhat=3, nIndex=0, nArraySize=2, nData=self._f)
+        
+
     def change_settings(self, refChn=1, nMode=0, nSteps=400, nAverage=1):
         # ret =           self.Init()
         ret, nMode =    self.Setinstrmode(nMode)
@@ -1222,9 +1317,10 @@ class AccessMyVNA():
         ret, nSteps =   self.SetScanSteps(nSteps)
         self.SetFequencies(f1, f2, nFlags=1)
 
-    def setADCChannel(self, reflectchn=1):
+
+    def setADCChannel(self, reflectchn=1, paths={}):
         # switch ADV channel for test
-        # nData = [transChn, reflectchn]
+        # nData = [transChn, reflectchn] (float)
         if reflectchn == 1:
             nData = np.array([2., 1.])
         elif reflectchn == 2:
@@ -1232,8 +1328,14 @@ class AccessMyVNA():
 
         ret, nData = self.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=nData)
         # if not ret:
-        #     self._chn = reflectchn        
+        #     self._chn = reflectchn
+
+        # load calibration file by channel
+        if paths and paths['ADC'+str(reflectchn)]:
+            ret += self.LoadCalibration(paths['ADC'+str(reflectchn)])
+
         return ret, reflectchn
+
 
     def set_vna(self, setflg):
         '''
@@ -1251,43 +1353,46 @@ class AccessMyVNA():
         print(self._phase_delay) #testprint
         print('--------') #testprint
 
+        flg_list = ['f', 'steps', 'chn', 'avg', 'speed', 'instrmode'] # list of flags to check
+
         for flg, val in setflg.items():
-            if val is not None: # val != None
+            if (val is not None) and (flg in flg_list): # val != None
                 print(flg) #testprint
                 print(val) #testprint
-                if flg == 'f': # set frequency
+                ret = 0 # inintialize ret in case no change is needed
+                if (flg == 'f') and (self._f != val): # set frequency
                     print(len(val)) #testprint
                     ret, self._f[0], self._f[1] = self.SetFequencies(f1=val[0], f2=val[1], nFlags=1)
                     if ret != 0:
                         print(ret)
                         print('SetFrequencies')
                         exit(0)
-                elif flg == 'steps': # set scan steps
+                elif (flg == 'steps') and self._nsteps != val: # set scan steps
                     ret, self._nsteps = self.SetScanSteps(nSteps=val)
                     if ret != 0:
                         print(ret)
                         print('SettScanSteps')
                         exit(0)
-                elif flg == 'chn': # set scan channel
+                elif (flg == 'chn') and (self._chn != int(val)): # set scan channel
                     if val != 'none':
-                        ret, self._chn = self.setADCChannel(reflectchn=int(val))
+                        ret, self._chn = self.setADCChannel(reflectchn=int(val), paths=setflg['cal'])
                         if ret != 0:
                             print(ret)
                             print('SetADCChannel')
                             exit(0)
-                elif flg == 'avg': # set scan average
+                elif (flg == 'avg') and (self._naverage != val): # set scan average
                     ret, self._naverage = self.SetScanAverage(nAverage=val)
                     if ret != 0:
                         print(ret)
                         print('SetScanAverage')
                         exit(0)
-                elif flg == 'instrmode': # set instrument mode
+                elif (flg == 'instrmode') and (self._instrmode != val): # set instrument mode
                     ret, self._instrmode = self.Setinstrmode(nMode=0)
                     if ret != 0:
                         print(ret)
                         print('Setinstrmode')
                         exit(0)
-                elif flg == 'speed': # set scan speed
+                elif (flg == 'speed') and (self._speed != val): # set scan speed
                     # we don't need to change it through python now
                     pass
                 else:
@@ -1390,23 +1495,34 @@ class AccessMyVNA():
 
 # exit(0)
 if __name__ == '__main__':
-    accvna = AccessMyVNA()
-    exit(0)
-
-    # ret = accvna.GetDoubleArray()
-    # ret, f, G, B = accvna.single_scan()
+    # ret = _MyVNAInit()
+    # ret = _MyVNAShowWindow(0)
+    # ret = _MyVNAClose()
+    # exit(0)
+    # # ret = accvna.GetDoubleArray()
+    # # ret, f, G, B = accvna.single_scan()
     # accvna = AccessMyVNA()
-    # print('acc', accvna._naverage) 
-    with accvna:
-        ret, nSteps = accvna.SetScanSteps(nSteps=300)
-        accvna._get_wait_time()
-        # pass
-        # print('acc', accvna._naverage) 
-        # print(11111) 
+    # # print('acc', accvna._naverage) 
+    # with accvna:
+    #     ret, nSteps = accvna.SetScanSteps(nSteps=300)
+    #     # accvna._get_wait_time()
+    #     # pass
+    #     # print('acc', accvna._naverage) 
+    #     # print(11111) 
 
-    # print('acc', accvna._naverage)
-    exit(0)
+    # # print('acc', accvna._naverage)
+    # exit(0)
     with AccessMyVNA() as accvna:
+        fileName = r'C:\Users\ShullGroup\Documents\User Data\WQF\GoogleDriveSync\py_programs\QCM\QCM_py\tests\dll\Hermes_4k_steps_4_36MHz_base_ADC2.myVNA.cal'
+        ret = accvna.LoadCalibration(fileName)
+        ret = accvna.LoadConfiguration(fileName)
+
+        ret, accvna._f[0], accvna._f[1] = accvna.SetFequencies(f1=4.9e6, f2=5.1e6, nFlags=1)
+        nSteps = 400
+        ret, f, G, B = accvna.single_scan()
+        ret, f, G = accvna.GetScanData(nStart=0, nEnd=accvna._nsteps-1, nWhata=-1, nWhatb=15)
+
+        exit(1)
         # print(accvna._get_wait_time())
         print('acc', accvna._naverage)
         ret, nSteps = accvna.SetScanSteps(nSteps=300)
@@ -1561,40 +1677,6 @@ def MyVNASetString():
     MyVNASetString = vna[28]
     # // set miscellaneous double array based data
     # __declspec(dllexport) int _stdcall MyVNASetString(int nWhat, int nIndex, _TCHAR * sValue )
-    
-
-# // MyVNALoadConfiguration()
-# // MyVNASaveConfiguration()
-# // MyVNALoadCalibration()
-# // MyVNASaveCalibration()
-# // Given a filename, attempt to load or save the current program configuration
-# // including calibration data or just load/save the calibration data
-# // finally, option exists to save current trace data to a file ( s2p only supported here)
-# // OLE equivalents:
-# // int LoadConfigurationAutomation(LPCTSTR fileName);
-# // int SaveConfigurationAutomation(LPCTSTR fileName);
-# // int LoadCalibrationAutomation(LPCTSTR fileName);
-# // int SaveCalibrationAutomation(LPCTSTR fileName);
-# // int SaveTraceDataAutomation(LPCTSTR fileName);
-
-def MyVNALoadConfiguration():
-    MyVNALoadConfiguration = vna[15]
-    # __declspec(dllexport) int _stdcall MyVNALoadConfiguration(_TCHAR * fileName)
-    
-
-def MyVNASaveConfiguration():
-    MyVNASaveConfiguration = vna[18]
-    # __declspec(dllexport) int _stdcall MyVNASaveConfiguration(_TCHAR * fileName)
-    
-
-def MyVNALoadCalibration():
-    MyVNALoadCalibration = vna[14]
-    # __declspec(dllexport) int _stdcall MyVNALoadCalibration(_TCHAR * fileName)
-    
-
-def MyVNASaveCalibration():
-    MyVNASaveCalibration = vna[17]
-    # __declspec(dllexport) int _stdcall MyVNASaveCalibration(_TCHAR * fileName)
     
 
 def MyVNASaveTraceData():

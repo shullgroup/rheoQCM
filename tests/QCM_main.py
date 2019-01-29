@@ -23,7 +23,20 @@ from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, 
 # packages
 from MainWindow import Ui_MainWindow # UI from QT5
 from UISettings import settings_init # UI basic settings
-from UISettings import settings_default as settings_default_org # UI value settings
+from UISettings import settings_default 
+
+# check default settings file
+print(os.getcwd())
+fileName = os.path.join(os.getcwd(), settings_init['default_settings_file_name'])
+if os.path.exists(fileName):
+    with open(fileName, 'r') as f:
+        settings_default = json.load(f) # read user default settings
+    print('use user default settings')
+else:
+    print('use default settings')
+del fileName
+if 'f' in locals():
+    del f
 
 from modules import UIModules, PeakTracker, DataSaver, QCM
 from modules.MatplotlibWidget import MatplotlibWidget
@@ -67,12 +80,33 @@ class VNATracker:
         self.avg = None     # average of scans (int)
         self.speed = None   # vna speed set up (int 1 to 10)
         self.instrmode = 0  # instrument mode (0: reflection)
+        self.cal = self.get_cal_filenames()
         
         self.setflg = {} # if vna needs to reset (set with reset selections)
         self.setflg.update(self.__dict__) # get all attributes in a dict
         self.setflg.pop('setflg', None) # remove setflg itself
-        # print(self.setflg) #testprint
-    
+        print('setflg', self.setflg) #testprint
+           
+    def get_cal_filenames(self):
+        '''
+        find calc file for ADC1 and ADC2 separately
+        The fill should be stored in settings_init['vna_cal_file_path'] for each channel 
+        ''' 
+        cal = {'ADC1': '', 'ADC2': ''}
+        if (UIModules.system_check() == 'win32') and (struct.calcsize('P') * 8 == 32): # windows (if is win32, struct will already be imported above)
+            for key in cal.keys():
+                files = os.listdir(settings_init['vna_cal_file_path']) # list all file in the given folder
+                print(files) #testprint
+                for file in files:
+                    if (key + '.myVNA.cal').lower() in file.lower():
+                        cal[key] = os.path.abspath(os.path.join(settings_init['vna_cal_file_path'], file)) # use absolute path
+                        break
+            print(cal) #testprint            
+
+        return cal
+
+
+
     def set_check(self, **kwargs):
         for key, val in kwargs.items():
             print(key, val) #testprint
@@ -105,18 +139,7 @@ class QCMApp(QMainWindow):
 
         self.tempPath = '' # to store the file name before it is initiated
 
-        # check default settings file
-        print(os.getcwd())
-        fileName = os.path.join(os.getcwd(), settings_init['default_settings_file_name'])
-        if os.path.exists(fileName):
-            with open(fileName, 'r') as f:
-                    self.settings = json.load(f) # read user default settings
-                    settings_default = self.settings.copy()
-            print('use user default settings')
-        else:
-            print('use default settings')
-            settings_default = settings_default_org
-            self.settings = settings_default.copy() # import default settings. It will be initalized later
+        self.settings = settings_default.copy() # import default settings. It will be initalized later
 
         self.peak_tracker = PeakTracker.PeakTracker()
         self.vna_tracker = VNATracker()
@@ -694,7 +717,7 @@ class QCMApp(QMainWindow):
 
         # self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.update_tempsensor)
         self.ui.checkBox_settings_temp_sensor.stateChanged.connect(self.on_clicked_set_temp_sensor)
-        self.ui.comboBox_thrmcpltype.currentIndexChanged.connect(self.update_tempdevice)
+        # self.ui.comboBox_thrmcpltype.currentIndexChanged.connect(self.update_tempdevice) # ??
         self.ui.comboBox_thrmcpltype.currentIndexChanged.connect(self.update_thrmcpltype)
 
         # set signals to update plots settings_settings
@@ -782,7 +805,7 @@ class QCMApp(QMainWindow):
 
         # NOTE: following two only emitted when value manually edited (activated)
         self.ui.comboBox_settings_data_samprefsource.activated.connect(self.save_data_saver_sampref)
-        self.ui.lineEdit_settings_data_samprefidx.textEdited.connect(self.save_data_saver_sampref)
+        self.ui.lineEdit_settings_data_samprefidx.editingFinished.connect(self.save_data_saver_sampref)
 
         # move frame_settings_data_refref
         self.move_to_col2(
@@ -796,7 +819,7 @@ class QCMApp(QMainWindow):
 
         # NOTE: following two only emitted when value manually edited (activated)
         self.ui.comboBox_settings_data_refrefsource.activated.connect(self.save_data_saver_refref)
-        self.ui.lineEdit_settings_data_refrefidx.textEdited.connect(self.save_data_saver_refref)
+        self.ui.lineEdit_settings_data_refrefidx.editingFinished.connect(self.save_data_saver_refref)
 
         
        # set treeWidget_settings_data_refs expanded
@@ -1058,9 +1081,16 @@ class QCMApp(QMainWindow):
         # toolButton_settings_data_refit
         # create menu: menu_settings_data_refit
         self.ui.menu_settings_data_refit = QMenu(self.ui.toolButton_settings_data_refit)
-        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_all)
-        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_marked)
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_allsamp)
+        self.ui.actionFit_allsamp.triggered.connect(lambda: self.autorefit_data(chn_name='samp', mode='all'))
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedsamp)
+        self.ui.actionFit_markedsamp.triggered.connect(lambda: self.autorefit_data(chn_name='samp', mode='marked'))
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_allref)
+        self.ui.actionFit_allref.triggered.connect(lambda: self.autorefit_data(chn_name='ref', mode='all'))
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedref)
+        self.ui.actionFit_markedref.triggered.connect(lambda: self.autorefit_data(chn_name='ref', mode='marked'))
         # self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_selected)
+        # self.ui.actionFit_all.triggered.connect(self.)
         # add menu to toolbutton
         self.ui.toolButton_settings_data_refit.setMenu(self.ui.menu_settings_data_refit)
 
@@ -1102,6 +1132,8 @@ class QCMApp(QMainWindow):
         self.ui.actionOpen_MyVNA.triggered.connect(self.on_triggered_actionOpen_MyVNA)
         # import QCM-D
         self.ui.actionImport_QCM_D.triggered.connect(self.on_triggered_actionImport_QCM_D)
+        # about QCM_py
+        self.ui.actionAbout_QCM_py.triggered.connect(self.msg_about)
 
 
         #endregion
@@ -1260,7 +1292,6 @@ class QCMApp(QMainWindow):
             # start the timer
             self.timer.start(0)
 
-
             self.ui.pushButton_runstop.setText('STOP')
         else:
             # set text on button for waitiong
@@ -1283,14 +1314,15 @@ class QCMApp(QMainWindow):
             #     print('looping') #testprint
 
             # write dfs and settings to file
-            if self.idle == True: # Timer stopped while timeout func is not running
+            if self.idle == True: # Timer stopped while timeout func is not running (test stopped while waiting)
                 self.process_saving_when_stop()
+                print('data saved while waiting') #testprint
 
 
 
     def process_saving_when_stop(self):
         '''
-        process saving fitted data when tested is stopped
+        process saving fitted data when test is stopped
         '''
         # save data
         self.data_saver.save_data()
@@ -1373,7 +1405,7 @@ class QCMApp(QMainWindow):
         ref_idx = UIModules.index_from_str(ref_idx, chn_queue_list)
         print('ref_idx', ref_idx, type(ref_idx)) #testprint
         # if the list is [] set it to [0], which mean the first data of the channel
-        if (not ref_idx) and (list(self.data_saver.get_queue_id('samp')) !=  list(self.data_saver.get_queue_id('ref'))): # samp and ref were not collected together
+        if (not ref_idx) and ((list(self.data_saver.get_queue_id('samp')) !=  list(self.data_saver.get_queue_id('ref')))): # samp and ref were not collected together
             ref_idx = [0]
             getattr(self.ui, 'lineEdit_settings_data_'+ chn_name + 'refidx').setText('[0]') 
             self.settings['lineEdit_settings_data_'+ chn_name + 'refidx'] = '[0]' 
@@ -1400,9 +1432,41 @@ class QCMApp(QMainWindow):
 
     def on_triggered_actionOpen_MyVNA(self):
         '''
-        open myVNA
+        open myVNA.exe
         '''
-        subprocess.Popen(settings_init['vna_path'])
+        if UIModules.system_check() != 'win32': # not windows
+            return
+
+        myvna_path = self.settings.get('vna_path', '')
+        print('myvna_path', myvna_path) #testprint
+        if myvna_path and os.path.exists(myvna_path): # user defined myVNA.exe path exists and correct
+            print('vna_path in self.settings') #testprint
+            pass
+        else: # use default path list
+            print('vna_path try settings_init') #testprint
+            for myvna_path in settings_init['vna_path']:
+                if os.path.exists(myvna_path):
+                    print('vna_path in settings_init') #testprint
+                    break
+                else:
+                    print('vna_path not found') #testprint
+                    myvna_path = ''
+        
+        print('myvna_path', myvna_path) #testprint
+        if myvna_path:
+            print('vna_path to open exe') #testprint
+            subprocess.call(myvna_path) # open myVNA
+        else:
+            print('vna_path msg box') #testprint
+            process = self.process_messagebox(
+                text='Failed to open myVNA.exe',
+                message=['Cannot find myVNA.exe in: \n{}\nPlease add the path for "vna_path" in "settings_default.json"!'.format('\n'.join(settings_init['vna_path'])),
+                'The format of the path should like this:',
+                r'"C:\\Program Files (x86)\\G8KBB\\myVNA\\myVNA.exe"'
+                ],
+                opts=False, 
+                forcepop=True,
+            )
 
 
     def on_triggered_actionImport_QCM_D(self):
@@ -1418,6 +1482,32 @@ class QCMApp(QMainWindow):
 
         if fileName:
             self.data_saver.import_qcmd(fileName, settings=self.settings)
+
+
+    def msg_about(self):
+        '''
+        This function opens a message box to display the version information
+        '''
+        msg_text = []
+        msg_text.append('Version: {}'.format(_version.__version__))
+        msg_text.append('Authors: {}'.format(' ,'.join(_version.__authors__)))
+        msg_text.append('Contact: {}'.format(_version.__contact__))
+        msg_text.append('Copyright: {}'.format(_version.__copyright__))
+        msg_text.append("Source: <a href='{0}'>{0}</a>".format(_version.__source__))
+        msg_text.append("Report issues: <a href='{0}'>{0}</a>".format(_version.__report__))
+        msg_text.append('License: {}'.format(_version.__license__))
+        msg_text.append('Date: {}'.format(_version.__date__))
+
+        buttons = QMessageBox.Ok
+
+        msg = QMessageBox()
+        msg.setTextFormat(Qt.RichText)
+        # msg.setIcon(QMessageBox.Information)
+        msg.setWindowTitle('About ' + _version.__projectname__)
+        msg.setText('<b>{} {}<\b>'.format(_version.__projectname__, _version.__version__))
+        msg.setInformativeText('<P>'.join(msg_text))
+        msg.setStandardButtons(buttons)
+        msg.exec_()
 
 
     # @pyqtSlot()
@@ -1476,7 +1566,7 @@ class QCMApp(QMainWindow):
     def saveFileDialog(self, title, path='', filetype=settings_init['default_datafiletype']):    
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
-        fileName, _ = QFileDialog.getSaveFileName(self,title, path, filetype, options=options)
+        fileName, _ = QFileDialog.getSaveFileName(self,title, os.path.splitext(path)[0], filetype, options=options)
         if fileName:
             print(fileName) 
         else:
@@ -1576,6 +1666,7 @@ class QCMApp(QMainWindow):
                 with open(fileName, 'w') as f:
                     settings = self.settings.copy()
                     settings.pop('dateTimeEdit_reftime', None)
+                    settings.pop('dateTimeEdit_settings_data_t0shifted', None)
                     line = json.dumps(settings, indent=4) + "\n"
                     f.write(line)
                 print('Settings were exported as json file.')
@@ -1633,7 +1724,7 @@ class QCMApp(QMainWindow):
         if fileName:
             self.data_saver.data_exporter(fileName) # do the export
 
-    def process_messagebox(self, message=[], forcepop=False):
+    def process_messagebox(self, text='Your selection was paused!', message=[], opts=True, forcepop=False):
         '''
         check is the experiment is ongoing (self.timer.isActive()) and if data is saved (self.data_saver.saveflg)
         and pop up a messageBox to ask if process
@@ -1652,12 +1743,15 @@ class QCMApp(QMainWindow):
                 message.append('Test is Running!')
                 buttons = QMessageBox.Ok
             else:
-                message.append('Do you want to process?')
-                buttons = QMessageBox.Yes | QMessageBox.Cancel
+                if not opts:
+                    buttons = QMessageBox.Ok
+                else:
+                    message.append('Do you want to process?')
+                    buttons = QMessageBox.Yes | QMessageBox.Cancel
 
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Information)
-            msg.setText('Your selection was paused!')
+            msg.setText(text)
             msg.setInformativeText('\n'.join(message))
             msg.setWindowTitle(_version.__projectname__ + ' Message')
             msg.setStandardButtons(buttons)
@@ -2009,9 +2103,9 @@ class QCMApp(QMainWindow):
         setflg = self.vna_tracker.set_check(f=freq_span, steps=steps, chn=self.get_chn_by_name(chn_name))
         print(setflg) #testprint
 
-        print(vna) #testprint
+        print(self.vna) #testprint
         with self.vna:
-            print(vna) #testprint
+            print(self.vna) #testprint
             print('vna._naverage', self.vna._naverage) #testprint
             ret = self.vna.set_vna(setflg)
             if ret == 0:
@@ -2061,10 +2155,15 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.update_data({'ln': 'lB', 'x': f, 'y': B})
 
         # constrain xlim
-        self.ui.mpl_spectra_fit.ax[0].set_xlim(f[0], f[-1])
-        self.ui.mpl_spectra_fit.ax[1].set_xlim(f[0], f[-1])
-        self.ui.mpl_spectra_fit.ax[0].set_ylim(min(G)-0.05*(max(G)-min(G)), max(G)+0.05*(max(G)-min(G)))
-        self.ui.mpl_spectra_fit.ax[1].set_ylim(min(B)-0.05*(max(B)-min(B)), max(B)+0.05*(max(B)-min(B)))
+        if (f is not None) and (f[0] != f[-1]): # f is available
+            self.ui.mpl_spectra_fit.ax[0].set_xlim(f[0], f[-1])
+            self.ui.mpl_spectra_fit.ax[1].set_xlim(f[0], f[-1])
+            self.ui.mpl_spectra_fit.ax[0].set_ylim(min(G)-0.05*(max(G)-min(G)), max(G)+0.05*(max(G)-min(G)))
+            self.ui.mpl_spectra_fit.ax[1].set_ylim(min(B)-0.05*(max(B)-min(B)), max(B)+0.05*(max(B)-min(B)))
+        elif f is None or (not f.any()): # vna error or f is all 0s
+            self.ui.mpl_spectra_fit.ax[0].autoscale()
+            self.ui.mpl_spectra_fit.ax[1].autoscale()
+
 
         ## connect axes event
         self.mpl_connect_cid(self.ui.mpl_spectra_fit, self.on_fit_lims_change)
@@ -2363,8 +2462,25 @@ class QCMApp(QMainWindow):
         self.tab_spectra_fit_update_mpls(f, G, B)
 
 
+    def autorefit_data(self, chn_name='samp', mode='all'):
+        '''
+        This function is to auto refit all or marked data from raw of given chn_name
+        '''
+        print(chn_name) #testprint
+        print(mode) #testprint
+        # get marks df with harms in columns
+        marks = self.data_saver.get_marks(chn_name, tocolumns=True)
 
-
+        # use all harms. the harmonics without data will be [] in sel_idx_dict
+        harms = [str(harm) for harm in range(1, settings_init['max_harmonic']+2, 2)]
+        print(harms) #testprint
+        # initiate sel_idx_dict. Since will will use all data points overwrite, it can be any shape dict
+        sel_idx_dict = {}
+        sel_idx_dict = UIModules.sel_ind_dict(harms, sel_idx_dict, mode, marks)
+        print('sel_idx_dict from main', sel_idx_dict) #testprint
+        
+        # auto refit data
+        self.data_refit(chn_name, sel_idx_dict)
 
 
     def get_active_queueid_from_l_harm_ind(self):
@@ -2376,9 +2492,9 @@ class QCMApp(QMainWindow):
         return queue_id
         '''
         if self.active['l_str'] == 'l': # showing all data
-            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanrow=False)
+            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=False)
         elif self.active['l_str'] == 'lm': # showing marked data
-            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanrow=True)
+            queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=True)
         return queue_list[self.active['ind']]
 
     def get_active_raw(self):
@@ -2603,7 +2719,7 @@ class QCMApp(QMainWindow):
         data_list = []
 
         if show_marked_when_all: 
-            mark_df = self.data_saver.get_list_column_to_columns_marked_rows(plt_chnname, 'marks', mark=False, dropnanrow=False, deltaval=False, norm=False)            
+            mark_df = self.data_saver.get_list_column_to_columns_marked_rows(plt_chnname, 'marks', mark=False, dropnanmarkrow=False, deltaval=False, norm=False)            
         for harm in plt_harms: # selected
             harm = str(harm)
             # set xdata for harm
@@ -2640,7 +2756,7 @@ class QCMApp(QMainWindow):
         data_list = []
 
         if show_marked_when_all: 
-            mark_df = self.data_saver.get_list_column_to_columns_marked_rows(plt_chnname, 'marks', mark=False, dropnanrow=False, deltaval=False, norm=False)            
+            mark_df = self.data_saver.get_list_column_to_columns_marked_rows(plt_chnname, 'marks', mark=False, dropnanmarkrow=False, deltaval=False, norm=False)            
         for harm in plt_harms: # selected
             harm = str(harm)
             # set xdata for harm
@@ -2702,29 +2818,31 @@ class QCMApp(QMainWindow):
 
         print(typestr) #testprint
         if typestr in ['df', 'delf_exps']: # get delf
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanmarkrow=False, deltaval=True, norm=False)
         elif 'mdf' == typestr: # get delf
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanmarkrow=False, deltaval=True, norm=False)
             data = self.data_saver.minus_columns(data)
         elif typestr in ['dg', 'delg_exps']: # get delg
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=False, deltaval=True, norm=False)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanmarkrow=False, deltaval=True, norm=False)
         elif 'dfn' == typestr: # get delfn
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=True)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanmarkrow=False, deltaval=True, norm=True)
         elif 'mdfn' == typestr: # get delfn
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=True, norm=True)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanmarkrow=False, deltaval=True, norm=True)
             data = self.data_saver.minus_columns(data)
         elif 'dgn' == typestr: # get delgn
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=False, deltaval=True, norm=True)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanmarkrow=False, deltaval=True, norm=True)
         elif 'f' == typestr: # get f
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanrow=False, deltaval=False, norm=False)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanmarkrow=False, deltaval=False, norm=False)
         elif 'g' == typestr: # get g
-            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanrow=False, deltaval=False, norm=False)
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanmarkrow=False, deltaval=False, norm=False)
         elif 't' == typestr: # get t
-            data = self.data_saver.get_t_marked_rows(chn_name, dropnanrow=False, unit=unit_t)
+            data = self.data_saver.get_t_marked_rows(chn_name, dropnanmarkrow=False, unit=unit_t)
         elif 'temp' == typestr: # get temp
-            data = self.data_saver.get_temp_by_uint_marked_rows(chn_name, dropnanrow=False, unit=unit_temp)
+            data = self.data_saver.get_temp_by_uint_marked_rows(chn_name, dropnanmarkrow=False, unit=unit_temp)
+        elif 'id' == typestr: # get queue_id
+            data = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanmarkrow=False)
         elif 'idx' == typestr: # get indices
-            data = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanrow=False)
+            data = self.data_saver.get_idx_marked_rows(chn_name, dropnanmarkrow=False)
         
         return data
 
@@ -2735,7 +2853,7 @@ class QCMApp(QMainWindow):
         print(sender_name) #testprint
 
         # check which plot to update
-        if 'plt1' in sender_name or 'plt2' in sender_name:# signal sent from one of the plots
+        if ('plt1' in sender_name) or ('plt2' in sender_name):# signal sent from one of the plots
             plt_str = sender_name.split('_')[1] # plt1 or plt2
 
             # plot option str in list [y, x]
@@ -2755,7 +2873,7 @@ class QCMApp(QMainWindow):
                 getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
 
             if plt_opt[1] not in ['t', 'temp']: # other type in x-axis w/o changing the unit
-                xlabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
+                xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
                 # set x labels
                 getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
                 getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
@@ -3003,7 +3121,7 @@ class QCMApp(QMainWindow):
             print(harm_sel_data) #testprint
             print(harm_sel_data[0]) #testprint
             if isinstance(harm_sel_data[0], pd.Series) and harm_sel_data[0].shape[0] > 0: # data is not empty
-                harm_sel_idx = harm_sel_data[0].index # get indices from xdata
+                harm_sel_idx = list(harm_sel_data[0].index) # get indices from xdata
                 print(harm_sel_idx) #testprint
                 sel_idx_dict[harm] = harm_sel_idx
                 selflg = True
@@ -3017,21 +3135,21 @@ class QCMApp(QMainWindow):
 
         # get channel name
         chn_name = self.get_plt_chnname(plt_str)
-        chn_queue_list = list(self.data_saver.get_queue_id(chn_name).tolist()) # list of available index in the target chn
+        marks = self.data_saver.get_marks(chn_name, tocolumns=True) # df of boolean shows if has data
 
         # create contextMenu
         selmenu = QMenu('selmenu', self)
 
         menuMark = QMenu('Mark', self)
         actionMark_all = QAction('Mark all showing data', self)
-        actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list), 1))
+        actionMark_all.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', marks), 1))
         if selflg:
             actionMark_selpts = QAction('Mark selected points', self)
-            actionMark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', chn_queue_list), 1))
+            actionMark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', marks), 1))
             actionMark_selidx = QAction('Mark selected indices', self)
-            actionMark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', chn_queue_list), 1))
+            actionMark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', marks), 1))
             actionMark_selharm = QAction('Mark selected harmonics', self)
-            actionMark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', chn_queue_list), 1))
+            actionMark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', marks), 1))
 
         menuMark.addAction(actionMark_all)
         if selflg:
@@ -3041,14 +3159,14 @@ class QCMApp(QMainWindow):
 
         menuUnmark = QMenu('Unmark', self)
         actionUnmark_all = QAction('Unmark all showing data', self)
-        actionUnmark_all.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list), 0))
+        actionUnmark_all.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', marks), 0))
         if selflg:
             actionUnmark_selpts = QAction('Unmark selected points', self)
-            actionUnmark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', chn_queue_list), 0))
+            actionUnmark_selpts.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', marks), 0))
             actionUnmark_selidx = QAction('Unmark selected indices', self)
-            actionUnmark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', chn_queue_list), 0))
+            actionUnmark_selidx.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', marks), 0))
             actionUnmark_selharm = QAction('Unmark selected harmonics', self)
-            actionUnmark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', chn_queue_list), 0))
+            actionUnmark_selharm.triggered.connect(lambda: self.data_saver.selector_mark_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', marks), 0))
 
         menuUnmark.addAction(actionUnmark_all)
         if selflg:
@@ -3058,14 +3176,14 @@ class QCMApp(QMainWindow):
 
         menuDel = QMenu('Delete', self)
         actionDel_all = QAction('Delete all showing data', self)
-        actionDel_all.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list)))
+        actionDel_all.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', marks)))
         if selflg:
             actionDel_selpts = QAction('Delete selected points', self)
-            actionDel_selpts.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', chn_queue_list)))
+            actionDel_selpts.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', marks)))
             actionDel_selidx = QAction('Delete selected indices', self)
-            actionDel_selidx.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', chn_queue_list)))
+            actionDel_selidx.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', marks)))
             actionDel_selharm = QAction('Delete selected harmonics', self)
-            actionDel_selharm.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', chn_queue_list)))
+            actionDel_selharm.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', marks)))
 
         menuDel.addAction(actionDel_all)
         if selflg:
@@ -3075,14 +3193,14 @@ class QCMApp(QMainWindow):
 
         menuRefit = QMenu('Refit', self)
         actionRefit_all = QAction('Refit all showing data', self)
-        actionRefit_all.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', chn_queue_list)))
+        actionRefit_all.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', marks)))
         if selflg:
             actionRefit_selpts = QAction('Refit selected points', self)
-            actionRefit_selpts.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', chn_queue_list)))
+            actionRefit_selpts.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', marks)))
             actionRefit_selidx = QAction('Refit selected indices', self)
-            actionRefit_selidx.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', chn_queue_list)))
+            actionRefit_selidx.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', marks)))
             actionRefit_selharm = QAction('Refit selected harmonics', self)
-            actionRefit_selharm.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', chn_queue_list)))
+            actionRefit_selharm.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', marks)))
 
         menuRefit.addAction(actionRefit_all)
         if selflg:
@@ -3155,12 +3273,12 @@ class QCMApp(QMainWindow):
 
 
     def mech_solve_all(self):
-        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanrow=False)
+        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanmarkrow=False)
         self.mech_solve_chn(self.mech_chn, queue_ids)
 
 
     def mech_solve_marked(self):
-        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanrow=True)       
+        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanmarkrow=True)       
         self.mech_solve_chn(self.mech_chn, queue_ids)
 
 
@@ -3194,6 +3312,9 @@ class QCMApp(QMainWindow):
             return
         # get f1
         f1 = self.data_saver.get_fg_ref(chn_name, harms=[1])['f0'][0]
+        if np.isnan(f1): # no 1st harmonic data collected
+            # use base frequency in settings
+            f1 = float(self.settings['comboBox_base_frequency']) * 1e6 # in Hz
         # set f1 to qcm module
         self.qcm.f1 = f1
 
@@ -3223,6 +3344,7 @@ class QCMApp(QMainWindow):
                 idx = qcm_df[qcm_df.queue_id == queue_id].index.astype(int)[0]
                 # idx = qcm_df[qcm_df.queue_id == queue_id].index
                 print('index', qcm_df.index) #testprint
+                print('index', mech_df.index) #testprint
                 print('idx', idx) #testprint
                 # qcm data of queue_id
                 qcm_queue = qcm_df.loc[[idx], :].copy() # as a dataframe
@@ -3526,11 +3648,11 @@ class QCMApp(QMainWindow):
             data = self.get_data_by_typestr(var, chn_name, mark=mark, unit_t=timeunit, unit_temp=tempunit)
 
         elif var in prop_cols: # delg delf is in data, so add them to the check list
-            data = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var, mark=mark, dropnanrow=False)
+            data = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var, mark=mark, dropnanmarkrow=False)
             data = self.qcm.convert_mech_unit(data) # convert unit for plot
             # get yerr
             if self.settings['checkBox_settings_mechanics_witherror'] and (var + '_err' in getattr(self.data_saver, chn_name + '_prop')[mech_key].keys()): # corresponding error exists
-                err = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var + '_err', mark=mark, dropnanrow=False)
+                err = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var + '_err', mark=mark, dropnanmarkrow=False)
                 err = self.qcm.convert_mech_unit(err)
             else:
                 err = None
@@ -3579,9 +3701,9 @@ class QCMApp(QMainWindow):
                 thrmcpltype = self.settings['comboBox_thrmcpltype'] # get thermocouple type
                 tempdevice = TempDevices.device_info(self.settings['comboBox_tempdevice']) #get temp device info
 
-                # check senor availability
-                package_str = settings_init['tempmodules_path'][2:].replace('/', '.') + tempmodule_name
-                print(package_str) #testprint
+                # # check senor availability
+                # package_str = settings_init['tempmodules_path'][2:].replace('/', '.') + tempmodule_name
+                # print(package_str) #testprint
                 # import package
                 temp_sensor = getattr(TempModules, tempmodule_name)
 
@@ -4150,6 +4272,7 @@ class QCMApp(QMainWindow):
         # set visibility of samp & ref related widgets
         self.setvisible_samprefwidgets(samp_value=self.settings['comboBox_samp_channel'] != 'none', ref_value=self.settings['comboBox_ref_channel'] != 'none')
 
+
     def update_tempsensor(self, signal):
         # NOTUSING
         print("update_tempsensor was called") #testprint
@@ -4495,129 +4618,6 @@ class QCMApp(QMainWindow):
         self.settings['lineEdit_settings_data_refrefidx'] = self.data_saver.exp_ref['ref_ref'][1]
 
 
-    def check_freq_range(self, harmonic, min_range, max_range):
-        #NOTUSING
-        startname = 'lineEdit_startf' + str(harmonic)
-        endname = 'lineEdit_endf' + str(harmonic)
-        # check start frequency range
-        if float(self.settings[startname]) <= min_range or float(self.settings[startname]) >= max_range:
-            print('ERROR')
-            self.settings[startname] = float(min_range)
-        if float(self.settings[startname]) >= float(self.settings[endname]):
-            if float(self.settings[startname]) == float(self.settings[endname]):
-                print('The start frequency cannot be the same as the end frequency!')
-                self.settings[startname] = min_range
-                # self.settings[endname] = max_range
-            else:
-                print('The start frequency is greater than the end frequency!')
-                self.settings[startname] = min_range
-        # check end frequency range
-        if float(self.settings[endname]) <= min_range or float(self.settings[endname]) >= max_range:
-            print('ERROR')
-            self.settings[endname] = max_range
-        if float(self.settings[endname]) <= float(self.settings[startname]):
-            print('ERROR: The end frequency is less than the start frequency!')
-            if float(self.settings[startname]) == max_range:
-                print('The start frequency cannot be the same as the end frequency!')
-                self.settings[startname] = min_range
-                # self.settings[endname] = max_range - 0.9
-            else:
-                self.settings[endname] = max_range
-
-    def smart_peak_tracker(self, harmonic=None, freq=None, conductance=None, susceptance=None, G_parameters=None):
-        # NOT USING
-        self.peak_tracker.f0 = G_parameters[0]
-        self.peak_tracker.g0 = G_parameters[1]
-
-        track_condition = self.get_harmdata('comboBox_tracking_condition', harmonic) 
-        track_method = self.get_harmdata('comboBox_tracking_method', harmonic)
-        chn = self.active_chn['name']
-        # determine the structure field that should be used to extract out the initial-guessing method
-        if track_method == 'bmax':
-            resonance = susceptance
-        else:
-            resonance = conductance
-        index = GBFitting.findpeaks(resonance, output='indices', sortstr='descend')
-        cen = freq[index[0]] # peak center
-        # determine the estimated associated conductance (or susceptance) value at the resonance peak
-        Gmax = resonance[index[0]] 
-        # determine the estimated half-max conductance (or susceptance) of the resonance peak
-        half_amp = (Gmax-np.amin(resonance))/2 + np.amin(resonance) 
-        half_wid = np.absolute(freq[np.where(np.abs(half_amp-resonance)==np.min(np.abs(half_amp-resonance)))[0][0]] -  cen)
-        current_xlim = self.get_freq_span(harm=harmonic, chn=chn)
-        # get the current center and current span of the data in Hz
-        current_center, current_span = UIModules.converter_startstop_to_centerspan(current_xlim[0], current_xlim[1])
-        # find the starting and ending frequency of only the peak in Hz
-        if track_condition == 'fixspan':
-            if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > 0.1 * current_span:
-                # new start and end frequencies in Hz
-                new_xlim=np.array([cen-0.5*current_span,cen+0.5*current_span])
-        elif track_condition == 'fixcenter':
-            # peak_xlim = np.array([cen-half_wid*3, cen+half_wid*3])
-            if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*half_wid, current_center + 3*half_wid])))) > 3e3:
-                #TODO above should equal to abs(sp - 6 * half_wid) > 3e3
-                # set new start and end freq based on the location of the peak in Hz
-                new_xlim = np.array(current_center-3*half_wid, current_center+3*half_wid)
-
-        elif track_condition == 'auto':
-            # adjust window if neither span or center is fixed (default)
-            if(np.mean(current_xlim)-cen) > 1*current_span/12:
-                new_xlim = current_xlim - current_span / 15  # new start and end frequencies in Hz
-            elif (np.mean(current_xlim)-cen) < -1*current_span/12:
-                new_xlim = current_xlim + current_span / 15  # new start and end frequencies in Hz
-            else:
-                thresh1 = .05 * current_span + current_xlim[0] # Threshold frequency in Hz
-                thresh2 = .03 * current_span # Threshold frequency span in Hz
-                LB_peak = cen - half_wid * 3 # lower bound of the resonance peak
-                if LB_peak - thresh1 > half_wid * 8: # if peak is too thin, zoom into the peak
-                    new_xlim[0] = (current_xlim[0] + thresh2) # Hz
-                    new_xlim[1] = (current_xlim[1] - thresh2) # Hz
-                elif thresh1 - LB_peak > -half_wid*5: # if the peak is too fat, zoom out of the peak
-                    new_xlim[0] = current_xlim[0] - thresh2 # Hz
-                    new_xlim[1] = current_xlim[1] + thresh2 # Hz
-        elif track_condition == 'fixcntspn':
-            # bothe span and cent are fixed
-            # no changes
-            return
-        elif track_condition == 'usrdef': #run custom tracking algorithm
-            ### CUSTOM, USER-DEFINED
-            ### CUSTOM, USER-DEFINED
-            ### CUSTOM, USER-DEFINED
-            return
-
-        # set new start/end freq in Hz
-        self.set_freq_span(new_xlim, harm= harmonic, chn=chn)
-        self.check_freq_spans()
-        self.update_frequencies()
-    
-    def read_scan(self, harmonic):
-        #NOTUSING
-        # read in live data scans
-        if self.peak_tracker.refit_flag == 0:
-            flag = 0
-            rawdata = np.array([])
-            start1 = self.settings['lineEdit_startf' + str(harmonic)]
-            end1 = self.settings['lineEdit_endf' + str(harmonic)]
-            if harmonic < 11:
-                rawfile = 'myVNAdata0' + str(harmonic) + '.csv'
-            else:
-                rawfile = 'myVNAdata11.csv'
-            while flag == 0:
-                with open(rawfile, newline='') as csvfile:
-                    reader = csv.DictReader(csvfile)
-                    for row in reader:
-                        np.append(rawdata, row[0])
-                num_pts = self.get_harmdata('lineEdit_scan_harmsteps', harm=self.settings_harm)
-                if len(rawdata) == num_pts*2:
-                    self.Peak_tracker.G = 1e3 * rawdata[:num_pts+1]
-                    self.peak_tracker.B = 1e3 * rawdata[num_pts:]
-                    self.peak_tracker.f = np.arange(start1,end1-(end1-start1)/num_pts+1,(end1-start1)/num_pts)
-                    flag = 1
-                    print('Status: Scan successful.')
-        #TODO refit loaded raw spectra data
-        else:
-            pass
-
     def updat_progressbar(self, val=0, text=''):
         '''
         update progressBar_status_interval_time
@@ -4698,6 +4698,23 @@ class QCMApp(QMainWindow):
                     print(harm_list) #testprint
                     f[chn_name][harm], G[chn_name][harm], B[chn_name][harm] = self.get_vna_data_no_with(harm=harm, chn_name=chn_name)
                     
+                    print('check:') #testprint
+                    print(f[chn_name][harm] is None) #testprint
+                    print(f[chn_name][harm][0] == f[chn_name][harm][-1]) #testprint
+                    if (f[chn_name][harm] is None) or (f[chn_name][harm][0] == f[chn_name][harm][-1]): # vna error
+                        print('Analyzer connection error!')
+                        # stop test
+                        self.idle = True
+                        self.ui.pushButton_runstop.setChecked(False)
+                        # alert
+                        process = self.process_messagebox(
+                            text='Failed to connect with analyzer!',
+                            message=['Please check the connection and power.'],
+                            opts=False, 
+                            forcepop=True,
+                        )
+                        return
+
                     # put f, G, B to peak_tracker for later fitting and/or tracking
                     self.peak_tracker.update_input(chn_name, harm, f[chn_name][harm], G[chn_name][harm], B[chn_name][harm], self.settings['harmdata'], self.settings['freq_span'])
 
@@ -4734,8 +4751,12 @@ class QCMApp(QMainWindow):
 
                     # update lsp
                     factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=chn_name, harm=harm)
-                    gc_list = [fit_result['v_fit']['g_c']['value']] * 2 # make its len() == 2
-                    bc_list = [fit_result['v_fit']['b_c']['value']] * 2 # make its len() == 2
+                    if 'g_c' in fit_result['v_fit']: # fitting successed
+                        gc_list = [fit_result['v_fit']['g_c']['value']] * 2 # make its len() == 2
+                        bc_list = [fit_result['v_fit']['b_c']['value']] * 2 # make its len() == 2
+                    else: # fitting failed
+                        gc_list = [np.nan, np.nan]
+                        bc_list = [np.nan, np.nan]
 
                     print(factor_span) #testprint
                     print(gc_list) #testprint
@@ -4810,7 +4831,11 @@ class QCMApp(QMainWindow):
         # Save scan data to file fitting data in RAM to file
         if int(self.counter) % int(self.settings['lineEdit_refreshresolution']) == 0: # check if to save by intervals
             self.writing = True
+            # save raw
             self.data_saver.dynamic_save(chn_name_list, harm_list, t=curr_time, temp=curr_temp, f=f, G=G, B=B, fs=fs, gs=gs, marks=marks)
+            
+            # save data (THIS MIGHT MAKE THE PROCESS SLOW)
+            self.data_saver.save_data()
         
             # plot data
             self.update_mpl_plt12()
@@ -4818,9 +4843,12 @@ class QCMApp(QMainWindow):
         # increase counter
         self.counter += 1
 
-        if not self.timer.isActive(): # if timer is stopped
+        if not self.timer.isActive(): # if timer is stopped (test stopped while collecting data)
             # save data
             self.process_saving_when_stop()
+            print('data saved while collecting') #testprint
+
+        self.idle = True
 
         self.writing = False
 
@@ -4828,13 +4856,7 @@ class QCMApp(QMainWindow):
         self.set_status_pts()
 
 
-        self.idle = True
 
-
-        self.writing = True
-        # save scans to file
-
-        self.writing = False
 
         # 
         # wait bar
@@ -4857,12 +4879,14 @@ class QCMApp(QMainWindow):
         print('sel_idx_dict\n', sel_idx_dict) #testprint
         # reform dict
         sel_harm_dict = UIModules.idx_dict_to_harm_dict(sel_idx_dict)
-        queue_list = sel_harm_dict.keys()
+        # queue_list = self.data_saver.get_queue_id(chn_name)[sel_harm_dict.keys()] # df
+        indeces = sel_harm_dict.keys()
         print('sel_harm_dict\n', sel_harm_dict) #testprint
 
-        for queue_id in queue_list:
+        for idx in indeces:
             # initiate data of queue_id
 
+            queue_id = self.data_saver.get_queue_id(chn_name)[idx]
             # scan harmonics (1, 3, 5...)
             fs = []
             gs = []
@@ -4870,7 +4894,7 @@ class QCMApp(QMainWindow):
             self.reading = True
 
             # data reading and plot
-            harm_list = sel_harm_dict[queue_id]
+            harm_list = sel_harm_dict[idx]
             for harm in harm_list:
                 # get data
                 f, G, B = self.data_saver.get_raw(chn_name, queue_id, harm)

@@ -17,7 +17,13 @@ settings_init = {
     'default_settings_file_name': 'settings_default.json',
 
     # myVNA path
-    'vna_path': r'C:\Program Files (x86)\G8KBB\myVNA\myVNA.exe',
+    'vna_path': [
+        r'C:\Program Files (x86)\G8KBB\myVNA\yVNA.exe',
+        r'C:\Program Files\G8KBB\myVNA\yVNA.exe',
+    ],
+
+    # where the calibration files where save
+    'vna_cal_file_path': r'./dll/', 
 
     # highest harmonic can be shown in the UI. 
     'max_harmonic': 9, # do not change
@@ -201,6 +207,7 @@ settings_init = {
         ('temp', 'temp.'),
         ('t', 'time'),
         ('idx', 'index'),
+        ('id', 'test ID')
     ]),
 
     'data_plt_axis_label': {
@@ -214,7 +221,8 @@ settings_init = {
         'g':    r'$\Gamma$ (Hz)',
         'temp': r'Temp. (unit)', # unit is going to be replaced by temperature unit
         't':    r'Time (unit)', # unit is going to be replaced by time unit
-        'idx':  r'Index', 
+        'id':  r'Test ID', # queue_id
+        'idx':  r'Index', # dataframe index
 
         # for property
         'delf_calcs':        r'$\Delta$f (Hz)',
@@ -404,8 +412,8 @@ settings_init = {
 
 
     ############ params for temperature modules ###########
-    # temperature modules path
-    'tempmodules_path': r'./modules/temp/', 
+    # # temperature modules path
+    # 'tempmodules_path': r'./modules/temp/', 
     
     # add NI sensors into the dict and the code will check if the devices in its keys.
     # the values are the number of samples per test for average
@@ -438,15 +446,38 @@ settings_init = {
     ######### params for DataSaver module #########
     'unsaved_path': r'.\unsaved', 
 
+
+    ######### params for PeakTracker module #######
+    'cen_range': 0.05, # peak center limitation (cen of span +/- cen_range*span)
+    'wid_ratio_range': (8, 20), # width_ratio[0]*HWHM <= span <= width_ratio[1]*HWHM
+    'change_thresh': (0.05, 0.5), # span change threshold current_span * change_thresh. When the changing step of (current_span +/- 'wid_ratio_range' * 2 * current_span) > ( current_span * (1 +/- change_thresh)), former will be used 
+    # the value should be between (0, 1)
+
 }
 
+
+
 #####################################################
+
+
+
+
+
+
+
 
 
 #####################################################
 
 settings_default = {
 #### default settings control ####
+
+    # add na_path on your computer if it is not in the 
+    # default path listed in settings_init['vna_path']
+    # add the string as 
+    # 'vna_path': r'C:/...../myVNA.exe'.
+    # if this key is empty, the program will look for the file in the default list in settings_init['vna_path']
+    'vna_path': r'',
     
     # # highest harmonic to display MUST <= settings_init['max_harmonic']
     # 'max_disp_harmonic': 9, 
@@ -477,80 +508,80 @@ settings_default = {
     'checkBox_fitfactorbyharm': False,
 
     #NOTUSING
-    'harm_set':{
-        'freq_range': {
+    # 'harm_set':{
+    #     'freq_range': {
 
-        },
-        'freq_span': {
+    #     },
+    #     'freq_span': {
 
-        },
-        'steps': {
-            1:  400, 
-            3:  400, 
-            5:  400, 
-            7:  400, 
-            9:  400, 
-            11: 400, 
-        },
-        'span_method': {
-            1:  'auto', 
-            3:  'auto', 
-            5:  'auto', 
-            7:  'auto', 
-            9:  'auto', 
-            11: 'auto', 
-        },
-        'span_track': {
-            1:  'auto', 
-            3:  'auto', 
-            5:  'auto', 
-            7:  'auto', 
-            9:  'auto', 
-            11: 'auto', 
-        },
-        'harmfit': {
-            1:  True, 
-            3:  True, 
-            5:  True, 
-            7:  True, 
-            9:  True, 
-            11: True, 
-        },
-        'harmfitfactor': {
-            1:  3, 
-            3:  3, 
-            5:  3, 
-            7:  3, 
-            9:  3, 
-            11: 3, 
+    #     },
+    #     'steps': {
+    #         1:  400, 
+    #         3:  400, 
+    #         5:  400, 
+    #         7:  400, 
+    #         9:  400, 
+    #         11: 400, 
+    #     },
+    #     'span_method': {
+    #         1:  'auto', 
+    #         3:  'auto', 
+    #         5:  'auto', 
+    #         7:  'auto', 
+    #         9:  'auto', 
+    #         11: 'auto', 
+    #     },
+    #     'span_track': {
+    #         1:  'auto', 
+    #         3:  'auto', 
+    #         5:  'auto', 
+    #         7:  'auto', 
+    #         9:  'auto', 
+    #         11: 'auto', 
+    #     },
+    #     'harmfit': {
+    #         1:  True, 
+    #         3:  True, 
+    #         5:  True, 
+    #         7:  True, 
+    #         9:  True, 
+    #         11: True, 
+    #     },
+    #     'harmfitfactor': {
+    #         1:  3, 
+    #         3:  3, 
+    #         5:  3, 
+    #         7:  3, 
+    #         9:  3, 
+    #         11: 3, 
 
-        },
-        'peaks_maxnum': {
-            1:  1, 
-            3:  1, 
-            5:  1, 
-            7:  1, 
-            9:  1, 
-            11: 1, 
+    #     },
+    #     'peaks_maxnum': {
+    #         1:  1, 
+    #         3:  1, 
+    #         5:  1, 
+    #         7:  1, 
+    #         9:  1, 
+    #         11: 1, 
 
-        },
-        'peaks_threshold': {
-            1:  0.0001, 
-            3:  0.0001, 
-            5:  0.0001, 
-            7:  0.0001, 
-            9:  0.0001, 
-            11: 0.0001, 
-        },
-        'peaks_prominence': {
-            1:  0.0001, 
-            3:  0.0001, 
-            5:  0.0001, 
-            7:  0.0001, 
-            9:  0.0001, 
-            11: 0.0001, 
-        },
-    },
+    #     },
+    #     'peaks_threshold': {
+    #         1:  0.0001, 
+    #         3:  0.0001, 
+    #         5:  0.0001, 
+    #         7:  0.0001, 
+    #         9:  0.0001, 
+    #         11: 0.0001, 
+    #     },
+    #     'peaks_prominence': {
+    #         1:  0.0001, 
+    #         3:  0.0001, 
+    #         5:  0.0001, 
+    #         7:  0.0001, 
+    #         9:  0.0001, 
+    #         11: 0.0001, 
+    #     },
+    # },
 
     # default frequency ranges for each harmonic
     'freq_range': {},
@@ -805,7 +836,6 @@ settings_default = {
 
     # default temperature settings
     'checkBox_settings_temp_sensor': False,
-    'comboBox_settings_mechanics_selectmodel': '',
     'comboBox_thrmcpltype': 'J',
 
     # default plots settings

@@ -45,10 +45,13 @@ All the modules needed for the data collection program are in the `QCM_main/` fo
 ## Using the Stand-alone Program (exe)
 
 A single executable file (exe file) which is precompiled from source code under 32-bit Python is located in the `stand_alone/` folder. It can be run without any additional installation on a Windows system, without the need to install a Python distribution. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (<span style="color:red">NOTE: You can customize the program with the  `settings_default.json`  file that comes with the executable file (See below about the way it works.)</span>)  
+The single executable file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (NOTE: You can customize the program with `settings_default.json`  file comes with the executable file. See below about the way how it works.)  
+
+The single executable file version might not be updated as frequently as the source code.
 
 ## Running the UI from Terminal
 
-Go to the `QCM_mani/` folder and run `QCM_main.py` will start the UI and it will check the environment by itself.  
+Go to the `QCM_main/` folder and run `QCM_main.py` will start the UI and it will check the environment by itself.  
 
 ## Using UI with QCM-D Data
 
@@ -83,6 +86,7 @@ The functions for the Matlab version of the data are locoalized in `QCMFuncs/` f
 Export the current settings as a json file named `settings_default.json` and save in the same folder as `QCM_main.py` or `QCM_main.exe`. The UI will use the settings you saved as default after the next time you opend it. If you want the setup go back the original one, just simply delete or rename that file.  
 
 There is a `QCM_main.bat` file in  `QCM_main/` for running the program with Python by just double clicking it. You need to change the path of python and QCM_main.py to them on your computer to make it work. Meanwhile, you can make a shortcut of this bat file and put the shortcut in a location of your choosing.
+There is a `QCM_main.bat` file in  `QCM_main/` for running the program with Python by just double clicking it on Windows. You need to change the path of python and QCM_main.py to them on your computer to make it work. Meanwhile, you can make a shortcut of this bat file and put the shortcut somewhere you want.
 
 ### Known Issues
 
