@@ -44,6 +44,7 @@ All the modules needed for the data collection program are in the `QCM_main/` fo
 
 ## Using the Stand-alone Program (exe)
 
+A single executable file (exe file) which is precompiled from source code under 32-bit Python is located in the `stand_alone/` folder. It can be run without any additional installation on a Windows system, without the need to install a Python distribution. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (<span style="color:red">NOTE: You can customize the program with the  `settings_default.json`  file that comes with the executable file (See below about the way it works.)</span>)  
 The single executable file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (NOTE: You can customize the program with `settings_default.json`  file comes with the executable file. See below about the way how it works.)  
 
 The single executable file version might not be updated as frequently as the source code.
@@ -55,12 +56,12 @@ Go to the `QCM_main/` folder and run `QCM_main.py` will start the UI and it will
 ## Using UI with QCM-D Data
 
 * Export the QCM-D data as .xlsx file. column names: t(s), delf1, delg1, delf3, delg3, ... The time column name could also be time(s).
-* Start the UI and from the manu bar select `File>Import QCM-D data` will import the QCM-D data and save a .h5 file with the same name in * the same folder. This will save all the calculated property data for the future using.  
+* Start the UI and from the menu bar and select `File>Import QCM-D data`.  This will import the QCM-D data and save a .h5 file with the same name in * the same folder. This will save all the calculated property data for future use.  
 * Now the UI can display your data and do the analysis the same as the data generated with the UI.
-* Don't forget save the data when you finish the calculation.
-* Click export to exprot a .xlsx file with all the data in it.
+* Don't forget to save the data when you finish the calculation.
+* Click export to export a .xlsx file with all the data in it.
 
-## Using Analysis Code for Mat File  
+## Using the Analysis Code for .mat Files  
 
 If you just need the updated analysis code for .mat files, everything you really need is in `QCMFuncs/QCM_functions.py`. In order to read and write these and get the analysis scripts to work, you need to install the hdf5storage package, which you can add with the following command (assuming you have already added the conda python distribution):  
 
@@ -70,27 +71,28 @@ conda install -c conda-forge hdf5storage
 
 In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py. You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
 
-## Using Analysis Code for h5 File  
+## Using the Analysis Code for .h5 Files  
 
-The `QCM_functions.py` code also works with .h5 data file collected by the UI of this project. The way to define the samples is similar as it of .mat files. Example files (`example_plot.py` and `example_sampledefs.py`) which demostrate both .mat and .h5 analysis with `QCM_functions.py` can be found in  `QCMFuncs/`.
+The `QCM_functions.py` code also works with .h5 data files collected by the UI of this project. The file definitions are similar to those of the .mat files. Example files (`example_plot.py` and `example_sampledefs.py`) which demostrate both .mat and .h5 analysis with `QCM_functions.py` can be found in  `QCMFuncs/`.
 
 ## Documentation
 
 The QCMnotes.pdf file has some background information on the rheometric mode of the QCM that we utilize, with some useful references included.
 
-Modules `DataSaver` and `QCM` in `Modules/` folder are availabe for dealing with the data and doing ananlysis manually. Those modules include functions run out of the software. You can simply import those modules and do almost the same thing in the software by running your own codes. An example code of extrating data from data file can be found in `example/` folder.
+Modules `DataSaver` and `QCM` in `Modules/` folder are availabe for dealing with the data and doing ananlysis manually. Those modules include functions run out of the software. You can simply import those modules and do almost the same thing in the software by running your own codes. An example code of extracting data from data file can be found in hte `example/` folder.
 
-The functions for Matlab version data are locoalized in `QCMFuncs/` folder.  
+The functions for the Matlab version of the data are locoalized in `QCMFuncs/` folder.  
 
 Export the current settings as a json file named `settings_default.json` and save in the same folder as `QCM_main.py` or `QCM_main.exe`. The UI will use the settings you saved as default after the next time you opend it. If you want the setup go back the original one, just simply delete or rename that file.  
 
+There is a `QCM_main.bat` file in  `QCM_main/` for running the program with Python by just double clicking it. You need to change the path of python and QCM_main.py to them on your computer to make it work. Meanwhile, you can make a shortcut of this bat file and put the shortcut in a location of your choosing.
 There is a `QCM_main.bat` file in  `QCM_main/` for running the program with Python by just double clicking it on Windows. You need to change the path of python and QCM_main.py to them on your computer to make it work. Meanwhile, you can make a shortcut of this bat file and put the shortcut somewhere you want.
 
-### Knowing Issues
+### Known Issues
 
 * Please set MyVNA to `Basic Mode` from the left pannel of MyVNA software by selecting VNA Hardware>Configure CSD / Harmonic Mode and checking Basic Mode in Select Mode. This will make sure the time counting in the Python program fits the hardware scanning time. You will not loose any precision as far as we know.  
 
-* The data analysis in the UI only work with `one layer` mode. Other modes will be add in the near future.
+* The data analysis in the UI only works with `one layer` mode. Other modes, including films immersed in a liquid medium, will be added in the near future.
 
 ## To Do List (work in Progress)
 

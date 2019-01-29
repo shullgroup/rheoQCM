@@ -587,7 +587,6 @@ def addVGPplot(sample, samplefits, vgpfig, fignum):
     qcmsize = 8  # marker size for qcm points
     # Read the fits from the appropriate sample file
 
-    sp_parms = samplefits['sp_parms']
     dmadata = sample['dmadata']
 
     # set up the van Gurp-Palmen plot
