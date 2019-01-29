@@ -58,7 +58,7 @@ Go to the `QCM_mani/` folder and run `QCM_main.py` will start the UI and it will
 * Don't forget to save the data when you finish the calculation.
 * Click export to export a .xlsx file with all the data in it.
 
-## Using Analysis Code for Mat File  
+## Using the Analysis Code for .mat Files  
 
 If you just need the updated analysis code for .mat files, everything you really need is in `QCMFuncs/QCM_functions.py`. In order to read and write these and get the analysis scripts to work, you need to install the hdf5storage package, which you can add with the following command (assuming you have already added the conda python distribution):  
 
@@ -68,17 +68,17 @@ conda install -c conda-forge hdf5storage
 
 In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py. You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
 
-## Using Analysis Code for h5 File  
+## Using the Analysis Code for .h5 Files  
 
-The `QCM_functions.py` code also works with .h5 data file collected by the UI of this project. The way to define the samples is similar as it of .mat files. Example files (`example_plot.py` and `example_sampledefs.py`) which demostrate both .mat and .h5 analysis with `QCM_functions.py` can be found in  `QCMFuncs/`.
+The `QCM_functions.py` code also works with .h5 data files collected by the UI of this project. The file definitions are similar to those of the .mat files. Example files (`example_plot.py` and `example_sampledefs.py`) which demostrate both .mat and .h5 analysis with `QCM_functions.py` can be found in  `QCMFuncs/`.
 
 ## Documentation
 
 The QCMnotes.pdf file has some background information on the rheometric mode of the QCM that we utilize, with some useful references included.
 
-Modules `DataSaver` and `QCM` in `Modules/` folder are availabe for dealing with the data and doing ananlysis manually. Those modules include functions run out of the software. You can simply import those modules and do almost the same thing in the software by running your own codes. An example code of extrating data from data file can be found in `example/` folder.
+Modules `DataSaver` and `QCM` in `Modules/` folder are availabe for dealing with the data and doing ananlysis manually. Those modules include functions run out of the software. You can simply import those modules and do almost the same thing in the software by running your own codes. An example code of extracting data from data file can be found in hte `example/` folder.
 
-The functions for Matlab version data are locoalized in `QCMFuncs/` folder.  
+The functions for the Matlab version of the data are locoalized in `QCMFuncs/` folder.  
 
 Export the current settings as a json file named `settings_default.json` and save in the same folder as `QCM_main.py` or `QCM_main.exe`. The UI will use the settings you saved as default after the next time you opend it. If you want the setup go back the original one, just simply delete or rename that file.  
 
