@@ -1051,6 +1051,57 @@ class PeakTracker:
             val['chisqr'] = result.chisqr # float
 
             print('params', result.params.valuesdict()) #testprint
+        else:
+            # values for tracking peak
+            val['amp_trk'] = {
+                'value' : np.nan,
+                'stderr': np.nan,
+            }
+            val['cen_trk'] = {
+                'value' : np.nan,
+                'stderr': np.nan,
+            }
+            val['wid_trk'] = {
+                'value' : np.nan,
+                'stderr': np.nan,
+            }
+            val['phi_trk'] = {
+                'value' : np.nan,
+                'stderr': np.nan,
+            }
+
+            # values for recording peak
+            val['amp_rec'] = {
+                'value' : np.nan,
+                'stderr': np.nan,
+            }
+            val['cen_rec'] = {
+                'value' : np.nan,
+                'stderr': np.nan,
+            }
+            val['wid_rec'] = {
+                'value' : np.nan,
+                'stderr': np.nan,
+            }
+            val['phi_rec'] = {
+                'value' : np.nan,
+                'stderr': np.nan,
+            }
+
+            val['g_c'] = {
+                'value' : np.nan,
+                'stderr': np.nan,
+            }
+            val['b_c'] = {
+                'value' : np.nan,
+                'stderr': np.nan,
+            }
+
+            val['sucess'] = False # bool
+            val['chisqr'] = np.nan # float
+
+            print('params', result.params.valuesdict()) #testprint
+
         return val
 
     def eval_mod(self, mod_name, chn_name=None, harm=None, components=False):

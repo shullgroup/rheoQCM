@@ -4770,10 +4770,7 @@ class QCMApp(QMainWindow):
 
 
                     # update srec
-                    if 'cen_rec' in fit_result['v_fit']:
-                        cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
-                    else:
-                        cen_rec_freq = np.nan
+                    cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
                     cen_rec_G = self.peak_tracker.get_output(key='gmod', chn_name=chn_name, harm=harm).eval(
                         self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
                         x=cen_rec_freq
