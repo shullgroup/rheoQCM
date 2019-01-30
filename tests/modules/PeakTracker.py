@@ -1100,8 +1100,6 @@ class PeakTracker:
             val['sucess'] = False # bool
             val['chisqr'] = np.nan # float
 
-            print('params', result.params.valuesdict()) #testprint
-
         return val
 
     def eval_mod(self, mod_name, chn_name=None, harm=None, components=False):
