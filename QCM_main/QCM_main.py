@@ -1283,7 +1283,6 @@ class QCMApp(QMainWindow):
             # start the timer
             self.timer.start(0)
 
-
             self.ui.pushButton_runstop.setText('STOP')
         else:
             # set text on button for waitiong
@@ -1303,14 +1302,14 @@ class QCMApp(QMainWindow):
             #     loop.exec_()
 
             # write dfs and settings to file
-            if self.idle == True: # Timer stopped while timeout func is not running
+            if self.idle == True: # Timer stopped while timeout func is not running (test stopped while waiting)
                 self.process_saving_when_stop()
 
 
 
     def process_saving_when_stop(self):
         '''
-        process saving fitted data when tested is stopped
+        process saving fitted data when test is stopped
         '''
         # save data
         self.data_saver.save_data()
@@ -4053,6 +4052,7 @@ class QCMApp(QMainWindow):
         # set visibility of samp & ref related widgets
         self.setvisible_samprefwidgets(samp_value=self.settings['comboBox_samp_channel'] != 'none', ref_value=self.settings['comboBox_ref_channel'] != 'none')
 
+
     def update_tempsensor(self, signal):
         # NOTUSING
         self.settings['checkBox_settings_temp_sensor'] = signal
@@ -4386,129 +4386,6 @@ class QCMApp(QMainWindow):
         self.settings['lineEdit_settings_data_refrefidx'] = self.data_saver.exp_ref['ref_ref'][1]
 
 
-    def check_freq_range(self, harmonic, min_range, max_range):
-        #NOTUSING
-        startname = 'lineEdit_startf' + str(harmonic)
-        endname = 'lineEdit_endf' + str(harmonic)
-        # check start frequency range
-        if float(self.settings[startname]) <= min_range or float(self.settings[startname]) >= max_range:
-            print('ERROR')
-            self.settings[startname] = float(min_range)
-        if float(self.settings[startname]) >= float(self.settings[endname]):
-            if float(self.settings[startname]) == float(self.settings[endname]):
-                print('The start frequency cannot be the same as the end frequency!')
-                self.settings[startname] = min_range
-                # self.settings[endname] = max_range
-            else:
-                print('The start frequency is greater than the end frequency!')
-                self.settings[startname] = min_range
-        # check end frequency range
-        if float(self.settings[endname]) <= min_range or float(self.settings[endname]) >= max_range:
-            print('ERROR')
-            self.settings[endname] = max_range
-        if float(self.settings[endname]) <= float(self.settings[startname]):
-            print('ERROR: The end frequency is less than the start frequency!')
-            if float(self.settings[startname]) == max_range:
-                print('The start frequency cannot be the same as the end frequency!')
-                self.settings[startname] = min_range
-                # self.settings[endname] = max_range - 0.9
-            else:
-                self.settings[endname] = max_range
-
-    def smart_peak_tracker(self, harmonic=None, freq=None, conductance=None, susceptance=None, G_parameters=None):
-        # NOT USING
-        self.peak_tracker.f0 = G_parameters[0]
-        self.peak_tracker.g0 = G_parameters[1]
-
-        track_condition = self.get_harmdata('comboBox_tracking_condition', harmonic) 
-        track_method = self.get_harmdata('comboBox_tracking_method', harmonic)
-        chn = self.active_chn['name']
-        # determine the structure field that should be used to extract out the initial-guessing method
-        if track_method == 'bmax':
-            resonance = susceptance
-        else:
-            resonance = conductance
-        index = GBFitting.findpeaks(resonance, output='indices', sortstr='descend')
-        cen = freq[index[0]] # peak center
-        # determine the estimated associated conductance (or susceptance) value at the resonance peak
-        Gmax = resonance[index[0]] 
-        # determine the estimated half-max conductance (or susceptance) of the resonance peak
-        half_amp = (Gmax-np.amin(resonance))/2 + np.amin(resonance) 
-        half_wid = np.absolute(freq[np.where(np.abs(half_amp-resonance)==np.min(np.abs(half_amp-resonance)))[0][0]] -  cen)
-        current_xlim = self.get_freq_span(harm=harmonic, chn=chn)
-        # get the current center and current span of the data in Hz
-        current_center, current_span = UIModules.converter_startstop_to_centerspan(current_xlim[0], current_xlim[1])
-        # find the starting and ending frequency of only the peak in Hz
-        if track_condition == 'fixspan':
-            if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > 0.1 * current_span:
-                # new start and end frequencies in Hz
-                new_xlim=np.array([cen-0.5*current_span,cen+0.5*current_span])
-        elif track_condition == 'fixcenter':
-            # peak_xlim = np.array([cen-half_wid*3, cen+half_wid*3])
-            if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*half_wid, current_center + 3*half_wid])))) > 3e3:
-                #TODO above should equal to abs(sp - 6 * half_wid) > 3e3
-                # set new start and end freq based on the location of the peak in Hz
-                new_xlim = np.array(current_center-3*half_wid, current_center+3*half_wid)
-
-        elif track_condition == 'auto':
-            # adjust window if neither span or center is fixed (default)
-            if(np.mean(current_xlim)-cen) > 1*current_span/12:
-                new_xlim = current_xlim - current_span / 15  # new start and end frequencies in Hz
-            elif (np.mean(current_xlim)-cen) < -1*current_span/12:
-                new_xlim = current_xlim + current_span / 15  # new start and end frequencies in Hz
-            else:
-                thresh1 = .05 * current_span + current_xlim[0] # Threshold frequency in Hz
-                thresh2 = .03 * current_span # Threshold frequency span in Hz
-                LB_peak = cen - half_wid * 3 # lower bound of the resonance peak
-                if LB_peak - thresh1 > half_wid * 8: # if peak is too thin, zoom into the peak
-                    new_xlim[0] = (current_xlim[0] + thresh2) # Hz
-                    new_xlim[1] = (current_xlim[1] - thresh2) # Hz
-                elif thresh1 - LB_peak > -half_wid*5: # if the peak is too fat, zoom out of the peak
-                    new_xlim[0] = current_xlim[0] - thresh2 # Hz
-                    new_xlim[1] = current_xlim[1] + thresh2 # Hz
-        elif track_condition == 'fixcntspn':
-            # bothe span and cent are fixed
-            # no changes
-            return
-        elif track_condition == 'usrdef': #run custom tracking algorithm
-            ### CUSTOM, USER-DEFINED
-            ### CUSTOM, USER-DEFINED
-            ### CUSTOM, USER-DEFINED
-            return
-
-        # set new start/end freq in Hz
-        self.set_freq_span(new_xlim, harm= harmonic, chn=chn)
-        self.check_freq_spans()
-        self.update_frequencies()
-    
-    def read_scan(self, harmonic):
-        #NOTUSING
-        # read in live data scans
-        if self.peak_tracker.refit_flag == 0:
-            flag = 0
-            rawdata = np.array([])
-            start1 = self.settings['lineEdit_startf' + str(harmonic)]
-            end1 = self.settings['lineEdit_endf' + str(harmonic)]
-            if harmonic < 11:
-                rawfile = 'myVNAdata0' + str(harmonic) + '.csv'
-            else:
-                rawfile = 'myVNAdata11.csv'
-            while flag == 0:
-                with open(rawfile, newline='') as csvfile:
-                    reader = csv.DictReader(csvfile)
-                    for row in reader:
-                        np.append(rawdata, row[0])
-                num_pts = self.get_harmdata('lineEdit_scan_harmsteps', harm=self.settings_harm)
-                if len(rawdata) == num_pts*2:
-                    self.Peak_tracker.G = 1e3 * rawdata[:num_pts+1]
-                    self.peak_tracker.B = 1e3 * rawdata[num_pts:]
-                    self.peak_tracker.f = np.arange(start1,end1-(end1-start1)/num_pts+1,(end1-start1)/num_pts)
-                    flag = 1
-                    print('Status: Scan successful.')
-        #TODO refit loaded raw spectra data
-        else:
-            pass
-
     def updat_progressbar(self, val=0, text=''):
         '''
         update progressBar_status_interval_time
@@ -4581,18 +4458,15 @@ class QCMApp(QMainWindow):
                     # get data
                     f[chn_name][harm], G[chn_name][harm], B[chn_name][harm] = self.get_vna_data_no_with(harm=harm, chn_name=chn_name)
                     
-                    print('check:')
-                    print(f[chn_name][harm] is None)
-                    print(f[chn_name][harm][0] == f[chn_name][harm][-1])
                     if (f[chn_name][harm] is None) or (f[chn_name][harm][0] == f[chn_name][harm][-1]): # vna error
-                        print('Can''t find analyzer!')
+                        print('Analyzer connection error!')
                         # stop test
                         self.idle = True
                         self.ui.pushButton_runstop.setChecked(False)
                         # alert
                         process = self.process_messagebox(
                             text='Failed to connect with analyzer!',
-                            message=['Please checked the connection with analyzer or if it''s power is on.'],
+                            message=['Please check the connection and power.'],
                             opts=False, 
                             forcepop=True,
                         )
@@ -4631,8 +4505,12 @@ class QCMApp(QMainWindow):
 
                     # update lsp
                     factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=chn_name, harm=harm)
-                    gc_list = [fit_result['v_fit']['g_c']['value']] * 2 # make its len() == 2
-                    bc_list = [fit_result['v_fit']['b_c']['value']] * 2 # make its len() == 2
+                    if 'g_c' in fit_result['v_fit']: # fitting successed
+                        gc_list = [fit_result['v_fit']['g_c']['value']] * 2 # make its len() == 2
+                        bc_list = [fit_result['v_fit']['b_c']['value']] * 2 # make its len() == 2
+                    else: # fitting failed
+                        gc_list = [np.nan, np.nan]
+                        bc_list = [np.nan, np.nan]
 
                     if self.settings['radioButton_spectra_showGp'] or self.settings['radioButton_spectra_showBp']: # show G or GB
 
@@ -4644,7 +4522,10 @@ class QCMApp(QMainWindow):
 
 
                     # update srec
-                    cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
+                    if 'cen_rec' in fit_result['v_fit']:
+                        cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
+                    else:
+                        cen_rec_freq = np.nan
                     cen_rec_G = self.peak_tracker.get_output(key='gmod', chn_name=chn_name, harm=harm).eval(
                         self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
                         x=cen_rec_freq
@@ -4701,7 +4582,11 @@ class QCMApp(QMainWindow):
         # Save scan data to file fitting data in RAM to file
         if int(self.counter) % int(self.settings['lineEdit_refreshresolution']) == 0: # check if to save by intervals
             self.writing = True
+            # save raw
             self.data_saver.dynamic_save(chn_name_list, harm_list, t=curr_time, temp=curr_temp, f=f, G=G, B=B, fs=fs, gs=gs, marks=marks)
+            
+            # save data (THIS MIGHT MAKE THE PROCESS SLOW)
+            self.data_saver.save_data()
         
             # plot data
             self.update_mpl_plt12()
@@ -4709,9 +4594,11 @@ class QCMApp(QMainWindow):
         # increase counter
         self.counter += 1
 
-        if not self.timer.isActive(): # if timer is stopped
+        if not self.timer.isActive(): # if timer is stopped (test stopped while collecting data)
             # save data
             self.process_saving_when_stop()
+
+        self.idle = True
 
         self.writing = False
 
@@ -4719,9 +4606,7 @@ class QCMApp(QMainWindow):
         self.set_status_pts()
 
 
-        self.idle = True
 
-        self.writing = False
 
         # 
         # wait bar

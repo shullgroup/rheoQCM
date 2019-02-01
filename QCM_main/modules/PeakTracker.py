@@ -468,6 +468,52 @@ class PeakTracker:
         track the peak and give the span for next scan
         NOTE: the returned span may out of span_range defined the the main UI!
         '''
+        def set_new_cen(freq, cen, current_span, current_xlim):
+            ''' set new center '''
+            cen_range = settings_init['cen_range'] # cen of span +/- cen_range*span as the accessible range
+            if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > cen_range * current_span: # out of range
+                # new start and end frequencies in Hz
+                return cen
+            else: 
+                # use span center
+                # return np.mean(np.array([freq[0],freq[-1]]))
+                return np.mean(np.array(current_xlim))
+
+
+        def set_new_span(current_span, half_wid):
+            wid_ratio_range = settings_init['wid_ratio_range'] # width_ratio[0] <= span <= width_ratio[1]
+            change_thresh = settings_init['change_thresh'] # span change threshold current_span * change_thresh[0/1]
+            ''' set new span '''
+            wid_ratio = 0.5 * current_span / half_wid
+            if wid_ratio < wid_ratio_range[0]: # too fat
+                return max(
+                    min(
+                        wid_ratio_range[0] * half_wid * 2, 
+                        current_span * (1 + change_thresh[1]),
+                    ),
+                    current_span * (1 + change_thresh[0])
+                )
+            elif wid_ratio > wid_ratio_range[1]: # too thin
+                print('peak too thin\n',
+                    half_wid,
+                    wid_ratio_range[1] * half_wid * 2,
+                    current_span * (1 - change_thresh[1]),
+                    current_span * (1 - change_thresh[0]) # 
+                )
+                return min(
+                    max(
+                        wid_ratio_range[1] * half_wid * 2,
+                        current_span * (1 - change_thresh[1]),
+                        ), # lower bound of wid_ratio_range
+                    current_span * (1 - change_thresh[0]) # 
+                )
+            else:
+                return current_span
+
+        def set_new_xlim(new_cen, new_span):
+            return [new_cen - 0.5 * new_span, new_cen + 0.5 * new_span]
+
+                
         chn_name = self.active_chn
         harm = self.active_harm
         track_condition = self.harminput[chn_name][harm]['condition']
@@ -494,30 +540,43 @@ class PeakTracker:
 
         # find the starting and ending frequency of only the peak in Hz
         if track_condition == 'fixspan':
-            if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > 0.1 * current_span:
+            new_cen = set_new_cen(freq, cen, current_span, current_xlim)
+            new_xlim = set_new_xlim(new_cen, current_span)
+            ''' if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > 0.1 * current_span:
                 # new start and end frequencies in Hz
-                new_xlim=np.array([cen-0.5*current_span,cen+0.5*current_span])
+                new_xlim=np.array([cen-0.5*current_span,cen+0.5*current_span]) '''
         elif track_condition == 'fixcenter':
-            # peak_xlim = np.array([cen-half_wid*3, cen+half_wid*3])
+            new_span = set_new_span(current_span, half_wid)
+            new_xlim = set_new_xlim(current_center, new_span)
+
+            ''' # peak_xlim = np.array([cen-half_wid*3, cen+half_wid*3])
             if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*half_wid, current_center + 3*half_wid])))) > 3e3:
                 #TODO above should equal to abs(sp - 6 * half_wid) > 3e3
                 # set new start and end freq based on the location of the peak in Hz
-                new_xlim = np.array(current_center-3*half_wid, current_center+3*half_wid)
+                new_xlim = np.array(current_center-3*half_wid, current_center+3*half_wid) '''
 
         elif track_condition == 'auto':
-            # adjust window if neither span or center is fixed (default)
-            if(np.mean(current_xlim)-cen) > 1*current_span/12:
+            new_cen = set_new_cen(freq, cen, current_span, current_xlim)
+            new_span = set_new_span(current_span, half_wid)
+            new_xlim = set_new_xlim(new_cen, new_span)
+
+
+
+            ''' # adjust window if neither span or center is fixed (default)
+            if(np.mean(current_xlim)-cen) > 1*current_span/12: # peak center freq too low
                 new_xlim = current_xlim - current_span / 15  # new start and end frequencies in Hz
-            elif (np.mean(current_xlim)-cen) < -1*current_span/12:
+            elif (np.mean(current_xlim)-cen) < -1*current_span/12: # peak center freq too high
                 new_xlim = current_xlim + current_span / 15  # new start and end frequencies in Hz
-            else:
-                thresh1 = .05 * current_span + current_xlim[0] # Threshold frequency in Hz
-                thresh2 = .03 * current_span # Threshold frequency span in Hz
-                LB_peak = cen - half_wid * 3 # lower bound of the resonance peak
-                if LB_peak - thresh1 > half_wid * 8: # if peak is too thin, zoom into the peak
-                    new_xlim = [(current_xlim[0] + thresh2), (current_xlim[1] - thresh2)] # Hz
-                elif thresh1 - LB_peak > -half_wid*5: # if the peak is too fat, zoom out of the peak
-                    new_xlim = [(current_xlim[0] - thresh2), (current_xlim[1] + thresh2)] # Hz
+            else: # peak center in the accessible range
+                pass
+
+            thresh1 = .05 * current_span + current_xlim[0] # Threshold frequency in Hz
+            thresh2 = .03 * current_span # Threshold frequency span in Hz
+            LB_peak = cen - half_wid * 3 # lower bound of the resonance peak
+            if LB_peak - thresh1 > half_wid * 8: # if peak is too thin, zoom into the peak
+                new_xlim = [(current_xlim[0] + thresh2), (current_xlim[1] - thresh2)] # Hz
+            elif thresh1 - LB_peak > -half_wid*5: # if the peak is too fat, zoom out of the peak
+                new_xlim = [(current_xlim[0] - thresh2), (current_xlim[1] + thresh2)] # Hz '''
         elif track_condition == 'fixcntspn':
             # bothe span and cent are fixed
             # no changes
@@ -1042,8 +1101,7 @@ if __name__ == '__main__':
     accvna = AccessMyVNA()
     _, f, G = accvna.GetScanData(nWhata=-1, nWhatb=15)
     _, _, B = accvna.GetScanData(nWhata=-1, nWhatb=16)
-    # G = G * 1e3
-    # B = B * 1e3
+
 
     n = 2
 

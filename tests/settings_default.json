@@ -347,7 +347,5 @@
     "spinBox_settings_mechanics_nhcalc_n2": 5,
     "spinBox_settings_mechanics_nhcalc_n3": 3,
     "comboBox_settings_mechanics_refG": "3",
-    "checkBox_settings_mechanics_witherror": true,
-    "comboBox_tempmodule": "NITempSensor",
-    "comboBox_tempdevice": "PCIe-6321"
+    "checkBox_settings_mechanics_witherror": true
 }

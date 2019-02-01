@@ -18,8 +18,8 @@ settings_init = {
 
     # myVNA path
     'vna_path': [
-        r'C:\Program Files (x86)\G8KBB\myVNA\yVNA.exe',
-        r'C:\Program Files\G8KBB\myVNA\yVNA.exe',
+        r'C:\Program Files (x86)\G8KBB\myVNA\myVNA.exe',
+        r'C:\Program Files\G8KBB\myVNA\myVNA.exe',
     ],
 
     # where the calibration files where save
