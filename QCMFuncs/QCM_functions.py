@@ -419,7 +419,7 @@ def find_base_fig_name(sample, parms):
             base_fig_path = os.path.join(cwd, 'figures')
         else: # running out of QCMFuns. Probably in QCM_py
             if 'QCMFuncs' in os.listdir(): # QCMFuncs is a subfolder
-                 base_fig_path = os.path.join(cwd, 'QCMFuncs', 'figures')
+                base_fig_path = os.path.join(cwd, 'QCMFuncs', 'figures')
             else: # QCMFuncs is not a subfolder
                 base_fig_path = os.path.join(cwd, 'figures') # save in figures/ directly
 

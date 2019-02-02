@@ -68,7 +68,7 @@ if UIModules.system_check() == 'win32': # windows
 else: # linux or MacOS
     # for test only
     # from modules.AccessMyVNA_dummy import AccessMyVNA
-        print('Current version of MyVNA does not work with MacOS and Linux!\nData analysis only!')
+    print('Current version of MyVNA does not work with MacOS and Linux!\nData analysis only!')
 
 
 class VNATracker:
