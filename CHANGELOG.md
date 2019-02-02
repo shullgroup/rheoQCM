@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.3] - 2019-01-31
+
+### Fixed
+
+- Fix the manual refit mode turning on/off bugs
+
 ## [0.15.2] - 2019-01-29
 
 ### Changed
