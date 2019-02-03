@@ -42,33 +42,32 @@ def close_on_click(event):
 
 def find_dataroot(owner):
     # returns root data directory as first potential option from an input list
-    # if none of the possibilities exist, we return 'none' 
+    # if none of the possibilities exist, we return 'none'
     if owner == 'schmitt':
         dataroots = ['/home/ken/k-shull@u.northwestern.edu/'+
                      'Group_Members/Research-Schmitt/data/Schmitt/',
                      r'/Volumes/GoogleDrive/My Drive/Research-Schmitt/'+
                      r'data/Schmitt']
     elif owner == 'qifeng':
-        dataroots =['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
-                    'Research-Wang/CHiMaD/QCM_sample/data/', 
-                    r'C:\Users\ShullGroup\Documents\User Data\WQF\GoogleDriveSync'+
-                    r'\Research-Wang\CHiMaD\QCM_sample\data']
+        dataroots = ['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
+                     'Research-Wang/CHiMaD/QCM_sample/data/',
+                     r'C:\Users\ShullGroup\Documents\User Data\WQF\GoogleDriveSync'+
+                     r'\Research-Wang\CHiMaD\QCM_sample\data']
     elif owner == 'taghon':
-        dataroots =['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
-                    'Research-Taghon/QCM/merefiles/data/']
+        dataroots = ['/home/ken/k-shull@u.northwestern.edu/Group_Members/'+
+                     'Research-Taghon/QCM/merefiles/data/']
     elif owner == 'depolo':
-        dataroots =['/home/ken/k-shull@u.northwestern.edu/'+
+        dataroots = ['/home/ken/k-shull@u.northwestern.edu/'+
                      r'Group_Members/Research-Depolo/data/',
                      r'C:\Users\Gwen dePolo\gwendepolo2023@u.northwestern.edu\Research-Depolo\data']
     elif owner == 'sturdy':
-        dataroots =['/home/ken/Mydocs/People/Sturdy/Filled_Galkyd_Paper/data/QCM/']
-    else: 
+        dataroots = ['/home/ken/Mydocs/People/Sturdy/Filled_Galkyd_Paper/data/QCM/']
+    else:
         dataroots = [os.getcwd()] # current folder
 
     for directory in dataroots:
         if os.path.exists(directory):
             return directory
-    
     print('cannot find root data directory')
     return 'none'
 
@@ -119,14 +118,12 @@ def calc_D(n, material, delfstar):
         return 0
     else:
         return 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n, material)
-        
 
 def zstar_bulk(n, material):
     grho3 = material['grho3']
     grho = grho3*(n/3)**(material['phi']/90)  #check for error here
     grhostar = grho*np.exp(1j*np.pi*material['phi']/180)
     return grhostar ** 0.5
-   
 
 def calc_delfstar_sla(ZL):
     return f1*1j/(np.pi*Zq)*ZL
@@ -134,94 +131,94 @@ def calc_delfstar_sla(ZL):
 def calc_ZL(n, layers, delfstar):
     # layers is a dictionary of dictionaries
     # each dictionary is named according to the layer number
-    # layer 1 is closest to the quartz 
+    # layer 1 is closest to the quartz
 
     N = len(layers)
     Z = {}; D = {}; L = {}; S = {}
-    
-    # we use the matrix formalism to avoid typos.  
+
+    # we use the matrix formalism to avoid typos.
     for i in np.arange(1, N):
         Z[i] = zstar_bulk(n, layers[i])
         D[i] = calc_D(n, layers[i], delfstar)
         L[i] = np.array([[np.cos(D[i])+1j*np.sin(D[i]), 0],
                  [0, np.cos(D[i])-1j*np.sin(D[i])]])
-    
+
     # get the terminal matrix from the properties of the last layer
     D[N] = calc_D(n, layers[N], delfstar)
     Zf_N = 1j*zstar_bulk(n, layers[N])*np.tan(D[N])
-    
+
     # if there is only one layer, we're already done
     if N == 1:
         return Zf_N
-    
-    Tn = np.array([[1+Zf_N/Z[N-1],0],
+
+    Tn = np.array([[1+Zf_N/Z[N-1], 0],
           [0, 1-Zf_N/Z[N-1]]])
-        
+
     uvec = L[N-1]@Tn@np.array([[1.], [1.]])
-    
+
     for i in np.arange(N-2, 0, -1):
         S[i] = np.array([[1+Z[i+1]/Z[i], 1-Z[i+1]/Z[i]],
           [1-Z[i+1]/Z[i], 1+Z[i+1]/Z[i]]])
         uvec = L[i]@S[i]@uvec
-        
+
     rstar = uvec[1,0]/uvec[0,0]
     return Z[1]*(1-rstar)/(1+rstar)
-    
+
 
 
 def calc_delfstar(n, layers, calctype):
     if 'overlayer' in layers:
         ZL = calc_ZL(n, {1:layers['film'], 2:layers['overlayer']}, 0)
         ZL_ref = calc_ZL(n, {1:layers['overlayer']}, 0)
-        del_ZL = ZL-ZL_ref 
+        del_ZL = ZL-ZL_ref
     else:
         del_ZL = calc_ZL(n, {1:layers['film']}, 0)
-        
+
     if calctype != 'LL':
         # use the small load approximation in all cases where calctype
         # is not explicitly set to 'LL'
         return calc_delfstar_sla(del_ZL)
-        
+
     else:
         # this is the most general calculation
         # use defaut electrode if it's not specified
         if 'electrode' not in layers:
             layers['electrode'] = electrode_default
-            
+
         layers_all = {1:layers['electrode'], 2:layers['film']}
         layers_ref = {1:layers['electrode']}
         if 'overlayer' in layers:
-            layers_all[3]=layers['overlayer']                                             
+            layers_all[3]=layers['overlayer']
             layers_ref[2] = layers['overlayer']
-            
+
         ZL_all = calc_ZL(n, layers_all, 0)
         delfstar_sla_all = calc_delfstar_sla(ZL_all)
         ZL_ref = calc_ZL(n, layers_ref, 0)
         delfstar_sla_ref = calc_delfstar_sla(ZL_ref)
 
-            
+
         def solve_Zmot(x):
-            delfstar = x[0] + 1j*x[1]            
+            delfstar = x[0] + 1j*x[1]
             Zmot = calc_Zmot(n,  layers_all, delfstar)
             return [Zmot.real, Zmot.imag]
-        
+
         sol = optimize.root(solve_Zmot, [delfstar_sla_all.real,
                                          delfstar_sla_all.imag])
         dfc = sol.x[0] + 1j* sol.x[1]
-        
+
         def solve_Zmot_ref(x):
-            delfstar = x[0] + 1j*x[1]   
+            delfstar = x[0] + 1j*x[1]
             Zmot = calc_Zmot(n,  layers_ref, delfstar)
             return [Zmot.real, Zmot.imag]
-        
-        sol = optimize.root(solve_Zmot_ref, [delfstar_sla_ref.real,
-                                             delfstar_sla_ref.imag])    
-        dfc_ref = sol.x[0] + 1j* sol.x[1]
-        
-        return (dfc-dfc_ref)
-         
 
-        
+        sol = optimize.root(solve_Zmot_ref, [delfstar_sla_ref.real,
+                                             delfstar_sla_ref.imag])
+        dfc_ref = sol.x[0] + 1j* sol.x[1]
+
+        return dfc-dfc_ref
+
+
+
 def calc_Zmot(n, layers, delfstar):
     om = 2 * np.pi *(n*f1 + delfstar)
     g0 = 10 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
@@ -230,14 +227,14 @@ def calc_Zmot(n, layers, delfstar):
     epsq = 4.54; eps0 = 8.8e-12; C0byA = epsq * eps0 / dq; ZC0byA = C0byA / (1j*om)
     ZPE = -(e26/dq)**2*ZC0byA  # ZPE accounts for oiezoelectric stiffening anc
     # can always be neglected as far as I can tell
-    
+
     Dq = om*drho_q/Zq
     secterm = -1j*Zqc/np.sin(Dq)
     ZL = calc_ZL(n, layers, delfstar)
     # eq. 4.5.9 in book
     thirdterm = ((1j*Zqc*np.tan(Dq/2))**-1 + (1j*Zqc*np.tan(Dq/2) + ZL)**-1)**-1
     Zmot = secterm + thirdterm  +ZPE
-    
+
     return Zmot
 
 
@@ -291,7 +288,7 @@ def solve_for_props(soln_input):
     # first pass at solution comes from rh and rd
     rd_exp = -delfstar[n3].imag/delfstar[n3].real
     rh_exp = (n2/n1)*delfstar[n1].real/delfstar[n2].real
-    
+
     if 'prop_guess' in soln_input:
         soln1_guess = guess_from_props(soln_input['propguess'])
     elif rd_exp > 0.5:
@@ -318,13 +315,13 @@ def solve_for_props(soln_input):
     # we solve it again to get the Jacobian with respect to our actual
     # input variables - this is helpfulf for the error analysis
     x0 = np.array([drho, grho3, phi])
-    
+
     lb = np.array([0, 1e7, 0])  # lower bounds drho, grho3, phi
     ub = np.array([1e-2, 1e13, 90])  # upper bounds drho, grho3, phi
-    
+
     # now solve a second time in order to get the proper jacobian for the
     # error calculation, using either the SLA or LL methods
-    
+
     def ftosolve2(x):
         layers['film'] = {'drho':x[0], 'grho3':x[1], 'phi':x[2]}
         return ([delfstar[n1].real-calc_delfstar(n1, layers, calctype).real,
@@ -333,17 +330,17 @@ def solve_for_props(soln_input):
 
     # put the input uncertainties into a 3 element vector
     delfstar_err = np.zeros(3)
-    
+
     delfstar_err[0] = fstar_err_calc(delfstar[n1]).real
     delfstar_err[1] = fstar_err_calc(delfstar[n2]).real
     delfstar_err[2] = fstar_err_calc(delfstar[n3]).imag
-    
+
     # initialize the output uncertainties
     err = {}
-    err_names=['drho', 'grho3', 'phi']
+    err_names = ['drho', 'grho3', 'phi']
 
     # recalculate solution to give the uncertainty, if solution is viable
-    if np.all(lb<x0) and np.all(x0<ub):
+    if np.all(lb < x0) and np.all(x0 < ub):
         soln2 = optimize.least_squares(ftosolve2, x0, bounds=(lb, ub))
         drho = soln2['x'][0]
         grho3 = soln2['x'][1]
@@ -352,12 +349,12 @@ def solve_for_props(soln_input):
         dlam3 = calc_dlam(3, film)
         jac = soln2['jac']
         jac_inv = np.linalg.inv(jac)
-        
+
         # define sensibly names partial derivatives for further use
         deriv = {}
         for k in [0, 1, 2]:
             deriv[err_names[k]]={0:jac_inv[k, 0], 1:jac_inv[k, 1], 2:jac_inv[k, 2]}
-            err[err_names[k]] = ((jac_inv[k, 0]*delfstar_err[0])**2 + 
+            err[err_names[k]] = ((jac_inv[k, 0]*delfstar_err[0])**2 +
                                 (jac_inv[k, 1]*delfstar_err[1])**2 +
                                 (jac_inv[k, 2]*delfstar_err[2])**2)**0.5
     else:
@@ -365,7 +362,7 @@ def solve_for_props(soln_input):
         deriv = {}
         for k in [0, 1, 2]:
             err[err_names[k]] = np.nan
-           
+
     # now back calculate delfstar, rh and rd from the solution
     delfstar_calc = {}
     rh = {}
@@ -377,7 +374,7 @@ def solve_for_props(soln_input):
 
     soln_output = {'film': film, 'dlam3': dlam3,
                    'delfstar_calc': delfstar_calc, 'rh': rh, 'rd': rd}
-    
+
     soln_output['err'] = err
     soln_output['delfstar_err'] = delfstar_err
     soln_output['deriv'] = deriv
@@ -389,7 +386,7 @@ def null_solution(nhplot):
     film = {'drho':np.nan, 'grho3':np.nan, 'phi':np.nan, 'dlam3':np.nan}
 
     soln_output = {'film':film, 'dlam3':np.nan,
-            'err':{'drho':np.nan, 'grho3':np.nan, 'phi': np.nan}}
+                   'err':{'drho':np.nan, 'grho3':np.nan, 'phi': np.nan}}
 
     delfstar_calc = {}
     rh = {}
@@ -401,7 +398,7 @@ def null_solution(nhplot):
     soln_output['rd'] = rd
     soln_output['rh'] = rh
     soln_output['delfstar_calc'] = delfstar_calc
-    
+
     return soln_output
 
 def find_base_fig_name(sample, parms):
@@ -412,7 +409,7 @@ def find_base_fig_name(sample, parms):
     if figlocation == 'datadir':
         base_fig_name = os.path.join(parms['dataroot'], datadir, filmfile)
     else:
-        # check in which folder we are running 
+        # check in which folder we are running
         cwd = os.getcwd()
         basename = os.path.basename(cwd) # name of current folder
         if basename == 'QCMFuncs': # running in QCMFuncs
@@ -462,7 +459,7 @@ def analyze(sample, parms):
     film = process_raw(sample, 'film')
     # plot and process bare crystal data
     bare = process_raw(sample, 'bare')
-    
+
     # if there is only one temperature, than we use time as the x axis, using
     # up to ten user-selected points
     if Temp.shape[0] == 1:
@@ -472,7 +469,7 @@ def analyze(sample, parms):
             nx = min(parms.get('nx',np.inf), film['n_in_range'])
     else:
         nx = Temp.shape[0]
-        
+
     # move getting index out of for loop for getting index from dict
     if film['filmindex'] is not None:
         film['idx'] = film['filmindex']
@@ -511,43 +508,43 @@ def analyze(sample, parms):
     delfstar = {}
     delfstar_err = {}
     film['fstar_ref']={}
-    
-    # if the number of temperatures is 1, we use the average of the 
+
+    # if the number of temperatures is 1, we use the average of the
     # bare temperature readings
     for n in nhplot:
         film['fstar_ref'][n] = np.zeros(film['n_all'], dtype=np.complex128)
         if Temp.shape[0] == 1:
             bare['fstar'][n] = bare['fstar'][n][~np.isnan(bare['fstar'][n])]
-            film['fstar_ref'][n][film['idx']] = (np.average(bare['fstar'][n]) * 
+            film['fstar_ref'][n][film['idx']] = (np.average(bare['fstar'][n]) *
                                                  np.ones(nx))
         else:
             film['fstar_ref'][n][film['idx']] = bare['fstar'][n][bare['idx']]
-    
+
     for i in np.arange(nx):
         idxf = film['idx'][i]
         delfstar[i] = {}
         delfstar_err[i] ={}
-        for n in nhplot: 
+        for n in nhplot:
             delfstar[i][n] = (film['fstar'][n][idxf] - film['fstar_ref'][n][idxf])
             delfstar_err[i][n] = fstar_err_calc(film['fstar'][n][idxf])
-            
+
     sample['delfstar'] = delfstar
     sample['delfstar_err'] = delfstar_err
     sample['film'] = film
     sample['bare'] = bare
-    
+
     # set the appropriate value for xdata
     if Temp.shape[0] == 1:
         sample['xdata'] = film['t'][film['idx']]
     else:
         sample['xdata'] = Temp
-        
-    # set up the property axes 
-    sample['propfig'] = make_prop_axes('prop_'+sample['samplename'], 
+
+    # set up the property axes
+    sample['propfig'] = make_prop_axes('prop_'+sample['samplename'],
           sample['xlabel'])
-              
+
     solve_from_delfstar(sample, parms)
-    
+
     # tidy up the property figure
     cleanup_propfig(sample, parms)
 
@@ -584,7 +581,7 @@ def solve_from_delfstar(sample, parms):
     # get film info (containing raw data plot, etc. if it exists)
     sample['film']=sample.get('film',{})
     close_on_click_switch = parms.get('close_on_click_switch', True)
-    
+
     base_fig_name = find_base_fig_name(sample, parms)
     imagetype = parms.get('imagetype', 'svg')
     nhplot = sample.get('nhplot', [1, 3, 5])
@@ -593,14 +590,13 @@ def solve_from_delfstar(sample, parms):
     propfig = sample['propfig']
     nx = len(delfstar)  # this is the number of data points
 
-    
     # set up the consistency check axes
     checkfig = {}
     for nh in sample['nhcalc']:
         checkfig[nh] = make_check_axes(sample, nh)
         if close_on_click_switch and not run_from_ipython():
             # when code is run with IPython don't use the event
-            checkfig[nh]['figure'].canvas.mpl_connect('key_press_event', 
+            checkfig[nh]['figure'].canvas.mpl_connect('key_press_event',
                                                     close_on_click)
 
     # now do all of the calculations and plot the data
@@ -609,9 +605,9 @@ def solve_from_delfstar(sample, parms):
     results = {}
     for nh in sample['nhcalc']:
         # initialize all the dictionaries
-        results[nh] = {'film':{'drho':np.zeros(nx), 'drho_err':np.zeros(nx), 
+        results[nh] = {'film':{'drho':np.zeros(nx), 'drho_err':np.zeros(nx),
                               'grho3':np.zeros(nx), 'grho3_err':np.zeros(nx),
-                              'phi':np.zeros(nx), 'phi_err':np.zeros(nx)}, 
+                              'phi':np.zeros(nx), 'phi_err':np.zeros(nx)},
                        'dlam3':np.zeros(nx),
                        'rd': {}, 'rh': {}, 'delfstar_calc': {}}
         for n in nhplot:
@@ -625,9 +621,9 @@ def solve_from_delfstar(sample, parms):
             # obtain the solution for the properties
             soln_input['nh'] = nh
             soln_input['delfstar'] = delfstar[i]
-            if (np.isnan(delfstar[i][int(nh[0])].real) or 
+            if (np.isnan(delfstar[i][int(nh[0])].real) or
                 np.isnan(delfstar[i][int(nh[1])].real) or
-                np.isnan(delfstar[i][int(nh[2])].imag)):                
+                np.isnan(delfstar[i][int(nh[2])].imag)):
                 soln = null_solution(nhplot)
             else:
                 soln = solve_for_props(soln_input)
@@ -639,7 +635,7 @@ def solve_from_delfstar(sample, parms):
             results[nh]['film']['grho3_err'][i] = soln['err']['grho3']
             results[nh]['film']['phi_err'][i] = soln['err']['phi']
             results[nh]['dlam3'][i] = soln['dlam3']
-            
+
             for n in nhplot:
                 results[nh]['delfstar_calc'][n][i] = (
                  soln['delfstar_calc'][n])
@@ -699,26 +695,26 @@ def solve_from_delfstar(sample, parms):
         drho_err = 1000*results[nh]['film']['drho_err']
         grho3_err = results[nh]['film']['grho3_err']/1000
         phi_err = results[nh]['film']['phi_err']
-        
+
         # this is where we determine what marker to use.  We change it if
         # we have specified a different marker in the sample dictionary
         if 'forcemarker' in sample:
             markers[nh] = sample['forcemarker']
-        
+
         # add property data with error bars to the figure
         propfig['drho_ax'].errorbar(xdata, drho, yerr=drho_err,
                                     marker=markers[nh], label=nh)
         propfig['grho3_ax'].errorbar(xdata, grho3, yerr=grho3_err,
                                     marker=markers[nh], label=nh)
         propfig['phi_ax'].errorbar(xdata, phi, yerr=phi_err,
-                                    marker=markers[nh], label=nh)
+                                   marker=markers[nh], label=nh)
         output_data = np.stack((xdata, drho, grho3, phi), axis=-1)
-        np.savetxt(base_fig_name+'_'+nh+'.txt', output_data, 
+        np.savetxt(base_fig_name+'_'+nh+'.txt', output_data,
                    delimiter=',', header='xdata,drho,grho,phi', comments='')
-        
+
         # add values of d/lam3 to the film raw data figure
         if 'rawfig' in sample['film']:
-            sample['film']['dlam3_ax'].plot(xdata, results[nh]['dlam3'],'+', label=nh)
+            sample['film']['dlam3_ax'].plot(xdata, results[nh]['dlam3'], '+', label=nh)
 
     # add legend to the the dlam3 figure and set the x axis label
     if 'rawfig' in sample['film']:
@@ -726,20 +722,20 @@ def solve_from_delfstar(sample, parms):
         sample['film']['dlam3_ax'].set_xlabel(sample['xlabel'])
 
     print('done with ', base_fig_name, 'press any key to close plots and continue')
-    
-    if close_on_click_switch and not run_from_ipython(): 
+
+    if close_on_click_switch and not run_from_ipython():
         # when code is run with IPython, don't use the event
         propfig['figure'].canvas.mpl_connect('key_press_event', close_on_click)
         if 'rawfig' in sample['film']:
             sample['film']['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
             sample['bare']['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
-        
+
     openplots = 3 + len(checkfig)
     if not run_from_ipython():
         # when code is run with IPython, don't use key_press_event
         while openplots>0:
             plt.pause(1)
-        
+
     sample['results'] = results
     return sample
 
@@ -756,7 +752,7 @@ def cleanup_propfig(sample, parms):
     if make_titles:
         propfig['drho_ax'].set_title('(a)')
         propfig['grho3_ax'].set_title('(b)')
-        propfig['phi_ax'].set_title('(c)')   
+        propfig['phi_ax'].set_title('(c)')
     # adjust linear and log axes as desired
     if 'xscale' in sample:
         propfig['drho_ax'].set_xscale(sample['xscale'])
@@ -790,7 +786,7 @@ def pickpoints(Temp, nx, data_dict):
                 idx_out = np.append(idx_out, (np.abs(t[n] - t_in)).argmin())
             idx_out = np.asarray(idx_out)
 
-    elif Path(idx_file).is_file(): 
+    elif Path(idx_file).is_file():
         idx_out = np.loadtxt(idx_file, dtype=int)
     else:
         # make the correct figure active
@@ -827,13 +823,13 @@ def make_prop_axes(propfigname, xlabel):
     phi_ax = fig.add_subplot(133)
     phi_ax.set_xlabel(xlabel)
     phi_ax.set_ylabel(r'$\phi$ (deg.)')
-    
+
     fig.tight_layout()
 
     return {'figure': fig, 'drho_ax': drho_ax, 'grho3_ax': grho3_ax,
             'phi_ax': phi_ax}
-    
-    
+
+
 def make_vgp_axes(vgpfigname):
     close_existing_fig(vgpfigname)
     fig = plt.figure(vgpfigname, figsize=(3, 3))
@@ -845,20 +841,20 @@ def make_vgp_axes(vgpfigname):
 
 
 def prop_plot_from_csv(figure, csvfile, plotstr, legendtext):
-    data = pd.read_csv(csvfile)    
-    figure['drho_ax'].plot(data['xdata'].values, data['drho'].values, plotstr, 
-                label=legendtext)   
-    figure['grho3_ax'].plot(data['xdata'].values, data['grho'].values, plotstr, 
+    data = pd.read_csv(csvfile)
+    figure['drho_ax'].plot(data['xdata'].values, data['drho'].values, plotstr,
                 label=legendtext)
-    figure['phi_ax'].plot(data['xdata'].values, data['phi'].values, plotstr, 
+    figure['grho3_ax'].plot(data['xdata'].values, data['grho'].values, plotstr,
+                label=legendtext)
+    figure['phi_ax'].plot(data['xdata'].values, data['phi'].values, plotstr,
                 label=legendtext)
 
 
 def vgp_plot_from_csv(figure, csvfile, plotstr, legendtext):
-    data = pd.read_csv(csvfile)    
-    figure['vgp_ax'].semilogx(data['grho'].values, data['phi'].values, plotstr, 
+    data = pd.read_csv(csvfile)
+    figure['vgp_ax'].semilogx(data['grho'].values, data['phi'].values, plotstr,
                 label=legendtext)
-   
+
 
 def process_raw(sample, data_type):
     colors = {1: [1, 0, 0], 3: [0, 0.5, 0], 5: [0, 0, 1]}
@@ -886,7 +882,7 @@ def process_raw(sample, data_type):
         data_dict['t'] = freq[:, 0]
         data_dict['fstar'] = {}
 
-        for n in nhplot:        
+        for n in nhplot:
             data_dict['fstar'][n] = freq[:, n] +1j*freq[:, n+1] - sample['freqref'][n]
 
         # set key for getting index to plot from txt file
@@ -897,31 +893,31 @@ def process_raw(sample, data_type):
         filmchn = sample.get('filmchn', 'samp') # default is samp
         # load file
         data_saver.load_file(data_dict['file'])
-        
+
         # read data from file
         if data_type == 'film': # get film data
             df = data_saver.reshape_data_df(filmchn, mark=False, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
         elif data_type == 'bare': # get bare data
             df = data_saver.reshape_data_df(filmchn+'_ref', mark=False, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
             pass
-        
+
         # reference frequencies are the first data points for the bare crystal data
         # get t
         data_dict['t'] = df.t.values # make it as ndarray, unit in min
         data_dict['fstar'] = {}
-        for n in nhplot:        
+        for n in nhplot:
             data_dict['fstar'][n] = df['f'+str(n)].values +1j*df['g'+str(n)].values
 
         # set key for getting index to plot from txt file
         data_dict['idx_file'] = os.path.join(sample['dataroot'], datadir, sample['filmfile']+'_film_idx.txt')
-    
+
     # get index to plot from *_sampledefs.py
     if 'filmindex' in sample:
         data_dict['filmindex'] = np.array(sample['filmindex'], dtype=int)
     else:
         data_dict['filmindex'] = None
-        
-        
+
+
 
     # figure out how man total points we have
     data_dict['n_all'] = data_dict['t'].shape[0]
@@ -939,7 +935,7 @@ def process_raw(sample, data_type):
     for n in nhplot:
         if not all(np.isnan(data_dict['fstar'][n])):
             data_dict['n_exist'] = np.append(data_dict['n_exist'], n)
-            
+
     # make the figure with its axis
     rawfigname = 'raw_'+data_type+'_'+sample['samplename']
     close_existing_fig(rawfigname)
@@ -947,7 +943,7 @@ def process_raw(sample, data_type):
         numplots=2
     else:
         numplots=3
-        
+
     data_dict['rawfig'] = plt.figure(rawfigname, figsize=(numplots*3,3))
 
     data_dict['f_ax'] = data_dict['rawfig'].add_subplot(1,numplots,1)
@@ -959,7 +955,7 @@ def process_raw(sample, data_type):
     data_dict['g_ax'].set_xlabel('t (min.)')
     data_dict['g_ax'].set_ylabel(r'$\Gamma$ (Hz)')
     data_dict['g_ax'].set_title(data_type)
-    
+
     if numplots == 3:
         data_dict['dlam3_ax'] = data_dict['rawfig'].add_subplot(1,numplots,3)
         data_dict['dlam3_ax'].set_xlabel('t (min.)')
@@ -980,14 +976,14 @@ def process_raw(sample, data_type):
         g = data_dict['fstar'][n][data_dict['idx_in_range']].imag
         (data_dict['f_ax'].plot(t, f, color=colors[n], label='n='+str(n)))
         (data_dict['g_ax'].plot(t, g, color=colors[n], label='n='+str(n)))
-        
+
     # add the legends
     data_dict['f_ax'].legend()
     data_dict['g_ax'].legend()
-    
-    data_dict['rawfig'].tight_layout() 
+
+    data_dict['rawfig'].tight_layout()
     data_dict['rawfigname'] = rawfigname
-    
+
     return data_dict
 
 
@@ -1020,7 +1016,7 @@ def make_check_axes(sample, nh):
 def plot_spectra(fig_dict, sample, idx_vals):
     datadir = sample.get('datadir','')
     if not 'fig' in fig_dict:
-        print('making new figure')   
+        print('making new figure')
         fig = plt.figure('spectra', figsize=(9, 9))
         G_ax = {}  # conductance plots
         B_ax = {}  # susceptance plots
@@ -1037,21 +1033,21 @@ def plot_spectra(fig_dict, sample, idx_vals):
             B_ax[n].set_ylabel('$B$ (S)')
             Nyquist_ax[n] = fig.add_subplot(3,3, 6+(n+1)/2)
             Nyquist_ax[n].set_xlabel('$B$ (S)')
-            Nyquist_ax[n].set_ylabel('$G$ (S)')          
+            Nyquist_ax[n].set_ylabel('$G$ (S)')
         fig.tight_layout()
-        
+
     else:
         fig = fig_dict['fig']
         G_ax = fig_dict['G_ax']
         B_ax = fig_dict['B_ax']
         Nyquist_ax = fig_dict['Nyquist_ax']
         plot_num = fig_dict['plot_num']+1
-    
+
     # define dictionaries for the relevant axes
     # the following command controls the way the offsets are handled
     # 4 is the default, but 2 seems to work better here
     plt.rcParams['axes.formatter.offset_threshold'] = 2
-    
+
        # read the data
     spectra_file = os.path.join(datadir, sample['filmfile'] + '_raw_spectras.mat')
     spectra = hdf5storage.loadmat(spectra_file)
@@ -1068,7 +1064,7 @@ def plot_spectra(fig_dict, sample, idx_vals):
             B_fit = spectra['raw_spectra_'+str(n)][idx][3][:, 4]
             G_res = spectra['raw_spectra_'+str(n)][idx][3][:, 5]
             B_res = spectra['raw_spectra_'+str(n)][idx][3][:, 6]
-    
+
             # now make the plots
             G_ax[n].plot(f, G_exp, 'b-')
             B_ax[n].plot(f, B_exp, 'b-')
@@ -1077,7 +1073,7 @@ def plot_spectra(fig_dict, sample, idx_vals):
             B_ax[n].plot(f, B_fit, 'r-')
             G_ax[n].plot(f, G_res, 'g-')
             B_ax[n].plot(f, B_res, 'g-')
-        
+
         # add label to plots
         text_y = spectra['raw_spectra_'+str(n)][idx_vals[0]][3][:, 1].max()
         max_idx = spectra['raw_spectra_'+str(n)][idx_vals[0]][3][:, 1].argmax()
@@ -1087,26 +1083,26 @@ def plot_spectra(fig_dict, sample, idx_vals):
 
     return  {'fig': fig, 'G_ax': G_ax, 'B_ax': B_ax,
             'Nyquist_ax': Nyquist_ax, 'plot_num': plot_num}
-    
-    
+
+
 def contour(function, parms):
     # set up the number of points and establisth the great
     n = parms.get('n', 100)
     phi = parms.get('phi', np.linspace(0, 90, n))
     dlam = parms.get('dlam', np.linspace(0, 0.5, n))
     dlam_i, phi_i = np.meshgrid(dlam, phi)
-    
+
     # calculate the z values and reset things to -1 at dlam=0
     z = normdelfstar(3, dlam_i, phi_i)
     z[:,0] = -1
-    
+
     # now make the contour plots
-    
-    fig = plt.figure('contour', figsize=(6,3))
-    
+
+    fig = plt.figure('contour', figsize=(6, 3))
+
     flevels = np.linspace(-2, 0, 1000)
     glevels = np.linspace(0, 2, 1000)
-    
+
     # start with frequency shift
     f_ax = fig.add_subplot(121)
     f_ax.set_xlabel(r'$d/\lambda_n$')
@@ -1114,13 +1110,13 @@ def contour(function, parms):
     f_ax.set_title(r'$\Delta f_n/f_{sn}$')
     f_map = f_ax.contourf(dlam_i, phi_i, z.real, flevels, cmap="gnuplot2",
                           extend='both')
-    fig.colorbar(f_map, ax=f_ax, ticks = np.linspace(min(flevels),
+    fig.colorbar(f_map, ax=f_ax, ticks=np.linspace(min(flevels),
                  max(flevels), 6))
-    
+
     # we need this to get rid of the lines in the contour plot
     for c in f_map.collections:
         c.set_edgecolor("face")
-    
+
     # now plot the dissipation
     g_ax = fig.add_subplot(122)
     g_ax.set_xlabel(r'$d/\lambda_n$')
@@ -1128,13 +1124,13 @@ def contour(function, parms):
     g_ax.set_title(r'$\Delta \Gamma_n/f_{sn}$')
     g_map = g_ax.contourf(dlam_i, phi_i, z.imag, glevels, cmap="gnuplot2_r",
                           extend='both')
-    fig.colorbar(g_map, ax=g_ax, ticks = np.linspace(min(glevels),
+    fig.colorbar(g_map, ax=g_ax, ticks=np.linspace(min(glevels),
                  max(glevels), 6))
     for c in g_map.collections:
         c.set_edgecolor("face")
-        
+
     fig.tight_layout()
-    
+
     return
 
 
@@ -1167,8 +1163,8 @@ def thinfilm_guess(delfstar):
     # for estimating the starting point
     return [0.05, 5]
 
-def make_knots(numpy_array, num_knots, parms):  
-    # makes num_knots eveNy spaced knots along array         
+def make_knots(numpy_array, num_knots, parms):
+    # makes num_knots eveNy spaced knots along array
     knot_interval = (np.max(numpy_array)-np.min(numpy_array))/(num_knots+1)
     minval = np.min(numpy_array)+knot_interval
     maxval = np.max(numpy_array)-knot_interval
@@ -1226,7 +1222,6 @@ def run_from_ipython():
         return True
     except NameError:
         return False
-    
+
 def print_test(variable):
     print(f1)
-
