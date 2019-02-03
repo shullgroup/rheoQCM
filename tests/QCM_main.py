@@ -921,7 +921,7 @@ class QCMApp(QMainWindow):
         # self.ui.mpl_spectra_fit.canvas.mpl_connect('button_release_event', self.spectra_fit_axesevent_connect)
             
         #
-        self.ui.pushButton_manual_refit.clicked['bool'].connect(self.init_manual_refit)
+        self.ui.pushButton_manual_refit.clicked.connect(self.init_manual_refit)
         # hide widget for manual refit
         self.hide_widgets('manual_refit_enable_disable_list')
 
@@ -1257,7 +1257,7 @@ class QCMApp(QMainWindow):
     def on_clicked_pushButton_runstop(self, checked):
         if checked:
             # turn off manual refit mode
-            self.ui.pushButton_manual_refit.setChecked(False)
+            self.set_manual_refit_mode(mode=False)
 
             # check checked harmonice if no, stop
             harm_list = self.get_all_checked_harms()
@@ -1677,7 +1677,7 @@ class QCMApp(QMainWindow):
         save current data to file if file has been opened
         '''
         # turn off manual refit mode
-        self.ui.pushButton_manual_refit.setChecked(False)
+        self.set_manual_refit_mode(mode=False)
 
         if self.data_saver.path: # there is file 
             self.data_saver.save_data_settings(settings=self.settings)
@@ -1692,7 +1692,7 @@ class QCMApp(QMainWindow):
         ''' save current data to a new file  '''
 
         # turn off manual refit mode
-        self.ui.pushButton_manual_refit.setChecked(False)
+        self.set_manual_refit_mode(mode=False)
 
         # export data to a selected form
         fileName = self.saveFileDialog(title='Choose a new file', filetype=settings_init['default_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
@@ -1768,8 +1768,7 @@ class QCMApp(QMainWindow):
 
         if process:
             # turn off manual refit mode
-            self.ui.pushButton_manual_refit.setChecked(False)
-
+            self.set_manual_refit_mode(mode=False)
 
         return process
            
@@ -1785,6 +1784,11 @@ class QCMApp(QMainWindow):
         if not process: 
             return
 
+        # # turn off manual refit mode
+        # self.set_manual_refit_mode(mode=False)
+
+        # delete all prop plots
+        self.del_prop_plot()
         # clear all mpl objects
         self.clear_all_mpl()
 
@@ -2451,8 +2455,9 @@ class QCMApp(QMainWindow):
         self.disable_widgets('manual_refit_enable_disable_harmtree_list')
         # set pushButton_manual_refit checked 
         self.show_widgets('manual_refit_enable_disable_list')
-        self.ui.pushButton_manual_refit.setChecked(True)
-        self.init_manual_refit()
+        self.set_manual_refit_mode(mode=True)
+        # self.ui.pushButton_manual_refit.setChecked(True)
+        # self.init_manual_refit()
 
         # get data from data saver
         f, G, B = self.get_active_raw()
@@ -2506,6 +2511,20 @@ class QCMApp(QMainWindow):
 
 
         return f, G, B
+
+
+    def set_manual_refit_mode(self, mode=True):
+        '''
+        set manual refit mode off:
+            pushButton_manual_refit.setChecked(mode)
+            than run self.init_manual_refit()
+        mode: True/False
+        ''' 
+        # turn off manual refit mode
+        self.ui.pushButton_manual_refit.setChecked(mode)
+        # set other items
+        self.init_manual_refit()
+       
 
     def init_manual_refit(self):
         '''
@@ -3892,9 +3911,7 @@ class QCMApp(QMainWindow):
             if self.ui.pushButton_manual_refit.isChecked() & (idx < 2): # current idx changed out of refit (2)
                 print('samprefchn move out of 2') #testprint
                 # disable refit widgets
-                self.ui.pushButton_manual_refit.setChecked(False)
-                self.init_manual_refit() # set the widgets
-
+                self.set_manual_refit_mode(mode=False)
 
             if idx == 0: # swith to samp
                 self.settings_chn = {
