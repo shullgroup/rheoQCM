@@ -167,6 +167,10 @@ def calc_ZL(n, layers, delfstar):
 
 
 def calc_delfstar(n, layers, calctype):
+    if not layers: # layers is empty {}
+        return np.nan
+
+    # there is data
     if 'overlayer' in layers:
         ZL = calc_ZL(n, {1:layers['film'], 2:layers['overlayer']}, 0)
         ZL_ref = calc_ZL(n, {1:layers['overlayer']}, 0)
@@ -368,6 +372,7 @@ def solve_for_props(soln_input):
     rh = {}
     rd = {}
     for n in nhplot:
+        print('layers', layers)
         delfstar_calc[n] = calc_delfstar(n, layers, calctype)
         rd[n] = rd_from_delfstar(n, delfstar_calc)
     rh = rh_from_delfstar(nh, delfstar_calc)
@@ -896,9 +901,9 @@ def process_raw(sample, data_type):
 
         # read data from file
         if data_type == 'film': # get film data
-            df = data_saver.reshape_data_df(filmchn, mark=False, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
+            df = data_saver.reshape_data_df(filmchn, mark=True, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
         elif data_type == 'bare': # get bare data
-            df = data_saver.reshape_data_df(filmchn+'_ref', mark=False, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
+            df = data_saver.reshape_data_df(filmchn+'_ref', mark=True, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
             pass
 
         # reference frequencies are the first data points for the bare crystal data

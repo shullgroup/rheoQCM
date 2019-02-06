@@ -2366,8 +2366,11 @@ class QCMApp(QMainWindow):
         '''
         # get data in tuple (x, y)
         data_lG, data_lB = self.ui.mpl_spectra_fit.get_data(ls=['lG', 'lB'])
+        print('len(data_lG)', len(data_lG)) #testprint
+        print('len(data_lG[0])', len(data_lG[0])) #testprint
 
         if len(data_lG[0]) == 0: # no data
+            print('no data from line') #testprint
             return
 
         # factor = self.get_harmdata('spinBox_harmfitfactor')
@@ -2391,6 +2394,8 @@ class QCMApp(QMainWindow):
         # add devided peaks
         self.ui.mpl_spectra_fit.add_temp_lines(self.ui.mpl_spectra_fit.ax[0], xlist=[data_lG[0]] * len(fit_result['comp_g']), ylist=fit_result['comp_g'])
         self.ui.mpl_spectra_fit_polar.add_temp_lines(self.ui.mpl_spectra_fit_polar.ax[0],xlist=fit_result['comp_g'], ylist=fit_result['comp_b'])
+
+        print('fit_result.comp_g', fit_result['comp_g'])
 
         # update lsp
         factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=self.settings_chn['name'], harm=self.settings_harm)
@@ -2434,7 +2439,8 @@ class QCMApp(QMainWindow):
 
         self.ui.mpl_spectra_fit.update_data({'ln': 'srec', 'x': cen_rec_freq, 'y': cen_rec_G})
 
-        # add results to textBrowser_spectra_fit_result
+        #TODO add results to textBrowser_spectra_fit_result
+        
         if self.get_spectraTab_mode() == 'refit': # refit mode
             # save scan data to data_saver 
             self.data_saver.update_refit_data(
@@ -2446,6 +2452,7 @@ class QCMApp(QMainWindow):
             )
             # update mpl_plt12
             self.update_mpl_plt12()
+
 
     def pick_manual_refit(self):
         '''
@@ -2500,7 +2507,9 @@ class QCMApp(QMainWindow):
             queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=False)
         elif self.active['l_str'] == 'lm': # showing marked data
             queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=True)
-        return queue_list[self.active['ind']]
+        print('queue_list', queue_list) #testprint
+        return queue_list.iloc[self.active['ind']]
+
 
     def get_active_raw(self):
         '''
@@ -2508,7 +2517,6 @@ class QCMApp(QMainWindow):
         '''
         queue_id = self.get_active_queueid_from_l_harm_ind()
         f, G, B = self.data_saver.get_raw(self.active['chn_name'], queue_id, self.active['harm'])
-
 
         return f, G, B
 
@@ -3258,6 +3266,7 @@ class QCMApp(QMainWindow):
             label = mpl.l['lp'][0].get_label()
             line, ind = label.split('_')
             l, harm = line[:-1], line[-1]
+            print('label', label) #testprint
             print(line) #testprint
             print(l, harm) #testprint
             print(ind) #testprint

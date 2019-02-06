@@ -362,8 +362,10 @@ class DataSaver:
         '''
 
         # get 
-        fs_all = self.get_queue(chn_name, queue_id, col='fs')
-        gs_all = self.get_queue(chn_name, queue_id, col='gs')
+        fs_all = self.get_queue(chn_name, queue_id, col='fs').iloc[0]
+        gs_all = self.get_queue(chn_name, queue_id, col='gs').iloc[0]
+        print('fs_all', fs_all) #testprint
+        print('type fs_all', type(fs_all)) #testprint
 
         # append to the form by chn_name
         # prepare data: change list to the size of harm_list by inserting nan to the empty harm
@@ -582,11 +584,12 @@ class DataSaver:
         update col data of a queue_id
         '''
         print(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col]) #testprint
-        print(val) #testprint
+        print('col', col) #testprint
+        print('val', val) #testprint
         print(pd.Series([val])) #testprint
         # getattr(self, chn_name).at[getattr(self, chn_name).queue_id == queue_id, [col]] = pd.Series([val])
-        getattr(self, chn_name)[getattr(self, chn_name).queue_id == queue_id][col] = [val]
         print(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col]) #testprint
+        getattr(self, chn_name)[getattr(self, chn_name).queue_id == queue_id][col] = [val]
 
         self.saveflg = False
 

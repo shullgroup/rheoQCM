@@ -31,6 +31,21 @@ sample = sample_dict()  # read sample dictionary
 parms['imagetype'] = 'png'  # default is 'svg'
 
 ######### run samples below ##########
+#%% 2:1 20190201 samp
+qcm.analyze(sample['D400_5_N2_CO2__samp'], parms)
+exit(0)
+#%% 2:1 20190201 ref
+# qcm.analyze(sample['D400_5_N2_CO2__ref'], parms)
+
+#%% 2:1 20190129 samp
+qcm.analyze(sample['D400_4_N2_RH__samp'], parms)
+#%% 2:1 20190129 ref
+qcm.analyze(sample['D400_4_N2_RH__ref'], parms)
+
+
+
+
+
 
 #%% 2:1 20181029 
 qcm.analyze(sample['DGEBA-PACM_RT_2_cured'], parms)
