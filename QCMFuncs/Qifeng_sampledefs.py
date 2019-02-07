@@ -6,7 +6,7 @@
 def sample_dict():
     sample = {}  # individual sample dictionaries get added to sample
 
-    # 20190201 D400_5_N2_CO2 samp
+    # 20190201 D400_5_N2_CO2 samp (CO2)
     samplename = 'D400_5_N2_CO2__samp'
     sample[samplename] = {
     'samplename': 'D400_5_N2_CO2__samp',
@@ -21,7 +21,7 @@ def sample_dict():
     'nhcalc': ['133', '353', '355'],
     'nhplot': [1, 3, 5]
     }
-    # 20190201 D400_5_N2_CO2 ref
+    # 20190201 D400_5_N2_CO2 ref (N2)
     samplename = 'D400_5_N2_CO2__ref'
     sample[samplename] = {
     'samplename': 'D400_5_N2_CO2__ref',
