@@ -68,7 +68,7 @@ if UIModules.system_check() == 'win32': # windows
 else: # linux or MacOS
     # for test only
     # from modules.AccessMyVNA_dummy import AccessMyVNA
-    print('Current version of MyVNA does not work with MacOS and Linux!\nData analysis only!')
+        print('Current version of MyVNA does not work with MacOS and Linux!\nData analysis only!')
 
 
 class VNATracker:
@@ -912,7 +912,7 @@ class QCMApp(QMainWindow):
         # self.ui.mpl_spectra_fit.canvas.mpl_connect('button_release_event', self.spectra_fit_axesevent_connect)
             
         #
-        self.ui.pushButton_manual_refit.clicked['bool'].connect(self.init_manual_refit)
+        self.ui.pushButton_manual_refit.clicked.connect(self.init_manual_refit)
         # hide widget for manual refit
         self.hide_widgets('manual_refit_enable_disable_list')
 
@@ -1248,7 +1248,7 @@ class QCMApp(QMainWindow):
     def on_clicked_pushButton_runstop(self, checked):
         if checked:
             # turn off manual refit mode
-            self.ui.pushButton_manual_refit.setChecked(False)
+            self.set_manual_refit_mode(mode=False)
 
             # check checked harmonice if no, stop
             harm_list = self.get_all_checked_harms()
@@ -1646,7 +1646,7 @@ class QCMApp(QMainWindow):
         save current data to file if file has been opened
         '''
         # turn off manual refit mode
-        self.ui.pushButton_manual_refit.setChecked(False)
+        self.set_manual_refit_mode(mode=False)
 
         if self.data_saver.path: # there is file 
             self.data_saver.save_data_settings(settings=self.settings)
@@ -1661,7 +1661,7 @@ class QCMApp(QMainWindow):
         ''' save current data to a new file  '''
 
         # turn off manual refit mode
-        self.ui.pushButton_manual_refit.setChecked(False)
+        self.set_manual_refit_mode(mode=False)
 
         # export data to a selected form
         fileName = self.saveFileDialog(title='Choose a new file', filetype=settings_init['default_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
@@ -1737,8 +1737,7 @@ class QCMApp(QMainWindow):
 
         if process:
             # turn off manual refit mode
-            self.ui.pushButton_manual_refit.setChecked(False)
-
+            self.set_manual_refit_mode(mode=False)
 
         return process
            
@@ -1754,6 +1753,11 @@ class QCMApp(QMainWindow):
         if not process: 
             return
 
+        # # turn off manual refit mode
+        # self.set_manual_refit_mode(mode=False)
+
+        # delete all prop plots
+        self.del_prop_plot()
         # clear all mpl objects
         self.clear_all_mpl()
 
@@ -2316,6 +2320,8 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.add_temp_lines(self.ui.mpl_spectra_fit.ax[0], xlist=[data_lG[0]] * len(fit_result['comp_g']), ylist=fit_result['comp_g'])
         self.ui.mpl_spectra_fit_polar.add_temp_lines(self.ui.mpl_spectra_fit_polar.ax[0],xlist=fit_result['comp_g'], ylist=fit_result['comp_b'])
 
+        # print('fit_result.comp_g', fit_result['comp_g'])
+
         # update lsp
         factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=self.settings_chn['name'], harm=self.settings_harm)
         gc_list = [fit_result['v_fit']['g_c']['value']] * 2 # make its len() == 2
@@ -2350,7 +2356,8 @@ class QCMApp(QMainWindow):
 
         self.ui.mpl_spectra_fit.update_data({'ln': 'srec', 'x': cen_rec_freq, 'y': cen_rec_G})
 
-        # add results to textBrowser_spectra_fit_result
+        #TODO add results to textBrowser_spectra_fit_result
+        
         if self.get_spectraTab_mode() == 'refit': # refit mode
             # save scan data to data_saver 
             self.data_saver.update_refit_data(
@@ -2363,6 +2370,7 @@ class QCMApp(QMainWindow):
             # update mpl_plt12
             self.update_mpl_plt12()
 
+
     def pick_manual_refit(self):
         '''
         manual refit process after manual refit context menu triggered
@@ -2371,8 +2379,9 @@ class QCMApp(QMainWindow):
         self.disable_widgets('manual_refit_enable_disable_harmtree_list')
         # set pushButton_manual_refit checked 
         self.show_widgets('manual_refit_enable_disable_list')
-        self.ui.pushButton_manual_refit.setChecked(True)
-        self.init_manual_refit()
+        self.set_manual_refit_mode(mode=True)
+        # self.ui.pushButton_manual_refit.setChecked(True)
+        # self.init_manual_refit()
 
         # get data from data saver
         f, G, B = self.get_active_raw()
@@ -2410,7 +2419,8 @@ class QCMApp(QMainWindow):
             queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=False)
         elif self.active['l_str'] == 'lm': # showing marked data
             queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=True)
-        return queue_list[self.active['ind']]
+        return queue_list.iloc[self.active['ind']]
+
 
     def get_active_raw(self):
         '''
@@ -2419,8 +2429,21 @@ class QCMApp(QMainWindow):
         queue_id = self.get_active_queueid_from_l_harm_ind()
         f, G, B = self.data_saver.get_raw(self.active['chn_name'], queue_id, self.active['harm'])
 
-
         return f, G, B
+
+
+    def set_manual_refit_mode(self, mode=True):
+        '''
+        set manual refit mode off:
+            pushButton_manual_refit.setChecked(mode)
+            than run self.init_manual_refit()
+        mode: True/False
+        ''' 
+        # turn off manual refit mode
+        self.ui.pushButton_manual_refit.setChecked(mode)
+        # set other items
+        self.init_manual_refit()
+       
 
     def init_manual_refit(self):
         '''
@@ -3689,9 +3712,7 @@ class QCMApp(QMainWindow):
             
             if self.ui.pushButton_manual_refit.isChecked() & (idx < 2): # current idx changed out of refit (2)
                 # disable refit widgets
-                self.ui.pushButton_manual_refit.setChecked(False)
-                self.init_manual_refit() # set the widgets
-
+                self.set_manual_refit_mode(mode=False)
 
             if idx == 0: # swith to samp
                 self.settings_chn = {
@@ -4522,10 +4543,7 @@ class QCMApp(QMainWindow):
 
 
                     # update srec
-                    if 'cen_rec' in fit_result['v_fit']:
-                        cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
-                    else:
-                        cen_rec_freq = np.nan
+                    cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
                     cen_rec_G = self.peak_tracker.get_output(key='gmod', chn_name=chn_name, harm=harm).eval(
                         self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
                         x=cen_rec_freq

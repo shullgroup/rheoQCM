@@ -7,6 +7,7 @@
 - Fix the manual refit mode turning on/off bugs.
 - Fix indexing bug while picking single point from data with marks.
 - Fix refit not updating bug.
+- Fix devided peak not plotting bug.
 
 ## [0.15.2] - 2019-01-29
 

@@ -17,9 +17,9 @@ import pandas as pd
 
 # variable limitions
 dlam_rh_range = (0, 5)
-drho_range = (0, 1e-2)
-grho_rh_range = (1e7, 1e13)
-phi_range = (0, np.pi/2)
+drho_range = (0, 1e-2) # kg/m^2
+grho_rh_range = (1e10, 1e16) # Pa kg/m^3
+phi_range = (0, np.pi/2) # rad 
 
 fit_method = 'lmfit'
 fit_method = 'scipy'
@@ -480,12 +480,12 @@ class QCM:
                     ub = np.array([drho_range[1], grho_rh_range[1], phi_range[1]])  # upper bounds drho, grho3, phi
 
                     def ftosolve2(x):
-                        return ([np.real(delfstar[n1]) -
-                                np.real(self.delfstarcalc(n1, x[0], x[1], x[2], overlayer)),
-                                np.real(delfstar[n2]) -
-                                np.real(self.delfstarcalc(n2, x[0], x[1], x[2], overlayer)),
-                                np.imag(delfstar[n3]) -
-                                np.imag(self.delfstarcalc(n3, x[0], x[1], x[2], overlayer))])
+                        return ([
+                            np.real(delfstar[n1]) - np.real(self.delfstarcalc(n1, x[0], x[1], x[2], overlayer)),
+                            np.real(delfstar[n2]) - np.real(self.delfstarcalc(n2, x[0], x[1], x[2], overlayer)),
+                            np.imag(delfstar[n3]) - np.imag(self.delfstarcalc(n3, x[0], x[1], x[2], overlayer))
+                            ]
+                        )
                     
                     # put the input uncertainties into a 3 element vector
                     delfstar_err = np.zeros(3)

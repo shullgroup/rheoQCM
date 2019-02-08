@@ -345,8 +345,8 @@ class DataSaver:
         '''
 
         # get 
-        fs_all = self.get_queue(chn_name, queue_id, col='fs')
-        gs_all = self.get_queue(chn_name, queue_id, col='gs')
+        fs_all = self.get_queue(chn_name, queue_id, col='fs').iloc[0]
+        gs_all = self.get_queue(chn_name, queue_id, col='gs').iloc[0]
 
         # append to the form by chn_name
         # prepare data: change list to the size of harm_list by inserting nan to the empty harm

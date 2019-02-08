@@ -2395,7 +2395,7 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.add_temp_lines(self.ui.mpl_spectra_fit.ax[0], xlist=[data_lG[0]] * len(fit_result['comp_g']), ylist=fit_result['comp_g'])
         self.ui.mpl_spectra_fit_polar.add_temp_lines(self.ui.mpl_spectra_fit_polar.ax[0],xlist=fit_result['comp_g'], ylist=fit_result['comp_b'])
 
-        print('fit_result.comp_g', fit_result['comp_g'])
+        # print('fit_result.comp_g', fit_result['comp_g'])
 
         # update lsp
         factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=self.settings_chn['name'], harm=self.settings_harm)
@@ -2507,7 +2507,7 @@ class QCMApp(QMainWindow):
             queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=False)
         elif self.active['l_str'] == 'lm': # showing marked data
             queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=True)
-        print('queue_list', queue_list) #testprint
+        # print('queue_list', queue_list) #testprint
         return queue_list.iloc[self.active['ind']]
 
 
@@ -2718,12 +2718,12 @@ class QCMApp(QMainWindow):
         # get x data. normally t
         xdata = self.get_data_by_typestr(plt_opt[1], plt_chnname, mark=mark, unit_t=timeuint, unit_temp=tempunit)
 
-        print('------xdata--------') #testprint
-        print(xdata) #testprint
-        print('-------------------') #testprint
-        print('------ydata--------') #testprint
-        print(ydata) #testprint
-        print('-------------------') #testprint
+        # print('------xdata--------') #testprint
+        # print(xdata) #testprint
+        # print('-------------------') #testprint
+        # print('------ydata--------') #testprint
+        # print(ydata) #testprint
+        # print('-------------------') #testprint
 
         # prepare data for plotting
         data_list = self.prepare_harm_data_for_mpl_update(plt_chnname, plt_harms, line_group, xdata, ydata, show_marked_when_all=True)
@@ -2769,7 +2769,7 @@ class QCMApp(QMainWindow):
                 if self.settings['radioButton_data_showall']:
                     if self.data_saver.with_marks(plt_chnname):
                         mark_list = mark_df['mark'+harm] == 1
-                        print('mark_list', mark_list) #testprint
+                        # print('mark_list', mark_list) #testprint
                     else: 
                         mark_list = []
                     if isinstance(mark_list, pd.Series):
@@ -2824,7 +2824,7 @@ class QCMApp(QMainWindow):
                 if self.settings['radioButton_data_showall']:
                     if self.data_saver.with_marks(plt_chnname):
                         mark_list = mark_df['mark'+harm] == 1
-                        print('mark_list', mark_list) #testprint
+                        # print('mark_list', mark_list) #testprint
                     else: 
                         mark_list = []
                     if isinstance(mark_list, pd.Series):

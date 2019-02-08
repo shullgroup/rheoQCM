@@ -602,7 +602,7 @@ class DataSaver:
             for ext in ['', '_ref']: # samp/ref and samp_ref/ref_ref
                 df = getattr(self, chn_name + ext)
                 col_endswith_s = [col for col in df.columns if col.endswith('s')]
-                print(col_endswith_s) #testprint
+                # print(col_endswith_s) #testprint
                 
                 for col in col_endswith_s:
                     df[col] = df[col].apply(lambda row: [np.nan if x is None else x for x in row])
@@ -739,7 +739,7 @@ class DataSaver:
         # convert t column to datetime object
         df['t'] = self.get_t_by_unit(chn_name, unit=unit_t)
         df['temp'] = self.get_temp_by_unit(chn_name, unit=unit_temp)
-        print(df.t) #testprint
+        # print(df.t) #testprint
 
         for col in cols:
             df = df.assign(**self.get_list_column_to_columns(chn_name, col, mark=mark, deltaval=deltaval, norm=norm)) # split columns: fs and gs
@@ -758,7 +758,7 @@ class DataSaver:
             # select rows with marks
             print('reshape_data_df: dropnanmarkrow = True') #testprint
             df = df[self.rows_with_marks(chn_name)][:]
-            print(df) #testprint
+            # print(df) #testprint
             if 'marks' in df.columns:
                 df = df.drop(columns='marks') # drop marks column
         else:
@@ -798,7 +798,7 @@ class DataSaver:
         if dropnanmarkrow == True: # rows with marks only
             # select rows with marks
             df = df[self.rows_with_marks(chn_name)][:]
-            print(df) #testprint
+            # print(df) #testprint
             if 'marks' in df.columns:
                 df = df.drop(columns='marks') # drop marks column
         else:
@@ -838,7 +838,7 @@ class DataSaver:
             return t
         else:
             print(self.get_t_ref()) #testprint
-            print(t) #testprint
+            # print(t) #testprint
             t = t -  self.get_t_ref() # delta t to reference (t0)
             t = t.dt.total_seconds() # convert to second
             return t
@@ -917,7 +917,6 @@ class DataSaver:
         else: # no t0 saved in self.exp_ref
             # find t0 in self.settings
             t0 = self.settings.get('dateTimeEdit_reftime', None)
-            print() #testprint
             print('t0', t0) #testprint
             if not t0:
                 if self.samp.shape[0]> 0: # use the first queque time
@@ -962,7 +961,7 @@ class DataSaver:
 
         if deltaval == True:
             s = self.convert_col_to_delta_val(chn_name, col, norm=norm)
-            print(s) #testprint
+            # print(s) #testprint
             col = 'del' + col # change column names to 'delfs' or 'delgs' 
             if norm:
                 col = col[:-1] + 'n' + col[-1:] # change columns to 'delfns' or 'delgns'
@@ -974,14 +973,14 @@ class DataSaver:
             return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col[:-1] + str(x * 2 + 1))
         else:
             m = getattr(self, chn_name)['marks'].copy()
-            print('mmmmm', m) #testprint
+            # print('mmmmm', m) #testprint
             idx = s.index
             # convert s and m to ndarray
             arr_s = np.array(s.values.tolist(), dtype=np.float) # the dtype=np.float replace None with np.nan
-            print(arr_s) #testprint
+            # print(arr_s) #testprint
             arr_m = np.array(m.values.tolist(), dtype=np.float) # the dtype=np.float replace None with np.nan
-            print(arr_m) #testprint
-            print(np.any(arr_m == 1)) #testprint
+            # print(arr_m) #testprint
+            # print(np.any(arr_m == 1)) #testprint
             if np.any(arr_m == 1): # there are marks (1)
                 print('there are marks (1) in df') #testprint
                 # replace None with np.nan
@@ -1025,10 +1024,10 @@ class DataSaver:
             idx = s.index
             # convert s and m to ndarray
             arr_s = np.array(s.values.tolist(), dtype=np.float) # the dtype=np.float replace None with np.nan
-            print(arr_s) #testprint
+            # print(arr_s) #testprint
             arr_m = np.array(m.values.tolist(), dtype=np.float) # the dtype=np.float replace None with np.nan
-            print(arr_m) #testprint
-            print(np.any(arr_m == 1)) #testprint
+            # print(arr_m) #testprint
+            # print(np.any(arr_m == 1)) #testprint
             if np.any(arr_m == 1): # there are marks (1)
                 print('there are marks (1) in df') #testprint
                 # replace None with np.nan
@@ -1049,12 +1048,12 @@ class DataSaver:
         '''
         # check if the reference is set
         if not self.refflg[chn_name]:
-            print(self.exp_ref[chn_name + '_ref']) #testprint
+            # print(self.exp_ref[chn_name + '_ref']) #testprint
             self.set_ref_set(chn_name, *self.exp_ref[chn_name + '_ref'])
 
         # get a copy
         col_s = getattr(self, chn_name)[col].copy()
-        print(self.exp_ref[chn_name]) #testprint
+        # print(self.exp_ref[chn_name]) #testprint
         if all(np.isnan(np.array(self.exp_ref[chn_name][self._ref_keys[col]]))): # no reference or no constant reference exist
             # check col+'_ref'
             if self.exp_ref[chn_name + '_ref'][1][0] is None or len(self.exp_ref[chn_name + '_ref'][1]) == 0: #start index is None or [], dynamic reference
@@ -1091,8 +1090,8 @@ class DataSaver:
             # get ref
             ref = self.exp_ref[chn_name][self._ref_keys[col]] # return a ndarray
             # return
-            print(ref) #testprint
-            print(col_s[0]) #testprint
+            # print(ref) #testprint
+            # print(col_s[0]) #testprint
             
             col_s = col_s.apply(lambda x: list(np.array(x, dtype=np.float) - np.array(ref, dtype=np.float)))
             if norm:
@@ -1188,7 +1187,7 @@ class DataSaver:
                     print(chn_name, col, key) #testprint
                     df = self.get_list_column_to_columns_marked_rows(chn_name + '_ref', col, mark=mark, dropnanmarkrow=False, deltaval=False)
                     print(getattr(self, chn_name + '_ref')[col]) #testprint
-                    print(df) #testprint
+                    # print(df) #testprint
                     self.exp_ref[chn_name][key] = df.mean().values.tolist()
                 self.refflg[chn_name] = True
             else:
@@ -1200,7 +1199,7 @@ class DataSaver:
                 }
                 self.refflg[chn_name] = False
 
-        print(self.exp_ref) #testprint
+        # print(self.exp_ref) #testprint
 
 
     def set_t0(self, t0=None, t0_shifted=None):
@@ -1214,7 +1213,7 @@ class DataSaver:
                 if isinstance(t0, datetime.datetime): # if t0 is datetime obj
                     t0 = t0.strftime(self.settings_init['time_str_format']) # convert to string
                 self.exp_ref['t0'] = t0
-                print(self.exp_ref) #testprint
+                # print(self.exp_ref) #testprint
 
         if t0_shifted is not None:
             if isinstance(t0_shifted, datetime.datetime): # if t0_shifted is datetime obj
@@ -1324,8 +1323,8 @@ class DataSaver:
         df_new = df.copy()
         print(type(df_new)) #testprint
         print(df_new.tail()) #testprint
-        print(df_new.fs) #testprint
-        print(df_new.marks) #testprint
+        # print(df_new.fs) #testprint
+        # print(df_new.marks) #testprint
         df_new.marks = df_new.marks.apply(lambda x: [new_mark if mark == old_mark else mark for mark in x])
         return df_new
 
@@ -1340,7 +1339,7 @@ class DataSaver:
         '''
         df_new = df.copy()
         def mark_func(row_marks):
-            print(row_marks) #testprint
+            # print(row_marks) #testprint
             new_marks = []
             for i, mark in enumerate(row_marks):
                 if str(i*2+1) == harm and mark != np.nan and mark is not None:
@@ -1349,10 +1348,10 @@ class DataSaver:
                     new_marks.append(mark)
                 return new_marks
 
-        print(df_new.marks) #testprint
+        # print(df_new.marks) #testprint
         # df_new.marks.loc[idx].apply(mark_func)
         df_new.marks.loc[idx] = df_new.marks.loc[idx].apply(lambda x: [mark_val if str(i*2+1) == harm and mark != np.nan and mark is not None else mark for i, mark in enumerate(x)])
-        print(df_new.marks) #testprint
+        # print(df_new.marks) #testprint
 
         return df_new
 
@@ -1363,7 +1362,7 @@ class DataSaver:
         '''
         df_new = df.copy()
         df_new.marks = df_new.marks.apply(lambda x: [mark_val if mark != np.nan and mark is not None else mark for mark in x])
-        print(df_new.marks) #testprint
+        # print(df_new.marks) #testprint
         return df_new
 
 
@@ -1566,7 +1565,7 @@ class DataSaver:
 
         # read QCM-D data
         df = pd.read_excel(path)
-        print(df.columns) #testprint
+        # print(df.columns) #testprint
         print(df.shape) #testprint
         print(df.head()) #testprint
 
@@ -1583,7 +1582,7 @@ class DataSaver:
         ref_gs = {'ref':[]}
         fGB = {'samp': {}, 'ref': {}} # a make up dict for f, G, B
         fgcol_list = df.filter(regex='del').columns
-        print(fgcol_list) #testprint
+        # print(fgcol_list) #testprint
         if len(fgcol_list) % 2: # odd columns
             print('delf and delg column number is not the same!\nPlease check the column name!')
             return
