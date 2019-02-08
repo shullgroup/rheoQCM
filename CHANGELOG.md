@@ -1,6 +1,12 @@
 # Changelog
 
-## [0.15.3] - 2019-01-31
+## [0.16.0] - 2019-02-08
+
+### Added
+
+- Add window state check before resize it.
+
+## [0.15.3] - 2019-02-07
 
 ### Fixed
 

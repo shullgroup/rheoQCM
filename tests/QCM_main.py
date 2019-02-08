@@ -227,7 +227,7 @@ class QCMApp(QMainWindow):
 
 
         #region cross different sections
-        # harmonic widgets
+        # harmonic widgets. Add widgets related number of harmonics here 
         # loop for setting harmonics 
         for i in range(1, settings_init['max_harmonic']+2, 2):
             # set to visable which is default. nothing to do
@@ -4424,7 +4424,9 @@ class QCMApp(QMainWindow):
         # set window title
         self.setWindowTitle(_version.__projectname__ + ' Version ' + _version.__version__ )
         # set window size
-        self.resize(*settings_init['window_size'])
+        if not self.isMaximized(): # resize window to default if is not maxized
+            self.resize(*settings_init['window_size'])
+
         # set deflault displaying of tab_settings
         self.ui.tabWidget_settings.setCurrentIndex(0)
         # set deflault displaying of stackedWidget_spetratop
@@ -4620,6 +4622,7 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_settings_mechanics_witherror.setChecked(self.settings['checkBox_settings_mechanics_witherror'])
 
         self.load_comboBox(self.ui.comboBox_settings_mechanics_selectmodel, 'qcm_model_opts')
+
 
     def update_refsource(self):
         '''
