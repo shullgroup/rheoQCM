@@ -400,17 +400,17 @@ class PeakTracker:
             for key, val in kwargs.items():
                 self.harmoutput[chn_name][harm][key] = val
         else: # initialize
-            self.harmoutput[chn_name][harm]['span'] = kwargs.get('span', [None, None])       # span for next scan
-            self.harmoutput[chn_name][harm]['cen_trk'] = kwargs.get('cen_trk', None)       # tracking peak center 
-            self.harmoutput[chn_name][harm]['factor_span'] = kwargs.get('span', [None, None])       # span of freq used for fitting
+            self.harmoutput[chn_name][harm]['span'] = kwargs.get('span', [np.nan, np.nan])       # span for next scan
+            self.harmoutput[chn_name][harm]['cen_trk'] = kwargs.get('cen_trk', np.nan)       # tracking peak center 
+            self.harmoutput[chn_name][harm]['factor_span'] = kwargs.get('span', [np.nan, np.nan])       # span of freq used for fitting
             self.harmoutput[chn_name][harm]['method'] = kwargs.get('method', '')       # method for next scan
-            self.harmoutput[chn_name][harm]['found_n'] = kwargs.get('found_n', None)       # condition for next scan
-            # self.harmoutput[chn_name][harm]['wid'] = kwargs.get('wid', None)       # peak width
-            # self.harmoutput[chn_name][harm]['amp'] = kwargs.get('amp', None)       # peak amp
-            # self.harmoutput[chn_name][harm]['phi'] = kwargs.get('phi', None)       # phase angle
-            self.harmoutput[chn_name][harm]['gmod'] = kwargs.get('gmod', None) # parameters input for clculation
-            self.harmoutput[chn_name][harm]['bmod'] = kwargs.get('bmod', None) # parameters input for clculation
-            self.harmoutput[chn_name][harm]['params'] = kwargs.get('params', None) # parameters input for clculation
+            self.harmoutput[chn_name][harm]['found_n'] = kwargs.get('found_n', np.nan)       # condition for next scan
+            # self.harmoutput[chn_name][harm]['wid'] = kwargs.get('wid', np.nan)       # peak width
+            # self.harmoutput[chn_name][harm]['amp'] = kwargs.get('amp', np.nan)       # peak amp
+            # self.harmoutput[chn_name][harm]['phi'] = kwargs.get('phi', np.nan)       # phase angle
+            self.harmoutput[chn_name][harm]['gmod'] = kwargs.get('gmod', np.nan) # parameters input for clculation
+            self.harmoutput[chn_name][harm]['bmod'] = kwargs.get('bmod', np.nan) # parameters input for clculation
+            self.harmoutput[chn_name][harm]['params'] = kwargs.get('params', np.nan) # parameters input for clculation
             self.harmoutput[chn_name][harm]['result'] = kwargs.get('result', {}) # clculation result
         
         # print('update params', kwargs.get('params')) #testprint
@@ -608,6 +608,7 @@ class PeakTracker:
             elif thresh1 - LB_peak > -half_wid*5: # if the peak is too fat, zoom out of the peak
                 new_xlim = [(current_xlim[0] - thresh2), (current_xlim[1] + thresh2)] # Hz '''
         elif track_condition == 'fixcntspn':
+            print('fixcntspn') #testprint
             # bothe span and cent are fixed
             # no changes
             return

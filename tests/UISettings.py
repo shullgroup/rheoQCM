@@ -26,7 +26,7 @@ settings_init = {
     'vna_cal_file_path': r'./dll/', 
 
     # highest harmonic can be shown in the UI. 
-    'max_harmonic': 9, # do not change
+    'max_harmonic': 9, # MUST >= 1
     
     # time string format
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
@@ -395,6 +395,10 @@ settings_init = {
     'mpl_legfontsize': 8,
     # cap size for prop figures
     'mpl_capsize': 4,
+    # text size for normal figures
+    'mpl_txtfontsize': 8,
+    # text size in mpl_sp figures
+    'mpl_sp_txtfontsize': 5,
 
     # progressBar settings
     # the programe will try to separate the scan_interval to 
@@ -444,7 +448,7 @@ settings_init = {
     'ftol': 1e-10, # -18
 
     ######### params for DataSaver module #########
-    'unsaved_path': r'.\unsaved', 
+    'unsaved_path': r'.\unsaved_data', 
 
 
     ######### params for PeakTracker module #######
@@ -478,18 +482,11 @@ settings_default = {
     # 'vna_path': r'C:/...../myVNA.exe'.
     # if this key is empty, the program will look for the file in the default list in settings_init['vna_path']
     'vna_path': r'',
-    
-    # # highest harmonic to display MUST <= settings_init['max_harmonic']
-    # 'max_disp_harmonic': 9, 
 
-
-    # default checkbox harm states
+    # default checkbox harm states (checkbox with False value can be omit from this list)
     'checkBox_harm1': True,
     'checkBox_harm3': True,
     'checkBox_harm5': True,
-    'checkBox_harm7': False,
-    'checkBox_harm9': False,
-    # 'checkBox_harm11': False,
 
     # default frequency display mode
     'comboBox_settings_control_dispmode': 'centerspan',
@@ -506,82 +503,6 @@ settings_default = {
     'spinBox_fitfactor': 6,
     'checkBox_dynamicfitbyharm': False,
     'checkBox_fitfactorbyharm': False,
-
-    #NOTUSING
-    # 'harm_set':{
-    #     'freq_range': {
-
-    #     },
-    #     'freq_span': {
-
-    #     },
-    #     'steps': {
-    #         1:  400, 
-    #         3:  400, 
-    #         5:  400, 
-    #         7:  400, 
-    #         9:  400, 
-    #         11: 400, 
-    #     },
-    #     'span_method': {
-    #         1:  'auto', 
-    #         3:  'auto', 
-    #         5:  'auto', 
-    #         7:  'auto', 
-    #         9:  'auto', 
-    #         11: 'auto', 
-    #     },
-    #     'span_track': {
-    #         1:  'auto', 
-    #         3:  'auto', 
-    #         5:  'auto', 
-    #         7:  'auto', 
-    #         9:  'auto', 
-    #         11: 'auto', 
-    #     },
-    #     'harmfit': {
-    #         1:  True, 
-    #         3:  True, 
-    #         5:  True, 
-    #         7:  True, 
-    #         9:  True, 
-    #         11: True, 
-    #     },
-    #     'harmfitfactor': {
-    #         1:  3, 
-    #         3:  3, 
-    #         5:  3, 
-    #         7:  3, 
-    #         9:  3, 
-    #         11: 3, 
-
-    #     },
-    #     'peaks_maxnum': {
-    #         1:  1, 
-    #         3:  1, 
-    #         5:  1, 
-    #         7:  1, 
-    #         9:  1, 
-    #         11: 1, 
-
-    #     },
-    #     'peaks_threshold': {
-    #         1:  0.0001, 
-    #         3:  0.0001, 
-    #         5:  0.0001, 
-    #         7:  0.0001, 
-    #         9:  0.0001, 
-    #         11: 0.0001, 
-    #     },
-    #     'peaks_prominence': {
-    #         1:  0.0001, 
-    #         3:  0.0001, 
-    #         5:  0.0001, 
-    #         7:  0.0001, 
-    #         9:  0.0001, 
-    #         11: 0.0001, 
-    #     },
-    # },
 
     # default frequency ranges for each harmonic
     'freq_range': {},
@@ -603,226 +524,9 @@ settings_default = {
         # }
     # }
     'harmdata': {
-        'samp':{
-            '1': {
-                # default scan settings
-                'lineEdit_scan_harmsteps': 400,
-                # default span settings
-                'comboBox_tracking_method': 'auto',
-                'comboBox_tracking_condition': 'auto',
-                # default fit settings
-                'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 3,
-                'spinBox_peaks_num': 1, 
-                'radioButton_peaks_num_max': True,
-                'radioButton_peaks_num_fixed': False,
-                'radioButton_peaks_policy_minf': False,
-                'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.0001,
-                'lineEdit_peaks_prominence': 0.0001,
-            },
-
-            '3': {
-                # default scan settings
-                'lineEdit_scan_harmsteps': 400,
-                # default span settings
-                'comboBox_tracking_method': 'auto',
-                'comboBox_tracking_condition': 'auto',   
-                # default fit settings
-                'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 3,
-                'spinBox_peaks_num': 1, 
-                'radioButton_peaks_num_max': True,
-                'radioButton_peaks_num_fixed': False,
-                'radioButton_peaks_policy_minf': False,
-                'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.0001,
-                'lineEdit_peaks_prominence': 0.0001,
-            },
-
-            '5': {
-                # default scan settings
-                'lineEdit_scan_harmsteps': 400,
-                # default span settings
-                'comboBox_tracking_method': 'auto',
-                'comboBox_tracking_condition': 'auto',
-                # default fit settings
-                'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 3,
-                'spinBox_peaks_num': 1, 
-                'radioButton_peaks_num_max': True,
-                'radioButton_peaks_num_fixed': False,
-                'radioButton_peaks_policy_minf': False,
-                'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.0001,
-                'lineEdit_peaks_prominence': 0.0001,
-            },
-
-            '7': {
-                # default scan settings
-                'lineEdit_scan_harmsteps': 400,
-                # default span settings
-                'comboBox_tracking_method': 'auto',
-                'comboBox_tracking_condition': 'auto',
-                # default fit settings
-                'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 3,
-                'spinBox_peaks_num': 1, 
-                'radioButton_peaks_num_max': True,
-                'radioButton_peaks_num_fixed': False,
-                'radioButton_peaks_policy_minf': False,
-                'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.0001,
-                'lineEdit_peaks_prominence': 0.0001,
-            },
-
-            '9': {
-                # default scan settings
-                'lineEdit_scan_harmsteps': 400,
-                # default span settings
-                'comboBox_tracking_method': 'auto',
-                'comboBox_tracking_condition': 'auto',
-                # default fit settings
-                'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 3,
-                'spinBox_peaks_num': 1, 
-                'radioButton_peaks_num_max': True,
-                'radioButton_peaks_num_fixed': False,
-                'radioButton_peaks_policy_minf': False,
-                'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.0001,
-                'lineEdit_peaks_prominence': 0.0001,
-            },
-
-            # 11: {
-            #     # default scan settings
-            #     'lineEdit_scan_harmsteps': 400,
-            #     # default span settings
-            #     'comboBox_tracking_method': 'auto',
-            #     'comboBox_tracking_condition': 'auto',
-            #     # default fit settings
-            #     'checkBox_harmfit': True,
-            #     'spinBox_harmfitfactor': 3,
-            #     'spinBox_peaks_num': 1, 
-            #     'radioButton_peaks_num_max': True,
-            #     'radioButton_peaks_num_fixed': False,
-            #     'radioButton_peaks_policy_minf': False,
-            #     'radioButton_peaks_policy_maxamp': True,
-            #     'lineEdit_peaks_threshold': 0.0001,
-            #     'lineEdit_peaks_prominence': 0.0001,
-            # },
-        },
-
+        'samp':{},
         # for reference channel
-        'ref':{
-            '1': {
-                # default scan settings
-                'lineEdit_scan_harmsteps': 400,
-                # default span settings
-                'comboBox_tracking_method': 'auto',
-                'comboBox_tracking_condition': 'auto',
-                # default fit settings
-                'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 3,
-                'spinBox_peaks_num': 1, 
-                'radioButton_peaks_num_max': True,
-                'radioButton_peaks_num_fixed': False,
-                'radioButton_peaks_policy_minf': False,
-                'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.0001,
-                'lineEdit_peaks_prominence': 0.0001,
-            },
-
-            '3': {
-                # default scan settings
-                'lineEdit_scan_harmsteps': 400,
-                # default span settings
-                'comboBox_tracking_method': 'auto',
-                'comboBox_tracking_condition': 'auto',   
-                # default fit settings
-                'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 3,
-                'spinBox_peaks_num': 1, 
-                'radioButton_peaks_num_max': True,
-                'radioButton_peaks_num_fixed': False,
-                'radioButton_peaks_policy_minf': False,
-                'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.0001,
-                'lineEdit_peaks_prominence': 0.0001,
-            },
-
-            '5': {
-                # default scan settings
-                'lineEdit_scan_harmsteps': 400,
-                # default span settings
-                'comboBox_tracking_method': 'auto',
-                'comboBox_tracking_condition': 'auto',
-                # default fit settings
-                'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 3,
-                'spinBox_peaks_num': 1, 
-                'radioButton_peaks_num_max': True,
-                'radioButton_peaks_num_fixed': False,
-                'radioButton_peaks_policy_minf': False,
-                'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.0001,
-                'lineEdit_peaks_prominence': 0.0001,
-            },
-
-            '7': {
-                # default scan settings
-                'lineEdit_scan_harmsteps': 400,
-                # default span settings
-                'comboBox_tracking_method': 'auto',
-                'comboBox_tracking_condition': 'auto',
-                # default fit settings
-                'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 3,
-                'spinBox_peaks_num': 1, 
-                'radioButton_peaks_num_max': True,
-                'radioButton_peaks_num_fixed': False,
-                'radioButton_peaks_policy_minf': False,
-                'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.0001,
-                'lineEdit_peaks_prominence': 0.0001,
-            },
-
-            '9': {
-                # default scan settings
-                'lineEdit_scan_harmsteps': 400,
-                # default span settings
-                'comboBox_tracking_method': 'auto',
-                'comboBox_tracking_condition': 'auto',
-                # default fit settings
-                'checkBox_harmfit': True,
-                'spinBox_harmfitfactor': 3,
-                'spinBox_peaks_num': 1, 
-                'radioButton_peaks_num_max': True,
-                'radioButton_peaks_num_fixed': False,
-                'radioButton_peaks_policy_minf': False,
-                'radioButton_peaks_policy_maxamp': True,
-                'lineEdit_peaks_threshold': 0.0001,
-                'lineEdit_peaks_prominence': 0.0001,
-            },
-
-            # 11: {
-            #     # default scan settings
-            #     'lineEdit_scan_harmsteps': 400,
-            #     # default span settings
-            #     'comboBox_tracking_method': 'auto',
-            #     'comboBox_tracking_condition': 'auto',
-            #     # default fit settings
-            #     'checkBox_harmfit': True,
-            #     'spinBox_harmfitfactor': 3,
-            #     'spinBox_peaks_num': 1, 
-            #     'radioButton_peaks_num_max': True,
-            #     'radioButton_peaks_num_fixed': False,
-            #     'radioButton_peaks_policy_minf': False,
-            #     'radioButton_peaks_policy_maxamp': True,
-            #     'lineEdit_peaks_threshold': 0.0001,
-            #     'lineEdit_peaks_prominence': 0.0001,
-            # },
-        },
+        'ref':{},
     },
     ### default hardware settings ###
     # 'tabWidget_settings_settings_samprefchn': 1,
@@ -852,27 +556,23 @@ settings_default = {
     'radioButton_spectra_showpolar': False,
     'checkBox_spectra_showchi': False,
 
-    # default selections for plot 1 elements
+    # default selections for plot 1 elements 
     'comboBox_plt1_optsy': 'dfn', 
     'comboBox_plt1_optsx': 't', 
-    'checkBox_plt1_h1': False,
-    'checkBox_plt1_h3': False,
-    'checkBox_plt1_h5': False,
-    'checkBox_plt1_h7': False,
-    'checkBox_plt1_h9': False,
-    'checkBox_plt1_h11': False,
+    # (checkbox with False value can be omit from this list)
+    'checkBox_plt1_h1': True,
+    'checkBox_plt1_h3': True,
+    'checkBox_plt1_h5': True,
     'radioButton_plt1_samp': True,
     'radioButton_plt1_ref': False,
 
     # default selections for plot 2 elements
     'comboBox_plt2_optsy': 'dg',
     'comboBox_plt2_optsx': 't',
-    'checkBox_plt2_h1': False,
-    'checkBox_plt2_h3': False,
-    'checkBox_plt2_h5': False,
-    'checkBox_plt2_h7': False,
-    'checkBox_plt2_h9': False,
-    'checkBox_plt2_h11': False,
+    # (checkbox with False value can be omit from this list)
+    'checkBox_plt2_h1': True,
+    'checkBox_plt2_h3': True,
+    'checkBox_plt2_h5': True,
     'radioButton_plt2_samp': True,
     'radioButton_plt2_ref': False,
 
@@ -889,8 +589,6 @@ settings_default = {
     'checkBox_nhplot1': True,
     'checkBox_nhplot3': True,
     'checkBox_nhplot5': True,
-    'checkBox_nhplot7': False,
-    'checkBox_nhplot9': False,
 
     'spinBox_settings_mechanics_nhcalc_n1': 3,
     'spinBox_settings_mechanics_nhcalc_n2': 5,
@@ -900,6 +598,30 @@ settings_default = {
     'checkBox_settings_mechanics_witherror': True, # errorbar
 
     'comboBox_settings_mechanics_selectmodel': 'onelayer',
-    
 }
 
+
+# initial harm_tree value for a single harmonic 
+harm_tree = {
+    # default scan settings
+    'lineEdit_scan_harmsteps': 400,
+    # default span settings
+    'comboBox_tracking_method': 'auto',
+    'comboBox_tracking_condition': 'auto',
+    # default fit settings
+    'checkBox_harmfit': True,
+    'spinBox_harmfitfactor': 3,
+    'spinBox_peaks_num': 1, 
+    'radioButton_peaks_num_max': True,
+    'radioButton_peaks_num_fixed': False,
+    'radioButton_peaks_policy_minf': False,
+    'radioButton_peaks_policy_maxamp': True,
+    'lineEdit_peaks_threshold': 0.0001,
+    'lineEdit_peaks_prominence': 0.0001,
+}
+
+# set harmdata value
+for harm in range(1, settings_init['max_harmonic']+2, 2):
+    harm = str(harm)
+    settings_default['harmdata']['samp'][harm] = harm_tree
+    settings_default['harmdata']['ref'][harm] = harm_tree

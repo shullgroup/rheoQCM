@@ -951,7 +951,7 @@ class DataSaver:
     def get_list_column_to_columns(self, chn_name, col, mark=False, deltaval=False, norm=False):
         '''
         get a df of marks, fs or gs by open the columns with list to colums by harmonics
-        chn_name: str of channel name ('sam', 'ref')
+        chn_name: str of channel name ('samp', 'ref')
         col: str of column name ('fs' or gs')
         mark: if True, show marked data only
         deltaval: if True, convert abs value to delta value
