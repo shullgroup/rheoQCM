@@ -1364,6 +1364,11 @@ background-color: red;
                     </item>
                     <item>
                      <property name="text">
+                      <string>Phase</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
                       <string>Threshold</string>
                      </property>
                      <property name="text">
@@ -1414,7 +1419,7 @@ background-color: red;
                    <x>0</x>
                    <y>0</y>
                    <width>286</width>
-                   <height>142</height>
+                   <height>133</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1543,8 +1548,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>71</height>
+                   <width>286</width>
+                   <height>133</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1852,6 +1857,13 @@ background-color: red;
                <widget class="QCheckBox" name="checkBox_linkx">
                 <property name="text">
                  <string/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_settings_settings_harmzerophase">
+                <property name="text">
+                 <string>Fix to 0</string>
                 </property>
                </widget>
               </item>
@@ -5616,6 +5628,7 @@ border: 1px solid blue;
     <addaction name="actionClear_All"/>
     <addaction name="separator"/>
     <addaction name="actionImport_QCM_D"/>
+    <addaction name="actionImport_QCM_Z"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -5626,6 +5639,7 @@ border: 1px solid blue;
     <addaction name="actionOpen_MyVNA"/>
     <addaction name="separator"/>
     <addaction name="actionReset"/>
+    <addaction name="actionMaximum_Harmonic"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -6001,6 +6015,23 @@ border: 1px solid blue;
    </property>
    <property name="toolTip">
     <string>refiit marked data in R chn.</string>
+   </property>
+  </action>
+  <action name="actionMaximum_Harmonic">
+   <property name="text">
+    <string>Maximum Harmonic</string>
+   </property>
+  </action>
+  <action name="actionImport_QCM_Z">
+   <property name="icon">
+    <iconset resource="UI_source.qrc">
+     <normaloff>:/icon/rc/import_qcmz.svg</normaloff>:/icon/rc/import_qcmz.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Import QCM-Z</string>
+   </property>
+   <property name="toolTip">
+    <string>Import QCM-Z Data (impedance analysis)</string>
    </property>
   </action>
  </widget>

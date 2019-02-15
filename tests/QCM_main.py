@@ -1195,6 +1195,8 @@ class QCMApp(QMainWindow):
         self.ui.actionOpen_MyVNA.triggered.connect(self.on_triggered_actionOpen_MyVNA)
         # import QCM-D
         self.ui.actionImport_QCM_D.triggered.connect(self.on_triggered_actionImport_QCM_D)
+        # import QCM-Z
+        self.ui.actionImport_QCM_Z.triggered.connect(self.on_triggered_actionImport_QCM_Z)
         # about QCM_py
         self.ui.actionAbout_QCM_py.triggered.connect(self.msg_about)
 
@@ -1541,11 +1543,25 @@ class QCMApp(QMainWindow):
         if not process: 
             return
 
-        fileName = self.openFileNameDialog(title='Choose an existing file to append', filetype=settings_init['qcmd_datafiletype']) # !! add path of last opened folder   
+        fileName = self.openFileNameDialog(title='Choose an existing file to append', filetype=settings_init['external_qcm_datafiletype']) # !! add path of last opened folder   
 
         if fileName:
-            self.data_saver.import_qcmd(fileName, settings=self.settings)
+            self.data_saver.import_qcm_with_other_format('qcmd', fileName, settings_init, settings=self.settings)
 
+
+    def on_triggered_actionImport_QCM_Z(self):
+        '''
+        import QCM-Z data for calculation
+        '''
+        process = self.process_messagebox(message=['Load QCM-Z data!'])
+
+        if not process: 
+            return
+
+        fileName = self.openFileNameDialog(title='Choose an existing file to append', filetype=settings_init['external_qcm_datafiletype']) # !! add path of last opened folder   
+
+        if fileName:
+            self.data_saver.import_qcm_with_other_format('qcmz', fileName, settings_init, settings=self.settings)
 
     def msg_about(self):
         '''
@@ -2315,6 +2331,7 @@ class QCMApp(QMainWindow):
         # plot
         self.tab_spectra_fit_update_mpls(f, G, B)
 
+
     def update_lineedit_fit_span(self, f):
         ''' 
         update lineEdit_spectra_fit_span text 
@@ -2460,7 +2477,7 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.add_temp_lines(self.ui.mpl_spectra_fit.ax[0], xlist=[data_lG[0]] * len(fit_result['comp_g']), ylist=fit_result['comp_g'])
         self.ui.mpl_spectra_fit_polar.add_temp_lines(self.ui.mpl_spectra_fit_polar.ax[0], xlist=fit_result['comp_g'], ylist=fit_result['comp_b'])
 
-        # print('fit_result.comp_g', fit_result['comp_g'])
+        print('fit_result.comp_g', fit_result['comp_g'].shape) #testprint
 
         # update lsp
         factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=self.settings_chn['name'], harm=self.settings_harm)

@@ -169,9 +169,9 @@ settings_init = {
     ]),
 
     # import QCM-D data file type
-    'qcmd_datafiletype': ';;'.join([
-        # 'csv file (*.csv)',
+    'external_qcm_datafiletype': ';;'.join([
         'excel file (*.xlsx)',
+        'csv file (*.csv)',
         # 'json file (*.json)',
     ]),
 
@@ -399,6 +399,8 @@ settings_init = {
     'mpl_txtfontsize': 8,
     # text size in mpl_sp figures
     'mpl_sp_txtfontsize': 5,
+    # text (harmonic number) size in mpl_sp figures
+    'mpl_sp_harmfontsize': 9,
 
     # progressBar settings
     # the programe will try to separate the scan_interval to 
@@ -449,6 +451,27 @@ settings_init = {
 
     ######### params for DataSaver module #########
     'unsaved_path': r'.\unsaved_data', 
+
+    ######### DataSaver module: import data format #####
+    # a number is going to replace '{}'
+    'data_saver_import_data':{
+        't': ['time(s)', 'time (s)', 't(s)'],
+        'temp': ['temp(c)', 'temp'],
+        'fs': ['freq{}'],
+        'gs': ['gamma{}'],
+        'delfs': ['delf{}'], 
+        'delgs': ['delg{}'],
+        # 'harm_number_org': '1', 
+    },
+    'data_saver_import_raw':{
+        't': ['time(s)', 't(s)', 't'],
+        'temp': ['temp', 'temp(c)'],
+        'f': ['{} Sweep [MHz]'],
+        'G': ['{} G [S]'],
+        'B': ['{} B [S]'],
+        # 'D': ['D(Hz)'],
+        # 'harm_number_org': '5', 
+    },
 
 
     ######### params for PeakTracker module #######

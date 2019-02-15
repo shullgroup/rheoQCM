@@ -45,6 +45,7 @@ dictionaries and dataframes are converted to json and are saved as text in the f
 '''
 
 import os
+import re
 import datetime
 import time # for test
 import pandas as pd
@@ -426,7 +427,7 @@ class DataSaver:
             })
             # print(data_new) #testprint
             setattr(self, chn_name, getattr(self, chn_name).append(data_new, ignore_index=True))
-            print(self.samp.tail()) #testprint
+            print(getattr(self, chn_name).tail()) #testprint
 
         # save raw data to file by chn_names
         self._save_raw(chn_names, harm_list, t=t, temp=temp, f=f, G=G, B=B)
@@ -1531,16 +1532,18 @@ class DataSaver:
         return 0.5 * int(harm) * 5 * D
 
 
-    def import_qcmd(self, path, f1=None, settings=None, t0=None, init_file=True):
+    def import_qcm_with_other_format(self, format, path, settings_init, settings=None, f1=None, t0=None, init_file=True):
         '''
-        import QCM-D data to data_saver
+        import QCM data to data_saver from other software
+        format: 'qcmd', QCM-D data with dissipation data "D"
+                'qcmz', QCM data from impedance measurement
         path: excel file path
-        f1: base frequency in MHz
+        settings_init: basic UI settings (a full copy of settings_init for format ditecting)
         settings: UI settings (dict)
+        f1: base frequency in MHz
         init_file: True, intialize h5 file for storing the data. By default the UI will save the h5 file with the same name as excel file.
         NOTE: f1 and settings should be given one at least. If both are given, the function will use the settings fist.
         '''
-        self.mode = 'qcmd'
         name, ext = os.path.splitext(path)
 
         # make a fake reference time t0
@@ -1551,6 +1554,8 @@ class DataSaver:
             if not t0:
                 t0 = datetime.datetime.now()
             t0_str = t0.strftime(self.settings_init['time_str_format'])
+
+        self.mode = 'qcmd' # set mode. it will be used to determine how to import data
 
         # initialize file
         if init_file and settings:
@@ -1564,52 +1569,165 @@ class DataSaver:
         g1 = 0 # in Hz
 
         # read QCM-D data
-        df = pd.read_excel(path)
+        print('ext', ext) #testprint
+        if ext == '.csv':
+            df = pd.read_csv(path)
+        elif ext == '.xlsx':
+            df = pd.read_excel(path)
         # print(df.columns) #testprint
         print(df.shape) #testprint
         print(df.head()) #testprint
 
-        # rename time column (it could be ['time(s)', 't(s)'])
-        # df = df.rename(columns={'t(s)': 't'})
-        df['t'] = df.filter(regex='(s)')
-        df = df.drop(columns=df.filter(regex='(s)').columns)
-        # save t as (delt + t0) 
-        # df['t'] = (df['t'] + t0).strftime(self.settings_init['time_str_format'])
-        df['t'] = df['t'].apply(lambda x: (t0 + datetime.timedelta(seconds=x)).strftime(self.settings_init['time_str_format']))
+        # import data to class
+        self.import_data_from_df(df, t0, t0_str, f1, g1, settings_init)
 
-        harm_list = []
+
+    def import_data_from_df(self, df, t0, t0_str, f1, g1, settings_init):
+        '''
+        import data (already read as df) to class.
+        The format is defined by self.settings_init.data_saver_import_data
+        df: dataframe
+        t0: starting time
+        f1: base frequency in Hz
+        g1: base dissipation in Hz
+        settings_init: basic UI settings (a full copy of settings_init for format ditecting)
+        '''
+        # get column names 
+        columns = df.columns
+        print(columns) #testprint
+
+        # the way to determine the corresponding column is:
+        # check the same key in settings_init.data_saver_import_data and find if any name string is in columns and use the name string to import data
+
+        # time: t
+        t_str = list(set(settings_init['data_saver_import_data']['t']) & set(columns))
+
+        if not t_str: # no time column is found
+            print('No column for time is found!\nPlease check the format of your data file of change the setup of program!')
+            return
+        elif len(t_str) != 1: # multiple time columns is found
+            print('multiple columns for time is found!\nPlease check the format of your data file of change the setup of program!')
+            return
+        else: # time column is found
+            df.rename(columns={t_str[0]: 't'}, inplace=True) # rename time column
+        # save t as (delt + t0) 
+        # df['t'] = (df['t'] + t0).strftime(settings_init['time_str_format'])
+        df['t'] = df['t'].apply(lambda x: (t0 + datetime.timedelta(seconds=x)).strftime(settings_init['time_str_format']))
+        
+        # temperature: temp
+        temp_str = list(set(settings_init['data_saver_import_data']['temp']) & set(columns))
+
+        if not temp_str: # no temperature column is found
+            print('No column for temperature is found!')
+            # add an temp column
+            df['temp'] = np.nan
+
+        elif len(temp_str) != 1: # multiple temperature columns is found
+            print('multiple columns for temperature is found!\nPlease check the format of your data file or change the setup of program!')
+            return
+        else: # temperature column is found
+            df.rename(columns={temp_str[0]: 'temp'}, inplace=True) # rename temp column
+
+        # find column name with number
+        col_with_num = df.filter(regex=r'\d+').columns
+        print(col_with_num) #testprint
+        
+        # extract the numbers
+        r = re.compile(r'(\d+)')
+        num_list = [int(m.group(1)) for col in col_with_num for m in [r.search(col)] if m]
+        print(num_list) #testprint
+
+        if not num_list: # no number found
+            print('No columns with harmonics was found!')
+            return
+        elif len(num_list) % 2: # odd length
+            print('Number of harmonic columns are incorrect!')
+            return
+        else: # even length
+            num_list = sorted(list(set(num_list))) # remove the duplicated numbers
+        
+        base_num = num_list[0] # the smallest number is considered as the base number
+        print('base_num', base_num) #testprint
+
+        # suppose 1st harmonic in data
+        if base_num == round(f1/1e6): # number is frequency (assume f1 != 1 MHz)
+            harm_list = [n/round(f1/1e6) for n in num_list]
+        elif base_num == 1: # number is harmonic
+            harm_list = num_list
+        print('harm_list', harm_list) #testprint
+
+        # initiate reference and create the make up raw data
         ref_fs = {'ref':[]}
         ref_gs = {'ref':[]}
         fGB = {'samp': {}, 'ref': {}} # a make up dict for f, G, B
-        fgcol_list = df.filter(regex='del').columns
-        # print(fgcol_list) #testprint
-        if len(fgcol_list) % 2: # odd columns
-            print('delf and delg column number is not the same!\nPlease check the column name!')
-            return
-        for harm in range(1, len(fgcol_list), 2):
-            harm_list.append(str(harm))
+        for harm in harm_list:
             ref_fs['ref'].append(f1 * harm)
             ref_gs['ref'].append(g1 * harm)
             fGB['samp'][str(harm)] = np.nan
             fGB['ref'][str(harm)] = np.nan
 
-            # convert delf to f
-            df['delf' + str(harm)] = df['delf' + str(harm)] + f1 * harm
-            # convert D to gamma
-            df['delg' + str(harm)] = self.convert_D_to_gamma(df['delg' + str(harm)], harm)
-            # convert delg to g
-            df['delg' + str(harm)] = df['delg' + str(harm)] + g1 * harm
-        
+
+        for fs_str in settings_init['data_saver_import_data']['fs']:
+            if fs_str.format(base_num) in col_with_num:
+                break
+            else:
+                fs_str = ''
+
+        for gs_str in settings_init['data_saver_import_data']['gs']:
+            if gs_str.format(base_num) in col_with_num:
+                break
+            else:
+                gs_str = ''
+            
+        if fs_str and gs_str: # absolute values found
+            pass
+        else: # no absolute values         
+            for delfs_str in settings_init['data_saver_import_data']['delfs']:
+                if delfs_str.format(base_num) in col_with_num:
+                    break
+                else:
+                    delfs_str = ''
+            for delgs_str in settings_init['data_saver_import_data']['delgs']:
+                if delgs_str.format(base_num) in col_with_num:
+                    break
+                else:
+                    delgs_str = ''
+            if not delfs_str or not delfs_str:
+                print('No frequency or dissipation data found!\nPlease check the format of your data file or change the setup of program!')
+                return
+            else: # data found
+                # convert delta data to absolute data and keep the column names
+                for harm in harm_list:
+                    # convert delf to f
+                    df[delfs_str.format(harm)] = df[delfs_str.format(harm)] + f1 * harm
+                    # dissipation
+                    if self.mode == 'qcmd': # 
+                    # convert delD to delg
+                        df[delgs_str.format(harm)] = self.convert_D_to_gamma(df[delgs_str.format(harm)], harm)
+                    # convert delg to g
+                    df[delgs_str.format(harm)] = df[delgs_str.format(harm)] + g1 * harm
+
+        # rename f/g columns
+        fg_rename_cols = {}
+        for harm in harm_list:
+            if fs_str and gs_str:
+                f_str = fs_str.format(harm)
+                g_str = fs_str.format(harm)
+            else: # delta values
+                f_str = delfs_str.format(harm)
+                g_str = delgs_str.format(harm)
+            fg_rename_cols[f_str] = 'f'+str(harm)
+            fg_rename_cols[g_str] = 'g'+str(harm)
+        df.rename(columns=fg_rename_cols, inplace=True) # rename f/g columns 
+               
         # f/g to one column fs/gs
-        df['fs'] = df.filter(regex='delf').values.tolist()
-        df['gs'] = df.filter(regex='delg').values.tolist()
-        # delete delf<n> and deg<n>
-        df = df.drop(columns=fgcol_list)
+        df['fs'] = df.filter(regex=r'^f\d+$').values.tolist()
+        df['gs'] = df.filter(regex=r'^g\d+$').values.tolist()
         # queue_list 
         df['queue_id'] = list(df.index.astype(int))
         # marks
         single_marks = [0 for _ in harm_list]
-        # for i in range(1, self.settings_init['max_harmonic']+2, 2):
+        # for i in range(1, settings_init['max_harmonic']+2, 2):
         #     if str(i) not in harm_list: # tested harmonic
         #         single_marks.insert(int((i-1)/2), np.nan)
         # print(harm_list) #testprint
@@ -1619,9 +1737,13 @@ class DataSaver:
         ## save to self.samp 
         # self.samp = self.samp.append(df, ignore_index=True, sort=False)
 
+        print('df before dynamic_save', df.head()) #testprint
         ## ANOTHER WAY to save is use self.dynamic_save and save the data to self.samp row by row
+
+        # convert harm_list from list of int to list of str
+        harm_list = [str(harm) for harm in harm_list]
         for i in df.index: # loop each row
-            self.dynamic_save(['samp'], harm_list, t={'samp': df.t[i]}, temp={'samp': np.nan}, f=fGB, G=fGB, B=fGB, fs={'samp': df.fs[i]}, gs={'samp': df.gs[i]}, marks=[0 for _ in harm_list])
+            self.dynamic_save(['samp'], harm_list, t={'samp': df.t[i]}, temp={'samp': df.temp[i]}, f=fGB, G=fGB, B=fGB, fs={'samp': df.fs[i]}, gs={'samp': df.gs[i]}, marks=single_marks)
 
         # print(self.samp.head()) #testprint
         print(self.samp.fs[0]) #testprint
@@ -1631,7 +1753,7 @@ class DataSaver:
 
         # set ref
         # save ref_fs ref_gs to self.ref as reference
-        self.dynamic_save(['ref'], harm_list, t={'ref': t0_str}, temp={'ref': np.nan}, f=fGB, G=fGB, B=fGB, fs=ref_fs, gs=ref_gs, marks=[0 for _ in harm_list])
+        self.dynamic_save(['ref'], harm_list, t={'ref': t0_str}, temp={'ref': np.nan}, f=fGB, G=fGB, B=fGB, fs=ref_fs, gs=ref_gs, marks=single_marks)
         print(self.ref.head()) #testprint
         print(self.ref['marks'][0]) #testprint
         

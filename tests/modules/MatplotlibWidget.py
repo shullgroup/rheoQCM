@@ -333,7 +333,7 @@ class MatplotlibWidget(QWidget):
         # self.ax[0].xaxis.set_major_locator(plt.MaxNLocator(3))
 
         # add text
-        self.txt['harm'] = self.fig.text(0.01, 0.98, '', va='top',ha='left') # option: weight='bold'
+        self.txt['sp_harm'] = self.fig.text(0.01, 0.98, '', va='top',ha='left') # option: weight='bold'
         self.txt['chi'] = self.fig.text(0.01, 0.01, '', va='bottom',ha='left')
 
         # set label of ax[1]
@@ -347,7 +347,7 @@ class MatplotlibWidget(QWidget):
     def update_sp_text_harm(self, harm):
         if isinstance(harm, int):
             harm = str(harm)
-        self.txt['harm'].set_text(harm)
+        self.txt['sp_harm'].set_text(harm)
 
 
     def update_sp_text_chi(self, chi=None):
@@ -919,9 +919,10 @@ class MatplotlibWidget(QWidget):
 
         # set text fontsize
         for key in self.txt.keys():
-            print('set txt fontsize') #testprint
-            print('txt', key)
-            self.txt[key].set_fontsize(txtfontsize)
+            if key == 'sp_harm':
+                self.txt[key].set_fontsize(settings_init['mpl_sp_harmfontsize'])
+            else: # normal text
+                self.txt[key].set_fontsize(txtfontsize)
         
 
 
@@ -1151,10 +1152,10 @@ class MatplotlibWidget(QWidget):
         if len(label_list) == 0:
             label_list = [''] * len(xlist) # make up a label_list with all ''
         for (x, y, label) in zip(xlist, ylist, label_list):
-            print('len x: ', len(x)) #testprint
-            print('len y: ', len(y)) #testprint
-            print(x) #testprint
-            print(y) #testprint
+            # print('len x: ', len(x)) #testprint
+            # print('len y: ', len(y)) #testprint
+            # print(x) #testprint
+            # print(y) #testprint
             
             if ax is None:
                 ax = self.ax[0]

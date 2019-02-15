@@ -2,6 +2,7 @@
   <qresource prefix="icon">
     <file>rc/import_qcmd.svg</file>
     <file>rc/export_settings.svg</file>
+    <file>rc/import_qcmz.svg</file>
     <file>rc/ref_self.svg</file>
     <file>rc/new.svg</file>
     <file>rc/delete_selected.svg</file>
