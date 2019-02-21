@@ -1,11 +1,12 @@
 # Changelog
 
-## [0.16.0] - 2019-02-11
+## [0.16.0] - 2019-02-21
 
 ### Added
 
 - Add window state check before resize it.
 - Add text fontsize to customize settings.
+- Add calibration file check.
 
 ### Changed
 
@@ -13,6 +14,7 @@
 - Change the harmonic related widgets settings and loading methods.
 - Change DataFrame filter to regex to read data from a given harmonic.
 - Change the way import data from other software (e.g.: QCM-D) to make it possible to customize the format for import and applicable for different formats (QCM-D and QCM-Z).
+- Change channel selection when the same analyzer channel selected.
 
 ### Fixed
 

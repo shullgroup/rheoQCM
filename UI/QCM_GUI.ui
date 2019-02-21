@@ -1147,7 +1147,7 @@ background-color: red;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <property name="documentMode">
                     <bool>false</bool>
@@ -1548,8 +1548,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>286</width>
-                   <height>133</height>
+                   <width>98</width>
+                   <height>71</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1711,7 +1711,7 @@ background-color: red;
               <item>
                <widget class="QCheckBox" name="checkBox_harmfit">
                 <property name="enabled">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                 <property name="text">
                  <string/>
@@ -1862,6 +1862,9 @@ background-color: red;
               </item>
               <item>
                <widget class="QCheckBox" name="checkBox_settings_settings_harmzerophase">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
                 <property name="text">
                  <string>Fix to 0</string>
                 </property>
@@ -4035,7 +4038,7 @@ border: 1px solid blue;
            </size>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="page_spectra_show">
            <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -4684,7 +4687,7 @@ p, li { white-space: pre-wrap; }
                    <bool>true</bool>
                   </property>
                   <attribute name="horizontalHeaderVisible">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </attribute>
                   <attribute name="horizontalHeaderCascadingSectionResizes">
                    <bool>true</bool>

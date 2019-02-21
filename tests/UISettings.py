@@ -639,6 +639,7 @@ harm_tree = {
     'radioButton_peaks_num_fixed': False,
     'radioButton_peaks_policy_minf': False,
     'radioButton_peaks_policy_maxamp': True,
+    'checkBox_settings_settings_harmzerophase': False,
     'lineEdit_peaks_threshold': 0.0001,
     'lineEdit_peaks_prominence': 0.0001,
 }

@@ -4,6 +4,7 @@ This is the main code of the QCM acquization program
 
 import os
 import subprocess
+import logging
 # import csv
 # import importlib
 import math
@@ -23,7 +24,8 @@ from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, 
 # packages
 from MainWindow import Ui_MainWindow # UI from QT5
 from UISettings import settings_init # UI basic settings
-from UISettings import settings_default 
+from UISettings import settings_default
+from UISettings import harm_tree as harm_tree_default
 
 # check default settings file
 print(os.getcwd())
@@ -490,6 +492,14 @@ class QCMApp(QMainWindow):
             160,
         )
 
+        # move checkBox_settings_settings_harmzerophase
+        self.move_to_col2(
+            self.ui.checkBox_settings_settings_harmzerophase,
+            self.ui.treeWidget_settings_settings_harmtree,
+            'Phase',
+            160,
+        )
+
         # move lineEdit_peaks_threshold
         self.move_to_col2(
             self.ui.lineEdit_peaks_threshold,
@@ -543,7 +553,6 @@ class QCMApp(QMainWindow):
             self.ui.treeWidget_settings_settings_harmtree
         )
 
-
         # insert samp_channel
         self.create_combobox(
             'comboBox_samp_channel', 
@@ -561,6 +570,25 @@ class QCMApp(QMainWindow):
             'R Channel', 
             self.ui.treeWidget_settings_settings_hardware
         )
+
+        ## check comboBox_samp_channel & comboBox_ref_channel list by calibration file
+        # get current chn from myvna
+        curr_chn = self.vna._chn
+        if not self.vna_tracker.cal['ADC1'] and (curr_chn != 1): # no calibration file for ADC1
+            # delete ADC1 from both lists
+            if self.ui.comboBox_samp_channel.findData(1) != -1:
+                self.ui.comboBox_samp_channel.removeItem(self.ui.comboBox_samp_channel.findData(1))
+            if self.ui.comboBox_ref_channel.findData(1) != -1:
+                self.ui.comboBox_ref_channel.removeItem(self.ui.comboBox_ref_channel.findData(1))
+        if not self.vna_tracker.cal['ADC2'] and (curr_chn != 2): # no calibration file for ADC1
+            # delete ADC1 from both lists
+            if self.ui.comboBox_samp_channel.findData(2) != -1:
+                self.ui.comboBox_samp_channel.removeItem(self.ui.comboBox_samp_channel.findData(2))
+            if self.ui.comboBox_ref_channel.findData(2) != -1:
+                self.ui.comboBox_ref_channel.removeItem(self.ui.comboBox_ref_channel.findData(2))
+
+
+
         # connect ref_channel
         # self.ui.comboBox_ref_channel.currentIndexChanged.connect() #TODO add function checking if sample and ref have the same channel
 
@@ -769,6 +797,7 @@ class QCMApp(QMainWindow):
         self.ui.radioButton_peaks_num_fixed.toggled['bool'].connect(self.update_harmwidget)
         self.ui.radioButton_peaks_policy_minf.toggled['bool'].connect(self.update_harmwidget)
         self.ui.radioButton_peaks_policy_maxamp.toggled['bool'].connect(self.update_harmwidget)
+        self.ui.checkBox_settings_settings_harmzerophase.toggled['bool'].connect(self.update_harmwidget)
     
         # set signals to update hardware settings_settings
         self.ui.comboBox_samp_channel.currentIndexChanged.connect(self.update_widget)
@@ -2338,10 +2367,13 @@ class QCMApp(QMainWindow):
         input
         f: list like data in Hz
         '''
-        span = max(f) - min(f)
+        if f is None:
+            span = max(f) - min(f)
 
-        # update 
-        self.ui.lineEdit_spectra_fit_span.setText(UIModules.num2str((span / 1000), precision=5)) # in kHz
+            # update 
+            self.ui.lineEdit_spectra_fit_span.setText(UIModules.num2str((span / 1000), precision=5)) # in kHz
+        else:
+            self.ui.lineEdit_spectra_fit_span.setText('')
 
     # def spectra_fit_axesevent_disconnect(self, event):
     #     print('disconnect') #testprint
@@ -2477,7 +2509,7 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.add_temp_lines(self.ui.mpl_spectra_fit.ax[0], xlist=[data_lG[0]] * len(fit_result['comp_g']), ylist=fit_result['comp_g'])
         self.ui.mpl_spectra_fit_polar.add_temp_lines(self.ui.mpl_spectra_fit_polar.ax[0], xlist=fit_result['comp_g'], ylist=fit_result['comp_b'])
 
-        print('fit_result.comp_g', fit_result['comp_g'].shape) #testprint
+        # print('fit_result.comp_g', fit_result['comp_g']) #testprint
 
         # update lsp
         factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=self.settings_chn['name'], harm=self.settings_harm)
@@ -2632,7 +2664,8 @@ class QCMApp(QMainWindow):
             print(self.settings_chn) #testprint
 
             # self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(-1) # show manual refit buttons and emit update_settings_chn
-            self.ui.tabWidget_settings_settings_harm.setCurrentIndex((int(self.active['harm'])-1)/2) # set to active harm and emit update_settings_chn
+            # self.ui.tabWidget_settings_settings_harm.setCurrentIndex((int(self.active['harm'])-1)/2) # set to active harm and emit update_settings_chn
+            self.ui.tabWidget_settings_settings_harm.setCurrentIndex(self.ui.tabWidget_settings_settings_harm.indexOf(getattr(self.ui, 'tab_settings_settings_harm'+self.active['harm']))) # set to active harm and emit update_settings_chn
 
             # # update treeWidget_settings_settings_harmtree
             # self.update_harmonic_tab()
@@ -4049,7 +4082,7 @@ class QCMApp(QMainWindow):
         harm = str(2 * self.ui.tabWidget_settings_settings_harm.currentIndex() + 1)
         self.settings_harm = harm
         
-        self.update_frequencies()
+        self.update_frequencies() #update frequency dispaly by harm
 
         # update lineEdit_scan_harmsteps
         self.ui.lineEdit_scan_harmsteps.setText(
@@ -4088,10 +4121,14 @@ class QCMApp(QMainWindow):
             self.get_harmdata('radioButton_peaks_policy_minf', harm=harm)
         )
 
-
         # update radioButton_peaks_policy_maxamp
         self.ui.radioButton_peaks_policy_maxamp.setChecked(
             self.get_harmdata('radioButton_peaks_policy_maxamp', harm=harm)
+        )
+
+        # update checkBox_settings_settings_harmzerophase
+        self.ui.checkBox_settings_settings_harmzerophase.setChecked(
+            self.get_harmdata('checkBox_settings_settings_harmzerophase', harm=harm)
         )
 
         # update lineEdit_peaks_threshold
@@ -4103,6 +4140,7 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_peaks_prominence.setText(
             str(self.get_harmdata('lineEdit_peaks_prominence', harm=harm))
         )
+
 
     def get_harmdata(self, objname, harm=None, chn_name=None):
         '''
@@ -4118,8 +4156,8 @@ class QCMApp(QMainWindow):
         try:
             return self.settings['harmdata'][chn_name][str(harm)][objname]
         except:
-            print(objname, 'is not found!')
-            return None
+            print(objname, 'is not found!\nUse default data')
+            return harm_tree_default[objname]
 
     def set_harmdata(self, objname, val, harm=None, chn_name=None):
         '''
@@ -4232,6 +4270,7 @@ class QCMApp(QMainWindow):
             # set 'freq_span' == 'freq_range
             self.settings['freq_span']['samp'] = self.settings['freq_range']
             self.settings['freq_span']['ref'] = self.settings['freq_range']
+
 
     def update_frequencies(self):
         
@@ -4378,12 +4417,28 @@ class QCMApp(QMainWindow):
         samp_channel = self.settings['comboBox_samp_channel']
         ref_channel = self.settings['comboBox_ref_channel']
 
+        # this part sets the sender to none if conflict found
+        '''
         if ref_channel == samp_channel:
             # make sure sample and ref channels are not the same
             self.settings[sender_name] = 'none' # set the sender to 'none'
             #TODO update in statusbar
         # load_comboBox has to be used after the value saved in self.settings
         self.load_comboBox(getattr(self.ui, sender_name), 'vna_channel_opts')
+
+        '''
+
+        # this park sets the other channel to none if conflict found
+        if ref_channel == samp_channel:
+            if 'samp' in sender_name:
+                self.settings['comboBox_ref_channel'] = 'none'
+                self.load_comboBox(getattr(self.ui, 'comboBox_ref_channel'), 'vna_channel_opts')
+            elif 'ref' in sender_name:
+                self.settings['comboBox_samp_channel'] = 'none'
+                self.load_comboBox(getattr(self.ui, 'comboBox_samp_channel'), 'vna_channel_opts')
+            else:
+                pass
+
         # set visibility of samp & ref related widgets
         self.setvisible_samprefwidgets(samp_value=self.settings['comboBox_samp_channel'] != 'none', ref_value=self.settings['comboBox_ref_channel'] != 'none')
 
