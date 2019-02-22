@@ -1,10 +1,11 @@
+#!/usr/bin/env python
 '''
 This is the main code of the QCM acquization program
 '''
 
 import os
 import subprocess
-import logging
+
 # import csv
 # import importlib
 import math
@@ -98,7 +99,7 @@ class VNATracker:
         if (UIModules.system_check() == 'win32') and (struct.calcsize('P') * 8 == 32): # windows (if is win32, struct will already be imported above)
             for key in cal.keys():
                 files = os.listdir(settings_init['vna_cal_file_path']) # list all file in the given folder
-                print(files) #testprint
+                print('cal folder', files) #testprint
                 for file in files:
                     if (key + '.myVNA.cal').lower() in file.lower():
                         cal[key] = os.path.abspath(os.path.join(settings_init['vna_cal_file_path'], file)) # use absolute path
@@ -574,6 +575,7 @@ class QCMApp(QMainWindow):
         ## check comboBox_samp_channel & comboBox_ref_channel list by calibration file
         # get current chn from myvna
         curr_chn = self.vna._chn
+        print('curr_chn', curr_chn) #testprint
         if not self.vna_tracker.cal['ADC1'] and (curr_chn != 1): # no calibration file for ADC1
             # delete ADC1 from both lists
             if self.ui.comboBox_samp_channel.findData(1) != -1:
@@ -2367,7 +2369,7 @@ class QCMApp(QMainWindow):
         input
         f: list like data in Hz
         '''
-        if f is None:
+        if f is not None:
             span = max(f) - min(f)
 
             # update 
@@ -5188,9 +5190,16 @@ class QCMApp(QMainWindow):
 
 if __name__ == '__main__':
     import sys
-
-    app = QApplication(sys.argv)
-    qcm_app = QCMApp()
-    qcm_app.show()
-    sys.exit(app.exec_())
+    import logging
+    import traceback
+    logging.basicConfig(filename='error.log', filemode='w', level=logging.ERROR)
+    try:
+        app = QApplication(sys.argv)
+        qcm_app = QCMApp()
+        qcm_app.show()
+        sys.exit(app.exec_())
+    except Exception as err:
+        traceback.print_tb(err.__traceback__)
+        print(err)
+        logging.exception('Exception occurred')
 

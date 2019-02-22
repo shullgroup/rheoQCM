@@ -1,10 +1,11 @@
+#!/usr/bin/env python
 '''
 This is the main code of the QCM acquization program
 '''
 
 import os
 import subprocess
-import logging
+
 # import csv
 # import importlib
 import math
@@ -2303,7 +2304,7 @@ class QCMApp(QMainWindow):
         input
         f: list like data in Hz
         '''
-        if f is None:
+        if f is not None:
             span = max(f) - min(f)
 
             # update 
@@ -4915,9 +4916,16 @@ class QCMApp(QMainWindow):
 
 if __name__ == '__main__':
     import sys
-
-    app = QApplication(sys.argv)
-    qcm_app = QCMApp()
-    qcm_app.show()
-    sys.exit(app.exec_())
+    import logging
+    import traceback
+    logging.basicConfig(filename='error.log', filemode='w', level=logging.ERROR)
+    try:
+        app = QApplication(sys.argv)
+        qcm_app = QCMApp()
+        qcm_app.show()
+        sys.exit(app.exec_())
+    except Exception as err:
+        traceback.print_tb(err.__traceback__)
+        print(err)
+        logging.exception('Exception occurred')
 

@@ -23,7 +23,7 @@ settings_init = {
     ],
 
     # where the calibration files where save
-    'vna_cal_file_path': r'./dll/', 
+    'vna_cal_file_path': r'.', 
 
     # highest harmonic can be shown in the UI. 
     'max_harmonic': 9, # MUST >= 1
