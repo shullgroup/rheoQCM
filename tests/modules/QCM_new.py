@@ -17,11 +17,15 @@ import pandas as pd
 
 # variable limitions
 dlam_rh_range = (0, 5)
-drho_range = (0, 1e-2) # kg/m^2
-grho_rh_range = (1e10, 1e16) # Pa kg/m^3
+drho_range = (0, 1e-2) # m kg/m^3 = 1000 um g/cm^3 = 1000 g/m^2
+grho_rh_range = (1e4, 1e10) # Pa kg/m^3 = 1/1000 Pa g/cm^3
 phi_range = (0, np.pi/2) # rad 
 
-fit_method = 'lmfit'
+e26 = 9.65e-2 # piezoelectric stress coefficient (e = 9.65·10−2 C/m2 for AT-cut quartz)
+electrode_default = {'drho':2.8e-3, 'grho3':3.0e14, 'phi':0}
+air_default = {'drho':np.inf, 'grho3':0, 'phi':0} #???
+
+# fit_method = 'lmfit'
 fit_method = 'scipy'
 
 def nh2i(nh):
@@ -44,12 +48,13 @@ class QCM:
         '''
         phi in rad for calculation and exported as degree
         '''
-        self.zq = 8.84e6  # shear acoustic impedance of AT cut quartz
+        self.Zq = 8.84e6  # kg m−2 s−1. shear acoustic impedance of AT cut quartz
         #TODO add zq by cuts
         self.f1 = None # 5e6 Hz fundamental resonant frequency
         self.g_err_min = 10 # error floor for gamma
         self.f_err_min = 50 # error floor for f
         self.err_frac = 3e-2 # error in f or gamma as a fraction of gamma
+        self.drho_q = self.Zq / (2 * self.f1)
 
         self.rh = None # reference harmonic for calculation
         # default values
@@ -72,16 +77,22 @@ class QCM:
 
     def sauerbreyf(self, n, drho):
         ''' delf_sn from Sauerbrey eq'''
-        return 2 * n * self.f1**2 * drho / self.zq
+        return 2 * n * self.f1**2 * drho / self.Zq
 
 
     def sauerbreym(self, n, delf):
         ''' mass from Sauerbrey eq'''
-        return delf * self.zq / (2 * n * self.f1**2)
+        return delf * self.Zq / (2 * n * self.f1**2)
 
 
-    def grho(self, n, grho_rh, phi):
-        ''' grho of n_th harmonic'''
+    # def grho(self, n, grho_rh, phi): # old func
+    #     ''' grho of n_th harmonic'''
+    #     return grho_rh * (n/self.rh) ** (phi)
+
+
+    def grho(self, n, material): # func new
+        grho_rh = material['grho_rh']
+        phi = material['phi']
         return grho_rh * (n/self.rh) ** (phi)
 
 
@@ -94,7 +105,7 @@ class QCM:
         bulk model
         calculate grho reference to rh
         '''
-        return (np.pi * self.zq * abs(delfstar[self.rh]) / self.f1) ** 2
+        return (np.pi * self.Zq * abs(delfstar[self.rh]) / self.f1) ** 2
 
 
     def phi_bulk(self, n, delfstar):
@@ -103,14 +114,6 @@ class QCM:
         calculate phi
         '''
         return -2 * np.arctan(np.real(delfstar[n]) / np.imag(delfstar[n]))
-
-
-    def lamrho_rh_calc(self, grho_rh, phi):
-        return np.sqrt(grho_rh) / (self.f1 * self.f1 * np.cos(phi / 2))
-
-
-    def D(self, n, drho, grho_rh, phi):
-        return 2*np.pi*drho*n*self.f1*(np.cos(phi/2) - 1j * np.sin(phi/2)) / (self.grho(n, grho_rh, phi)) ** 0.5
 
 
     def DfromZ(self, n, drho, Zstar):
@@ -128,44 +131,141 @@ class QCM:
             answer = self.zstarbulk(grhostar) * np.tan(2 * np.pi * n * self.f1 * drho / self.zstarbulk(grhostar)) 
         return answer
 
+    ###### new funcs #########
+    def calc_D(n, material, delfstar):
+        drho = material['drho']
+        # set switch to handle ase where drho = 0
+        if drho == 0:
+            return 0
+        else:
+            return 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n, material)
 
-    def rstar(self, n, drho, grho_rh, phi, overlayer={'drho': 0, 'gho_rh': 0, 'phi': 0}):
-        # overlayer is dictionary with drho, grho_rh and phi
-        grhostar_1 = self.grhostar(n, grho_rh, phi)
-        grhostar_2 = self.grhostar(n, overlayer.get('grho_rh', 0), overlayer.get('phi', 0))
-        zstar_1 = self.zstarbulk(grhostar_1)
-        zstar_2 = self.zstarfilm(n, overlayer.get('drho', 0), grhostar_2)   
-        return zstar_2 / zstar_1
-    
-    
-    # calcuated complex frequency shift for single layer
-    def delfstarcalc(self, n, drho, grho_rh, phi, overlayer):
-        rstar = self.rstar(n, drho, grho_rh, phi, overlayer)
-        # overlayer is dictionary with drho, grho_rh and phi
-        calc = -(self.sauerbreyf(n, drho)*np.tan(self.D(n, drho, grho_rh, phi)) / self.D(n, drho, grho_rh, phi))*(1-rstar**2) / (1+1j*rstar*np.tan(self.D(n, drho, grho_rh, phi)))
-        
-        # handle case where drho = 0, if it exists
-        # calc[np.where(drho==0)]=0
-        return calc
+    def zstar_bulk(n, material):
+        grho3 = material['grho3']
+        grho = grho3*(n/3)**(material['phi']/90)  #check for error here
+        grhostar = grho*np.exp(1j*np.pi*material['phi']/180)
+        return grhostar ** 0.5
+
+    def calc_delfstar_sla(ZL):
+        return f1*1j/(np.pi*Zq)*ZL
+
+    def calc_ZL(n, layers, delfstar):
+        # layers is a dictionary of dictionaries
+        # each dictionary is named according to the layer number
+        # layer 1 is closest to the quartz
+
+        N = len(layers)
+        Z = {}; D = {}; L = {}; S = {}
+
+        # we use the matrix formalism to avoid typos.
+        for i in np.arange(1, N):
+            Z[i] = zstar_bulk(n, layers[i])
+            D[i] = calc_D(n, layers[i], delfstar)
+            L[i] = np.array([[np.cos(D[i])+1j*np.sin(D[i]), 0],
+                    [0, np.cos(D[i])-1j*np.sin(D[i])]])
+
+        # get the terminal matrix from the properties of the last layer
+        D[N] = calc_D(n, layers[N], delfstar)
+        Zf_N = 1j*zstar_bulk(n, layers[N])*np.tan(D[N])
+
+        # if there is only one layer, we're already done
+        if N == 1:
+            return Zf_N
+
+        Tn = np.array([[1+Zf_N/Z[N-1], 0],
+            [0, 1-Zf_N/Z[N-1]]])
+
+        uvec = L[N-1]@Tn@np.array([[1.], [1.]])
+
+        for i in np.arange(N-2, 0, -1):
+            S[i] = np.array([[1+Z[i+1]/Z[i], 1-Z[i+1]/Z[i]],
+            [1-Z[i+1]/Z[i], 1+Z[i+1]/Z[i]]])
+            uvec = L[i]@S[i]@uvec
+
+        rstar = uvec[1,0]/uvec[0,0]
+        return Z[1]*(1-rstar)/(1+rstar)
 
 
-    # calculated complex frequency shift for bulk layer
-    def delfstarcalc_bulk(self, n, grho_rh, phi):
-        return ((self.f1*np.sqrt(self.grho(n, grho_rh, phi)) / (np.pi*self.zq)) * (-np.sin(phi/2)+ 1j * np.cos(phi/2)))
+    def calc_delfstar(n, layers, calctype):
+        if not layers: # layers is empty {}
+            return np.nan
+
+        # there is data
+        if 'overlayer' in layers:
+            ZL = calc_ZL(n, {1:layers['film'], 2:layers['overlayer']}, 0)
+            ZL_ref = calc_ZL(n, {1:layers['overlayer']}, 0)
+            del_ZL = ZL-ZL_ref
+        else:
+            del_ZL = calc_ZL(n, {1:layers['film']}, 0)
+
+        if calctype != 'LL':
+            # use the small load approximation in all cases where calctype
+            # is not explicitly set to 'LL'
+            return calc_delfstar_sla(del_ZL)
+
+        else:
+            # this is the most general calculation
+            # use defaut electrode if it's not specified
+            if 'electrode' not in layers:
+                layers['electrode'] = electrode_default
+
+            layers_all = {1:layers['electrode'], 2:layers['film']}
+            layers_ref = {1:layers['electrode']}
+            if 'overlayer' in layers:
+                layers_all[3]=layers['overlayer']
+                layers_ref[2] = layers['overlayer']
+
+            ZL_all = calc_ZL(n, layers_all, 0)
+            delfstar_sla_all = calc_delfstar_sla(ZL_all)
+            ZL_ref = calc_ZL(n, layers_ref, 0)
+            delfstar_sla_ref = calc_delfstar_sla(ZL_ref)
 
 
-    def d_lamcalc(self, n, drho, grho_rh, phi):
-        return drho*n*self.f1*np.cos(phi/2) / np.sqrt(self.grho(n, grho_rh, phi))
+            def solve_Zmot(x):
+                delfstar = x[0] + 1j*x[1]
+                Zmot = calc_Zmot(n,  layers_all, delfstar)
+                return [Zmot.real, Zmot.imag]
+
+            sol = optimize.root(solve_Zmot, [delfstar_sla_all.real,
+                                            delfstar_sla_all.imag])
+            dfc = sol.x[0] + 1j* sol.x[1]
+
+            def solve_Zmot_ref(x):
+                delfstar = x[0] + 1j*x[1]
+                Zmot = calc_Zmot(n,  layers_ref, delfstar)
+                return [Zmot.real, Zmot.imag]
+
+            sol = optimize.root(solve_Zmot_ref, [delfstar_sla_ref.real,
+                                                delfstar_sla_ref.imag])
+            dfc_ref = sol.x[0] + 1j* sol.x[1]
+
+            return dfc-dfc_ref
 
 
-    def thin_film_gamma(self, n, drho, jdprime_rho):
-        return 8*np.pi ** 2*n ** 3*self.f1 ** 4*drho ** 3*jdprime_rho / (3*self.zq)
-        # same master expression, replacing grho3 with jdprime_rho3
+    def calc_Zmot(n, layers, delfstar):
+        om = 2 * np.pi *(n*f1 + delfstar)
+        g0 = 10 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
+        Zqc = Zq * (1 + 1j*2*g0/(n*f1))
+        dq = 330e-6  # only needed for piezoelectric stiffening calc.
+        epsq = 4.54; eps0 = 8.8e-12; C0byA = epsq * eps0 / dq; ZC0byA = C0byA / (1j*om)
+        ZPE = -(e26/dq)**2*ZC0byA  # ZPE accounts for oiezoelectric stiffening anc
+        # can always be neglected as far as I can tell
+
+        Dq = om*drho_q/Zq
+        secterm = -1j*Zqc/np.sin(Dq)
+        ZL = calc_ZL(n, layers, delfstar)
+        # eq. 4.5.9 in book
+        thirdterm = ((1j*Zqc*np.tan(Dq/2))**-1 + (1j*Zqc*np.tan(Dq/2) + ZL)**-1)**-1
+        Zmot = secterm + thirdterm  +ZPE
+
+        return Zmot
 
 
-    def grho_rh(self, jdprime_rho_rh, phi):
-        return np.sin(phi)/jdprime_rho_rh
 
+    def calc_dlam(n, film):
+        return calc_D(n, film, 0).real/(2*np.pi)
+
+    ##### end new funcs ######
 
     def dlam(self, n, dlam_rh, phi):
         return dlam_rh*(n/self.rh) ** (1-phi/np.pi)
@@ -209,7 +309,7 @@ class QCM:
 
     def bulk_guess(self, delfstar):
         ''' get the bulk solution for grho and phi '''
-        grho_rh = (np.pi*self.zq*abs(delfstar[self.rh])/self.f1) ** 2
+        grho_rh = (np.pi*self.Zq*abs(delfstar[self.rh])/self.f1) ** 2
         phi = -2*np.arctan(np.real(delfstar[self.rh]) / np.imag(delfstar[self.rh]))
 
         # calculate rho*lambda
@@ -448,6 +548,7 @@ class QCM:
             print('grho_rh', grho_rh) #testprint
 
             # we solve it again to get the Jacobian with respect to our actual
+            # input variables - this is helpfulf for the error analysis
             if drho_range[0]<=drho<=drho_range[1] and grho_rh_range[0]<=grho_rh<=grho_rh_range[1] and phi_range[0]<=phi<=phi_range[1]:
                 
                 print('1st solution in range') #testprint
@@ -633,7 +734,7 @@ class QCM:
         cols = mech_df.columns
         for col in cols:
             if 'drho' in col:
-                df[col] = df[col].apply(lambda x: list(np.array(x) * 1000) if isinstance(x, list) else x * 1000) # from kg/m2 to g/cm2 (~ um)
+                df[col] = df[col].apply(lambda x: list(np.array(x) * 1000) if isinstance(x, list) else x * 1000) # from m kg/m3 to um g/cm2
             elif 'grho' in col:
                 df[col] = df[col].apply(lambda x: list(np.array(x) / 1000) if isinstance(x, list) else x / 1000) # from Pa kg/m3 to Pa g/cm3 (~ Pa)
             elif 'phi' in col:

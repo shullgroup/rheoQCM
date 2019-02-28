@@ -1,12 +1,14 @@
 # Changelog
 
-## [0.16.0] - 2019-02-21
+## [0.16.0] - 2019-02-27
 
 ### Added
 
 - Add window state check before resize it.
 - Add text fontsize to customize settings.
 - Add calibration file check.
+- Add error log function.
+- Add key check to user settings (Add missed key from settings_default)
 
 ### Changed
 
@@ -15,11 +17,14 @@
 - Change DataFrame filter to regex to read data from a given harmonic.
 - Change the way import data from other software (e.g.: QCM-D) to make it possible to customize the format for import and applicable for different formats (QCM-D and QCM-Z).
 - Change channel selection when the same analyzer channel selected.
+- Hide reference time items to simplify the setup process. The reference time will always be the first time starting the experiment.
+- Improve the peak tracking method.
 
 ### Fixed
 
 - Fix the span setting failure when peak tracking failed.
 - Fix temp lines deleting bug.
+- Fix delete selected raw data bug when it doesn't exist.
 
 ## [0.15.3] - 2019-02-07
 

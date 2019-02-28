@@ -12,7 +12,7 @@ You can browse the data with hdf5 UI software e.g. HDFCompass if you
 don't want to extract the data with code.
 dictionaries and dataframes are converted to json and are saved as text in the file
 
-.h5 --- raw --- samp ---0---1(harmonic)---column 1: frequency   (f)
+.h5 -|- raw -|- samp -|-0-|-1(harmonic)-|-column 1: frequency   (f)
      |       |        |   |             |-column 2: conductance (G)
      |       |        |   |             --column 3: susceptance (B)
      |       |        |   |-3
@@ -917,7 +917,7 @@ class DataSaver:
                 t0 = datetime.datetime.strptime(self.exp_ref.get('t0'), self.settings_init['time_str_format']) # use t0
         else: # no t0 saved in self.exp_ref
             # find t0 in self.settings
-            t0 = self.settings.get('dateTimeEdit_reftime', None)
+            t0 = self.settings.get('t0', self.settings.get('dateTimeEdit_reftime', None))
             print('t0', t0) #testprint
             if not t0:
                 if self.samp.shape[0]> 0: # use the first queque time
@@ -1128,12 +1128,14 @@ class DataSaver:
         ''' 
         
         # check self.exp_ref
-        if self.exp_ref['samp_ref'][0] in self._chn_keys: # use test data
+        if self.exp_ref[chn_name + '_ref'][0] in self._chn_keys: # use test data
             # reset mark (1 to 0) and copy
             if df is None:
-                df = getattr(self, self.exp_ref['samp_ref'][0]).copy()
-        else:
-            raise ValueError('df should not be None when {0} is reference source.'.fromat(self.exp_ref['samp_ref'][0]))            
+                df = getattr(self, self.exp_ref[chn_name + '_ref'][0]).copy()
+        elif df is None: # chn_name is not samp/ref and df is not given
+            # print('df should not be None when {} is reference source.'.fromat(self.exp_ref[chn_name + '_ref'][0]))
+            # return
+            raise ValueError('df should not be None when {} is reference source.'.fromat(self.exp_ref[chn_name + '_ref'][0]))            
 
         df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
         setattr(self, chn_name + '_ref', df)
@@ -1421,8 +1423,9 @@ class DataSaver:
                 # delete from raw
                 for idx in idxs:
                     print(df_chn.queue_id[idx]) #testprint
-                    print(fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[idx])) + '/' + harm]) #testprint
-                    del fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[idx])) + '/' + harm]
+                    if 'raw' in fh.keys() and chn_name in fh['raw'] and str(int(df_chn.queue_id[idx])) in fh['raw/'+chn_name] and harm in fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[idx]))]: # raw data exist
+                        print(fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[idx])) + '/' + harm]) #testprint
+                        del fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[idx])) + '/' + harm]
 
 
     ######## functions for unit convertion #################
@@ -1548,7 +1551,7 @@ class DataSaver:
 
         # make a fake reference time t0
         if settings:
-            t0_str = settings['dateTimeEdit_reftime']
+            t0_str = settings['label_reftime']
             t0 = datetime.datetime.strptime(t0_str, self.settings_init['time_str_format'])
         else:
             if not t0:

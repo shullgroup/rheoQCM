@@ -510,11 +510,21 @@ class PeakTracker:
         def set_new_cen(freq, cen, current_span, current_xlim):
             ''' set new center '''
             cen_range = settings_init['cen_range'] # cen of span +/- cen_range*span as the accessible range
-            print('cen_diff', np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen)) #testprint
-            print('cen_span', cen_range * current_span) #testprint
-            if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > cen_range * current_span: # out of range
+            cen_diff = cen - np.mean(np.array([freq[0],freq[-1]]))
+            print('cen_diff', cen_diff) #testprint
+            half_cen_span = cen_range * current_span
+            print('half_cen_span', half_cen_span) #testprint
+            if np.absolute(cen_diff) > half_cen_span: # out of range
                 # new start and end frequencies in Hz
-                return cen
+                # return cen # return current peak center as new center
+                # OR move the center to the oppsite direction a little incase of a big move of the peak center
+                if cen_diff / half_cen_span < -settings_init['big_move_thresh']: # peak on the left side of center range
+                    return cen - half_cen_span
+                elif cen_diff / half_cen_span > settings_init['big_move_thresh']: # peak on the right side of center range
+                    return cen + half_cen_span
+                else: # small move use center
+                    return cen
+
             else: 
                 # use span center
                 # return np.mean(np.array([freq[0],freq[-1]]))

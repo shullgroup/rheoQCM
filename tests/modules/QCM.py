@@ -44,7 +44,8 @@ class QCM:
         '''
         phi in rad for calculation and exported as degree
         '''
-        self.zq = 8.84e6  # shear acoustic impedance of quartz
+        self.zq = 8.84e6  # shear acoustic impedance of AT cut quartz
+        #TODO add zq by cuts
         self.f1 = None # 5e6 Hz fundamental resonant frequency
         self.g_err_min = 10 # error floor for gamma
         self.f_err_min = 50 # error floor for f

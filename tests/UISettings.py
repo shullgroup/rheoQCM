@@ -7,6 +7,7 @@ Change the following factors will change the apperiance of the GUI
 # (dictionary in Python >=3.6 is ordered by default)
 # Use OrderedDict for those dicts need to be shown in order
 from collections import OrderedDict
+import numpy as np
 
 settings_init = {
 
@@ -22,11 +23,11 @@ settings_init = {
         r'C:\Program Files\G8KBB\myVNA\myVNA.exe',
     ],
 
-    # where the calibration files where save
+    # where the calibration files saved (not necessary)
     'vna_cal_file_path': r'./cal/', 
 
     # highest harmonic can be shown in the UI. 
-    'max_harmonic': 9, # MUST >= 1
+    'max_harmonic': 11, # MUST >= 1
     
     # time string format
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
@@ -107,6 +108,12 @@ settings_init = {
 
     # list for disabled widges for current version
     'version_hide_list':[
+        # hide reference time widgets to simplify the setup
+        # reference time can always be changed by shifted_t0
+        'dateTimeEdit_reftime',
+        'pushButton_resetreftime',
+        'label_reftime',
+
         'groupBox_settings_output',
 
         'groupBox_settings_fitting',
@@ -128,7 +135,7 @@ settings_init = {
         # 'label_6',
         # 'comboBox_settings_mechanics_refG',
         # 'comboBox_settings_mechanics_selectmodel',
-        'tableWidget_settings_mechanics_setmodel',
+        'stackedWidget_settings_mechanics_modeswitch',
 
         # 'groupBox_settings_mechanics_contour',
         # 'pushButton_settings_mechanics_simulator',
@@ -229,12 +236,12 @@ settings_init = {
         'delf_exps':         r'$\Delta$f$_{exp}$ (Hz)',
         'delg_calcs':        r'$\Delta\Gamma$ (Hz)',
         'delg_exps':         r'$\Delta\Gamma_{exp}$ (Hz)',
-        'drho':              r'd$\rho$ (g/cm$^2$)',
-        'grho_rh':           r'$|G_{rh}^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
+        'drho':              r'd$\rho$ ($\mu$m$\cdot$g/cm$^3$)',
+        'grho_rh':           r'$|G_{rh}^*|\rho$ (Pa$\cdot$g/cm$^3$)',
         'phi':               r'$\phi$ ($\degree$)',
         'dlam_rh':           r'd/$\lambda_{rh}$',
-        'lamrho':            r'$\lambda\rho$ (g/cm$^2$)',
-        'delrho':            r'$\delta\rho$ (g/cm$^2$)',
+        'lamrho':            r'$\lambda\rho$ ($\mu$m$\cdot$g/cm$^3$)',
+        'delrho':            r'$\delta\rho$ ($\mu$m$\cdot$g/cm$^3$)',
         'delf_delfsn':       r'$\Delta$f/$\Delta$f$_{sn}$',
         'delg_delfsn_exps':  r'$(\Delta\Gamma$/$\Delta$f$_{sn})_{exp}$',
         'delg_delfsn_calcs': r'$\Delta\Gamma$/$\Delta$f$_{sn}$',
@@ -250,12 +257,12 @@ settings_init = {
         'delf_calcs':        u'\u0394' + 'fcalc (Hz)', # Δfcalc (Hz)
         'delg_exps':         u'\u0394\u0393' + ' (Hz)', # ΔΓ (Hz)
         'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
-        'drho':              'd' + u'\u03C1' + ' (g/cm'+ u'\u00B2' + ')', # dρ (g/cm²)
+        'drho':              'd' + u'\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # dρ (μm∙g/m³)
         'grho_rh':           '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
         'phi':                u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
         'dlam_rh':           'd/' + u'\u03BB\u2099', # d/λₙ
-        'lamrho':            u'\u03BB\u03C1' + ' (g/cm' + u'\u00B2' + ')', # λρ (g/cm²)
-        'delrho':            u'\u03B4\u03C1' + ' (g/cm' + u'\u00B2' + ')', # δρ (g/cm²)
+        'lamrho':            u'\u03BB\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # λρ (μm∙g/m³)
+        'delrho':            u'\u03B4\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # δρ (μm∙g/m³)
         'delf_delfsn':       u'\u0394' + 'f/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
         'delg_delfsn_calcs': u'\u0394\u0393' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓ/Δfₛₙ
         'rh':                'rh',
@@ -299,8 +306,14 @@ settings_init = {
         # ('none', 'none'),
         ('samp', 'S chn.'),
         ('ref', 'R chn.'),
-        ('ext', 'ext'), # always read from the reference channel
+        # ('ext', 'ext'), # always read from the reference channel
     ]),
+
+    # crystal cuts options
+    'crystal_cut_opts':{
+        'AT': 'AT',
+        'BT': 'BT',
+    },
 
     'thrmcpl_opts': OrderedDict([
     # key: number; val: for display in combobox
@@ -366,9 +379,34 @@ settings_init = {
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {
         'onelayer': 'One layer',
-        'twolayers': 'Two layers',
+        # 'twolayers': 'Two layers',
         'bulk': 'Bulk',
         # 'multiple': 'Multiple models',
+    },
+
+    'qcm_layer_known_source_opts': {
+        'prop': 'Prop.',
+        'fg': u'\u0394' + 'f&' u'\u0394\u0393',
+        'ind': 'Index',
+        'none': '--',
+    },
+
+    'qcm_layer_unknown_source_opts': {
+        'none': '--',
+        'guess': 'Guess',
+    },
+
+    'qcm_layer_bulk_val_opts':{
+        'air': {
+            'drho': np.inf,
+            'grho': 0,
+            'phi': np.pi / 2,
+        },
+        'water': {
+            'drho': np.inf, 
+            'grho': 1e5, # in Pa
+            'phi': np.pi /2,
+        },
     },
 
     # steps ofr span control slider
@@ -476,9 +514,16 @@ settings_init = {
 
     ######### params for PeakTracker module #######
     'cen_range': 0.05, # peak center limitation (cen of span +/- cen_range*span)
+    'big_move_thresh': 1.5, # if the peak out abs(cen - span_cen) > 'big_move_thresh' * 'cen_range' * span, is is considered as a big move. center will be moved to the opposite side.
     'wid_ratio_range': (8, 20), # width_ratio[0]*HWHM <= span <= width_ratio[1]*HWHM
-    'change_thresh': (0.05, 0.5), # span change threshold current_span * change_thresh. When the changing step of (current_span +/- 'wid_ratio_range' * 2 * current_span) > ( current_span * (1 +/- change_thresh)), former will be used 
-    # the value should be between (0, 1)
+    'change_thresh': (0.05, 0.5), # span change threshold. the value should be between (0, 1)
+    # min(
+    #     max(
+    #         wid_ratio_range[1/0] * half_wid * 2,
+    #         current_span * (1 - change_thresh[1/0]),
+    #         ), # lower bound of wid_ratio_range
+    #     current_span * (1 - change_thresh[0/1]) # 
+    # )
 
 }
 
@@ -560,6 +605,7 @@ settings_default = {
     # default crystal settings
     'comboBox_base_frequency': 5,
     'comboBox_bandwidth': 0.1,
+    'comboBox_crystalcut': 'AT',
 
     # default temperature settings
     'checkBox_settings_temp_sensor': False,
@@ -618,6 +664,8 @@ settings_default = {
     'spinBox_settings_mechanics_nhcalc_n3': 3,
 
     'comboBox_settings_mechanics_refG': '3', # reference harmonic for property
+    'spinBox_mech_expertmode_layernum': 0, # number of layers for expert mode mechanic 
+
     'checkBox_settings_mechanics_witherror': True, # errorbar
 
     'comboBox_settings_mechanics_selectmodel': 'onelayer',

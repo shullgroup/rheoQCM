@@ -33,8 +33,14 @@ print(os.getcwd())
 fileName = os.path.join(os.getcwd(), settings_init['default_settings_file_name'])
 if os.path.exists(fileName):
     with open(fileName, 'r') as f:
-        settings_default = json.load(f) # read user default settings
-    print('use user default settings')
+        settings_user = json.load(f) # read user default settings
+        for key, val in settings_default.items():
+            # add missed keys to settings_user
+            if key not in settings_user:
+                settings_user[key] = val
+        # rename settings_user to settings_defualt
+        settings_default = settings_user
+    print('use user settings')
 else:
     print('use default settings')
 del fileName
@@ -203,7 +209,7 @@ class QCMApp(QMainWindow):
         self.bartimer.timeout.connect(self.update_progressbar)
 
 
-        self.main()
+        self.init_ui()
         
         # hide widges not necessary
         self.hide_widgets(
@@ -219,7 +225,7 @@ class QCMApp(QMainWindow):
         self.load_settings()
 
 
-    def main(self):
+    def init_ui(self):
         #region ###### initiate UI #################################
 
         #region main UI 
@@ -336,13 +342,10 @@ class QCMApp(QMainWindow):
 
         # set comboBox_plt1_optsy/x, comboBox_plt2_optsy/x
         # dict for the comboboxes
-        for key, val in settings_init['data_plt_opts'].items():
-            # userData is setup for geting the plot type
-            # userDat can be access with itemData(index)
-            self.ui.comboBox_plt1_optsy.addItem(val, key)
-            self.ui.comboBox_plt1_optsx.addItem(val, key)
-            self.ui.comboBox_plt2_optsy.addItem(val, key)
-            self.ui.comboBox_plt2_optsx.addItem(val, key)
+        self.build_comboBox(self.ui.comboBox_plt1_optsy, 'data_plt_opts')
+        self.build_comboBox(self.ui.comboBox_plt1_optsx, 'data_plt_opts')
+        self.build_comboBox(self.ui.comboBox_plt2_optsy, 'data_plt_opts')
+        self.build_comboBox(self.ui.comboBox_plt2_optsx, 'data_plt_opts')
 
         # set RUN/STOP button
         self.ui.pushButton_runstop.toggled.connect(self.on_clicked_pushButton_runstop)
@@ -390,8 +393,7 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_refreshresolution.editingFinished.connect(self.set_lineEdit_scaninterval)
 
         # add value to the comboBox_settings_control_dispmode
-        for key, val in settings_init['display_opts'].items():
-            self.ui.comboBox_settings_control_dispmode.addItem(val, key)
+        self.build_comboBox(self.ui.comboBox_settings_control_dispmode, 'display_opts')
         self.ui.comboBox_settings_control_dispmode.currentIndexChanged.connect(self.update_widget)
         self.ui.comboBox_settings_control_dispmode.currentIndexChanged.connect(self. update_freq_display_mode)
 
@@ -609,6 +611,15 @@ class QCMApp(QMainWindow):
             settings_init['bandwidth_opts'], 
             100, 
             'Bandwidth', 
+            self.ui.treeWidget_settings_settings_hardware
+        )
+
+        # insert crystal cut
+        self.create_combobox(
+            'comboBox_crystalcut', 
+            settings_init['crystal_cut_opts'], 
+            100, 
+            'Cut', 
             self.ui.treeWidget_settings_settings_hardware
         )
 
@@ -846,11 +857,8 @@ class QCMApp(QMainWindow):
         )
 
         # load opts to combox
-        for key, val in settings_init['ref_channel_opts'].items():
-            # userData is setup for geting the plot type
-            # userDat can be access with itemData(index)
-            self.ui.comboBox_settings_data_samprefsource.addItem(val, key)
-            self.ui.comboBox_settings_data_refrefsource.addItem(val, key)
+        self.build_comboBox(self.ui.comboBox_settings_data_samprefsource, 'ref_channel_opts')
+        self.build_comboBox(self.ui.comboBox_settings_data_refrefsource, 'ref_channel_opts')
 
         # move pushButton_settings_data_resetshiftedt0
         self.move_to_col2(
@@ -946,6 +954,10 @@ class QCMApp(QMainWindow):
 
         self.ui.checkBox_settings_mechanics_witherror.toggled.connect(self.update_widget)
 
+        # spinBox_mech_expertmode_layernum
+        self.ui.spinBox_mech_expertmode_layernum.valueChanged.connect(self.update_widget)
+        self.ui.spinBox_mech_expertmode_layernum.valueChanged.connect(self.build_mech_layers)
+
         # hide tableWidget_settings_mechanics_errortab
         self.ui.tableWidget_settings_mechanics_errortab.hide()
         # hide tableWidget_settings_mechanics_contoursettings
@@ -953,8 +965,7 @@ class QCMApp(QMainWindow):
         # hide groupBox_settings_mechanics_simulator
         self.ui.groupBox_settings_mechanics_simulator.hide()
 
-        for key, val in settings_init['qcm_model_opts'].items():
-            self.ui.comboBox_settings_mechanics_selectmodel.addItem(val, userData=key)
+        self.build_comboBox(self.ui.comboBox_settings_mechanics_selectmodel, 'qcm_model_opts')
         self.ui.comboBox_settings_mechanics_selectmodel.currentIndexChanged.connect(self.update_widget)
 
         #endregion
@@ -1242,42 +1253,100 @@ class QCMApp(QMainWindow):
         # self.addToolBar(Qt.TopToolBarArea, self.ui.mpl_dummy_fig.toolbar)
         # self.ui.mpl_dummy_fig.hide() # hide the figure
 
-        
-
-
-
         #endregion
 
-
-        #endregion
-
-        #region ###### set UI value ###############################
-
-        # for i in range(1, settings_init['max_harmonic']+2, 2):
-        #     if i in self.settings['harmonics_check']: # in the default range 
-        #         # settings/control/Harmonics
-        #         getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(True)
-        #         getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(True)
-
-        #     else: # out of the default range
-        #         getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(False)
-        #         getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(False)
-        #         # hide spectra/sp
-        #         getattr(self.ui, 'frame_sp' + str(i)).setVisible(False)
-
-
-        # self.ui.comboBox_plt1_optsy.setCurrentIndex(2)
-        # self.ui.comboBox_plt2_optsy.setCurrentIndex(3)
-
-        # set time interval
-        # self.ui.lineEdit_scaninterval.setText(str(self.settings['lineEdit_scaninterval']))
-        # self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
-        # self.ui.lineEdit_refreshresolution.setText(str(self.settings['lineEdit_refreshresolution']))
-
-        #endregion
 
 
         #region #########  functions ##############
+
+    def build_mech_layers(self):
+        '''
+        insert/delete a gridlayout with items for layers between bulk and electrode
+        nlayers is from a spinBox which limits its value e.g. [0, 5]
+
+        ------------
+        radio button (bulk)      | comobx (source) | lineEdit (value)
+        radio button (nth layer) | comobx (source) | lineEdit (value)
+        ...
+        radio button (electrod)  | comobx (source) | lineEdit (value)
+        '''
+        start_row = 2 # the row to insert
+
+        # check previous number of layer by check radioButton_mech_expertmode_calc_electrode row number
+        # get the bottom row by checking electrode layer
+        bottom_row = self.ui.gridLayout_mech_expertmode_layers.getItemPosition(self.ui.gridLayout_mech_expertmode_layers.indexOf(self.ui.radioButton_mech_expertmode_calc_electrode))[0] 
+        pre_nlayers = bottom_row - start_row
+        nlayers = self.settings.get('spinBox_mech_expertmode_layernum', 0) # get changed number of layers after update in self.settings
+        print('pre_nlayers', pre_nlayers) #testprint
+        print('nlayers', nlayers) #testprint
+        
+        
+        # number of rows
+        rowcount = self.ui.gridLayout_mech_expertmode_layers.rowCount()
+        print('rowcount', rowcount) #testprint
+        del_nlayers = nlayers - pre_nlayers 
+        print('del_nlayers', del_nlayers) #testprint
+        if pre_nlayers == nlayers:
+            # no changes
+            return
+        elif pre_nlayers < nlayers:
+            # add layers above previous layer
+            print('add') #testprint
+            for i in range(pre_nlayers+1, nlayers+1):
+                print(i) #testprint
+                # radiobutton
+                setattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i), QRadioButton(self.ui.stackedWidgetPage_mech_expertmode))
+                getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).setObjectName("radioButton_mech_expertmode_calc_"+str(i))
+                self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)), start_row, 0, 1, 1)
+                getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).setText(QCoreApplication.translate("MainWindow", 'layer '+str(i)))
+                # combobox
+                setattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i), QComboBox(self.ui.stackedWidgetPage_mech_expertmode))
+                sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+                sizePolicy.setHorizontalStretch(0)
+                sizePolicy.setVerticalStretch(0)
+                sizePolicy.setHeightForWidth(getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).sizePolicy().hasHeightForWidth())
+                getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).setSizePolicy(sizePolicy)
+                getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).setCurrentText("")
+                getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).setObjectName("comboBox_mech_expertmode_source_"+str(i))
+                self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)), start_row, 1, 1, 1)
+                # lineEdit
+                setattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i),QLineEdit(self.ui.stackedWidgetPage_mech_expertmode))
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).setReadOnly(True)
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).setObjectName("lineEdit_mech_expertmode_value_"+str(i))
+                self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)), start_row, 2, 1, 1)
+                #change the background
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_' + str(i)).setStyleSheet(
+                    "QLineEdit { background: transparent; }"
+                )
+        elif pre_nlayers > nlayers:
+            # delete layers from row 1 (leave bulk (0))
+            print('delete') #testprint
+            for i in range(nlayers+1, pre_nlayers+1):
+                print(i) #testprint
+                # radiobutton
+                getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).deleteLater()
+                # combobox
+                getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).deleteLater()
+                # lineEdit
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).deleteLater()
+
+                # move previous layers to (row - 1)
+        else:
+            pass
+        # move previous layers to (current row + del_nlayers)
+        for i in range(1, pre_nlayers+1):
+            # bottom_row-i+del_nlayers
+            # bottom_row-i: current row
+            self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)), (bottom_row-i+del_nlayers), 0, 1, 1)
+            self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)), (bottom_row-i+del_nlayers), 1, 1, 1)
+            self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'lineEdit_mech_expertmode_value_' + str(i)), (bottom_row-i+del_nlayers), 2, 1, 1)
+        # move electrode widgets to (current row + del_nlayers)
+        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.radioButton_mech_expertmode_calc_electrode, bottom_row+del_nlayers, 0, 1, 1)
+        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.comboBox_mech_expertmode_source_electrode, bottom_row+del_nlayers, 1, 1, 1)
+        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.lineEdit_mech_expertmode_value_electrode, bottom_row+del_nlayers, 2, 1, 1)
+
+        print('rowcount', self.ui.gridLayout_mech_expertmode_layers.rowCount()) #testprint
+
 
     def link_tab_page(self, tab_idx):
         self.UITab = tab_idx
@@ -1291,31 +1360,6 @@ class QCMApp(QMainWindow):
             self.ui.stackedWidget_spectra.setCurrentIndex(2)
             self.ui.stackedWidget_data.setCurrentIndex(1)
 
-    def create_combobox(self, name, contents, box_width, row_text='', parent=''):
-        ''' 
-        this function create a combobox object with its name = name, items = contents. and  set it't width. 
-        And move it to row[0] = row_text in parent
-        '''
-        # create a combobox object
-        setattr(self.ui, name, QComboBox())
-        # get the object
-        obj_box = getattr(self.ui, name)
-        # set objectName
-        obj_box.setObjectName(name)
-        # set its size adjust policy
-        obj_box.SizeAdjustPolicy(QComboBox.AdjustToContents)
-        # add items from contents
-        if isinstance(contents, list): # if given a list, add only the text
-            for val in contents:
-                obj_box.addItem(val)
-        elif isinstance(contents, dict): # if given a dict, add the text (val) and userData (key)
-            for key, val in contents.items():
-                obj_box.addItem(val, key)
-
-        # insert to the row of row_text if row_text and parent_name are not empty
-        if (row_text and parent):
-            self.move_to_col2(obj_box, parent, row_text, box_width)
-            
 
     def move_to_col2(self, obj, parent, row_text, width=[]): 
         if width: # set width of obj
@@ -1376,6 +1420,10 @@ class QCMApp(QMainWindow):
                 self.load_refsource()
                 self.update_refsource()
 
+            # this part is auto reset reftime to current time 
+            # USE it only when dateTimeEdit_reftime & pushButton_resetreftime is hidden 
+            if not self.ui.pushButton_resetreftime.isVisible() and not self.ui.dateTimeEdit_reftime.isVisible() and self.ui.pushButton_resetreftime.isEnabled() and self.ui.dateTimeEdit_reftime.isEnabled():
+                self.reset_reftime() # use current time as t0
             # disable features
             self.disable_widgets(
                 'pushButton_runstop_disable_list'
@@ -1400,7 +1448,7 @@ class QCMApp(QMainWindow):
             # stop bartimer
             self.bartimer.stop()
             # reset progressbar
-            self.updat_progressbar(val=0, text='')
+            self.set_progressbar(val=0, text='')
 
             # # wait for data_collection fun finish (self.idle == True)
             # while self.idle == False:
@@ -3379,7 +3427,7 @@ class QCMApp(QMainWindow):
         print(isinstance(pk_data[0], float)) #testprint
         print(isinstance(pk_data[0], np.float)) #testprint
         print(isinstance(pk_data[0], np.float64)) #testprint
-        if isinstance(pk_data[0], float): # data is not empty
+        if isinstance(pk_data[0], float) and isinstance(pk_data[0], int): # data is not empty (float for values, int for index and queue_id)
             label = mpl.l['lp'][0].get_label()
             line, ind = label.split('_')
             l, harm = line[:-1], line[-1]
@@ -3658,7 +3706,7 @@ class QCMApp(QMainWindow):
             return
 
         # get harmonics to plot
-        plt_harms = [str(i) for i in range(1, settings_init['max_harmonic']+2, 2) if self.settings['checkBox_nhplot' + str(i)]]
+        plt_harms = [str(i) for i in range(1, settings_init['max_harmonic']+2, 2) if self.settings.get('checkBox_nhplot' + str(i), None)]
         print('plt_harms', plt_harms) #testprint
 
         if not plt_harms: # no harmonic selected
@@ -4503,27 +4551,66 @@ class QCMApp(QMainWindow):
         # TODO update plt1 and plt2
 
 
-    def load_comboBox(self, comboBox, choose_dict_name, harm=None):
+    def load_comboBox(self, comboBox, opts, harm=None):
         '''
-        load combobox value from self.settings 
+        load combobox value from self.settings[comboBox.objectName()] 
         if harm == None
             set the value of combox from self.settings[comboBox]
         if harm = int
             the combobox is in harmwidget
         '''
         comboBoxName = comboBox.objectName()
-        if settings_init[choose_dict_name]:
-            for key in settings_init[choose_dict_name].keys():
-                # TODO look for value from itemdata and loop use for in combox.count()
-                if harm is None: # not embeded in subdict
-                    if key == self.settings[comboBoxName]:
-                        comboBox.setCurrentIndex(comboBox.findData(key))
-                        break
-                else:
-                    if key == self.get_harmdata(comboBoxName, harm):
-                        comboBox.setCurrentIndex(comboBox.findData(key))
-                        break
+        # if settings_init[opts]:
+        #     for key in settings_init[opts].keys():
+        #         # TODO look for value from itemdata and loop use for in combox.count()
+        #         if harm is None: # not embeded in subdict
+        #             if key == self.settings[comboBoxName]:
+        #                 comboBox.setCurrentIndex(comboBox.findData(key))
+        #                 break
+        #         else:
+        #             if key == self.get_harmdata(comboBoxName, harm):
+        #                 comboBox.setCurrentIndex(comboBox.findData(key))
+        #                 break
+        if comboBoxName in self.settings:
+            set_ind = comboBox.findData(self.settings[comboBoxName])
+            if set_ind != -1: # key in list
+                comboBox.setCurrentIndex(set_ind)
                 
+
+
+    def build_comboBox(self, combobox, opts):
+        '''
+        build comboBox by addItem from opts in settings_init[opts]
+        '''
+        for key, val in settings_init[opts].items():
+            combobox.addItem(val, userData=key)
+
+
+    def create_combobox(self, name, contents, box_width, row_text='', parent=''):
+        ''' 
+        this function create a combobox object with its name = name, items = contents. and  set it't width. 
+        And move it to row[0] = row_text in parent
+        '''
+        # create a combobox object
+        setattr(self.ui, name, QComboBox())
+        # get the object
+        obj_box = getattr(self.ui, name)
+        # set objectName
+        obj_box.setObjectName(name)
+        # set its size adjust policy
+        obj_box.SizeAdjustPolicy(QComboBox.AdjustToContents)
+        # add items from contents
+        if isinstance(contents, list): # if given a list, add only the text
+            for val in contents:
+                obj_box.addItem(val)
+        elif isinstance(contents, dict): # if given a dict, add the text (val) and userData (key)
+            for key, val in contents.items():
+                obj_box.addItem(val, key)
+
+        # insert to the row of row_text if row_text and parent_name are not empty
+        if (row_text and parent):
+            self.move_to_col2(obj_box, parent, row_text, box_width)
+            
 
     def update_guichecks(self, checkBox, name_in_settings):
         #NOTUSING
@@ -4590,7 +4677,7 @@ class QCMApp(QMainWindow):
         # set active_chn
         self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
         # set progressbar
-        self.updat_progressbar(val=0, text='')
+        self.set_progressbar(val=0, text='')
 
         # set lineEdit_datafilestr
         self.ui.lineEdit_datafilestr.setText(self.data_saver.path)
@@ -4666,6 +4753,8 @@ class QCMApp(QMainWindow):
         self.load_comboBox(self.ui.comboBox_bandwidth, 'bandwidth_opts')
         # update statusbar
         self.statusbar_f0bw_update()
+        # update crystalcut
+        self.load_comboBox(self.ui.comboBox_crystalcut, 'crystal_cut_opts')
 
         # create self.settings['freq_range']. 
         # this has to be initated before any 
@@ -4735,7 +4824,7 @@ class QCMApp(QMainWindow):
 
 
         # load t0_shifted time
-        if 'dateTimeEdit_settings_data_t0shifted' in self.settings.keys(): # t0_shifted has been defined
+        if 'dateTimeEdit_settings_data_t0shifted' in self.settings: # t0_shifted has been defined
             print(self.settings['dateTimeEdit_settings_data_t0shifted']) #testprint
             self.ui.dateTimeEdit_settings_data_t0shifted.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_settings_data_t0shifted'], settings_init['time_str_format']))
 
@@ -4761,7 +4850,9 @@ class QCMApp(QMainWindow):
         self.ui.spinBox_settings_mechanics_nhcalc_n2.setValue(self.settings['spinBox_settings_mechanics_nhcalc_n2'])
         self.ui.spinBox_settings_mechanics_nhcalc_n3.setValue(self.settings['spinBox_settings_mechanics_nhcalc_n3'])
 
-        self.ui.comboBox_settings_mechanics_refG.setCurrentIndex(self.ui.comboBox_settings_mechanics_refG.findData(self.settings['comboBox_settings_mechanics_refG']))
+        # self.ui.comboBox_settings_mechanics_refG.setCurrentIndex(self.ui.comboBox_settings_mechanics_refG.findData(self.settings['comboBox_settings_mechanics_refG']))
+        self.load_comboBox(self.ui.comboBox_settings_mechanics_refG, 'qcm_model_opts')
+
 
         self.ui.checkBox_settings_mechanics_witherror.setChecked(self.settings['checkBox_settings_mechanics_witherror'])
 
@@ -4791,7 +4882,7 @@ class QCMApp(QMainWindow):
         self.settings['lineEdit_settings_data_refrefidx'] = self.data_saver.exp_ref['ref_ref'][1]
 
 
-    def updat_progressbar(self, val=0, text=''):
+    def set_progressbar(self, val=0, text=''):
         '''
         update progressBar_status_interval_time
         '''
@@ -4833,7 +4924,7 @@ class QCMApp(QMainWindow):
         if self.settings['comboBox_ref_channel'] != 'none': # reference channel is not selected
             chn_name_list.append('ref')
 
-        harm_list = [str(i) for i in range(1, settings_init['max_harmonic']+2, 2) if self.settings['checkBox_harm' + str(i)]] # get all checked harmonic into a list
+        harm_list = [str(i) for i in range(1, settings_init['max_harmonic']+2, 2) if self.settings.get('checkBox_harm' + str(i), None)] # get all checked harmonic into a list
 
         print(self.settings['comboBox_samp_channel']) #testprint
         print(self.settings['comboBox_ref_channel']) #testprint
@@ -5002,7 +5093,7 @@ class QCMApp(QMainWindow):
         
 
         # Save scan data to file fitting data in RAM to file
-        if int(self.counter) % int(self.settings['lineEdit_refreshresolution']) == 0: # check if to save by intervals
+        if self.refresh_modulus() == 0: # check if to save by intervals
             self.writing = True
             # save raw
             self.data_saver.dynamic_save(chn_name_list, harm_list, t=curr_time, temp=curr_temp, f=f, G=G, B=B, fs=fs, gs=gs, marks=marks)
@@ -5162,7 +5253,7 @@ class QCMApp(QMainWindow):
         return all checked harmonics in a list of str
         '''
         return [str(i) for i in range(1, settings_init['max_harmonic']+2, 2) if 
-        self.settings['checkBox_harm' + str(i)]] # get all checked harmonics
+        self.settings.get('checkBox_harm' + str(i), None)] # get all checked harmonics
     
     def update_progressbar(self):
         '''
@@ -5175,11 +5266,23 @@ class QCMApp(QMainWindow):
         # print(timer_remain) #testprint
         # print(timer_interval) #testprint
         # print(min(round((1 - timer_remain / timer_interval) * 100), 100)) #testprint
-        self.updat_progressbar(
+        
+        if self.refresh_modulus() == 0: # going to save data 
+            txt = '{:.1f} s'.format(timer_remain)
+        else:
+            txt = '{:.1f} s + {}'.format(timer_remain, int(self.settings['lineEdit_refreshresolution']) - self.refresh_modulus())
+
+        self.set_progressbar(
             val=min(round((1 - timer_remain / timer_interval) * 100), 100), 
-            text='{:.1f} s'.format(timer_remain)
+            text=txt
         )
 
+
+    def refresh_modulus(self):
+        '''
+        calculate how many times refresh left before recording
+        '''
+        return int(self.counter) % int(self.settings['lineEdit_refreshresolution'])
 
 
 

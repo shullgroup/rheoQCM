@@ -195,7 +195,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -575,14 +575,27 @@ background-color: red;
                     </widget>
                    </item>
                    <item row="0" column="3">
-                    <spacer name="horizontalSpacer_reftime_l">
+                    <spacer name="horizontalSpacer_31">
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
                        <width>40</width>
-                       <height>0</height>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                   <item row="0" column="5">
+                    <spacer name="horizontalSpacer_24">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
                       </size>
                      </property>
                     </spacer>
@@ -612,19 +625,6 @@ background-color: red;
                       <string>Rest reference time</string>
                      </property>
                     </widget>
-                   </item>
-                   <item row="0" column="5">
-                    <spacer name="horizontalSpacer_reftime_r">
-                     <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>40</width>
-                       <height>0</height>
-                      </size>
-                     </property>
-                    </spacer>
                    </item>
                   </layout>
                  </item>
@@ -4994,12 +4994,7 @@ p, li { white-space: pre-wrap; }
                   </row>
                   <row>
                    <property name="text">
-                    <string>dρ (μm∙g/cm³)</string>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>7</pointsize>
-                    </font>
+                    <string>dρ (g/cm²)</string>
                    </property>
                   </row>
                   <row>
@@ -5024,22 +5019,12 @@ p, li { white-space: pre-wrap; }
                   </row>
                   <row>
                    <property name="text">
-                    <string>λρ (μm∙g/cm³)</string>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>7</pointsize>
-                    </font>
+                    <string>λρ (g/cm²)</string>
                    </property>
                   </row>
                   <row>
                    <property name="text">
-                    <string>δρ (μm∙g/cm³)</string>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>7</pointsize>
-                    </font>
+                    <string>δρ (g/cm²)</string>
                    </property>
                   </row>
                   <row>
