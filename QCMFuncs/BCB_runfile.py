@@ -19,7 +19,7 @@ parms['dataroot'] = r'C:\Users\ShullGroup\Documents\User Data\WQF\GoogleDriveSyn
 parms['figlocation'] = 'datadir' # save data in 
 parms['close_on_click_switch'] = False
 parms['nx'] = 20 # number of points to calculate if filmindex is not defined
-sample = sample_dict()  # read sample dictionary
+sample = sample_dict()  # read sample dictionary 
 
 # specify any non-default parameters  
 parms['imagetype'] = 'png'  # default is 'svg'
@@ -27,7 +27,7 @@ parms['imagetype'] = 'png'  # default is 'svg'
 ######### run samples below ##########
 #%% 2:1 20181210
 qcm.analyze(sample['BCB_4'], parms)
-
+exit(0)
 #%% 2:1 20181210
 qcm.analyze(sample['BCB_4_h5'], parms)
 

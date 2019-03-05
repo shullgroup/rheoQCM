@@ -1373,8 +1373,8 @@ class AccessMyVNA():
                         print(ret)
                         print('SettScanSteps')
                         exit(0)
-                elif (flg == 'chn') and (self._chn != int(val)): # set scan channel
-                    if val != 'none':
+                elif (flg == 'chn'): # set scan channel
+                    if val != 'none' and (self._chn != int(val)):
                         ret, self._chn = self.setADCChannel(reflectchn=int(val), paths=setflg['cal'])
                         if ret != 0:
                             print(ret)

@@ -89,7 +89,7 @@ class MatplotlibWidget(QWidget):
         self.ax = [] # list of axes 
         self.l = {} # all the plot stored in dict
         self.l['temp'] = [] # for temp lines in list
-        self.t = {} # all text in fig
+        self.txt = {} # all text in fig
         self.leg = '' # initiate legend 
 
         # set padding size
@@ -332,21 +332,22 @@ class MatplotlibWidget(QWidget):
         # self.ax[0].xaxis.set_major_locator(plt.LinearLocator())
         # self.ax[0].xaxis.set_major_locator(plt.MaxNLocator(3))
 
+        # add text
+        self.txt['sp_harm'] = self.fig.text(0.01, 0.98, '', va='top',ha='left') # option: weight='bold'
+        self.txt['chi'] = self.fig.text(0.01, 0.01, '', va='bottom',ha='left')
+
         # set label of ax[1]
         self.set_ax(self.ax[0], title=title, xlabel=r'$f$ (Hz)',ylabel=r'$G_P$ (mS)')
         self.set_ax(self.ax[1], xlabel=r'$f$ (Hz)',ylabel=r'$B_P$ (mS)')
 
         self.ax[0].xaxis.set_major_locator(ticker.LinearLocator(3))
 
-        # add text
-        self.t['harm'] = self.fig.text(0.01, 0.98, '', va='top',ha='left') # option: weight='bold'
-        self.t['chi'] = self.fig.text(0.01, 0.01, '', va='bottom',ha='left', fontsize='7')
 
 
     def update_sp_text_harm(self, harm):
         if isinstance(harm, int):
             harm = str(harm)
-        self.t['harm'].set_text(harm)
+        self.txt['sp_harm'].set_text(harm)
 
 
     def update_sp_text_chi(self, chi=None):
@@ -354,9 +355,9 @@ class MatplotlibWidget(QWidget):
         chi: number
         '''
         if not chi:
-            self.t['chi'].set_text('')
+            self.txt['chi'].set_text('')
         else:
-            self.t['chi'].set_text(r'$\chi^2$ = {:.4f}'.format(chi))
+            self.txt['chi'].set_text(r'$\chi^2$ = {:.4f}'.format(chi))
 
 
     def init_sp_fit(self, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
@@ -895,9 +896,11 @@ class MatplotlibWidget(QWidget):
         if self.axtype == 'sp':
             fontsize = settings_init['mpl_sp_fontsize']
             legfontsize = settings_init['mpl_sp_legfontsize']
+            txtfontsize = settings_init['mpl_sp_txtfontsize']
         else:
             fontsize = settings_init['mpl_fontsize']
             legfontsize = settings_init['mpl_legfontsize']
+            txtfontsize = settings_init['mpl_txtfontsize']
 
         if self.axtype == 'contour':
             for ticklabel in self.l['colorbar'].ax.yaxis.get_ticklabels():
@@ -913,6 +916,15 @@ class MatplotlibWidget(QWidget):
         # ax.set_ylabel(fontsize=fontsize+1)
         ax.tick_params(labelsize=fontsize)
         # ax.xaxis.set_major_locator(ticker.LinearLocator(3))
+
+        # set text fontsize
+        for key in self.txt.keys():
+            if key == 'sp_harm':
+                self.txt[key].set_fontsize(settings_init['mpl_sp_harmfontsize'])
+            else: # normal text
+                self.txt[key].set_fontsize(txtfontsize)
+        
+
 
     def resize(self, event):
         # on resize reposition the navigation toolbar to (0,0) of the axes.
@@ -1062,7 +1074,7 @@ class MatplotlibWidget(QWidget):
         for l_temp in self.l['temp']:
             # print('l_temp', l_temp) #testprint
             ax.lines.remove(l_temp[0]) # remove from ax
-            self.l['temp'].remove(l_temp) # remove from list .l['temp']
+        self.l['temp'] = [] # inintiate
 
         self.reset_ax_lim(ax)
         self.canvas_draw()
@@ -1136,25 +1148,25 @@ class MatplotlibWidget(QWidget):
         add line in self.l['temp'][i]
         all the lines share the same xdata
         '''
+        print('add_temp_lines')
+        if len(label_list) == 0:
+            label_list = [''] * len(xlist) # make up a label_list with all ''
         for (x, y, label) in zip(xlist, ylist, label_list):
             # print('len x: ', len(x)) #testprint
             # print('len y: ', len(y)) #testprint
             # print(x) #testprint
             # print(y) #testprint
+            
             if ax is None:
-                self.l['temp'].append(plt.plot(
-                    x, y,
-                    linestyle='--',
-                    color=color[-1],
-                    )
+                ax = self.ax[0]
+
+            self.l['temp'].append(ax.plot(
+                x, y,
+                linestyle='--',
+                color=color[-1],
                 )
-            else:
-                self.l['temp'].append(ax.plot(
-                    x, y,
-                    linestyle='--',
-                    color=color[-1],
-                    )
-                )
+            )
+
             if label:
                 self.l['temp'][-1][0].set_label(label)
         

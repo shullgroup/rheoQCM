@@ -6,6 +6,107 @@
 def sample_dict():
     sample = {}  # individual sample dictionaries get added to sample
 
+    # 20190201 D400_5_N2_CO2 samp (CO2)
+    samplename = 'D400_5_N2_CO2__samp'
+    sample[samplename] = {
+    'samplename': 'D400_5_N2_CO2__samp',
+    'datadir': '20190201',
+    'filetype': 'h5',
+    'filmchn': 'samp',
+    'filmfile': 'D400_5_N2_CO2',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['133', '353', '355'],
+    'nhplot': [1, 3, 5]
+    }
+    # 20190201 D400_5_N2_CO2 ref (N2)
+    samplename = 'D400_5_N2_CO2__ref'
+    sample[samplename] = {
+    'samplename': 'D400_5_N2_CO2__ref',
+    'datadir': '20190201',
+    'filetype': 'h5',
+    'filmchn': 'ref',
+    'filmfile': 'D400_5_N2_CO2',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['353', '355'],
+    'nhplot': [1, 3, 5]
+    }
+
+
+    # 20190129 D400_4_N2_RH samp
+    samplename = 'D400_4_N2_RH__samp'
+    sample[samplename] = {
+    'samplename': 'D400_4_N2_RH__samp',
+    'datadir': '20190129',
+    'filetype': 'h5',
+    'filmchn': 'samp',
+    'filmfile': 'D400_4_N2_RH',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['353', '355'],
+    'nhplot': [1, 3, 5]
+    }
+    # 20190129 D400_4_N2_RH ref
+    samplename = 'D400_4_N2_RH__ref'
+    sample[samplename] = {
+    'samplename': 'D400_4_N2_RH__ref',
+    'datadir': '20190129',
+    'filetype': 'h5',
+    'filmchn': 'ref',
+    'filmfile': 'D400_4_N2_RH',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['353', '355'],
+    'nhplot': [1, 3, 5]
+    }
+
+
+
+
+    # 20190118 temp_ramp_23_143_23 samp
+    samplename = 'temp_ramp_23_143_23__samp'
+    sample[samplename] = {
+    'samplename': 'temp_ramp_23_143_23__samp',
+    'datadir': '20190118',
+    'filetype': 'h5',
+    'filmchn': 'samp',
+    'filmfile': 'temp_ramp_23_143_23',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['353', '355'],
+    'nhplot': [1, 3, 5]
+    }
+
+    # 20190118 temp_ramp_23_143_23.h5
+    samplename = 'temp_ramp_23_143_23__ref'
+    sample[samplename] = {
+    'samplename': 'temp_ramp_23_143_23__ref',
+    'datadir': '20190118',
+    'filetype': 'h5',
+    'filmchn': 'ref',
+    'filmfile': 'temp_ramp_23_143_23',
+    'firstline': 0,
+    # 'filmtrange': [1, 10],
+    # 'filmindex': range(0, 156, 10),
+    # 'xscale': 'log',
+    'nhcalc': ['353', '355'],
+    'nhplot': [1, 3, 5]
+    }
+
+
+
+
     # 20181029 DGEBA-PACM_RT_2_cured 
     samplename = 'DGEBA-PACM_RT_2_cured'
     sample[samplename] = {
@@ -182,7 +283,7 @@ def sample_dict():
     # 'filmtrange': [1, 10],
     'filmindex':  list(range(0,31, 5)) + [32, 33, 34] + list(range(35, 100, 5)) + [102, 103],
     'xscale': 'log',
-    'nhcalc':     ['133', '355'],
+    'nhcalc':     ['133', '355', ],
     'nhplot':     [1, 3, 5]
     }
 
