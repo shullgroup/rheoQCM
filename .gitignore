@@ -174,6 +174,11 @@ pyqt_gui_compile.bat
 
 QCMFuncs/test.pdf
 QCMFuncs/test.pptx
+
+# myVNA calibration file
+*.myVNA.cal
+
+# misc other files - some may not even exist anymore
 QCMFuncs/filled_galkyd_runfile.py
 QCMFuncs/legacy_functions.py
 QCMFuncs/testfile.txt
@@ -183,5 +188,4 @@ QCMFuncs/Depolo_runfile.py
 docs/QCMnotes.lyx
 QCMFuncs/johannsmann.py
 QCMFuncs/filled_galkyd_runfile.py
-docs/QCMnotes.lyx
 QCM_main/runqcm.sh
