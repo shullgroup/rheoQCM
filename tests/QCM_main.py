@@ -2705,8 +2705,10 @@ class QCMApp(QMainWindow):
             queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=False)
         elif self.active['l_str'] == 'lm': # showing marked data
             queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=True)
-        # print('queue_list', queue_list) #testprint
-        return queue_list.iloc[self.active['ind']]
+        print('queue_list', queue_list) #testprint
+        print("self.active['ind']", self.active['ind']) #testprint
+        # return queue_list.iloc[self.active['ind']]
+        return queue_list[self.active['ind']]
 
 
     def get_active_raw(self):
