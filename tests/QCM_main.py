@@ -1570,9 +1570,10 @@ class QCMApp(QMainWindow):
         print('ref_source', ref_source) #testprint
         print('ref_idx', ref_idx, type(ref_idx)) #testprint
 
-        chn_queue_list = list(self.data_saver.get_queue_id(ref_source).tolist()) # list of available index in the target chn
+        # chn_queue_list = list(self.data_saver.get_queue_id(ref_source).tolist()) # list of available index in the target chn
+        chn_idx = self.data_saver.get_idx(chn_name).values.tolist() # use list of index for comperison
         # convert ref_idx from str to a list of int
-        ref_idx = UIModules.index_from_str(ref_idx, chn_queue_list)
+        ref_idx = UIModules.index_from_str(ref_idx, chn_idx)
         print('ref_idx', ref_idx, type(ref_idx)) #testprint
         # if the list is [] set it to [0], which mean the first data of the channel
         if (not ref_idx) and ((list(self.data_saver.get_queue_id('samp')) !=  list(self.data_saver.get_queue_id('ref')))): # samp and ref were not collected together
@@ -1841,7 +1842,7 @@ class QCMApp(QMainWindow):
         if not process:
             return
 
-        fileName = self.saveFileDialog('Choose a file to load its settings', path=self.data_saver.path, filetype=settings_init['default_settings_export_filetype']) # TODO add path of last opened folder
+        fileName = self.saveFileDialog('Choose a file to save settings', path=self.data_saver.path, filetype=settings_init['default_settings_export_filetype']) # TODO add path of last opened folder
 
         if fileName:
             # load settings from file
@@ -2672,6 +2673,29 @@ class QCMApp(QMainWindow):
         self.tab_spectra_fit_update_mpls(f, G, B)
 
 
+    def pick_export_raw(self):
+        '''
+        export raw data of picked point
+        '''
+        print('export raw') #testprint
+        # make the file name
+        name, ext = os.path.splitext(self.data_saver.path)
+        print(name, ext) #testprint
+        chn_txt = '_S_' if self.active['chn_name'] == 'samp' else '_R_' if self.active['chn_name'] == 'ref' else '_NA_'
+        print(chn_txt) #testprint
+        queue_id = self.get_active_queueid_from_l_harm_ind()
+        path = name + chn_txt + str(queue_id)
+
+        fileName = self.saveFileDialog(
+            'Choose a file to save raw data',
+            path=path,
+            filetype=settings_init['export_rawfiletype']
+        )
+        print(fileName) #testprint
+        if fileName:
+            self.data_saver.raw_exporter(fileName, self.active['chn_name'], queue_id, self.active['harm'])
+
+
     def autorefit_data(self, chn_name='samp', mode='all'):
         '''
         This function is to auto refit all or marked data from raw of given chn_name
@@ -3493,10 +3517,11 @@ class QCMApp(QMainWindow):
             actionManual_fit = QAction('Manual fit', self)
             actionManual_fit.triggered.connect(self.pick_manual_refit)
 
-            actionManual_fit = QAction('Manual fit', self)
-            actionManual_fit.triggered.connect(self.pick_manual_refit)
+            actionExport_raw = QAction('Export raw data', self)
+            actionExport_raw.triggered.connect(self.pick_export_raw)
 
             pkmenu.addAction(actionManual_fit)
+            pkmenu.addAction(actionExport_raw)
 
             pkmenu.exec_(mpl.canvas.mapToGlobal(position))
 

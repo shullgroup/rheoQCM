@@ -50,6 +50,7 @@ import datetime
 import time # for test
 import pandas as pd
 import numpy as np
+from scipy.interpolate import interp1d # , splrep, splev
 import h5py
 import json
 import openpyxl
@@ -574,14 +575,23 @@ class DataSaver:
         return [np.nan] * int((self.settings_init['max_harmonic'] + 1) / 2)
 
 
-    def get_raw(self, chn_name, queue_id, harm):
+    def get_raw(self, chn_name, queue_id, harm, with_t_temp=False):
         '''
-        return a set of raw data (f, G, B)
+        return a set of raw data (f, G, B) or (f, G, B, t, temp)
         '''
         with h5py.File(self.path, 'r') as fh:
+            t = fh['raw/' + chn_name + '/' + str(queue_id)].attrs['t']
+            if 'temp' in fh['raw/' + chn_name + '/' + str(queue_id)].attrs.keys():
+                temp = fh['raw/' + chn_name + '/' + str(queue_id)].attrs['temp']
+            else:
+                temp = np.nan
+
             self.raw = fh['raw/' + chn_name + '/' + str(queue_id) + '/' + harm][()]
         print(type(self.raw)) #testprint
-        return [self.raw[0, :], self.raw[1, :], self.raw[2, :]]
+        if with_t_temp:
+            return [self.raw[0, :], self.raw[1, :], self.raw[2, :], t, temp]
+        else: 
+            return [self.raw[0, :], self.raw[1, :], self.raw[2, :]]
 
 
     def get_queue(self, chn_name, queue_id, col=''):
@@ -791,6 +801,61 @@ class DataSaver:
             df = df.drop(columns='marks') # drop marks column
 
         return df
+
+    def raw_exporter(self, fileName, chn_name, queue_id, harm):
+        '''
+        this function export the raw data
+        '''
+        f, G, B, t, temp = self.get_raw(chn_name, queue_id, harm, with_t_temp=True)
+
+        # print(f) #testprint
+        # print(t) #testprint
+        # print(type(f)) #testprint
+        # print(type(t)) #testprint
+        # print(type(temp)) #testprint
+
+        df_raw = pd.DataFrame.from_dict({
+            'f_Hz': f,
+            'G_mS': G,
+            'B_ms': B,
+        })
+
+        # prepare for output
+        chn_txt = 'S' if chn_name == 'samp' else 'R' if chn_name == 'ref' else 'NA'
+
+        # get ext
+        name, ext = os.path.splitext(fileName)
+
+        # export by ext
+        if ext.lower() == '.xlsx':
+            # sheetname
+            sheet_name = '{}_id_{}'.format(chn_txt, queue_id)
+            with pd.ExcelWriter(fileName) as writer:
+                df_raw.to_excel(writer, sheet_name=sheet_name)
+        elif ext.lower() == '.csv': # TODO add prop
+            # add chn_name to samp and ref df
+            # and append ref to samp
+            with open(fileName, 'w') as file:
+                csvwriter = csv.writer(file)
+                csvwriter.writerow(['id', queue_id])
+                csvwriter.writerow(['t', t])
+                csvwriter.writerow(['temp (C)', temp])
+            
+            df_raw.to_csv(fileName, mode='a')
+
+        elif ext.lower() == '.json': # TODO add prop
+            with open(fileName, 'w') as file:
+                # lines with indent (this will make the file larger)
+                json.dump({
+                    'f_Hz': f.tolist(), 
+                    'G_mS': G.tolist(), 
+                    'B_mS': B.tolist(),
+                    't': t,
+                    'temp': temp,
+                    'id': int(queue_id),
+                    }, 
+                    file
+                )
 
 
     def reshape_mech_df(self, chn_name, mech_key, mark=False, dropnanmarkrow=True, dropnancolumn=True):
@@ -1199,6 +1264,12 @@ class DataSaver:
                 # clear self.samp_ref
                 if self.samp_ref.shape[0] > 0: 
                     self.samp_ref = self._make_df()
+                # clear all self.exp_ref[chn_name]
+                for chn_name in self._chn_keys: 
+                    self.exp_ref[chn_name] = {
+                        'f0': self.nan_harm_list(), # list for each harmonic
+                        'g0': self.nan_harm_list(), # list for each harmonic
+                    }
                        
                 # only copy df of ref to ref_ref 
                 # but the data may not be used
@@ -1229,39 +1300,107 @@ class DataSaver:
         '''
         calculate reference of f (f0) and g (g0)  by the set in self.samp_ref, self.ref_ref and save them in self.exp_ref['f0'] and ['g0']
         '''
-        if self.exp_ref[chn_name + '_ref'][1][0] is None: #start index is None, dynamic reference
-            print('reference element by element! clear self.{}_ref & self.exp_ref.{}'.format(chn_name, chn_name))
-            
-            # clear self.<chn_name>_ref
-            setattr(self, chn_name + '_ref', self._make_df())
-            # clear self.exp_ref.<chn_name>
-            self.exp_ref[chn_name] = {
-                'f0': self.nan_harm_list(), # list for each harmonic
-                'g0': self.nan_harm_list(), # list for each harmonic
-            }
-            self.refflg[chn_name] = True
+        mode = self.exp_ref.get('mode')
 
-        else: # there is reference data saved
-            if getattr(self, chn_name + '_ref').shape[0] > 0: # there is reference data saved
-                print('>0') #testprint
-                # calculate f0 and g0 
-                for col, key in self._ref_keys.items():
-                    print(chn_name, col, key) #testprint
-                    df = self.get_list_column_to_columns_marked_rows(chn_name + '_ref', col, mark=mark, dropnanmarkrow=False, deltaval=False)
-                    print(getattr(self, chn_name + '_ref')[col]) #testprint
-                    # print(df) #testprint
-                    self.exp_ref[chn_name][key] = df.mean().values.tolist()
+        if mode['cryst'] == 'single':
+            if mode['temp'] == 'const': # dual crystal and constant temperature
+                if getattr(self, chn_name + '_ref').shape[0] > 0: # there is reference data saved
+                    print('>0') #testprint
+                    # calculate f0 and g0 
+                    for col, key in self._ref_keys.items():
+                        print(chn_name, col, key) #testprint
+                        df = self.get_list_column_to_columns_marked_rows(chn_name + '_ref', col, mark=mark, dropnanmarkrow=False, deltaval=False)
+                        print(getattr(self, chn_name + '_ref')[col]) #testprint
+                        # print(df) #testprint
+                        self.exp_ref[chn_name][key] = df.mean().values.tolist()
+                    self.refflg[chn_name] = True
+                else: # no data saved 
+                    # clear self.exp_ref.<chn_name>
+                    self.exp_ref[chn_name] = {
+                        'f0': self.nan_harm_list(), # list for each harmonic
+                        'g0': self.nan_harm_list(), # list for each harmonic
+                    }
+                    self.refflg[chn_name] = False
+
+            elif mode['temp'] == 'var': # dual crystal and constant temperature
+                # check if there is temp data in self.ref
+                temp = self.get_temp_by_uint_marked_rows('ref', dropnanmarkrow=False, unit='C') # in C. If marked only, set dropnanmarkrow=True
+                print(temp) #testprint
+                if np.isnan(temp).all(): # no temp data
+                    print('no temperature data in bare!')
+                    return
+
+                # check if all elements in self.exp_ref.ref_ref[1] is list
+                if all([isinstance(l, list) for l in self.exp_ref.ref_ref[1]]): # all list
+                    bare_idx = self.exp_ref.ref_ref[1]
+                elif all([isinstance(l, int) for l in self.exp_ref.ref_ref[1]]): # all int
+                    bare_idx = [self.exp_ref.ref_ref[1]] # put into a list
+                else:
+                    print('no reference index avaible!')
+                    return
+                
+                # get harm data fs in columns
+                fs = self.get_list_column_to_columns_marked_rows('ref', 'fs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute freq in Hz. If marked, set mark=True
+                gs = self.get_list_column_to_columns_marked_rows('ref', 'gs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute gamma in Hz. If marked, set mark=True
+
+                func_list = [] # list of funcs 
+                for ind_list in bare_idx: # iterate each list
+                    func_f_list = [] # func for all freq
+                    func_g_list = [] # func for all gamma
+                    tempind = temp[ind_list]
+                    for harm in range(1, self.settings_init['max_harmonic']+2, 2): # calculate each harm
+                        fharmind = fs['f'+str(harm)][ind_list] # f of harm
+                        gharmind = fs['g'+str(harm)][ind_list] # g of harm
+
+                        # calc freq
+                        if np.isnan(fharmind).all(): # no data in harm and ind_list
+                            func_f_list.append(lambda temp: np.nan) # add a func return nan
+                        else: # there is data
+                            func_f_list.append(interp1d(tempind, fharmind, kind=self.exp_ref.mode.fit, fill_value=np.nan, bounds_error=False))
+                        
+                        # calc gamma
+                        if np.isnan(gharmind).all(): # no data in harm and ind_list
+                            func_g_list.append(lambda temp: np.nan) # add a func return nan
+                        else: # there is data
+                            func_g_list.append(interp1d(tempind, gharmind, kind=self.exp_ref.mode.fit, fill_value=np.nan, bounds_error=False))
+
+                    # make function for each ind_list
+                    func_list.append(self.make_interpfun(func_f_list, func_g_list))
+
+                self.exp_ref.func = func_list # save to class
+
+                # calculate ref for each film (samp) temp and save to self.samp_ref
+
+
                 self.refflg[chn_name] = True
+                    
             else:
-                # no data saved 
-                # clear self.exp_ref.<chn_name>
-                self.exp_ref[chn_name] = {
-                    'f0': self.nan_harm_list(), # list for each harmonic
-                    'g0': self.nan_harm_list(), # list for each harmonic
-                }
-                self.refflg[chn_name] = False
+                pass
+        if mode['cryst'] == 'dual': #TODO
+            if mode['temp'] == 'const': # dual crystal and constant temperature
+                pass
+            elif mode['temp'] == 'var': # dual crystal and constant temperature
+                pass
+            else:
+                pass
+                
 
-        # print(self.exp_ref) #testprint
+    def make_interpfun(self, func_f_list, func_g_list):
+        '''
+        return a fun
+        [f1, f3, ...], [g1, g3, ...] = fun(temp)
+
+        temp: temperature
+        func_f_list: interpolate fun list of freq for all harmonics
+        func_g_list: interpolate fun list of gamma for all harmonics
+        '''
+        def func_fg(temp):
+            return [
+                [func_f(temp) for func_f in func_f_list],
+                [func_g(temp) for func_g in func_g_list],
+            ]
+        return func_fg
+
 
 
     def set_t0(self, t0=None, t0_shifted=None):
@@ -1585,13 +1724,13 @@ class DataSaver:
 
     ######## Following functions are for QCM-D 
 
-    def convert_D_to_gamma(self, D, harm):
+    def convert_D_to_gamma(self, D, f1, harm):
         '''
         this function convert given D (from QCM-D) to gamma used in this program
         D: dissipation from QCM-D
         harm: str. 
         '''
-        return 0.5 * int(harm) * 5 * D
+        return 0.5 * int(harm) * f1 * D
 
 
     def import_qcm_with_other_format(self, format, path, settings_init, settings=None, f1=None, t0=None, init_file=True):
@@ -1765,7 +1904,7 @@ class DataSaver:
                     # dissipation
                     if self.mode == 'qcmd': # 
                     # convert delD to delg
-                        df[delgs_str.format(harm)] = self.convert_D_to_gamma(df[delgs_str.format(harm)], harm)
+                        df[delgs_str.format(harm)] = self.convert_D_to_gamma(df[delgs_str.format(harm)], f1, harm)
                     # convert delg to g
                     df[delgs_str.format(harm)] = df[delgs_str.format(harm)] + g1 * harm
 

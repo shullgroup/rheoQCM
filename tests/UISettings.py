@@ -127,10 +127,10 @@ settings_init = {
         'pushButton_settings_data_tonext',
         'pushButton_settings_data_toend',
         
-        'frame_settings_data_tempref',
-        'comboBox_settings_data_ref_crystmode',
-        'comboBox_settings_data_ref_tempmode',
-        'comboBox_settings_data_ref_fitttype',
+        # 'frame_settings_data_tempref',
+        # 'comboBox_settings_data_ref_crystmode',
+        # 'comboBox_settings_data_ref_tempmode',
+        # 'comboBox_settings_data_ref_fitttype',
 
         # 'toolButton_settings_mechanics_solve',
         # 'groupBox_nhplot',
@@ -177,7 +177,13 @@ settings_init = {
         # 'json file (*.json)',
         # 'hdf5 file (*.h5)',
         # 'Matlab file (*.mat)',
+    ]),
 
+    # export raw data file type
+    'export_rawfiletype': ';;'.join([
+        'csv file (*.csv)',
+        'excel file (*.xlsx)',
+        'json file (*.json)',
     ]),
 
     # import QCM-D data file type

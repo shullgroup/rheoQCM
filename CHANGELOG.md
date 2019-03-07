@@ -4,8 +4,9 @@
 
 ### Added
 - Add manual fitting report to UI
+- Add export raw to right click menu in data plots.
 
-## Changed
+### Changed
 - Change reference claculating strategy
 
 ## [0.16.0] - 2019-02-27

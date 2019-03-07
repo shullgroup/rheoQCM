@@ -56,11 +56,11 @@ def split_path(path):
     pass
 
 
-def index_from_str(idx_str, chn_queue_list, join_segs=True):
+def index_from_str(idx_str, chn_idx, join_segs=True):
     '''
     convert str to indices
     data_len: int. length of data
-    chn_queue_list: queue_list of chn
+    chn_idx: index of chn
     join_segs: True, use the uint of all segments seperarted by []
                False, return indics in a list of lists [[seg1], [seg2], ...] (this is for multiple segments fitting for temperature expreiment)
     idx_str examples:
@@ -72,7 +72,7 @@ def index_from_str(idx_str, chn_queue_list, join_segs=True):
     '[1:5] [7:10]' # multiple segments, use [ ]
     '''
     idx = [] # for found indices
-    if chn_queue_list == []:
+    if chn_idx == []:
         return idx
 
     if isinstance(idx_str, list):
@@ -82,7 +82,8 @@ def index_from_str(idx_str, chn_queue_list, join_segs=True):
         return [idx_str]
 
     # create a dummy data with index
-    data = list(range(max(chn_queue_list)))
+    data = list(range(max(chn_idx)))
+    print(chn_idx) #testprint
     print(data) #testprint
     try:
         # check if string contains [ ]
@@ -95,6 +96,7 @@ def index_from_str(idx_str, chn_queue_list, join_segs=True):
                 print('data' +'[' + seg + ']') #testprint
                 print(eval('data' +'[' + seg + ']')) #testprint
                 new_idx = eval('data' +'[' + seg + ']') 
+                print('type(new_idx)', type(new_idx))
                 if join_segs: # True: combine
                     if isinstance(new_idx, int):
                         idx.append(new_idx)
@@ -116,12 +118,12 @@ def index_from_str(idx_str, chn_queue_list, join_segs=True):
             elif isinstance(new_idx, list):
                 idx.extend(new_idx)
         
-        # check the index with chn_queue_list
+        # check the index with chn_idx
         if join_segs: # combine all
-            return sorted(list(set(idx) & set(chn_queue_list)))
+            return sorted(list(set(idx) & set(chn_idx)))
         else: # keep separate
             # return thel list
-            return [sorted(list(set(ind) & set(chn_queue_list))) for ind in idx]
+            return [sorted(list(set(ind) & set(chn_idx))) for ind in idx]
     except Exception as err:
         print(err)
         return idx
