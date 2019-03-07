@@ -137,6 +137,17 @@ class DataSaver:
             #   indeces:
             #   if len == 1 (e.g.: [0,]), is a single point 
             #   if [] or [None], reference point by point
+
+            # temp ref
+            # mode
+            'mode': {
+                'cryst': 'single', 
+                'temp': 'const', 
+                'fit': 'linear'
+            },
+            'func': { # this key only saved in memory, will not be save to file!
+                # example: '1': fun1 (return f0s, g0s)
+            }
         } # experiment reference setup in dict
 
 
@@ -287,7 +298,13 @@ class DataSaver:
             
             self.settings = json.loads(fh['settings'][()])
             self.settings_init = json.loads(fh['settings_init'][()])
+            
+            dump_exp_ref = self._make_exp_ref()
             self.exp_ref = json.loads(fh['exp_ref'][()])
+            for key, val in dump_exp_ref.items():
+                if key not in self.exp_ref:
+                    self.exp_ref[key] = val
+            
             self.ver = fh.attrs['ver']
             print(self.ver) #testprint
             print(self.exp_ref) #testprint
@@ -1146,24 +1163,66 @@ class DataSaver:
         set self.exp_ref.<chn_name>_ref value
         source: str in ['samp', 'ref', 'ext', 'none']
         '''
-        if getattr(self, chn_name).shape[0] > 0: # data is not empty
+        if getattr(self, chn_name).shape[0] == 0: # data is empty
+            print('no data')
+            return
+
+        mode = self.exp_ref.get('mode')
+        if mode['cryst'] == 'single':
+
+            # set ref source
             self.exp_ref[chn_name + '_ref'][0] = source
-            if len(idx_list) > 0: # 
-                self.exp_ref[chn_name + '_ref'][1] = idx_list
+
+            # set index in self.exp_ref.<chn_name>_ref[1]
+            if len(idx_list) > 0: 
+                self.exp_ref[chn_name + '_ref'][1] = idx_list 
+                
+            # copy data to <chn_name>_ref
+            if mode['temp'] == 'const': # single crystal and constant temperature
+                # both chn can have ref
+                # use average of reference
 
                 # copy df to ref
-                if source in self._chn_keys and self.exp_ref[chn_name + '_ref'][1][0] is not None: # use data from current test
+                if source in self._chn_keys: # use data from current test
                     df = getattr(self, source)
                     self.copy_to_ref(chn_name, df.loc[idx_list, :]) # copy to reference data set
                 elif source == 'ext': # data from external file
                     if df is not None:
-                        self.copy_to_ref(chn_name, df) # copy to reference data set
+                        self.copy_to_ref(chn_name, df.loc[idx_list, :]) # copy to reference data set
                     else:
                         print('no dataframe is provided!')
-                else: # source in self._chn_keys and self.exp_ref[chn_name + '_ref'][1][0] is None:
-                    # point by point referencing, don't need copy data
-                    pass 
-            self.calc_fg_ref(chn_name, mark=True)
+
+            elif mode['temp'] == 'var': # single crystal and variable temperature
+                # samp as film and ref as bare
+                # use fitting of reference  
+
+                # clear self.samp_ref
+                if self.samp_ref.shape[0] > 0: 
+                    self.samp_ref = self._make_df()
+                       
+                # only copy df of ref to ref_ref 
+                # but the data may not be used
+                if source == 'ref': # use data from current test
+                    df = getattr(self, source)
+                    self.copy_to_ref('ref', df.loc[idx_list, :]) # copy to reference data set
+                elif source == 'ext': # data from external file
+                    if df is not None:
+                        self.copy_to_ref('ref', df.loc[idx_list, :]) # copy to reference data set
+                    else:
+                        print('no dataframe is provided!')
+                else:
+                    pass
+
+        if mode['cryst'] == 'dual': #TODO
+            if mode['temp'] == 'const': # dual crystal and constant temperature
+                pass
+            elif mode['temp'] == 'var': # dual crystal and constant temperature
+                pass
+            else:
+                pass
+ 
+        # calculate reference
+        self.calc_fg_ref(chn_name, mark=True)
         
 
     def calc_fg_ref(self, chn_name, mark=True):
@@ -1194,7 +1253,7 @@ class DataSaver:
                     self.exp_ref[chn_name][key] = df.mean().values.tolist()
                 self.refflg[chn_name] = True
             else:
-                # no data to saved 
+                # no data saved 
                 # clear self.exp_ref.<chn_name>
                 self.exp_ref[chn_name] = {
                     'f0': self.nan_harm_list(), # list for each harmonic
