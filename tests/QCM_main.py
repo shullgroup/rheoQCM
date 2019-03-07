@@ -571,10 +571,6 @@ class QCMApp(QMainWindow):
             settings_init['vna_channel_opts'],
             100,
             'R Channel',
-<<<<<<< HEAD
-
-=======
->>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
             self.ui.treeWidget_settings_settings_hardware
         )
 
@@ -719,12 +715,8 @@ class QCMApp(QMainWindow):
         )
 
         # move checkBox_linkx to treeWidget_settings_settings_plots
-<<<<<<< HEAD
-        self.move_to_col2(
-=======
 
         self.move_to_col(
->>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
             self.ui.checkBox_linkx,
             self.ui.treeWidget_settings_settings_plots,
             'Link Time'
@@ -741,11 +733,7 @@ class QCMApp(QMainWindow):
         # move center pushButton_settings_harm_cntr to treeWidget_settings_settings_harmtree
         # comment it for now, this button is not using
         # move it to other place will disable the hide function ran above
-<<<<<<< HEAD
-        # self.move_to_col2(
-=======
         # self.move_to_col(
->>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
         #     self.ui.pushButton_settings_harm_cntr,
         #     self.ui.treeWidget_settings_settings_harmtree,
         #     'Scan',
@@ -753,11 +741,7 @@ class QCMApp(QMainWindow):
         # )
 
         # move center checkBox_settings_temp_sensor to treeWidget_settings_settings_hardware
-<<<<<<< HEAD
-        self.move_to_col2(
-=======
         self.move_to_col(
->>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
             self.ui.checkBox_settings_temp_sensor,
             self.ui.treeWidget_settings_settings_hardware,
             'Temperature'
@@ -941,8 +925,6 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_data_refrefsource.activated.connect(self.save_data_saver_refref)
         self.ui.lineEdit_settings_data_refrefidx.editingFinished.connect(self.save_data_saver_refref)
 
-<<<<<<< HEAD
-=======
         # move frame_settings_data_tempref
         self.move_to_col(
             self.ui.frame_settings_data_tempref,
@@ -967,7 +949,6 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_data_ref_tempmode.currentIndexChanged.connect(self.on_ref_mode_changed)
 
 
->>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
 
        # set treeWidget_settings_data_refs expanded
         self.ui.treeWidget_settings_data_refs.expandToDepth(0)
@@ -1406,21 +1387,13 @@ class QCMApp(QMainWindow):
             self.ui.stackedWidget_data.setCurrentIndex(1)
 
 
-<<<<<<< HEAD
-    def move_to_col2(self, obj, parent, row_text, width=[]):
-=======
     def move_to_col(self, obj, parent, row_text, width=[], col=1):
->>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
         if width: # set width of obj
             obj.setMaximumWidth(width)
         # find item with row_text
         item = self.find_text_item(parent, row_text)
         # insert the combobox in to the 2nd column of row_text
-<<<<<<< HEAD
-        parent.setItemWidget(item, 1, obj)
-=======
         parent.setItemWidget(item, col, obj)
->>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
 
     def find_text_item(self, parent, text):
         '''
@@ -2126,15 +2099,10 @@ class QCMApp(QMainWindow):
         print(args) #testprint
         for name_list in args:
             for name in settings_init[name_list]:
-<<<<<<< HEAD
-                if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list':
-                    getattr(self.ui, name).setEnabled(True)
-=======
                 getattr(self.ui, name).setEnabled(True)
                 # the following check if is hidden by the version may not be necessary in some case. e.g. hide ref_time widgets need them to be disabled
                 # if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list':
                 #     getattr(self.ui, name).setEnabled(True)
->>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
 
     def disable_widgets(self, *args):
         '''
@@ -2144,15 +2112,10 @@ class QCMApp(QMainWindow):
         print(args) #testprint
         for name_list in args:
             for name in settings_init[name_list]:
-<<<<<<< HEAD
-                if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list':
-                    getattr(self.ui, name).setEnabled(False)
-=======
                 getattr(self.ui, name).setEnabled(False)
                 # the following check if is hidden by the version may not be necessary in some case. e.g. hide ref_time widgets need them to be disabled
                 # if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list':
                 #     getattr(self.ui, name).setEnabled(False)
->>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
 
     def set_filename(self, fileName=''):
         '''
@@ -2672,10 +2635,6 @@ class QCMApp(QMainWindow):
 
         #TODO add results to textBrowser_spectra_fit_result
 
-<<<<<<< HEAD
-=======
-
->>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
         if self.get_spectraTab_mode() == 'refit': # refit mode
             # save scan data to data_saver
             self.data_saver.update_refit_data(
@@ -4730,11 +4689,7 @@ class QCMApp(QMainWindow):
 
         # insert to the row of row_text if row_text and parent_name are not empty
         if (row_text and parent):
-<<<<<<< HEAD
-            self.move_to_col2(obj_box, parent, row_text, box_width)
-=======
             self.move_to_col(obj_box, parent, row_text, box_width)
->>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
 
 
     def update_guichecks(self, checkBox, name_in_settings):
