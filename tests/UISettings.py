@@ -126,6 +126,8 @@ settings_init = {
         'pushButton_settings_data_toprevious',
         'pushButton_settings_data_tonext',
         'pushButton_settings_data_toend',
+        
+        'frame_settings_data_tempref',
 
         # 'toolButton_settings_mechanics_solve',
         # 'groupBox_nhplot',
