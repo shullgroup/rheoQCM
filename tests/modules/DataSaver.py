@@ -837,9 +837,9 @@ class DataSaver:
             # and append ref to samp
             with open(fileName, 'w') as file:
                 csvwriter = csv.writer(file)
-                csvwriter.writerow(['id', queue_id])
-                csvwriter.writerow(['t', t])
-                csvwriter.writerow(['temp (C)', temp])
+                # csvwriter.writerow(['id', queue_id])
+                # csvwriter.writerow(['t', t])
+                # csvwriter.writerow(['temp (C)', temp])
             
             df_raw.to_csv(fileName, mode='a')
 
