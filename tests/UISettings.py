@@ -447,11 +447,11 @@ settings_init = {
     },
 
     # font size for mpl_sp figures
-    'mpl_sp_fontsize': 8,
+    'mpl_sp_fontsize': 5,
     # font size for normal figures
     'mpl_fontsize': 8,
     # legend font size for mpl_sp figures
-    'mpl_sp_legfontsize': 8,
+    'mpl_sp_legfontsize': 5,
     # legend font size for normal figures
     'mpl_legfontsize': 8,
     # cap size for prop figures

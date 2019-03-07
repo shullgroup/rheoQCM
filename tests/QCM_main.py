@@ -40,9 +40,9 @@ if os.path.exists(fileName):
                 settings_user[key] = val
         # rename settings_user to settings_defualt
         settings_default = settings_user
-    print('use user settings')
+    print('use user settings_default')
 else:
-    print('use default settings')
+    print('use default settings_default')
 del fileName
 if 'f' in locals():
     del f
