@@ -2636,7 +2636,6 @@ class QCMApp(QMainWindow):
 
         #TODO add results to textBrowser_spectra_fit_result
 
-
         if self.get_spectraTab_mode() == 'refit': # refit mode
             # save scan data to data_saver
             self.data_saver.update_refit_data(
