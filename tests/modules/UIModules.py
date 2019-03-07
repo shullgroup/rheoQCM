@@ -56,17 +56,20 @@ def split_path(path):
     pass
 
 
-def index_from_str(idx_str, chn_queue_list):
+def index_from_str(idx_str, chn_queue_list, join_segs=True):
     '''
     convert str to indices
     data_len: int. length of data
+    chn_queue_list: queue_list of chn
+    join_segs: True, use the uint of all segments seperarted by []
+               False, return indics in a list of lists [[seg1], [seg2], ...] (this is for multiple segments fitting for temperature expreiment)
     idx_str examples:
     '::' 
     '0'
     '1, 2, 4, 9' # this is not suggested
     '1:5' 
     '1:5:2' 
-    '[1:5] [7, 8, 9, 10]' # multiple segments, use [ ]
+    '[1:5] [7:10]' # multiple segments, use [ ]
     '''
     idx = [] # for found indices
     if chn_queue_list == []:
@@ -92,10 +95,17 @@ def index_from_str(idx_str, chn_queue_list):
                 print('data' +'[' + seg + ']') #testprint
                 print(eval('data' +'[' + seg + ']')) #testprint
                 new_idx = eval('data' +'[' + seg + ']') 
-                if isinstance(new_idx, int):
-                    idx.append(new_idx)
-                elif isinstance(new_idx, list):
-                    idx.extend(new_idx)
+                if join_segs: # True: combine
+                    if isinstance(new_idx, int):
+                        idx.append(new_idx)
+                    elif isinstance(new_idx, list):
+                        idx.extend(new_idx)
+                else: # Fasle: keep size
+                    if isinstance(new_idx, int):
+                        idx.append([new_idx])
+                    elif isinstance(new_idx, list):
+                        idx.append(new_idx)
+                
         else:
             print('single') #testprint
             print('data' +'[' + idx_str + ']') #testprint
@@ -106,9 +116,12 @@ def index_from_str(idx_str, chn_queue_list):
             elif isinstance(new_idx, list):
                 idx.extend(new_idx)
         
-
-        return sorted(list(set(idx) & set(chn_queue_list)))
-
+        # check the index with chn_queue_list
+        if join_segs: # combine all
+            return sorted(list(set(idx) & set(chn_queue_list)))
+        else: # keep separate
+            # return thel list
+            return [sorted(list(set(ind) & set(chn_queue_list))) for ind in idx]
     except Exception as err:
         print(err)
         return idx
@@ -126,7 +139,8 @@ def sel_ind_dict(harms, sel_idx_dict, mode, marks):
     '''
     data_idx_dict = {}
     for harm in harms:
-        data_idx_dict[harm] = list(marks[marks['mark' + harm].notna()].index) # all the indices with data for each harm
+        if 'mark'+ harm in marks.columns:
+            data_idx_dict[harm] = list(marks[marks['mark' + harm].notna()].index) # all the indices with data for each harm
 
     if mode == 'all':
         sel_idx_dict = data_idx_dict  
@@ -243,3 +257,13 @@ def converter_centerspan_to_startstop(fc, fs):
     f2 = fc + fs / 2
     return [f1, f2]
 
+
+
+if __name__ == '__main__':
+
+    idx_str = '[1:3] [5] [7:11]'
+    chn_queue_list = list(range(13))
+    print('---')
+    print(index_from_str(idx_str, chn_queue_list, join_segs=True))
+    print('---')
+    print(index_from_str(idx_str, chn_queue_list, join_segs=False))

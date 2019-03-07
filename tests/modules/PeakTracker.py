@@ -854,8 +854,8 @@ class PeakTracker:
         print('prek_guess', self.peak_guess) #testprint
 
         if self.found_n == 0: # no peak found by find_peak_py
-            self.found_n = 1 # force it to at list 1 for fitting
-            self.update_output(found_n=1) # force it to at list 1 for fitting
+            self.found_n = 1 # force it to at least 1 for fitting
+            self.update_output(found_n=1) # force it to at least 1 for fitting
 
         for i in np.arange(self.found_n):
             if not self.peak_guess: 
@@ -884,7 +884,8 @@ class PeakTracker:
             params.add(
                 'p'+str(i)+'_wid',                 # width (hwhm)
                 value=wid,                         # init: half range
-                min= settings_init['peak_min_width_Hz'] / 2,         # lb in Hz
+                # min= settings_init['peak_min_width_Hz'] / 2,         # lb in Hz (this limit sometime makes the peaks to thin)
+                min= wid / 10,         # lb in Hz (limit the width >= 1/10 of the guess value!!)
                 max=(np.amax(f) - np.amin(f)) * 2, # ub in Hz: assume peak is in the range of f
             )
             params.add(
@@ -1236,7 +1237,42 @@ class PeakTracker:
                 'comp_g': self.eval_mod('gmod', chn_name=chn_name, harm=harm, components=True), # list of fitted G value of each peak
                 'comp_b': self.eval_mod('bmod', chn_name=chn_name, harm=harm, components=True), # list of fitted B value of each peak
             }
-            
+
+
+    def fit_result_report(self, fit_result=None):
+        # if not fit_result:
+        #     # chn_name = self.active_chn
+        #     # harm = self.active_harm
+        #     fit_result = self.get_output(key='result')
+        # return fit_report(fit_result, show_correl=False, )
+
+        v_fit = self.get_fit_values()
+        print(v_fit) #testprint
+        keys = {
+            # 'Sucess': 'sucess',
+            # u'\u03A7' + 'sq': 'chisqr',
+            'f (Hz)': 'cen_rec',
+            u'\u0393' + ' (Hz)': 'wid_rec',
+            'G_amp (mS)': 'amp_rec',
+            u'\u03A6' + ' (deg.)': 'phi_rec',
+            'G_shift (mS)': 'g_c',
+            'B_shift (mS)': 'b_c',
+        }
+
+        buff = []
+
+        buff.append('Sucess:\t{}'.format(v_fit['sucess']))
+        buff.append(u'\u03A7' + 'sq:\t{:.7g}'.format(v_fit['chisqr']))
+        
+        for txt, key in keys.items():
+            txt = '{}:\t'.format(txt)
+            if v_fit[key].get('value') is not None:
+                txt = '{}{:.7g}'.format(txt, v_fit[key].get('value')*180/np.pi if key == 'phi_rec' else v_fit[key].get('value'))
+            if v_fit[key].get('stderr') is not None:
+                txt = '{} +/- {:.7g}'.format(txt, v_fit[key].get('stderr')*180/np.pi if key == 'phi_rec' else v_fit[key].get('stderr'))
+            buff.append(txt)
+        return '\n'.join(buff)
+
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt

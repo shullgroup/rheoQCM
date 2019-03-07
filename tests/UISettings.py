@@ -309,6 +309,29 @@ settings_init = {
         # ('ext', 'ext'), # always read from the reference channel
     ]),
 
+    # the value here is the same as the value of 'kind'
+    # of scipy.interpolate.interp1d()
+    'ref_interp_opts': OrderedDict({
+        'linear': 'linear', 
+        'nearest': 'nearest', 
+        'zero': 'zero', 
+        'slinear': 'slinear', 
+        'quadratic': 'quadratic', 
+        'cubic': 'cubic',
+    }),
+
+    'ref_crystal_opts': OrderedDict({
+        'single': 'Single',
+        'dual': 'Dual',
+        # '': '',
+    }),
+
+    'ref_temp_opts': OrderedDict({
+        'const': 'Constant T',
+        'var': 'Variable T',
+        # '': '',
+    }),
+
     # crystal cuts options
     'crystal_cut_opts':{
         'AT': 'AT',
@@ -489,6 +512,7 @@ settings_init = {
 
     ######### params for DataSaver module #########
     'unsaved_path': r'.\unsaved_data', 
+    'unsaved_filename': r'%Y%m%d%H%M%S',
 
     ######### DataSaver module: import data format #####
     # a number is going to replace '{}'
@@ -652,6 +676,9 @@ settings_default = {
     'lineEdit_settings_data_samprefidx': [0],
     'comboBox_settings_data_refrefsource': 'ref',
     'lineEdit_settings_data_refrefidx': [0],
+    'comboBox_settings_data_ref_crystmode': 'single',
+    'comboBox_settings_data_ref_tempmode': 'const',
+    'comboBox_settings_data_ref_fitttype': 'linear',
 
     ### settings_mech
     'checkBox_settings_mech_liveupdate': True,

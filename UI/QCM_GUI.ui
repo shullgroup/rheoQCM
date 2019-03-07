@@ -195,7 +195,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>2</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -205,7 +205,7 @@ background-color: red;
               </sizepolicy>
              </property>
              <attribute name="title">
-              <string>Control</string>
+              <string>&amp;Control</string>
              </attribute>
              <layout class="QVBoxLayout" name="verticalLayout_11">
               <property name="spacing">
@@ -1093,7 +1093,7 @@ background-color: red;
               </sizepolicy>
              </property>
              <attribute name="title">
-              <string>Settings</string>
+              <string>&amp;Settings</string>
              </attribute>
              <layout class="QVBoxLayout" name="verticalLayout_14">
               <property name="spacing">
@@ -1157,12 +1157,12 @@ background-color: red;
                    </property>
                    <widget class="QWidget" name="tab_settings_settings_harmchnsamp">
                     <attribute name="title">
-                     <string>S Channel</string>
+                     <string>&amp;S Channel</string>
                     </attribute>
                    </widget>
                    <widget class="QWidget" name="tab_settings_settings_harmchnref">
                     <attribute name="title">
-                     <string>R Channel</string>
+                     <string>&amp;R Channel</string>
                     </attribute>
                    </widget>
                    <widget class="QWidget" name="tab_settings_settings_harmchnrefit">
@@ -2027,7 +2027,7 @@ border: none;
             </widget>
             <widget class="QWidget" name="tab_settings_data">
              <attribute name="title">
-              <string>Data</string>
+              <string>&amp;Data</string>
              </attribute>
              <layout class="QVBoxLayout" name="verticalLayout_52">
               <property name="spacing">
@@ -2136,10 +2136,10 @@ border: none;
                     <bool>true</bool>
                    </attribute>
                    <attribute name="headerDefaultSectionSize">
-                    <number>80</number>
+                    <number>70</number>
                    </attribute>
                    <attribute name="headerMinimumSectionSize">
-                    <number>80</number>
+                    <number>70</number>
                    </attribute>
                    <column>
                     <property name="text">
@@ -2185,6 +2185,11 @@ border: none;
                     <property name="text">
                      <string/>
                     </property>
+                    <item>
+                     <property name="text">
+                      <string>Mode</string>
+                     </property>
+                    </item>
                     <item>
                      <property name="text">
                       <string>S chn.</string>
@@ -2242,11 +2247,11 @@ border: none;
                    <item>
                     <widget class="QTabWidget" name="tabWidget_settings_data_markindex">
                      <property name="currentIndex">
-                      <number>0</number>
+                      <number>1</number>
                      </property>
                      <widget class="QWidget" name="tab_sampmarks">
                       <attribute name="title">
-                       <string>S Marks</string>
+                       <string>&amp;S Marks</string>
                       </attribute>
                       <layout class="QVBoxLayout" name="verticalLayout_48">
                        <property name="spacing">
@@ -2279,7 +2284,7 @@ p, li { white-space: pre-wrap; }
                      </widget>
                      <widget class="QWidget" name="tab_refmarks">
                       <attribute name="title">
-                       <string>R Marks</string>
+                       <string>&amp;R Marks</string>
                       </attribute>
                       <layout class="QVBoxLayout" name="verticalLayout_49">
                        <property name="spacing">
@@ -2452,13 +2457,20 @@ p, li { white-space: pre-wrap; }
                  </property>
                  <item>
                   <widget class="QComboBox" name="comboBox_settings_data_samprefsource">
+                   <property name="toolTip">
+                    <string>c</string>
+                   </property>
                    <property name="sizeAdjustPolicy">
                     <enum>QComboBox::AdjustToContents</enum>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLineEdit" name="lineEdit_settings_data_samprefidx"/>
+                  <widget class="QLineEdit" name="lineEdit_settings_data_samprefidx">
+                   <property name="toolTip">
+                    <string>Indices of reference</string>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -2489,13 +2501,20 @@ p, li { white-space: pre-wrap; }
                  </property>
                  <item>
                   <widget class="QComboBox" name="comboBox_settings_data_refrefsource">
+                   <property name="toolTip">
+                    <string>Source of reference</string>
+                   </property>
                    <property name="sizeAdjustPolicy">
                     <enum>QComboBox::AdjustToContents</enum>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLineEdit" name="lineEdit_settings_data_refrefidx"/>
+                  <widget class="QLineEdit" name="lineEdit_settings_data_refrefidx">
+                   <property name="toolTip">
+                    <string>Indices of reference</string>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -2535,16 +2554,66 @@ p, li { white-space: pre-wrap; }
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QLabel" name="label_13">
+                  <widget class="QLabel" name="label_2">
                    <property name="text">
-                    <string>source - [indices]</string>
+                    <string>Source - [indices]</string>
                    </property>
                   </widget>
                  </item>
                  <item>
                   <widget class="QPushButton" name="pushButton_settings_data_recalcref">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="text">
                     <string>Recalc.</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame_settings_data_tempref">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_17">
+                 <property name="spacing">
+                  <number>2</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QComboBox" name="comboBox_settings_data_ref_crystmode">
+                   <property name="sizeAdjustPolicy">
+                    <enum>QComboBox::AdjustToContents</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="comboBox_settings_data_ref_tempmode"/>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="comboBox_settings_data_ref_fitttype">
+                   <property name="sizeAdjustPolicy">
+                    <enum>QComboBox::AdjustToContents</enum>
                    </property>
                   </widget>
                  </item>
@@ -2568,7 +2637,7 @@ p, li { white-space: pre-wrap; }
             </widget>
             <widget class="QWidget" name="tab_settings_mechanics">
              <attribute name="title">
-              <string>Mechanics</string>
+              <string>&amp;Mechanics</string>
              </attribute>
              <layout class="QVBoxLayout" name="verticalLayout_31">
               <property name="leftMargin">
@@ -2619,16 +2688,16 @@ p, li { white-space: pre-wrap; }
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <widget class="QWidget" name="tab_settings_mechanis_sampchn">
                     <attribute name="title">
-                     <string>S Channel</string>
+                     <string>&amp;S Channel</string>
                     </attribute>
                    </widget>
                    <widget class="QWidget" name="tab_settings_mechanis_refchn">
                     <attribute name="title">
-                     <string>R Channel</string>
+                     <string>&amp;R Channel</string>
                     </attribute>
                    </widget>
                   </widget>
@@ -4300,7 +4369,7 @@ border: 1px solid blue;
            </size>
           </property>
           <property name="currentIndex">
-           <number>2</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="page_spectra_show">
            <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -4745,7 +4814,7 @@ border: 1px solid blue;
                 </item>
                </layout>
               </widget>
-              <widget class="QTextBrowser" name="textBrowser_spectra_fit_result">
+              <widget class="QPlainTextEdit" name="plainTextEdit_spectra_fit_result">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -4761,15 +4830,14 @@ border: 1px solid blue;
                <property name="maximumSize">
                 <size>
                  <width>16777215</width>
-                 <height>50</height>
+                 <height>100</height>
                 </size>
                </property>
-               <property name="html">
-                <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="overwriteMode">
+                <bool>true</bool>
                </property>
               </widget>
               <widget class="QWidget" name="layoutWidget">
@@ -4949,7 +5017,7 @@ p, li { white-space: pre-wrap; }
                    <bool>true</bool>
                   </property>
                   <attribute name="horizontalHeaderVisible">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </attribute>
                   <attribute name="horizontalHeaderCascadingSectionResizes">
                    <bool>true</bool>
@@ -6335,8 +6403,8 @@ border: 1px solid blue;
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>105</x>
-     <y>729</y>
+     <x>121</x>
+     <y>775</y>
     </hint>
     <hint type="destinationlabel">
      <x>87</x>
@@ -6352,7 +6420,7 @@ border: 1px solid blue;
    <hints>
     <hint type="sourcelabel">
      <x>299</x>
-     <y>615</y>
+     <y>614</y>
     </hint>
     <hint type="destinationlabel">
      <x>272</x>
@@ -6416,11 +6484,11 @@ border: 1px solid blue;
    <hints>
     <hint type="sourcelabel">
      <x>110</x>
-     <y>425</y>
+     <y>423</y>
     </hint>
     <hint type="destinationlabel">
-     <x>128</x>
-     <y>570</y>
+     <x>145</x>
+     <y>569</y>
     </hint>
    </hints>
   </connection>
@@ -6431,12 +6499,12 @@ border: 1px solid blue;
    <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>200</x>
-     <y>797</y>
+     <x>215</x>
+     <y>831</y>
     </hint>
     <hint type="destinationlabel">
-     <x>183</x>
-     <y>558</y>
+     <x>201</x>
+     <y>485</y>
     </hint>
    </hints>
   </connection>
@@ -6447,12 +6515,12 @@ border: 1px solid blue;
    <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>183</x>
-     <y>558</y>
+     <x>201</x>
+     <y>485</y>
     </hint>
     <hint type="destinationlabel">
-     <x>200</x>
-     <y>797</y>
+     <x>215</x>
+     <y>831</y>
     </hint>
    </hints>
   </connection>
@@ -6464,11 +6532,11 @@ border: 1px solid blue;
    <hints>
     <hint type="sourcelabel">
      <x>268</x>
-     <y>416</y>
+     <y>343</y>
     </hint>
     <hint type="destinationlabel">
-     <x>173</x>
-     <y>583</y>
+     <x>188</x>
+     <y>633</y>
     </hint>
    </hints>
   </connection>
