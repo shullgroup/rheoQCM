@@ -18,7 +18,7 @@ import scipy.signal
 # import types
 from PyQt5.QtCore import pyqtSlot, Qt, QEvent, QTimer, QEventLoop, QCoreApplication, QSize
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QRadioButton, QMenu, QAction, QMessageBox, QTableWidgetItem, QSizePolicy, QFrame
+    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QRadioButton, QMenu, QAction, QMessageBox, QTableWidgetItem, QSizePolicy, QFrame, QLabel
 )
 from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, QDoubleValidator, QRegExpValidator
 
@@ -40,9 +40,9 @@ if os.path.exists(fileName):
                 settings_user[key] = val
         # rename settings_user to settings_defualt
         settings_default = settings_user
-    print('use user settings')
+    print('use user settings_default')
 else:
-    print('use default settings')
+    print('use default settings_default')
 del fileName
 if 'f' in locals():
     del f
@@ -456,7 +456,7 @@ class QCMApp(QMainWindow):
         ### add combobox into treewidget
         self.ui.tabWidget_settings_settings_harm.currentChanged.connect(self.update_harmonic_tab)
         # move lineEdit_scan_harmstart
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.lineEdit_scan_harmstart,
             self.ui.treeWidget_settings_settings_harmtree,
             'Start',
@@ -464,7 +464,7 @@ class QCMApp(QMainWindow):
         )
 
         # move lineEdit_scan_harmend
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.lineEdit_scan_harmend,
             self.ui.treeWidget_settings_settings_harmtree,
             'End',
@@ -472,7 +472,7 @@ class QCMApp(QMainWindow):
         )
 
         # move lineEdit_scan_harmsteps
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.lineEdit_scan_harmsteps,
             self.ui.treeWidget_settings_settings_harmtree,
             'Steps',
@@ -480,7 +480,7 @@ class QCMApp(QMainWindow):
         )
 
         # move frame_peaks_num
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.frame_peaks_num,
             self.ui.treeWidget_settings_settings_harmtree,
             'Num.',
@@ -488,7 +488,7 @@ class QCMApp(QMainWindow):
         )
 
         # move frame_peaks_policy
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.frame_peaks_policy,
             self.ui.treeWidget_settings_settings_harmtree,
             'Policy',
@@ -496,7 +496,7 @@ class QCMApp(QMainWindow):
         )
 
         # move checkBox_settings_settings_harmzerophase
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.checkBox_settings_settings_harmzerophase,
             self.ui.treeWidget_settings_settings_harmtree,
             'Phase',
@@ -504,7 +504,7 @@ class QCMApp(QMainWindow):
         )
 
         # move lineEdit_peaks_threshold
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.lineEdit_peaks_threshold,
             self.ui.treeWidget_settings_settings_harmtree,
             'Threshold',
@@ -512,7 +512,7 @@ class QCMApp(QMainWindow):
         )
 
         # move lineEdit_peaks_prominence
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.lineEdit_peaks_prominence,
             self.ui.treeWidget_settings_settings_harmtree,
             'Prominence',
@@ -520,7 +520,7 @@ class QCMApp(QMainWindow):
         )
 
         # move checkBox_harmfit
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.checkBox_harmfit,
             self.ui.treeWidget_settings_settings_harmtree,
             'Fit',
@@ -528,7 +528,7 @@ class QCMApp(QMainWindow):
         )
 
         # move spinBox_harmfitfactor
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.spinBox_harmfitfactor,
             self.ui.treeWidget_settings_settings_harmtree,
             'Factor',
@@ -571,7 +571,10 @@ class QCMApp(QMainWindow):
             settings_init['vna_channel_opts'],
             100,
             'R Channel',
+<<<<<<< HEAD
 
+=======
+>>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
             self.ui.treeWidget_settings_settings_hardware
         )
 
@@ -716,7 +719,12 @@ class QCMApp(QMainWindow):
         )
 
         # move checkBox_linkx to treeWidget_settings_settings_plots
+<<<<<<< HEAD
         self.move_to_col2(
+=======
+
+        self.move_to_col(
+>>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
             self.ui.checkBox_linkx,
             self.ui.treeWidget_settings_settings_plots,
             'Link Time'
@@ -733,7 +741,11 @@ class QCMApp(QMainWindow):
         # move center pushButton_settings_harm_cntr to treeWidget_settings_settings_harmtree
         # comment it for now, this button is not using
         # move it to other place will disable the hide function ran above
+<<<<<<< HEAD
         # self.move_to_col2(
+=======
+        # self.move_to_col(
+>>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
         #     self.ui.pushButton_settings_harm_cntr,
         #     self.ui.treeWidget_settings_settings_harmtree,
         #     'Scan',
@@ -741,7 +753,11 @@ class QCMApp(QMainWindow):
         # )
 
         # move center checkBox_settings_temp_sensor to treeWidget_settings_settings_hardware
+<<<<<<< HEAD
         self.move_to_col2(
+=======
+        self.move_to_col(
+>>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
             self.ui.checkBox_settings_temp_sensor,
             self.ui.treeWidget_settings_settings_hardware,
             'Temperature'
@@ -862,7 +878,7 @@ class QCMApp(QMainWindow):
         self.build_comboBox(self.ui.comboBox_settings_data_refrefsource, 'ref_channel_opts')
 
         # move pushButton_settings_data_resetshiftedt0
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.pushButton_settings_data_resetshiftedt0,
             self.ui.treeWidget_settings_data_refs,
             'Time Shift',
@@ -871,7 +887,7 @@ class QCMApp(QMainWindow):
         self.ui.pushButton_settings_data_resetshiftedt0.clicked.connect(self.reset_shiftedt0)
 
         # move label_settings_data_t0
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.label_settings_data_t0,
             self.ui.treeWidget_settings_data_refs,
             't0',
@@ -879,7 +895,7 @@ class QCMApp(QMainWindow):
         )
 
         # move dateTimeEdit_settings_data_t0shifted
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.dateTimeEdit_settings_data_t0shifted,
             self.ui.treeWidget_settings_data_refs,
             'Shifted t0',
@@ -888,7 +904,7 @@ class QCMApp(QMainWindow):
         self.ui.dateTimeEdit_settings_data_t0shifted.dateTimeChanged.connect(self.on_dateTimeChanged_dateTimeEdit_t0shifted)
 
         # move frame_settings_data_recalcref
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.frame_settings_data_recalcref,
             self.ui.treeWidget_settings_data_refs,
             'Reference',
@@ -897,7 +913,7 @@ class QCMApp(QMainWindow):
         self.ui.pushButton_settings_data_recalcref.clicked.connect(self.recalc_refs)
 
         # move frame_settings_data_sampref
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.frame_settings_data_sampref,
             self.ui.treeWidget_settings_data_refs,
             'S chn.',
@@ -911,12 +927,13 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_settings_data_samprefidx.editingFinished.connect(self.save_data_saver_sampref)
 
         # move frame_settings_data_refref
-        self.move_to_col2(
+        self.move_to_col(
             self.ui.frame_settings_data_refref,
             self.ui.treeWidget_settings_data_refs,
             'R chn.',
             # 100,
         )
+
         self.ui.comboBox_settings_data_refrefsource.currentIndexChanged.connect(self.update_widget)
         self.ui.lineEdit_settings_data_refrefidx.textChanged.connect(self.update_widget)
 
@@ -924,6 +941,33 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_data_refrefsource.activated.connect(self.save_data_saver_refref)
         self.ui.lineEdit_settings_data_refrefidx.editingFinished.connect(self.save_data_saver_refref)
 
+<<<<<<< HEAD
+=======
+        # move frame_settings_data_tempref
+        self.move_to_col(
+            self.ui.frame_settings_data_tempref,
+            self.ui.treeWidget_settings_data_refs,
+            'Mode',
+            # 100,
+        )
+        # load opts to comboBox_settings_data_ref_fitttype
+        self.build_comboBox(self.ui.comboBox_settings_data_ref_fitttype, 'ref_interp_opts')
+        self.ui.comboBox_settings_data_ref_fitttype.currentIndexChanged.connect(self.update_widget)
+        # initially hiden
+        self.ui.comboBox_settings_data_ref_fitttype.hide()
+        self.ui.comboBox_settings_data_ref_fitttype.currentIndexChanged.connect(self.on_ref_mode_changed)
+        # comboBox_settings_data_ref_crystmode
+        self.build_comboBox(self.ui.comboBox_settings_data_ref_crystmode, 'ref_crystal_opts')
+        self.ui.comboBox_settings_data_ref_crystmode.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_settings_data_ref_crystmode.currentIndexChanged.connect(self.on_ref_mode_changed)
+
+        # comboBox_settings_data_ref_tempmode
+        self.build_comboBox(self.ui.comboBox_settings_data_ref_tempmode, 'ref_temp_opts')
+        self.ui.comboBox_settings_data_ref_tempmode.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_settings_data_ref_tempmode.currentIndexChanged.connect(self.on_ref_mode_changed)
+
+
+>>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
 
        # set treeWidget_settings_data_refs expanded
         self.ui.treeWidget_settings_data_refs.expandToDepth(0)
@@ -1362,13 +1406,21 @@ class QCMApp(QMainWindow):
             self.ui.stackedWidget_data.setCurrentIndex(1)
 
 
+<<<<<<< HEAD
     def move_to_col2(self, obj, parent, row_text, width=[]):
+=======
+    def move_to_col(self, obj, parent, row_text, width=[], col=1):
+>>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
         if width: # set width of obj
             obj.setMaximumWidth(width)
         # find item with row_text
         item = self.find_text_item(parent, row_text)
         # insert the combobox in to the 2nd column of row_text
+<<<<<<< HEAD
         parent.setItemWidget(item, 1, obj)
+=======
+        parent.setItemWidget(item, col, obj)
+>>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
 
     def find_text_item(self, parent, text):
         '''
@@ -1411,7 +1463,7 @@ class QCMApp(QMainWindow):
                 if self.tempPath: # new file name is set
                     path = self.tempPath
                 else: # no file name is set. save data to a temp file
-                    path=os.path.join(settings_init['unsaved_path'], datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.h5')
+                    path=os.path.join(settings_init['unsaved_path'], datetime.datetime.now().strftime(settings_init['unsaved_filename']) + '.h5')
                 self.data_saver.init_file(
                     path=path,
                     settings=self.settings,
@@ -1425,6 +1477,7 @@ class QCMApp(QMainWindow):
             # USE it only when dateTimeEdit_reftime & pushButton_resetreftime is hidden
             if not self.ui.pushButton_resetreftime.isVisible() and not self.ui.dateTimeEdit_reftime.isVisible() and self.ui.pushButton_resetreftime.isEnabled() and self.ui.dateTimeEdit_reftime.isEnabled():
                 self.reset_reftime() # use current time as t0
+
             # disable features
             self.disable_widgets(
                 'pushButton_runstop_disable_list'
@@ -1462,7 +1515,6 @@ class QCMApp(QMainWindow):
             if self.idle == True: # Timer stopped while timeout func is not running (test stopped while waiting)
                 self.process_saving_when_stop()
                 print('data saved while waiting') #testprint
-
 
 
     def process_saving_when_stop(self):
@@ -2074,8 +2126,15 @@ class QCMApp(QMainWindow):
         print(args) #testprint
         for name_list in args:
             for name in settings_init[name_list]:
+<<<<<<< HEAD
                 if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list':
                     getattr(self.ui, name).setEnabled(True)
+=======
+                getattr(self.ui, name).setEnabled(True)
+                # the following check if is hidden by the version may not be necessary in some case. e.g. hide ref_time widgets need them to be disabled
+                # if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list':
+                #     getattr(self.ui, name).setEnabled(True)
+>>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
 
     def disable_widgets(self, *args):
         '''
@@ -2085,8 +2144,15 @@ class QCMApp(QMainWindow):
         print(args) #testprint
         for name_list in args:
             for name in settings_init[name_list]:
+<<<<<<< HEAD
                 if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list':
                     getattr(self.ui, name).setEnabled(False)
+=======
+                getattr(self.ui, name).setEnabled(False)
+                # the following check if is hidden by the version may not be necessary in some case. e.g. hide ref_time widgets need them to be disabled
+                # if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list':
+                #     getattr(self.ui, name).setEnabled(False)
+>>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
 
     def set_filename(self, fileName=''):
         '''
@@ -2606,6 +2672,10 @@ class QCMApp(QMainWindow):
 
         #TODO add results to textBrowser_spectra_fit_result
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
         if self.get_spectraTab_mode() == 'refit': # refit mode
             # save scan data to data_saver
             self.data_saver.update_refit_data(
@@ -2617,6 +2687,9 @@ class QCMApp(QMainWindow):
             )
             # update mpl_plt12
             self.update_mpl_plt12()
+
+        #TODO add results to textBrowser_spectra_fit_result
+        self.ui.plainTextEdit_spectra_fit_result.setPlainText(self.peak_tracker.fit_result_report())
 
 
     def pick_manual_refit(self):
@@ -2672,8 +2745,10 @@ class QCMApp(QMainWindow):
             queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=False)
         elif self.active['l_str'] == 'lm': # showing marked data
             queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=True)
-        # print('queue_list', queue_list) #testprint
-        return queue_list.iloc[self.active['ind']]
+        print('queue_list', queue_list) #testprint
+        print("self.active['ind']", self.active['ind']) #testprint
+        # return queue_list.iloc[self.active['ind']]
+        return queue_list[self.active['ind']]
 
 
     def get_active_raw(self):
@@ -2885,15 +2960,15 @@ class QCMApp(QMainWindow):
         xdata = self.get_data_by_typestr(plt_opt[1], plt_chnname, mark=mark, unit_t=timeuint, unit_temp=tempunit)
 
         print('------xdata--------') #testprint
-        print(xdata) #testprint
+        # print(xdata) #testprint
         print('-------------------') #testprint
         print('------ydata--------') #testprint
-        print(ydata) #testprint
+        # print(ydata) #testprint
         print('-------------------') #testprint
 
         # prepare data for plotting
         data_list = self.prepare_harm_data_for_mpl_update(plt_chnname, plt_harms, line_group, xdata, ydata, show_marked_when_all=True)
-        print('data_list\n', data_list) #testprint
+        # print('data_list\n', data_list) #testprint
         # update mpl_<plt_str>
         getattr(self.ui, 'mpl_' + plt_str).update_data(*data_list)
 
@@ -3428,7 +3503,11 @@ class QCMApp(QMainWindow):
         print(isinstance(pk_data[0], float)) #testprint
         print(isinstance(pk_data[0], np.float)) #testprint
         print(isinstance(pk_data[0], np.float64)) #testprint
-        if isinstance(pk_data[0], float) and isinstance(pk_data[0], int): # data is not empty (float for values, int for index and queue_id)
+        print(isinstance(pk_data[0], int)) #testprint
+        print(isinstance(pk_data[0], np.int)) #testprint
+        print(isinstance(pk_data[0], np.int32)) #testprint
+        print(isinstance(pk_data[0], np.int64)) #testprint
+        if isinstance(pk_data[0], (float, int, np.int64)): # data is not empty (float for values, int for index and queue_id)
             label = mpl.l['lp'][0].get_label()
             line, ind = label.split('_')
             l, harm = line[:-1], line[-1]
@@ -3984,6 +4063,47 @@ class QCMApp(QMainWindow):
     def on_clicked_checkBox_fitfactorbyharm(self, value):
         self.ui.spinBox_fitfactor.setEnabled(not value)
         self.ui.label_fitfactor.setEnabled(not value)
+
+
+    def on_ref_mode_changed(self, signal):
+        '''
+        This function add/delete label to treeWidget_settings_data_refs
+        to change the column names of S chn. and R chn.
+        when the reference mode changes to/out of temperature mode
+        '''
+        print('ref', self.sender().objectName(), signal) #testprint
+        value = self.sender().itemData(signal)
+        parent = self.ui.treeWidget_settings_data_refs
+
+        # change header name by comboBox_settings_data_ref_tempmode value (const/var)
+        if value == 'var': # temp mode
+            item_samp = self.find_text_item(parent, 'S chn.')
+            item_ref = self.find_text_item(parent, 'R chn.')
+            # change text
+            item_samp.setText(0, 'Film')
+            item_ref.setText(0, 'Bare')
+        elif value == 'const': # normal mode
+            item_samp = self.find_text_item(parent, 'Film')
+            item_ref = self.find_text_item(parent, 'Bare')
+            # change text
+            item_samp.setText(0, 'S chn.')
+            item_ref.setText(0, 'R chn.')
+
+        # change visible of comboBox_settings_data_ref_fitttype by comboBox_settings_data_ref_tempmode value (const/var)
+        if self.settings.get('comboBox_settings_data_ref_tempmode', None) == 'const': #constant temp experiment
+            self.ui.comboBox_settings_data_ref_fitttype.hide()
+        elif self.settings.get('comboBox_settings_data_ref_tempmode', None) == 'var': #variable temp experiment
+            self.ui.comboBox_settings_data_ref_fitttype.setVisible(True)
+
+        # save to data_saver
+        sender_name = self.sender().objectName()
+        if 'cryst' in sender_name:
+            self.data_saver.exp_ref['mode']['cryst'] = value
+        elif 'temp' in sender_name:
+            self.data_saver.exp_ref['mode']['temp'] = value
+        elif 'fit' in sender_name:
+            self.data_saver.exp_ref['mode']['fit'] = value
+
 
 
     def set_stackedwidget_index(self, stwgt, idx=[], diret=[]):
@@ -4610,7 +4730,11 @@ class QCMApp(QMainWindow):
 
         # insert to the row of row_text if row_text and parent_name are not empty
         if (row_text and parent):
+<<<<<<< HEAD
             self.move_to_col2(obj_box, parent, row_text, box_width)
+=======
+            self.move_to_col(obj_box, parent, row_text, box_width)
+>>>>>>> cb4b53da8145f70d37ef6c9780c53f6d1946cbb4
 
 
     def update_guichecks(self, checkBox, name_in_settings):
@@ -4871,9 +4995,15 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_settings_data_samprefidx.setText(str(self.settings['lineEdit_settings_data_samprefidx']))
         self.ui.lineEdit_settings_data_refrefidx.setText(str(self.settings['lineEdit_settings_data_refrefidx']))
 
+        # temp ref
+        self.load_comboBox(self.ui.comboBox_settings_data_refrefsource, 'comboBox_settings_data_ref_crystmode')
+        self.load_comboBox(self.ui.comboBox_settings_data_refrefsource, 'comboBox_settings_data_ref_tempmode')
+        self.load_comboBox(self.ui.comboBox_settings_data_refrefsource, 'comboBox_settings_data_ref_fitttype')
+
+
     def load_refsource(self):
         '''
-        update widgets related to reference source
+        update widgets related to reference source from data_saver
         '''
         print('ref_channel_opts') #testprint
         self.settings['comboBox_settings_data_samprefsource'] = self.data_saver.exp_ref['samp_ref'][0]
@@ -4881,6 +5011,11 @@ class QCMApp(QMainWindow):
 
         self.settings['lineEdit_settings_data_samprefidx'] = self.data_saver.exp_ref['samp_ref'][1]
         self.settings['lineEdit_settings_data_refrefidx'] = self.data_saver.exp_ref['ref_ref'][1]
+
+        if 'mode' in self.data_saver.exp_ref:
+            self.settings['comboBox_settings_data_ref_crystmode'] = self.data_saver.exp_ref['mode'].get('cryst')
+            self.settings['comboBox_settings_data_ref_tempmode'] = self.data_saver.exp_ref['mode'].get('temp')
+            self.settings['comboBox_settings_data_ref_fitttype'] = self.data_saver.exp_ref['mode'].get('fit')
 
 
     def set_progressbar(self, val=0, text=''):

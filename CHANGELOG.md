@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.16.1] - 2019-03-05
+
+### Added
+- Add manual fitting report to UI
+
+## Changed
+- Change reference claculating strategy
+
 ## [0.16.0] - 2019-02-27
 
 ### Added
