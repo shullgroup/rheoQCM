@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1141, 992)
+        MainWindow.resize(1141, 1076)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -523,7 +523,7 @@ class Ui_MainWindow(object):
         self.toolBox = QtWidgets.QToolBox(self.tab_settings_settings)
         self.toolBox.setObjectName("toolBox")
         self.page_settings_settings_hardwares = QtWidgets.QWidget()
-        self.page_settings_settings_hardwares.setGeometry(QtCore.QRect(0, 0, 286, 159))
+        self.page_settings_settings_hardwares.setGeometry(QtCore.QRect(0, 0, 284, 154))
         self.page_settings_settings_hardwares.setObjectName("page_settings_settings_hardwares")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.page_settings_settings_hardwares)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -561,7 +561,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.treeWidget_settings_settings_hardware)
         self.toolBox.addItem(self.page_settings_settings_hardwares, "")
         self.page_settings_settings_plots = QtWidgets.QWidget()
-        self.page_settings_settings_plots.setGeometry(QtCore.QRect(0, 0, 83, 71))
+        self.page_settings_settings_plots.setGeometry(QtCore.QRect(0, 0, 98, 70))
         self.page_settings_settings_plots.setObjectName("page_settings_settings_plots")
         self.verticalLayout_24 = QtWidgets.QVBoxLayout(self.page_settings_settings_plots)
         self.verticalLayout_24.setContentsMargins(0, 0, 0, 0)
@@ -953,7 +953,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_11.addWidget(self.pushButton_settings_data_recalcref)
         self.verticalLayout_52.addWidget(self.frame_settings_data_recalcref)
         self.frame_settings_data_tempref = QtWidgets.QFrame(self.tab_settings_data)
-        self.frame_settings_data_tempref.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_settings_data_tempref.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.frame_settings_data_tempref.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame_settings_data_tempref.setObjectName("frame_settings_data_tempref")
         self.horizontalLayout_17 = QtWidgets.QHBoxLayout(self.frame_settings_data_tempref)
@@ -2404,7 +2404,7 @@ class Ui_MainWindow(object):
         self.scrollArea_data_mechanics_plots.setWidgetResizable(True)
         self.scrollArea_data_mechanics_plots.setObjectName("scrollArea_data_mechanics_plots")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 392, 843))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 381, 904))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout_38 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_38.setContentsMargins(2, 2, 2, 2)
@@ -2420,7 +2420,7 @@ class Ui_MainWindow(object):
         self.gridLayout_6.addWidget(self.splitter, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1141, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1141, 22))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -2768,14 +2768,14 @@ class Ui_MainWindow(object):
         self.textEdit_settings_data_sampmarks.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">To be added!</p></body></html>"))
+"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt;\">To be added!</span></p></body></html>"))
         self.tabWidget_settings_data_markindex.setTabText(self.tabWidget_settings_data_markindex.indexOf(self.tab_sampmarks), _translate("MainWindow", "&S Marks"))
         self.textEdit_settings_data_refmarks.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">To be added!</p></body></html>"))
+"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt;\">To be added!</span></p></body></html>"))
         self.tabWidget_settings_data_markindex.setTabText(self.tabWidget_settings_data_markindex.indexOf(self.tab_refmarks), _translate("MainWindow", "&R Marks"))
         self.pushButton_settings_data_marksadd.setText(_translate("MainWindow", "1"))
         self.pushButton_settings_data_marksdel.setText(_translate("MainWindow", "0"))
