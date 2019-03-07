@@ -128,6 +128,9 @@ settings_init = {
         'pushButton_settings_data_toend',
         
         'frame_settings_data_tempref',
+        'comboBox_settings_data_ref_crystmode',
+        'comboBox_settings_data_ref_tempmode',
+        'comboBox_settings_data_ref_fitttype',
 
         # 'toolButton_settings_mechanics_solve',
         # 'groupBox_nhplot',
