@@ -1,0 +1,4 @@
+import UISettings.settings_init
+import json
+
+txt = json.dump(settings_init)

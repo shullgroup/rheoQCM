@@ -15,7 +15,7 @@
    version="1.1"
    id="svg1839"
    inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
-   sodipodi:docname="signal_ch.svg">
+   sodipodi:docname="signal_ch_off.svg">
   <defs
      id="defs1833" />
   <sodipodi:namedview
@@ -26,8 +26,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="5.6"
-     inkscape:cx="2.0178504"
-     inkscape:cy="59.020692"
+     inkscape:cx="55.143503"
+     inkscape:cy="61.786242"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -54,54 +54,103 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(0,-263.13332)">
-    <path
-       inkscape:connector-curvature="0"
-       style="opacity:1;fill:#333333;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3.00000024;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers fill stroke"
-       d="M 16.982426,266.38687 A 26.34359,27.360062 0 0 0 0,272.78751 l 3.3868733,4.19199 a 21.074871,21.88805 0 0 1 27.0929197,0 l 3.386873,-4.19199 a 26.34359,27.360062 0 0 0 -16.88424,-6.40064 z"
-       id="path2565" />
-    <path
-       inkscape:connector-curvature="0"
-       style="opacity:1;fill:#333333;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3.00000024;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers fill stroke"
-       d="m 16.962789,277.3309 a 15.806154,16.416038 0 0 0 -10.1895592,3.8406 l 3.3868732,4.19147 a 10.537435,10.944025 0 0 1 13.54646,0 l 3.386873,-4.19147 a 15.806154,16.416038 0 0 0 -10.130647,-3.8406 z"
-       id="path2565-21" />
-    <ellipse
-       style="opacity:1;fill:#333333;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3.00000024;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers fill stroke"
-       id="path2565-2"
-       d="m 13.546666,289.55487 a 5.2687178,5.4720125 0 0 1 6.773333,0 l -3.386667,4.1918 z"
-       sodipodi:type="arc"
-       sodipodi:start="4.0142573"
-       sodipodi:end="5.4105207"
-       sodipodi:ry="5.4720125"
-       sodipodi:rx="5.2687178"
-       sodipodi:cy="293.74667"
-       sodipodi:cx="16.933332" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:28.965868px;line-height:125%;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000080;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="42.843849"
-       y="293.76877"
-       id="text2707"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46666622px;line-height:0%;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="36.792439"
+       y="274.72183"
+       id="text4511-5"><tspan
          sodipodi:role="line"
-         id="tspan2705"
-         x="42.843849"
-         y="293.76877"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:28.965868px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000080;stroke-width:0.26458332px">1</tspan></text>
+         id="tspan4509-6"
+         x="36.792439"
+         y="274.72183"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46666622px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332px">Chn</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:28.965868px;line-height:125%;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#008000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       x="35.01442"
-       y="283.78717"
-       id="text2707-9"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46666622px;line-height:0%;font-family:'Digital-7 Mono';-inkscape-font-specification:'Digital-7 Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="36.50885"
+       y="281.39178"
+       id="text4511-3"><tspan
          sodipodi:role="line"
-         id="tspan2705-5"
-         x="35.01442"
-         y="283.78717"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:28.965868px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#008000;stroke-width:0.26458332px">2</tspan></text>
-    <circle
-       style="opacity:1;fill:#333333;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers fill stroke"
-       id="path2565-2-5"
-       cx="16.933332"
-       cy="291.32846"
-       r="3.96875" />
+         id="tspan4509-3"
+         x="36.50885"
+         y="281.39178"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46666622px;font-family:'Digital-7 Mono';-inkscape-font-specification:'Digital-7 Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332px">Chn</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:42.33333206px;line-height:0%;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#008000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="-20.857306"
+       y="297.81107"
+       id="text4511-58"><tspan
+         sodipodi:role="line"
+         id="tspan4509-60"
+         x="-20.857306"
+         y="297.81107"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:42.33333206px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#008000;stroke-width:0.26458332px">S</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:23.98888969px;line-height:0%;font-family:'Digital-7 Mono';-inkscape-font-specification:'Digital-7 Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#4d4d4d;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="34.251621"
+       y="298.07568"
+       id="text4511"><tspan
+         sodipodi:role="line"
+         id="tspan4509"
+         x="34.251621"
+         y="298.07568"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:23.98888969px;font-family:'Digital-7 Mono';-inkscape-font-specification:'Digital-7 Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#4d4d4d;stroke-width:0.26458332px">Chn</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:42.33333206px;line-height:0%;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#808080;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="0.95084661"
+       y="294.82544"
+       id="text4511-58-2"><tspan
+         sodipodi:role="line"
+         id="tspan4509-60-7"
+         x="0.95084661"
+         y="294.82544"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:42.33333206px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#808080;stroke-width:0.26458332px">c</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:23.98888969px;line-height:0%;font-family:'Digital-7 Mono';-inkscape-font-specification:'Digital-7 Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#808080;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="21.806755"
+       y="288.42996"
+       id="text4511-54"><tspan
+         sodipodi:role="line"
+         id="tspan4509-65"
+         x="21.806755"
+         y="288.42996"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:23.98888969px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#808080;stroke-width:0.26458332px">N</tspan><tspan
+         sodipodi:role="line"
+         x="21.806755"
+         y="288.42996"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:23.98888969px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#808080;stroke-width:0.26458332px"
+         id="tspan4653" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:23.98888969px;line-height:0%;font-family:'Digital-7 Mono';-inkscape-font-specification:'Digital-7 Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#808080;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="8.8483829"
+       y="288.42996"
+       id="text4511-54-8"><tspan
+         sodipodi:role="line"
+         id="tspan4509-65-4"
+         x="8.8483829"
+         y="288.42996"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:23.98888969px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#808080;stroke-width:0.26458332px">H</tspan><tspan
+         sodipodi:role="line"
+         x="8.8483829"
+         y="288.42996"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:23.98888969px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#808080;stroke-width:0.26458332px"
+         id="tspan4651" /></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:42.33333206px;line-height:0%;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#800000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="-19.153656"
+       y="292.85013"
+       id="text4511-58-7"><tspan
+         sodipodi:role="line"
+         id="tspan4509-60-5"
+         x="-19.153656"
+         y="292.85013"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:42.33333206px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#800000;stroke-width:0.26458332px">R</tspan></text>
   </g>
 </svg>

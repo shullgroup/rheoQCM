@@ -15,7 +15,7 @@ settings_init = {
     'window_size': [1200, 800], # px
 
     # UI will looking for the file to load the default setup
-    'default_settings_file_name': 'settings_default.json',
+    'default_settings_file_name': 'user_settings.json',
 
     # myVNA path
     'vna_path': [
@@ -27,7 +27,7 @@ settings_init = {
     'vna_cal_file_path': r'./cal/', 
 
     # highest harmonic can be shown in the UI. 
-    'max_harmonic': 11, # MUST >= 1
+    'max_harmonic': 9, # MUST >= 1
     
     # time string format
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
@@ -127,10 +127,10 @@ settings_init = {
         'pushButton_settings_data_tonext',
         'pushButton_settings_data_toend',
         
-        # 'frame_settings_data_tempref',
-        # 'comboBox_settings_data_ref_crystmode',
-        # 'comboBox_settings_data_ref_tempmode',
-        # 'comboBox_settings_data_ref_fitttype',
+        'frame_settings_data_tempref',
+        'comboBox_settings_data_ref_crystmode',
+        'comboBox_settings_data_ref_tempmode',
+        'comboBox_settings_data_ref_fitttype',
 
         # 'toolButton_settings_mechanics_solve',
         # 'groupBox_nhplot',
@@ -145,11 +145,15 @@ settings_init = {
         # 'groupBox_settings_mechanics_contour',
         # 'pushButton_settings_mechanics_simulator',
         # 'groupBox_settings_mechanics_simulator',
+
+        # statusbar
+        'pushButton_status_reftype',
+        # 'pushButton_status_signal_ch',
     ],
 
     # list of widges to delete in current version
     'version_delete_list':[
-        'tab_settings_mechanics',
+        # 'tab_settings_mechanics',
     ],
 
         
@@ -278,9 +282,9 @@ settings_init = {
         'delg_delfsn_calcs': u'\u0394\u0393' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓ/Δfₛₙ
         'rh':                'rh',
         'rd_calcs':          'rd',
-        # 't':                 'Time (s)', # Time (s)
-        # 'temp':              'Temp. (' + u'\u00B0' + 'C)', # Temp. (°C)
-    },
+        't':                 'Time (s)', # Time (s)
+        'temp':              'Temp. (' + u'\u00B0' + 'C)', # Temp. (°C)
+    }, # add the colum when activate column here
 
     # spinBox_harmfitfactor max value
     'fitfactor_max': 20, # int

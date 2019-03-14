@@ -379,7 +379,7 @@ class PeakTracker:
         self.harminput[chn_name][harm]['steps'] = harm_dict.get('lineEdit_scan_harmsteps', None)
         self.harminput[chn_name][harm]['method'] = harm_dict.get('comboBox_tracking_method', None)
         self.harminput[chn_name][harm]['condition'] = harm_dict.get('comboBox_tracking_condition', None)
-        self.harminput[chn_name][harm]['fit'] = harm_dict.get('checkBox_harmfit', None)
+        self.harminput[chn_name][harm]['fit'] = harm_dict.get('checkBox_harmfit', True)
         self.harminput[chn_name][harm]['factor'] = harm_dict.get('spinBox_harmfitfactor', None)
         self.harminput[chn_name][harm]['n'] = harm_dict.get('spinBox_peaks_num', None)
         
@@ -397,6 +397,7 @@ class PeakTracker:
         else: # initialize data
             self.harminput[chn_name][harm]['p_policy'] = None
 
+        self.harminput[chn_name][harm]['zerophase'] = harm_dict.get('checkBox_settings_settings_harmzerophase', False)
         self.harminput[chn_name][harm]['threshold'] = harm_dict.get('lineEdit_peaks_threshold', None)
         self.harminput[chn_name][harm]['prominence'] = harm_dict.get('lineEdit_peaks_prominence', None)
 
@@ -843,9 +844,9 @@ class PeakTracker:
         params = Parameters()
 
         # rough guess
-        f = self.get_input(key='f', chn_name=self.active_chn, harm=self.active_harm)
-        G = self.get_input(key='G', chn_name=self.active_chn, harm=self.active_harm)
-        B = self.get_input(key='B', chn_name=self.active_chn, harm=self.active_harm)
+        f = self.get_input(key='f', chn_name=chn_name, harm=harm)
+        G = self.get_input(key='G', chn_name=chn_name, harm=harm)
+        B = self.get_input(key='B', chn_name=chn_name, harm=harm)
         amp_rough = np.amax(self.resonance) - np.amin(self.resonance)
         cen_rough = np.mean(f)
         wid_rough = (np.amax(f) - np.amin(f)) / 6
@@ -888,12 +889,21 @@ class PeakTracker:
                 min= wid / 10,         # lb in Hz (limit the width >= 1/10 of the guess value!!)
                 max=(np.amax(f) - np.amin(f)) * 2, # ub in Hz: assume peak is in the range of f
             )
-            params.add(
-                'p'+str(i)+'_phi',       # phase shift
-                value=phi,               # init value: peak height
-                min=-np.pi / 2,          # lb in rad
-                max=np.pi / 2,           # ub in rad
-            )
+            if self.harminput[chn_name][harm]['zerophase']: # fix phase to 0
+                params.add(
+                    'p'+str(i)+'_phi',       # phase shift
+                    value=0,                 # init value: peak height
+                    vary=False,              # fix phi=0
+                    min=-np.pi / 2,          # lb in rad
+                    max=np.pi / 2,           # ub in rad
+                )
+            else: # leave phase vary
+                params.add(
+                    'p'+str(i)+'_phi',       # phase shift
+                    value=phi,               # init value: peak height
+                    min=-np.pi / 2,          # lb in rad
+                    max=np.pi / 2,           # ub in rad
+                )
         
         params.add(
             'g_c',              # initialize G_offset
@@ -904,6 +914,7 @@ class PeakTracker:
             value=np.mean(B),   # init B_offset = mean(B)
         )
         self.update_output(params=params)
+
 
     ########### fitting ##########################
     def minimize_GB(self):
@@ -1253,8 +1264,8 @@ class PeakTracker:
             # u'\u03A7' + 'sq': 'chisqr',
             'f (Hz)': 'cen_rec',
             u'\u0393' + ' (Hz)': 'wid_rec',
-            'G_amp (mS)': 'amp_rec',
             u'\u03A6' + ' (deg.)': 'phi_rec',
+            'G_amp (mS)': 'amp_rec',
             'G_shift (mS)': 'g_c',
             'B_shift (mS)': 'b_c',
         }

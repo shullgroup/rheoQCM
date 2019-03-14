@@ -301,11 +301,13 @@ class DataSaver:
             self.settings_init = json.loads(fh['settings_init'][()])
             
             dump_exp_ref = self._make_exp_ref()
-            self.exp_ref = json.loads(fh['exp_ref'][()])
-            for key, val in dump_exp_ref.items():
-                if key not in self.exp_ref:
-                    self.exp_ref[key] = val
-            
+            if 'exp_ref' in fh.keys():
+                self.exp_ref = json.loads(fh['exp_ref'][()])
+                for key, val in dump_exp_ref.items():
+                    if key not in self.exp_ref:
+                        self.exp_ref[key] = val
+            else:
+                self.exp_ref = dump_exp_ref
             self.ver = fh.attrs['ver']
             print(self.ver) #testprint
             print(self.exp_ref) #testprint
@@ -319,7 +321,10 @@ class DataSaver:
                 setattr(self, chn_name, pd.read_json(fh['data/' + chn_name][()]).sort_values(by=['queue_id'])) 
                 
                 # df for data form samp_ref/ref_ref chn
-                setattr(self, chn_name + '_ref', pd.read_json(fh['data/' + chn_name + '_ref'][()]).sort_values(by=['queue_id'])) 
+                if chn_name + '_ref' in fh['data'].keys():
+                    setattr(self, chn_name + '_ref', pd.read_json(fh['data/' + chn_name + '_ref'][()]).sort_values(by=['queue_id'])) 
+                else:
+                    setattr(self, chn_name + '_ref', self._make_df())
 
                 # load prop
                 if ('prop' in fh.keys()) and (chn_name in fh['prop'].keys()): # prop exists
@@ -494,11 +499,17 @@ class DataSaver:
                 # print(fh['data/' + key]) #testprint
                 if key in fh['data']:
                     del fh['data/' + key]
+                if key + '_ref' in fh['data']:
                     del fh['data/' + key + '_ref']
                 print(json.dumps(getattr(self, key).to_dict())) #testprint
                 # fh['data/' + key] = json.dumps(getattr(self, key).to_dict())        
                 fh.create_dataset('data/' + key, data=getattr(self, key).to_json(), dtype=h5py.special_dtype(vlen=str))  
-                fh.create_dataset('data/' + key + '_ref', data=getattr(self, key + '_ref').to_json(), dtype=h5py.special_dtype(vlen=str))  
+
+                print(getattr(self, key + '_ref').columns) #testprint
+                print(getattr(self, key + '_ref').head()) #testprint
+                print(getattr(self, key + '_ref').head().to_json()) #testprint
+                data = getattr(self, key + '_ref').head().to_json()
+                fh.create_dataset('data/' + key + '_ref', data=data, dtype=h5py.special_dtype(vlen=str))  
 
 
     def save_settings(self, settings={}, settings_init={}):
@@ -550,10 +561,16 @@ class DataSaver:
     def save_exp_ref(self):
         with h5py.File(self.path, 'a') as fh:
             # save reference
+
+            # make a copy for saving
+            exp_ref = self.exp_ref.copy()
+            # set func = {} in exp_ref which cannot be saved as text
+            exp_ref['func'] = {}
+
             print(self.exp_ref) #testprint
             if 'exp_ref' in fh:
                 del fh['exp_ref']
-            fh.create_dataset('exp_ref',data=json.dumps(self.exp_ref))
+            fh.create_dataset('exp_ref',data=json.dumps(exp_ref))
 
 
     def _save_ver(self):
@@ -835,11 +852,11 @@ class DataSaver:
         elif ext.lower() == '.csv': # TODO add prop
             # add chn_name to samp and ref df
             # and append ref to samp
-            with open(fileName, 'w') as file:
-                csvwriter = csv.writer(file)
-                # csvwriter.writerow(['id', queue_id])
-                # csvwriter.writerow(['t', t])
-                # csvwriter.writerow(['temp (C)', temp])
+            # with open(fileName, 'w') as file:
+            #     csvwriter = csv.writer(file)
+            #     csvwriter.writerow(['id', queue_id])
+            #     csvwriter.writerow(['t', t])
+            #     csvwriter.writerow(['temp (C)', temp])
             
             df_raw.to_csv(fileName, mode='a')
 
@@ -1039,7 +1056,7 @@ class DataSaver:
         mark: if True, show marked data only
         deltaval: if True, convert abs value to delta value
         norm: if True, normalize value by harmonic (works only when deltaval is True)
-        return: df with columns = ['1', '3', '5', '7', '9]
+        return: df with columns = ['x1', 'x3', 'x5', 'x7', 'x9]
         '''
 
         if deltaval == True:
@@ -1098,7 +1115,11 @@ class DataSaver:
         '''
 
         s = getattr(self, chn_name + '_prop')[mech_key][col].copy()
-        print('sssss', s) #testprint
+        print('chn_name/mech_key/col', chn_name, mech_key, col) #testprint
+        print('mech_s head', s.head()) #testprint
+        print('mech_s', type(s.values.tolist())) #testprint
+        print('mech_s', s.values.tolist()[0]) #testprint
+        print('mech_s', type(s.values.tolist()[0])) #testprint
 
         if mark == False:
             return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col + str(x * 2 + 1))
@@ -1137,11 +1158,58 @@ class DataSaver:
         # get a copy
         col_s = getattr(self, chn_name)[col].copy()
         # print(self.exp_ref[chn_name]) #testprint
-        if all(np.isnan(np.array(self.exp_ref[chn_name][self._ref_keys[col]]))): # no reference or no constant reference exist
-            # check col+'_ref'
-            if self.exp_ref[chn_name + '_ref'][1][0] is None or len(self.exp_ref[chn_name + '_ref'][1]) == 0: #start index is None or [], dynamic reference
+
+        mode = self.exp_ref.get('mode')
+
+        if mode['cryst'] == 'single': # single crystal
+            if mode['temp'] == 'const': # single crystal and constant temperature
+                if all(np.isnan(np.array(self.exp_ref[chn_name][self._ref_keys[col]]))): # no reference or no constant reference exist
+                    print('ref still not set')
+                    return col_s.apply(lambda x: list(np.array(x, dtype=np.float) * np.nan)) # return all nan
+                else: # use constant ref in self.<chn_name>_ref
+                    print('constant reference') #testprint
+                    # get ref
+                    ref = self.exp_ref[chn_name][self._ref_keys[col]] # return a ndarray
+                    # return
+                    # print(ref) #testprint
+                    # print(col_s[0]) #testprint
+                    
+                    col_s = col_s.apply(lambda x: list(np.array(x, dtype=np.float) - np.array(ref, dtype=np.float)))
+                    if norm:
+                        return self._norm_by_harm(col_s)
+                    else: 
+                        return col_s
+            elif mode['temp'] == 'var': # single crystal and constant temperature
+                print('single, temp') 
+
+                ref_s = self.interp_film_ref(chn_name, col=col) # get reference for col (fs or gs)
+
+                print('ref_s\n', ref_s) #testprint
+                
+                # convert series value to ndarray
+                col_arr = np.array(col_s.values.tolist())
+                ref_arr = np.array(ref_s.values.tolist())
+
+                # subtract ref from col elemental wise
+                col_arr = col_arr - ref_arr
+
+                # save it back to col_s
+                col_s.values[:] = col_arr.tolist()
+                
+                if norm: # normalize the data by harmonics
+                    col_s = self._norm_by_harm(col_s)
+                return col_s
+            else:
+                pass
+
+        elif mode['cryst'] == 'dual': #TODO
+            if mode['temp'] == 'const': # dual crystal and constant temperature
+                pass
+            elif mode['temp'] == 'var': # dual crystal and constant temperature
+                return 
+                #TODO temperarilly save the code below
                 print('dynamic reference') 
-                ref_s=getattr(self, self.exp_ref[chn_name + '_ref'][0]).copy()
+                ref_s = getattr(self, self.exp_ref[chn_name + '_ref'][0]).copy()
 
                 # convert series value to ndarray
                 col_arr = np.array(col_s.values.tolist())
@@ -1156,31 +1224,8 @@ class DataSaver:
                 if norm: # normalize the data by harmonics
                     col_s = self._norm_by_harm(col_s)
                 return col_s
-            elif self.exp_ref[chn_name + '_ref'][0] not in ['ext', 'none']: # use constant ref in self.<chn_name>_ref
-                # TODO may try to change the ref type self.exp_ref[chn_name + '_ref'][0]
-            
-                print('ref still not set')
-                return col_s.apply(lambda x: list(np.array(x, dtype=np.float) * np.nan)) # return all nan
-
-                # set the ref
-                # self.set_ref_set(chn_name, *self.exp_ref[chn_name + '_ref'])
-
-                # print(self.exp_ref) #testprint
-                # np.isnan(np.array(self.exp_ref[chn_name][self._ref_keys[col]]))
-
-        else: # there is a constant reference exist
-            print('constant reference')
-            # get ref
-            ref = self.exp_ref[chn_name][self._ref_keys[col]] # return a ndarray
-            # return
-            # print(ref) #testprint
-            # print(col_s[0]) #testprint
-            
-            col_s = col_s.apply(lambda x: list(np.array(x, dtype=np.float) - np.array(ref, dtype=np.float)))
-            if norm:
-                return self._norm_by_harm(col_s)
-            else: 
-                return col_s
+            else:
+                pass
 
 
     def _norm_by_harm(self, s):
@@ -1228,9 +1273,19 @@ class DataSaver:
         set self.exp_ref.<chn_name>_ref value
         source: str in ['samp', 'ref', 'ext', 'none']
         '''
+        # print('idx_list', idx_list) #testprint
         if getattr(self, chn_name).shape[0] == 0: # data is empty
             print('no data')
+            self.refflg = False
             return
+
+        # check idx_list structure
+        if all([isinstance(l, list) for l in idx_list]): # idx_list is list of lists
+            idx_list_opened =[]
+            for l in idx_list:
+                idx_list_opened.extend(l)
+        else:
+            idx_list_opened = idx_list
 
         mode = self.exp_ref.get('mode')
         if mode['cryst'] == 'single':
@@ -1250,15 +1305,15 @@ class DataSaver:
                 # copy df to ref
                 if source in self._chn_keys: # use data from current test
                     df = getattr(self, source)
-                    self.copy_to_ref(chn_name, df.loc[idx_list, :]) # copy to reference data set
+                    self.copy_to_ref(chn_name, df.loc[idx_list_opened, :]) # copy to reference data set
                 elif source == 'ext': # data from external file
                     if df is not None:
-                        self.copy_to_ref(chn_name, df.loc[idx_list, :]) # copy to reference data set
+                        self.copy_to_ref(chn_name, df.loc[idx_list_opened, :]) # copy to reference data set
                     else:
                         print('no dataframe is provided!')
 
             elif mode['temp'] == 'var': # single crystal and variable temperature
-                # samp as film and ref as bare
+                # samp as sample and ref as reference
                 # use fitting of reference  
 
                 # clear self.samp_ref
@@ -1273,16 +1328,17 @@ class DataSaver:
                        
                 # only copy df of ref to ref_ref 
                 # but the data may not be used
-                if source == 'ref': # use data from current test
-                    df = getattr(self, source)
-                    self.copy_to_ref('ref', df.loc[idx_list, :]) # copy to reference data set
-                elif source == 'ext': # data from external file
-                    if df is not None:
-                        self.copy_to_ref('ref', df.loc[idx_list, :]) # copy to reference data set
+                if chn_name == 'ref':
+                    if source in self._chn_keys: # use data from current test
+                        df = getattr(self, source)
+                        self.copy_to_ref('ref', df.loc[idx_list_opened, :]) # copy to reference data set
+                    elif source == 'ext': # data from external file
+                        if df is not None:
+                            self.copy_to_ref('ref', df.loc[idx_list_opened, :]) # copy to reference data set
+                        else:
+                            print('no dataframe is provided!')
                     else:
-                        print('no dataframe is provided!')
-                else:
-                    pass
+                        pass
 
         if mode['cryst'] == 'dual': #TODO
             if mode['temp'] == 'const': # dual crystal and constant temperature
@@ -1303,7 +1359,7 @@ class DataSaver:
         mode = self.exp_ref.get('mode')
 
         if mode['cryst'] == 'single':
-            if mode['temp'] == 'const': # dual crystal and constant temperature
+            if mode['temp'] == 'const': # single crystal and constant temperature
                 if getattr(self, chn_name + '_ref').shape[0] > 0: # there is reference data saved
                     print('>0') #testprint
                     # calculate f0 and g0 
@@ -1322,61 +1378,82 @@ class DataSaver:
                     }
                     self.refflg[chn_name] = False
 
-            elif mode['temp'] == 'var': # dual crystal and constant temperature
+            elif mode['temp'] == 'var': # single crystal and constant temperature
+                samp_source = self.exp_ref['samp_ref'][0]
+                ref_source = self.exp_ref['ref_ref'][0]
+
                 # check if there is temp data in self.ref
-                temp = self.get_temp_by_uint_marked_rows('ref', dropnanmarkrow=False, unit='C') # in C. If marked only, set dropnanmarkrow=True
+                temp = self.get_temp_by_uint_marked_rows(ref_source, dropnanmarkrow=False, unit='C') # in C. If marked only, set dropnanmarkrow=True
                 print(temp) #testprint
                 if np.isnan(temp).all(): # no temp data
-                    print('no temperature data in bare!')
+                    print('no temperature data in reference!')
+                    self.refflg[chn_name] = False
                     return
 
                 # check if all elements in self.exp_ref.ref_ref[1] is list
-                if all([isinstance(l, list) for l in self.exp_ref.ref_ref[1]]): # all list
-                    bare_idx = self.exp_ref.ref_ref[1]
-                elif all([isinstance(l, int) for l in self.exp_ref.ref_ref[1]]): # all int
-                    bare_idx = [self.exp_ref.ref_ref[1]] # put into a list
+                if all([isinstance(l, list) for l in self.exp_ref['ref_ref'][1]]): # all list
+                    reference_idx = self.exp_ref['ref_ref'][1]
+                elif all([isinstance(l, int) for l in self.exp_ref['ref_ref'][1]]): # all int
+                    reference_idx = [self.exp_ref['ref_ref'][1]] # put into a list
                 else:
-                    print('no reference index avaible!')
+                    print('Check reference reference index!')
+                    self.refflg[chn_name] = False
                     return
                 
                 # get harm data fs in columns
-                fs = self.get_list_column_to_columns_marked_rows('ref', 'fs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute freq in Hz. If marked, set mark=True
-                gs = self.get_list_column_to_columns_marked_rows('ref', 'gs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute gamma in Hz. If marked, set mark=True
+                fs = self.get_list_column_to_columns_marked_rows(ref_source, 'fs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute freq in Hz. If marked, set mark=True
+                gs = self.get_list_column_to_columns_marked_rows(ref_source, 'gs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute gamma in Hz. If marked, set mark=True
 
                 func_list = [] # list of funcs 
-                for ind_list in bare_idx: # iterate each list
+                for ind_list in reference_idx: # iterate each list
+                    print('reference_idx', reference_idx) #testprint
+                    print('ind_list', ind_list)
                     func_f_list = [] # func for all freq
                     func_g_list = [] # func for all gamma
                     tempind = temp[ind_list]
                     for harm in range(1, self.settings_init['max_harmonic']+2, 2): # calculate each harm
                         fharmind = fs['f'+str(harm)][ind_list] # f of harm
-                        gharmind = fs['g'+str(harm)][ind_list] # g of harm
+                        gharmind = gs['g'+str(harm)][ind_list] # g of harm
 
                         # calc freq
                         if np.isnan(fharmind).all(): # no data in harm and ind_list
-                            func_f_list.append(lambda temp: np.nan) # add a func return nan
+                            func_f_list.append(lambda temp: np.array([np.nan] * len(temp))) # add a func return nan
                         else: # there is data
-                            func_f_list.append(interp1d(tempind, fharmind, kind=self.exp_ref.mode.fit, fill_value=np.nan, bounds_error=False))
+                            print('tempind', tempind) #testprint
+                            print('fharmind', fharmind) #testprint
+                            func_f_list.append(interp1d(tempind, fharmind, kind=self.exp_ref['mode']['fit'], fill_value=np.nan, bounds_error=False))
                         
                         # calc gamma
                         if np.isnan(gharmind).all(): # no data in harm and ind_list
-                            func_g_list.append(lambda temp: np.nan) # add a func return nan
+                            func_g_list.append(lambda temp: np.array([np.nan] * len(temp))) # add a func return nan
                         else: # there is data
-                            func_g_list.append(interp1d(tempind, gharmind, kind=self.exp_ref.mode.fit, fill_value=np.nan, bounds_error=False))
+                            func_g_list.append(interp1d(tempind, gharmind, kind=self.exp_ref['mode']['fit'], fill_value=np.nan, bounds_error=False))
 
                     # make function for each ind_list
                     func_list.append(self.make_interpfun(func_f_list, func_g_list))
 
-                self.exp_ref.func = func_list # save to class
+                self.exp_ref['func'] = func_list # save to class
 
-                # calculate ref for each film (samp) temp and save to self.samp_ref
+                # calculate ref for each sample (samp) temp and save to self.samp_ref
+                cols_df = self.interp_film_ref('samp')
 
+                # copy df from samp_source
+                df = getattr(self, samp_source).copy()
 
+                # copy film ref to df
+                df.fs = cols_df.fs
+                df.gs = cols_df.gs
+
+                # change mark 1 to 1
+                df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
+                # copy to samp_ref
+                self.samp_ref = df
+                
                 self.refflg[chn_name] = True
                     
             else:
                 pass
-        if mode['cryst'] == 'dual': #TODO
+        elif mode['cryst'] == 'dual': #TODO
             if mode['temp'] == 'const': # dual crystal and constant temperature
                 pass
             elif mode['temp'] == 'var': # dual crystal and constant temperature
@@ -1401,6 +1478,81 @@ class DataSaver:
             ]
         return func_fg
 
+
+    def interp_film_ref(self, chn_name, col=None):
+        '''
+        return fs/gs of chn_name reference by uing the interpolation funcions calculated before
+        col: column name (fs/gs). If None, retrun both.
+        '''
+        # check if the reference is set
+        # if not self.refflg[chn_name]:
+        #     # print(self.exp_ref[chn_name + '_ref']) #testprint
+        #     self.set_ref_set(chn_name, *self.exp_ref[chn_name + '_ref'])
+
+        # samp_source = self.exp_ref['samp_ref'][0]
+        chn_temp = self.get_temp_by_uint_marked_rows(chn_name, dropnanmarkrow=False, unit='C') # in C. If marked only, set dropnanmarkrow=True
+        print(chn_temp) #testprint
+
+        # prepare series fro return
+        cols = getattr(self, chn_name)[['fs', 'gs']].copy()
+
+        # set all fs, gs to [np.nan, np.nan, ...]
+        cols['fs'] = cols['fs'].apply(lambda x: self.nan_harm_list())
+        cols['gs'] = cols['gs'].apply(lambda x: self.nan_harm_list())
+
+        if col not in self._ref_keys: # col is not fs or gs
+            return cols
+
+        # calculate ref for each film (samp) temp and save to self.samp_ref
+
+        if np.isnan(chn_temp).all(): # no temp data
+            print('no temperature data in film!')
+            if col is None:
+                return cols
+            else:
+                return cols[col]
+        
+        # check if all elements in self.exp_ref.samp_ref[1] is list
+        if all([isinstance(l, list) for l in self.exp_ref[chn_name+'_ref'][1]]): # all list
+            film_idx = self.exp_ref[chn_name+'_ref'][1]
+        elif all([isinstance(l, int) for l in self.exp_ref[chn_name+'_ref'][1]]): # all int
+            film_idx = [self.exp_ref[chn_name+'_ref'][1]] # put into a list
+        else:
+            print('Check sample reference index!')
+        if np.isnan(chn_temp).all(): # no temp data
+            print('no temperature data in sample!')
+            if col is None:
+                return cols
+            else:
+                return cols[col]
+        
+        # get interpolated f and g by chn_temp
+        for seg, ind_list in enumerate(film_idx): # iterate each list
+            tempind = chn_temp[ind_list]
+            print('len(ind_list)', len(ind_list)) #testprint
+            print('len(fun)', len(self.exp_ref['func'])) #testprint
+            # get interpolated f, g of temp in ind_list (tempind) 
+            # len(ind_list) can be longer than len(self.exp_ref['func']) 
+            # use modulus 
+            f_list, g_list = self.exp_ref['func'][seg % len(self.exp_ref['func'])](tempind)
+            # transpose 
+            fs_list = np.transpose(np.array(f_list)).tolist()
+            print('len(fs_list)', len(fs_list)) #testprint
+
+            g_arr = np.transpose(np.array(g_list))
+            gs_list = g_arr.tolist()
+
+            # save to df
+            cols.fs[ind_list] = fs_list
+            cols.gs[ind_list] = gs_list
+
+        print('cols[ind_list]\n', cols.iloc[ind_list]) #testprint
+        print(cols[col].head())
+
+        if col is None:
+            return cols
+        else:
+            return cols[col]
 
 
     def set_t0(self, t0=None, t0_shifted=None):

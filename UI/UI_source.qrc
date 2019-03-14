@@ -16,8 +16,10 @@
     <file>rc/ref_channel.svg</file>
     <file>rc/ref_input.svg</file>
     <file>rc/ref_file.svg</file>
-    <file>rc/signal_ch.svg</file>
     <file>rc/signal_ch_off.svg</file>
+    <file>rc/signal_ch_sr.svg</file>
+    <file>rc/signal_ch_s.svg</file>
+    <file>rc/signal_ch_r.svg</file>
     <file>rc/saveAs.svg</file>
     <file>rc/save.svg</file>
     <file>rc/ref_0.svg</file>

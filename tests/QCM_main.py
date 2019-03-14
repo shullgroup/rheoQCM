@@ -28,22 +28,43 @@ from UISettings import settings_init # UI basic settings
 from UISettings import settings_default
 from UISettings import harm_tree as harm_tree_default
 
+
+settings_init_json = os.path.join(os.getcwd(), 'settings_init.json')
+if os.path.exists(settings_init_json):
+    try:
+        with open(settings_init_json, 'r') as f:
+            settings_msater = json.load(f) # read user default settings
+            for key, val in settings_msater.items():
+                # overwrite keys to settings_init
+                if key in settings_init:
+                    settings_init[key] = val
+    except:
+        pass
+else:
+    print('use default settings_init')
+del settings_init_json
+if 'f' in locals():
+    del f
+
 # check default settings file
 print(os.getcwd())
-fileName = os.path.join(os.getcwd(), settings_init['default_settings_file_name'])
-if os.path.exists(fileName):
-    with open(fileName, 'r') as f:
-        settings_user = json.load(f) # read user default settings
-        for key, val in settings_default.items():
-            # add missed keys to settings_user
-            if key not in settings_user:
-                settings_user[key] = val
-        # rename settings_user to settings_defualt
-        settings_default = settings_user
-    print('use user settings_default')
+usersettings_file = os.path.join(os.getcwd(), settings_init['default_settings_file_name'])
+if os.path.exists(usersettings_file):
+    try:
+        with open(usersettings_file, 'r') as f:
+            settings_user = json.load(f) # read user default settings
+            for key, val in settings_default.items():
+                # add missed keys to settings_user
+                if key not in settings_user:
+                    settings_user[key] = val
+            # rename settings_user to settings_defualt
+            settings_default = settings_user
+        print('use user settings')
+    except:
+        print('Error occured while loading {}\nuse default settings'.format(settings_init['default_settings_file_name']))
 else:
-    print('use default settings_default')
-del fileName
+    print('use default settings')
+del usersettings_file
 if 'f' in locals():
     del f
 
@@ -96,6 +117,7 @@ class VNATracker:
         self.setflg.pop('setflg', None) # remove setflg itself
         print('setflg', self.setflg) #testprint
 
+
     def get_cal_filenames(self):
         '''
         find calc file for ADC1 and ADC2 separately
@@ -111,9 +133,7 @@ class VNATracker:
                         cal[key] = os.path.abspath(os.path.join(settings_init['vna_cal_file_path'], file)) # use absolute path
                         break
             print(cal) #testprint
-
         return cal
-
 
 
     def set_check(self, **kwargs):
@@ -129,8 +149,8 @@ class VNATracker:
             if getattr(self, key) != val: # if self.<key> changed
                 setattr(self, key, val) # save val to class
             self.setflg[key] = val # add set key and value to setflg
-
         return self.setflg
+
 
     def reset_flag(self):
         ''' set to vna doesn't neet rest '''
@@ -236,7 +256,11 @@ class QCMApp(QMainWindow):
 
 
         #region cross different sections
-        # harmonic widgets. Add widgets related number of harmonics here
+        ##### harmonic widgets #####
+        # Add widgets related number of harmonics here
+
+        # set number of coulmns in tableWidget_spectra_mechanics_table
+        self.ui.tableWidget_spectra_mechanics_table.setColumnCount(int((settings_init['max_harmonic']+1)/2))
         # loop for setting harmonics
         _translate = QCoreApplication.translate
         for i in range(1, settings_init['max_harmonic']+2, 2):
@@ -337,8 +361,19 @@ class QCMApp(QMainWindow):
             # checkBox_nhplot<n>
             getattr(self.ui, 'checkBox_nhplot' + str(i)).toggled.connect(self.update_widget)
 
+            ## add horizontal header to tableWidget_spectra_mechanics_table
+            self.ui.tableWidget_spectra_mechanics_table.setHorizontalHeaderItem(int((i-1)/2), QTableWidgetItem())
+            self.ui.tableWidget_spectra_mechanics_table.horizontalHeaderItem(int((i-1)/2)).setText(_translate('MainWindow', 'n'+str(i)))
+
+
+
+        ########
+
         # show samp & ref related widgets
         self.setvisible_samprefwidgets(samp_value=True, ref_value=False)
+        # set statusbar icon pushButton_status_signal_ch
+        self.statusbar_signal_chn_update()
+
 
         # set comboBox_plt1_optsy/x, comboBox_plt2_optsy/x
         # dict for the comboboxes
@@ -1324,7 +1359,7 @@ class QCMApp(QMainWindow):
                 setattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i), QRadioButton(self.ui.stackedWidgetPage_mech_expertmode))
                 getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).setObjectName("radioButton_mech_expertmode_calc_"+str(i))
                 self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)), start_row, 0, 1, 1)
-                getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).setText(QCoreApplication.translate("MainWindow", 'layer '+str(i)))
+                getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).setText(QCoreApplication.translate(self, 'layer '+str(i)))
                 # combobox
                 setattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i), QComboBox(self.ui.stackedWidgetPage_mech_expertmode))
                 sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
@@ -1424,6 +1459,11 @@ class QCMApp(QMainWindow):
         if checked:
             # turn off manual refit mode
             self.set_manual_refit_mode(mode=False)
+
+            # check recording chns
+            if (self.settings['comboBox_samp_channel'] == 'none') and (self.settings['comboBox_ref_channel'] == 'none'):
+                self.ui.pushButton_runstop.setChecked(False)
+                return
 
             # check checked harmonice if no, stop
             harm_list = self.get_all_checked_harms()
@@ -1573,7 +1613,7 @@ class QCMApp(QMainWindow):
         # chn_queue_list = list(self.data_saver.get_queue_id(ref_source).tolist()) # list of available index in the target chn
         chn_idx = self.data_saver.get_idx(chn_name).values.tolist() # use list of index for comperison
         # convert ref_idx from str to a list of int
-        ref_idx = UIModules.index_from_str(ref_idx, chn_idx)
+        ref_idx = UIModules.index_from_str(ref_idx, chn_idx, join_segs=False)
         print('ref_idx', ref_idx, type(ref_idx)) #testprint
         # if the list is [] set it to [0], which mean the first data of the channel
         if (not ref_idx) and ((list(self.data_saver.get_queue_id('samp')) !=  list(self.data_saver.get_queue_id('ref')))): # samp and ref were not collected together
@@ -2350,6 +2390,7 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.update_data({'ln': 'lB', 'x': f, 'y': B})
 
         # constrain xlim
+        print(type(f)) #testprint
         if (f is not None) and (f[0] != f[-1]): # f is available
             self.ui.mpl_spectra_fit.ax[0].set_xlim(f[0], f[-1])
             self.ui.mpl_spectra_fit.ax[1].set_xlim(f[0], f[-1])
@@ -2587,6 +2628,7 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.del_templines()
         self.ui.mpl_spectra_fit_polar.del_templines()
         # add devided peaks
+        print(fit_result['comp_g']) # testprint to see when no peak found
         self.ui.mpl_spectra_fit.add_temp_lines(self.ui.mpl_spectra_fit.ax[0], xlist=[data_lG[0]] * len(fit_result['comp_g']), ylist=fit_result['comp_g'])
         self.ui.mpl_spectra_fit_polar.add_temp_lines(self.ui.mpl_spectra_fit_polar.ax[0], xlist=fit_result['comp_g'], ylist=fit_result['comp_b'])
 
@@ -3684,13 +3726,18 @@ class QCMApp(QMainWindow):
                     df_colname = ''
             if df_colname:
                 row_data = df_queue[df_colname].iloc[0]
+                print('type(row_data)', type(row_data)) #testprint
+                print(df_queue[df_colname]) #testprint (it is a series)
                 for tb_col in range(tb_cols):
-                    # print('r,c', tb_row, tb_col) #testprint
+                    print('r,c', tb_row, tb_col) #testprint
                     # if df_colname.endswith('s'): # multiple values
                     #     data = df_queue[df_colname].iloc[0][tb_col]
                     # else:
                     #     data = df_queue[df_colname].iloc[0]
                     if isinstance(row_data, list):
+                        print(df_queue[df_colname].shape) #testprint
+                        print(df_queue[df_colname].iloc[0]) #testprint
+                        # print(df_queue[df_colname].columns) #testprint
                         data = df_queue[df_colname].iloc[0][tb_col]
                     else:
                         data = row_data
@@ -4064,11 +4111,14 @@ class QCMApp(QMainWindow):
             item_samp = self.find_text_item(parent, 'S chn.')
             item_ref = self.find_text_item(parent, 'R chn.')
             # change text
-            item_samp.setText(0, 'Film')
-            item_ref.setText(0, 'Bare')
+            item_samp.setText(0, 'Samp.')
+            item_ref.setText(0, 'Ref.')
         elif value == 'const': # normal mode
-            item_samp = self.find_text_item(parent, 'Film')
-            item_ref = self.find_text_item(parent, 'Bare')
+            item_samp = self.find_text_item(parent, 'Samp.')
+            item_ref = self.find_text_item(parent, 'Ref.')
+            print(item_samp) #testprint
+            print(item_ref) #testprint
+
             # change text
             item_samp.setText(0, 'S chn.')
             item_ref.setText(0, 'R chn.')
@@ -4501,14 +4551,12 @@ class QCMApp(QMainWindow):
         value = self.ui.comboBox_tracking_method.itemData(fitmethod_index)
         self.set_harmdata('comboBox_tracking_method', value, harm=self.settings_harm)
 
+
     def update_spantrack(self, trackmethod_index):
         #NOTUSING
         value = self.ui.comboBox_tracking_condition.itemData(trackmethod_index)
         self.set_harmdata('comboBox_tracking_condition', value, harm=self.settings_harm)
 
-    def update_harmfitfactor(self, harmfitfactor_index):
-        #NOTUSING
-        self.set_harmdata('comboBox_harmfitfactor', value, harm=self.settings_harm)
 
     def setvisible_samprefwidgets(self, samp_value=True, ref_value=False):
         '''
@@ -4532,6 +4580,33 @@ class QCMApp(QMainWindow):
             else:
                 self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(1)
 
+
+    def statusbar_signal_chn_update(self):
+        '''
+        set the pushButton_status_signal_ch
+        '''
+        print('statusbar_signal_chn_update')
+        samp_value = self.settings['comboBox_samp_channel']
+        ref_value = self.settings['comboBox_ref_channel']
+        
+        # convert value to False/True
+        samp_value = True if samp_value != 'none' else False
+        ref_value = True if ref_value != 'none' else False
+    
+        print(samp_value) #testprint
+        print(ref_value) #testprint
+
+        # set tabWidget_settings_settings_samprefchn
+        if samp_value and ref_value: # both samp and ref  (value is '1' or '2')channels are selected
+            self.ui.pushButton_status_signal_ch.setIcon(QIcon(":/icon/rc/signal_ch_sr.svg"))
+        elif not samp_value and not ref_value: # neither of samp or ref channel is selected
+            self.ui.pushButton_status_signal_ch.setIcon(QIcon(":/icon/rc/signal_ch_off.svg"))
+        elif samp_value and not ref_value: # only samp selected
+            self.ui.pushButton_status_signal_ch.setIcon(QIcon(":/icon/rc/signal_ch_s.svg"))
+        elif not samp_value and ref_value: # only ref selected
+            self.ui.pushButton_status_signal_ch.setIcon(QIcon(":/icon/rc/signal_ch_r.svg"))
+        else: # somthing wrong
+            self.ui.pushButton_status_signal_ch.setIcon(QIcon(":/icon/rc/signal_ch_off.svg"))
 
 
 
@@ -4594,8 +4669,11 @@ class QCMApp(QMainWindow):
             else:
                 pass
 
-        # set visibility of samp & ref related widgets
+        # set visibility of samp & ref related widgets 
         self.setvisible_samprefwidgets(samp_value=self.settings['comboBox_samp_channel'] != 'none', ref_value=self.settings['comboBox_ref_channel'] != 'none')
+
+        # set statusbar icon pushButton_status_signal_ch
+        self.statusbar_signal_chn_update()
 
 
     def update_tempsensor(self, signal):
@@ -5009,6 +5087,9 @@ class QCMApp(QMainWindow):
         '''
         data collecting routine
         '''
+        # increase counter
+        self.counter += 1
+
         self.idle = False
         # self.timer.setSingleShot(True)
         scan_interval = self.settings['lineEdit_scaninterval'] * 1000 # in ms
@@ -5128,7 +5209,6 @@ class QCMApp(QMainWindow):
                     elif self.settings['radioButton_spectra_showpolar']: # checked
                         getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'lPfit', 'x': fit_result['fit_g'], 'y': fit_result['fit_b']})
 
-
                     # update lsp
                     factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=chn_name, harm=harm)
                     if 'g_c' in fit_result['v_fit']: # fitting successed
@@ -5174,7 +5254,12 @@ class QCMApp(QMainWindow):
 
                     if self.settings['checkBox_spectra_showchi']: # show chi square
                         getattr(self.ui, 'mpl_sp' + harm).update_sp_text_chi(fit_result['v_fit']['chisqr'])
-
+                else: # collect data w/o fitting
+                    # save data to fs and gs
+                    fs[chn_name].append(np.nan) # fs
+                    gs[chn_name].append(np.nan) # gs = half_width
+                    # clear lines
+                    getattr(self.ui, 'mpl_sp' + harm).clr_lines(l_list=['lGfit', 'lBfit', 'lPfit', 'lsp', 'srec'])
 
                 ## get tracking data
                 # get span from tracking
@@ -5207,9 +5292,8 @@ class QCMApp(QMainWindow):
                 # set xticks
                 # self.mpl_set_faxis(getattr(self.ui, 'mpl_sp' + str(harm)).ax[0])
 
-
-        # Save scan data to file fitting data in RAM to file
-        if self.refresh_modulus() == 0: # check if to save by intervals
+        # Save scan data to file, fitting data in RAM to file
+        if self.spectra_refresh_modulus() == 0: # check if to save by intervals
             self.writing = True
             # save raw
             self.data_saver.dynamic_save(chn_name_list, harm_list, t=curr_time, temp=curr_temp, f=f, G=G, B=B, fs=fs, gs=gs, marks=marks)
@@ -5219,9 +5303,6 @@ class QCMApp(QMainWindow):
 
             # plot data
             self.update_mpl_plt12()
-
-        # increase counter
-        self.counter += 1
 
         if not self.timer.isActive(): # if timer is stopped (test stopped while collecting data)
             # save data
@@ -5234,12 +5315,6 @@ class QCMApp(QMainWindow):
 
         # display total points collected
         self.set_status_pts()
-
-
-
-
-        #
-        # wait bar
 
 
     def data_refit(self, chn_name, sel_idx_dict):
@@ -5383,10 +5458,10 @@ class QCMApp(QMainWindow):
         # print(timer_interval) #testprint
         # print(min(round((1 - timer_remain / timer_interval) * 100), 100)) #testprint
 
-        if self.refresh_modulus() == 0: # going to save data
+        if self.spectra_refresh_modulus() == 0: # going to save data
             txt = '{:.1f} s'.format(timer_remain)
         else:
-            txt = '{:.1f} s + {}'.format(timer_remain, int(self.settings['lineEdit_refreshresolution']) - self.refresh_modulus())
+            txt = '{:.1f} s + {}'.format(timer_remain, int(self.settings['lineEdit_refreshresolution']) - self.spectra_refresh_modulus())
 
         self.set_progressbar(
             val=min(round((1 - timer_remain / timer_interval) * 100), 100),
@@ -5394,7 +5469,7 @@ class QCMApp(QMainWindow):
         )
 
 
-    def refresh_modulus(self):
+    def spectra_refresh_modulus(self):
         '''
         calculate how many times refresh left before recording
         '''

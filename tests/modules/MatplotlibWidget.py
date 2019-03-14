@@ -725,7 +725,7 @@ class MatplotlibWidget(QWidget):
         print(thisline.get_label()) #testprint
         print(x_s.name) #testprint
         print(y_s.name)  #testprint
-        print(ind)    #testprint
+        print(ind)    #testprintk
         # print('onpick1 line:', zip(np.take(xdata, ind), np.take(ydata, ind))) #testprint
 
         # plot
