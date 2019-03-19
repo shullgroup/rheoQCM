@@ -195,7 +195,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1418,8 +1418,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>71</height>
+                   <width>286</width>
+                   <height>133</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1556,7 +1556,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
+                   <width>83</width>
                    <height>71</height>
                   </rect>
                  </property>
@@ -1735,7 +1735,7 @@ background-color: red;
                  <number>10</number>
                 </property>
                 <property name="value">
-                 <number>6</number>
+                 <number>3</number>
                 </property>
                </widget>
               </item>
@@ -2963,6 +2963,29 @@ border-image: url(:/button/rc/plus_p.svg);
                      </property>
                     </spacer>
                    </item>
+                   <item>
+                    <widget class="QLabel" name="label_6">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Reference</string>
+                     </property>
+                     <property name="buddy">
+                      <cstring>comboBox_settings_mechanics_refG</cstring>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QComboBox" name="comboBox_settings_mechanics_refG">
+                     <property name="currentIndex">
+                      <number>-1</number>
+                     </property>
+                    </widget>
+                   </item>
                   </layout>
                  </item>
                  <item>
@@ -2984,25 +3007,9 @@ border-image: url(:/button/rc/plus_p.svg);
                     </spacer>
                    </item>
                    <item>
-                    <widget class="QLabel" name="label_6">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
+                    <widget class="QPushButton" name="pushButton_settings_mechanics_clrallprops">
                      <property name="text">
-                      <string>Reference</string>
-                     </property>
-                     <property name="buddy">
-                      <cstring>comboBox_settings_mechanics_refG</cstring>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QComboBox" name="comboBox_settings_mechanics_refG">
-                     <property name="currentIndex">
-                      <number>-1</number>
+                      <string>Clear All Props.</string>
                      </property>
                     </widget>
                    </item>
@@ -4928,9 +4935,15 @@ border: 1px solid blue;
                    <number>6</number>
                   </property>
                   <item>
-                   <widget class="QLabel" name="label_spectra_mechanics_currmechkey">
-                    <property name="text">
-                     <string/>
+                   <widget class="QSpinBox" name="spinBox_spectra_mechanics_currid">
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                    <property name="buttonSymbols">
+                     <enum>QAbstractSpinBox::UpDownArrows</enum>
+                    </property>
+                    <property name="maximum">
+                     <number>10000</number>
                     </property>
                    </widget>
                   </item>

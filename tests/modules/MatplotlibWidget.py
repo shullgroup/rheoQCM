@@ -717,20 +717,21 @@ class MatplotlibWidget(QWidget):
 
         # print(dir(event)) #testprint
         thisline = event.artist
-        x_s = thisline.get_xdata()
-        y_s = thisline.get_ydata()
+        x_p = thisline.get_xdata()
+        y_p = thisline.get_ydata()
         ind = event.ind[0]
         print(thisline) #testprint
         # print(dir(thisline)) #testprint
         print(thisline.get_label()) #testprint
-        print(x_s.name) #testprint
-        print(y_s.name)  #testprint
+        print(x_p.name) #testprint
+        print(y_p.name)  #testprint
         print(ind)    #testprintk
         # print('onpick1 line:', zip(np.take(xdata, ind), np.take(ydata, ind))) #testprint
 
         # plot
-        print(x_s.iloc[ind], y_s.iloc[ind]) #testprint
-        self.l['lp'][0].set_data(x_s.iloc[ind], y_s.iloc[ind])
+        print('x_p', x_p) #testprint
+        print(x_p.iloc[ind], y_p.iloc[ind]) #testprint
+        self.l['lp'][0].set_data(x_p.iloc[ind], y_p.iloc[ind])
         self.l['lp'][0].set_label(thisline.get_label() + '_' + str(ind)) # transfer the label of picked line and ind to 'lp'
         self.canvas_draw()
 
@@ -913,8 +914,9 @@ class MatplotlibWidget(QWidget):
         ax.title.set_fontsize(fontsize+1)
         ax.xaxis.label.set_size(fontsize+1)
         ax.yaxis.label.set_size(fontsize+1)
-        # ax.set_ylabel(fontsize=fontsize+1)
         ax.tick_params(labelsize=fontsize)
+        ax.xaxis.offsetText.set_size(fontsize)
+        ax.yaxis.offsetText.set_size(fontsize)
         # ax.xaxis.set_major_locator(ticker.LinearLocator(3))
 
         # set text fontsize

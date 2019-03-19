@@ -32,6 +32,9 @@ settings_init = {
     # time string format
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
 
+    # if marked data shown when showing all data
+    'show_marked_when_all': True,
+
     'analysis_mode_disable_list':[
         'pushButton_runstop',
         # 'actionOpen_MyVNA',

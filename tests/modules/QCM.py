@@ -286,8 +286,8 @@ class QCM:
         rd_calc = {}
         delf_calcs = mech_queue.delf_calcs.iloc[0].copy()
         delg_calcs = mech_queue.delg_calcs.iloc[0].copy()
-        rd_exps = mech_queue.rd_exps.iloc[0]
-        rd_calcs = mech_queue.rd_calcs.iloc[0]
+        rd_exps = mech_queue.rd_exps.iloc[0].copy()
+        rd_calcs = mech_queue.rd_calcs.iloc[0].copy()
         print('delf_calcs', delf_calcs) #testprint
         print(type(delf_calcs)) #testprint
         for n in nhplot:
@@ -336,12 +336,12 @@ class QCM:
         mech_queue['rh'] = [[rh] * tot_harms]
 
         # multiple values in list
-        mech_queue['delf_exps'] = qcm_queue['delfs']
+        mech_queue['delf_exps'] = qcm_queue['delfs'].copy()
         mech_queue['delf_calcs'] = [delf_calcs]
-        mech_queue['delg_exps'] = qcm_queue['delgs']
+        mech_queue['delg_exps'] = qcm_queue['delgs'].copy()
         mech_queue['delg_calcs'] = [delg_calcs]
         mech_queue['delg_delfsn_exps'] =[[np.nan] * tot_harms]
-        mech_queue['delg_delfsn_clacs'] =[[np.nan] * tot_harms]
+        mech_queue['delg_delfsn_calcs'] =[[np.nan] * tot_harms]
         mech_queue['rd_exps'] = [rd_exps]
         mech_queue['rd_calcs'] = [rd_calcs]
 
@@ -625,11 +625,13 @@ class QCM:
         '''
         print(type(mech_df)) #testprint
         print(mech_df) #testprint
+        # print(mech_df.drho) #testprint
+        # print(mech_df.drho.values) #testprint
         df = mech_df.copy()
         cols = mech_df.columns
         for col in cols:
             if 'drho' in col:
-                df[col] = df[col].apply(lambda x: list(np.array(x) * 1000) if isinstance(x, list) else x * 1000) # from kg/m2 to g/cm2 (~ um)
+                df[col] = df[col].apply(lambda x: list(np.array(x) * 1000) if isinstance(x, list) else x * 1000) # from kg/m2 to g/m2 (~ um)
             elif 'grho' in col:
                 df[col] = df[col].apply(lambda x: list(np.array(x) / 1000) if isinstance(x, list) else x / 1000) # from Pa kg/m3 to Pa g/cm3 (~ Pa)
             elif 'phi' in col:

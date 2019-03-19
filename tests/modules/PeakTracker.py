@@ -310,10 +310,11 @@ def guess_peak_factors(freq, resonance):
 
 class PeakTracker:
 
-    def __init__(self):
+    def __init__(self, max_harm):
+        self.max_harm = max_harm
         self.harminput = self.init_harmdict()
         self.harmoutput = self.init_harmdict()
-        for harm in range(1, settings_init['max_harmonic']+2, 2):
+        for harm in range(1, self.max_harm+2, 2):
             harm = str(harm)
             self.update_input('samp', harm , [], [], [], {}, {})
             self.update_input('ref', harm , [], [], [], {}, {})
@@ -339,7 +340,7 @@ class PeakTracker:
         create a dict with for saving input or output data
         '''
         harm_dict = {}
-        for i in range(1, settings_init['max_harmonic']+2, 2):
+        for i in range(1, self.max_harm+2, 2):
             harm_dict[str(i)] = {}
         chn_dict = {
             'samp': harm_dict,
@@ -1162,7 +1163,7 @@ class PeakTracker:
                     self.harmoutput[chn_name][harm]['result'].params, 
                     x=self.harminput[chn_name][harm]['f']
                     )
-            else: # return single peak
+            else: # return divided peaks
                 # make gmod and bmod for all components
                 gmods, bmods = make_models(n=self.harmoutput[chn_name][harm]['found_n'])
                 if mod_name == 'gmod':
