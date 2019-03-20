@@ -385,7 +385,7 @@ class QCMApp(QMainWindow):
         ########
 
         # show samp & ref related widgets
-        self.setvisible_samprefwidgets(samp_value=True, ref_value=False)
+        self.setvisible_samprefwidgets()
         # set statusbar icon pushButton_status_signal_ch
         self.statusbar_signal_chn_update()
 
@@ -4391,6 +4391,7 @@ class QCMApp(QMainWindow):
         elif isinstance(self.sender(), QSpinBox):
             self.set_harmdata(self.sender().objectName(), signal, harm=harm)
 
+
     def update_settings_chn(self):
         print('update_settings_chn') #testprint
         if self.sender().objectName() == 'tabWidget_settings_settings_samprefchn': # switched to samp
@@ -4601,7 +4602,13 @@ class QCMApp(QMainWindow):
         if chn_name is None:
             chn_name = self.settings_chn['name']
 
+        # print('get_freq_span') #testprint
+        # print('harm', harm) #testprint
+        # print('chn_name', chn_name) #testprint
+        # print('freq_span', self.settings['freq_span'][chn_name][harm]) #testprint
+
         return self.settings['freq_span'][chn_name][harm]
+
 
     def set_freq_span(self, span, harm=None, chn_name=None):
         '''
@@ -4614,10 +4621,11 @@ class QCMApp(QMainWindow):
         if chn_name is None:
             chn_name = self.settings_chn['name']
 
-        if np.isnan(span[0]) or np.isnan(span[1]): # failed to track peak
+        if any(np.isnan(span)): # failed to track peak
             return # return w/o changing the previous span
         else:
             self.settings['freq_span'][chn_name][harm] = span
+
 
     def check_freq_spans(self):
         '''
@@ -4651,14 +4659,16 @@ class QCMApp(QMainWindow):
         # update lineEdit_startf<n> & lineEdit_endf<n>
         for harm in range(1, self.settings['max_harmonic']+2, 2):
             harm = str(harm)
-            f1, f2 = np.array(self.settings['freq_span']['samp'][harm]) * 1e-6 # in MHz
-            f1r, f2r = np.array(self.settings['freq_span']['ref'][harm]) * 1e-6 # in MHz
+            # f1, f2 = self.settings['freq_span']['samp'][harm] # in Hz
+            f1, f2 = self.get_freq_span(harm=harm, chn_name='samp') # in Hz
+            # f1r, f2r = self.settings['freq_span']['ref'][harm] # in Hz
+            f1r, f2r = self.get_freq_span(harm=harm, chn_name='ref') # in Hz
             if disp_mode == 'centerspan':
                 # convert f1, f2 from start/stop to center/span
                 f1, f2 = UIModules.converter_startstop_to_centerspan(f1, f2)
                 f1r, f2r = UIModules.converter_startstop_to_centerspan(f1r, f2r)
-            getattr(self.ui, 'lineEdit_startf' + harm).setText(UIModules.num2str(f1, precision=6)) # display as MHz
-            getattr(self.ui, 'lineEdit_endf' + harm).setText(UIModules.num2str(f2, precision=6)) # display as MHz
+            getattr(self.ui, 'lineEdit_startf' + harm).setText(UIModules.num2str(f1, precision=1)) # display as Hz
+            getattr(self.ui, 'lineEdit_endf' + harm).setText(UIModules.num2str(f2, precision=1)) # display as Hz
             getattr(self.ui, 'lineEdit_startf' + harm + '_r').setText(UIModules.num2str(f1r, precision=6)) # display as MHz
             getattr(self.ui, 'lineEdit_endf' + harm + '_r').setText(UIModules.num2str(f2r, precision=6)) # display as MHz
 
@@ -4666,13 +4676,14 @@ class QCMApp(QMainWindow):
         harm = self.settings_harm
         print(harm) #testprint
         f1, f2 = self.get_freq_span()
+        # f1, f2 = self.settings['freq_span'][self.settings_chn['name']][harm]
         # Set Start
         self.ui.lineEdit_scan_harmstart.setText(
-            UIModules.num2str(f1*1e-6, precision=6)
+            UIModules.num2str(f1, precision=1)
         )
         # set End
         self.ui.lineEdit_scan_harmend.setText(
-            UIModules.num2str(f2*1e-6, precision=6)
+            UIModules.num2str(f2, precision=1)
         )
 
 
@@ -4726,10 +4737,13 @@ class QCMApp(QMainWindow):
         self.set_harmdata('comboBox_tracking_condition', value, harm=self.settings_harm)
 
 
-    def setvisible_samprefwidgets(self, samp_value=True, ref_value=False):
+    def setvisible_samprefwidgets(self):
         '''
         set the visibility of sample and reference related widget
         '''
+        samp_value = self.settings['comboBox_samp_channel'] != 'none'
+        ref_value = self.settings['comboBox_ref_channel'] != 'none'
+        
         print(samp_value) #testprint
         print(ref_value) #testprint
         self.setvisible_sampwidgets(value=samp_value)
@@ -4838,7 +4852,7 @@ class QCMApp(QMainWindow):
                 pass
 
         # set visibility of samp & ref related widgets 
-        self.setvisible_samprefwidgets(samp_value=self.settings['comboBox_samp_channel'] != 'none', ref_value=self.settings['comboBox_ref_channel'] != 'none')
+        self.setvisible_samprefwidgets()
 
         # set statusbar icon pushButton_status_signal_ch
         self.statusbar_signal_chn_update()
@@ -5133,6 +5147,11 @@ class QCMApp(QMainWindow):
         # load default VNA settings
         self.load_comboBox(self.ui.comboBox_samp_channel, 'vna_channel_opts')
         self.load_comboBox(self.ui.comboBox_ref_channel, 'vna_channel_opts')
+
+        # show samp & ref related widgets
+        self.setvisible_samprefwidgets()
+        # set statusbar icon pushButton_status_signal_ch
+        self.statusbar_signal_chn_update()
 
         # set treeWidget_settings_settings_harmtree display
         self.update_harmonic_tab()

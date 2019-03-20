@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>986</width>
-    <height>941</height>
+    <height>942</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -195,7 +195,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -338,7 +338,7 @@ background-color: red;
                    <item>
                     <widget class="QLabel" name="label_settings_control_samp">
                      <property name="text">
-                      <string>S Channel (MHz)</string>
+                      <string>S Channel (Hz)</string>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>
@@ -348,7 +348,7 @@ background-color: red;
                    <item>
                     <widget class="QLabel" name="label_settings_control_ref">
                      <property name="text">
-                      <string>R Channel (MHz)</string>
+                      <string>R Channel (Hz)</string>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>
@@ -1147,7 +1147,7 @@ background-color: red;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>2</number>
+                    <number>1</number>
                    </property>
                    <property name="documentMode">
                     <bool>false</bool>
@@ -1419,7 +1419,7 @@ background-color: red;
                    <x>0</x>
                    <y>0</y>
                    <width>286</width>
-                   <height>133</height>
+                   <height>134</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1556,7 +1556,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>83</width>
+                   <width>98</width>
                    <height>71</height>
                   </rect>
                  </property>
@@ -5910,7 +5910,7 @@ border: 1px solid blue;
                  <x>0</x>
                  <y>0</y>
                  <width>317</width>
-                 <height>792</height>
+                 <height>793</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_38">
