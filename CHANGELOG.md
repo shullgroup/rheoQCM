@@ -14,6 +14,7 @@
 ### Fixed
 
 - Fix property of none calculated index value which is signed to value from other rows.  
+- Fix harmonic setting items update bugs.
 
 ## [0.16.1] - 2019-03-14
 

@@ -1375,7 +1375,7 @@ class QCMApp(QMainWindow):
                 setattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i), QRadioButton(self.ui.stackedWidgetPage_mech_expertmode))
                 getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).setObjectName("radioButton_mech_expertmode_calc_"+str(i))
                 self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)), start_row, 0, 1, 1)
-                getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).setText(QCoreApplication.translate(self, 'layer '+str(i)))
+                getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).setText(QCoreApplication.translate('MainWindow', 'layer '+str(i)))
                 # combobox
                 setattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i), QComboBox(self.ui.stackedWidgetPage_mech_expertmode))
                 sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
@@ -4454,6 +4454,8 @@ class QCMApp(QMainWindow):
 
         self.update_frequencies() #update frequency dispaly by harm
 
+        print(self.settings['harmdata'][self.settings_chn['name']][harm]) #testprint
+
         # update lineEdit_scan_harmsteps
         self.ui.lineEdit_scan_harmsteps.setText(
             str(self.get_harmdata('lineEdit_scan_harmsteps', harm=harm))
@@ -4926,10 +4928,17 @@ class QCMApp(QMainWindow):
         #             if key == self.get_harmdata(comboBoxName, harm):
         #                 comboBox.setCurrentIndex(comboBox.findData(key))
         #                 break
-        if comboBoxName in self.settings:
-            set_ind = comboBox.findData(self.settings[comboBoxName])
+        if harm is None: # normal combobox
+            if comboBoxName in self.settings:
+                set_ind = comboBox.findData(self.settings[comboBoxName])
+                if set_ind != -1: # key in list
+                    comboBox.setCurrentIndex(set_ind)
+        else: # in harmdata
+            print('harmdata') #testprint
+            set_ind = comboBox.findData(self.get_harmdata(comboBoxName, harm))
             if set_ind != -1: # key in list
-                comboBox.setCurrentIndex(set_ind)
+                print('{} is found'.format(comboBoxName)) #testprint
+                comboBox.setCurrentIndex(set_ind) 
 
 
 

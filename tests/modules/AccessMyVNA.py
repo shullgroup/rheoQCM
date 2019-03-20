@@ -907,7 +907,7 @@ class AccessMyVNA():
         _, self._naverage = self.GetScanAverage()
         _, self._instrmode = self.Getinstrmode()
         self._displaymode = np.array(0, dtype=int)
-        self._chn = np.array(0, dtype=int) # avtive channel
+        _, self._chn = self.getADCChannel() # avtive channel
         self._f = [np.nan, np.nan] # start & stop  frequencies [start, stop]
         _, self._speed, self._step_delay, self._start_delay, self._phase_delay = self.get_speed_delays()
         print(self._nsteps) #testprint
@@ -922,7 +922,7 @@ class AccessMyVNA():
         print(self._phase_delay) #testprint
 
         print('__init__1') #testprint
-        
+
     # use __enter__ __exit__ for with or use try finally
     def __enter__(self):
         self.Init()
@@ -1034,7 +1034,7 @@ class AccessMyVNA():
         '''
         print('MyVNAGetDoubleArray') #testprint
 
-        nResult = np.zeros(nArraySize, dtype=np.float, order='C')
+        nResult = np.zeros(nArraySize, dtype=np.float64, order='C')
         # self.narray = nResult
 
         nRes_ptr = nResult.ctypes.data_as(POINTER(c_double))
@@ -1337,6 +1337,24 @@ class AccessMyVNA():
         return ret, reflectchn
 
 
+    def getADCChannel(self):
+        # get current ADV channel set
+        # nData = [transChn, reflectchn] (float)
+
+        #TODO seems not work (may check C++ source code)
+
+        ret, nData = self.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
+        print('getADCChannel', nData)
+
+        if nData[0] == 1.:
+            reflectchn = 1
+        elif nData[0] == 2.:
+            reflectchn =  2
+        else: 
+            reflectchn = None
+        return ret, reflectchn
+
+
     def set_vna(self, setflg):
         '''
         set MyVNA by setflg (dict)
@@ -1501,18 +1519,21 @@ if __name__ == '__main__':
     # exit(0)
     # # ret = accvna.GetDoubleArray()
     # # ret, f, G, B = accvna.single_scan()
-    # accvna = AccessMyVNA()
-    # # print('acc', accvna._naverage) 
-    # with accvna:
-    #     ret, nSteps = accvna.SetScanSteps(nSteps=300)
-    #     # accvna._get_wait_time()
-    #     # pass
-    #     # print('acc', accvna._naverage) 
-    #     # print(11111) 
+    accvna = AccessMyVNA()
+    # print('acc', accvna._naverage) 
+    with accvna:
+        ret, nSteps = accvna.SetScanSteps(nSteps=300)
+        accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=5)
+        # accvna._get_wait_time()
+        # pass
+        # print('acc', accvna._naverage) 
+        # print(11111) 
 
-    # # print('acc', accvna._naverage)
+    # print('acc', accvna._naverage)
     # exit(0)
     with AccessMyVNA() as accvna:
+        accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=5)
+        # exit(0)
         fileName = r'C:\Users\ShullGroup\Documents\User Data\WQF\GoogleDriveSync\py_programs\QCM\QCM_py\tests\dll\Hermes_4k_steps_4_36MHz_base_ADC2.myVNA.cal'
         ret = accvna.LoadCalibration(fileName)
         ret = accvna.LoadConfiguration(fileName)

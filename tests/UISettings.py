@@ -740,5 +740,5 @@ harm_tree = {
 # set harmdata value
 for harm in range(1, settings_init['max_harmonic']+2, 2):
     harm = str(harm)
-    settings_default['harmdata']['samp'][harm] = harm_tree
-    settings_default['harmdata']['ref'][harm] = harm_tree
+    settings_default['harmdata']['samp'][harm] = harm_tree.copy()
+    settings_default['harmdata']['ref'][harm] = harm_tree.copy()
