@@ -1450,7 +1450,7 @@ class DataSaver:
         # print('idx_list', idx_list) #testprint
         if getattr(self, chn_name).shape[0] == 0: # data is empty
             print('no data')
-            self.refflg = False
+            self.refflg[chn_name] = False
             return
 
         # check idx_list structure

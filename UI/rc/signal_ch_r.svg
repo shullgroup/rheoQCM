@@ -26,7 +26,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="5.6"
-     inkscape:cx="73.946429"
+     inkscape:cx="41.267858"
      inkscape:cy="61.786242"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
@@ -45,7 +45,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -54,32 +54,24 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(0,-263.13332)">
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:42.33333206px;line-height:0%;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#333333;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
-       x="0.95084661"
-       y="294.82544"
-       id="text4511-58-2"><tspan
-         sodipodi:role="line"
-         id="tspan4509-60-7"
-         x="0.95084661"
-         y="294.82544"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:42.33333206px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#333333;stroke-width:0.26458332px;">c</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:23.98888969px;line-height:0%;font-family:'Digital-7 Mono';-inkscape-font-specification:'Digital-7 Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#800000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
-       x="21.806755"
-       y="288.42996"
-       id="text4511-54"><tspan
-         sodipodi:role="line"
-         id="tspan4509-65"
-         x="21.806755"
-         y="288.42996"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:23.98888969px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#800000;stroke-width:0.26458332px;">R</tspan><tspan
-         sodipodi:role="line"
-         x="21.806755"
-         y="288.42996"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:23.98888969px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#800000;stroke-width:0.26458332px;"
-         id="tspan4653" /></text>
+    <g
+       aria-label="c"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:42.33333206px;line-height:0%;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#333333;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="text4511-58-2">
+      <path
+         d="M 3.4313153,265.30786 H 15.1722 q 0.103353,0 0.826823,0.82683 0,0.10335 -2.480468,2.48046 H 5.0849611 q -0.1033529,0 -2.4804687,-2.48046 0,-0.10336 0.8268229,-0.82683 z m -1.6536458,0.90951 q 0.1033529,0 2.4804687,2.48047 v 8.43359 q 0,0.10335 -2.4804687,2.48047 -0.1033529,0 -0.82682289,-0.82682 v -11.74089 q 0,-0.10335 0.82682289,-0.82682 z m 0,14.22135 q 0.1033529,0 2.4804687,2.48047 v 8.43359 q 0,0.10336 -2.4804687,2.48047 -0.1033529,0 -0.82682289,-0.82682 v -11.74089 q 0,-0.10335 0.82682289,-0.82682 z m 3.2246093,11.07943 h 8.4335932 q 0.103353,0 2.480469,2.48047 0,0.10335 -0.826823,0.82682 H 3.348633 q -0.1033529,0 -0.8268229,-0.82682 0,-0.10336 2.4804687,-2.48047 z"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:42.33333206px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#333333;stroke-width:0.26458332px"
+         id="path1379" />
+    </g>
+    <g
+       aria-label="R
+"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:23.98888969px;line-height:0%;font-family:'Digital-7 Mono';-inkscape-font-specification:'Digital-7 Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#800000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="text4511-54">
+      <path
+         d="m 23.212354,271.70333 h 6.653169 q 0.05857,0 0.468533,0.46854 0,0.0586 -1.405599,1.4056 H 24.14942 q -0.05857,0 -1.405599,-1.4056 0,-0.0586 0.468533,-0.46854 z m 7.543381,0.46854 q 0.05857,0 0.468533,0.46853 v 6.65317 q 0,0.0586 -0.468533,0.46853 -0.05857,0 -1.405599,-1.4056 v -4.77903 q 0,-0.0586 1.405599,-1.4056 z m -8.480447,0.0469 q 0.05857,0 1.405599,1.4056 v 4.77904 q 0,0.0586 -1.405599,1.40559 -0.05857,0 -0.468533,-0.46853 v -6.65317 q 0,-0.0586 0.468533,-0.46853 z m 1.405599,6.84058 h 5.528689 q 0.05857,0 0.937066,0.93707 v 0.0469 q 0,0.0586 -0.937066,0.93707 h -5.528689 q -0.05857,0 -0.937066,-0.93707 v -0.0469 q 0,-0.0586 0.937066,-0.93707 z m -1.405599,1.21819 q 0.05857,0 1.405599,1.4056 v 5.34127 q 0,0.0586 -1.405599,1.4056 -0.05857,0 -0.468533,-0.46853 v -7.21541 q 0,-0.0586 0.468533,-0.46853 z m 4.68533,1.17133 h 1.358746 q 0.983919,0.50367 1.686719,3.04546 0.187413,0.39826 1.218185,3.32659 -0.234266,0.46853 -0.234266,0.56224 h -0.04685 q -1.920986,-0.69109 -1.920986,-1.12448 -1.405599,-3.99424 -2.155252,-5.76296 z"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:23.98888969px;font-family:'Open 24 Display St';-inkscape-font-specification:'Open 24 Display St, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#800000;stroke-width:0.26458332px"
+         id="path1376" />
+    </g>
   </g>
 </svg>

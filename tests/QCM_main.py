@@ -5270,8 +5270,6 @@ class QCMApp(QMainWindow):
         '''
         data collecting routine
         '''
-        # increase counter
-        self.counter += 1
 
         self.idle = False
         # self.timer.setSingleShot(True)
@@ -5491,6 +5489,9 @@ class QCMApp(QMainWindow):
             # save data
             self.process_saving_when_stop()
             print('data saved while collecting') #testprint
+
+        # increase counter
+        self.counter += 1
 
         self.idle = True
 
