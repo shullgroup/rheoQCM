@@ -1,2 +1,0 @@
-TODO list
-mech_df uncalculated rows get random value

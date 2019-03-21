@@ -9,7 +9,7 @@ NOTE: Differnt to other modules, the harmonics used in this module are all INT.
 
 
 import numpy as np
-from scipy.optimize import least_squares
+from scipy.optimize import least_squares, root
 from lmfit import Minimizer, minimize, Parameters, fit_report, printfuncs
 
 import pandas as pd
@@ -22,6 +22,12 @@ grho_rh_range = (1e4, 1e10) # Pa kg/m^3 = 1/1000 Pa g/cm^3
 phi_range = (0, np.pi/2) # rad 
 
 e26 = 9.65e-2 # piezoelectric stress coefficient (e = 9.65·10−2 C/m2 for AT-cut quartz)
+g0 = 10 # 10 Hz, Half bandwidth (HWHM) of unloaed resonator (intrinsic dissipation on crystalline quartz)
+dq = 330e-6  # only needed for piezoelectric stiffening calc.
+epsq = 4.54
+eps0 = 8.8e-12
+C0byA = epsq * eps0 / dq 
+
 electrode_default = {'drho':2.8e-3, 'grho3':3.0e14, 'phi':0}
 air_default = {'drho':np.inf, 'grho3':0, 'phi':0} #???
 
@@ -132,24 +138,27 @@ class QCM:
         return answer
 
     ###### new funcs #########
-    def calc_D(n, material, delfstar):
+    def calc_D(self, n, material, delfstar):
         drho = material['drho']
         # set switch to handle ase where drho = 0
         if drho == 0:
             return 0
         else:
-            return 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n, material)
+            return 2 * np.pi * ( n * self.f1 + delfstar) * drho / self.zstar_bulk(n, material)
 
-    def zstar_bulk(n, material):
-        grho3 = material['grho3']
-        grho = grho3*(n/3)**(material['phi']/90)  #check for error here
-        grhostar = grho*np.exp(1j*np.pi*material['phi']/180)
-        return grhostar ** 0.5
 
-    def calc_delfstar_sla(ZL):
-        return f1*1j/(np.pi*Zq)*ZL
+    def zstar_bulk(self, n, material):
+        grho_rh = material['grho_rh']
+        grho = grho_rh * (n / self.rh) ** (material['phi'] / (np.pi / 2))  #check for error here
+        grhostar = grho * np.exp(1j * material['phi'])
+        return grhostar**0.5
 
-    def calc_ZL(n, layers, delfstar):
+
+    def calc_delfstar_sla(self, ZL):
+        return self.f1 * 1j / (np.pi * self.Zq) * ZL
+
+
+    def calc_ZL(self, n, layers, delfstar):
         # layers is a dictionary of dictionaries
         # each dictionary is named according to the layer number
         # layer 1 is closest to the quartz
@@ -159,49 +168,55 @@ class QCM:
 
         # we use the matrix formalism to avoid typos.
         for i in np.arange(1, N):
-            Z[i] = zstar_bulk(n, layers[i])
-            D[i] = calc_D(n, layers[i], delfstar)
-            L[i] = np.array([[np.cos(D[i])+1j*np.sin(D[i]), 0],
-                    [0, np.cos(D[i])-1j*np.sin(D[i])]])
+            Z[i] = self.zstar_bulk(n, layers[i])
+            D[i] = self.calc_D(n, layers[i], delfstar)
+            L[i] = np.array([
+                [np.cos(D[i]) + 1j * np.sin(D[i]), 0], 
+                [0, np.cos(D[i]) - 1j * np.sin(D[i])]
+            ])
 
         # get the terminal matrix from the properties of the last layer
-        D[N] = calc_D(n, layers[N], delfstar)
-        Zf_N = 1j*zstar_bulk(n, layers[N])*np.tan(D[N])
+        D[N] = self.calc_D(n, layers[N], delfstar)
+        Zf_N = 1j * self.zstar_bulk(n, layers[N]) * np.tan(D[N])
 
         # if there is only one layer, we're already done
         if N == 1:
             return Zf_N
 
-        Tn = np.array([[1+Zf_N/Z[N-1], 0],
-            [0, 1-Zf_N/Z[N-1]]])
+        Tn = np.array([
+            [1 + Zf_N / Z[N-1], 0],
+            [0, 1 - Zf_N / Z[N-1]]
+            ])
 
-        uvec = L[N-1]@Tn@np.array([[1.], [1.]])
+        uvec = L[N-1] @ Tn @ np.array([[1.], [1.]])
 
         for i in np.arange(N-2, 0, -1):
-            S[i] = np.array([[1+Z[i+1]/Z[i], 1-Z[i+1]/Z[i]],
-            [1-Z[i+1]/Z[i], 1+Z[i+1]/Z[i]]])
-            uvec = L[i]@S[i]@uvec
+            S[i] = np.array([
+                [1 + Z[i+1] / Z[i], 1 - Z[i+1] / Z[i]],
+                [1 - Z[i+1] / Z[i], 1 + Z[i+1] / Z[i]]
+            ])
+            uvec = L[i] @ S[i] @ uvec
 
-        rstar = uvec[1,0]/uvec[0,0]
-        return Z[1]*(1-rstar)/(1+rstar)
+        rstar = uvec[1,0] / uvec[0,0]
+        return Z[1] * (1 - rstar) / (1 + rstar)
 
 
-    def calc_delfstar(n, layers, calctype):
+    def calc_delfstar(self, n, layers, calctype):
         if not layers: # layers is empty {}
             return np.nan
 
         # there is data
         if 'overlayer' in layers:
-            ZL = calc_ZL(n, {1:layers['film'], 2:layers['overlayer']}, 0)
-            ZL_ref = calc_ZL(n, {1:layers['overlayer']}, 0)
-            del_ZL = ZL-ZL_ref
+            ZL = self.calc_ZL(n, {1:layers['film'], 2:layers['overlayer']}, 0)
+            ZL_ref = self.calc_ZL(n, {1:layers['overlayer']}, 0)
+            del_ZL = ZL - ZL_ref
         else:
-            del_ZL = calc_ZL(n, {1:layers['film']}, 0)
+            del_ZL = self.calc_ZL(n, {1:layers['film']}, 0)
 
         if calctype != 'LL':
             # use the small load approximation in all cases where calctype
             # is not explicitly set to 'LL'
-            return calc_delfstar_sla(del_ZL)
+            return self.calc_delfstar_sla(del_ZL)
 
         else:
             # this is the most general calculation
@@ -212,60 +227,55 @@ class QCM:
             layers_all = {1:layers['electrode'], 2:layers['film']}
             layers_ref = {1:layers['electrode']}
             if 'overlayer' in layers:
-                layers_all[3]=layers['overlayer']
+                layers_all[3] = layers['overlayer']
                 layers_ref[2] = layers['overlayer']
 
-            ZL_all = calc_ZL(n, layers_all, 0)
-            delfstar_sla_all = calc_delfstar_sla(ZL_all)
-            ZL_ref = calc_ZL(n, layers_ref, 0)
-            delfstar_sla_ref = calc_delfstar_sla(ZL_ref)
-
+            ZL_all = self.calc_ZL(n, layers_all, 0)
+            delfstar_sla_all = self.calc_delfstar_sla(ZL_all)
+            ZL_ref = self.calc_ZL(n, layers_ref, 0)
+            delfstar_sla_ref = self.calc_delfstar_sla(ZL_ref)
 
             def solve_Zmot(x):
-                delfstar = x[0] + 1j*x[1]
-                Zmot = calc_Zmot(n,  layers_all, delfstar)
+                delfstar = x[0] + 1j * x[1]
+                Zmot = self.calc_Zmot(n, layers_all, delfstar)
                 return [Zmot.real, Zmot.imag]
 
-            sol = optimize.root(solve_Zmot, [delfstar_sla_all.real,
-                                            delfstar_sla_all.imag])
-            dfc = sol.x[0] + 1j* sol.x[1]
+            sol = root(solve_Zmot, [delfstar_sla_all.real, delfstar_sla_all.imag])
+            dfc = sol.x[0] + 1j * sol.x[1]
 
             def solve_Zmot_ref(x):
-                delfstar = x[0] + 1j*x[1]
-                Zmot = calc_Zmot(n,  layers_ref, delfstar)
+                delfstar = x[0] + 1j * x[1]
+                Zmot = self.calc_Zmot(n, layers_ref, delfstar)
                 return [Zmot.real, Zmot.imag]
 
-            sol = optimize.root(solve_Zmot_ref, [delfstar_sla_ref.real,
-                                                delfstar_sla_ref.imag])
-            dfc_ref = sol.x[0] + 1j* sol.x[1]
+            sol = root(solve_Zmot_ref, [delfstar_sla_ref.real, delfstar_sla_ref.imag])
+            dfc_ref = sol.x[0] + 1j * sol.x[1]
 
-            return dfc-dfc_ref
+            return dfc - dfc_ref
 
 
-    def calc_Zmot(n, layers, delfstar):
-        om = 2 * np.pi *(n*f1 + delfstar)
-        g0 = 10 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
-        Zqc = Zq * (1 + 1j*2*g0/(n*f1))
-        dq = 330e-6  # only needed for piezoelectric stiffening calc.
-        epsq = 4.54; eps0 = 8.8e-12; C0byA = epsq * eps0 / dq; ZC0byA = C0byA / (1j*om)
-        ZPE = -(e26/dq)**2*ZC0byA  # ZPE accounts for oiezoelectric stiffening anc
+    def calc_Zmot(self, n, layers, delfstar):
+        om = 2 * np.pi * (n * self.f1 + delfstar)
+        Zqc = self.Zq * (1 + 1j * 2 * g0 / (n * self.f1))
+        ZC0byA = C0byA / (1j*om)
         # can always be neglected as far as I can tell
+        ZPE = -(e26 / dq)**2 * ZC0byA  # ZPE accounts for piezoelectric stiffening anc
 
-        Dq = om*drho_q/Zq
-        secterm = -1j*Zqc/np.sin(Dq)
-        ZL = calc_ZL(n, layers, delfstar)
+        Dq = om * self.drho_q / self.Zq
+        secterm = -1j * Zqc / np.sin(Dq)
+        ZL = self.calc_ZL(n, layers, delfstar)
         # eq. 4.5.9 in book
-        thirdterm = ((1j*Zqc*np.tan(Dq/2))**-1 + (1j*Zqc*np.tan(Dq/2) + ZL)**-1)**-1
-        Zmot = secterm + thirdterm  +ZPE
+        thirdterm = ((1j * Zqc * np.tan(Dq/2))**-1 + (1j * Zqc * np.tan(Dq / 2) + ZL)**-1)**-1
+        Zmot = secterm + thirdterm  + ZPE
 
         return Zmot
 
 
-
-    def calc_dlam(n, film):
-        return calc_D(n, film, 0).real/(2*np.pi)
+    def calc_dlam(self, n, film):
+        return np.real(self.calc_D(n, film, 0)) / (2 * np.pi)
 
     ##### end new funcs ######
+
 
     def dlam(self, n, dlam_rh, phi):
         return dlam_rh*(n/self.rh) ** (1-phi/np.pi)

@@ -1923,12 +1923,16 @@ class QCMApp(QMainWindow):
             if ext == '.json':
                 with open(fileName, 'w') as f:
                     settings = self.settings.copy()
-                    settings.pop('dateTimeEdit_reftime', None)
-                    settings.pop('dateTimeEdit_settings_data_t0shifted', None)
+                    # remove some keys dependent on each test
+                    settings.pop('dateTimeEdit_reftime', None) # time reference
+                    settings.pop('dateTimeEdit_settings_data_t0shifted', None) # time shift
+                    # settings.pop('lineEdit_datafilestr', None) # file path (it is not in settings)
+
                     line = json.dumps(settings, indent=4) + "\n"
                     f.write(line)
                 print('Settings were exported as json file.')
                 #TODO statusbar
+
 
     def on_triggered_actionSave(self):
         '''
@@ -2045,10 +2049,8 @@ class QCMApp(QMainWindow):
         # # turn off manual refit mode
         # self.set_manual_refit_mode(mode=False)
 
-        # delete all prop plots
-        self.del_prop_plot()
-        # clear all mpl objects
-        self.clear_all_mpl()
+        # clear spectra_fit items
+        self.clr_spectra_fit()
 
         # set widgets enabled by using the disabled list
         self.enable_widgets(
@@ -2106,10 +2108,18 @@ class QCMApp(QMainWindow):
             'pushButton_appendfile_disable_list',
         )
 
+        # clear spectra_fit items
+        self.clr_spectra_fit()
+
+
+    def clr_spectra_fit(self):
         # delete prop plot
         self.del_prop_plot()
         # clear all mpl objects
         self.clear_all_mpl()
+        # clear plainTextEdit
+        self.ui.plainTextEdit_spectra_fit_result.clear()
+
 
     def clear_all_mpl(self):
         '''
@@ -2873,14 +2883,11 @@ class QCMApp(QMainWindow):
             self.enable_widgets('manual_refit_enable_disable_harmtree_list')
             self.add_manual_refit_tab(False)
             # reset index
-            self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
+            self.setvisible_samprefwidgets()
 
             # clear mpl
             self.ui.mpl_spectra_fit.clr_lines()
             self.ui.mpl_spectra_fit_polar.clr_lines()
-
-
-
 
 
     def add_manual_refit_tab(self, signal):
@@ -4669,8 +4676,8 @@ class QCMApp(QMainWindow):
                 f1r, f2r = UIModules.converter_startstop_to_centerspan(f1r, f2r)
             getattr(self.ui, 'lineEdit_startf' + harm).setText(UIModules.num2str(f1, precision=1)) # display as Hz
             getattr(self.ui, 'lineEdit_endf' + harm).setText(UIModules.num2str(f2, precision=1)) # display as Hz
-            getattr(self.ui, 'lineEdit_startf' + harm + '_r').setText(UIModules.num2str(f1r, precision=6)) # display as MHz
-            getattr(self.ui, 'lineEdit_endf' + harm + '_r').setText(UIModules.num2str(f2r, precision=6)) # display as MHz
+            getattr(self.ui, 'lineEdit_startf' + harm + '_r').setText(UIModules.num2str(f1r, precision=1)) # display as Hz
+            getattr(self.ui, 'lineEdit_endf' + harm + '_r').setText(UIModules.num2str(f2r, precision=1)) # display as Hz
 
         # update start/end in treeWidget_settings_settings_harmtree
         harm = self.settings_harm
@@ -5059,7 +5066,7 @@ class QCMApp(QMainWindow):
         self.set_progressbar(val=0, text='')
 
         # set lineEdit_datafilestr
-        self.ui.lineEdit_datafilestr.setText(self.data_saver.path)
+        self.set_filename()
 
 
 
