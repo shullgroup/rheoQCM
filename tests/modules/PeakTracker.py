@@ -303,7 +303,7 @@ def guess_peak_factors(freq, resonance):
     print('amp', amp) #testprint
 
     print('where', np.where(np.abs(half_max-resonance)==np.min(np.abs(half_max-resonance)))) #testprint
-    half_wid = np.absolute(freq[np.where(np.abs(half_max-resonance)==np.min(np.abs(half_max-resonance)))[0][0]] -  cen)
+    half_wid = np.absolute(freq[np.argmin(np.abs(half_max-resonance))] -  cen)
     print(half_wid) #testprint
     return amp, cen, half_wid, half_max
 

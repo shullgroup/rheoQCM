@@ -76,7 +76,7 @@ class QCM:
         '''
         # start by specifying the error input parameters
         fstar_err = np. zeros(1, dtype=np.complex128)
-        fstar_err = (self.f_err_min + self.err_frac * np.imag(fstar)) + 1j*(self.g_err_min + self.err_frac*np.imag(fstar))
+        fstar_err = (self.f_err_min + self.err_frac * np.imag(fstar)) + 1j*(self.g_err_min + self.err_frac * np.imag(fstar))
         return fstar_err
         # ?? show above both imag?
 
@@ -136,6 +136,7 @@ class QCM:
         else:
             answer = self.zstarbulk(grhostar) * np.tan(2 * np.pi * n * self.f1 * drho / self.zstarbulk(grhostar)) 
         return answer
+
 
     ###### new funcs #########
     def calc_D(self, n, material, delfstar):
@@ -285,8 +286,8 @@ class QCM:
         return -np.tan(2*np.pi*self.dlam(n, dlam_rh, phi)*(1-1j*np.tan(phi/2))) / (2*np.pi*self.dlam(n, dlam_rh, phi)*(1-1j*np.tan(phi/2)))
 
 
-    def drho(self, n1, delfstar, dlam_rh, phi):
-        return self.sauerbreym(n1, np.real(delfstar[n1])) / np.real(self.normdelfstar(n1, dlam_rh, phi))
+    # def drho(self, n1, delfstar, dlam_rh, phi):
+        # return self.sauerbreym(n1, np.real(delfstar[n1])) / np.real(self.normdelfstar(n1, dlam_rh, phi))
 
 
     def rhcalc(self, nh, dlam_rh, phi):
@@ -319,24 +320,26 @@ class QCM:
 
     def bulk_guess(self, delfstar):
         ''' get the bulk solution for grho and phi '''
-        grho_rh = (np.pi*self.Zq*abs(delfstar[self.rh])/self.f1) ** 2
-        phi = -2*np.arctan(np.real(delfstar[self.rh]) / np.imag(delfstar[self.rh]))
+        grho_rh = (np.pi * self.Zq * abs(delfstar[self.rh]) / self.f1) ** 2
+        phi = -2 * np.arctan(np.real(delfstar[self.rh]) / np.imag(delfstar[self.rh]))
 
         # calculate rho*lambda
-        lamrho_rh = np.sqrt(grho_rh)/(self.rh*self.f1*np.cos(phi/2))
+        lamrho_rh = np.sqrt(grho_rh) / (self.rh * self.f1 * np.cos(phi/2))
 
-        # we need an estimate for drho.  We only use this approach if it is
-        # reasonably large.  We'll put it at the quarter wavelength condition
-        # for now
+        # we need an estimate for drho. We only use this approach if it is
+        # reasonably large. We'll put it at the quarter wavelength condition for now
 
         drho = lamrho_rh / 4
-        dlam_rh = self.d_lamcalc(self.rh, drho, grho_rh, phi)
+
+        film = {'drho':drho, 'grho3':grho_rh, 'phi':phi}
+        
+        dlam_rh = self.calc_dlam(self.rh, film)
 
         return [dlam_rh, min(phi, np.pi/2)]
 
 
-    def guess_from_props(self, drho, grho_rh, phi):
-        dlam_rh = self.d_lamcalc(self.rh, drho, grho_rh, phi)
+    def guess_from_props(self, film):
+        dlam_rh = self.calc_dlam(self.rh, film)
         return [dlam_rh, phi]
 
 
@@ -345,7 +348,7 @@ class QCM:
         really a placeholder function until we develop a more creative strategy
         for estimating the starting point 
         '''
-        return [0.05, np.pi/180*5]
+        return [0.05, np.pi/180*5] # in rad
 
 
     ########################################################
@@ -355,7 +358,7 @@ class QCM:
     ########################################################
 
 
-    def solve_single_queue(self, nh, qcm_queue, mech_queue):
+    def solve_single_queue(self, nh, qcm_queue, mech_queue, calctype='SLA', film={}):
         '''
         solve the property of a single test.
         nh: list of int

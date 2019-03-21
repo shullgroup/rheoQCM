@@ -1474,17 +1474,18 @@ class QCMApp(QMainWindow):
     def on_clicked_pushButton_runstop(self, checked):
         if checked:
             # turn off manual refit mode
-            self.set_manual_refit_mode(mode=False)
+            self.set_manual_refit_mode(val=False)
 
             # check recording chns
             if (self.settings['comboBox_samp_channel'] == 'none') and (self.settings['comboBox_ref_channel'] == 'none'):
                 self.ui.pushButton_runstop.setChecked(False)
                 return
 
-            # check checked harmonice if no, stop
+            # if no checked harmonic, stop
             harm_list = self.get_all_checked_harms()
             if not harm_list:
                 self.ui.pushButton_runstop.setChecked(False)
+                print('No harmonic is checked for recording!')
                 # TODO update statusbar
                 return
             # check filename if avaialbe
@@ -1505,7 +1506,7 @@ class QCMApp(QMainWindow):
                 self.update_refsource()
 
             # this part is auto reset reftime to current time
-            # USE it only when dateTimeEdit_reftime & pushButton_resetreftime is hidden
+            # it only works when dateTimeEdit_reftime & pushButton_resetreftime is hidden
             if not self.ui.pushButton_resetreftime.isVisible() and not self.ui.dateTimeEdit_reftime.isVisible() and self.ui.pushButton_resetreftime.isEnabled() and self.ui.dateTimeEdit_reftime.isEnabled():
                 self.reset_reftime() # use current time as t0
 
@@ -1939,7 +1940,7 @@ class QCMApp(QMainWindow):
         save current data to file if file has been opened
         '''
         # turn off manual refit mode
-        self.set_manual_refit_mode(mode=False)
+        self.set_manual_refit_mode(val=False)
 
         if self.data_saver.path: # there is file
             self.data_saver.save_data_settings(settings=self.settings)
@@ -1954,7 +1955,7 @@ class QCMApp(QMainWindow):
         ''' save current data to a new file  '''
 
         # turn off manual refit mode
-        self.set_manual_refit_mode(mode=False)
+        self.set_manual_refit_mode(val=False)
 
         # export data to a selected form
         fileName = self.saveFileDialog(title='Choose a new file', filetype=settings_init['default_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
@@ -2030,7 +2031,7 @@ class QCMApp(QMainWindow):
 
         if process:
             # turn off manual refit mode
-            self.set_manual_refit_mode(mode=False)
+            self.set_manual_refit_mode(val=False)
 
         return process
 
@@ -2047,7 +2048,7 @@ class QCMApp(QMainWindow):
             return
 
         # # turn off manual refit mode
-        # self.set_manual_refit_mode(mode=False)
+        # self.set_manual_refit_mode(val=False)
 
         # clear spectra_fit items
         self.clr_spectra_fit()
@@ -2749,7 +2750,7 @@ class QCMApp(QMainWindow):
         self.disable_widgets('manual_refit_enable_disable_harmtree_list')
         # set pushButton_manual_refit checked
         self.show_widgets('manual_refit_enable_disable_list')
-        self.set_manual_refit_mode(mode=True)
+        self.set_manual_refit_mode(val=True)
         # self.ui.pushButton_manual_refit.setChecked(True)
         # self.init_manual_refit()
 
@@ -2839,15 +2840,15 @@ class QCMApp(QMainWindow):
         return f, G, B
 
 
-    def set_manual_refit_mode(self, mode=True):
+    def set_manual_refit_mode(self, val=True):
         '''
         set manual refit mode off:
-            pushButton_manual_refit.setChecked(mode)
+            pushButton_manual_refit.setChecked(val)
             than run self.init_manual_refit()
-        mode: True/False
+        val: True/False
         '''
         # turn off manual refit mode
-        self.ui.pushButton_manual_refit.setChecked(mode)
+        self.ui.pushButton_manual_refit.setChecked(val)
         # set other items
         self.init_manual_refit()
 
@@ -2860,8 +2861,8 @@ class QCMApp(QMainWindow):
         if self.ui.pushButton_manual_refit.isChecked():
             # make a copy of self.freq_span and self.harmdata for refit
             print('copy to active') #testprint
-            self.settings['freq_span']['refit'] = self.settings['freq_span'][self.active['chn_name']]
-            self.settings['harmdata']['refit'] = self.settings['harmdata'][self.active['chn_name']]
+            self.settings['freq_span']['refit'] = self.settings['freq_span'][self.active['chn_name']].copy()
+            self.settings['harmdata']['refit'] = self.settings['harmdata'][self.active['chn_name']].copy()
 
             # add manual refit tab to tabWidget_settings_settings_samprefchn
             self.add_manual_refit_tab(True)
@@ -4411,7 +4412,7 @@ class QCMApp(QMainWindow):
             if self.ui.pushButton_manual_refit.isChecked() & (idx < 2): # current idx changed out of refit (2)
                 print('samprefchn move out of 2') #testprint
                 # disable refit widgets
-                self.set_manual_refit_mode(mode=False)
+                self.set_manual_refit_mode(val=False)
 
             if idx == 0: # swith to samp
                 self.settings_chn = {
