@@ -18,7 +18,7 @@ import scipy.signal
 # import types
 from PyQt5.QtCore import pyqtSlot, Qt, QEvent, QTimer, QEventLoop, QCoreApplication, QSize
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QRadioButton, QMenu, QAction, QMessageBox, QTableWidgetItem, QSizePolicy, QFrame, QLabel
+    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QRadioButton, QMenu, QAction, QMessageBox, QTableWidgetItem, QSizePolicy, QFrame, QLabel
 )
 from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, QDoubleValidator, QRegExpValidator
 
@@ -1039,6 +1039,8 @@ class QCMApp(QMainWindow):
         # comboBox_mech_expertmode_source_electrode
         self.build_comboBox(self.ui.comboBox_mech_expertmode_source_electrode, 'qcm_layer_known_source_opts')
 
+        # comboBox_mech_expertmode_indchn_electrode
+        self.build_comboBox(self.ui.comboBox_mech_expertmode_indchn_electrode, 'ref_channel_opts')
 
         # hide tableWidget_settings_mechanics_errortab
         self.ui.tableWidget_settings_mechanics_errortab.hide()
@@ -1395,11 +1397,19 @@ class QCMApp(QMainWindow):
                 self.build_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)), 'qcm_layer_known_source_opts')
                 # combobox: add signal/slot
 
+                # combobox
+                setattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i),  QComboBox(self.ui.stackedWidgetPage_mech_expertmode))
+                getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)).setObjectName('comboBox_mech_expertmode_indchn_'+str(i))
+                self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)), start_row, 2, 1, 1)
+                # combobox: build with opts
+                self.build_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)), 'ref_channel_opts')
+                # combobox: add signal/slot
+
                 # lineEdit
                 setattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i),QLineEdit(self.ui.stackedWidgetPage_mech_expertmode))
                 getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).setReadOnly(True)
                 getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).setObjectName("lineEdit_mech_expertmode_value_"+str(i))
-                self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)), start_row, 2, 1, 1)
+                self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)), start_row, 3, 1, 1)
                 #change the background
                 getattr(self.ui, 'lineEdit_mech_expertmode_value_' + str(i)).setStyleSheet(
                     "QLineEdit { background: transparent; }"
@@ -1413,7 +1423,9 @@ class QCMApp(QMainWindow):
                 getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).deleteLater()
                 # combobox
                 getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).deleteLater()
-                # lineEdit
+                # combobox
+                getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)).deleteLater()
+                # lineedit
                 getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).deleteLater()
 
                 # move previous layers to (row - 1)
@@ -1425,11 +1437,13 @@ class QCMApp(QMainWindow):
             # bottom_row-i: current row
             self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)), (bottom_row-i+del_nlayers), 0, 1, 1)
             self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)), (bottom_row-i+del_nlayers), 1, 1, 1)
-            self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'lineEdit_mech_expertmode_value_' + str(i)), (bottom_row-i+del_nlayers), 2, 1, 1)
+            self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'comboBox_mech_expertmode_indchn_' + str(i)), (bottom_row-i+del_nlayers), 2, 1, 1)
+            self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'lineEdit_mech_expertmode_value_' + str(i)), (bottom_row-i+del_nlayers), 3, 1, 1)
         # move electrode widgets to (current row + del_nlayers)
         self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.label_mech_expertmode_calc_electrode, bottom_row+del_nlayers, 0, 1, 1)
         self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.comboBox_mech_expertmode_source_electrode, bottom_row+del_nlayers, 1, 1, 1)
-        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.lineEdit_mech_expertmode_value_electrode, bottom_row+del_nlayers, 2, 1, 1)
+        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.comboBox_mech_expertmode_indchn_electrode, bottom_row+del_nlayers, 2, 1, 1)
+        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.lineEdit_mech_expertmode_value_electrode, bottom_row+del_nlayers, 3, 1, 1)
 
         print('rowcount', self.ui.gridLayout_mech_expertmode_layers.rowCount()) #testprint
 
