@@ -1036,6 +1036,9 @@ class QCMApp(QMainWindow):
         self.ui.spinBox_mech_expertmode_layernum.valueChanged.connect(self.update_widget)
         self.ui.spinBox_mech_expertmode_layernum.valueChanged.connect(self.build_mech_layers)
         
+        # comboBox_mech_expertmode_source_bulk
+        self.build_comboBox(self.ui.comboBox_mech_expertmode_source_bulk, 'qcm_layer_known_source_opts')
+
         # comboBox_mech_expertmode_source_electrode
         self.build_comboBox(self.ui.comboBox_mech_expertmode_source_electrode, 'qcm_layer_known_source_opts')
 
@@ -1348,15 +1351,16 @@ class QCMApp(QMainWindow):
         nlayers is from a spinBox which limits its value e.g. [0, 5]
 
         ------------
+        radio button (bulk)      | comobx (source) | lineEdit (value)
         radio button (nth layer) | comobx (source) | lineEdit (value)
         ...
         radio button (electrod)  | comobx (source) | lineEdit (value)
         '''
-        start_row = 1 # the row to insert
+        start_row = 2 # the row to insert
 
-        # check previous number of layer by check label_mech_expertmode_calc_electrode row number
+        # check previous number of layer by check radioButton_mech_expertmode_calc_electrode row number
         # get the bottom row by checking electrode layer
-        bottom_row = self.ui.gridLayout_mech_expertmode_layers.getItemPosition(self.ui.gridLayout_mech_expertmode_layers.indexOf(self.ui.label_mech_expertmode_calc_electrode))[0]
+        bottom_row = self.ui.gridLayout_mech_expertmode_layers.getItemPosition(self.ui.gridLayout_mech_expertmode_layers.indexOf(self.ui.radioButton_mech_expertmode_calc_electrode))[0]
         pre_nlayers = bottom_row - start_row
         nlayers = self.settings.get('spinBox_mech_expertmode_layernum', 0) # get changed number of layers after update in self.settings
         print('pre_nlayers', pre_nlayers) #testprint
@@ -1427,7 +1431,7 @@ class QCMApp(QMainWindow):
             self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)), (bottom_row-i+del_nlayers), 1, 1, 1)
             self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'lineEdit_mech_expertmode_value_' + str(i)), (bottom_row-i+del_nlayers), 2, 1, 1)
         # move electrode widgets to (current row + del_nlayers)
-        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.label_mech_expertmode_calc_electrode, bottom_row+del_nlayers, 0, 1, 1)
+        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.radioButton_mech_expertmode_calc_electrode, bottom_row+del_nlayers, 0, 1, 1)
         self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.comboBox_mech_expertmode_source_electrode, bottom_row+del_nlayers, 1, 1, 1)
         self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.lineEdit_mech_expertmode_value_electrode, bottom_row+del_nlayers, 2, 1, 1)
 
@@ -3740,7 +3744,7 @@ class QCMApp(QMainWindow):
         '''
         # get number of layers 
         n_layers = int(self.ui.spinBox_mech_expertmode_layernum.value())
-        n_layers += 1 # add electrode layer
+        # n_layers += 2 # add electrode and bulk layers
 
         film_layer_dict = {}
 
@@ -3751,6 +3755,14 @@ class QCMApp(QMainWindow):
             'val': {'samp': [0]}
         }
 
+        # bulk layer
+        film_layer_dict[n_layers+1] = {
+            'known': True,
+            'source': 'ind',
+            'val': {'samp': [0]}
+        }
+
+    def get_mech_layer(self, )
 
 
     def mech_solve_chn(self, chn_name, queue_ids):

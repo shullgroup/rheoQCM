@@ -417,6 +417,9 @@ settings_init = {
     #     ('file', 'Other file'),
     # ]),
 
+    # maximum layer for mechanic property calculation
+    'max_mech_layers': 1,
+
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {
         'onelayer': 'One layer',
@@ -426,27 +429,31 @@ settings_init = {
     },
 
     'qcm_layer_known_source_opts': {
+        'ind': 'Index',
         'prop': 'Prop.',
         'fg': u'\u0394' + 'f&' u'\u0394\u0393',
-        'ind': 'Index',
-        'none': '--',
+        'name': 'Name',
+        # 'none': '--',
     },
 
     'qcm_layer_unknown_source_opts': {
         'none': '--',
+        'ind': 'Index',
         'guess': 'Guess',
     },
 
-    'qcm_layer_bulk_val_opts':{
+    'qcm_layer_bulk_name_opts': {
         'air': {
             'drho': np.inf,
             'grho': 0,
             'phi': np.pi / 2,
+            'rh': 3,
         },
         'water': {
             'drho': np.inf, 
             'grho': 1e5, # in Pa
             'phi': np.pi /2,
+            'rh': 3,
         },
     },
 
@@ -714,6 +721,8 @@ settings_default = {
     'checkBox_settings_mechanics_witherror': True, # errorbar
 
     'comboBox_settings_mechanics_selectmodel': 'onelayer',
+
+    'film_layers_dict': {}, # dictionary for saving the layers defination
 }
 
 

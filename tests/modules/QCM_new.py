@@ -9,7 +9,7 @@ NOTE: Differnt to other modules, the harmonics used in this module are all INT.
 
 
 import numpy as np
-from scipy.optimize import least_squares, root
+from scipy import optimize
 from lmfit import Minimizer, minimize, Parameters, fit_report, printfuncs
 
 import pandas as pd
@@ -28,8 +28,8 @@ epsq = 4.54
 eps0 = 8.8e-12
 C0byA = epsq * eps0 / dq 
 
-electrode_default = {'drho':2.8e-3, 'grho3':3.0e14, 'phi':0}
-air_default = {'drho':np.inf, 'grho3':0, 'phi':0} #???
+electrode_default = {'drho': 2.8e-3, 'grho_rh': 3.0e14, 'phi': 0, 'rh': 3} # rh here is relative harmonic. it is different to rh in the calc results
+air_default = {'drho': 0, 'grho_rh': 0, 'phi': np.pi / 2, 'rh': 3} #???
 
 # fit_method = 'lmfit'
 fit_method = 'scipy'
@@ -66,7 +66,6 @@ class QCM:
         # default values
         # self.nhcalc = '355' # harmonics used for calculating
         # self.nhplot = [1, 3, 5] # harmonics used for plotting (show calculated data)
-
 
 
     def fstar_err_calc(self, fstar):
@@ -141,17 +140,21 @@ class QCM:
     ###### new funcs #########
     def calc_D(self, n, material, delfstar):
         drho = material['drho']
-        # set switch to handle ase where drho = 0
+        # set switch to handle as where drho = 0
         if drho == 0:
             return 0
         else:
-            return 2 * np.pi * ( n * self.f1 + delfstar) * drho / self.zstar_bulk(n, material)
+            return 2 * np.pi * (n * self.f1 + delfstar) * drho / self.zstar_bulk(n, material)
+            #?? should delfstar be delfstar.real?
+            #?? can we replace (n * self.f1 + delfstar) with fstar.real
 
 
     def zstar_bulk(self, n, material):
         grho_rh = material['grho_rh']
-        grho = grho_rh * (n / self.rh) ** (material['phi'] / (np.pi / 2))  #check for error here
-        grhostar = grho * np.exp(1j * material['phi'])
+        rh = material['rh']
+        phi = material['phi']
+        grho = grho_rh * (n / rh) ** (phi / (np.pi / 2))  #check for error here
+        grhostar = grho * np.exp(1j * phi)
         return grhostar**0.5
 
 
@@ -207,24 +210,28 @@ class QCM:
             return np.nan
 
         # there is data
-        if 'overlayer' in layers:
-            ZL = self.calc_ZL(n, {1:layers['film'], 2:layers['overlayer']}, 0)
-            ZL_ref = self.calc_ZL(n, {1:layers['overlayer']}, 0)
-            del_ZL = ZL - ZL_ref
-        else:
-            del_ZL = self.calc_ZL(n, {1:layers['film']}, 0)
-
-        if calctype != 'LL':
+        if calctype.upper() == 'SLA':
             # use the small load approximation in all cases where calctype
             # is not explicitly set to 'LL'
+
+            #?? sla doesn't consider electrode layer
+            if 'overlayer' in layers:
+                ZL = self.calc_ZL(n, {1:layers['film'], 2:layers['overlayer']}, 0) #! use layers FROM the one to calc and above
+                ZL_ref = self.calc_ZL(n, {1:layers['overlayer']}, 0) #! use layers ABOVE the one to calc
+                del_ZL = ZL - ZL_ref
+            else: # no else
+                del_ZL = self.calc_ZL(n, {1:layers['film']}, 0)
+
             return self.calc_delfstar_sla(del_ZL)
 
-        else:
+        elif calctype.upper() == 'LL':
             # this is the most general calculation
             # use defaut electrode if it's not specified
-            if 'electrode' not in layers:
+            if 'electrode' not in layers: 
                 layers['electrode'] = electrode_default
 
+            #! layers_all should be layers[:]
+            #! layers_ref should be layers[layer != the layer to calc]
             layers_all = {1:layers['electrode'], 2:layers['film']}
             layers_ref = {1:layers['electrode']}
             if 'overlayer' in layers:
@@ -241,7 +248,7 @@ class QCM:
                 Zmot = self.calc_Zmot(n, layers_all, delfstar)
                 return [Zmot.real, Zmot.imag]
 
-            sol = root(solve_Zmot, [delfstar_sla_all.real, delfstar_sla_all.imag])
+            sol = optimize.root(solve_Zmot, [delfstar_sla_all.real, delfstar_sla_all.imag])
             dfc = sol.x[0] + 1j * sol.x[1]
 
             def solve_Zmot_ref(x):
@@ -249,10 +256,12 @@ class QCM:
                 Zmot = self.calc_Zmot(n, layers_ref, delfstar)
                 return [Zmot.real, Zmot.imag]
 
-            sol = root(solve_Zmot_ref, [delfstar_sla_ref.real, delfstar_sla_ref.imag])
+            sol = optimize.root(solve_Zmot_ref, [delfstar_sla_ref.real, delfstar_sla_ref.imag])
             dfc_ref = sol.x[0] + 1j * sol.x[1]
 
             return dfc - dfc_ref
+        else:
+            return np.nan
 
 
     def calc_Zmot(self, n, layers, delfstar):
@@ -286,8 +295,8 @@ class QCM:
         return -np.tan(2*np.pi*self.dlam(n, dlam_rh, phi)*(1-1j*np.tan(phi/2))) / (2*np.pi*self.dlam(n, dlam_rh, phi)*(1-1j*np.tan(phi/2)))
 
 
-    # def drho(self, n1, delfstar, dlam_rh, phi):
-        # return self.sauerbreym(n1, np.real(delfstar[n1])) / np.real(self.normdelfstar(n1, dlam_rh, phi))
+    def drho(self, n1, delfstar, dlam_rh, phi):
+        return self.sauerbreym(n1, np.real(delfstar[n1])) / np.real(self.normdelfstar(n1, dlam_rh, phi))
 
 
     def rhcalc(self, nh, dlam_rh, phi):
@@ -364,6 +373,8 @@ class QCM:
         nh: list of int
         qcm_queue:  QCM data. df (shape[0]=1) 
         mech_queue: initialized property data. df (shape[0]=1)
+        calctype: 'SLA' / 'LL'
+        film: dict of the film layers information
         return mech_queue
         '''
         # get fstar
@@ -379,7 +390,7 @@ class QCM:
         # get the marks [1st, 3rd, 5th, ...]
         marks = qcm_queue.marks.iloc[0]
         # find where the mark is not nan or None
-        nhplot = [i*2+1 for i, mark in enumerate(marks) if mark != np.nan and mark is not None ]
+        nhplot = [i*2+1 for i, mark in enumerate(marks) if (not np.isnan(mark)) and (mark is not None) ]
 
         # fstar_err ={}
         # for n in nhplot: 
@@ -388,13 +399,15 @@ class QCM:
 
         # set up to handle one or two layer cases
         # overlayer set to air if it doesn't exist in soln_input
+        #! check the last layer. it should be air or water or so with inf thickness
+        #! if rd > 0.5 and nl < layers, set out layers to {0, 0, 0}
         if 'overlayer' in qcm_queue.keys():
             overlayer = qcm_queue.overlayer.iat[0, 0]
         else:
             overlayer = {'drho':0, 'grho_rh':0, 'phi':0}
 
 
-        drho, grho_rh, phi, dlam_rh, err = self.solve_general(nh, delfstar, overlayer)
+        drho, grho_rh, phi, dlam_rh, err = self.solve_general(nh, delfstar, layers, calctype, prop_guess={})
 
         # now back calculate delfstar, rh and rd from the solution
         delfstar_calc = {}
@@ -408,7 +421,7 @@ class QCM:
         print('delf_calcs', delf_calcs) #testprint
         print(type(delf_calcs)) #testprint
         for n in nhplot:
-            delfstar_calc[n] = self.delfstarcalc(n, drho, grho_rh, phi, overlayer)
+            delfstar_calc[n] = self.calc_delfstar(n, layers, calctype)
             delf_calcs[nh2i(n)] = np.real(delfstar_calc[n])
             delg_calcs[nh2i(n)] = np.imag(delfstar_calc[n])
             
@@ -470,7 +483,7 @@ class QCM:
         ########## TODO 
 
 
-    def solve_general(self, nh, delfstar, overlayer, prop_guess={}):
+    def solve_general(self, nh, delfstar, layers, calctype, prop_guess={}):
         '''
         solve the property of a single test.
         nh: list of int
@@ -497,7 +510,7 @@ class QCM:
         # solve the problem
         if ~np.isnan(rd_exp) or ~np.isnan(rh_exp):
             print('rd_exp, rh_exp is not nan') #testprint
-            # TODO change here for the model selection
+            #TODO change here for the model selection
             if prop_guess: # value{'drho', 'grho_rh', 'phi'}
                 dlam_rh, phi = self.guess_from_props(**prop_guess)
             elif rd_exp > 0.5:
@@ -508,7 +521,7 @@ class QCM:
             print('dlam_rh', dlam_rh) #testprint
             print('phi', phi) #testprint
             
-            if fit_method == 'lmfit':
+            if fit_method == 'lmfit': # this part is the old protocal w/o jacobian
                 params1 = Parameters()
                 params1.add('dlam_rh', value=dlam_rh, min=dlam_rh_range[0], max=dlam_rh_range[1])
                 params1.add('phi', value=phi, min=phi_range[0], max=phi_range[1])
@@ -539,15 +552,17 @@ class QCM:
                 drho = self.drho(n1, delfstar, dlam_rh, phi)
                 grho_rh = self.grho_from_dlam(self.rh, drho, dlam_rh, phi)
             else: # scipy
-                lb = np.array([dlam_rh_range[0], phi_range[0]])  # lower bounds on dlam3 and phi
-                ub = np.array([dlam_rh_range[1], phi_range[1]])  # upper bonds on dlam3 and phi
+                lb = np.array([dlam_rh_range[0], phi_range[0]])  # lower bounds on dlam_rh and phi
+                ub = np.array([dlam_rh_range[1], phi_range[1]])  # upper bonds on dlam_rh and phi
 
+                # we solve the problem initially using the harmonic and dissipation
+                # ratios, using the small load approximation
                 def ftosolve(x):
                     return [self.rhcalc(nh, x[0], x[1])-rh_exp, self.rdcalc(nh, x[0], x[1])-rd_exp]
 
                 x0 = np.array([dlam_rh, phi])
                 print(x0) #testprint
-                soln1 = least_squares(ftosolve, x0, bounds=(lb, ub))
+                soln1 = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
                 print(soln1['x']) #testprint
                 dlam_rh = soln1['x'][0]
                 phi =soln1['x'][1]
@@ -565,7 +580,7 @@ class QCM:
             if drho_range[0]<=drho<=drho_range[1] and grho_rh_range[0]<=grho_rh<=grho_rh_range[1] and phi_range[0]<=phi<=phi_range[1]:
                 
                 print('1st solution in range') #testprint
-                if fit_method == 'lmfit':
+                if fit_method == 'lmfit': # this part is the old protocal w/o jacobian 
                     params2 = Parameters()
 
                     params2.add('drho', value=dlam_rh, min=drho_range[0], max=drho_range[1])
@@ -629,12 +644,12 @@ class QCM:
                     ub = np.array([drho_range[1], grho_rh_range[1], phi_range[1]])  # upper bounds drho, grho3, phi
 
                     def ftosolve2(x):
+                        layers['film'] = {'drho':x[0], 'grho_rh':x[1], 'phi':x[2]}
                         return ([
-                            np.real(delfstar[n1]) - np.real(self.delfstarcalc(n1, x[0], x[1], x[2], overlayer)),
-                            np.real(delfstar[n2]) - np.real(self.delfstarcalc(n2, x[0], x[1], x[2], overlayer)),
-                            np.imag(delfstar[n3]) - np.imag(self.delfstarcalc(n3, x[0], x[1], x[2], overlayer))
-                            ]
-                        )
+                            np.real(delfstar[n1]) - np.real(self.calc_delfstar(n1, layers, calctype)),
+                            np.real(delfstar[n2]) - np.real(self.calc_delfstar(n2, layers, calctype)),
+                            np.imag(delfstar[n3]) - np.imag(self.calc_delfstar(n3, layers, calctype))
+                        ])
                     
                     # put the input uncertainties into a 3 element vector
                     delfstar_err = np.zeros(3)
@@ -643,11 +658,12 @@ class QCM:
                     delfstar_err[2] = np.imag(self.fstar_err_calc(delfstar[n3]))
 
                     # recalculate solution to give the uncertainty, if solution is viable
-                    soln2 = least_squares(ftosolve2, x0, bounds=(lb, ub))
+                    soln2 = optimize.least_squares(ftosolve2, x0, bounds=(lb, ub))
                     drho = soln2['x'][0]
                     grho_rh = soln2['x'][1]
                     phi = soln2['x'][2]
-                    dlam_rh = self.d_lamcalc(self.rh, drho, grho_rh, phi)
+                    film = {'drho':drho, 'grho_rh':grho_rh, 'phi':phi}
+                    dlam_rh = self.calc_dlam(self.rh, film)
                     jac = soln2['jac']
                     print('jac', jac) #testprint
                     jac_inv = np.linalg.inv(jac)
