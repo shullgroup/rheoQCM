@@ -1035,13 +1035,37 @@ class QCMApp(QMainWindow):
         self.ui.spinBox_mech_expertmode_layernum.setMaximum(settings_init['max_mech_layers'])
         self.ui.spinBox_mech_expertmode_layernum.valueChanged.connect(self.update_widget)
         self.ui.spinBox_mech_expertmode_layernum.valueChanged.connect(self.build_mech_layers)
-        
-        # comboBox_mech_expertmode_source_electrode
-        self.build_comboBox(self.ui.comboBox_mech_expertmode_source_electrode, 'qcm_layer_known_source_opts')
+        self.ui.spinBox_mech_expertmode_layernum.valueChanged.connect(self.make_film_layers_dict)
 
-        # comboBox_mech_expertmode_indchn_electrode
-        self.build_comboBox(self.ui.comboBox_mech_expertmode_indchn_electrode, 'ref_channel_opts')
+        # lineEdit_mech_expertmode_value_0
+        # change the background
+        self.ui.lineEdit_mech_expertmode_value_0.setStyleSheet(
+            "QLineEdit { background: transparent; }"
+        )
+        self.ui.lineEdit_mech_expertmode_value_0.textChanged.connect(self.update_widget)
+        self.ui.lineEdit_mech_expertmode_value_0.textChanged.connect(self.make_film_layers_dict)
 
+        # comboBox_mech_expertmode_indchn_0
+        self.build_comboBox(self.ui.comboBox_mech_expertmode_indchn_0, 'ref_channel_opts')
+        self.ui.comboBox_mech_expertmode_indchn_0.currentIndexChanged.connect(self.update_widget)
+
+        # comboBox_mech_expertmode_source_0
+        self.build_comboBox(self.ui.comboBox_mech_expertmode_source_0, 'qcm_layer_known_source_opts')
+        self.ui.comboBox_mech_expertmode_source_0.currentIndexChanged.connect(self.on_mech_layer_source_changed)
+        self.ui.comboBox_mech_expertmode_source_0.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_mech_expertmode_source_0.currentIndexChanged.connect(self.make_film_layers_dict)
+
+        # radioButton_mech_expertmode_calc_0
+        self.ui.radioButton_mech_expertmode_calc_0.toggled.connect(self.update_widget) 
+
+        # save current value to self.settings
+        self.settings['lineEdit_mech_expertmode_value_0'] = self.ui.lineEdit_mech_expertmode_value_0.text()
+        self.settings['comboBox_mech_expertmode_indchn_0'] = self.ui.comboBox_mech_expertmode_indchn_0.itemData(self.ui.comboBox_mech_expertmode_indchn_0.currentIndex())
+        self.settings['comboBox_mech_expertmode_source_0'] = self.ui.comboBox_mech_expertmode_source_0.itemData(self.ui.comboBox_mech_expertmode_source_0.currentIndex())
+        self.settings['radioButton_mech_expertmode_calc_0'] = self.ui.radioButton_mech_expertmode_calc_0.isChecked()
+
+        ##
+                
         # hide tableWidget_settings_mechanics_errortab
         self.ui.tableWidget_settings_mechanics_errortab.hide()
         # hide tableWidget_settings_mechanics_contoursettings
@@ -1356,9 +1380,9 @@ class QCMApp(QMainWindow):
         '''
         start_row = 1 # the row to insert
 
-        # check previous number of layer by check label_mech_expertmode_calc_electrode row number
+        # check previous number of layer by check radioButton_mech_expertmode_calc_0 row number
         # get the bottom row by checking electrode layer
-        bottom_row = self.ui.gridLayout_mech_expertmode_layers.getItemPosition(self.ui.gridLayout_mech_expertmode_layers.indexOf(self.ui.label_mech_expertmode_calc_electrode))[0]
+        bottom_row = self.ui.gridLayout_mech_expertmode_layers.getItemPosition(self.ui.gridLayout_mech_expertmode_layers.indexOf(self.ui.radioButton_mech_expertmode_calc_0))[0]
         pre_nlayers = bottom_row - start_row
         nlayers = self.settings.get('spinBox_mech_expertmode_layernum', 0) # get changed number of layers after update in self.settings
         print('pre_nlayers', pre_nlayers) #testprint
@@ -1378,12 +1402,15 @@ class QCMApp(QMainWindow):
             print('add') #testprint
             for i in range(pre_nlayers+1, nlayers+1):
                 print(i) #testprint
-                # radiobutton
+
+                ## create wedgits
+                # radiobutton radioButton_mech_expertmode_calc_
                 setattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i), QRadioButton(self.ui.stackedWidgetPage_mech_expertmode))
                 getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).setObjectName("radioButton_mech_expertmode_calc_"+str(i))
                 self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)), start_row, 0, 1, 1)
                 getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).setText(QCoreApplication.translate('MainWindow', 'layer '+str(i)))
-                # combobox
+
+                # combobox comboBox_mech_expertmode_source_
                 setattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i), QComboBox(self.ui.stackedWidgetPage_mech_expertmode))
                 sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
                 sizePolicy.setHorizontalStretch(0)
@@ -1393,27 +1420,59 @@ class QCMApp(QMainWindow):
                 getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).setCurrentText("")
                 getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).setObjectName("comboBox_mech_expertmode_source_"+str(i))
                 self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)), start_row, 1, 1, 1)
-                # combobox: build with opts
-                self.build_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)), 'qcm_layer_known_source_opts')
-                # combobox: add signal/slot
 
-                # combobox
+                # combobox comboBox_mech_expertmode_indchn_
                 setattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i),  QComboBox(self.ui.stackedWidgetPage_mech_expertmode))
                 getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)).setObjectName('comboBox_mech_expertmode_indchn_'+str(i))
                 self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)), start_row, 2, 1, 1)
-                # combobox: build with opts
-                self.build_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)), 'ref_channel_opts')
-                # combobox: add signal/slot
 
-                # lineEdit
+                # lineEdit lineEdit_mech_expertmode_value_
                 setattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i),QLineEdit(self.ui.stackedWidgetPage_mech_expertmode))
-                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).setReadOnly(True)
+                # getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).setReadOnly(True)
                 getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).setObjectName("lineEdit_mech_expertmode_value_"+str(i))
                 self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)), start_row, 3, 1, 1)
                 #change the background
-                getattr(self.ui, 'lineEdit_mech_expertmode_value_' + str(i)).setStyleSheet(
-                    "QLineEdit { background: transparent; }"
-                )
+                # getattr(self.ui, 'lineEdit_mech_expertmode_value_' + str(i)).setStyleSheet(
+                    # "QLineEdit { background: transparent; }"
+                # )
+
+                ## set signals. reverse the widgets secquence
+                # linedeit: signal
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).textEdited.connect(self.update_widget)
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).textEdited.connect(self.make_film_layers_dict)
+                # combobox: add signal/slot
+                getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)).currentIndexChanged.connect(self.update_widget)
+                getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)).currentIndexChanged.connect(self.make_film_layers_dict)
+
+                # combobox: add signal/slot
+                getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).currentIndexChanged.connect(self.update_widget)
+                getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).currentIndexChanged.connect(self.on_mech_layer_source_changed)
+                getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).currentIndexChanged.connect(self.make_film_layers_dict)
+
+                # radiobutton: signal
+                getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).toggled.connect(self.update_widget)
+                getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).toggled.connect(self.make_film_layers_dict)
+
+                ## initiate values. reverse the widgets secquence
+                # combobox: build with opts
+                self.build_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)), 'ref_channel_opts')
+                # combobox: build with opts
+                self.build_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)), 'qcm_layer_known_source_opts')
+
+                # save current value to self.settings
+                self.settings['lineEdit_mech_expertmode_value_'+str(i)] = getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).text()
+
+                # save current value to self.settings
+                self.settings['comboBox_mech_expertmode_indchn_'+str(i)] = getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)).itemData(getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)).currentIndex())
+
+                # save current value to self.settings
+                self.settings['comboBox_mech_expertmode_source_'+str(i)] = getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).itemData(getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).currentIndex())
+
+                # save current value to self.settings
+                self.settings['radioButton_mech_expertmode_calc_'+str(i)] = getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).isChecked()
+
+
+
         elif pre_nlayers > nlayers:
             # delete layers from row 1 (leave bulk (0))
             print('delete') #testprint
@@ -1440,10 +1499,10 @@ class QCMApp(QMainWindow):
             self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'comboBox_mech_expertmode_indchn_' + str(i)), (bottom_row-i+del_nlayers), 2, 1, 1)
             self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'lineEdit_mech_expertmode_value_' + str(i)), (bottom_row-i+del_nlayers), 3, 1, 1)
         # move electrode widgets to (current row + del_nlayers)
-        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.label_mech_expertmode_calc_electrode, bottom_row+del_nlayers, 0, 1, 1)
-        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.comboBox_mech_expertmode_source_electrode, bottom_row+del_nlayers, 1, 1, 1)
-        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.comboBox_mech_expertmode_indchn_electrode, bottom_row+del_nlayers, 2, 1, 1)
-        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.lineEdit_mech_expertmode_value_electrode, bottom_row+del_nlayers, 3, 1, 1)
+        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.radioButton_mech_expertmode_calc_0, bottom_row+del_nlayers, 0, 1, 1)
+        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.comboBox_mech_expertmode_source_0, bottom_row+del_nlayers, 1, 1, 1)
+        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.comboBox_mech_expertmode_indchn_0, bottom_row+del_nlayers, 2, 1, 1)
+        self.ui.gridLayout_mech_expertmode_layers.addWidget(self.ui.lineEdit_mech_expertmode_value_0, bottom_row+del_nlayers, 3, 1, 1)
 
         print('rowcount', self.ui.gridLayout_mech_expertmode_layers.rowCount()) #testprint
 
@@ -3748,24 +3807,65 @@ class QCMApp(QMainWindow):
         self.qcm.rh = int(self.settings['comboBox_settings_mechanics_refG'])
 
 
+    def on_mech_layer_source_changed(self, signal):
+        '''
+        hide/show comboBox_mech_expertmode_indchn_<n> by comboBox_mech_expertmode_source_<n> value
+        '''
+        sender_name = self.sender().objectName()
+
+        sender_val = self.sender().itemData(signal) # str
+
+        layer_num = sender_name.split('_')[-1] # str
+
+        if sender_val == 'ind': # use index 
+            # show comboBox_mech_expertmode_indchn_<n>
+            getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+layer_num).setVisible(True)
+
+            # set comboBox_mech_expertmode_indchn_<n> format
+            if layer_num == '0': # electrode layer and there is data. This the the bare value in air use the same in data chn_name ref
+                #TODO This layer should be set at the same time data reference chn is set
+                pass
+            else: # film layers
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText('[]')
+        else: # use other form
+            # hide comboBox_mech_expertmode_indchn_<n>
+            getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+layer_num).setVisible(False)
+
+            # set lineEdit_mech_expertmode_value_<n>
+            if sender_val == 'prop': # use property
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText("{'drho': 0, 'grho': 0, 'phi': 0, 'rh':1}")
+            elif sender_val == 'name': # use name
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText("air")
+            elif sender_val == 'fg': # use freq and gamma value
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText("{'f': [], 'g': []}")
+
+
+
+
     def make_film_layers_dict(self):
         '''
         make a dict with film layers construction and save it to self.settings['film_layers_dict']
         '''
+        prefix = {
+            'calc': 'radioButton_mech_expertmode_calc_', 
+            'source': 'comboBox_mech_expertmode_source_', 
+            'indchn': 'comboBox_mech_expertmode_indchn_',
+            'val': 'lineEdit_mech_expertmode_value_',
+        }
         # get number of layers 
         n_layers = int(self.ui.spinBox_mech_expertmode_layernum.value())
         n_layers += 1 # add electrode layer
 
-        film_layer_dict = {}
+        print(n_layers) #testprint
 
-        # electrode layer
-        film_layer_dict[0] = {
-            'known': True,
-            'source': 'ind',
-            'val': {'samp': [0]}
-        }
+        film_layers_dict = {}
 
+        for n in range(n_layers): # all layers
+            print(n) #testprint
+            n = str(n) # convert to string for storing as json, which does not support int key
+            film_layers_dict[n] = {key: self.settings.get(pre_name+n) for key, pre_name in prefix.items()}
 
+        print(film_layers_dict) #testprint
 
     def mech_solve_chn(self, chn_name, queue_ids):
         '''
@@ -3857,6 +3957,9 @@ class QCMApp(QMainWindow):
         collect data and send to update_spectra_mechanics_table
         '''
         chn_name = self.mech_chn
+
+        if not self.data_saver.path: # no data
+            return
 
         qcm_df = self.data_saver.df_qcm(chn_name)
         
