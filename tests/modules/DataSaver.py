@@ -755,6 +755,13 @@ class DataSaver:
         return getattr(self, chn_name + '_prop')[self.get_mech_key(nhcalc, rh)].copy()
 
 
+    def get_prop_keys(self, chn_name):
+        '''
+        get keys (solution names) in self.'chn_name'_prop
+        '''
+        return getattr(self, chn_name + '_prop').keys()
+
+
     def clr_mech_df_in_prop(self, chn_name=None, mech_keys=[]):
         '''
         clear mech_df in samp_prop and ref_prop by given mech_key

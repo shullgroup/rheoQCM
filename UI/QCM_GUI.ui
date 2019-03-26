@@ -3199,6 +3199,22 @@ border-image: url(:/button/rc/plus_p.svg);
                        <property name="verticalSpacing">
                         <number>0</number>
                        </property>
+                       <item row="0" column="3">
+                        <widget class="QLabel" name="label_21">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="text">
+                          <string>Value</string>
+                         </property>
+                         <property name="alignment">
+                          <set>Qt::AlignCenter</set>
+                         </property>
+                        </widget>
+                       </item>
                        <item row="0" column="1">
                         <widget class="QLabel" name="label_20">
                          <property name="sizePolicy">
@@ -3231,6 +3247,26 @@ border-image: url(:/button/rc/plus_p.svg);
                          </property>
                         </widget>
                        </item>
+                       <item row="1" column="0">
+                        <widget class="QRadioButton" name="radioButton_mech_expertmode_calc_0">
+                         <property name="text">
+                          <string>Electrode</string>
+                         </property>
+                         <property name="checkable">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="1" column="3">
+                        <widget class="QLineEdit" name="lineEdit_mech_expertmode_value_0">
+                         <property name="readOnly">
+                          <bool>true</bool>
+                         </property>
+                         <property name="clearButtonEnabled">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
                        <item row="1" column="1">
                         <widget class="QComboBox" name="comboBox_mech_expertmode_source_0">
                          <property name="sizePolicy">
@@ -3243,42 +3279,6 @@ border-image: url(:/button/rc/plus_p.svg);
                        </item>
                        <item row="1" column="2">
                         <widget class="QComboBox" name="comboBox_mech_expertmode_indchn_0"/>
-                       </item>
-                       <item row="1" column="3">
-                        <widget class="QLineEdit" name="lineEdit_mech_expertmode_value_0">
-                         <property name="readOnly">
-                          <bool>true</bool>
-                         </property>
-                         <property name="clearButtonEnabled">
-                          <bool>false</bool>
-                         </property>
-                        </widget>
-                       </item>
-                       <item row="0" column="3">
-                        <widget class="QLabel" name="label_21">
-                         <property name="sizePolicy">
-                          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                           <horstretch>0</horstretch>
-                           <verstretch>0</verstretch>
-                          </sizepolicy>
-                         </property>
-                         <property name="text">
-                          <string>Value</string>
-                         </property>
-                         <property name="alignment">
-                          <set>Qt::AlignCenter</set>
-                         </property>
-                        </widget>
-                       </item>
-                       <item row="1" column="0">
-                        <widget class="QRadioButton" name="radioButton_mech_expertmode_calc_0">
-                         <property name="text">
-                          <string>Electrode</string>
-                         </property>
-                         <property name="checkable">
-                          <bool>false</bool>
-                         </property>
-                        </widget>
                        </item>
                       </layout>
                      </item>

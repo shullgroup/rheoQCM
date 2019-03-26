@@ -1046,17 +1046,22 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_mech_expertmode_value_0.textChanged.connect(self.make_film_layers_dict)
 
         # comboBox_mech_expertmode_indchn_0
-        self.build_comboBox(self.ui.comboBox_mech_expertmode_indchn_0, 'ref_channel_opts')
         self.ui.comboBox_mech_expertmode_indchn_0.currentIndexChanged.connect(self.update_widget)
 
         # comboBox_mech_expertmode_source_0
-        self.build_comboBox(self.ui.comboBox_mech_expertmode_source_0, 'qcm_layer_known_source_opts')
-        self.ui.comboBox_mech_expertmode_source_0.currentIndexChanged.connect(self.on_mech_layer_source_changed)
         self.ui.comboBox_mech_expertmode_source_0.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_mech_expertmode_source_0.currentIndexChanged.connect(self.on_mech_layer_source_changed)
         self.ui.comboBox_mech_expertmode_source_0.currentIndexChanged.connect(self.make_film_layers_dict)
 
         # radioButton_mech_expertmode_calc_0
         self.ui.radioButton_mech_expertmode_calc_0.toggled.connect(self.update_widget) 
+
+        # build combox
+        # comboBox_mech_expertmode_indchn_0
+        self.build_comboBox(self.ui.comboBox_mech_expertmode_indchn_0, 'ref_channel_opts')
+
+        # comboBox_mech_expertmode_source_0
+        self.build_comboBox(self.ui.comboBox_mech_expertmode_source_0, 'qcm_layer_known_source_opts')
 
         # save current value to self.settings
         self.settings['lineEdit_mech_expertmode_value_0'] = self.ui.lineEdit_mech_expertmode_value_0.text()
@@ -1378,7 +1383,7 @@ class QCMApp(QMainWindow):
         ...
         radio button (electrod)  | comobx (source) | lineEdit (value)
         '''
-        start_row = 1 # the row to insert
+        start_row = 1 # the first row to insert
 
         # check previous number of layer by check radioButton_mech_expertmode_calc_0 row number
         # get the bottom row by checking electrode layer
@@ -2338,8 +2343,8 @@ class QCMApp(QMainWindow):
         f1, f2 = UIModules.converter_centerspan_to_startstop(fc, fs)
 
         # set lineEdit_scan_harmstart & lineEdit_scan_harmend
-        self.ui.lineEdit_scan_harmstart.setText(str(f1*1e-6)) # in MHz
-        self.ui.lineEdit_scan_harmend.setText(str(f2*1e-6)) # in MHz
+        self.ui.lineEdit_scan_harmstart.setText(str(f1)) # in Hz
+        self.ui.lineEdit_scan_harmend.setText(str(f2)) # in Hz
 
         # reset xlim to active on_fit_lims_change
         self.ui.mpl_spectra_fit.ax[0].set_xlim(f1, f2)
@@ -2421,9 +2426,10 @@ class QCMApp(QMainWindow):
         f = None
         G = None
         B = None
+        print('self.get_spectraTab_mode()', self.get_spectraTab_mode())
         if self.get_spectraTab_mode() == 'center': # for peak centering
             if not self.vna:
-                return
+                return f, G, B
             # get harmonic from self.settings_harm
             harm = self.settings_harm
             chn = self.settings_chn['chn']
@@ -2438,15 +2444,20 @@ class QCMApp(QMainWindow):
 
             # get raw of active queue_id from data_saver
             f, G, B = self.get_active_raw()
-                    # get the vna reset flag
+            # get the vna reset flag
             freq_span = self.get_freq_span(harm=self.active['harm'], chn_name=self.active['chn_name'])
+            
+            print('data_span', f[0], f[-1]) #testprint
+            print('freq_span', freq_span) #testprint
+            print('self.active', self.active) #testprint
 
-            idx = np.where((f >= freq_span[0]) & (f <= freq_span[1]))
+            idx = np.where((freq_span[0] <= f) & (f <= freq_span[1]))
             f, G, B = f[idx], G[idx], B[idx]
         else:
             print('Change Tab to Settings or Data to active the function.')
 
         return f, G, B
+
 
     def get_vna_data(self, harm=None, chn_name=None):
         '''
@@ -2511,6 +2522,7 @@ class QCMApp(QMainWindow):
             print('There is an error while setting VNA!')
         return f, G, B
 
+
     def tab_spectra_fit_update_mpls(self, f, G, B):
         ''' update mpl_spectra_fit and mpl_spectra_fit_polar '''
         ## disconnect axes event
@@ -2520,6 +2532,7 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.update_data({'ln': 'lB', 'x': f, 'y': B})
 
         # constrain xlim
+        print(f) #testprint
         print(type(f)) #testprint
         if (f is not None) and (f[0] != f[-1]): # f is available
             self.ui.mpl_spectra_fit.ax[0].set_xlim(f[0], f[-1])
@@ -2570,6 +2583,7 @@ class QCMApp(QMainWindow):
         ## reset xlim to active on_fit_lims_change, emit scan and updating harmtree
         self.ui.mpl_spectra_fit.ax[0].set_xlim(self.get_freq_span())
 
+
     def on_fit_lims_change(self, axes):
         print('on lim changed') #testprint
         axG = self.ui.mpl_spectra_fit.ax[0]
@@ -2583,6 +2597,7 @@ class QCMApp(QMainWindow):
         # get axes lims
         f1, f2 = axG.get_xlim()
         # check lim with BW
+        print('flims', f1, f2) #testprint
         f1, f2 = self.span_check(harm=self.settings_harm, f1=f1, f2=f2)
         print('get_navigate_mode()', axG.get_navigate_mode()) #testprint
         print('flims', f1, f2) #testprint
@@ -2600,8 +2615,8 @@ class QCMApp(QMainWindow):
         print('f12', f1, f2) #testprint
 
         # set lineEdit_scan_harmstart & lineEdit_scan_harmend
-        self.ui.lineEdit_scan_harmstart.setText(str(f1*1e-6)) # in MHz
-        self.ui.lineEdit_scan_harmend.setText(str(f2*1e-6)) # in MHz
+        self.ui.lineEdit_scan_harmstart.setText(str(f1)) # in Hz
+        self.ui.lineEdit_scan_harmend.setText(str(f2)) # in Hz
 
         # update limit of active harmonic
         self.on_editingfinished_harm_freq()
@@ -2897,11 +2912,11 @@ class QCMApp(QMainWindow):
         return queue_id
         '''
         if self.active['l_str'] == 'l': # showing all data
-            dropnanmarkrow=False
+            mark=False
         elif self.active['l_str'] == 'lm': # showing marked data
-            dropnanmarkrow=True
+            mark=True
             
-        queue_list = self.data_saver.get_queue_id_marked_rows(self.active['chn_name'], dropnanmarkrow=dropnanmarkrow)
+        queue_list = self.data_saver.get_marked_harm_queue_id(self.active['chn_name'], self.active['harm'], mark=mark)
 
         print('queue_list', queue_list) #testprint
         print("self.active['ind']", self.active['ind']) #testprint
@@ -2918,6 +2933,7 @@ class QCMApp(QMainWindow):
         '''
         queue_id = self.get_active_queueid_from_l_harm_ind()
         f, G, B = self.data_saver.get_raw(self.active['chn_name'], queue_id, self.active['harm'])
+        # print('raw', f, G, B) #testprint
 
         return f, G, B
 
@@ -2943,8 +2959,13 @@ class QCMApp(QMainWindow):
         if self.ui.pushButton_manual_refit.isChecked():
             # make a copy of self.freq_span and self.harmdata for refit
             print('copy to active') #testprint
-            self.settings['freq_span']['refit'] = self.settings['freq_span'][self.active['chn_name']].copy()
-            self.settings['harmdata']['refit'] = self.settings['harmdata'][self.active['chn_name']].copy()
+            # if use .copy() the manual refit related self.active[chn_name] needs to be changed!
+            # self.settings['freq_span']['refit'] = self.settings['freq_span'][self.active['chn_name']].copy()
+            # self.settings['harmdata']['refit'] = self.settings['harmdata'][self.active['chn_name']].copy()
+            
+            # link (by linking, we can keep the active['chn_name'] the same instead to change it to 'refit')
+            self.settings['freq_span']['refit'] = self.settings['freq_span'][self.active['chn_name']]
+            self.settings['harmdata']['refit'] = self.settings['harmdata'][self.active['chn_name']]
 
             # add manual refit tab to tabWidget_settings_settings_samprefchn
             self.add_manual_refit_tab(True)
@@ -3824,7 +3845,7 @@ class QCMApp(QMainWindow):
             # set comboBox_mech_expertmode_indchn_<n> format
             if layer_num == '0': # electrode layer and there is data. This the the bare value in air use the same in data chn_name ref
                 #TODO This layer should be set at the same time data reference chn is set
-                pass
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText('[]')
             else: # film layers
                 getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText('[]')
         else: # use other form
@@ -3838,7 +3859,6 @@ class QCMApp(QMainWindow):
                 getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText("air")
             elif sender_val == 'fg': # use freq and gamma value
                 getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText("{'f': [], 'g': []}")
-
 
 
 
@@ -3866,6 +3886,34 @@ class QCMApp(QMainWindow):
             film_layers_dict[n] = {key: self.settings.get(pre_name+n) for key, pre_name in prefix.items()}
 
         print(film_layers_dict) #testprint
+
+
+    def set_film_layers_widgets(self):
+        '''
+        set widgets related film_layers construction from self.settings['spinBox_mech_expertmode_layernum'] and self.settings['film_layers_dict']
+        Or from self.settings['film_layers_dict']
+        '''
+        prefix = {
+            'calc': 'radioButton_mech_expertmode_calc_', 
+            'source': 'comboBox_mech_expertmode_source_', 
+            'indchn': 'comboBox_mech_expertmode_indchn_',
+            'val': 'lineEdit_mech_expertmode_value_',
+        }
+        # get number of layers 
+        n_layers = int(self.ui.spinBox_mech_expertmode_layernum.value())
+        n_layers += 1 # add electrode layer
+
+        print(n_layers) #testprint
+
+        film_layers_dict = {}
+
+        for n in range(n_layers): # all layers
+            print(n) #testprint
+            n = str(n) # convert to string for storing as json, which does not support int key
+            film_layers_dict[n] = {key: self.settings.get(pre_name+n) for key, pre_name in prefix.items()}
+
+        print(film_layers_dict) #testprint
+
 
     def mech_solve_chn(self, chn_name, queue_ids):
         '''
@@ -3979,7 +4027,12 @@ class QCMApp(QMainWindow):
             print('rh', rh) #testprint
             print('nhcalc', nhcalc) #testprint
 
-            
+            # check if solution is in data_saver
+            mech_key = self.data_saver.get_mech_key(nhcalc, rh)
+            if mech_key not in self.data_saver.get_prop_keys(chn_name): # no solution stored of given combination
+                print('Solution of {} does not exist.'.format(mech_key))
+                return
+
             mech_df = self.data_saver.get_mech_df_in_prop(chn_name, nhcalc, rh)
 
             # print('qcm_df', qcm_df) #testpring
@@ -4778,6 +4831,7 @@ class QCMApp(QMainWindow):
             chn_name = self.settings_chn['name']
 
         if any(np.isnan(span)): # failed to track peak
+            print('failed to set freq_span')
             return # return w/o changing the previous span
         else:
             self.settings['freq_span'][chn_name][harm] = span
@@ -4869,8 +4923,8 @@ class QCMApp(QMainWindow):
         update frequency when lineEdit_scan_harmstart or  lineEdit_scan_harmend edited
         '''
         # print(self.sender().objectName()) #testprint
-        harmstart = float(self.ui.lineEdit_scan_harmstart.text()) * 1e6 # in Hz
-        harmend = float(self.ui.lineEdit_scan_harmend.text()) * 1e6 # in Hz
+        harmstart = float(self.ui.lineEdit_scan_harmstart.text()) # in Hz
+        harmend = float(self.ui.lineEdit_scan_harmend.text()) # in Hz
         harm=self.settings_harm
         print(harm, harmstart, harmend) #testprint
         f1, f2 = self.span_check(harm=harm, f1=harmstart, f2=harmend)
