@@ -342,7 +342,6 @@ def solve_for_props(soln_input):
     # initialize the output uncertainties
     err = {}
     err_names = ['drho', 'grho3', 'phi']
-
     # recalculate solution to give the uncertainty, if solution is viable
     if np.all(lb < x0) and np.all(x0 < ub):
         soln2 = optimize.least_squares(ftosolve2, x0, bounds=(lb, ub))
@@ -382,7 +381,7 @@ def solve_for_props(soln_input):
 
     soln_output['err'] = err
     soln_output['delfstar_err'] = delfstar_err
-    soln_output['deriv'] = deriv
+#    soln_output['deriv'] = deriv
     return soln_output
 
 
@@ -411,6 +410,7 @@ def find_base_fig_name(sample, parms):
     figlocation = parms.get('figlocation', 'figures')
     datadir = sample.get('datadir', '')
     filmfile = sample.get('filmfile', '')
+    samplename = sample.get('samplename', 'null_name')
     if figlocation == 'datadir':
         base_fig_name = os.path.join(parms['dataroot'], datadir, filmfile)
     else:
@@ -428,7 +428,7 @@ def find_base_fig_name(sample, parms):
         if not os.path.exists(base_fig_path):
             os.mkdir(base_fig_path)
 
-        base_fig_name = os.path.join(base_fig_path, sample['samplename'])
+        base_fig_name = os.path.join(base_fig_path, samplename)
 
     print('path', base_fig_name)
 
@@ -581,7 +581,7 @@ def solve_from_delfstar(sample, parms):
     # and want to obtain the solutions from there
     # now set the markers used for the different calculation types
     markers = {'131': '>', '133': '^', '353': '+', '355': 'x', '3': 'x'}
-    colors = parms['colors']
+    colors = parms.get('colors',{1: [1, 0, 0], 3: [0, 0.5, 0], 5: [0, 0, 1]})
     imagetype = parms.get('imagetype', 'svg')
     # get film info (containing raw data plot, etc. if it exists)
     sample['film']=sample.get('film',{})
@@ -591,9 +591,17 @@ def solve_from_delfstar(sample, parms):
     imagetype = parms.get('imagetype', 'svg')
     nhplot = sample.get('nhplot', [1, 3, 5])
     delfstar = sample['delfstar']
-    xdata = sample['xdata']
-    propfig = sample['propfig']
     nx = len(delfstar)  # this is the number of data points
+
+    if 'xdata' in sample:
+        xdata = sample['xdata']
+    else:
+        xdata=np.arange(nx)
+        sample['xlabel'] = 'index'
+    if 'propfig' in sample:
+        propfig = sample['propfig']
+    else:
+        propfig = make_prop_axes('props', sample['xlabel'])
 
     # set up the consistency check axes
     checkfig = {}
@@ -1137,6 +1145,14 @@ def contour(function, parms):
     fig.tight_layout()
 
     return
+
+def bulk_props(delfstar):
+    # get the bulk solution for grho and phi
+    grho3 = (np.pi*Zq*abs(delfstar[3])/f1) ** 2
+    phi = -np.degrees(2*np.arctan(delfstar[3].real /
+                      delfstar[3].imag))
+
+    return [grho3, phi]
 
 
 def bulk_guess(delfstar):
