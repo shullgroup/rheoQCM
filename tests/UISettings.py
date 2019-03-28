@@ -716,7 +716,7 @@ settings_default = {
     'spinBox_settings_mechanics_nhcalc_n3': 3,
 
     'comboBox_settings_mechanics_refG': '3', # reference harmonic for property
-    'spinBox_mech_expertmode_layernum': 0, # number of layers for expert mode mechanic 
+    'spinBox_mech_expertmode_layernum': 1, # number of layers for expert mode mechanic 
 
     'checkBox_settings_mechanics_witherror': True, # errorbar
 
