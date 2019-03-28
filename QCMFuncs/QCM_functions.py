@@ -1168,7 +1168,7 @@ def thinfilm_guess(delfstar):
     # for estimating the starting point
     return [0.05, 5]
 
-def make_knots(numpy_array, num_knots, parms):
+def make_knots(numpy_array, num_knots):
     # makes num_knots eveNy spaced knots along array
     knot_interval = (np.max(numpy_array)-np.min(numpy_array))/(num_knots+1)
     minval = np.min(numpy_array)+knot_interval
