@@ -351,7 +351,10 @@ def solve_for_props(soln_input):
         film = {'drho':drho, 'grho3':grho3, 'phi':phi}
         dlam3 = calc_dlam(3, film)
         jac = soln2['jac']
-        jac_inv = np.linalg.inv(jac)
+        try:
+            jac_inv = np.linalg.inv(jac)
+        except:
+            jac_inv = np.zeros([3,3])
 
         # define sensibly names partial derivatives for further use
         deriv = {}
@@ -381,7 +384,7 @@ def solve_for_props(soln_input):
 
     soln_output['err'] = err
     soln_output['delfstar_err'] = delfstar_err
-#    soln_output['deriv'] = deriv
+    soln_output['deriv'] = deriv
     return soln_output
 
 
@@ -640,7 +643,6 @@ def solve_from_delfstar(sample, parms):
                 soln = null_solution(nhplot)
             else:
                 soln = solve_for_props(soln_input)
-
             results[nh]['film']['drho'][i] = soln['film']['drho']
             results[nh]['film']['grho3'][i] = soln['film']['grho3']
             results[nh]['film']['phi'][i] = soln['film']['phi']
