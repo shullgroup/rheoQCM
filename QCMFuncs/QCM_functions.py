@@ -363,6 +363,13 @@ def solve_for_props(soln_input):
             err[err_names[k]] = ((jac_inv[k, 0]*delfstar_err[0])**2 +
                                 (jac_inv[k, 1]*delfstar_err[1])**2 +
                                 (jac_inv[k, 2]*delfstar_err[2])**2)**0.5
+        # reset erros to zero if they are bigger than the actual values
+        if err['drho']>drho:
+            err['drho']=0
+        if err['grho3']>grho3:
+            err['grho3']=0
+        if err['phi']>phi:
+            err['phi']=0
     else:
         film = {'drho':np.nan, 'grho3':np.nan, 'phi':np.nan, 'dlam3':np.nan}
         deriv = {}
@@ -553,9 +560,6 @@ def analyze(sample, parms):
 
     solve_from_delfstar(sample, parms)
 
-    # tidy up the property figure
-    cleanup_propfig(sample, parms)
-
 
 def find_idx_in_range(t, t_range):
     if t_range[0] == t_range[1]:
@@ -605,6 +609,7 @@ def solve_from_delfstar(sample, parms):
         propfig = sample['propfig']
     else:
         propfig = make_prop_axes('props', sample['xlabel'])
+        sample['propfig']=propfig
 
     # set up the consistency check axes
     checkfig = {}
@@ -752,6 +757,8 @@ def solve_from_delfstar(sample, parms):
             plt.pause(1)
 
     sample['results'] = results
+    # tidy up the property figure
+    cleanup_propfig(sample, parms)
     return sample
 
 def cleanup_propfig(sample, parms):
