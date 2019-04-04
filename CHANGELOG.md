@@ -1,15 +1,17 @@
 # Changelog
 
-## [0.17.0] - 2019-03-18
+## [0.17.0] - 2019-04-03
 
 ### Added
 
 - Add spinBox for selecting index for displaying property in table.  
+- Add sample discription
 
 ### Changed
 
 - Change data structure. Copy some keys in settings_init to settings_default to keep enough information of data collecting parameter.  
 - Change the way to getting display data from all harmonic together to by harmonics.
+- Change multiple peak fitting to using separate data ranges. The range plotted in the figures are still a connected range.
 
 ### Fixed
 

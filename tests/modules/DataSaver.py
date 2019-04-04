@@ -884,7 +884,8 @@ class DataSaver:
                     # json.dump(data, f)
         except PermissionError as err:
             print('Permission denied.\nCheck if your file is open.')
-            
+
+    
     def reshape_data_df(self, chn_name, mark=False, dropnanmarkrow=True, dropnancolumn=True, deltaval=False, norm=False, unit_t=None, unit_temp=None, keep_mark=True):
         '''
         reshape and tidy data df (samp and ref) for exporting
@@ -930,6 +931,7 @@ class DataSaver:
             df = df.drop(columns='marks') # drop marks column
 
         return df
+
 
     def raw_exporter(self, fileName, chn_name, queue_id, harm):
         '''
@@ -1520,8 +1522,7 @@ class DataSaver:
                             print('no dataframe is provided!')
                     else:
                         pass
-
-        if mode['cryst'] == 'dual': #TODO
+        elif mode['cryst'] == 'dual': #TODO
             if mode['temp'] == 'const': # dual crystal and constant temperature
                 pass
             elif mode['temp'] == 'var': # dual crystal and constant temperature
@@ -1664,6 +1665,9 @@ class DataSaver:
         '''
         return fs/gs of chn_name reference by uing the interpolation funcions calculated before
         col: column name (fs/gs). If None, retrun both.
+        if self.exp_ref['mode']['temp'] == 'const'
+        set all rows with the same value from self.exp_ref[chn_name]['f0'] and ['g0']
+        returned df have the same size of chn_name df
         '''
         # check if the reference is set
         # if not self.refflg[chn_name]:
@@ -1673,7 +1677,7 @@ class DataSaver:
         # samp_source = self.exp_ref['samp_ref'][0]
         chn_temp = self.get_temp_by_uint_marked_rows(chn_name, dropnanmarkrow=False, unit='C') # in C. If marked only, set dropnanmarkrow=True
         print(chn_temp) #testprint
-
+        
         # prepare series fro return
         cols = getattr(self, chn_name)[['fs', 'gs']].copy()
 
@@ -1681,55 +1685,64 @@ class DataSaver:
         cols['fs'] = cols['fs'].apply(lambda x: self.nan_harm_list())
         cols['gs'] = cols['gs'].apply(lambda x: self.nan_harm_list())
 
-        if col not in self._ref_keys: # col is not fs or gs
-            return cols
+        mode = self.exp_ref.get('mode')
+        if mode['cryst'] == 'single':
+            if mode['temp'] == 'const': # single crystal and constant temperature
+                # set all value the same
+                # set all fs, gs to self.exp_ref[chn_name]['f0'] and ['g0']
+                cols['fs'] = cols['fs'].apply(lambda x: self.exp_ref[chn_name]['f0'])
+                cols['gs'] = cols['gs'].apply(lambda x: self.exp_ref[chn_name]['g0'])
 
-        # calculate ref for each film (samp) temp and save to self.samp_ref
+            elif mode['temp'] == 'var': # single crystal and variable temperature
+                if np.isnan(chn_temp).all(): # no temp data
+                    print('no temperature data in film!')
+                    if col is None:
+                        return cols
+                    else:
+                        return cols[col]
 
-        if np.isnan(chn_temp).all(): # no temp data
-            print('no temperature data in film!')
-            if col is None:
-                return cols
+                if col not in self._ref_keys: # col is not fs or gs
+                    return cols
+
+                # calculate ref for each film (samp) temp and save to self.samp_ref
+
+                # check if all elements in self.exp_ref.samp_ref[1] is list
+                if all([isinstance(l, list) for l in self.exp_ref[chn_name+'_ref'][1]]): # all list
+                    film_idx = self.exp_ref[chn_name+'_ref'][1]
+                elif all([isinstance(l, int) for l in self.exp_ref[chn_name+'_ref'][1]]): # all int
+                    film_idx = [self.exp_ref[chn_name+'_ref'][1]] # put into a list
+                else:
+                    print('Check sample reference index!')
+                
+                # get interpolated f and g by chn_temp
+                for seg, ind_list in enumerate(film_idx): # iterate each list
+                    tempind = chn_temp[ind_list]
+                    print('len(ind_list)', len(ind_list)) #testprint
+                    print('len(fun)', len(self.exp_ref['func'])) #testprint
+                    # get interpolated f, g of temp in ind_list (tempind) 
+                    # len(ind_list) can be longer than len(self.exp_ref['func']) 
+                    # use modulus 
+                    f_list, g_list = self.exp_ref['func'][seg % len(self.exp_ref['func'])](tempind)
+                    # transpose 
+                    fs_list = np.transpose(np.array(f_list)).tolist()
+                    print('len(fs_list)', len(fs_list)) #testprint
+
+                    gs_list = np.transpose(np.array(g_list)).tolist()
+
+                    # save to df
+                    cols.fs[ind_list] = fs_list
+                    cols.gs[ind_list] = gs_list
+
+                print('cols[ind_list]\n', cols.iloc[ind_list]) #testprint
+                print(cols[col].head())
+        elif mode['cryst'] == 'dual': #TODO
+            if mode['temp'] == 'const': # dual crystal and constant temperature
+                pass
+            elif mode['temp'] == 'var': # dual crystal and constant temperature
+                pass
             else:
-                return cols[col]
-        
-        # check if all elements in self.exp_ref.samp_ref[1] is list
-        if all([isinstance(l, list) for l in self.exp_ref[chn_name+'_ref'][1]]): # all list
-            film_idx = self.exp_ref[chn_name+'_ref'][1]
-        elif all([isinstance(l, int) for l in self.exp_ref[chn_name+'_ref'][1]]): # all int
-            film_idx = [self.exp_ref[chn_name+'_ref'][1]] # put into a list
-        else:
-            print('Check sample reference index!')
-        if np.isnan(chn_temp).all(): # no temp data
-            print('no temperature data in sample!')
-            if col is None:
-                return cols
-            else:
-                return cols[col]
-        
-        # get interpolated f and g by chn_temp
-        for seg, ind_list in enumerate(film_idx): # iterate each list
-            tempind = chn_temp[ind_list]
-            print('len(ind_list)', len(ind_list)) #testprint
-            print('len(fun)', len(self.exp_ref['func'])) #testprint
-            # get interpolated f, g of temp in ind_list (tempind) 
-            # len(ind_list) can be longer than len(self.exp_ref['func']) 
-            # use modulus 
-            f_list, g_list = self.exp_ref['func'][seg % len(self.exp_ref['func'])](tempind)
-            # transpose 
-            fs_list = np.transpose(np.array(f_list)).tolist()
-            print('len(fs_list)', len(fs_list)) #testprint
-
-            g_arr = np.transpose(np.array(g_list))
-            gs_list = g_arr.tolist()
-
-            # save to df
-            cols.fs[ind_list] = fs_list
-            cols.gs[ind_list] = gs_list
-
-        print('cols[ind_list]\n', cols.iloc[ind_list]) #testprint
-        print(cols[col].head())
-
+                pass
+ 
         if col is None:
             return cols
         else:
@@ -2012,7 +2025,7 @@ class DataSaver:
     def df_qcm(self, chn_name):
         '''
         convert delfs and delgs in df to delfstar for calculation and 
-        return a df with ['queue_id', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs']
+        return a df with ['queue_id', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs', 'f0stars', 'f0s', 'g0s']
         '''
         df = self.get_queue_id(chn_name).astype('int64').to_frame()
         df['t'] = self.get_t_marked_rows(chn_name, dropnanmarkrow=False, unit=None)
@@ -2026,6 +2039,9 @@ class DataSaver:
         # get delf and delg in form of [n1, n3, n5, ...]
         delfs = self.convert_col_to_delta_val(chn_name, 'fs', norm=False)
         delgs = self.convert_col_to_delta_val(chn_name, 'gs', norm=False)
+        # get reference value as array
+        f0s = self.interp_film_ref(chn_name, col='fs')
+        g0s = self.interp_film_ref(chn_name, col='gs')
 
         # convert to array
         f_arr = np.array(fs.values.tolist())
@@ -2034,16 +2050,23 @@ class DataSaver:
         delf_arr = np.array(delfs.values.tolist())
         delg_arr = np.array(delgs.values.tolist())
 
+        f0_arr = np.array(f0s.values.tolist())
+        g0_arr = np.array(g0s.values.tolist())
+
         # get delfstar as array
         fstar_arr = f_arr + 1j * g_arr
         delfstar_arr = delf_arr + 1j * delg_arr
+        f0star_arr = f0_arr + 1j * g0_arr
 
         df['fstars'] = list(fstar_arr)
         df['delfstars'] = list(delfstar_arr)
+        df['f0stars'] = list(f0star_arr)
         df['fs'] = fs
         df['gs'] = gs
         df['delfs'] = delfs
         df['delgs'] = delgs
+        df['f0s'] = f0s
+        df['g0s'] = g0s
 
         return df
 

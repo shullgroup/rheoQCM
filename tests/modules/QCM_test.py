@@ -21,6 +21,12 @@ drho_range = (0, 1e-2) # m kg/m^3 = 1000 um g/cm^3 = 1000 g/m^2
 grho_rh_range = (1e4, 1e10) # Pa kg/m^3 = 1/1000 Pa g/cm^3
 phi_range = (0, np.pi/2) # rad 
 
+#  Zq (shear acoustic impedance) of quartz = rho_q * v_q
+Zq = {
+    'AT': 8.84e6,  # kg m−2 s−1
+    'BT': 0e6,  # kg m−2 s−1
+}
+
 e26 = 9.65e-2 # piezoelectric stress coefficient (e = 9.65·10−2 C/m2 for AT-cut quartz)
 g0 = 10 # 10 Hz, Half bandwidth (HWHM) of unloaed resonator (intrinsic dissipation on crystalline quartz)
 dq = 330e-6  # only needed for piezoelectric stiffening calc.
@@ -29,7 +35,7 @@ eps0 = 8.8e-12
 C0byA = epsq * eps0 / dq 
 
 electrode_default = {'drho': 2.8e-3, 'grho_rh': 3.0e14, 'phi': 0, 'rh': 3} # rh here is relative harmonic. it is different to rh in the calc results
-air_default = {'drho': 0, 'grho_rh': 0, 'phi': np.pi / 2, 'rh': 3} #???
+air_default = {'drho': 0, 'grho_rh': 0, 'phi': 0, 'rh': 3} #???
 
 # fit_method = 'lmfit'
 fit_method = 'scipy'
@@ -50,22 +56,24 @@ def nhcalc2nh(nhcalc):
 
 
 class QCM:
-    def __init__(self):
+    def __init__(self, cut='AT'):
         '''
         phi in rad for calculation and exported as degree
         '''
-        self.Zq = 8.84e6  # kg m−2 s−1. shear acoustic impedance of AT cut quartz
+        self.Zq = Zq[cut]  # kg m−2 s−1. shear acoustic impedance of AT cut quartz
         #TODO add zq by cuts
         self.f1 = None # 5e6 Hz fundamental resonant frequency
         self.g_err_min = 10 # error floor for gamma
         self.f_err_min = 50 # error floor for f
         self.err_frac = 3e-2 # error in f or gamma as a fraction of gamma
-        self.drho_q = self.Zq / (2 * self.f1)
 
         self.rh = None # reference harmonic for calculation
         # default values
         # self.nhcalc = '355' # harmonics used for calculating
         # self.nhplot = [1, 3, 5] # harmonics used for plotting (show calculated data)
+        
+        # self.air_default = air_default
+        # self.electrode_default = electrode_default
 
 
     def fstar_err_calc(self, fstar):
@@ -271,6 +279,7 @@ class QCM:
         # can always be neglected as far as I can tell
         ZPE = -(e26 / dq)**2 * ZC0byA  # ZPE accounts for piezoelectric stiffening anc
 
+        self.drho_q = self.Zq / (2 * self.f1)
         Dq = om * self.drho_q / self.Zq
         secterm = -1j * Zqc / np.sin(Dq)
         ZL = self.calc_ZL(n, layers, delfstar)
@@ -306,6 +315,7 @@ class QCM:
 
     def rhexp(self, nh, delfstar):
         return (nh[1]/nh[0])*np.real(delfstar[nh[0]]) / np.real(delfstar[nh[1]])
+
 
     def rh_from_delfstar(self, nh, delfstar):
         ''' this func is the same as rhexp!!! '''
@@ -391,6 +401,12 @@ class QCM:
         marks = qcm_queue.marks.iloc[0]
         # find where the mark is not nan or None
         nhplot = [i*2+1 for i, mark in enumerate(marks) if (not np.isnan(mark)) and (mark is not None) ]
+
+        # set f1
+        f0s = qcm_queue.f0s.iloc[0]
+        first_notnan = np.argwhere(~np.isnan(f0s))[0] # find out index of the first freq is not nan
+        # use this value calculate f1 = fn/n (in case f1 is not recorded)
+        self.f1 = f0s[first_notnan] / (first_notnan * 2 + 1)
 
         # fstar_err ={}
         # for n in nhplot: 
@@ -488,7 +504,7 @@ class QCM:
         solve the property of a single test.
         nh: list of int
         delfstar: dict {harm(int): complex, ...}
-        overlayer: dicr e.g.: {'drho': 0, 'grho_rh': 0, 'phi': 0}
+        overlayer: dict e.g.: {'drho': 0, 'grho_rh': 0, 'phi': 0}
         return drho, grho_rh, phi, dlam_rh, err
         '''
         # input variables - this is helpfulf for the error analysis
@@ -630,7 +646,10 @@ class QCM:
                     dlam_rh = self.d_lamcalc(self.rh, drho, grho_rh, phi)
                     jac = soln2.params.get('jac') #TODO ???
                     print('jac', jac) #testprint
-                    jac_inv = np.linalg.inv(jac)
+                    try:
+                        jac_inv = np.linalg.inv(jac)
+                    except:
+                        jac_inv = np.zeros([3,3])
 
                     for i, k in enumerate(err_names):
                         deriv[k]={0:jac_inv[i, 0], 1:jac_inv[i, 1], 2:jac_inv[i, 2]}

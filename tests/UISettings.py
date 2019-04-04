@@ -143,15 +143,18 @@ settings_init = {
         # 'label_6',
         # 'comboBox_settings_mechanics_refG',
         # 'comboBox_settings_mechanics_selectmodel',
-        'stackedWidget_settings_mechanics_modeswitch',
+        'groupBox_settings_mechanics_mech_film',
 
         # 'groupBox_settings_mechanics_contour',
         # 'pushButton_settings_mechanics_simulator',
         # 'groupBox_settings_mechanics_simulator',
 
+        'actionSolve_test',
+
         # statusbar
         'pushButton_status_reftype',
         # 'pushButton_status_signal_ch',
+
     ],
 
     # list of widges to delete in current version
@@ -417,7 +420,8 @@ settings_init = {
     #     ('file', 'Other file'),
     # ]),
 
-    # maximum layer for mechanic property calculation
+    # minimum/maximum layer for mechanic property calculation
+    'min_mech_layers': 0,
     'max_mech_layers': 1,
 
     # options for comboBox_settings_mechanics_selectmodel
@@ -426,6 +430,12 @@ settings_init = {
         # 'twolayers': 'Two layers',
         'bulk': 'Bulk',
         # 'multiple': 'Multiple models',
+    },
+
+    # calctype
+    'calctype_opts':{
+        'SLA': 'SLA',
+        'LL': 'LL',
     },
 
     'qcm_layer_known_source_opts': {
@@ -621,6 +631,9 @@ settings_default = {
     'checkBox_dynamicfitbyharm': False,
     'checkBox_fitfactorbyharm': False,
 
+    # default sampe discription
+    'plainTextEdit_settings_samplediscription': '',
+
     # default frequency ranges for each harmonic
     'freq_range': {},
     # default frequency span for each harmonic
@@ -645,6 +658,12 @@ settings_default = {
         # for reference channel
         'ref':{},
     },
+
+    'mechchndata': {
+        'samp': {}, 
+        'ref': {}
+    }, # dictionary for saving the widgets for layers defination
+
     ### default hardware settings ###
     # 'tabWidget_settings_settings_samprefchn': 1,
     # default VNA settings
@@ -718,11 +737,13 @@ settings_default = {
     'comboBox_settings_mechanics_refG': '3', # reference harmonic for property
     'spinBox_mech_expertmode_layernum': 1, # number of layers for expert mode mechanic 
 
+    'comboBox_settings_mechanics_calctype': 'LL', # 'LL' or 'SLA'
+
     'checkBox_settings_mechanics_witherror': True, # errorbar
 
     'comboBox_settings_mechanics_selectmodel': 'onelayer',
 
-    'film_layers_dict': {}, # dictionary for saving the layers defination
+    'film_layers_dict': {'samp': {}, 'ref': {}}, # dictionary for saving the layers defination
 }
 
 

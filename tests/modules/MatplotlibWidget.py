@@ -876,6 +876,7 @@ class MatplotlibWidget(QWidget):
         self.set_ax_items(ax, title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
         self.set_ax_font(ax)
 
+
     def set_ax_items(self, ax, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         if title:
             ax.set_title(title)
@@ -893,6 +894,7 @@ class MatplotlibWidget(QWidget):
         if ylim is not None:
             ax.set_ylim(*ylim)
 
+
     def set_ax_font(self, ax, *args, **kwargs):
         if self.axtype == 'sp':
             fontsize = settings_init['mpl_sp_fontsize']
@@ -906,6 +908,8 @@ class MatplotlibWidget(QWidget):
         if self.axtype == 'contour':
             for ticklabel in self.l['colorbar'].ax.yaxis.get_ticklabels():
                 ticklabel.set_size(fontsize)
+            self.l['colorbar'].ax.yaxis.offsetText.set_size(fontsize)
+            
 
         if self.axtype == 'legend':
             self.leg

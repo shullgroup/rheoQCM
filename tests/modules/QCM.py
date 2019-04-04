@@ -21,6 +21,16 @@ drho_range = (0, 1e-2) # kg/m^2
 grho_rh_range = (1e10, 1e16) # Pa kg/m^3
 phi_range = (0, np.pi/2) # rad 
 
+e26 = 9.65e-2 # piezoelectric stress coefficient (e = 9.65·10−2 C/m2 for AT-cut quartz)
+g0 = 10 # 10 Hz, Half bandwidth (HWHM) of unloaed resonator (intrinsic dissipation on crystalline quartz)
+dq = 330e-6  # only needed for piezoelectric stiffening calc.
+epsq = 4.54
+eps0 = 8.8e-12
+C0byA = epsq * eps0 / dq 
+
+electrode_default = {'drho': 2.8e-3, 'grho_rh': 3.0e14, 'phi': 0, 'rh': 3} # rh here is relative harmonic. it is different to rh in the calc results
+air_default = {'drho': 0, 'grho_rh': 0, 'phi': 0, 'rh': 3} #???
+
 fit_method = 'lmfit'
 fit_method = 'scipy'
 
@@ -253,12 +263,12 @@ class QCM:
         fstars = qcm_queue.fstars.iloc[0] # list
         # get delfstar
         delfstars = qcm_queue.delfstars.iloc[0] # list
-        print('fstars', fstars) #testprint
-        print(delfstars) #testprint
+        # print('fstars', fstars) #testprint
+        # print(delfstars) #testprint
         # convert list to dict to make it easier to do the calculation
         # fstar = {int(i*2+1): fstar[i] for i, fstar in enumerate(fstars)}
         delfstar = {int(i*2+1): dfstar for i, dfstar in enumerate(delfstars)}
-        print(delfstar) #testprint
+        # print(delfstar) #testprint
         # get the marks [1st, 3rd, 5th, ...]
         marks = qcm_queue.marks.iloc[0]
         # find where the mark is not nan or None
@@ -288,8 +298,8 @@ class QCM:
         delg_calcs = mech_queue.delg_calcs.iloc[0].copy()
         rd_exps = mech_queue.rd_exps.iloc[0].copy()
         rd_calcs = mech_queue.rd_calcs.iloc[0].copy()
-        print('delf_calcs', delf_calcs) #testprint
-        print(type(delf_calcs)) #testprint
+        # print('delf_calcs', delf_calcs) #testprint
+        # print(type(delf_calcs)) #testprint
         for n in nhplot:
             delfstar_calc[n] = self.delfstarcalc(n, drho, grho_rh, phi, overlayer)
             delf_calcs[nh2i(n)] = np.real(delfstar_calc[n])
@@ -300,8 +310,8 @@ class QCM:
             rd_exp[n] = self.rd_from_delfstar(n, delfstar)
             rd_exps[nh2i(n)] = rd_exp[n]
         rh = self.rh_from_delfstar(nh, delfstar_calc)
-        print('delf_calcs', delf_calcs) #testprint
-        print('delg_calcs', delg_calcs) #testprint
+        # print('delf_calcs', delf_calcs) #testprint
+        # print('delg_calcs', delg_calcs) #testprint
 
         # drho = 1000*results[nh]['drho']
         # grho3 = results[nh]['grho3']/1000
@@ -345,10 +355,10 @@ class QCM:
         mech_queue['rd_exps'] = [rd_exps]
         mech_queue['rd_calcs'] = [rd_calcs]
 
-        print(mech_queue['delf_calcs']) #testprint
-        print(mech_queue['delg_calcs']) #testprint
+        # print(mech_queue['delf_calcs']) #testprint
+        # print(mech_queue['delg_calcs']) #testprint
         # TODO save delfstar, deriv {n1:, n2:, n3:}
-        print(mech_queue)    #testprint
+        # print(mech_queue)    #testprint
         return mech_queue
         ########## TODO 
 

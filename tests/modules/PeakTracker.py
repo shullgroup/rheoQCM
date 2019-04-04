@@ -953,30 +953,40 @@ class PeakTracker:
         # max_idx = max(max indices)
         # all the points between will be used for fitting
         
-        factor_idx = []
+        factor_idx_list = [] # for factor_span
+        factor_set_list = [] # for indexing the points for fitting
         if factor is not None:
             for i in range(self.found_n): # for loop for each single peak from guessed val
                 # get peak cen and wid
                 cen_i, wid_i = val['p' + str(i) + '_cen'], val['p' + str(i) + '_wid']
                 print('cen_i', cen_i) #testprint
                 print('wid_i', wid_i) #testprint
-                factor_idx.append(np.abs(self.harminput[chn_name][harm]['f'] - (cen_i - wid_i * factor)).argmin()) # add min index 
-                factor_idx.append(np.abs(self.harminput[chn_name][harm]['f'] - (cen_i + wid_i * factor)).argmin()) # add max index 
-            max_idx = max(factor_idx)
-            min_idx = min(factor_idx)
-            # save min_idx and max_idx to 'factor_span'
-            self.update_output(chn_name=chn_name, harm=harm, factor_span=[f[min_idx], f[max_idx]]) # span of f used for fitting
+                ind_min = np.abs(self.harminput[chn_name][harm]['f'] - (cen_i - wid_i * factor)).argmin()
+                ind_max = np.abs(self.harminput[chn_name][harm]['f'] - (cen_i + wid_i * factor)).argmin()
+                # factor_idx_list.append(ind_min) # add min index 
+                # factor_idx_list.append(ind_max) # add max index 
+                # or use one line
+                factor_idx_list.extend([ind_min, ind_max])
+                # get indices for this peak in form of set
+                factor_set_list.append(set(np.arange(ind_min, ind_max)))
+                
+            # find the union of sets
+            idx_list = list(set().union(*factor_set_list))
+            # mask of if points used for fitting
+            factor_mask = [True if i in idx_list else False for i in np.arange(len(f))]
 
-            f = f[min_idx: max_idx]
-            G = G[min_idx: max_idx]
-            B = B[min_idx: max_idx]
+            # save min_idx and max_idx to 'factor_span'
+            self.update_output(chn_name=chn_name, harm=harm, factor_span=[min(f[factor_idx_list]), max(f[factor_idx_list])]) # span of f used for fitting
+
+            f = f[idx_list]
+            G = G[idx_list]
+            B = B[idx_list]
 
             print('data len after factor', len(f)) #testprint
 
         print('factor\n', factor) #testprint
         # print('cen_guess\n', cen_guess) #testprint
         # print('half_wid_guess\n', half_wid_guess) #testprint
-        print('type factor_idx', type(factor_idx)) #testprint
         # print('factor_span\n', factor_span) #testprint
         # minimize with leastsq
         # mini = Minimizer(residual, params, fcn_args=(f, G, B))
