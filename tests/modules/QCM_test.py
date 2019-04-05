@@ -113,19 +113,23 @@ class QCM:
         return (drho * n * self.f1 * np.cos(phi / 2) / dlam)**2
 
 
-    def grho_rh_bulk(self, delfstar):
+    def grho_bulk(self, delfstar, n=None):
         '''
         bulk model
         calculate grho reference to rh
         '''
+        if n is None:
+            n = self.rh
         return (np.pi * self.Zq * abs(delfstar[self.rh]) / self.f1) ** 2
 
 
-    def phi_bulk(self, n, delfstar):
+    def phi_bulk(self, delfstar, n=None):
         '''
         bulk model
         calculate phi
         '''
+        if n is None:
+            n = self.rh
         return -2 * np.arctan(np.real(delfstar[n]) / np.imag(delfstar[n]))
 
 
@@ -293,6 +297,7 @@ class QCM:
     def calc_dlam(self, n, film):
         return np.real(self.calc_D(n, film, 0)) / (2 * np.pi)
 
+
     ##### end new funcs ######
 
 
@@ -355,6 +360,15 @@ class QCM:
         dlam_rh = self.calc_dlam(self.rh, film)
 
         return [dlam_rh, min(phi, np.pi/2)]
+
+    
+    def bulk_props(self, delfstar, n=None):
+        # get the bulk solution for grho and phi
+        #??
+        return [
+            self.grho_bulk(delfstar, n), # grho
+            self.phi_bulk(delfstar, n), # phi
+        ]
 
 
     def guess_from_props(self, film):

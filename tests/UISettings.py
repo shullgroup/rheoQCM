@@ -742,8 +742,6 @@ settings_default = {
     'checkBox_settings_mechanics_witherror': True, # errorbar
 
     'comboBox_settings_mechanics_selectmodel': 'onelayer',
-
-    'film_layers_dict': {'samp': {}, 'ref': {}}, # dictionary for saving the layers defination
 }
 
 

@@ -15,6 +15,7 @@ import datetime, time
 import numpy as np
 import pandas as pd
 import scipy.signal
+# from collections import OrderedDict
 # import types
 from PyQt5.QtCore import pyqtSlot, Qt, QEvent, QTimer, QEventLoop, QCoreApplication, QSize
 from PyQt5.QtWidgets import (
@@ -964,7 +965,9 @@ class QCMApp(QMainWindow):
 
         # NOTE: following two only emitted when value manually edited (activated)
         self.ui.comboBox_settings_data_samprefsource.activated.connect(self.save_data_saver_sampref)
+        self.ui.comboBox_settings_data_samprefsource.activated.connect(self.set_mech_layer_0_indchn_val)
         self.ui.lineEdit_settings_data_samprefidx.editingFinished.connect(self.save_data_saver_sampref)
+        self.ui.lineEdit_settings_data_samprefidx.editingFinished.connect(self.set_mech_layer_0_indchn_val)
 
         # move frame_settings_data_refref
         self.move_to_col(
@@ -979,7 +982,9 @@ class QCMApp(QMainWindow):
 
         # NOTE: following two only emitted when value manually edited (activated)
         self.ui.comboBox_settings_data_refrefsource.activated.connect(self.save_data_saver_refref)
+        self.ui.comboBox_settings_data_refrefsource.activated.connect(self.set_mech_layer_0_indchn_val)
         self.ui.lineEdit_settings_data_refrefidx.editingFinished.connect(self.save_data_saver_refref)
+        self.ui.lineEdit_settings_data_refrefidx.editingFinished.connect(self.set_mech_layer_0_indchn_val)
 
         # move frame_settings_data_tempref
         self.move_to_col(
@@ -1014,7 +1019,7 @@ class QCMApp(QMainWindow):
 
         #region settings_mechanis
         #########
-        self.ui.tabWidget_mechanics_chn.currentChanged.connect(self.update_mechanics_chn)
+        self.ui.tabWidget_mechanics_chn.currentChanged.connect(self.on_mech_chn_changed)
 
         self.ui.checkBox_settings_mech_liveupdate.toggled.connect(self.update_widget)
 
@@ -3738,14 +3743,17 @@ class QCMApp(QMainWindow):
                 ## set signals. reverse the widgets secquence
                 # linedeit: signal
                 getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).textChanged.connect(self.update_mechchnwidget)
+                
                 # combobox: add signal/slot
+                getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)).currentIndexChanged.connect(self.on_mech_layer_indchn_changed)
                 getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)).currentIndexChanged.connect(self.update_mechchnwidget)
 
                 # combobox: add signal/slot
-                getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).currentIndexChanged.connect(self.update_mechchnwidget)
                 getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).currentIndexChanged.connect(self.on_mech_layer_source_changed)
+                getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).currentIndexChanged.connect(self.update_mechchnwidget)
 
                 # radiobutton: signal
+                getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).toggled.connect(self.on_mech_layer_calc_changed)
                 getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).toggled.connect(self.update_mechchnwidget)
 
                 ## initiate values. reverse the widgets secquence
@@ -3785,48 +3793,14 @@ class QCMApp(QMainWindow):
             self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'comboBox_mech_expertmode_indchn_' + str(i)), (rowcount-1-i+del_nlayers), 2, 1, 1)
             self.ui.gridLayout_mech_expertmode_layers.addWidget(getattr(self.ui, 'lineEdit_mech_expertmode_value_' + str(i)), (rowcount-1-i+del_nlayers), 3, 1, 1)
 
-            if (self.get_mechchndata('radioButton_mech_expertmode_calc_'+str(i)) is None) or (i >= pre_nlayers): # no data saved for this layer or new layer
-                # save current value to self.settings
-                self.set_mechchndata('lineEdit_mech_expertmode_value_'+str(i), getattr(self.ui, 'lineEdit_mech_expertmode_value_'+str(i)).text())
-
-                # save current value to self.settings
-                self.set_mechchndata('comboBox_mech_expertmode_indchn_'+str(i), getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)).itemData(getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)).currentIndex()))
-
-                # save current value to self.settings
-                self.set_mechchndata('comboBox_mech_expertmode_source_'+str(i), getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).itemData(getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)).currentIndex()))
-
-                # save current value to self.settings
-                self.set_mechchndata('radioButton_mech_expertmode_calc_'+str(i), getattr(self.ui, 'radioButton_mech_expertmode_calc_'+str(i)).isChecked())
-
+        # load data 
+        self.load_film_layers_widgets()
 
     
         print('rowcount', self.ui.gridLayout_mech_expertmode_layers.rowCount()) #testprint
 
 
-    def mech_clear(self):
-        print('pushButton_settings_mechanics_clrallprops clicked')
-        self.data_saver.clr_mech_df_in_prop()
-
-
-    def mech_solve_test(self):
-        '''
-        for code testing
-        '''
-        self.make_film_layers_dict()
-        print(self.settings['film_layers_dict']) #testprint
-
-
-    def mech_solve_all(self):
-        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanmarkrow=False)
-        self.mech_solve_chn(self.mech_chn, queue_ids)
-
-
-    def mech_solve_marked(self):
-        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanmarkrow=True)
-        self.mech_solve_chn(self.mech_chn, queue_ids)
-
-
-    def update_mechanics_chn(self):
+    def on_mech_chn_changed(self):
         '''
         update self.mech_chn
         set film lsyers widgets
@@ -3854,14 +3828,15 @@ class QCMApp(QMainWindow):
         which will change with self.mech_chn
         '''
         #  of the signal isA QLineEdit object, update QLineEdit vals in dict
-        print('mech_chn widget update', signal) #testprint
+        print('mech_chn widget update', self.sender().objectName(), signal) #testprint
         # mech_chn = self.mech_chn
 
         if isinstance(self.sender(), QLineEdit):
-                try:
-                    self.set_mechchndata(self.sender().objectName(), float(signal))
-                except:
-                    self.set_mechchndata(self.sender().objectName(), 0)
+                self.set_mechchndata(self.sender().objectName(), signal)
+                # try:
+                #     self.set_mechchndata(self.sender().objectName(), float(signal))
+                # except:
+                #     self.set_mechchndata(self.sender().objectName(), 0)
         # if the sender of the signal isA QCheckBox object, update QCheckBox vals in dict
         elif isinstance(self.sender(), QCheckBox):
             self.set_mechchndata(self.sender().objectName(), signal)
@@ -3909,8 +3884,41 @@ class QCMApp(QMainWindow):
         '''
         if mech_chn is None: # use harmonic displayed in UI
             mech_chn = self.mech_chn
+        print(self.settings['mechchndata']) #testprint
+        if self.get_mechchndata(objname, mech_chn=mech_chn) is not None: # exists
+            self.settings['mechchndata'][mech_chn].pop(objname)
 
-        self.settings['mechchndata'][mech_chn].pop(objname)
+
+    def on_mech_layer_calc_changed(self, signal):
+        '''
+        change the slected layer comboBox_mech_expertmode_indchn_<n> by self.mech_chn
+        '''
+        sender_name = self.sender().objectName()
+        layer_num = sender_name.split('_')[-1] # str
+
+        if signal: # is checked
+            # set mechchandata
+            self.set_mechchndata('comboBox_mech_expertmode_indchn_' + layer_num, val=self.mech_chn)
+            # reload the comboBox
+            self.load_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_indchn_' + layer_num), mech_chn=self.mech_chn)
+
+
+    def on_mech_layer_indchn_changed(self, signal):
+        '''
+        change the slected layer comboBox_mech_expertmode_indchn_<n> to self.mech_chn if radioButton_mech_expertmode_calc_<n> is checked
+        '''
+        sender_name = self.sender().objectName()
+        layer_num = sender_name.split('_')[-1] # str
+
+        iscalc = self.get_mechchndata('radioButton_mech_expertmode_calc_' + layer_num)
+
+        indchn = self.sender().itemData(signal)
+
+        if iscalc and (indchn != self.mech_chn): # is checked
+            # set mechchandata
+            self.set_mechchndata('comboBox_mech_expertmode_indchn_' + layer_num, val=self.mech_chn)
+            # reload the comboBox
+            self.load_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_indchn_' + layer_num), mech_chn=self.mech_chn)
 
 
     def on_mech_layer_source_changed(self, signal):
@@ -3948,7 +3956,8 @@ class QCMApp(QMainWindow):
 
     def make_film_layers_dict(self):
         '''
-        make a dict with film layers construction and save it to self.settings['film_layers_dict']
+        return a dict with film layers construction 
+        from currenent widgets' value or mechchndata (now we are using widgets' value)
         '''
         prefix = {
             'calc': 'radioButton_mech_expertmode_calc_', 
@@ -3962,18 +3971,16 @@ class QCMApp(QMainWindow):
 
         print(n_layers) #testprint
 
-        chn_film_layers_dict = {}
+        film_dict = {}
 
         for n in range(n_layers): # all layers
             print(n) #testprint
             n = str(n) # convert to string for storing as json, which does not support int key
-            chn_film_layers_dict[n] = {key: self.get_mechchndata(pre_name+n) for key, pre_name in prefix.items()}
+            film_dict[n] = {key: self.get_mechchndata(pre_name+n) for key, pre_name in prefix.items()}
 
-        print(chn_film_layers_dict) #testprint
+        print(film_dict) #testprint
 
-        # set to self.settings
-        self.settings['film_layers_dict'][self.mech_chn] = chn_film_layers_dict
-        print(self.settings['film_layers_dict']) #testprint
+        return film_dict
 
 
     def set_film_layers_widgets(self):
@@ -3987,23 +3994,161 @@ class QCMApp(QMainWindow):
 
         if layernum is None: # no data saved
             print('layernum is None') #testprint
+            # use default layernum
+            layernum = self.settings['spinBox_mech_expertmode_layernum']
             # generate layers
-            self.ui.spinBox_mech_expertmode_layernum.setValue(self.settings['spinBox_mech_expertmode_layernum']) # use default value
+            self.ui.spinBox_mech_expertmode_layernum.setValue(layernum) # use default value
+            self.set_mechchndata('spinBox_mech_expertmode_layernum', layernum)
+            print(self.settings['mechchndata']) #testprint
         else:
             # generate layers
             self.ui.spinBox_mech_expertmode_layernum.setValue(layernum)
 
-            for n in range(layernum+1): # all layers
-                print(n) #testprint
-                n = str(n) # convert to string for storing as json, which does not support int key
+        self.load_film_layers_widgets() # load values
+        
+
+    def load_film_layers_widgets(self):
+        '''
+        load values in mechchndata to widgets
+        if None
+        save to mechndata
+        '''
+        layernum = self.get_mechchndata('spinBox_mech_expertmode_layernum')
+        mech_chn = self.mech_chn
+        for n in range(layernum+1): # all layers
+            print(n) #testprint
+            n = str(n) # convert to string for storing as json, which does not support int key
+
+            if (self.get_mechchndata('radioButton_mech_expertmode_calc_'+n) is None): # no data saved for this layer or new layer
+                # save current value to self.settings
+                self.set_mechchndata('lineEdit_mech_expertmode_value_'+n, getattr(self.ui, 'lineEdit_mech_expertmode_value_'+n).text())
+                # save current value to self.settings
+                self.set_mechchndata('comboBox_mech_expertmode_indchn_'+n, getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+n).itemData(getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+n).currentIndex()))
+
+                # save current value to self.settings
+                self.set_mechchndata('comboBox_mech_expertmode_source_'+n, getattr(self.ui, 'comboBox_mech_expertmode_source_'+n).itemData(getattr(self.ui, 'comboBox_mech_expertmode_source_'+n).currentIndex()))
+
+                # save current value to self.settings
+                self.set_mechchndata('radioButton_mech_expertmode_calc_'+n, getattr(self.ui, 'radioButton_mech_expertmode_calc_'+n).isChecked())
+            else: # data in mechchndata
                 # the order of setting values should not change
                 getattr(self.ui, 'radioButton_mech_expertmode_calc_'+n).setChecked(self.get_mechchndata('radioButton_mech_expertmode_calc_'+n))
-                self.load_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_source_'+n), val=self.get_mechchndata('comboBox_mech_expertmode_source_'+n))
-                self.load_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+n), val=self.get_mechchndata('comboBox_mech_expertmode_indchn_'+n))
-                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+n).setText(self.get_mechchndata('lineEdit_mech_expertmode_value_'+n))
+                self.load_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_source_'+n), val=self.get_mechchndata('comboBox_mech_expertmode_source_'+n), mech_chn=mech_chn)
+                self.load_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+n), val=self.get_mechchndata('comboBox_mech_expertmode_indchn_'+n), mech_chn=mech_chn)
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+n).setText(str(self.get_mechchndata('lineEdit_mech_expertmode_value_'+n)))
 
 
-    def mech_solve_chn(self, chn_name, queue_ids):
+    def mech_solve_chn(self, chn_name=None, queue_ids=None):
+        '''
+        send the data to qcm module to solve in secquence by queue_ids and
+        save the returned mechanic data to data_saver
+        '''
+
+        if not self.data_saver.path:
+            print('No data available!')
+            return
+
+        if chn_name is None:
+            chn_name = self.mech_chn
+
+        if queue_ids is None:
+            queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanmarkrow=False)
+
+        # set f1 to qcm module (leave this to qcm modue for each single solution)
+
+        self.qcm.rh = int(self.settings['comboBox_settings_mechanics_refG'])
+        rh = self.qcm.rh # reference harmonic
+
+        print('rh', rh) #testprint
+
+        ## work with layers first 
+        film_dict = self.make_film_layers_dict()
+
+        # {'0': {'calc': False, 'source': 'ind', 'indchn': 'ref', 'val': '[2]'}, '1': {'calc': True, 'source': 'ind', 'indchn': 'samp', 'val': '[]'}}
+
+        # find the layer w/ calc = Ture
+        calc_num = None
+        for n, dic in film_dict.items():
+            if dic['calc']:
+                calc_num = int(n)
+                break
+        
+        if calc_num is None:
+            print('Stoped! No layer is marked to calculate')
+            return
+
+        # to iterate the dict sorted w/o using orderedDict
+        # 1st get the keys and sorted
+        for n in sorted([int(n) for n in film_dict.keys()]):
+            pass
+
+
+        # get qcm data (columns=['queue_id', 't', 'temp', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs', 'f0stars', 'f0s', 'g0s'])
+        # 'delf', 'delgs' may not necessary
+        qcm_df = self.data_saver.df_qcm(chn_name)
+
+        # get nhcalc
+        nhcalc_list = self.gen_nhcalc_list()
+
+        # do calc with each nhcalc
+        for nhcalc in nhcalc_list: # for now, only one nhcalc
+            mech_df = self.data_saver.update_mech_df_shape(chn_name, nhcalc, rh) # this also update in data_saver
+
+            print(mech_df) #testprint mech_df from data_saver is all nan (passed)
+
+            # if live update is not needed, use QCM.analyze to replace. the codes should be the same
+            nh = QCM.nhcalc2nh(nhcalc)
+            for queue_id in queue_ids: # iterate all ids
+                print('queue_id', queue_id) #testprint
+                # print('qcm_df', qcm_df) #testprint
+                print(type(qcm_df)) #testprint
+                # queue index
+                idx = qcm_df[qcm_df.queue_id == queue_id].index.astype(int)[0]
+                # idx = qcm_df[qcm_df.queue_id == queue_id].index
+                print('index', qcm_df.index) #testprint
+                print('index', mech_df.index) #testprint
+                print('idx', idx) #testprint
+                # qcm data of queue_id
+                qcm_queue = qcm_df.loc[[idx], :].copy() # as a dataframe
+                # mechanic data of queue_id
+                mech_queue = mech_df.loc[[idx], :].copy()  # as a dataframe 
+                # !! The copy here will not work, since mech_df contains object and the data change to mech_queue will be updated in mech_df 
+
+                # create a dump df which is a copy of mech_df.loc[[idx], :]
+                # mech_queue = pd.DataFrame.from_dict(mech_df.loc[[idx], :].to_dict())
+                mech_queue['queue_id'] = mech_queue['queue_id'].astype('int')
+                # exit(0)
+
+                # obtain the solution for the properties
+                if self.qcm.all_nhcaclc_harm_not_na(nh, qcm_queue):
+                    # solve a single queue
+                    mech_queue = self.qcm.solve_single_queue(nh, qcm_queue, mech_queue)
+
+                    # save back to mech_df
+                    mech_queue.index = [idx] # not necessary
+                    # mech_df.update(mech_queue)
+                    # mech_df['queue_id'] = mech_df['queue_id'].astype('int')
+                    self.data_saver.update_mech_queue(chn_name, nhcalc, rh, mech_queue) # update to mech_df in data_saver
+                    
+                    if self.settings['checkBox_settings_mech_liveupdate']: # live update
+                        # update tableWidget_spectra_mechanics_table
+                        self.ui.spinBox_spectra_mechanics_currid.setValue(idx)
+
+                else:
+                    # since the df already initialized with nan values, nothing to do here
+                    pass
+
+            print('{} calculation finished.'.format(nhcalc))
+
+            # # save back to data_saver
+            # self.data_saver.update_mech_df_in_prop(chn_name, nhcalc, rh, mech_df)
+
+            if not self.settings['checkBox_settings_mech_liveupdate']: 
+                # update table
+                self.update_spectra_mechanics_table(chn_name, nhcalc, rh, queue_id, qcm_queue, mech_queue)
+
+
+    def backup_mech_solve_chn(self, chn_name, queue_ids):
         '''
         send the data to qcm module to solve in secquence by queue_ids and
         save the returned mechanic data to data_saver
@@ -4081,6 +4226,55 @@ class QCMApp(QMainWindow):
             if not self.settings['checkBox_settings_mech_liveupdate']: 
                 # update table
                 self.update_spectra_mechanics_table(chn_name, nhcalc, rh, queue_id, qcm_queue, mech_queue)
+
+
+    def mech_clear(self):
+        print('pushButton_settings_mechanics_clrallprops clicked')
+        self.data_saver.clr_mech_df_in_prop()
+
+
+    def mech_solve_test(self):
+        '''
+        for code testing
+        '''
+        self.make_film_layers_dict()
+
+
+    def mech_solve_all(self):
+        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanmarkrow=False)
+        self.mech_solve_chn(self.mech_chn, queue_ids)
+
+
+    def mech_solve_marked(self):
+        queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanmarkrow=True)
+        self.mech_solve_chn(self.mech_chn, queue_ids)
+
+
+    def set_mech_layer_0_indchn_val(self):
+        '''
+        set layer 0 value of mech_layers
+        '''
+        # get ref_tempmode
+        ref_tempmode = self.settings['comboBox_settings_data_ref_tempmode']
+        samprefsource = self.settings['comboBox_settings_data_samprefsource']
+        samprefidx = self.settings['lineEdit_settings_data_samprefidx']
+        refrefsource = self.settings['comboBox_settings_data_refrefsource']
+        refrefidx = self.settings['lineEdit_settings_data_refrefidx']
+
+        # set mechchndata
+        if ref_tempmode == 'const':
+            self.set_mechchndata('comboBox_mech_expertmode_indchn_0', samprefsource, mech_chn='samp')
+            self.set_mechchndata('comboBox_mech_expertmode_indchn_0', refrefsource, mech_chn='ref')
+        elif ref_tempmode == 'var': # use the same reference
+            self.set_mechchndata('comboBox_mech_expertmode_indchn_0', refrefsource, mech_chn='samp')
+            self.set_mechchndata('comboBox_mech_expertmode_indchn_0', refrefsource, mech_chn='ref')
+        else:
+            pass
+        self.set_mechchndata('lineEdit_mech_expertmode_value_0', samprefidx, mech_chn='samp')
+        self.set_mechchndata('lineEdit_mech_expertmode_value_0', refrefidx, mech_chn='ref')
+        
+        # load film layers data 
+        self.load_film_layers_widgets()
 
 
     def on_changed_spinBox_spectra_mechanics_currid(self, idx):
@@ -4568,6 +4762,7 @@ class QCMApp(QMainWindow):
             # change text
             item_samp.setText(0, 'Samp.')
             item_ref.setText(0, 'Ref.')
+            self.ui.label_settings_data_refdiscription.setText('Source - [indices]')
         elif value == 'const': # normal mode
             item_samp = self.find_text_item(parent, 'Samp.')
             item_ref = self.find_text_item(parent, 'Ref.')
@@ -4577,6 +4772,7 @@ class QCMApp(QMainWindow):
             # change text
             item_samp.setText(0, 'S chn.')
             item_ref.setText(0, 'R chn.')
+            self.ui.label_settings_data_refdiscription.setText('Reference - [indices]')
 
         # change visible of comboBox_settings_data_ref_fitttype by comboBox_settings_data_ref_tempmode value (const/var)
         if self.settings.get('comboBox_settings_data_ref_tempmode', None) == 'const': #constant temp experiment
@@ -4592,7 +4788,6 @@ class QCMApp(QMainWindow):
             self.data_saver.exp_ref['mode']['temp'] = value
         elif 'fit' in sender_name:
             self.data_saver.exp_ref['mode']['fit'] = value
-
 
 
     def set_stackedwidget_index(self, stwgt, idx=[], diret=[]):
@@ -5218,7 +5413,7 @@ class QCMApp(QMainWindow):
         # TODO update plt1 and plt2
 
 
-    def load_comboBox(self, comboBox, val=None, harm=None):
+    def load_comboBox(self, comboBox, val=None, harm=None, mech_chn=None):
         '''
         load combobox value from self.settings[comboBox.objectName()]
         if harm == None
@@ -5238,21 +5433,29 @@ class QCMApp(QMainWindow):
         #             if key == self.get_harmdata(comboBoxName, harm):
         #                 comboBox.setCurrentIndex(comboBox.findData(key))
         #                 break
-        if harm is None: # normal combobox
+        if (harm is None) and (mech_chn is None): # normal combobox
             if comboBoxName in self.settings:
                 if val is None:
                     val = self.settings[comboBoxName]
                 set_ind = comboBox.findData(val)
                 if set_ind != -1: # key in list
                     comboBox.setCurrentIndex(set_ind)
-        else: # in harmdata
+        elif (harm is not None) and (mech_chn is None): # in harmdata
             print('harmdata') #testprint
             if val is None:
                 val = self.get_harmdata(comboBoxName, harm)
             set_ind = comboBox.findData(val)
             if set_ind != -1: # key in list
                 print('{} is found'.format(comboBoxName)) #testprint
-                comboBox.setCurrentIndex(set_ind) 
+                comboBox.setCurrentIndex(set_ind)
+        elif (harm is None) and (mech_chn is not None):
+            print('mechchndata') #testprint
+            if val is None:
+                val = self.get_mechchndata(comboBoxName, mech_chn)
+            set_ind = comboBox.findData(val)
+            if set_ind != -1: # key in list
+                print('{} is found'.format(comboBoxName)) #testprint
+                comboBox.setCurrentIndex(set_ind)
 
 
 
