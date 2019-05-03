@@ -210,7 +210,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>2</number>
+             <number>3</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1117,7 +1117,7 @@ background-color: red;
                     <string/>
                    </property>
                    <property name="placeholderText">
-                    <string>Type note of your sample here.</string>
+                    <string>Type your sample note here.</string>
                    </property>
                   </widget>
                  </item>
@@ -1624,7 +1624,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>83</width>
+                   <width>98</width>
                    <height>71</height>
                   </rect>
                  </property>
@@ -2251,6 +2251,21 @@ border: none;
                    </item>
                    <item>
                     <property name="text">
+                     <string>Channels</string>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>S chn.</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>R chn.</string>
+                     </property>
+                    </item>
+                   </item>
+                   <item>
+                    <property name="text">
                      <string>Reference</string>
                     </property>
                     <property name="text">
@@ -2258,12 +2273,7 @@ border: none;
                     </property>
                     <item>
                      <property name="text">
-                      <string>Mode</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>S chn.</string>
+                      <string>S ref.</string>
                      </property>
                      <property name="text">
                       <string/>
@@ -2274,7 +2284,7 @@ border: none;
                     </item>
                     <item>
                      <property name="text">
-                      <string>R chn.</string>
+                      <string>R ref.</string>
                      </property>
                      <property name="text">
                       <string/>
@@ -2501,6 +2511,12 @@ p, li { white-space: pre-wrap; }
                  <string>yyyy-MM-dd hh:mm:ss.zzz</string>
                 </property>
                </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_settings_data_sampidx"/>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_settings_data_refidx"/>
               </item>
               <item>
                <widget class="QFrame" name="frame_settings_data_sampref">
@@ -2772,7 +2788,7 @@ p, li { white-space: pre-wrap; }
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <widget class="QWidget" name="tab_settings_mechanis_sampchn">
                     <attribute name="title">
@@ -3114,10 +3130,6 @@ p, li { white-space: pre-wrap; }
                   </widget>
                  </item>
                 </layout>
-                <zorder></zorder>
-                <zorder>gridLayoutWidget</zorder>
-                <zorder>verticalSpacer_11</zorder>
-                <zorder>stackedWidget_settings_mechanics_modeswitch</zorder>
                </widget>
               </item>
               <item>
@@ -3319,7 +3331,7 @@ border-image: url(:/button/rc/plus_p.svg);
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="label_6">
+                    <widget class="QLabel" name="label_settings_mechanics_refG">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                        <horstretch>0</horstretch>
@@ -4422,7 +4434,7 @@ border: 1px solid blue;
            </size>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="page_spectra_show">
            <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -5076,7 +5088,7 @@ border: 1px solid blue;
                    <bool>true</bool>
                   </property>
                   <attribute name="horizontalHeaderVisible">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </attribute>
                   <attribute name="horizontalHeaderCascadingSectionResizes">
                    <bool>true</bool>
@@ -5086,6 +5098,9 @@ border: 1px solid blue;
                   </attribute>
                   <attribute name="horizontalHeaderStretchLastSection">
                    <bool>false</bool>
+                  </attribute>
+                  <attribute name="verticalHeaderVisible">
+                   <bool>true</bool>
                   </attribute>
                   <attribute name="verticalHeaderDefaultSectionSize">
                    <number>22</number>

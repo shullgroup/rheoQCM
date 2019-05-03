@@ -123,8 +123,9 @@ class DataSaver:
                 'g0': self.nan_harm_list(), # list for each harmonic
             },
             # str show the source used as reference
-            'samp_ref': ['samp', [0,]],  # default
-            'ref_ref': ['ref', [0,]],    # default
+            # [ref source, ref indices, channel indices]
+            'samp_ref': ['samp', [0,], []],  # default 
+            'ref_ref': ['ref', [0,], []],    # default
             
             # structure: (source, [indices]) 
             #   source: 'samp', 'ref', 'ext', 'none'
@@ -143,19 +144,50 @@ class DataSaver:
                 'temp': 'const', 
                 'fit': 'linear'
             },
-            'func': { # this key only saved in memory, will not be save to file!
-                # example: '1': fun1 (return f0s, g0s)
-            }
+            # this key only saved in memory, will not be save to file!
+            # example: '1': fun1 (return f0s, g0s)
+            'func': self.nan_interp_func_list()
         } # experiment reference setup in dict
 
 
-    def update_mech_df_shape(self, chn_name, nhcalc, rh):
+    def nan_interp_func_list(self):
+        func_dict = {}
+        func_list = [] # list of funcs 
+        func_f_list = [] # func for all freq
+        func_g_list = [] # func for all gamma
+        nan_func = lambda temp: np.array([np.nan] * len(temp))
+        for harm in range(1, self.settings['max_harmonic']+2, 2): # calculate each harm
+            func_f_list.append(nan_func) # add a func return nan
+            func_g_list.append(nan_func) # add a func return nan
+            # make function for each ind_list
+            func_list.append(self.make_interpfun(func_f_list, func_g_list))
+        for chn_name in self._chn_keys:
+            func_dict[chn_name] = func_list.copy()
+        return func_dict
+
+
+    def get_chn_idx_in_exp_ref(self, chn_name):
         '''
-        initiate an empty df for storing the mechanic data in self.mech with nhcalc_rh as a key
+        get indices of chn_name 
+        if self.exp_ref.<chn_name>_ref[2] exists and is not empty:
+            use it
+        else: 
+            use all
+        '''
+        chn_ref = self.exp_ref[chn_name + '_ref']
+        if (len(chn_ref) > 2) and chn_ref[2]: # exist chn_idx
+            return chn_ref[2]
+        else: # chn_idx does not exist
+            return getattr(self, chn_name).index.tolist()
+
+
+    def update_mech_df_shape(self, chn_name, nhcalc, refh):
+        '''
+        initiate an empty df for storing the mechanic data in self.mech with nhcalc_refh as a key
         if there is a key with the same name, check and add missed rows (queue_id)
         nhcalc: str '133'
-        rh: in, reference harmonit
-        the df will be saved/updated as nhcalc_str(rh)
+        refh: in, reference harmonic
+        the df will be saved/updated as nhcalc_str(refh)
         return the updated df
         '''
         # data_keys = ['queue_id', 't', 'temp', 'marks', 'delfs', 'delgs',]
@@ -163,17 +195,12 @@ class DataSaver:
 
         # column names with single value for prop df
         mech_keys_single = [
-            'drho',
-            'drho_err',
-            'grho_rh',
-            'grho_rh_err',
-            'phi',
-            'phi_err',
-            'dlam_rh',
-            'lamrho',
-            'delrho',
-            'delf_delfsn',
-            'rh',
+            'drho', # 
+            'drho_err', #
+            'phi', #
+            'phi_err', #
+            'rh_exp', # 
+            'rh_calc', # 
         ]
 
         # column names with multiple value for prop df
@@ -182,13 +209,21 @@ class DataSaver:
             'delf_calcs', # n
             'delg_exps',
             'delg_calcs', # n
+            'delf_delfsns', # h dependent
             'delg_delfsn_exps', # n
             'delg_delfsn_calcs', # n
+
+            'grhos', # h dependent
+            'grhos_err', # h dependent
+            'dlams', # h dependent
+            'lamrhos', # h dependent
+            'delrhos', # h dependent
+
             'rd_exps', # n
             'rd_calcs', # n
         ]
 
-        mech_key = self.get_mech_key(nhcalc, rh)
+        mech_key = self.get_mech_key(nhcalc)
         print(mech_key) #testprint
 
         if mech_key in getattr(self, chn_name + '_prop').keys():
@@ -239,7 +274,7 @@ class DataSaver:
         print(df_mech['delf_calcs'].head) #testprint
 
         # set it to class
-        self.update_mech_df_in_prop(chn_name, nhcalc, rh, df_mech)
+        self.update_mech_df_in_prop(chn_name, nhcalc, refh, df_mech)
 
         return getattr(self, chn_name + '_prop')[mech_key].copy()
 
@@ -301,9 +336,16 @@ class DataSaver:
             dump_exp_ref = self._make_exp_ref()
             if 'exp_ref' in fh.keys():
                 self.exp_ref = json.loads(fh['exp_ref'][()])
+                self.exp_ref.pop('func', None)
                 for key, val in dump_exp_ref.items():
                     if key not in self.exp_ref:
+                        # print(key, 'does not exist. added.') #testprint
                         self.exp_ref[key] = val
+                # set self.exp_ref[chn_name + '_ref']
+                # old version has len == 2 add one to the end
+                for chn_name in self._chn_keys:
+                    if len(self.exp_ref[chn_name + '_ref']) == 2:
+                        self.exp_ref[chn_name + '_ref'].append([])
             else:
                 self.exp_ref = dump_exp_ref
             self.ver = fh.attrs['ver']
@@ -345,6 +387,11 @@ class DataSaver:
             queue_samp_data = self.samp.queue_id.values # TODO add checking marker != -1
             queue_ref_data = self.ref.queue_id.values
             self.queue_list = sorted(list(set(queue_samp_data) | set(queue_ref_data) | set(queue_samp_raw) | set(queue_ref_raw)))
+
+
+            # calculate func which cannot be saved in file
+            for chn_name in self._chn_keys:
+                self.calc_fg_ref(chn_name, mark=True)
 
             self.raw  = {} # raw data from last queue
 
@@ -657,7 +704,7 @@ class DataSaver:
         self.saveflg = False
 
 
-    def update_mech_queue(self, chn_name, nhcalc, rh, queue):
+    def update_mech_queue(self, chn_name, nhcalc, refh, queue):
         '''
         this function update queue (df) the df of dmech_df
         This function will check if the index of both dmech_df and queue with the same queue_id are the same. if not, the index of queue will be changed to it of dmech_df and use dataframe.update function to update
@@ -666,7 +713,7 @@ class DataSaver:
         queue: one row of the df
         '''
 
-        mech_key = self.get_mech_key(nhcalc, rh)
+        mech_key = self.get_mech_key(nhcalc)
         if not mech_key in getattr(self, chn_name + '_prop'):
             print('no df of {} in {}'.format(mech_key, chn_name))
             return
@@ -735,24 +782,24 @@ class DataSaver:
                     getattr(self, chn_name + '_prop')[mech_key] = df
 
 
-    def update_mech_df_in_prop(self, chn_name, nhcalc, rh, mech_df):
+    def update_mech_df_in_prop(self, chn_name, nhcalc, refh, mech_df):
         '''
         save mech_df to self.'chn_nam'_mech[nhcalc]
         '''
         # set queue_id as int
         mech_df['queue_id'] = mech_df.queue_id.astype('int')
 
-        getattr(self, chn_name + '_prop')[self.get_mech_key(nhcalc, rh)] = mech_df
+        getattr(self, chn_name + '_prop')[self.get_mech_key(nhcalc)] = mech_df
         print('mech_df in data_saver') #testprint
-        print(getattr(self, chn_name + '_prop')[self.get_mech_key(nhcalc, rh)]) #testprint
+        print(getattr(self, chn_name + '_prop')[self.get_mech_key(nhcalc)]) #testprint
         self.saveflg = False
     
 
-    def get_mech_df_in_prop(self, chn_name, nhcalc, rh):
+    def get_mech_df_in_prop(self, chn_name, nhcalc, refh):
         '''
         get mech_df from self.'chn_name'_mech[mech_key]
         '''
-        return getattr(self, chn_name + '_prop')[self.get_mech_key(nhcalc, rh)].copy()
+        return getattr(self, chn_name + '_prop')[self.get_mech_key(nhcalc)].copy()
 
 
     def get_prop_keys(self, chn_name):
@@ -1402,7 +1449,7 @@ class DataSaver:
                 col_arr = col_arr - ref_arr
 
                 # save it back to col_s
-                col_s.values[:] = list(col_arr)
+                col_s.values[:] = col_arr.tolist()
                 
                 if norm: # normalize the data by harmonics
                     col_s = self._norm_by_harm(col_s)
@@ -1431,6 +1478,13 @@ class DataSaver:
         return df
 
 
+    def set_chn_idx(self, chn_name, chn_idx):
+        '''
+        save index used to calculate to class
+        '''
+        self.exp_ref[chn_name + '_ref'][2] = chn_idx
+
+
     def copy_to_ref(self, chn_name, df=None):
         '''
         copy df to self.[chn_name + '_ref'] as reference
@@ -1440,9 +1494,12 @@ class DataSaver:
         # check self.exp_ref
         if self.exp_ref[chn_name + '_ref'][0] in self._chn_keys: # use test data
             # reset mark (1 to 0) and copy
+            print('in file reference') #testprint
             if df is None:
+                print('df is None') #testprint
                 df = getattr(self, self.exp_ref[chn_name + '_ref'][0]).copy()
         elif df is None: # chn_name is not samp/ref and df is not given
+            print('out file reference and df is None') #testprint
             # print('df should not be None when {} is reference source.'.fromat(self.exp_ref[chn_name + '_ref'][0]))
             # return
             raise ValueError('df should not be None when {} is reference source.'.fromat(self.exp_ref[chn_name + '_ref'][0]))            
@@ -1463,12 +1520,14 @@ class DataSaver:
             return
 
         # check idx_list structure
-        if all([isinstance(l, list) for l in idx_list]): # idx_list is list of lists
+        print('idx_list', idx_list) #testprint
+        if any([isinstance(l, list) for l in idx_list]): # idx_list is list of lists
             idx_list_opened =[]
             for l in idx_list:
                 idx_list_opened.extend(l)
         else:
             idx_list_opened = idx_list
+        print('idx_list_opened', idx_list_opened) #testprint
 
         mode = self.exp_ref.get('mode')
         if mode['cryst'] == 'single':
@@ -1481,20 +1540,10 @@ class DataSaver:
                 self.exp_ref[chn_name + '_ref'][1] = idx_list 
                 
             # copy data to <chn_name>_ref
+            # both chn can have ref
+            # use average of reference
             if mode['temp'] == 'const': # single crystal and constant temperature
-                # both chn can have ref
-                # use average of reference
-
-                # copy df to ref
-                if source in self._chn_keys: # use data from current test
-                    df = getattr(self, source)
-                    self.copy_to_ref(chn_name, df.loc[idx_list_opened, :]) # copy to reference data set
-                elif source == 'ext': # data from external file
-                    if df is not None:
-                        self.copy_to_ref(chn_name, df.loc[idx_list_opened, :]) # copy to reference data set
-                    else:
-                        print('no dataframe is provided!')
-
+                pass
             elif mode['temp'] == 'var': # single crystal and variable temperature
                 # samp as sample and ref as reference
                 # use fitting of reference  
@@ -1508,20 +1557,23 @@ class DataSaver:
                         'f0': self.nan_harm_list(), # list for each harmonic
                         'g0': self.nan_harm_list(), # list for each harmonic
                     }
-                       
-                # only copy df of ref to ref_ref 
-                # but the data may not be used
-                if chn_name == 'ref':
-                    if source in self._chn_keys: # use data from current test
-                        df = getattr(self, source)
-                        self.copy_to_ref('ref', df.loc[idx_list_opened, :]) # copy to reference data set
-                    elif source == 'ext': # data from external file
-                        if df is not None:
-                            self.copy_to_ref('ref', df.loc[idx_list_opened, :]) # copy to reference data set
-                        else:
-                            print('no dataframe is provided!')
-                    else:
-                        pass
+
+            # copy df to ref
+            if source in self._chn_keys: # use data from current test
+                df = getattr(self, source)
+                print('source', source) #testprint
+                print('idx_list_opened', idx_list_opened) #testprint
+                print('df.loc[idx_list_opened]', df.loc[idx_list_opened, :]) #testprint
+                print(df) #testprint
+                self.copy_to_ref(chn_name, df.loc[idx_list_opened, :]) # copy to reference data set
+            elif source == 'ext': # data from external file
+                if df is not None:
+                    self.copy_to_ref(chn_name, df.loc[idx_list_opened, :]) # copy to reference data set
+                else:
+                    print('no dataframe is provided!')
+            else:
+                pass
+                                       
         elif mode['cryst'] == 'dual': #TODO
             if mode['temp'] == 'const': # dual crystal and constant temperature
                 pass
@@ -1561,35 +1613,38 @@ class DataSaver:
                     self.refflg[chn_name] = False
 
             elif mode['temp'] == 'var': # single crystal and constant temperature
-                samp_source = self.exp_ref['samp_ref'][0]
-                ref_source = self.exp_ref['ref_ref'][0]
+                chn_ref_source = self.exp_ref[chn_name + '_ref'][0]
 
                 # check if there is temp data in self.ref
-                temp = self.get_temp_by_uint_marked_rows(ref_source, dropnanmarkrow=False, unit='C') # in C. If marked only, set dropnanmarkrow=True
+                temp = self.get_temp_by_uint_marked_rows(chn_ref_source, dropnanmarkrow=False, unit='C') # in C. If marked only, set dropnanmarkrow=True
                 print(temp) #testprint
                 if np.isnan(temp).all(): # no temp data
                     print('no temperature data in reference!')
                     self.refflg[chn_name] = False
                     return
 
-                # check if all elements in self.exp_ref.ref_ref[1] is list
-                if all([isinstance(l, list) for l in self.exp_ref['ref_ref'][1]]): # all list
-                    reference_idx = self.exp_ref['ref_ref'][1]
-                elif all([isinstance(l, int) for l in self.exp_ref['ref_ref'][1]]): # all int
-                    reference_idx = [self.exp_ref['ref_ref'][1]] # put into a list
+                # check if all elements in self.exp_ref.<chn_name>_ref[1] is list
+                if all([isinstance(l, list) for l in self.exp_ref[chn_name+'_ref'][1]]): # all list
+                    reference_idx = self.exp_ref[chn_name+'_ref'][1]
+                elif all([isinstance(l, int) for l in self.exp_ref[chn_name+'_ref'][1]]): # all int
+                    reference_idx = [self.exp_ref[chn_name+'_ref'][1]] # put into a list
                 else:
                     print('Check reference reference index!')
                     self.refflg[chn_name] = False
                     return
                 
                 # get harm data fs in columns
-                fs = self.get_list_column_to_columns_marked_rows(ref_source, 'fs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute freq in Hz. If marked, set mark=True
-                gs = self.get_list_column_to_columns_marked_rows(ref_source, 'gs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute gamma in Hz. If marked, set mark=True
+                fs = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'fs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute freq in Hz. If marked, set mark=True
+                gs = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'gs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute gamma in Hz. If marked, set mark=True
 
                 func_list = [] # list of funcs 
+                print('reference_idx', reference_idx) #testprint
+                print('exp_ref', self.exp_ref) #testprint
                 for ind_list in reference_idx: # iterate each list
-                    print('reference_idx', reference_idx) #testprint
                     print('ind_list', ind_list)
+                    if len(ind_list) == 1: # single point
+                        # cause single point is not allowed for interp1d, doubling the length by repeating
+                        ind_list = ind_list * 2
                     func_f_list = [] # func for all freq
                     func_g_list = [] # func for all gamma
                     tempind = temp[ind_list]
@@ -1599,7 +1654,7 @@ class DataSaver:
 
                         # calc freq
                         if np.isnan(fharmind).all(): # no data in harm and ind_list
-                            func_f_list.append(lambda temp: np.array([np.nan] * len(temp))) # add a func return nan
+                            pass # already initiated
                         else: # there is data
                             print('tempind', tempind) #testprint
                             print('fharmind', fharmind) #testprint
@@ -1607,20 +1662,20 @@ class DataSaver:
                         
                         # calc gamma
                         if np.isnan(gharmind).all(): # no data in harm and ind_list
-                            func_g_list.append(lambda temp: np.array([np.nan] * len(temp))) # add a func return nan
+                            pass # already initiated
                         else: # there is data
                             func_g_list.append(interp1d(tempind, gharmind, kind=self.exp_ref['mode']['fit'], fill_value=np.nan, bounds_error=False))
 
                     # make function for each ind_list
                     func_list.append(self.make_interpfun(func_f_list, func_g_list))
 
-                self.exp_ref['func'] = func_list # save to class
+                self.exp_ref['func'][chn_name] = func_list # save to class
 
                 # calculate ref for each sample (samp) temp and save to self.samp_ref
                 cols_df = self.interp_film_ref('samp')
 
-                # copy df from samp_source
-                df = getattr(self, samp_source).copy()
+                # copy df from samp_ref_source
+                df = getattr(self, chn_name).copy()
 
                 # copy film ref to df
                 df.fs = cols_df.fs
@@ -1629,7 +1684,7 @@ class DataSaver:
                 # change mark 1 to 1
                 df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
                 # copy to samp_ref
-                self.samp_ref = df
+                setattr(self, chn_name + '_ref', df)
                 
                 self.refflg[chn_name] = True
                     
@@ -1707,22 +1762,25 @@ class DataSaver:
                 # calculate ref for each film (samp) temp and save to self.samp_ref
 
                 # check if all elements in self.exp_ref.samp_ref[1] is list
-                if all([isinstance(l, list) for l in self.exp_ref[chn_name+'_ref'][1]]): # all list
-                    film_idx = self.exp_ref[chn_name+'_ref'][1]
-                elif all([isinstance(l, int) for l in self.exp_ref[chn_name+'_ref'][1]]): # all int
-                    film_idx = [self.exp_ref[chn_name+'_ref'][1]] # put into a list
+                chn_idx = self.get_chn_idx_in_exp_ref(chn_name)
+                if all([isinstance(l, list) for l in chn_idx]): # all list
+                    film_idx = chn_idx
+                elif all([isinstance(l, int) for l in chn_idx]): # all int
+                    film_idx = [chn_idx] # put into a list
                 else:
                     print('Check sample reference index!')
                 
                 # get interpolated f and g by chn_temp
                 for seg, ind_list in enumerate(film_idx): # iterate each list
                     tempind = chn_temp[ind_list]
+                    print(self.exp_ref['func']) #testprint
+                    chn_func = self.exp_ref['func'][chn_name]
                     print('len(ind_list)', len(ind_list)) #testprint
-                    print('len(fun)', len(self.exp_ref['func'])) #testprint
+                    print('len(fun)', len(chn_func)) #testprint
                     # get interpolated f, g of temp in ind_list (tempind) 
-                    # len(ind_list) can be longer than len(self.exp_ref['func']) 
+                    # len(ind_list) can be longer than len(chn_func) 
                     # use modulus 
-                    f_list, g_list = self.exp_ref['func'][seg % len(self.exp_ref['func'])](tempind)
+                    f_list, g_list = chn_func[seg % len(chn_func)](tempind)
                     # transpose 
                     fs_list = np.transpose(np.array(f_list)).tolist()
                     print('len(fs_list)', len(fs_list)) #testprint
@@ -2034,8 +2092,12 @@ class DataSaver:
         df['marks'] = self.get_marks(chn_name)
 
         # get freqs and gamms in form of [n1, n3, n5, ...]
-        fs = self.get_cols(chn_name, cols=['fs'])
-        gs = self.get_cols(chn_name, cols=['gs'])
+        fs = self.get_cols(chn_name, cols=['fs']).squeeze() # convert to series
+        gs = self.get_cols(chn_name, cols=['gs']).squeeze() # convert to series
+        # another way is to get the series directly as follow
+        # fs = getattr(self, chn_name)['fs'].copy()
+        # gs = getattr(self, chn_name)['gs'].copy()
+
         # get delf and delg in form of [n1, n3, n5, ...]
         delfs = self.convert_col_to_delta_val(chn_name, 'fs', norm=False)
         delgs = self.convert_col_to_delta_val(chn_name, 'gs', norm=False)
@@ -2058,9 +2120,9 @@ class DataSaver:
         delfstar_arr = delf_arr + 1j * delg_arr
         f0star_arr = f0_arr + 1j * g0_arr
 
-        df['fstars'] = list(fstar_arr)
-        df['delfstars'] = list(delfstar_arr)
-        df['f0stars'] = list(f0star_arr)
+        df['fstars'] = fstar_arr.tolist()
+        df['delfstars'] = delfstar_arr.tolist()
+        df['f0stars'] = f0star_arr.tolist()
         df['fs'] = fs
         df['gs'] = gs
         df['delfs'] = delfs
@@ -2068,14 +2130,126 @@ class DataSaver:
         df['f0s'] = f0s
         df['g0s'] = g0s
 
+        print(f_arr.shape)
+        print(g_arr.shape)
+        print(fstar_arr.shape)
+        print(df['fstars'].iloc[0])
+
         return df
 
 
-    def get_mech_key(self, nhcalc, rh):
+    def shape_qcmdf_b_to_a(self, df_a, df_b, idx_a, idx_b):
+        '''
+        given qcm_df a and b,
+        make a new df with shape of a and iterpolated data of b
+        columns = ['queue_id', 't', 'temp', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs', 'f0stars', 'f0s', 'g0s']
+        '''
+        print('df_a', df_a) #testprint
+        print('df_b', df_b) #testprint
+        # make a new df with the same shape of df_a
+        df = df_a.copy()
+        # we don't need columns 't', and 'queue_id'
+        df.pop('t')
+        df.pop('temp')
+        
+        # get temp from df (df_a)
+        temp_a = df_a.temp
+        temp_b = df_b.temp
+
+        mode = self.exp_ref.get('mode')
+
+        # iterate the columns
+        for col in df.columns:
+            if col not in ['queue_id', 't', 'temp', 'marks']: # f/g columns with columns
+                # clear all values execpt queue_id, t, temp
+                print('col', col) #testprint
+                df[col] = df[col].apply(lambda x: self.nan_harm_list())
+                # get value
+                col_s = df_b[col].copy()
+
+                if mode['cryst'] == 'single':
+                    if mode['temp'] == 'const': # single crystal and constant temperature
+                        col_arr = np.array(col_s.values.tolist()) # convert series to array
+                        col_mean = np.mean(col_arr, axis=0) # get mean of each column
+                        print('col_arr', col_arr) #testprint
+                        print('col_mean', col_mean) #testprint
+                        df[col] = df[col].apply(lambda x: list(col_mean)) # save back to all rows
+                    elif mode['temp'] == 'var': # single crystal and variable temperature
+                        ## calc interp fun
+                        # check if all elements in self.exp_ref.ref_ref[1] is list
+                        if all([isinstance(l, list) for l in idx_b]): # all list
+                            pass
+                        elif all([isinstance(l, int) for l in idx_b]): # all int
+                            idx_b = [idx_b] # put into a list
+                        else:
+                            print('Check index format!')
+                            return
+
+                        col_arr = np.array(col_s.values.tolist()) # convert series to array
+                        print('col_s', col_s.iloc[0]) #testprint
+                        print('col_fs', df_b['fs'].iloc[0]) #testprint
+                        # print('col_arr', col_arr) #testprint
+                        print('col_arr.shape', col_arr.shape) #testprint
+                        # iterate columns in col_arr
+                        n_arr_cols = col_arr.shape[1] if len(col_arr.shape) > 1 else 1
+                        print('n_arr_cols', n_arr_cols) #testprint
+
+                        func_list = []
+                        # calc the fun
+                        for ind_list in idx_b:
+                            func_seg_list = []
+                            temp_b_ind = temp_b[ind_list]
+
+                            for i in range(n_arr_cols): # each column in array
+                                if n_arr_cols > 1:
+                                    col_arr_i = col_arr[ind_list, i]
+                                else: #single column
+                                    col_arr_i = col_arr[ind_list]
+                                
+                                if np.isnan(col_arr_i).all(): # no data in harm and ind_list
+                                    func_seg_list.append(lambda temp: np.array([np.nan] * len(temp))) # add a func return nan
+                                else: # there is data
+                                    print(temp_b_ind.shape, col_arr_i.shape)
+                                    func_seg_list.append(interp1d(temp_b_ind, col_arr_i, kind=self.exp_ref['mode']['fit'], fill_value=np.nan, bounds_error=False))
+                            func_list.append(lambda temp: [func_seg(temp) for func_seg in func_seg_list])    
+ 
+                        # check if all elements in self.exp_ref.samp_ref[1] is list
+                        if all([isinstance(l, list) for l in idx_a]): # all list
+                            pass
+                        elif all([isinstance(l, int) for l in idx_a]): # all int
+                            idx_a = [idx_a] # put into a list
+                        else:
+                            print('Check index format!')
+                        
+                        # get interpolated f and g by temp_a
+                        for seg, ind_list in enumerate(idx_a): # iterate each list
+                            temp_a_ind = temp_a[ind_list]
+                            # use modulus 
+                            v_list = func_list[seg % len(func_list)](temp_a_ind)
+                            # transpose 
+                            val_list = np.transpose(np.array(v_list)).tolist()
+                            print('len(val_list)', len(val_list)) #testprint
+
+                            df[col][ind_list] = val_list
+
+                elif mode['cryst'] == 'dual': #TODO
+                    if mode['temp'] == 'const': # dual crystal and constant temperature
+                        pass
+                    elif mode['temp'] == 'var': # dual crystal and constant temperature
+                        pass
+                    else:
+                        pass
+        
+        return df
+
+
+
+
+    def get_mech_key(self, nhcalc):
         '''
         return a str which represents the key in self.<chn_name>_mech[key]
         '''
-        return nhcalc + '_' + str(rh)
+        return nhcalc
 
 
     ######## Following functions are for QCM-D 

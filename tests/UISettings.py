@@ -140,8 +140,8 @@ settings_init = {
         # 'groupBox_settings_mechanics_nhcalc',
         # 'checkBox_settings_mechanics_witherror',
         'pushButton_settings_mechanics_errorsettings',
-        # 'label_6',
-        # 'comboBox_settings_mechanics_refG',
+        'label_settings_mechanics_refG',
+        'comboBox_settings_mechanics_refG',
         # 'comboBox_settings_mechanics_selectmodel',
         'groupBox_settings_mechanics_mech_film',
 
@@ -258,15 +258,16 @@ settings_init = {
         'delg_calcs':        r'$\Delta\Gamma$ (Hz)',
         'delg_exps':         r'$\Delta\Gamma_{exp}$ (Hz)',
         'drho':              r'd$\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-        'grho_rh':           r'$|G_{rh}^*|\rho$ (Pa$\cdot$g/cm$^3$)',
+        'grhos':           r'$|G_{n}^*|\rho$ (Pa$\cdot$g/cm$^3$)',
         'phi':               r'$\phi$ ($\degree$)',
-        'dlam_rh':           r'd/$\lambda_{rh}$',
-        'lamrho':            r'$\lambda\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-        'delrho':            r'$\delta\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-        'delf_delfsn':       r'$\Delta$f/$\Delta$f$_{sn}$',
+        'dlams':           r'd/$\lambda_{n}$',
+        'lamrhos':            r'$\lambda\rho$ ($\mu$m$\cdot$g/cm$^3$)',
+        'delrhos':            r'$\delta\rho$ ($\mu$m$\cdot$g/cm$^3$)',
+        'delf_delfsns':       r'$\Delta$f/$\Delta$f$_{sn}$',
         'delg_delfsn_exps':  r'$(\Delta\Gamma$/$\Delta$f$_{sn})_{exp}$',
         'delg_delfsn_calcs': r'$\Delta\Gamma$/$\Delta$f$_{sn}$',
-        'rh':                r'r$_h$',
+        'rh_exp':           r'r$_{h,exp}$',
+        'rh_calc':          r'r$_h$',
         'rd_exps':           r'r$_{d,exp}$',
         'rd_calcs':          r'r$_d$',
     },
@@ -279,14 +280,14 @@ settings_init = {
         'delg_exps':         u'\u0394\u0393' + ' (Hz)', # ΔΓ (Hz)
         'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
         'drho':              'd' + u'\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # dρ (μm∙g/m³)
-        'grho_rh':           '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
+        'grhos':           '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
         'phi':                u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
-        'dlam_rh':           'd/' + u'\u03BB\u2099', # d/λₙ
-        'lamrho':            u'\u03BB\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # λρ (μm∙g/m³)
-        'delrho':            u'\u03B4\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # δρ (μm∙g/m³)
-        'delf_delfsn':       u'\u0394' + 'f/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
+        'dlams':           'd/' + u'\u03BB\u2099', # d/λₙ
+        'lamrhos':            u'\u03BB\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # λρ (μm∙g/m³)
+        'delrhos':            u'\u03B4\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # δρ (μm∙g/m³)
+        'delf_delfsns':       u'\u0394' + 'f/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
         'delg_delfsn_calcs': u'\u0394\u0393' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓ/Δfₛₙ
-        'rh':                'rh',
+        'rh_calc':                'rh',
         'rd_calcs':          'rd',
         't':                 'Time (s)', # Time (s)
         'temp':              'Temp. (' + u'\u00B0' + 'C)', # Temp. (°C)
@@ -441,7 +442,8 @@ settings_init = {
     'qcm_layer_known_source_opts': {
         'ind': 'Index',
         'prop': 'Prop.',
-        'fg': u'\u0394' + 'f&' u'\u0394\u0393',
+        # 'fg': u'\u0394' + 'f&' + u'\u0394\u0393',
+        # 'fg': 'f&' + u'\u0393',
         'name': 'Name',
         # 'none': '--',
     },
@@ -456,7 +458,7 @@ settings_init = {
         'air': {
             'drho': np.inf,
             'grho': 0,
-            'phi': np.pi / 2,
+            'phi': 0,
             'rh': 3,
         },
         'water': {
@@ -717,9 +719,11 @@ settings_default = {
     'radioButton_data_showall': True,
     'radioButton_data_showmarked': False,
     'comboBox_settings_data_samprefsource': 'samp',
-    'lineEdit_settings_data_samprefidx': [0],
+    'lineEdit_settings_data_sampidx': '[]',
+    'lineEdit_settings_data_samprefidx': '[0]',
     'comboBox_settings_data_refrefsource': 'ref',
-    'lineEdit_settings_data_refrefidx': [0],
+    'lineEdit_settings_data_refidx': '[]',
+    'lineEdit_settings_data_refrefidx': '[0]',
     'comboBox_settings_data_ref_crystmode': 'single',
     'comboBox_settings_data_ref_tempmode': 'const',
     'comboBox_settings_data_ref_fitttype': 'linear',

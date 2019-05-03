@@ -82,7 +82,7 @@ def index_from_str(idx_str, chn_idx, join_segs=True):
         return [idx_str]
 
     # create a dummy data with index
-    data = list(range(max(chn_idx)))
+    data = list(range(max(chn_idx)+1))
     print(chn_idx) #testprint
     print(data) #testprint
     try:
@@ -120,6 +120,7 @@ def index_from_str(idx_str, chn_idx, join_segs=True):
         
         # check the index with chn_idx
         if join_segs: # combine all
+            print('joined', sorted(list(set(idx) & set(chn_idx))))
             return sorted(list(set(idx) & set(chn_idx)))
         else: # keep separate
             # return thel list
@@ -264,6 +265,7 @@ def converter_centerspan_to_startstop(fc, fs):
 if __name__ == '__main__':
 
     idx_str = '[1:3] [5] [7:11]'
+    idx_str = '[3:4]'
     chn_queue_list = list(range(13))
     print('---')
     print(index_from_str(idx_str, chn_queue_list, join_segs=True))
