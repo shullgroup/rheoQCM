@@ -896,11 +896,11 @@ class AccessMyVNA():
         _, self._naverage = self.GetScanAverage()
         _, self._instrmode = self.Getinstrmode()
         self._displaymode = np.array(0, dtype=int)
-        self._chn = np.array(0, dtype=int) # avtive channel
+        _, self._chn = self.getADCChannel() # avtive channel
         self._f = [np.nan, np.nan] # start & stop  frequencies [start, stop]
         _, self._speed, self._step_delay, self._start_delay, self._phase_delay = self.get_speed_delays()
 
-        
+
     # use __enter__ __exit__ for with or use try finally
     def __enter__(self):
         self.Init()
@@ -1001,7 +1001,7 @@ class AccessMyVNA():
         Get frequency nWhat = GET_SCAN_FREQ_DATA 0
         '''
 
-        nResult = np.zeros(nArraySize, dtype=np.float, order='C')
+        nResult = np.zeros(nArraySize, dtype=np.float64, order='C')
         # self.narray = nResult
 
         nRes_ptr = nResult.ctypes.data_as(POINTER(c_double))
@@ -1036,6 +1036,7 @@ class AccessMyVNA():
         del nData, ret
 
         return rt, nD
+
 
     # @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
     def GetIntegerArray(self, nWhat=5, nIndex=0, nArraySize=4):
@@ -1078,6 +1079,7 @@ class AccessMyVNA():
 
         return rt, nD
 
+
     def Getinstrmode(self):
         nMode = np.array(0, dtype=int)
         ret = _MyVNAGetInstrumentMode(nMode.ctypes.data_as(POINTER(c_int)))
@@ -1086,6 +1088,7 @@ class AccessMyVNA():
         del nMode
 
         return ret, nM
+
 
     def Setinstrmode(self, nMode=0):
         '''
@@ -1102,6 +1105,7 @@ class AccessMyVNA():
         ret = _MyVNAGetDisplayMode(nMode.ctypes.data_as(POINTER(c_int)))
         return ret, nMode
 
+
     def Setdisplaymode(self, nMode=0):
         ret = _MyVNASetDisplayMode(nMode)
         # if not ret:
@@ -1109,6 +1113,7 @@ class AccessMyVNA():
         return ret, nMode
         # __declspec(dllexport) int _stdcall MyVNASetDisplayMode(int nMode)
         # int nRet = MyVNASetDisplayMode( nDisplayMode);
+
 
     def SingleScan(self):
         '''
@@ -1239,6 +1244,7 @@ class AccessMyVNA():
         ret, nAverage = self.SetScanAverage(nAverage)
         # ret =           self.Close()
 
+
     def set_steps_freq(self, nSteps=300, f1=4.95e6, f2=5.00e6):
         # set scan parameters
         ret, nSteps =   self.SetScanSteps(nSteps)
@@ -1261,6 +1267,24 @@ class AccessMyVNA():
         if paths and paths['ADC'+str(reflectchn)]:
             ret += self.LoadCalibration(paths['ADC'+str(reflectchn)])
 
+        return ret, reflectchn
+
+
+    def getADCChannel(self):
+        # get current ADV channel set
+        # nData = [transChn, reflectchn] (float)
+
+        #TODO seems not work (may check C++ source code)
+
+        ret, nData = self.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
+        print('getADCChannel', nData)
+
+        if nData[0] == 1.:
+            reflectchn = 1
+        elif nData[0] == 2.:
+            reflectchn =  2
+        else: 
+            reflectchn = None
         return ret, reflectchn
 
 
@@ -1287,8 +1311,8 @@ class AccessMyVNA():
                         print(ret)
                         print('SettScanSteps')
                         exit(0)
-                elif (flg == 'chn') and (self._chn != int(val)): # set scan channel
-                    if val != 'none':
+                elif (flg == 'chn'): # set scan channel
+                    if val != 'none' and (self._chn != int(val)):
                         ret, self._chn = self.setADCChannel(reflectchn=int(val), paths=setflg['cal'])
                         if ret != 0:
                             print(ret)
@@ -1321,10 +1345,12 @@ class AccessMyVNA():
 
         return 0
 
+
     def get_freq_span(self):
         ''' get frequency span from vna setup '''
         ret, ndResult = self.GetDoubleArray(nWhat=0, nIndex=0, nArraySize=9)
         return ret, ndResult[0:1]
+
 
     def get_speed_delays(self):
         ''' get adc_speed and delays'''
@@ -1340,7 +1366,7 @@ class AccessMyVNA():
         delta t = npt * phase delay 
         delta t = npt * step delay 
         '''
-        extra_time = 0.05 # in s. This extra time will be added to the calculated value
+        extra_time = 0.1 # in s. This extra time will be added to the calculated value
         nsteps= self._nsteps
         naverage = self._naverage
         step_delay = self._step_delay
@@ -1392,25 +1418,28 @@ if __name__ == '__main__':
     # exit(0)
     # # ret = accvna.GetDoubleArray()
     # # ret, f, G, B = accvna.single_scan()
-    # accvna = AccessMyVNA()
-    # # print('acc', accvna._naverage) 
-    # with accvna:
-    #     ret, nSteps = accvna.SetScanSteps(nSteps=300)
-    #     # accvna._get_wait_time()
-    #     # pass
-    #     # print('acc', accvna._naverage) 
-    #     # print(11111) 
+    accvna = AccessMyVNA()
+    # print('acc', accvna._naverage) 
+    with accvna:
+        ret, nSteps = accvna.SetScanSteps(nSteps=300)
+        accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=5)
+        # accvna._get_wait_time()
+        # pass
+        # print('acc', accvna._naverage) 
+        # print(11111) 
 
-    # # print('acc', accvna._naverage)
+    # print('acc', accvna._naverage)
     # exit(0)
     with AccessMyVNA() as accvna:
+        accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=5)
+        # exit(0)
         fileName = r'C:\Users\ShullGroup\Documents\User Data\WQF\GoogleDriveSync\py_programs\QCM\QCM_py\tests\dll\Hermes_4k_steps_4_36MHz_base_ADC2.myVNA.cal'
         ret = accvna.LoadCalibration(fileName)
         ret = accvna.LoadConfiguration(fileName)
 
         ret, accvna._f[0], accvna._f[1] = accvna.SetFequencies(f1=4.9e6, f2=5.1e6, nFlags=1)
         nSteps = 400
-        ret, f, G, B = accvna.single_scan()
+        ret, f, B = accvna.single_scan()
         ret, f, G = accvna.GetScanData(nStart=0, nEnd=accvna._nsteps-1, nWhata=-1, nWhatb=15)
 
         exit(1)
@@ -1472,8 +1501,8 @@ if __name__ == '__main__':
         #     ret, nResult = accvna.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=[1, 2])
         ret, nResult = accvna.GetDoubleArray()
         # print('nR', nResult)
-        ret, f, G, B = accvna.single_scan()
-        ret, f, G = accvna.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
+        ret, f, G = accvna.single_scan()
+        ret, f, B = accvna.GetScanData(nStart=0, nEnd=nSteps-1, nWhata=-1, nWhatb=15)
         # ret = accvna.SingleScan()
         print(ret)
 

@@ -289,16 +289,17 @@ def guess_peak_factors(freq, resonance):
     # determine the estimated half-max conductance (or susceptance) of the resonance peak
     half_max = amp / 2 + np.amin(resonance)
 
-    half_wid = np.absolute(freq[np.where(np.abs(half_max-resonance)==np.min(np.abs(half_max-resonance)))[0][0]] -  cen)
+    half_wid = np.absolute(freq[np.argmin(np.abs(half_max-resonance))] -  cen)
     return amp, cen, half_wid, half_max
 
 
 class PeakTracker:
 
-    def __init__(self):
+    def __init__(self, max_harm):
+        self.max_harm = max_harm
         self.harminput = self.init_harmdict()
         self.harmoutput = self.init_harmdict()
-        for harm in range(1, settings_init['max_harmonic']+2, 2):
+        for harm in range(1, self.max_harm+2, 2):
             harm = str(harm)
             self.update_input('samp', harm , [], [], [], {}, {})
             self.update_input('ref', harm , [], [], [], {}, {})
@@ -324,7 +325,7 @@ class PeakTracker:
         create a dict with for saving input or output data
         '''
         harm_dict = {}
-        for i in range(1, settings_init['max_harmonic']+2, 2):
+        for i in range(1, self.max_harm+2, 2):
             harm_dict[str(i)] = {}
         chn_dict = {
             'samp': harm_dict,
@@ -359,7 +360,7 @@ class PeakTracker:
         self.harminput[chn_name][harm]['steps'] = harm_dict.get('lineEdit_scan_harmsteps', None)
         self.harminput[chn_name][harm]['method'] = harm_dict.get('comboBox_tracking_method', None)
         self.harminput[chn_name][harm]['condition'] = harm_dict.get('comboBox_tracking_condition', None)
-        self.harminput[chn_name][harm]['fit'] = harm_dict.get('checkBox_harmfit', None)
+        self.harminput[chn_name][harm]['fit'] = harm_dict.get('checkBox_harmfit', True)
         self.harminput[chn_name][harm]['factor'] = harm_dict.get('spinBox_harmfitfactor', None)
         self.harminput[chn_name][harm]['n'] = harm_dict.get('spinBox_peaks_num', None)
         
@@ -377,6 +378,7 @@ class PeakTracker:
         else: # initialize data
             self.harminput[chn_name][harm]['p_policy'] = None
 
+        self.harminput[chn_name][harm]['zerophase'] = harm_dict.get('checkBox_settings_settings_harmzerophase', False)
         self.harminput[chn_name][harm]['threshold'] = harm_dict.get('lineEdit_peaks_threshold', None)
         self.harminput[chn_name][harm]['prominence'] = harm_dict.get('lineEdit_peaks_prominence', None)
 
@@ -489,9 +491,19 @@ class PeakTracker:
         def set_new_cen(freq, cen, current_span, current_xlim):
             ''' set new center '''
             cen_range = settings_init['cen_range'] # cen of span +/- cen_range*span as the accessible range
-            if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > cen_range * current_span: # out of range
+            cen_diff = cen - np.mean(np.array([freq[0],freq[-1]]))
+            half_cen_span = cen_range * current_span
+            if np.absolute(cen_diff) > half_cen_span: # out of range
                 # new start and end frequencies in Hz
-                return cen
+                # return cen # return current peak center as new center
+                # OR move the center to the oppsite direction a little incase of a big move of the peak center
+                if cen_diff / half_cen_span < -settings_init['big_move_thresh']: # peak on the left side of center range
+                    return cen - half_cen_span
+                elif cen_diff / half_cen_span > settings_init['big_move_thresh']: # peak on the right side of center range
+                    return cen + half_cen_span
+                else: # small move use center
+                    return cen
+
             else: 
                 # use span center
                 # return np.mean(np.array([freq[0],freq[-1]]))
@@ -787,9 +799,9 @@ class PeakTracker:
         params = Parameters()
 
         # rough guess
-        f = self.get_input(key='f', chn_name=self.active_chn, harm=self.active_harm)
-        G = self.get_input(key='G', chn_name=self.active_chn, harm=self.active_harm)
-        B = self.get_input(key='B', chn_name=self.active_chn, harm=self.active_harm)
+        f = self.get_input(key='f', chn_name=chn_name, harm=harm)
+        G = self.get_input(key='G', chn_name=chn_name, harm=harm)
+        B = self.get_input(key='B', chn_name=chn_name, harm=harm)
         amp_rough = np.amax(self.resonance) - np.amin(self.resonance)
         cen_rough = np.mean(f)
         wid_rough = (np.amax(f) - np.amin(f)) / 6
@@ -797,8 +809,8 @@ class PeakTracker:
 
 
         if self.found_n == 0: # no peak found by find_peak_py
-            self.found_n = 1 # force it to at list 1 for fitting
-            self.update_output(found_n=1) # force it to at list 1 for fitting
+            self.found_n = 1 # force it to at least 1 for fitting
+            self.update_output(found_n=1) # force it to at least 1 for fitting
 
         for i in np.arange(self.found_n):
             if not self.peak_guess: 
@@ -827,15 +839,25 @@ class PeakTracker:
             params.add(
                 'p'+str(i)+'_wid',                 # width (hwhm)
                 value=wid,                         # init: half range
-                min= settings_init['peak_min_width_Hz'] / 2,         # lb in Hz
+                # min= settings_init['peak_min_width_Hz'] / 2,         # lb in Hz (this limit sometime makes the peaks to thin)
+                min= wid / 10,         # lb in Hz (limit the width >= 1/10 of the guess value!!)
                 max=(np.amax(f) - np.amin(f)) * 2, # ub in Hz: assume peak is in the range of f
             )
-            params.add(
-                'p'+str(i)+'_phi',       # phase shift
-                value=phi,               # init value: peak height
-                min=-np.pi / 2,          # lb in rad
-                max=np.pi / 2,           # ub in rad
-            )
+            if self.harminput[chn_name][harm]['zerophase']: # fix phase to 0
+                params.add(
+                    'p'+str(i)+'_phi',       # phase shift
+                    value=0,                 # init value: peak height
+                    vary=False,              # fix phi=0
+                    min=-np.pi / 2,          # lb in rad
+                    max=np.pi / 2,           # ub in rad
+                )
+            else: # leave phase vary
+                params.add(
+                    'p'+str(i)+'_phi',       # phase shift
+                    value=phi,               # init value: peak height
+                    min=-np.pi / 2,          # lb in rad
+                    max=np.pi / 2,           # ub in rad
+                )
         
         params.add(
             'g_c',              # initialize G_offset
@@ -846,6 +868,7 @@ class PeakTracker:
             value=np.mean(B),   # init B_offset = mean(B)
         )
         self.update_output(params=params)
+
 
     ########### fitting ##########################
     def minimize_GB(self):
@@ -878,21 +901,32 @@ class PeakTracker:
         # max_idx = max(max indices)
         # all the points between will be used for fitting
         
-        factor_idx = []
+        factor_idx_list = [] # for factor_span
+        factor_set_list = [] # for indexing the points for fitting
         if factor is not None:
             for i in range(self.found_n): # for loop for each single peak from guessed val
                 # get peak cen and wid
                 cen_i, wid_i = val['p' + str(i) + '_cen'], val['p' + str(i) + '_wid']
-                factor_idx.append(np.abs(self.harminput[chn_name][harm]['f'] - (cen_i - wid_i * factor)).argmin()) # add min index 
-                factor_idx.append(np.abs(self.harminput[chn_name][harm]['f'] - (cen_i + wid_i * factor)).argmin()) # add max index 
-            max_idx = max(factor_idx)
-            min_idx = min(factor_idx)
-            # save min_idx and max_idx to 'factor_span'
-            self.update_output(chn_name=chn_name, harm=harm, factor_span=[f[min_idx], f[max_idx]]) # span of f used for fitting
+                ind_min = np.abs(self.harminput[chn_name][harm]['f'] - (cen_i - wid_i * factor)).argmin()
+                ind_max = np.abs(self.harminput[chn_name][harm]['f'] - (cen_i + wid_i * factor)).argmin()
+                # factor_idx_list.append(ind_min) # add min index 
+                # factor_idx_list.append(ind_max) # add max index 
+                # or use one line
+                factor_idx_list.extend([ind_min, ind_max])
+                # get indices for this peak in form of set
+                factor_set_list.append(set(np.arange(ind_min, ind_max)))
+                
+            # find the union of sets
+            idx_list = list(set().union(*factor_set_list))
+            # mask of if points used for fitting
+            factor_mask = [True if i in idx_list else False for i in np.arange(len(f))]
 
-            f = f[min_idx: max_idx]
-            G = G[min_idx: max_idx]
-            B = B[min_idx: max_idx]
+            # save min_idx and max_idx to 'factor_span'
+            self.update_output(chn_name=chn_name, harm=harm, factor_span=[min(f[factor_idx_list]), max(f[factor_idx_list])]) # span of f used for fitting
+
+            f = f[idx_list]
+            G = G[idx_list]
+            B = B[idx_list]
 
 
         # minimize with leastsq
@@ -1070,7 +1104,7 @@ class PeakTracker:
                     self.harmoutput[chn_name][harm]['result'].params, 
                     x=self.harminput[chn_name][harm]['f']
                     )
-            else: # return single peak
+            else: # return divided peaks
                 # make gmod and bmod for all components
                 gmods, bmods = make_models(n=self.harmoutput[chn_name][harm]['found_n'])
                 if mod_name == 'gmod':
@@ -1154,7 +1188,41 @@ class PeakTracker:
                 'comp_g': self.eval_mod('gmod', chn_name=chn_name, harm=harm, components=True), # list of fitted G value of each peak
                 'comp_b': self.eval_mod('bmod', chn_name=chn_name, harm=harm, components=True), # list of fitted B value of each peak
             }
-            
+
+
+    def fit_result_report(self, fit_result=None):
+        # if not fit_result:
+        #     # chn_name = self.active_chn
+        #     # harm = self.active_harm
+        #     fit_result = self.get_output(key='result')
+        # return fit_report(fit_result, show_correl=False, )
+
+        v_fit = self.get_fit_values()
+        keys = {
+            # 'Sucess': 'sucess',
+            # u'\u03A7' + 'sq': 'chisqr',
+            'f (Hz)': 'cen_rec',
+            u'\u0393' + ' (Hz)': 'wid_rec',
+            u'\u03A6' + ' (deg.)': 'phi_rec',
+            'G_amp (mS)': 'amp_rec',
+            'G_shift (mS)': 'g_c',
+            'B_shift (mS)': 'b_c',
+        }
+
+        buff = []
+
+        buff.append('Sucess:\t{}'.format(v_fit['sucess']))
+        buff.append(u'\u03A7' + 'sq:\t{:.7g}'.format(v_fit['chisqr']))
+        
+        for txt, key in keys.items():
+            txt = '{}:\t'.format(txt)
+            if v_fit[key].get('value') is not None:
+                txt = '{}{:.7g}'.format(txt, v_fit[key].get('value')*180/np.pi if key == 'phi_rec' else v_fit[key].get('value'))
+            if v_fit[key].get('stderr') is not None:
+                txt = '{} +/- {:.7g}'.format(txt, v_fit[key].get('stderr')*180/np.pi if key == 'phi_rec' else v_fit[key].get('stderr'))
+            buff.append(txt)
+        return '\n'.join(buff)
+
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt

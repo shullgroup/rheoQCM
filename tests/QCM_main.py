@@ -1081,6 +1081,7 @@ class QCMApp(QMainWindow):
 
         self.build_comboBox(self.ui.comboBox_settings_mechanics_selectmodel, 'qcm_model_opts')
         self.ui.comboBox_settings_mechanics_selectmodel.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_settings_mechanics_selectmodel.currentIndexChanged.connect(self.set_mechmodel_widgets)
 
         #endregion
 
@@ -4142,11 +4143,11 @@ class QCMApp(QMainWindow):
             chn_name = dic['indchn']
             print('set chn_name to indchn!')
 
-        if queue_ids is None: # if no queue_id given, use all in the channel
+        if (queue_ids is None) or not (queue_ids): # if no queue_id given, use all in the channel
             queue_ids = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanmarkrow=False)
 
         chn_idx = list(queue_ids.index) # all available indics
-        if idx is None: # if no queue_id given, use all in the channel
+        if idx is None or not (idx): # if no idx given, use all in the channel
             queue_ids = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanmarkrow=False)
             idx = chn_idx
         
@@ -4490,6 +4491,49 @@ class QCMApp(QMainWindow):
             
             # updaate in mech table
             self.update_spectra_mechanics_table(chn_name, nhcalc, refh, qcm_queue, mech_queue)
+
+
+    def set_mechmodel_widgets(self):
+        '''
+        this function set visible & value (to default) of 
+            label_settings_mechanics_model_overlayer
+            comboBox_settings_mechanics_model_overlayer_chn
+            lineEdit_settings_mechanics_model_overlayer_idx
+        by comboBox_settings_mechanics_selectmodel value
+        and
+        set spinBox_mech_expertmode_layernum value
+        '''
+        model = self.settings['comboBox_settings_mechanics_selectmodel'] # onelayer, bulk, twolayers
+        if model == 'onelayer' or model == 'bulk':
+            self.ui.spinBox_mech_expertmode_layernum.setValue(1)
+            
+            # set values
+            self.set_mechchndata('comboBox_mech_expertmode_calc_1', val=True)
+            self.set_mechchndata('comboBox_mech_expertmode_source_1', val='ind')
+            self.set_mechchndata('comboBox_mech_expertmode_indchn_1', val=self.mech_chn)
+
+            # show samplayer widgets
+            self.show_widgets('mech_model_show_hide_samplayer_list')
+            # hide overlayer widgets
+            self.hide_widgets('mech_model_show_hide_overlayer_list')
+ 
+        elif model == 'twolayers':
+            self.ui.spinBox_mech_expertmode_layernum.setValue(2)
+            self.set_mechchndata('comboBox_mech_expertmode_calc_1', val=True)
+            self.set_mechchndata('comboBox_mech_expertmode_source_1', val='ind')
+            self.set_mechchndata('comboBox_mech_expertmode_source_2', val='ind')
+            # show samplayer widgets
+            self.show_widgets('mech_model_show_hide_samplayer_list')
+            # show overlayer widgets
+            self.show_widgets('mech_model_show_hide_overlayer_list')
+
+        else:
+            # hide all layers
+            # hide samplayer widgets
+            self.hide_widgets('mech_model_show_hide_samplayer_list')
+            # hide overlayer widgets
+            self.hide_widgets('mech_model_show_hide_overlayer_list')
+ 
 
 
     def update_spectra_mechanics_table(self, chn_name, nhcalc, refh, qcm_queue, mech_queue):
@@ -5805,8 +5849,6 @@ class QCMApp(QMainWindow):
         self.update_harmonic_tab()
 
         # load default temperature settings
-        self.load_comboBox(self.ui.comboBox_settings_mechanics_selectmodel)
-
         self.ui.checkBox_settings_temp_sensor.setChecked(self.settings['checkBox_settings_temp_sensor'])
 
         self.load_comboBox(self.ui.comboBox_tempmodule)

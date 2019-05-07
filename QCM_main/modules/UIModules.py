@@ -44,6 +44,7 @@ def list_modules(module):
     # return modules
 
     # from subclass
+    print(dir(module))  #testprint
     subcls_list = inspect.getmembers(module, inspect.isclass)
 
     return {subcls[0]: subcls[0] for subcls in subcls_list}
@@ -55,20 +56,23 @@ def split_path(path):
     pass
 
 
-def index_from_str(idx_str, chn_queue_list):
+def index_from_str(idx_str, chn_idx, join_segs=True):
     '''
     convert str to indices
     data_len: int. length of data
+    chn_idx: index of chn
+    join_segs: True, use the uint of all segments seperarted by []
+               False, return indics in a list of lists [[seg1], [seg2], ...] (this is for multiple segments fitting for temperature expreiment)
     idx_str examples:
     '::' 
     '0'
     '1, 2, 4, 9' # this is not suggested
     '1:5' 
     '1:5:2' 
-    '[1:5] [7, 8, 9, 10]' # multiple segments, use [ ]
+    '[1:5] [7:10]' # multiple segments, use [ ]
     '''
     idx = [] # for found indices
-    if chn_queue_list == []:
+    if chn_idx == []:
         return idx
 
     if isinstance(idx_str, list):
@@ -78,27 +82,49 @@ def index_from_str(idx_str, chn_queue_list):
         return [idx_str]
 
     # create a dummy data with index
-    data = list(range(max(chn_queue_list)))
+    data = list(range(max(chn_idx)+1))
+    print(chn_idx) #testprint
+    print(data) #testprint
     try:
         # check if string contains [ ]
         segs = re.findall(r'\[([0-9\:][^]]*)\]', idx_str) # get [] as seg
+        print(segs) #testprint
         if segs:
             for seg in segs:
+                print('multi') #testprint
+                print(seg) #testprint
+                print('data' +'[' + seg + ']') #testprint
+                print(eval('data' +'[' + seg + ']')) #testprint
                 new_idx = eval('data' +'[' + seg + ']') 
-                if isinstance(new_idx, int):
-                    idx.append(new_idx)
-                elif isinstance(new_idx, list):
-                    idx.extend(new_idx)
+                print('type(new_idx)', type(new_idx))
+                if join_segs: # True: combine
+                    if isinstance(new_idx, int):
+                        idx.append(new_idx)
+                    elif isinstance(new_idx, list):
+                        idx.extend(new_idx)
+                else: # Fasle: keep size
+                    if isinstance(new_idx, int):
+                        idx.append([new_idx])
+                    elif isinstance(new_idx, list):
+                        idx.append(new_idx)
+                
         else:
+            print('single') #testprint
+            print('data' +'[' + idx_str + ']') #testprint
+            print(eval('data' +'[' + idx_str + ']')) #testprint
             new_idx = eval('data' +'[' + idx_str + ']')
             if isinstance(new_idx, int):
                 idx.append(new_idx)
             elif isinstance(new_idx, list):
                 idx.extend(new_idx)
         
-
-        return sorted(list(set(idx) & set(chn_queue_list)))
-
+        # check the index with chn_idx
+        if join_segs: # combine all
+            print('joined', sorted(list(set(idx) & set(chn_idx))))
+            return sorted(list(set(idx) & set(chn_idx)))
+        else: # keep separate
+            # return thel list
+            return [sorted(list(set(ind) & set(chn_idx))) for ind in idx]
     except Exception as err:
         print(err)
         return idx
@@ -116,14 +142,17 @@ def sel_ind_dict(harms, sel_idx_dict, mode, marks):
     '''
     data_idx_dict = {}
     for harm in harms:
-        data_idx_dict[harm] = list(marks[marks['mark' + harm].notna()].index) # all the indices with data for each harm
+        if 'mark'+ harm in marks.columns:
+            data_idx_dict[harm] = list(marks[marks['mark' + harm].notna()].index) # all the indices with data for each harm
 
     if mode == 'all':
         sel_idx_dict = data_idx_dict  
     if mode == 'marked':
         for harm in harms:
+            print(harm) #testprint
             data_idx_dict[harm] = list(marks[marks['mark' + harm] == 1].index) # all the indices with data for each harm
         sel_idx_dict = data_idx_dict  
+        print(sel_idx_dict) #testprint 
             
     if mode == 'selpts':
         pass
@@ -157,6 +186,7 @@ def idx_dict_to_harm_dict(sel_idx_dict):
     for idxs in sel_idx_dict.values():
         idx_set |= set(idxs)
     idx_un = list(idx_set)
+    print('idx_un', idx_un)   #testprint
 
     sel_harm_dict = {}
     for idx in idx_un:
@@ -230,3 +260,14 @@ def converter_centerspan_to_startstop(fc, fs):
     f2 = fc + fs / 2
     return [f1, f2]
 
+
+
+if __name__ == '__main__':
+
+    idx_str = '[1:3] [5] [7:11]'
+    idx_str = '[3:4]'
+    chn_queue_list = list(range(13))
+    print('---')
+    print(index_from_str(idx_str, chn_queue_list, join_segs=True))
+    print('---')
+    print(index_from_str(idx_str, chn_queue_list, join_segs=False))

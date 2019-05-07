@@ -109,6 +109,20 @@ settings_init = {
         'checkBox_harmfit',
     ],
 
+    # list for mechanics model show/hide
+    'mech_model_show_hide_samplayer_list':[
+        'label_settings_mechanics_model_samplayer',
+        'comboBox_settings_mechanics_model_samplayer_chn',
+        'lineEdit_settings_mechanics_model_samplayer_idx'
+    ],
+
+    # list for mechanics model show/hide
+    'mech_model_show_hide_overlayer_list':[
+        'label_settings_mechanics_model_overlayer',
+        'comboBox_settings_mechanics_model_overlayer_chn',
+        'lineEdit_settings_mechanics_model_overlayer_idx'
+    ],
+
     # list for disabled widges for current version
     'version_hide_list':[
         # hide reference time widgets to simplify the setup
@@ -428,9 +442,8 @@ settings_init = {
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {
         'onelayer': 'One layer',
-        # 'twolayers': 'Two layers',
         'bulk': 'Bulk',
-        # 'multiple': 'Multiple models',
+        'twolayers': 'Two layers',
     },
 
     # calctype

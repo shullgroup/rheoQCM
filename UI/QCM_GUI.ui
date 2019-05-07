@@ -1624,7 +1624,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
+                   <width>83</width>
                    <height>71</height>
                   </rect>
                  </property>
@@ -2925,6 +2925,13 @@ p, li { white-space: pre-wrap; }
                         <widget class="QComboBox" name="comboBox_settings_mechanics_selectmodel"/>
                        </item>
                        <item>
+                        <widget class="QLabel" name="label_2">
+                         <property name="text">
+                          <string>Reference all data to bare in air!</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
                         <spacer name="horizontalSpacer_16">
                          <property name="orientation">
                           <enum>Qt::Horizontal</enum>
@@ -2936,6 +2943,58 @@ p, li { white-space: pre-wrap; }
                           </size>
                          </property>
                         </spacer>
+                       </item>
+                      </layout>
+                     </item>
+                     <item>
+                      <layout class="QGridLayout" name="gridLayout">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="horizontalSpacing">
+                        <number>2</number>
+                       </property>
+                       <property name="verticalSpacing">
+                        <number>0</number>
+                       </property>
+                       <item row="0" column="0">
+                        <widget class="QLabel" name="label_settings_mechanics_model_overlayer">
+                         <property name="text">
+                          <string>Over layer</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="1" column="1">
+                        <widget class="QComboBox" name="comboBox_settings_mechanics_model_samplayer_chn">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="0" column="1">
+                        <widget class="QComboBox" name="comboBox_settings_mechanics_model_overlayer_chn"/>
+                       </item>
+                       <item row="1" column="0">
+                        <widget class="QLabel" name="label_settings_mechanics_model_samplayer">
+                         <property name="text">
+                          <string>Sample</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="0" column="2">
+                        <widget class="QLineEdit" name="lineEdit_settings_mechanics_model_overlayer_idx"/>
+                       </item>
+                       <item row="1" column="2">
+                        <widget class="QLineEdit" name="lineEdit_settings_mechanics_model_samplayer_idx"/>
                        </item>
                       </layout>
                      </item>
@@ -5522,7 +5581,7 @@ border: 1px solid blue;
         <item>
          <widget class="QStackedWidget" name="stackedWidget_data">
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="page_data_data">
            <layout class="QVBoxLayout" name="verticalLayout_22">
