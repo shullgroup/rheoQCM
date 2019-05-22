@@ -342,7 +342,6 @@ def solve_for_props(soln_input):
     # initialize the output uncertainties
     err = {}
     err_names = ['drho', 'grho3', 'phi']
-
     # recalculate solution to give the uncertainty, if solution is viable
     if np.all(lb < x0) and np.all(x0 < ub):
         soln2 = optimize.least_squares(ftosolve2, x0, bounds=(lb, ub))
@@ -352,7 +351,10 @@ def solve_for_props(soln_input):
         film = {'drho':drho, 'grho3':grho3, 'phi':phi}
         dlam3 = calc_dlam(3, film)
         jac = soln2['jac']
-        jac_inv = np.linalg.inv(jac)
+        try:
+            jac_inv = np.linalg.inv(jac)
+        except:
+            jac_inv = np.zeros([3,3])
 
         # define sensibly names partial derivatives for further use
         deriv = {}
@@ -361,6 +363,13 @@ def solve_for_props(soln_input):
             err[err_names[k]] = ((jac_inv[k, 0]*delfstar_err[0])**2 +
                                 (jac_inv[k, 1]*delfstar_err[1])**2 +
                                 (jac_inv[k, 2]*delfstar_err[2])**2)**0.5
+        # reset erros to zero if they are bigger than the actual values
+        if err['drho']>drho:
+            err['drho']=0
+        if err['grho3']>grho3:
+            err['grho3']=0
+        if err['phi']>phi:
+            err['phi']=0
     else:
         film = {'drho':np.nan, 'grho3':np.nan, 'phi':np.nan, 'dlam3':np.nan}
         deriv = {}
@@ -411,6 +420,7 @@ def find_base_fig_name(sample, parms):
     figlocation = parms.get('figlocation', 'figures')
     datadir = sample.get('datadir', '')
     filmfile = sample.get('filmfile', '')
+    samplename = sample.get('samplename', 'null_name')
     if figlocation == 'datadir':
         base_fig_name = os.path.join(parms['dataroot'], datadir, filmfile)
     else:
@@ -428,7 +438,7 @@ def find_base_fig_name(sample, parms):
         if not os.path.exists(base_fig_path):
             os.mkdir(base_fig_path)
 
-        base_fig_name = os.path.join(base_fig_path, sample['samplename'])
+        base_fig_name = os.path.join(base_fig_path, samplename)
 
     print('path', base_fig_name)
 
@@ -550,9 +560,6 @@ def analyze(sample, parms):
 
     solve_from_delfstar(sample, parms)
 
-    # tidy up the property figure
-    cleanup_propfig(sample, parms)
-
 
 def find_idx_in_range(t, t_range):
     if t_range[0] == t_range[1]:
@@ -581,7 +588,7 @@ def solve_from_delfstar(sample, parms):
     # and want to obtain the solutions from there
     # now set the markers used for the different calculation types
     markers = {'131': '>', '133': '^', '353': '+', '355': 'x', '3': 'x'}
-    colors = parms['colors']
+    colors = parms.get('colors',{1: [1, 0, 0], 3: [0, 0.5, 0], 5: [0, 0, 1]})
     imagetype = parms.get('imagetype', 'svg')
     # get film info (containing raw data plot, etc. if it exists)
     sample['film']=sample.get('film',{})
@@ -591,9 +598,18 @@ def solve_from_delfstar(sample, parms):
     imagetype = parms.get('imagetype', 'svg')
     nhplot = sample.get('nhplot', [1, 3, 5])
     delfstar = sample['delfstar']
-    xdata = sample['xdata']
-    propfig = sample['propfig']
     nx = len(delfstar)  # this is the number of data points
+
+    if 'xdata' in sample:
+        xdata = sample['xdata']
+    else:
+        xdata=np.arange(nx)
+        sample['xlabel'] = 'index'
+    if 'propfig' in sample:
+        propfig = sample['propfig']
+    else:
+        propfig = make_prop_axes('props', sample['xlabel'])
+        sample['propfig']=propfig
 
     # set up the consistency check axes
     checkfig = {}
@@ -632,7 +648,6 @@ def solve_from_delfstar(sample, parms):
                 soln = null_solution(nhplot)
             else:
                 soln = solve_for_props(soln_input)
-
             results[nh]['film']['drho'][i] = soln['film']['drho']
             results[nh]['film']['grho3'][i] = soln['film']['grho3']
             results[nh]['film']['phi'][i] = soln['film']['phi']
@@ -742,6 +757,8 @@ def solve_from_delfstar(sample, parms):
             plt.pause(1)
 
     sample['results'] = results
+    # tidy up the property figure
+    cleanup_propfig(sample, parms)
     return sample
 
 def cleanup_propfig(sample, parms):
@@ -1138,6 +1155,14 @@ def contour(function, parms):
 
     return
 
+def bulk_props(delfstar):
+    # get the bulk solution for grho and phi
+    grho3 = (np.pi*Zq*abs(delfstar[3])/f1) ** 2
+    phi = -np.degrees(2*np.arctan(delfstar[3].real /
+                      delfstar[3].imag))
+
+    return [grho3, phi]
+
 
 def bulk_guess(delfstar):
     # get the bulk solution for grho and phi
@@ -1168,7 +1193,7 @@ def thinfilm_guess(delfstar):
     # for estimating the starting point
     return [0.05, 5]
 
-def make_knots(numpy_array, num_knots, parms):
+def make_knots(numpy_array, num_knots):
     # makes num_knots eveNy spaced knots along array
     knot_interval = (np.max(numpy_array)-np.min(numpy_array))/(num_knots+1)
     minval = np.min(numpy_array)+knot_interval

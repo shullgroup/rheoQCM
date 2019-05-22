@@ -717,20 +717,21 @@ class MatplotlibWidget(QWidget):
 
         # print(dir(event)) #testprint
         thisline = event.artist
-        x_s = thisline.get_xdata()
-        y_s = thisline.get_ydata()
+        x_p = thisline.get_xdata()
+        y_p = thisline.get_ydata()
         ind = event.ind[0]
         print(thisline) #testprint
         # print(dir(thisline)) #testprint
         print(thisline.get_label()) #testprint
-        print(x_s.name) #testprint
-        print(y_s.name)  #testprint
-        print(ind)    #testprint
+        print(x_p.name) #testprint
+        print(y_p.name)  #testprint
+        print(ind)    #testprintk
         # print('onpick1 line:', zip(np.take(xdata, ind), np.take(ydata, ind))) #testprint
 
         # plot
-        print(x_s.iloc[ind], y_s.iloc[ind]) #testprint
-        self.l['lp'][0].set_data(x_s.iloc[ind], y_s.iloc[ind])
+        print('x_p', x_p) #testprint
+        print(x_p.iloc[ind], y_p.iloc[ind]) #testprint
+        self.l['lp'][0].set_data(x_p.iloc[ind], y_p.iloc[ind])
         self.l['lp'][0].set_label(thisline.get_label() + '_' + str(ind)) # transfer the label of picked line and ind to 'lp'
         self.canvas_draw()
 
@@ -875,6 +876,7 @@ class MatplotlibWidget(QWidget):
         self.set_ax_items(ax, title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
         self.set_ax_font(ax)
 
+
     def set_ax_items(self, ax, title='', xlabel='', ylabel='', xlim=None, ylim=None, xscale='linear', yscale='linear', *args, **kwargs):
         if title:
             ax.set_title(title)
@@ -892,6 +894,7 @@ class MatplotlibWidget(QWidget):
         if ylim is not None:
             ax.set_ylim(*ylim)
 
+
     def set_ax_font(self, ax, *args, **kwargs):
         if self.axtype == 'sp':
             fontsize = settings_init['mpl_sp_fontsize']
@@ -905,6 +908,8 @@ class MatplotlibWidget(QWidget):
         if self.axtype == 'contour':
             for ticklabel in self.l['colorbar'].ax.yaxis.get_ticklabels():
                 ticklabel.set_size(fontsize)
+            self.l['colorbar'].ax.yaxis.offsetText.set_size(fontsize)
+            
 
         if self.axtype == 'legend':
             self.leg
@@ -913,8 +918,9 @@ class MatplotlibWidget(QWidget):
         ax.title.set_fontsize(fontsize+1)
         ax.xaxis.label.set_size(fontsize+1)
         ax.yaxis.label.set_size(fontsize+1)
-        # ax.set_ylabel(fontsize=fontsize+1)
         ax.tick_params(labelsize=fontsize)
+        ax.xaxis.offsetText.set_size(fontsize)
+        ax.yaxis.offsetText.set_size(fontsize)
         # ax.xaxis.set_major_locator(ticker.LinearLocator(3))
 
         # set text fontsize

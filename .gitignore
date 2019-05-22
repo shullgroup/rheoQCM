@@ -4,15 +4,15 @@ doc/figures
 doc/QCMnotes.lyx~
 QCMFuncs/Depolo_sampledefs.py
 
-# myVNA calibration file
-*.myVNA.cal
-
 # folder for temporary test Files
 test/
 pyqt_gui_compile.bat
 
 QCMFuncs/test.pdf
 QCMFuncs/test.pptx
+
+# test files
+settings_init.json
 
 # myVNA calibration file
 *.myVNA.cal
@@ -29,7 +29,6 @@ QCMFuncs/johannsmann.py
 QCMFuncs/filled_galkyd_runfile.py
 QCM_main/runqcm.sh
 
-tests/settings_init.json
 
 # Windows image file caches
 Thumbs.db
@@ -190,3 +189,4 @@ venv.bak/
 
 # mkdocs documentation
 /site
+

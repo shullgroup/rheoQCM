@@ -47,6 +47,7 @@ def device_info(devtype):
     '''
     return a single device 
     '''
+    print('devtype', devtype) #testprint
     devices = list_devices()
     for device in devices:
     #     if device.product_type != devtype:

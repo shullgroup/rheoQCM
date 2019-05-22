@@ -7,6 +7,7 @@ Change the following factors will change the apperiance of the GUI
 # (dictionary in Python >=3.6 is ordered by default)
 # Use OrderedDict for those dicts need to be shown in order
 from collections import OrderedDict
+import numpy as np
 
 settings_init = {
 
@@ -14,7 +15,7 @@ settings_init = {
     'window_size': [1200, 800], # px
 
     # UI will looking for the file to load the default setup
-    'default_settings_file_name': 'settings_default.json',
+    'default_settings_file_name': 'user_settings.json',
 
     # myVNA path
     'vna_path': [
@@ -22,14 +23,17 @@ settings_init = {
         r'C:\Program Files\G8KBB\myVNA\myVNA.exe',
     ],
 
-    # where the calibration files where save
-    'vna_cal_file_path': r'.', 
+    # where the calibration files saved (not necessary)
+    'vna_cal_file_path': r'./cal/', 
 
     # highest harmonic can be shown in the UI. 
     'max_harmonic': 9, # MUST >= 1
     
     # time string format
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
+
+    # if marked data shown when showing all data
+    'show_marked_when_all': True,
 
     'analysis_mode_disable_list':[
         'pushButton_runstop',
@@ -105,8 +109,28 @@ settings_init = {
         'checkBox_harmfit',
     ],
 
+    # list for mechanics model show/hide
+    'mech_model_show_hide_samplayer_list':[
+        'label_settings_mechanics_model_samplayer',
+        'comboBox_settings_mechanics_model_samplayer_chn',
+        'lineEdit_settings_mechanics_model_samplayer_idx'
+    ],
+
+    # list for mechanics model show/hide
+    'mech_model_show_hide_overlayer_list':[
+        'label_settings_mechanics_model_overlayer',
+        'comboBox_settings_mechanics_model_overlayer_chn',
+        'lineEdit_settings_mechanics_model_overlayer_idx'
+    ],
+
     # list for disabled widges for current version
     'version_hide_list':[
+        # hide reference time widgets to simplify the setup
+        # reference time can always be changed by shifted_t0
+        'dateTimeEdit_reftime',
+        'pushButton_resetreftime',
+        'label_reftime',
+
         'groupBox_settings_output',
 
         'groupBox_settings_fitting',
@@ -119,25 +143,37 @@ settings_init = {
         'pushButton_settings_data_toprevious',
         'pushButton_settings_data_tonext',
         'pushButton_settings_data_toend',
+        
+        'frame_settings_data_tempref',
+        'comboBox_settings_data_ref_crystmode',
+        'comboBox_settings_data_ref_tempmode',
+        'comboBox_settings_data_ref_fitttype',
 
         # 'toolButton_settings_mechanics_solve',
         # 'groupBox_nhplot',
         # 'groupBox_settings_mechanics_nhcalc',
         # 'checkBox_settings_mechanics_witherror',
         'pushButton_settings_mechanics_errorsettings',
-        # 'label_6',
-        # 'comboBox_settings_mechanics_refG',
+        'label_settings_mechanics_refG',
+        'comboBox_settings_mechanics_refG',
         # 'comboBox_settings_mechanics_selectmodel',
-        'tableWidget_settings_mechanics_setmodel',
+        'groupBox_settings_mechanics_mech_film',
 
         # 'groupBox_settings_mechanics_contour',
         # 'pushButton_settings_mechanics_simulator',
         # 'groupBox_settings_mechanics_simulator',
+
+        'actionSolve_test',
+
+        # statusbar
+        'pushButton_status_reftype',
+        # 'pushButton_status_signal_ch',
+
     ],
 
     # list of widges to delete in current version
     'version_delete_list':[
-        'tab_settings_mechanics',
+        # 'tab_settings_mechanics',
     ],
 
         
@@ -165,7 +201,13 @@ settings_init = {
         # 'json file (*.json)',
         # 'hdf5 file (*.h5)',
         # 'Matlab file (*.mat)',
+    ]),
 
+    # export raw data file type
+    'export_rawfiletype': ';;'.join([
+        'csv file (*.csv)',
+        'excel file (*.xlsx)',
+        'json file (*.json)',
     ]),
 
     # import QCM-D data file type
@@ -229,16 +271,17 @@ settings_init = {
         'delf_exps':         r'$\Delta$f$_{exp}$ (Hz)',
         'delg_calcs':        r'$\Delta\Gamma$ (Hz)',
         'delg_exps':         r'$\Delta\Gamma_{exp}$ (Hz)',
-        'drho':              r'd$\rho$ (g/cm$^2$)',
-        'grho_rh':           r'$|G_{rh}^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
+        'drho':              r'd$\rho$ ($\mu$m$\cdot$g/cm$^3$)',
+        'grhos':           r'$|G_{n}^*|\rho$ (Pa$\cdot$g/cm$^3$)',
         'phi':               r'$\phi$ ($\degree$)',
-        'dlam_rh':           r'd/$\lambda_{rh}$',
-        'lamrho':            r'$\lambda\rho$ (g/cm$^2$)',
-        'delrho':            r'$\delta\rho$ (g/cm$^2$)',
-        'delf_delfsn':       r'$\Delta$f/$\Delta$f$_{sn}$',
+        'dlams':           r'd/$\lambda_{n}$',
+        'lamrhos':            r'$\lambda\rho$ ($\mu$m$\cdot$g/cm$^3$)',
+        'delrhos':            r'$\delta\rho$ ($\mu$m$\cdot$g/cm$^3$)',
+        'delf_delfsns':       r'$\Delta$f/$\Delta$f$_{sn}$',
         'delg_delfsn_exps':  r'$(\Delta\Gamma$/$\Delta$f$_{sn})_{exp}$',
         'delg_delfsn_calcs': r'$\Delta\Gamma$/$\Delta$f$_{sn}$',
-        'rh':                r'r$_h$',
+        'rh_exp':           r'r$_{h,exp}$',
+        'rh_calc':          r'r$_h$',
         'rd_exps':           r'r$_{d,exp}$',
         'rd_calcs':          r'r$_d$',
     },
@@ -250,19 +293,19 @@ settings_init = {
         'delf_calcs':        u'\u0394' + 'fcalc (Hz)', # Δfcalc (Hz)
         'delg_exps':         u'\u0394\u0393' + ' (Hz)', # ΔΓ (Hz)
         'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
-        'drho':              'd' + u'\u03C1' + ' (g/cm'+ u'\u00B2' + ')', # dρ (g/cm²)
-        'grho_rh':           '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
+        'drho':              'd' + u'\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # dρ (μm∙g/m³)
+        'grhos':           '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
         'phi':                u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
-        'dlam_rh':           'd/' + u'\u03BB\u2099', # d/λₙ
-        'lamrho':            u'\u03BB\u03C1' + ' (g/cm' + u'\u00B2' + ')', # λρ (g/cm²)
-        'delrho':            u'\u03B4\u03C1' + ' (g/cm' + u'\u00B2' + ')', # δρ (g/cm²)
-        'delf_delfsn':       u'\u0394' + 'f/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
+        'dlams':           'd/' + u'\u03BB\u2099', # d/λₙ
+        'lamrhos':            u'\u03BB\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # λρ (μm∙g/m³)
+        'delrhos':            u'\u03B4\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # δρ (μm∙g/m³)
+        'delf_delfsns':       u'\u0394' + 'f/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
         'delg_delfsn_calcs': u'\u0394\u0393' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓ/Δfₛₙ
-        'rh':                'rh',
+        'rh_calc':                'rh',
         'rd_calcs':          'rd',
-        # 't':                 'Time (s)', # Time (s)
-        # 'temp':              'Temp. (' + u'\u00B0' + 'C)', # Temp. (°C)
-    },
+        't':                 'Time (s)', # Time (s)
+        'temp':              'Temp. (' + u'\u00B0' + 'C)', # Temp. (°C)
+    }, # add the colum when activate column here
 
     # spinBox_harmfitfactor max value
     'fitfactor_max': 20, # int
@@ -299,8 +342,37 @@ settings_init = {
         # ('none', 'none'),
         ('samp', 'S chn.'),
         ('ref', 'R chn.'),
-        ('ext', 'ext'), # always read from the reference channel
+        # ('ext', 'ext'), # always read from the reference channel
     ]),
+
+    # the value here is the same as the value of 'kind'
+    # of scipy.interpolate.interp1d()
+    'ref_interp_opts': OrderedDict({
+        'linear': 'linear', 
+        'nearest': 'nearest', 
+        'zero': 'zero', 
+        'slinear': 'slinear', 
+        'quadratic': 'quadratic', 
+        'cubic': 'cubic',
+    }),
+
+    'ref_crystal_opts': OrderedDict({
+        'single': 'Single',
+        'dual': 'Dual',
+        # '': '',
+    }),
+
+    'ref_temp_opts': OrderedDict({
+        'const': 'Constant T',
+        'var': 'Variable T',
+        # '': '',
+    }),
+
+    # crystal cuts options
+    'crystal_cut_opts':{
+        'AT': 'AT',
+        'BT': 'BT',
+    },
 
     'thrmcpl_opts': OrderedDict([
     # key: number; val: for display in combobox
@@ -363,12 +435,51 @@ settings_init = {
     #     ('file', 'Other file'),
     # ]),
 
+    # minimum/maximum layer for mechanic property calculation
+    'min_mech_layers': 0,
+    'max_mech_layers': 1,
+
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {
         'onelayer': 'One layer',
-        'twolayers': 'Two layers',
         'bulk': 'Bulk',
-        # 'multiple': 'Multiple models',
+        'twolayers': 'Two layers',
+    },
+
+    # calctype
+    'calctype_opts':{
+        'SLA': 'SLA',
+        'LL': 'LL',
+    },
+
+    'qcm_layer_known_source_opts': {
+        'ind': 'Index',
+        'prop': 'Prop.',
+        # 'fg': u'\u0394' + 'f&' + u'\u0394\u0393',
+        # 'fg': 'f&' + u'\u0393',
+        'name': 'Name',
+        # 'none': '--',
+    },
+
+    'qcm_layer_unknown_source_opts': {
+        'none': '--',
+        'ind': 'Index',
+        'guess': 'Guess',
+    },
+
+    'qcm_layer_bulk_name_opts': {
+        'air': {
+            'drho': np.inf,
+            'grho': 0,
+            'phi': 0,
+            'rh': 3,
+        },
+        'water': {
+            'drho': np.inf, 
+            'grho': 1e5, # in Pa
+            'phi': np.pi /2,
+            'rh': 3,
+        },
     },
 
     # steps ofr span control slider
@@ -451,6 +562,7 @@ settings_init = {
 
     ######### params for DataSaver module #########
     'unsaved_path': r'.\unsaved_data', 
+    'unsaved_filename': r'%Y%m%d%H%M%S',
 
     ######### DataSaver module: import data format #####
     # a number is going to replace '{}'
@@ -476,9 +588,16 @@ settings_init = {
 
     ######### params for PeakTracker module #######
     'cen_range': 0.05, # peak center limitation (cen of span +/- cen_range*span)
+    'big_move_thresh': 1.5, # if the peak out abs(cen - span_cen) > 'big_move_thresh' * 'cen_range' * span, is is considered as a big move. center will be moved to the opposite side.
     'wid_ratio_range': (8, 20), # width_ratio[0]*HWHM <= span <= width_ratio[1]*HWHM
-    'change_thresh': (0.05, 0.5), # span change threshold current_span * change_thresh. When the changing step of (current_span +/- 'wid_ratio_range' * 2 * current_span) > ( current_span * (1 +/- change_thresh)), former will be used 
-    # the value should be between (0, 1)
+    'change_thresh': (0.05, 0.5), # span change threshold. the value should be between (0, 1)
+    # min(
+    #     max(
+    #         wid_ratio_range[1/0] * half_wid * 2,
+    #         current_span * (1 - change_thresh[1/0]),
+    #         ), # lower bound of wid_ratio_range
+    #     current_span * (1 - change_thresh[0/1]) # 
+    # )
 
 }
 
@@ -527,6 +646,9 @@ settings_default = {
     'checkBox_dynamicfitbyharm': False,
     'checkBox_fitfactorbyharm': False,
 
+    # default sampe discription
+    'plainTextEdit_settings_samplediscription': '',
+
     # default frequency ranges for each harmonic
     'freq_range': {},
     # default frequency span for each harmonic
@@ -551,6 +673,12 @@ settings_default = {
         # for reference channel
         'ref':{},
     },
+
+    'mechchndata': {
+        'samp': {}, 
+        'ref': {}
+    }, # dictionary for saving the widgets for layers defination
+
     ### default hardware settings ###
     # 'tabWidget_settings_settings_samprefchn': 1,
     # default VNA settings
@@ -560,6 +688,7 @@ settings_default = {
     # default crystal settings
     'comboBox_base_frequency': 5,
     'comboBox_bandwidth': 0.1,
+    'comboBox_crystalcut': 'AT',
 
     # default temperature settings
     'checkBox_settings_temp_sensor': False,
@@ -603,9 +732,14 @@ settings_default = {
     'radioButton_data_showall': True,
     'radioButton_data_showmarked': False,
     'comboBox_settings_data_samprefsource': 'samp',
-    'lineEdit_settings_data_samprefidx': [0],
+    'lineEdit_settings_data_sampidx': '[]',
+    'lineEdit_settings_data_samprefidx': '[0]',
     'comboBox_settings_data_refrefsource': 'ref',
-    'lineEdit_settings_data_refrefidx': [0],
+    'lineEdit_settings_data_refidx': '[]',
+    'lineEdit_settings_data_refrefidx': '[0]',
+    'comboBox_settings_data_ref_crystmode': 'single',
+    'comboBox_settings_data_ref_tempmode': 'const',
+    'comboBox_settings_data_ref_fitttype': 'linear',
 
     ### settings_mech
     'checkBox_settings_mech_liveupdate': True,
@@ -618,6 +752,10 @@ settings_default = {
     'spinBox_settings_mechanics_nhcalc_n3': 3,
 
     'comboBox_settings_mechanics_refG': '3', # reference harmonic for property
+    'spinBox_mech_expertmode_layernum': 1, # number of layers for expert mode mechanic 
+
+    'comboBox_settings_mechanics_calctype': 'LL', # 'LL' or 'SLA'
+
     'checkBox_settings_mechanics_witherror': True, # errorbar
 
     'comboBox_settings_mechanics_selectmodel': 'onelayer',
@@ -647,5 +785,5 @@ harm_tree = {
 # set harmdata value
 for harm in range(1, settings_init['max_harmonic']+2, 2):
     harm = str(harm)
-    settings_default['harmdata']['samp'][harm] = harm_tree
-    settings_default['harmdata']['ref'][harm] = harm_tree
+    settings_default['harmdata']['samp'][harm] = harm_tree.copy()
+    settings_default['harmdata']['ref'][harm] = harm_tree.copy()
