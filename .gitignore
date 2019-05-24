@@ -4,6 +4,32 @@ doc/figures
 doc/QCMnotes.lyx~
 QCMFuncs/Depolo_sampledefs.py
 
+# folder for temporary test Files
+test/
+pyqt_gui_compile.bat
+
+QCMFuncs/test.pdf
+QCMFuncs/test.pptx
+
+# test files
+settings_init.json
+
+# myVNA calibration file
+*.myVNA.cal
+
+# misc other files - some may not even exist anymore
+QCMFuncs/filled_galkyd_runfile.py
+QCMFuncs/legacy_functions.py
+QCMFuncs/testfile.txt
+QCMFuncs/QCM_functions_old.py
+QCMFuncs/QCM_rubber_paper_plots.py
+QCMFuncs/Depolo_runfile.py
+docs/QCMnotes.lyx
+QCMFuncs/johannsmann.py
+QCMFuncs/filled_galkyd_runfile.py
+QCM_main/runqcm.sh
+
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
@@ -164,31 +190,3 @@ venv.bak/
 # mkdocs documentation
 /site
 
-# myVNA calibration file
-*.myVNA.cal
-
-
-# folder for temporary test Files
-test/
-pyqt_gui_compile.bat
-
-QCMFuncs/test.pdf
-QCMFuncs/test.pptx
-
-# test files
-settings_init.json
-
-# myVNA calibration file
-*.myVNA.cal
-
-# misc other files - some may not even exist anymore
-QCMFuncs/filled_galkyd_runfile.py
-QCMFuncs/legacy_functions.py
-QCMFuncs/testfile.txt
-QCMFuncs/QCM_functions_old.py
-QCMFuncs/QCM_rubber_paper_plots.py
-QCMFuncs/Depolo_runfile.py
-docs/QCMnotes.lyx
-QCMFuncs/johannsmann.py
-QCMFuncs/filled_galkyd_runfile.py
-QCM_main/runqcm.sh
