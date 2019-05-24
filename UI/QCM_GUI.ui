@@ -6514,6 +6514,14 @@ border: 1px solid blue;
     <string>Ctrl+M</string>
    </property>
   </action>
+  <action name="actionRows_Index">
+   <property name="text">
+    <string>Rows - Index</string>
+   </property>
+   <property name="toolTip">
+    <string>Plot variables vs. indices</string>
+   </property>
+  </action>
  </widget>
  <tabstops>
   <tabstop>pushButton_runstop</tabstop>

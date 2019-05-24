@@ -1344,12 +1344,14 @@ class QCMApp(QMainWindow):
         # toolButton_spectra_mechanics_plotrows
         self.ui.actionRows_Time.triggered.connect(self.mechanics_plot_r_time)
         self.ui.actionRows_Temp.triggered.connect(self.mechanics_plot_r_temp)
+        self.ui.actionRows_Index.triggered.connect(self.mechanics_plot_r_idx)
         self.ui.actionRow_s1_Row_s2.triggered.connect(self.mechanics_plot_r1_r2)
         self.ui.actionRow_s2_Row_s1.triggered.connect(self.mechanics_plot_r2_r1)
         # create menu: menu_spectra_mechanics_plotrows
         self.ui.menu_spectra_mechanics_plotrows = QMenu(self.ui.toolButton_spectra_mechanics_plotrows)
         self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRows_Time)
         self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRows_Temp)
+        self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRows_Index)
         self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRow_s1_Row_s2)
         self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRow_s2_Row_s1)
         # add menu to toolbutton
@@ -4727,6 +4729,9 @@ class QCMApp(QMainWindow):
     def mechanics_plot_r_temp(self):
         self.mechanics_plot('temp')
 
+
+    def mechanics_plot_r_idx(self):
+        self.mechanics_plot('idx')
 
     def mechanics_plot_r1_r2(self):
         self.mechanics_plot('r1r2')
