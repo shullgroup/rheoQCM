@@ -102,13 +102,18 @@ def grho_from_dlam(n, drho, dlam, phi):
     return (drho*n*f1*np.cos(np.deg2rad(phi/2))/dlam) ** 2
 
 
-def grho3_bulk(delfstar):
-    return (np.pi*Zq*abs(delfstar[3])/f1) ** 2
+def grho_bulk(n, delfstar):
+    return (np.pi*Zq*abs(delfstar[n])/f1) ** 2
 
 
 def phi_bulk(n, delfstar):
     return -np.degrees(2*np.arctan(np.real(delfstar[n]) /
                        np.imag(delfstar[n])))
+
+    
+def deltarho_bulk(n, delfstar):
+    #decay length multiplied by density
+    return (np.pi*Zq*abs(delfstar[n])/f1) ** 2
 
 
 def calc_D(n, material, delfstar):
@@ -583,19 +588,14 @@ def nhcalc_in_nhplot(nhcalc_in, nhplot):
     return nhcalc_out
 
 
-def solve_from_delfstar(sample, parms):
+def solve_from_delfstar_bulk(sample, parms):
     # this function is used if we already have a bunch of delfstar values
-    # and want to obtain the solutions from there
-    # now set the markers used for the different calculation types
-    markers = {'131': '>', '133': '^', '353': '+', '355': 'x', '3': 'x'}
-    colors = parms.get('colors',{1: [1, 0, 0], 3: [0, 0.5, 0], 5: [0, 0, 1]})
+    # and want to obtain the solution to bulk layers with a semiinfinite thickness
+    markers = {'1': '>', '3': '^', '5': '+', '7': 'x', '9': 'o'}
     imagetype = parms.get('imagetype', 'svg')
     # get film info (containing raw data plot, etc. if it exists)
     sample['film']=sample.get('film',{})
-    close_on_click_switch = parms.get('close_on_click_switch', True)
-
     base_fig_name = find_base_fig_name(sample, parms)
-    imagetype = parms.get('imagetype', 'svg')
     nhplot = sample.get('nhplot', [1, 3, 5])
     delfstar = sample['delfstar']
     nx = len(delfstar)  # this is the number of data points
@@ -610,154 +610,27 @@ def solve_from_delfstar(sample, parms):
     else:
         propfig = make_prop_axes('props', sample['xlabel'])
         sample['propfig']=propfig
+        
+    #for nh in nhcalc:  (# still under construction here)
+    #
+    #   for in in np.arange(nx):
+            
 
-    # set up the consistency check axes
-    checkfig = {}
-    for nh in sample['nhcalc']:
-        checkfig[nh] = make_check_axes(sample, nh)
-        if close_on_click_switch and not run_from_ipython():
-            # when code is run with IPython don't use the event
-            checkfig[nh]['figure'].canvas.mpl_connect('key_press_event',
-                                                    close_on_click)
+    # add property data with error bars to the figure
+    propfig['drho_ax'].errorbar(xdata, drho, yerr=drho_err,
+                                marker=markers[nh], label=nh)
+    propfig['grho3_ax'].errorbar(xdata, grho3, yerr=grho3_err,
+                                marker=markers[nh], label=nh)
+    propfig['phi_ax'].errorbar(xdata, phi, yerr=phi_err,
+                               marker=markers[nh], label=nh)
+    output_data = np.stack((xdata, drho, grho3, phi), axis=-1)
+    np.savetxt(base_fig_name+'_'+nh+'.txt', output_data,
+               delimiter=',', header='xdata,drho,grho,phi', comments='')
 
-    # now do all of the calculations and plot the data
-    soln_input = {'nhplot': nhplot}
-    soln_input['layers']=sample.get('layers',{})
-    results = {}
-    for nh in sample['nhcalc']:
-        # initialize all the dictionaries
-        results[nh] = {'film':{'drho':np.zeros(nx), 'drho_err':np.zeros(nx),
-                              'grho3':np.zeros(nx), 'grho3_err':np.zeros(nx),
-                              'phi':np.zeros(nx), 'phi_err':np.zeros(nx)},
-                       'dlam3':np.zeros(nx),
-                       'rd': {}, 'rh': {}, 'delfstar_calc': {}}
-        for n in nhplot:
-            results[nh]['delfstar_calc'][n] = (np.zeros(nx,
-                                               dtype=np.complex128))
-            results[nh]['rd'][n] = np.zeros(nx)
-
-        results[nh]['rh'] = np.zeros(nx)
-
-        for i in np.arange(nx):
-            # obtain the solution for the properties
-            soln_input['nh'] = nh
-            soln_input['delfstar'] = delfstar[i]
-            if (np.isnan(delfstar[i][int(nh[0])].real) or
-                np.isnan(delfstar[i][int(nh[1])].real) or
-                np.isnan(delfstar[i][int(nh[2])].imag)):
-                soln = null_solution(nhplot)
-            else:
-                soln = solve_for_props(soln_input)
-            results[nh]['film']['drho'][i] = soln['film']['drho']
-            results[nh]['film']['grho3'][i] = soln['film']['grho3']
-            results[nh]['film']['phi'][i] = soln['film']['phi']
-            results[nh]['film']['drho_err'][i] = soln['err']['drho']
-            results[nh]['film']['grho3_err'][i] = soln['err']['grho3']
-            results[nh]['film']['phi_err'][i] = soln['err']['phi']
-            results[nh]['dlam3'][i] = soln['dlam3']
-
-            for n in nhplot:
-                results[nh]['delfstar_calc'][n][i] = (
-                 soln['delfstar_calc'][n])
-                results[nh]['rd'][n][i] = soln['rd'][n]
-            results[nh]['rh'][i] = soln['rh']
-
-            # add actual values of delf, delg for each harmonic to the
-            # solution check figure
-            for n in nhplot:
-                checkfig[nh]['delf_ax'].plot(xdata[i], delfstar[i][n].real
-                                             / n, '+', color=colors[n])
-                checkfig[nh]['delg_ax'].plot(xdata[i], delfstar[i][n].imag,
-                                             '+', color=colors[n])
-            # add experimental rh, rd to solution check figure
-            checkfig[nh]['rh_ax'].plot(xdata[i], rh_from_delfstar(nh,
-                                       delfstar[i]), '+', color=colors[n])
-
-            for n in nhplot:
-                checkfig[nh]['rd_ax'].plot(xdata[i], rd_from_delfstar(n,
-                                           delfstar[i]), '+', color=colors[n])
-
-        # add the calculated values of rh, rd to the solution check figures
-        checkfig[nh]['rh_ax'].plot(xdata, results[nh]['rh'], '-')
-        for n in nhplot:
-            checkfig[nh]['rd_ax'].plot(xdata, results[nh]['rd'][n], '-',
-                                       color=colors[n])
-
-        # add calculated delf and delg to solution check figures
-        for n in nhplot:
-            (checkfig[nh]['delf_ax'].plot(xdata,
-             results[nh]['delfstar_calc'][n].real / n, '-',
-             color=colors[n], label='n='+str(n)))
-            (checkfig[nh]['delg_ax'].plot(xdata,
-             results[nh]['delfstar_calc'][n].imag, '-', color=colors[n],
-             label='n='+str(n)))
-
-        # add legend to the solution check figures
-        checkfig[nh]['delf_ax'].legend()
-        checkfig[nh]['delg_ax'].legend()
-
-        if 'xscale' in sample:
-            checkfig[nh]['delf_ax'].set_xscale(sample['xscale'])
-            checkfig[nh]['delg_ax'].set_xscale(sample['xscale'])
-            checkfig[nh]['rh_ax'].set_xscale(sample['xscale'])
-            checkfig[nh]['rd_ax'].set_xscale(sample['xscale'])
-
-
-        # tidy up the solution check figure
-        checkfig[nh]['figure'].tight_layout()
-        checkfig[nh]['figure'].savefig(base_fig_name + '_'+nh +
-                                       '.' + imagetype)
-
-        # get the property data to add to the property figure
-        drho = 1000*results[nh]['film']['drho']
-        grho3 = results[nh]['film']['grho3']/1000
-        phi = results[nh]['film']['phi']
-        drho_err = 1000*results[nh]['film']['drho_err']
-        grho3_err = results[nh]['film']['grho3_err']/1000
-        phi_err = results[nh]['film']['phi_err']
-
-        # this is where we determine what marker to use.  We change it if
-        # we have specified a different marker in the sample dictionary
-        if 'forcemarker' in sample:
-            markers[nh] = sample['forcemarker']
-
-        # add property data with error bars to the figure
-        propfig['drho_ax'].errorbar(xdata, drho, yerr=drho_err,
-                                    marker=markers[nh], label=nh)
-        propfig['grho3_ax'].errorbar(xdata, grho3, yerr=grho3_err,
-                                    marker=markers[nh], label=nh)
-        propfig['phi_ax'].errorbar(xdata, phi, yerr=phi_err,
-                                   marker=markers[nh], label=nh)
-        output_data = np.stack((xdata, drho, grho3, phi), axis=-1)
-        np.savetxt(base_fig_name+'_'+nh+'.txt', output_data,
-                   delimiter=',', header='xdata,drho,grho,phi', comments='')
-
-        # add values of d/lam3 to the film raw data figure
-        if 'rawfig' in sample['film']:
-            sample['film']['dlam3_ax'].plot(xdata, results[nh]['dlam3'], '+', label=nh)
-
-    # add legend to the the dlam3 figure and set the x axis label
+    # add values of d/lam3 to the film raw data figure
     if 'rawfig' in sample['film']:
-        sample['film']['dlam3_ax'].legend()
-        sample['film']['dlam3_ax'].set_xlabel(sample['xlabel'])
+        sample['film']['dlam3_ax'].plot(xdata, results[nh]['dlam3'], '+', label=nh)
 
-    print('done with ', base_fig_name, 'press any key to close plots and continue')
-
-    if close_on_click_switch and not run_from_ipython():
-        # when code is run with IPython, don't use the event
-        propfig['figure'].canvas.mpl_connect('key_press_event', close_on_click)
-        if 'rawfig' in sample['film']:
-            sample['film']['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
-            sample['bare']['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
-
-    openplots = 3 + len(checkfig)
-    if not run_from_ipython():
-        # when code is run with IPython, don't use key_press_event
-        while openplots>0:
-            plt.pause(1)
-
-    sample['results'] = results
-    # tidy up the property figure
     cleanup_propfig(sample, parms)
     return sample
 
@@ -831,7 +704,7 @@ def close_existing_fig(figname):
 
 
 def make_prop_axes(propfigname, xlabel):
-    # set up the property plot
+    # set up the standard property plot
     close_existing_fig(propfigname)
     fig = plt.figure(propfigname, figsize=(9, 3))
     drho_ax = fig.add_subplot(131)
@@ -850,6 +723,28 @@ def make_prop_axes(propfigname, xlabel):
 
     return {'figure': fig, 'drho_ax': drho_ax, 'grho3_ax': grho3_ax,
             'phi_ax': phi_ax}
+    
+def make_prop_axes_bulk(propfigname, xlabel):
+    # set up the standard property plot
+    close_existing_fig(propfigname)
+    fig = plt.figure(propfigname, figsize=(9, 3))
+    drho_ax = fig.add_subplot(131)
+    drho_ax.set_xlabel(xlabel)
+    drho_ax.set_ylabel(r'$\delta\rho$ (g/m$^2$)')
+
+    grho3_ax = fig.add_subplot(132)
+    grho3_ax.set_xlabel(xlabel)
+    grho3_ax.set_ylabel(r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)')
+
+    phi_ax = fig.add_subplot(133)
+    phi_ax.set_xlabel(xlabel)
+    phi_ax.set_ylabel(r'$\phi$ (deg.)')
+
+    fig.tight_layout()
+
+    return {'figure': fig, 'drho_ax': drho_ax, 'grho3_ax': grho3_ax,
+            'phi_ax': phi_ax}
+
 
 
 def make_vgp_axes(vgpfigname):
@@ -1107,6 +1002,17 @@ def plot_spectra(fig_dict, sample, idx_vals):
             'Nyquist_ax': Nyquist_ax, 'plot_num': plot_num}
 
 
+def delfstar_from_xlsx(dir, file):  # build delfstar dictionary from excel file
+    df = pd.read_excel(dir+file, sheet_name=None, header=0)['S_channel']
+    delfstar={}
+    for i in np.arange(len(df)):
+        delfstar[i]={}
+        for n in [1, 3, 5, 7, 9]:
+            if 'delf'+str(n) in df.keys():
+                delfstar[i][n] = df['delf'+str(n)] + 1j*df['delg'+str(n)]
+    return delfstar
+
+
 def contour(function, parms):
     # set up the number of points and establisth the great
     n = parms.get('n', 100)
@@ -1143,7 +1049,7 @@ def contour(function, parms):
     g_ax = fig.add_subplot(122)
     g_ax.set_xlabel(r'$d/\lambda_n$')
     g_ax.set_ylabel(r'$\phi$ (deg.)')
-    g_ax.set_title(r'$\Delta \Gamma_n/f_{sn}$')
+    g_ax.set_title(r'$\f \Gamma_n/f_{sn}$')
     g_map = g_ax.contourf(dlam_i, phi_i, z.imag, glevels, cmap="gnuplot2_r",
                           extend='both')
     fig.colorbar(g_map, ax=g_ax, ticks=np.linspace(min(glevels),

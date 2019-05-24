@@ -582,6 +582,21 @@ These equations can be inverted to give the following for
 
 \end_layout
 
+\begin_layout Standard
+The decay length is:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\delta_{n}=\frac{\rho}{\mathrm{Im}\left(k^{*}\right)}=\frac{\left(\rho\left|G_{n}^{*}\right|\right)^{1/2}}{2\pi f_{n}\sin\left(\phi_{n}/2\right)}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Subsection
 Generalized Single Layer
 \end_layout
@@ -678,6 +693,15 @@ D_{n}^{*}=k_{n}^{*}d=\frac{2\pi d}{\lambda_{n}}\left(1-i\tan\left(\phi_{n}/2\rig
 \end_layout
 
 \begin_layout Standard
+The bulk limit applies when the film thickness is much larger than the decay
+ length, 
+\begin_inset Formula $\delta$
+\end_inset
+
+, which is given by the following expression:
+\end_layout
+
+\begin_layout Standard
 The impedance of a layer (which we refer to hear as layer 1) of mass thickness
  
 \begin_inset Formula $d\rho$
@@ -721,8 +745,6 @@ k_{q}=\frac{2\pi f_{n}\rho_{q}}{Z_{q}};\,\,\,2\pi f_{n}^{*}=Z_{q}^{*}k_{q}^{*}/\
 
 \end_inset
 
-/
-\backslash
 
 \end_layout
 
@@ -1652,21 +1674,25 @@ f_{sn}=\frac{2nf_{1}^{2}}{Z_{q}}\rho d
 
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Subsubsection
 Extension to 3 layers
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 In some cases we are interested in an extension to 3 layers.
  The generalization here is:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Eq.
  10.6.1 from Diethelm's book is:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 
 \family roman
 \series medium
@@ -1690,12 +1716,12 @@ Eq.
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 If we now we use the following version of the small load approximation to
  turn this into an expression for the load impedance:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \Delta Z_{nL}^{*}=\frac{\pi Z_{q}\Delta f_{n}^{*}}{if_{1}}=-\frac{\pi iZ_{q}\Delta f_{n}^{*}}{f_{1}}\label{eq:SLA-1}
@@ -1706,11 +1732,11 @@ If we now we use the following version of the small load approximation to
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 which gives: 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 
 \family roman
 \series medium
@@ -1734,7 +1760,7 @@ which gives:
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 
 \family roman
 \series medium
@@ -1758,7 +1784,7 @@ which gives:
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Now we need to figure out how to adapt this to the case where third layer
  has a finite thickness.
  One of the terms involving 
@@ -1791,7 +1817,7 @@ Now we need to figure out how to adapt this to the case where third layer
  Doing this gives:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 
 \family roman
 \series medium
@@ -1815,29 +1841,29 @@ Now we need to figure out how to adapt this to the case where third layer
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Something seems wrong with this.
  Our python code gives the following:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 I*Z0*(Z0*Z1*sin(D0)*cos(D1)*cos(D2) - Z0*Z2*sin(D0)*sin(D1)*sin(D2) + Z1**2*sin(
 D1)*cos(D0)*cos(D2) + Z1*Z2*sin(D2)*cos(D0)*cos(D1))/(Z0*Z1*cos(D0)*cos(D1)*cos(
 D2) - Z0*Z2*sin(D1)*sin(D2)*cos(D0) - Z1**2*sin(D0)*sin(D1)*cos(D2) - Z1*Z2*sin(
 D0)*sin(D2)*cos(D1))
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 dividing through by the product of the cosine terms gives:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 I*Z0*(Z0*Z1*tan(D0) - Z0*Z2*tan(D0)*tan(D1)*tan(D2) + Z1**2*tan(D1) + Z1*Z2*tan(
 D2))/(Z0*Z1*- Z0*Z2*tan(D1)*tan(D2)-Z1**2*tan(D0)*tan(D1) - Z1*Z2*tan(D0)*tan(D2
 ))
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \[
 iZ_{0}\frac{Z0Z1tan(D0)-Z0Z2tan(D0)tan(D1)tan(D2)+Z1**2*tan(D1)+Z1*Z2*tan(D2)}{Z0Z1-Z0Z2tan(D1)tan(D2)-Z1**2tan(D0)tan(D1)-Z1Z2tan(D0)tan(D2)}
@@ -1848,11 +1874,11 @@ iZ_{0}\frac{Z0Z1tan(D0)-Z0Z2tan(D0)tan(D1)tan(D2)+Z1**2*tan(D1)+Z1*Z2*tan(D2)}{Z
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 incrementi
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \[
 i\frac{\left(Z_{1n}^{*}\right)^{2}Z_{2n}^{*}\tan(D_{1n}^{*})-Z_{1n}^{*}Z_{3n}^{*}\tan(D_{1n}^{*})\tan(D_{2n}^{*})\tan(D_{3n}^{*})+\left(Z_{2n}^{*}\right)^{2}\tan(D_{2n}^{*})+Z_{2n}^{*}Z_{3n}^{*}\tan(D_{3n}^{*})}{Z_{1n}^{*}Z_{2n}^{*}-Z_{1n}^{*}Z_{3n}^{*}\tan(D_{2n}^{*})\tan(D_{3n}^{*})-\left(Z_{2n}^{*}\right)^{2}\tan(D_{1n}^{*})\tan(D_{2n}^{*})-Z_{2n}^{*}Z_{3n}^{*}\tan(D_{1n}^{*})\tan(D_{3n}^{*})}
@@ -1863,7 +1889,7 @@ i\frac{\left(Z_{1n}^{*}\right)^{2}Z_{2n}^{*}\tan(D_{1n}^{*})-Z_{1n}^{*}Z_{3n}^{*
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Let's check this out.
  What happens if 
 \begin_inset Formula $D_{2n}^{*}=0:$
@@ -1872,7 +1898,7 @@ Let's check this out.
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \[
 i\frac{\left(Z_{1n}^{*}\right)^{2}Z_{2n}^{*}\tan(D_{1n}^{*})+Z_{2n}^{*}Z_{3n}^{*}\tan(D_{3n}^{*})}{Z_{1n}^{*}Z_{2n}^{*}--Z_{2n}^{*}Z_{3n}^{*}\tan(D_{1n}^{*})\tan(D_{3n}^{*})}
@@ -1883,7 +1909,7 @@ i\frac{\left(Z_{1n}^{*}\right)^{2}Z_{2n}^{*}\tan(D_{1n}^{*})+Z_{2n}^{*}Z_{3n}^{*
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \[
 i\frac{\left(Z_{1n}^{*}\right)^{2}\tan(D_{1n}^{*})+Z_{3n}^{*}\tan(D_{3n}^{*})}{Z_{1n}^{*}-Z_{3n}^{*}\tan(D_{1n}^{*})\tan(D_{3n}^{*})}
@@ -1892,11 +1918,11 @@ i\frac{\left(Z_{1n}^{*}\right)^{2}\tan(D_{1n}^{*})+Z_{3n}^{*}\tan(D_{3n}^{*})}{Z
 \end_inset
 
 looks okay.
- 
 \end_layout
 
-\begin_layout Standard
-()/()
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -2684,41 +2710,6 @@ D_{nq}^{*}=\frac{2\pi nf_{1}d_{q}\rho_{q}}{Z_{q}}=\pi n
 
 \end_layout
 
-\begin_layout Standard
-\begin_inset Note Note
-status collapsed
-
-\begin_layout Plain Layout
-\begin_inset Formula 
-\[
-d/\lambda_{n}==d\rho nf_{1}\left(\frac{1}{\rho\left|G_{n}^{*}\right|}\right)^{1/2}\cos\left(\phi_{n}/2\right)
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-or
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Formula 
-\[
-d/\lambda_{n}==d\rho nf_{1}\left(\frac{\left|J_{n}^{*}\right|\sin\phi}{\rho}\right)^{1/2}\frac{\cos\left(\phi_{n}/2\right)}{\left(\sin\phi\right)^{1/2}}
-\]
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
 \begin_layout Subsection
 Voigt Model
 \end_layout
@@ -3144,8 +3135,8 @@ So to get the Jacobian for for the case where
 \begin_inset CommandInset bibtex
 LatexCommand bibtex
 btprint "btPrintCited"
-bibfiles "doc/QCM"
-options "doc/MSEcore"
+bibfiles "QCM"
+options "MSEcore"
 
 \end_inset
 
