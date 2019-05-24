@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.17.0] - 2019-04-08
+## [0.17.0] - 2019-05-24
 
 ### Added
 
@@ -10,8 +10,8 @@
 ### Changed
 
 - Change data structure. Copy some keys in settings_init to settings_default to keep enough information of data collecting parameter.  
-- Change the way to getting display data from all harmonic together to by harmonics.
-- Change multiple peak fitting to using separate data ranges. The range plotted in the figures are still a connected range.
+- Change the way to get display data from all harmonic together to by harmonics.
+- Change multiple peak fitting to use separate data ranges. The range plotted in the figures are still a connected range.
 - Change variable names with "rh", reference harmonics, to "refh". This resulted in exported excel file column names change.
 - Change the data reference structure to make both channels use separated references in all conditions.
 - Change mechanical calculation protocal. It is still in a testing version.
