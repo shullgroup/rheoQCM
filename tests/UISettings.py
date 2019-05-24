@@ -272,16 +272,17 @@ settings_init = {
         'delg_calcs':        r'$\Delta\Gamma$ (Hz)',
         'delg_exps':         r'$\Delta\Gamma_{exp}$ (Hz)',
         'drho':              r'd$\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-        'grhos':           r'$|G_{n}^*|\rho$ (Pa$\cdot$g/cm$^3$)',
+        'grhos':             r'$|G_{n}^*|\rho$ (Pa$\cdot$g/cm$^3$)',
         'phi':               r'$\phi$ ($\degree$)',
-        'dlams':           r'd/$\lambda_{n}$',
-        'lamrhos':            r'$\lambda\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-        'delrhos':            r'$\delta\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-        'delf_delfsns':       r'$\Delta$f/$\Delta$f$_{sn}$',
+        'etarhos':           r'$|\eta_{n}^*|\rho$ (mPa$\cdot$s$\cdot$g/cm$^3$)',
+        'dlams':             r'd/$\lambda_{n}$',
+        'lamrhos':           r'$\lambda\rho$ ($\mu$m$\cdot$g/cm$^3$)',
+        'delrhos':           r'$\delta\rho$ ($\mu$m$\cdot$g/cm$^3$)',
+        'delf_delfsns':      r'$\Delta$f/$\Delta$f$_{sn}$',
         'delg_delfsn_exps':  r'$(\Delta\Gamma$/$\Delta$f$_{sn})_{exp}$',
         'delg_delfsn_calcs': r'$\Delta\Gamma$/$\Delta$f$_{sn}$',
-        'rh_exp':           r'r$_{h,exp}$',
-        'rh_calc':          r'r$_h$',
+        'rh_exp':            r'r$_{h,exp}$',
+        'rh_calc':           r'r$_h$',
         'rd_exps':           r'r$_{d,exp}$',
         'rd_calcs':          r'r$_d$',
     },
@@ -294,14 +295,15 @@ settings_init = {
         'delg_exps':         u'\u0394\u0393' + ' (Hz)', # ΔΓ (Hz)
         'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
         'drho':              'd' + u'\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # dρ (μm∙g/m³)
-        'grhos':           '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
-        'phi':                u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
-        'dlams':           'd/' + u'\u03BB\u2099', # d/λₙ
-        'lamrhos':            u'\u03BB\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # λρ (μm∙g/m³)
-        'delrhos':            u'\u03B4\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # δρ (μm∙g/m³)
-        'delf_delfsns':       u'\u0394' + 'f/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
+        'grhos':             '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
+        'phi':               u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
+        'etarhos':           '|' + u'\u03B7' + '*|' + u'\u03C1' + ' (mPa' + u'\u2219' + 's' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |η*|ρ (Pa∙s∙g/cm³)
+        'dlams':             'd/' + u'\u03BB\u2099', # d/λₙ
+        'lamrhos':           u'\u03BB\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # λρ (μm∙g/m³)
+        'delrhos':           u'\u03B4\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # δρ (μm∙g/m³)
+        'delf_delfsns':      u'\u0394' + 'f/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
         'delg_delfsn_calcs': u'\u0394\u0393' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓ/Δfₛₙ
-        'rh_calc':                'rh',
+        'rh_calc':           'rh',
         'rd_calcs':          'rd',
         't':                 'Time (s)', # Time (s)
         'temp':              'Temp. (' + u'\u00B0' + 'C)', # Temp. (°C)
@@ -441,18 +443,18 @@ settings_init = {
 
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {
-        'onelayer': 'One layer',
-        'bulk': 'Bulk',
-        'twolayers': 'Two layers',
+        'onelayer': 'In air',
+        # 'bulk': 'Bulk',
+        'twolayers': 'In medium',
     },
 
     # calctype
     'calctype_opts':{
-        'SLA': 'SLA',
-        'LL': 'LL',
+        'SLA': 'Small-load approximation',
+        'LL': 'Large-load',
     },
 
-    'qcm_layer_known_source_opts': {
+    'qcm_layer_source_opts': {
         'ind': 'Index',
         'prop': 'Prop.',
         # 'fg': u'\u0394' + 'f&' + u'\u0394\u0393',
@@ -461,26 +463,29 @@ settings_init = {
         # 'none': '--',
     },
 
-    'qcm_layer_unknown_source_opts': {
-        'none': '--',
-        'ind': 'Index',
-        'guess': 'Guess',
-    },
+    'mechanics_modeswitch': 0, 
 
-    'qcm_layer_bulk_name_opts': {
-        'air': {
-            'drho': np.inf,
-            'grho': 0,
-            'phi': 0,
-            'rh': 3,
-        },
-        'water': {
-            'drho': np.inf, 
-            'grho': 1e5, # in Pa
-            'phi': np.pi /2,
-            'rh': 3,
-        },
-    },
+
+    # 'qcm_layer_unknown_source_opts': {
+    #     'none': '--',
+    #     'ind': 'Index',
+    #     'guess': 'Guess',
+    # },
+
+    # 'qcm_layer_bulk_name_opts': {
+    #     'air': {
+    #         'drho': np.inf,
+    #         'grho': 0,
+    #         'phi': 0,
+    #         'rh': 3,
+    #     },
+    #     'water': {
+    #         'drho': np.inf, 
+    #         'grho': 1e5, # in Pa
+    #         'phi': np.pi /2,
+    #         'rh': 3,
+    #     },
+    # },
 
     # steps ofr span control slider
     'span_ctrl_steps': [1, 2, 5, 10, 20, 50, 100],

@@ -2883,6 +2883,36 @@ p, li { white-space: pre-wrap; }
                   <number>0</number>
                  </property>
                  <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_32">
+                   <property name="topMargin">
+                    <number>10</number>
+                   </property>
+                   <item>
+                    <widget class="QLabel" name="label_6">
+                     <property name="text">
+                      <string>Calc. Type</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QComboBox" name="comboBox_settings_mechanics_calctype"/>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_34">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
                   <widget class="QStackedWidget" name="stackedWidget_settings_mechanics_modeswitch">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -2891,7 +2921,7 @@ p, li { white-space: pre-wrap; }
                     </sizepolicy>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <widget class="QWidget" name="stackedWidgetPage_mech_normalmode">
                     <property name="sizePolicy">
@@ -2969,7 +2999,7 @@ p, li { white-space: pre-wrap; }
                        <item row="0" column="0">
                         <widget class="QLabel" name="label_settings_mechanics_model_overlayer">
                          <property name="text">
-                          <string>Over layer</string>
+                          <string>Medium</string>
                          </property>
                         </widget>
                        </item>
@@ -2991,10 +3021,18 @@ p, li { white-space: pre-wrap; }
                         </widget>
                        </item>
                        <item row="0" column="2">
-                        <widget class="QLineEdit" name="lineEdit_settings_mechanics_model_overlayer_idx"/>
+                        <widget class="QLineEdit" name="lineEdit_settings_mechanics_model_overlayer_idx">
+                         <property name="text">
+                          <string>[]</string>
+                         </property>
+                        </widget>
                        </item>
                        <item row="1" column="2">
-                        <widget class="QLineEdit" name="lineEdit_settings_mechanics_model_samplayer_idx"/>
+                        <widget class="QLineEdit" name="lineEdit_settings_mechanics_model_samplayer_idx">
+                         <property name="text">
+                          <string>[]</string>
+                         </property>
+                        </widget>
                        </item>
                       </layout>
                      </item>
@@ -3069,9 +3107,6 @@ p, li { white-space: pre-wrap; }
                           <number>1</number>
                          </property>
                         </widget>
-                       </item>
-                       <item>
-                        <widget class="QComboBox" name="comboBox_settings_mechanics_calctype"/>
                        </item>
                        <item>
                         <spacer name="horizontalSpacer_15">
@@ -5162,7 +5197,7 @@ border: 1px solid blue;
                    <bool>true</bool>
                   </attribute>
                   <attribute name="verticalHeaderDefaultSectionSize">
-                   <number>22</number>
+                   <number>23</number>
                   </attribute>
                   <attribute name="verticalHeaderMinimumSectionSize">
                    <number>23</number>
@@ -5216,6 +5251,16 @@ border: 1px solid blue;
                   <row>
                    <property name="text">
                     <string>Φ (°)</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>|η*|ρ (mPa∙s∙g/cm³)</string>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>7</pointsize>
+                    </font>
                    </property>
                   </row>
                   <row>
@@ -6459,6 +6504,14 @@ border: 1px solid blue;
    </property>
    <property name="toolTip">
     <string>this is for testing</string>
+   </property>
+  </action>
+  <action name="actionfilm_construction_mode_switch">
+   <property name="text">
+    <string>film construction mode switch</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+M</string>
    </property>
   </action>
  </widget>

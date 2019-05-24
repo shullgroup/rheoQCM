@@ -215,6 +215,8 @@ class DataSaver:
 
             'grhos', # h dependent
             'grhos_err', # h dependent
+            'etarhos', # h dependent
+            'etarhos_err', # h dependent
             'dlams', # h dependent
             'lamrhos', # h dependent
             'delrhos', # h dependent
@@ -2146,6 +2148,7 @@ class DataSaver:
         '''
         print('df_a', df_a) #testprint
         print('df_b', df_b) #testprint
+        
         # make a new df with the same shape of df_a
         df = df_a.copy()
         # we don't need columns 't', and 'queue_id'
@@ -2168,8 +2171,16 @@ class DataSaver:
                 col_s = df_b[col].copy()
 
                 if mode['cryst'] == 'single':
+                    col_arr = np.array(col_s.values.tolist()) # convert series to array of array ??
+                    
+                    # col_l = col_s.values.tolist()
+                    # for i in range(len(col_l)):
+                    #     try:
+                    #         print(len(col_l[i]))
+                    #     except:
+                    #         print(i, col_l[i])
+
                     if mode['temp'] == 'const': # single crystal and constant temperature
-                        col_arr = np.array(col_s.values.tolist()) # convert series to array
                         col_mean = np.mean(col_arr, axis=0) # get mean of each column
                         print('col_arr', col_arr) #testprint
                         print('col_mean', col_mean) #testprint
@@ -2185,7 +2196,6 @@ class DataSaver:
                             print('Check index format!')
                             return
 
-                        col_arr = np.array(col_s.values.tolist()) # convert series to array
                         print('col_s', col_s.iloc[0]) #testprint
                         print('col_fs', df_b['fs'].iloc[0]) #testprint
                         # print('col_arr', col_arr) #testprint
@@ -2206,6 +2216,17 @@ class DataSaver:
                                 else: #single column
                                     col_arr_i = col_arr[ind_list]
                                 
+                                # print(i) #testprint
+                                # print(type(col_s.values)) #testprint
+                                # print(col_s.values.dtype) #testprint
+                                # print(col_s.values.tolist()) #testprint
+                                # print(col_arr) #testprint
+                                # print(type(col_arr)) #testprint
+                                # print(type(col_arr[0])) #testprint
+                                # print(type(col_arr_i)) #testprint
+                                # print(col_arr_i) #testprint
+                                # print(type(col_arr_i[0])) #testprint
+                                # print(col_arr_i[0]) #testprint
                                 if np.isnan(col_arr_i).all(): # no data in harm and ind_list
                                     func_seg_list.append(lambda temp: np.array([np.nan] * len(temp))) # add a func return nan
                                 else: # there is data

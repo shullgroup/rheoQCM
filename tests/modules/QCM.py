@@ -140,6 +140,15 @@ class QCM:
         return min(np.pi / 2, -2 * np.arctan(np.real(delfstar[n]) / np.imag(delfstar[n]))) # limit phi <= pi/2
 
 
+    def etarho(self, n, grho_n):
+        ''' 
+        viscosity at nth harmonic 
+        grho_n: grho at nth haromonic
+        eta = G / (2*pi*f)
+        '''
+        return grho_n / (2 * np.pi * n * self.f1)
+
+
     def calc_lamrho(self, n, grho, phi):
         '''
         calculate rho*lambda
@@ -583,6 +592,8 @@ class QCM:
         delrhos = mech_queue.delrhos.iloc[0].copy()
         grhos = mech_queue.dlams.iloc[0].copy()
         grhos_err = mech_queue.dlams.iloc[0].copy()
+        etarhos = mech_queue.dlams.iloc[0].copy()
+        etarhos_err = mech_queue.dlams.iloc[0].copy()
         print('delf_calcs', delf_calcs) #testprint
         print(type(delf_calcs)) #testprint
         for n in nhplot:
@@ -598,6 +609,8 @@ class QCM:
             # dlams[nh2i(n)] = self.calc_dlam(n, film) # more calculation
             grhos[nh2i(n)] = self.grho(n, grho_refh, phi)
             grhos_err[nh2i(n)] = self.grho(n, err['grho_refh'], phi) # supose errors follow power law, too
+            etarhos[nh2i(n)] = self.etarho(n, grhos[nh2i(n)])
+            etarhos_err[nh2i(n)] = self.etarho(n, grhos_err[nh2i(n)]) # supose errors follow power law, too
             lamrhos[nh2i(n)] = self.calc_lamrho(n, grhos[nh2i(n)], phi) 
             delrhos[nh2i(n)] = self.calc_delrho(n, grhos[nh2i(n)], phi) 
 
@@ -619,7 +632,9 @@ class QCM:
 
         # multiple values in list
         mech_queue['grhos'] = [grhos] # in Pa kg/m3
-        mech_queue['grhos_err'] = [grhos_err] # in Pa kg/m3 #TODO #!! change with refh
+        mech_queue['grhos_err'] = [grhos_err] # in Pa kg/m3 
+        mech_queue['etarhos'] = [etarhos] # in Pa s kg/m3
+        mech_queue['etarhos_err'] = [etarhos_err] # in Pa s kg/m3 
         mech_queue['dlams'] = [dlams] # in na
         mech_queue['lamrhos'] = [lamrhos] # in kg/m2
         mech_queue['delrhos'] = [delrhos] # in kg/m2
