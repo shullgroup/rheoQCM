@@ -157,7 +157,7 @@ settings_init = {
         'label_settings_mechanics_refG',
         'comboBox_settings_mechanics_refG',
         # 'comboBox_settings_mechanics_selectmodel',
-        'groupBox_settings_mechanics_mech_film',
+        # 'groupBox_settings_mechanics_mech_film',
 
         # 'groupBox_settings_mechanics_contour',
         # 'pushButton_settings_mechanics_simulator',
@@ -439,7 +439,7 @@ settings_init = {
 
     # minimum/maximum layer for mechanic property calculation
     'min_mech_layers': 0,
-    'max_mech_layers': 1,
+    'max_mech_layers': 2,
 
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {
@@ -757,7 +757,7 @@ settings_default = {
     'spinBox_settings_mechanics_nhcalc_n3': 3,
 
     'comboBox_settings_mechanics_refG': '3', # reference harmonic for property
-    'spinBox_mech_expertmode_layernum': 1, # number of layers for expert mode mechanic 
+    'spinBox_mech_expertmode_layernum': 2, # number of layers for expert mode mechanic 
 
     'comboBox_settings_mechanics_calctype': 'LL', # 'LL' or 'SLA'
 
