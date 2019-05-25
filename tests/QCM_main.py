@@ -1083,9 +1083,9 @@ class QCMApp(QMainWindow):
         # hide groupBox_settings_mechanics_simulator
         self.ui.groupBox_settings_mechanics_simulator.hide()
 
-        self.build_comboBox(self.ui.comboBox_settings_mechanics_selectmodel, 'qcm_model_opts')
         self.ui.comboBox_settings_mechanics_selectmodel.currentIndexChanged.connect(self.update_widget)
         self.ui.comboBox_settings_mechanics_selectmodel.currentIndexChanged.connect(self.set_mechmodel_widgets)
+        self.build_comboBox(self.ui.comboBox_settings_mechanics_selectmodel, 'qcm_model_opts')
 
         #### following widgets are not saved in self.settings
         # label_settings_mechanics_model_overlayer
@@ -4731,7 +4731,7 @@ class QCMApp(QMainWindow):
 
 
     def mechanics_plot_r_idx(self):
-        self.mechanics_plot('idx')
+        self.mechanics_plot('index')
 
     def mechanics_plot_r1_r2(self):
         self.mechanics_plot('r1r2')
@@ -4746,6 +4746,7 @@ class QCMApp(QMainWindow):
         make plot by plot_type
         variable is given by row selection of tableWidget_spectra_mechanics_table
         '''
+        x_list = ['t', 'temp', 'idx'] # common x-axis variables. t, temp is the column name, idx is not.
         print('plot_type', plot_type) #testprint
 
         # get chn_name
@@ -4790,22 +4791,17 @@ class QCMApp(QMainWindow):
 
         # get data mode showall or marked
         # from tabWidget_settings
-        if self.show_marked_data(): # show marked data only
-            if self.data_saver.with_marks(chn_name):
-                prop_group = 'pm'
-                line_group = 'l'
-                mark = True
-            else:
-                prop_group = 'p'
-                line_group = 'l'
-                mark = False
+        if self.show_marked_data() and self.data_saver.with_marks(chn_name): # show marked data only
+            prop_group = 'pm'
+            line_group = 'l'
+            mark = True
         else: # show all data
-            mark = False
             prop_group = 'p'
             line_group = 'l'
+            mark = False
 
         # create varplots (list of [var_y, var_x] for plots)
-        if plot_type in ['t', 'temp']: # y vs. time/temp
+        if plot_type in x_list: # y vs. time/temp/idx
             varplots = [[var, plot_type] for var in varplot]
 
         elif plot_type in ['r1r2', 'r2r1']:
@@ -4911,6 +4907,9 @@ class QCMApp(QMainWindow):
                 err = self.qcm.convert_mech_unit(err)
             else:
                 err = None
+        elif var == 'idx': # get index
+            data = self.data_saver.get_idx_marked_rows(chn_name, dropnanmarkrow=False)
+            err = None
 
         return data, err
 
