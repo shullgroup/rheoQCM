@@ -30,6 +30,19 @@ drho_q = Zq/(2*f1)
 e26 = 9.65e-2
 electrode_default = {'drho':2.8e-3, 'grho3':3.0e14, 'phi':0}
 
+# find indices of an array where the values are closet to the ones specified
+def find_nearest_idx(values, array):
+    # find index of a point with value closest to the one specified
+    idx = np.zeros(len(values), dtype=int)
+    for i in np.arange(len(values)):
+        idxval = np.searchsorted(array, values[i], side="left")
+        if idxval > 0 and (idxval == len(array) or np.abs(values[i] - array[idxval-1]) < 
+                        np.abs(values[i] - array[idxval])):
+            idx[i] = idxval-1
+        else:
+            idx[i] = idxval
+    return idx
+
 
 def close_on_click(event):
     # used so plots close in response to a some event
