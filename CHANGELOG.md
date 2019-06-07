@@ -1,11 +1,13 @@
 # Changelog
 
-## [0.17.0] - 2019-05-24
+## [0.17.0] - 2019-05-29
 
 ### Added
 
 - Add spinBox for selecting index for displaying property in table.  
-- Add sample discription
+- Add sample discription.
+- Add scipy functions to peak factors guess.
+- Add viscocity to property calculation.
 
 ### Changed
 
@@ -15,6 +17,7 @@
 - Change variable names with "rh", reference harmonics, to "refh". This resulted in exported excel file column names change.
 - Change the data reference structure to make both channels use separated references in all conditions.
 - Change mechanical calculation protocal. It is still in a testing version.
+- Change recording interval set up method. All three factors (record interval, refresh resolution, scan interval) can be changed.
 
 ### Fixed
 

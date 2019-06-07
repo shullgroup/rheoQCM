@@ -427,14 +427,17 @@ class QCM:
 
 
     def rhcalc(self, nh, dlam_refh, phi):
-        ''' nh list '''
+        ''' nh: list '''
         return np.real(self.normdelfstar(nh[0], dlam_refh, phi)) /  np.real(self.normdelfstar(nh[1], dlam_refh, phi))
 
     def rh_from_delfstar(self, nh, delfstar):
         ''' this func is the same as rhexp!!! '''
         n1 = int(nh[0])
         n2 = int(nh[1])
-        return (n2/n1)*np.real(delfstar[n1])/np.real(delfstar[n2])
+        if np.real(delfstar[n2]) == 0:
+            return np.nan
+        else:
+            return (n2/n1)*np.real(delfstar[n1])/np.real(delfstar[n2])
 
 
     def rdcalc(self, nh, dlam_refh, phi):
@@ -447,7 +450,10 @@ class QCM:
 
     def rd_from_delfstar(self, n, delfstar):
         ''' dissipation ratio calculated for the relevant harmonic '''
-        return -np.imag(delfstar[n])/np.real(delfstar[n])
+        if np.real(delfstar[n]) == 0:
+            return np.nan
+        else:
+            return -np.imag(delfstar[n])/np.real(delfstar[n])
 
 
     def bulk_guess(self, delfstar):
@@ -673,6 +679,11 @@ class QCM:
         err = {}
         err_names=['drho', 'grho_refh', 'phi']
 
+        # initiate deriv and err
+        for key in err_names:
+            deriv[key] = np.nan
+            err[key] = np.nan
+
         if not film: # film is not built
             film = self.build_single_layer_film()
 
@@ -770,14 +781,18 @@ class QCM:
 
                     jac = soln2['jac']
                     print('jac', jac) #testprint
-                    jac_inv = np.linalg.inv(jac)
-                    print('jac_inv', jac_inv) #testprint
+                    try:
+                        jac_inv = np.linalg.inv(jac)
+                        print('jac_inv', jac_inv) #testprint
 
-                    for i, k in enumerate(err_names):
-                        deriv[k]={0:jac_inv[i, 0], 1:jac_inv[i, 1], 2:jac_inv[i, 2]}
-                        err[k] = ((jac_inv[i, 0]*delfstar_err[0])**2 + 
-                                (jac_inv[i, 1]*delfstar_err[1])**2 +
-                                (jac_inv[i, 2]*delfstar_err[2])**2)**0.5
+                        for i, k in enumerate(err_names):
+                            deriv[k]={0:jac_inv[i, 0], 1:jac_inv[i, 1], 2:jac_inv[i, 2]}
+                            err[k] = ((jac_inv[i, 0]*delfstar_err[0])**2 + 
+                                    (jac_inv[i, 1]*delfstar_err[1])**2 +
+                                    (jac_inv[i, 2]*delfstar_err[2])**2)**0.5
+                    except:
+                        print('error calculation failed!') 
+                        pass
             else:
                 print('1st solution out of range') #testprint
 
@@ -875,7 +890,7 @@ class QCM:
             if any([st in col for st in ['drho', 'lamrho', 'delrho']]):
                 print('x1000') #testprint
                 df[col] = df[col].apply(lambda x: list(np.array(x) * 1000) if isinstance(x, list) else x * 1000) # from m kg/m3 to um g/cm3
-            elif 'grho' in col:
+            elif any([st in col for st in ['grho', 'etarho']]):
                 print('x1/1000') #testprint
                 df[col] = df[col].apply(lambda x: list(np.array(x) / 1000) if isinstance(x, list) else x / 1000) # from Pa kg/m3 to Pa g/cm3 (~ Pa)
             elif 'phi' in col:

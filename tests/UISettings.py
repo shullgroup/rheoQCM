@@ -274,7 +274,7 @@ settings_init = {
         'drho':              r'd$\rho$ ($\mu$m$\cdot$g/cm$^3$)',
         'grhos':             r'$|G_{n}^*|\rho$ (Pa$\cdot$g/cm$^3$)',
         'phi':               r'$\phi$ ($\degree$)',
-        'etarhos':           r'$|\eta_{n}^*|\rho$ (mPa$\cdot$s$\cdot$g/cm$^3$)',
+        'etarhos':           r'$|\eta_{n}^*|\rho$ (Pa$\cdot$s$\cdot$g/cm$^3$)',
         'dlams':             r'd/$\lambda_{n}$',
         'lamrhos':           r'$\lambda\rho$ ($\mu$m$\cdot$g/cm$^3$)',
         'delrhos':           r'$\delta\rho$ ($\mu$m$\cdot$g/cm$^3$)',
@@ -297,7 +297,7 @@ settings_init = {
         'drho':              'd' + u'\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # dρ (μm∙g/m³)
         'grhos':             '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
         'phi':               u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
-        'etarhos':           '|' + u'\u03B7' + '*|' + u'\u03C1' + ' (mPa' + u'\u2219' + 's' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |η*|ρ (Pa∙s∙g/cm³)
+        'etarhos':           '|' + u'\u03B7' + '*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 's' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |η*|ρ (Pa∙s∙g/cm³)
         'dlams':             'd/' + u'\u03BB\u2099', # d/λₙ
         'lamrhos':           u'\u03BB\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # λρ (μm∙g/m³)
         'delrhos':           u'\u03B4\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # δρ (μm∙g/m³)
@@ -641,9 +641,9 @@ settings_default = {
     # NOTE: keep this key commented
     # 'dateTimeEdit_reftime': '2000-01-01 00:00:00.000',
     
-    'lineEdit_recordinterval': 5,
-    'lineEdit_refreshresolution': 1,
-    'lineEdit_scaninterval': 5,
+    'spinBox_recordinterval': 15,
+    'spinBox_refreshresolution': 1,
+    'spinBox_scaninterval': 15,
 
     # default fitting and display options
     'checkBox_dynamicfit': True,
@@ -708,8 +708,8 @@ settings_default = {
 
     ### default plot selections ###
     # default selections for spectra show
-    'radioButton_spectra_showGp': True,
-    'radioButton_spectra_showBp': False,
+    'radioButton_spectra_showGp': False,
+    'radioButton_spectra_showBp': True,
     'radioButton_spectra_showpolar': False,
     'checkBox_spectra_showchi': False,
 
@@ -776,14 +776,14 @@ harm_tree = {
     'comboBox_tracking_condition': 'auto',
     # default fit settings
     'checkBox_harmfit': True,
-    'spinBox_harmfitfactor': 3,
+    'spinBox_harmfitfactor': 1,
     'spinBox_peaks_num': 1, 
     'radioButton_peaks_num_max': True,
     'radioButton_peaks_num_fixed': False,
     'radioButton_peaks_policy_minf': False,
     'radioButton_peaks_policy_maxamp': True,
     'checkBox_settings_settings_harmzerophase': False,
-    'lineEdit_peaks_threshold': 0.0001,
+    'lineEdit_peaks_threshold': 0.00001,
     'lineEdit_peaks_prominence': 0.0001,
 }
 
