@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '.\UI\QCM_GUI.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -2661,7 +2661,7 @@ class Ui_MainWindow(object):
         self.pushButton_runstop.setText(_translate("MainWindow", "START RECORD"))
         self.lineEdit_datafilestr.setPlaceholderText(_translate("MainWindow", "<output filename>"))
         self.pushButton_gotofolder.setToolTip(_translate("MainWindow", "Go to data folder"))
-        self.pushButton_gotofolder.setText(_translate("MainWindow", "Go"))
+        self.pushButton_gotofolder.setText(_translate("MainWindow", "Folder"))
         self.groupBox_settings_harmonics.setTitle(_translate("MainWindow", "Harmonics"))
         self.label_9.setText(_translate("MainWindow", "Display mode "))
         self.label_settings_control_samp.setText(_translate("MainWindow", "S Channel (Hz)"))
@@ -3057,7 +3057,7 @@ class Ui_MainWindow(object):
         self.actionSolve_test.setText(_translate("MainWindow", "Solve test"))
         self.actionSolve_test.setToolTip(_translate("MainWindow", "this is for testing"))
         self.actionfilm_construction_mode_switch.setText(_translate("MainWindow", "film construction mode switch"))
-        self.actionfilm_construction_mode_switch.setShortcut(_translate("MainWindow", "Ctrl+M"))
+        self.actionfilm_construction_mode_switch.setShortcut(_translate("MainWindow", "Ctrl+Alt+M"))
         self.actionRows_Index.setText(_translate("MainWindow", "Rows - Index"))
         self.actionRows_Index.setToolTip(_translate("MainWindow", "Plot variables vs. indices"))
 

@@ -339,6 +339,8 @@ settings_init = {
         ('2', 'ADC 2'),
     ]),
 
+    'vna_wait_time_extra': 0.05, # extra time adds to wait_time
+
     'ref_channel_opts': OrderedDict([
     # key: str(number); val: for display in combobox
         # ('none', 'none'),
@@ -629,6 +631,9 @@ settings_default = {
     # 'vna_path': r'C:/...../myVNA.exe'.
     # if this key is empty, the program will look for the file in the default list in settings_init['vna_path']
     'vna_path': r'',
+    # keep key below (vna_wait_time_extra) commented.
+    # it can be actived in user setting file
+    # 'vna_wait_time_extra': 0.05, # in s. This extra time will be added to the calculated value
 
     # default checkbox harm states (checkbox with False value can be omit from this list)
     'checkBox_harm1': True,

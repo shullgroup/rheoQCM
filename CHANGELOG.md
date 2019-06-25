@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.17.1] - 2019-06-19
+
+### Added
+
+- Add customized "extra wait time" for AccessMyVNA.
+
+### Fixed
+
+- Fix not "cal" path bug. Still needs to add the case no calibration file found.
+
+- Fix manual peak fitting crashes when no peak is found.
+
 ## [0.17.0] - 2019-05-29
 
 ### Added

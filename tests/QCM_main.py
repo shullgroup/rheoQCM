@@ -136,14 +136,18 @@ class VNATracker:
         '''
         cal = {'ADC1': '', 'ADC2': ''}
         if (UIModules.system_check() == 'win32') and (struct.calcsize('P') * 8 == 32): # windows (if is win32, struct will already be imported above)
-            for key in cal.keys():
-                files = os.listdir(settings_init['vna_cal_file_path']) # list all file in the given folder
+            vna_cal_path = os.path.abspath(settings_init['vna_cal_file_path'])
+            if not os.path.isdir(vna_cal_path): # directory doesn't exist
+                os.makedirs(vna_cal_path) # create directory
+            else:
+                files = os.listdir(vna_cal_path) # list all file in the given folder
                 print('cal folder', files) #testprint
-                for file in files:
-                    if (key + '.myVNA.cal').lower() in file.lower():
-                        cal[key] = os.path.abspath(os.path.join(settings_init['vna_cal_file_path'], file)) # use absolute path
-                        break
-            print(cal) #testprint
+                for key in cal.keys():
+                    for file in files:
+                        if (key + '.myVNA.cal').lower() in file.lower():
+                            cal[key] = os.path.join(vna_cal_path, file) # use absolute path
+                            break
+                print(cal) #testprint
         return cal
 
 
@@ -1088,6 +1092,8 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_mechanics_selectmodel.currentIndexChanged.connect(self.update_widget)
         self.ui.comboBox_settings_mechanics_selectmodel.currentIndexChanged.connect(self.set_mechmodel_widgets)
         self.build_comboBox(self.ui.comboBox_settings_mechanics_selectmodel, 'qcm_model_opts')
+        # initiate data
+        # self.settings['comboBox_settings_mechanics_selectmodel'] = self.ui.comboBox_settings_mechanics_selectmodel.itemData(self.ui.comboBox_settings_mechanics_selectmodel.currentIndex())
 
         #### following widgets are not saved in self.settings
         # label_settings_mechanics_model_overlayer
@@ -2693,6 +2699,7 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.del_templines()
         self.ui.mpl_spectra_fit_polar.del_templines()
         # add devided peaks
+        print('to see when no peak found') #testprint
         print(fit_result['comp_g']) # testprint to see when no peak found
         self.ui.mpl_spectra_fit.add_temp_lines(self.ui.mpl_spectra_fit.ax[0], xlist=[data_lG[0]] * len(fit_result['comp_g']), ylist=fit_result['comp_g'])
         self.ui.mpl_spectra_fit_polar.add_temp_lines(self.ui.mpl_spectra_fit_polar.ax[0], xlist=fit_result['comp_g'], ylist=fit_result['comp_b'])
@@ -2712,8 +2719,13 @@ class QCMApp(QMainWindow):
         # sp_polar
         print(len(data_lG[0])) #testprint
         print(factor_span) #testprint
-        idx = np.where((data_lG[0] >= factor_span[0]) & (data_lG[0] <= factor_span[1])) # determine the indices by f (data_lG[0])
+        idx = np.where((data_lG[0] >= factor_span[0]) & (data_lG[0] <= factor_span[1]))[0] # determine the indices by f (data_lG[0])
 
+        print('idx', idx) #testprint
+        print(type(idx))
+        print(idx.dtype)
+        print(fit_result['fit_g'])
+        print(fit_result['fit_g'][idx])
         self.ui.mpl_spectra_fit_polar.update_data({'ln': 'lsp', 'x': fit_result['fit_g'][idx], 'y': fit_result['fit_b'][idx]})
 
         if self.get_spectraTab_mode() == 'center': # center mode
@@ -4132,7 +4144,7 @@ class QCMApp(QMainWindow):
         self.qcm.refh = self.settings['spinBox_settings_mechanics_nhcalc_n3'] # use the dissipatione harmonic as reference
         refh = self.qcm.refh # reference harmonic
 
-        print('refh', refh) #testprint
+        # print('refh', refh) #testprint
 
         # get nhcalc
         nhcalc = self.gen_nhcalc_str()
@@ -4143,7 +4155,7 @@ class QCMApp(QMainWindow):
 
         layernum = self.get_mechchndata('spinBox_mech_expertmode_layernum', mech_chn=chn_name)
 
-        print('nhcalc_list', nhcalc_list) #testprint
+        # print('nhcalc_list', nhcalc_list) #testprint
 
         # check which is using: model or layers
         if self.ui.stackedWidget_settings_mechanics_modeswitch.currentIndex() == 0: # model mode
@@ -4206,10 +4218,10 @@ class QCMApp(QMainWindow):
                 queue_ids = chn_queue_ids[idx_joined] # overwrite queue_id with queue_id calculated with given idx
                 qcm_df_calc = qcm_df.loc[idx_joined] # df of calc layer
             else: # idx_joined = []
-                print('idx_joined is empty') #testprint
+                # print('idx_joined is empty') #testprint
                 pass
-            print('idx', idx) #testprint
-            print('idx_joined', idx_joined) #testprint
+            # print('idx', idx) #testprint
+            # print('idx_joined', idx_joined) #testprint
         elif dic['source'] == 'prop':
             # set given prop 'prop_guess'
             film_dict[n]['prop_guess'] = (dic['val'])
@@ -4261,9 +4273,9 @@ class QCMApp(QMainWindow):
 
                 elif dic['source'] == 'name':
                     # get prop_guess from qcm
-                    print('dic', dic) #testprint
-                    print('dic[val]', dic['val']) #testprint
-                    print('get prop by name:', self.qcm.get_prop_by_name(dic['val'])) #testprint
+                    # print('dic', dic) #testprint
+                    # print('dic[val]', dic['val']) #testprint
+                    # print('get prop by name:', self.qcm.get_prop_by_name(dic['val'])) #testprint
                     for ind in idx_joined:
                         prop_dict[ind][n].update(**self.qcm.get_prop_by_name(dic['val']))
 
@@ -4275,7 +4287,7 @@ class QCMApp(QMainWindow):
                     layer_chn_idx = list(layer_queue_ids.index)
                     idx_layer = UIModules.index_from_str(idx_str, layer_chn_idx, join_segs=False)
                     idx_layer_joined = UIModules.index_from_str(idx_str, layer_chn_idx, join_segs=True)
-                    print('idx_layer_joined', idx_layer_joined) #testprint
+                    # print('idx_layer_joined', idx_layer_joined) #testprint
                     if idx_layer_joined:
                         queue_ids_layer = layer_queue_ids[idx_layer_joined]
 
@@ -4285,7 +4297,7 @@ class QCMApp(QMainWindow):
                     # create qcm_df by interpolation
                     qcm_df_layer = self.data_saver.shape_qcmdf_b_to_a(qcm_df_calc, qcm_df_layer, idx, idx_layer)
                     # get values for each
-                    print('qcm_df_layer', qcm_df_layer) #testprint
+                    # print('qcm_df_layer', qcm_df_layer) #testprint
 
                     nh = QCM.nhcalc2nh(nhcalc)
                     for ind in idx_joined:
@@ -4301,18 +4313,18 @@ class QCMApp(QMainWindow):
                 else: 
                     print('source not defined!')
 
-        print('prop_dict') #testprint
-        print(prop_dict) #testprint
+        # print('prop_dict') #testprint
+        # print(prop_dict) #testprint
         
         # 5. do calc with each nhcalc
         mech_df = self.data_saver.update_mech_df_shape(chn_name, nhcalc) # this also update in data_saver
 
-        print(mech_df) #testprint mech_df from data_saver is all nan (passed)
+        # print(mech_df) #testprint mech_df from data_saver is all nan (passed)
         
         # if live update is not needed, use QCM.analyze to replace. the codes should be the same
         nh = QCM.nhcalc2nh(nhcalc)
         for ind in idx_joined: # iterate all ids
-            print('ind', ind) #testprint
+            # print('ind', ind) #testprint
             # qcm data of queue_id
             qcm_queue = qcm_df.loc[[ind], :].copy() # as a dataframe
             # mechanic data of queue_id
@@ -4527,8 +4539,8 @@ class QCMApp(QMainWindow):
 
             mech_df = self.data_saver.get_mech_df_in_prop(chn_name, nhcalc, refh)
 
-            # print('qcm_df', qcm_df) #testpring
-            # print('mech_df', mech_df) #testpring
+            # print('qcm_df', qcm_df) #testprint
+            # print('mech_df', mech_df) #testprint
 
             # get queue_id
             print(qcm_df.queue_id) #testprint
@@ -4538,8 +4550,8 @@ class QCMApp(QMainWindow):
             qcm_queue = qcm_df.loc[[idx], :].copy() # as a dataframe
             # mechanic data of queue_id
             mech_queue = mech_df.loc[[idx], :].copy()  # as a dataframe 
-            print('qcm_queue', qcm_queue) #testpring
-            print('mech_queue', mech_queue) #testpring
+            # print('qcm_queue', qcm_queue) #testprint
+            # print('mech_queue', mech_queue) #testprint
             
             # updaate in mech table
             self.update_spectra_mechanics_table(chn_name, qcm_queue, mech_queue)
@@ -4562,6 +4574,8 @@ class QCMApp(QMainWindow):
         # initialize fil_dict
         film_dict = {}
 
+        if not self.settings['comboBox_settings_mechanics_selectmodel']: # in case comboBox_settings_mechanics_selectmodel is empty
+            self.settings['comboBox_settings_mechanics_selectmodel'] = self.ui.comboBox_settings_mechanics_selectmodel.itemData(self.ui.comboBox_settings_mechanics_selectmodel.currentIndex())
 
         model = self.settings['comboBox_settings_mechanics_selectmodel'] # onelayer, bulk, twolayers
         print('model', model) #testprint

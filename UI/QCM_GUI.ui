@@ -6496,7 +6496,7 @@ border: 1px solid blue;
     <string>film construction mode switch</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+M</string>
+    <string>Ctrl+Alt+M</string>
    </property>
   </action>
   <action name="actionRows_Index">

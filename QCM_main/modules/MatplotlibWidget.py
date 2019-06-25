@@ -547,7 +547,18 @@ class MatplotlibWidget(QWidget):
                 picker=5, # 5 points tolerance
                 label='lm'+str(i),
                 alpha=0.75,
-            ) # maked points of line
+            ) # marked points of line
+
+            self.l['lt' + str(i)] = self.ax[0].plot(
+                [], [], 
+                marker='o', 
+                color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
+                linestyle='none',
+                picker=None, # disable
+                label='lt'+str(i),
+                alpha=0.35,
+            ) # temperary points of line
+            
             self.l['ls' + str(i)] = self.ax[0].plot(
                 [], [], 
                 marker='o', 

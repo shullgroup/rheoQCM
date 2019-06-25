@@ -1,5 +1,6 @@
 
 import os
+import json
 import signal
 import numpy as np
 from ctypes import *
@@ -15,6 +16,32 @@ import win32process
 
 import ctypes
 
+try:
+    from UISettings import settings_init
+except:
+    settings_init = {}
+
+extra_time = None # initialize 
+if settings_init:
+    usersettings_file = os.path.join(os.getcwd(), settings_init['default_settings_file_name'])
+    if os.path.exists(usersettings_file):
+        try:
+            with open(usersettings_file, 'r') as f:
+                settings_user = json.load(f) # read user default settings
+                if 'vna_wait_time_extra' in settings_user:
+                    extra_time = settings_user['vna_wait_time_extra']
+            print('use user settings')
+        except:
+            print('Error occured while loading {}\nuse default settings'.format(settings_init['default_settings_file_name']))
+    else:
+        pass
+    del usersettings_file
+    if 'f' in locals():
+        del f
+
+if extra_time is None:
+    extra_time = settings_init.get('vna_wait_time_extra', 0.05) # in s. This extra time will be added to the calculated value
+
 # try: # run from main
 #     from modules.retrying import retry
 # except: # run by itself
@@ -26,10 +53,11 @@ import ctypes
 WM_USER = 0x0400                 # WM_USER   0x0400
 WM_COMMAND = 0x0111                # WM_COMMAND 0x0111
 MESSAGE_SCAN_ENDED = WM_USER + 0x1234  # MESSAGE_SCAN_ENDED (WM_USER+0x1234)
-# retry decorator
-wait_fixed = 10
-stop_max_attempt_number = 100
-stop_max_delay = 10000
+
+# # retry decorator
+# wait_fixed = 10
+# stop_max_attempt_number = 100
+# stop_max_delay = 10000
 
 # window name
 win_names = [
@@ -1298,7 +1326,7 @@ class AccessMyVNA():
 
         for flg, val in setflg.items():
             if (val is not None) and (flg in flg_list): # val != None
-                ret = 0 # inintialize ret in case no change is needed
+                ret = 0 # initialize ret in case no change is needed
                 if (flg == 'f') and (self._f != val): # set frequency
                     ret, self._f[0], self._f[1] = self.SetFequencies(f1=val[0], f2=val[1], nFlags=1)
                     if ret != 0:
@@ -1366,7 +1394,6 @@ class AccessMyVNA():
         delta t = npt * phase delay 
         delta t = npt * step delay 
         '''
-        extra_time = 0.2 # in s. This extra time will be added to the calculated value
         nsteps= self._nsteps
         naverage = self._naverage
         step_delay = self._step_delay

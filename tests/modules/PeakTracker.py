@@ -319,9 +319,9 @@ def guess_peak_factors(freq, resonance):
         widths = peak_widths(resonance, np.array([cen_index]), prominence_data=prominences, rel_height=0.5)
         
         cen = freq[cen_index] # peak center
-        # use prominence as width since the peak we are looking for is th tallest one
+        # use prominence as amp since the peak we are looking for is th tallest one
         amp = prominences[0][0]
-        half_wid = min(cen_index-widths[2][0], widths[3][0]-cen_index) * (freq[1] - freq[0])
+        half_wid = min(cen_index-widths[2][0], widths[3][0]-cen_index) * (freq[1] - freq[0]) # min of left and right side
         half_max = widths[1][0]
 
         return amp, cen, half_wid, half_max
@@ -1220,7 +1220,10 @@ class PeakTracker:
                         dummy.append(np.empty(self.harminput[chn_name][harm]['f'].shape) * np.nan)
                     return dummy
         else: # no result found
-            return np.empty(self.harminput[chn_name][harm]['f'].shape) * np.nan
+            if components is False: # total fitting
+                return np.empty(self.harminput[chn_name][harm]['f'].shape) * np.nan # array
+            else: # return divided peaks
+                return [np.empty(self.harminput[chn_name][harm]['f'].shape) * np.nan] # array of array
 
 
     ########### warp up functions ################
