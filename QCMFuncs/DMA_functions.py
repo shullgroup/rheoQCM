@@ -11,7 +11,6 @@ from scipy.optimize import fsolve, curve_fit
 import hdf5storage
 from scipy.interpolate import LSQUnivariateSpline
 import pandas as pd
-import pdb
 
 
 def DMAread_delgado(sample, parms):
@@ -75,9 +74,8 @@ def DMAread_delgado(sample, parms):
     return sample
 
 
-def DMAread_sturdy(sample, parms):
+def DMAread_sturdy(file, parms):
     dmadir = parms['dmadir']
-    file = sample['file']
     # a read file for Laruen's MAT files
     data_input = hdf5storage.loadmat(dmadir + file)
     # not surewhy dtype needs to be specified here, but it seems to be 
@@ -106,7 +104,7 @@ def DMAread_sturdy(sample, parms):
     dma_np[:, 4] = eloss
     dma_np = np.reshape(dma_np, (Tnum, fnum, 5))
     
-    dmadata = sample.get('dmadata',{})
+    dmadata = {}
     dmadata['f'] = dma_np[:, :, 0]
     dmadata['estar'] = dma_np[:, :, 1]
     dmadata['phi'] = dma_np[:, :, 2]    
@@ -116,20 +114,20 @@ def DMAread_sturdy(sample, parms):
     dmadata['aT_raw'] = aT_raw
     dmadata['T'] = T
     
-    sample['dmadata'] = dmadata
+    sample={'dmadata': dmadata}
     return sample
 
 
 def DMAplot(sample, parms, Tref):
     dmadata = sample['dmadata']
-    sp_parms = sample['sp_parms'] 
     figinfo = parms.get('figinfo',{})
-    Trange = parms.get('Trange')
+    Trange = parms.get('Trange', {})
     markertype = parms.get('markertype', '+')
     markersize = parms.get('markersize', 8)
     colortype = parms.get('colortype', 'r')
     filltype = parms.get('filltype', 'none')
-    sp_parms = sample.get('sp_parms', {})
+    sp_parms = parms.get('sp_parms', {})
+    # older versions had sp_parms in sample instead of parms
     labeltext = parms.get('labeltext','nolab')
     
     Trange['spline']=Trange.get('spline', [Trange['plot'][0]-10,
@@ -148,7 +146,8 @@ def DMAplot(sample, parms, Tref):
     
     # generate spline fits to the DMA data
     faT_plot, estar_spline_raw, phi_spline_raw = make_property_splines(dmadata, aT, Tind)
-
+    
+    
     # now we add the QCM points and do the fits
     K = 2.4e9  # bulk modulus of rubber from Polymer 35, 2759–2763 (1994)
     
@@ -161,21 +160,29 @@ def DMAplot(sample, parms, Tref):
     nqcm_aT = qcm_E.shape[0]
     qcm_aT = np.zeros(nqcm_aT)
     
+    # determine the shift factors by getting Estar values to match DMA data
     for i in np.arange(nqcm_aT):
         def ftosolve(logf):
             return abs(estar_spline_raw(logf) - np.log(qcm_E[i]))
+        
         logf_guess = np.log(sp_parms['fref_raw']) - 5  # usually works as a guess
         qcm_aT[i] = np.exp(fsolve(ftosolve, logf_guess))/1.5e7
+ 
+    # develop spline fits 
+    T_total = np.append(T[Tind['spline']], qcm_T)
+    aT_total = np.append(aT[Tind['spline']], qcm_aT)
 
-    vft_guess = np.array([sp_parms['Tref_raw'], sp_parms['B'],
-                          sp_parms['Tinf']])
-    T_total = np.append(dmadata['T'][Tind['plot']], qcmdata['qcm_T'])
-    aT_total = np.append(aT[Tind['plot']], qcm_aT)
-    [Tref_raw, B, Tinf], pcov = curve_fit(qcm.vogel, T_total,
-                                          np.log(aT_total), vft_guess)
+    # generate spline fit for raw shift factors 
+    aT_spline_raw = LSQUnivariateSpline(T_total, np.log(aT_total), [0])
     
+    # determine raw reference temperature
+    Tref_raw = fsolve(aT_spline_raw, 25)
+    aTfix = np.exp(aT_spline_raw(Tref)-aT_spline_raw(Tref_raw))
+    
+    def aT_spline(T):
+        return np.exp(aT_spline_raw(T))/aTfix
+
     # adjust shift factors based on ref. temp.
-    aTfix = np.exp(qcm.vogel(Tref, Tref_raw, B, Tinf))   
     aT = aT/aTfix
     qcm_aT = qcm_aT/aTfix
     faT_plot = faT_plot/aTfix
@@ -228,9 +235,9 @@ def DMAplot(sample, parms, Tref):
         estar_ax.set_ylabel('$|E^*|$ (Pa)')
         estar_ax.set_title('(a)')
     else:
-        vgpfig = parms['figinfo']['vgpfig']
-        vgp_ax = parms['figinfo']['vgp_ax']
-        estar_ax = parms['figinfo']['estar_ax']
+        vgpfig = figinfo['vgpfig']
+        vgp_ax = figinfo['vgp_ax']
+        estar_ax = figinfo['estar_ax']
         
     # reset the color cycling
     dma_ax1.set_prop_cycle(None)
@@ -270,56 +277,65 @@ def DMAplot(sample, parms, Tref):
     qcmdata4, = estar_ax.plot(1.5e7*qcm_aT, qcm_E, 'ro', markersize=qcmsize)
     qcmdata5, = vgp_ax.plot(qcm_E, qcm_phi, 'ro', markersize=qcmsize)
     
+
     # add the VFT fit for the shift factors
-    T_for_fit = np.linspace(T_total.min(), T_total.max(), 100)
-    VFT_fit = np.exp(qcm.vogel(T_for_fit, Tref, B, Tinf))
-    aTfit, = dma_ax3.plot(T_for_fit, VFT_fit, 'b-', label='fit')
+    T_for_fit = np.linspace(T[Tind['plot']].min(), T[Tind['plot']].max(), 100)
+            
+    if parms.get('add_vft_fit', False):
+        VFT_fit = np.exp(qcm.vogel(T_for_fit, Tref, B, Tinf))
+        aTfit, = dma_ax3.plot(T_for_fit, VFT_fit, 'b-', label='fit')
+        
+    # add simple spline fits to the shift factor plot
+    if parms.get('add_aT_spline', True):
+        aTspline_plt, = dma_ax3.plot(T_for_fit, aT_spline(T_for_fit), 'b-')
     
     # add legend to the shift factor plot
-    dma_ax3.legend([dmadata1[Tind['plot'].min()], qcmdata3, aTfit],
+    if parms.get('aTlegend', False):
+        dma_ax3.legend([dmadata1[Tind['plot'].min()], qcmdata3, aTfit],
                    ['DMA', 'QCM', 'fit'])                     
         
     # now we create the springpot fits and add them to the plot
-    if parms.get('show_springpot_fit', 'no') == 'yes':
+    if parms.get('show_springpot_fit', False):
         faTfit = qcm.springpot_f(sp_parms)
         Estar = qcm.springpot(faTfit, sp_parms)
         fit1, = dma_ax1.loglog(faTfit, abs(Estar), 'b-')
         fit2, = dma_ax2.semilogx(faTfit, np.angle(Estar, deg=True), 'b-')
-
-    # Calculate Tg as Temp where fref = 1 Hz.
-    def fvogel(T):
-        return qcm.vogel(T, Tref_raw, B, Tinf)-np.log(sp_parms['fref_raw'])
-    Tg_guess = Tinf+50
-    sp_parms['Tg'] = fsolve(fvogel, Tg_guess)
+        
 
     # now add titles to plots
-    if parms.get('add_titles', 'no') == 'yes':
-        dma_ax1.set_title(sample['title'])
-        dma_ax2.set_title('$T_{ref}=$'+str(Tref) + r'$^{\circ}$' +
-                          'C \n $f_{ref}=$' +
-                          '{:.1e}'.format(sp_parms['fref']) + ' s$^{-1}$')
-        dma_ax3.set_title('$B=${:.0f}'.format(B) + '\n' +
-                          r'$T_{\infty}=$' +
-                          '{:.0f}'.format(Tinf) + r'$^{\circ}$C')                            
+    if parms.get('add_titles', True):
+        dma_ax1.set_title('(a)')
+        dma_ax2.set_title('(b)')
+        dma_ax3.set_title('(c)')                        
         
     # add splines to different plots
     vgp_ax.semilogx(estar_spline(faT_plot), phi_spline(faT_plot),
                     color=colortype, linewidth=1)
     estar_ax.loglog(faT_plot, estar_spline(faT_plot),
-                   color=colortype, linewidth=1, label=labeltext)
+                   color=colortype, linewidth=1, label=labeltext,
+                   markevery=1000, marker=markertype, 
+                   markerfacecolor = 'None')
+    
+        
 
     # only show on the primary property axes if desired
-    if parms.get('show_splines', 'no') == 'yes':
+    if parms.get('show_splines', False):
         dma_ax1.loglog(faT_plot, estar_spline(faT_plot),
                        color=colortype, linewidth=1, label=labeltext)
         dma_ax2.semilogx(faT_plot, phi_spline(faT_plot),
                          color=colortype, linewidth=1, label=labeltext)
         
     # add symbols to vgp plot
-    if parms.get('add_vgp_symbols','no') == 'yes':
+    if parms.get('add_vgp_symbols', False):
         Estarmin = 3e8  #  minimum estar for symbols to be added to vgp plot
         vgp_plot_sym = np.logspace(np.log10(faT_plot[0]),
                                    np.log10(faT_plot[-1]), 10)
+        
+        
+        estar_ax.loglog(vgp_plot_sym, estar_spline(vgp_plot_sym),
+                        color=colortype,
+                        marker=markertype, linestyle='None', fillstyle='none',
+                        linewidth=1)
         vgp_plot_sym = vgp_plot_sym[np.where(estar_spline(vgp_plot_sym)
                                             <Estarmin)]
         
@@ -335,7 +351,6 @@ def DMAplot(sample, parms, Tref):
     vgpfig.tight_layout()
     
     # 
-    figinfo = {} 
     figinfo['dmafig'] = dmafig
     figinfo['dma_ax1'] = dma_ax1
     figinfo['dma_ax2'] = dma_ax2
@@ -353,8 +368,10 @@ def DMAplot(sample, parms, Tref):
     dmadata['phi_spline'] = phi_spline
     dmadata['qcm_E'] = qcm_E
     dmadata['qcm_phi'] = qcm_phi
+    
+    parms['figinfo'] = figinfo
 
-    return dmadata, figinfo
+    return parms
 
 
 def make_knots(numpy_array, num_knots, parms):           
@@ -365,7 +382,7 @@ def make_knots(numpy_array, num_knots, parms):
     return knots
 
 def make_property_splines(dmadata, aT, Tind):
-    # returns spline fits of the master curves for Estar and phi
+    # returns spline fits of the master curves for Estar, phi and aT
     dma_np = dmadata['dma_np']
 
     # restrict data to the desired temperatures for the spline fit and plots
@@ -399,7 +416,8 @@ def make_property_splines(dmadata, aT, Tind):
     # make spline fits to property data
     knots = make_knots(np.log(freq_master_spline), 5, {})
     estar_spline = LSQUnivariateSpline(np.log(freq_master_spline), np.log(estar_master_spline), knots)   
-    phi_spline = LSQUnivariateSpline(np.log(freq_master_spline), phi_master_spline, knots) 
+    phi_spline = LSQUnivariateSpline(np.log(freq_master_spline), phi_master_spline, knots)
+    
     return faT_plot, estar_spline, phi_spline
 
 
@@ -609,12 +627,12 @@ def addVGPplot(sample, samplefits, vgpfig, fignum):
 
     # read in factors needed for the fit
 
-    faTfit = qcm.springpot_f(sp_parms)
+    # faTfit = qcm.springpot_f(sp_parms)
 
-    # calc. and plot the magnitude and phase angle of E from the fit function
-    fit_E = np.absolute(qcm.springpot(faTfit, sp_parms))
-    fit_phi = np.angle(qcm.springpot(faTfit, sp_parms), deg=True)
-    fit, = vgp_ax.plot(fit_E, fit_phi, 'b-')
+    # # calc. and plot the magnitude and phase angle of E from the fit function
+    # fit_E = np.absolute(qcm.springpot(faTfit, sp_parms))
+    # fit_phi = np.angle(qcm.springpot(faTfit, sp_parms), deg=True)
+    # fit, = vgp_ax.plot(fit_E, fit_phi, 'b-')
 
     # read in the QCM data and add them to the plot
     K = 2.4e9  # bulk modulus of rubber from Polymer 35, 2759–2763 (1994).
