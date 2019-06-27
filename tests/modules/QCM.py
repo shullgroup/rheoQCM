@@ -233,8 +233,8 @@ class QCM:
         '''
         take the material from a single layer {'drho': 0, 'grho': 0, 'phi': 0, 'n': 1}
         '''
-        print('material', material) #testprint
-        print('delfstar', delfstar) #testprint
+        # print('material', material) #testprint
+        # print('delfstar', delfstar) #testprint
         drho = material['drho']
         # set switch to handle as where drho = 0
         if drho == 0:
@@ -246,7 +246,7 @@ class QCM:
 
 
     def zstar_bulk(self, n, material):
-        print('material', material) #testprint
+        # print('material', material) #testprint
         grho_refh = material['grho']
         refh = material['n']
         phi = material['phi']
@@ -268,7 +268,7 @@ class QCM:
             return 0
 
         N = len(layers)
-        print('N', N) #testprint
+        # print('N', N) #testprint
         Z = {}; D = {}; L = {}; S = {}
 
         # we use the matrix formalism to avoid typos.
@@ -281,19 +281,19 @@ class QCM:
                 [0, np.cos(D[i]) - 1j * np.sin(D[i])]
             ], dtype=complex)
 
-            print('i', i) #testprint
-            print('Zi', Z[i]) #testprint
-            print('Di', D[i]) #testprint
-            print('Li', L[i]) #testprint
+            # print('i', i) #testprint
+            # print('Zi', Z[i]) #testprint
+            # print('Di', D[i]) #testprint
+            # print('Li', L[i]) #testprint
 
         # get the terminal matrix from the properties of the last layer
         top_n = sorted(layers.keys())[-1]
         D[N] = self.calc_D(n, layers[top_n], delfstar)
         Zf_N = 1j * self.zstar_bulk(n, layers[top_n]) * np.tan(D[N])
 
-        print('top_n', top_n) #testprint
-        print('DN', D[N]) #testprint
-        print('Zf_n', Zf_N) #testprint
+        # print('top_n', top_n) #testprint
+        # print('DN', D[N]) #testprint
+        # print('Zf_n', Zf_N) #testprint
 
         # if there is only one layer, we're already done
         if N == 1:
@@ -304,24 +304,24 @@ class QCM:
             [0, 1 - Zf_N / Z[N-1]]
             ], dtype=complex)
 
-        print('L[N-1]', L[N-1]) #testprint
-        print('Tn', Tn) #testprint
+        # print('L[N-1]', L[N-1]) #testprint
+        # print('Tn', Tn) #testprint
 
         uvec = L[N-1] @ Tn @ np.array([[1.], [1.]])
-        print('uvec', uvec) #testprint
+        # print('uvec', uvec) #testprint
 
         for i in np.arange(N-2, 0, -1):
             S[i] = np.array([
                 [1 + Z[i+1] / Z[i], 1 - Z[i+1] / Z[i]],
                 [1 - Z[i+1] / Z[i], 1 + Z[i+1] / Z[i]]
             ])
-            print('S[i]', S[i]) #testprint
+            # print('S[i]', S[i]) #testprint
             uvec = L[i] @ S[i] @ uvec
-            print('uvec', uvec) #testprint
+            # print('uvec', uvec) #testprint
 
         rstar = uvec[1,0] / uvec[0,0]
-        print('rstar', rstar) #testprint
-        print('ZL', Z[1] * (1 - rstar) / (1 + rstar)) #testprint
+        # print('rstar', rstar) #testprint
+        # print('ZL', Z[1] * (1 - rstar) / (1 + rstar)) #testprint
 
         return Z[1] * (1 - rstar) / (1 + rstar)
 
@@ -364,7 +364,7 @@ class QCM:
 
             sol = optimize.root(solve_Zmot, [np.real(delfstar_sla_all), np.imag(delfstar_sla_all)])
             dfc = sol.x[0] + 1j * sol.x[1]
-            print('dfc', dfc)
+            # print('dfc', dfc) #testprint
 
             if refto == 1:
                 layers_ref = self.get_ref_layers(layers)
@@ -378,7 +378,7 @@ class QCM:
 
                 sol = optimize.root(solve_Zmot_ref, [np.real(delfstar_sla_ref), np.imag(delfstar_sla_ref)])
                 dfc_ref = sol.x[0] + 1j * sol.x[1]
-                print('dfc_ref', dfc_ref)
+                # print('dfc_ref', dfc_ref) #testprint
 
                 return dfc - dfc_ref
             else:
@@ -402,8 +402,8 @@ class QCM:
         thirdterm = ((1j * Zqc * np.tan(Dq/2))**-1 + (1j * Zqc * np.tan(Dq / 2) + ZL)**-1)**-1
         Zmot = secterm + thirdterm  + ZPE
 
-        print('Zmot shape', Zmot.shape) #testprint
-        print('Zmot', Zmot) #testprint
+        # print('Zmot shape', Zmot.shape) #testprint
+        # print('Zmot', Zmot) #testprint
         return Zmot
 
 
@@ -427,14 +427,17 @@ class QCM:
 
 
     def rhcalc(self, nh, dlam_refh, phi):
-        ''' nh list '''
+        ''' nh: list '''
         return np.real(self.normdelfstar(nh[0], dlam_refh, phi)) /  np.real(self.normdelfstar(nh[1], dlam_refh, phi))
 
     def rh_from_delfstar(self, nh, delfstar):
         ''' this func is the same as rhexp!!! '''
         n1 = int(nh[0])
         n2 = int(nh[1])
-        return (n2/n1)*np.real(delfstar[n1])/np.real(delfstar[n2])
+        if np.real(delfstar[n2]) == 0:
+            return np.nan
+        else:
+            return (n2/n1)*np.real(delfstar[n1])/np.real(delfstar[n2])
 
 
     def rdcalc(self, nh, dlam_refh, phi):
@@ -447,7 +450,10 @@ class QCM:
 
     def rd_from_delfstar(self, n, delfstar):
         ''' dissipation ratio calculated for the relevant harmonic '''
-        return -np.imag(delfstar[n])/np.real(delfstar[n])
+        if np.real(delfstar[n]) == 0:
+            return np.nan
+        else:
+            return -np.imag(delfstar[n])/np.real(delfstar[n])
 
 
     def bulk_guess(self, delfstar):
@@ -457,8 +463,8 @@ class QCM:
 
         # calculate rho*lambda
         lamrho_refh = self.calc_lamrho(self.refh, grho_refh, phi)
-        print('grho_refh', grho_refh) #testprint
-        print('lamrho_refh', lamrho_refh) #testprint
+        # print('grho_refh', grho_refh) #testprint
+        # print('lamrho_refh', lamrho_refh) #testprint
         # we need an estimate for drho. We only use this approach if it is
         # reasonably large. We'll put it at the quarter wavelength condition for now
 
@@ -514,12 +520,12 @@ class QCM:
         fstars = qcm_queue.fstars.iloc[0] # list
         # get delfstar
         delfstars = qcm_queue.delfstars.iloc[0] # list
-        print('fstars', fstars) #testprint
-        print(delfstars) #testprint
+        # print('fstars', fstars) #testprint
+        # print(delfstars) #testprint
         # convert list to dict to make it easier to do the calculation
         # fstar = {int(i*2+1): fstar[i] for i, fstar in enumerate(fstars)}
         delfstar = {int(i*2+1): dfstar for i, dfstar in enumerate(delfstars)}
-        print(delfstar) #testprint
+        # print(delfstar) #testprint
 
         # set f1
         f0s = qcm_queue.f0s.iloc[0]
@@ -528,11 +534,8 @@ class QCM:
         else:
             first_notnan = np.argwhere(~np.isnan(f0s))[0][0] # find out index of the first freq is not nan
             # use this value calculate f1 = fn/n (in case f1 is not recorded)
-            print(np.argwhere(~np.isnan(f0s)))
-            print(first_notnan)
-            print(type(first_notnan))
             self.f1 = f0s[first_notnan] / (first_notnan * 2 + 1)
-        print('f1', self.f1) #testprint
+        # print('f1', self.f1) #testprint
 
         # fstar_err ={}
         # for n in nhplot: 
@@ -559,16 +562,16 @@ class QCM:
         film: dict of the film layers information
         return mech_queue
         '''
-        print('calctype', calctype) #testprint
+        # print('calctype', calctype) #testprint
         #TODO this may be replaced
         film = self.replace_layer_0_prop_with_known(film)
 
-        print('film before calc', film) #testprint
+        # print('film before calc', film) #testprint
         drho, grho_refh, phi, dlam_refh, err = self.solve_single_queue_to_prop(nh, qcm_queue, calctype=calctype, film=film)
 
         # update calc layer prop
         film = self.set_calc_layer_val(film, drho, grho_refh, phi)
-        print('film after calc', film) #testprint
+        # print('film after calc', film) #testprint
 
         # now back calculate delfstar, rh and rd from the solution
         # get the marks [1st, 3rd, 5th, ...]
@@ -594,8 +597,8 @@ class QCM:
         grhos_err = mech_queue.dlams.iloc[0].copy()
         etarhos = mech_queue.dlams.iloc[0].copy()
         etarhos_err = mech_queue.dlams.iloc[0].copy()
-        print('delf_calcs', delf_calcs) #testprint
-        print(type(delf_calcs)) #testprint
+        # print('delf_calcs', delf_calcs) #testprint
+        # print(type(delf_calcs)) #testprint
         for n in nhplot:
             delfstar_calc[n] = self.calc_delfstar(n, film, calctype)
             delf_calcs[nh2i(n)] = np.real(delfstar_calc[n])
@@ -617,8 +620,8 @@ class QCM:
         rh_exp = self.rh_from_delfstar(nh, delfstar)
         rh_calc = self.rh_from_delfstar(nh, delfstar_calc)
         # rh_calc = self.rhcalc(nh, dlam_refh, phi)
-        print('delf_calcs', delf_calcs) #testprint
-        print('delg_calcs', delg_calcs) #testprint
+        # print('delf_calcs', delf_calcs) #testprint
+        # print('delg_calcs', delg_calcs) #testprint
 
         # repeat values for single value
         tot_harms = len(delf_calcs)
@@ -650,10 +653,10 @@ class QCM:
         mech_queue['rd_exps'] = [rd_exps]
         mech_queue['rd_calcs'] = [rd_calcs]
 
-        print(mech_queue['delf_calcs']) #testprint
-        print(mech_queue['delg_calcs']) #testprint
+        # print(mech_queue['delf_calcs']) #testprint
+        # print(mech_queue['delg_calcs']) #testprint
         # TODO save delfstar, deriv {n1:, n2:, n3:}
-        print(mech_queue)    #testprint
+        # print(mech_queue)    #testprint
 
         return mech_queue
         ########## TODO 
@@ -673,34 +676,39 @@ class QCM:
         err = {}
         err_names=['drho', 'grho_refh', 'phi']
 
+        # initiate deriv and err
+        for key in err_names:
+            deriv[key] = np.nan
+            err[key] = np.nan
+
         if not film: # film is not built
             film = self.build_single_layer_film()
 
         # first pass at solution comes from rh and rd
         rd_exp = self.rd_from_delfstar(nh[2], delfstar) # nh[2]
         rh_exp = self.rh_from_delfstar(nh, delfstar) # nh[0], nh[1]
-        print('rd_exp', rd_exp) #testprint
-        print('rh_exp', rh_exp) #testprint
+        # print('rd_exp', rd_exp) #testprint
+        # print('rh_exp', rh_exp) #testprint
         
         n1 = nh[0]
         n2 = nh[1]
         n3 = nh[2]
         # solve the problem
         if ~np.isnan(rd_exp) and ~np.isnan(rh_exp):
-            print('rd_exp, rh_exp is not nan') #testprint
+            # print('rd_exp, rh_exp is not nan') #testprint
             
             if rd_exp > 0.5: # bulk
-                print('use bulk guess') #testprint
+                # print('use bulk guess') #testprint
                 dlam_refh, phi = self.bulk_guess(delfstar)
             elif prop_guess: # value{'drho', 'grho_refh', 'phi'}
-                print('use prop guess') #testprint
+                # print('use prop guess') #testprint
                 dlam_refh, phi = self.guess_from_props(**prop_guess)
             else:
-                print('use thin film guess') #testprint
+                # print('use thin film guess') #testprint
                 dlam_refh, phi = self.thinfilm_guess(delfstar)
 
-            print('dlam_refh', dlam_refh) #testprint
-            print('phi', phi) #testprint
+            # print('dlam_refh', dlam_refh) #testprint
+            # print('phi', phi) #testprint
             
             if fit_method == 'lmfit': # this part is the old protocal w/o jacobian
                 pass
@@ -714,24 +722,24 @@ class QCM:
                     return [self.rhcalc(nh, x[0], x[1])-rh_exp, self.rdcalc(nh, x[0], x[1])-rd_exp]
 
                 x0 = np.array([dlam_refh, phi])
-                print(x0) #testprint
+                # print(x0) #testprint
                 soln1 = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
-                print(soln1['x']) #testprint
+                # print(soln1['x']) #testprint
                 dlam_refh = soln1['x'][0]
                 phi =soln1['x'][1]
                 drho = self.calc_drho(n1, delfstar, dlam_refh, phi)
                 grho_refh = self.grho_from_dlam(self.refh, drho, dlam_refh, phi)
 
-            print('solution of 1st solving:') #testprint
-            print('dlam_refh', dlam_refh) #testprint
-            print('phi', phi) #testprint
-            print('drho', drho) #testprint
-            print('grho_refh', grho_refh) #testprint
+            # print('solution of 1st solving:') #testprint
+            # print('dlam_refh', dlam_refh) #testprint
+            # print('phi', phi) #testprint
+            # print('drho', drho) #testprint
+            # print('grho_refh', grho_refh) #testprint
             
             # we solve it again to get the Jacobian with respect to our actual
             # input variables - this is helpfulf for the error analysis
             if drho_range[0]<=drho<=drho_range[1] and grho_refh_range[0]<=grho_refh<=grho_refh_range[1] and phi_range[0]<=phi<=phi_range[1]:
-                print('1st solution in range') #testprint
+                # print('1st solution in range') #testprint
                 
                 if fit_method == 'lmfit': # this part is the old protocal w/o jacobian 
                     pass
@@ -757,7 +765,7 @@ class QCM:
                     
                     # update calc layer prop
                     film = self.set_calc_layer_val(film, drho, grho_refh, phi)
-                    print('film after 2nd sol', film) #testprint
+                    # print('film after 2nd sol', film) #testprint
                     
                     # dlam_refh = self.calc_dlam(self.refh, film)
                     # comment above line to use the dlam_refh from soln1
@@ -769,17 +777,21 @@ class QCM:
                     delfstar_err[2] = np.imag(self.fstar_err_calc(delfstar[n3]))
 
                     jac = soln2['jac']
-                    print('jac', jac) #testprint
-                    jac_inv = np.linalg.inv(jac)
-                    print('jac_inv', jac_inv) #testprint
+                    # print('jac', jac) #testprint
+                    try:
+                        jac_inv = np.linalg.inv(jac)
+                        # print('jac_inv', jac_inv) #testprint
 
-                    for i, k in enumerate(err_names):
-                        deriv[k]={0:jac_inv[i, 0], 1:jac_inv[i, 1], 2:jac_inv[i, 2]}
-                        err[k] = ((jac_inv[i, 0]*delfstar_err[0])**2 + 
-                                (jac_inv[i, 1]*delfstar_err[1])**2 +
-                                (jac_inv[i, 2]*delfstar_err[2])**2)**0.5
+                        for i, k in enumerate(err_names):
+                            deriv[k]={0:jac_inv[i, 0], 1:jac_inv[i, 1], 2:jac_inv[i, 2]}
+                            err[k] = ((jac_inv[i, 0]*delfstar_err[0])**2 + 
+                                    (jac_inv[i, 1]*delfstar_err[1])**2 +
+                                    (jac_inv[i, 2]*delfstar_err[2])**2)**0.5
+                    except:
+                        print('error calculation failed!') 
+                        pass
             else:
-                print('1st solution out of range') #testprint
+                print('1st solution out of range') 
 
 
         if np.isnan(rd_exp) or np.isnan(rh_exp) or not deriv or not err: # failed to solve the problem
@@ -792,13 +804,13 @@ class QCM:
             for k in err_names:
                 err[k] = np.nan
 
-        print('drho', drho) #testprint
-        print('grho_refh', grho_refh) #testprint
-        print('phi', phi) #testprint
-        print('dlam_refh', phi) #testprint
-        print('err', err) #testprint
+        # print('drho', drho) #testprint
+        # print('grho_refh', grho_refh) #testprint
+        # print('phi', phi) #testprint
+        # print('dlam_refh', phi) #testprint
+        # print('err', err) #testprint
         delrho = self.calc_delrho(self.refh, grho_refh, phi)
-        print('delrho', delrho) #testprint
+        # print('delrho', delrho) #testprint
 
         return drho, grho_refh, phi, dlam_refh, err
 
@@ -810,10 +822,10 @@ class QCM:
         qcm_queue: qcm data (df) of a single queue
         return: True/False
         '''
-        print(nh) #testprint
-        print(nh2i(nh[0])) #testprint
-        print(qcm_queue.delfstars.values) #testprint
-        print(qcm_queue.delfstars.iloc[0]) #testprint
+        # print(nh) #testprint
+        # print(nh2i(nh[0])) #testprint
+        # print(qcm_queue.delfstars.values) #testprint
+        # print(qcm_queue.delfstars.iloc[0]) #testprint
         if np.isnan(qcm_queue.delfstars.iloc[0][nh2i(nh[0])].real) or np.isnan(qcm_queue.delfstars.iloc[0][nh2i(nh[1])].real) or np.isnan(qcm_queue.delfstars.iloc[0][nh2i(nh[2])].imag):
             return False
         else:
@@ -832,9 +844,9 @@ class QCM:
         '''
         nh = nhcalc2nh(nhcalc) # list of harmonics (int) in nhcalc
         for queue_id in queue_ids: # iterate all ids
-            print('queue_id', queue_id) #testprint
+            # print('queue_id', queue_id) #testprint
             # print('qcm_df', qcm_df) #testprint
-            print(type(qcm_df)) #testprint
+            # print(type(qcm_df)) #testprint
             # queue index
             idx = qcm_df[qcm_df.queue_id == queue_id].index.astype(int)[0]
             # qcm data of queue_id
@@ -847,14 +859,14 @@ class QCM:
                 # solve a single queue
                 mech_queue = self.solve_single_queue(nh, qcm_queue, mech_queue)
                 # save back to mech_df
-                print(mech_df.loc[[idx], :].to_dict()) #testprint
-                print(mech_queue.to_dict()) #testprint
+                # print(mech_df.loc[[idx], :].to_dict()) #testprint
+                # print(mech_queue.to_dict()) #testprint
                 # set mech_queue index the same as where it is from for update
-                print(mech_df.delg_calcs) #testprint
+                # print(mech_df.delg_calcs) #testprint
                 mech_queue.index = [idx]
                 mech_df.update(mech_queue)
                 # print(mech_df) #testprint
-                print(mech_df.delg_calcs) #testprint
+                # print(mech_df.delg_calcs) #testprint
             else:
                 # since the df already initialized with nan values, nothing todo
                 pass
@@ -866,23 +878,24 @@ class QCM:
         convert unit of drho, grho, phi from IS to those convient to use
         input: df or series 
         '''
-        print(type(mech_df)) #testprint
-        print(mech_df) #testprint
+        # print(type(mech_df)) #testprint
+        # print(mech_df) #testprint
         df = mech_df.copy()
         cols = mech_df.columns
         for col in cols:
-            print(col) #testprint
+            # print(col) #testprint
             if any([st in col for st in ['drho', 'lamrho', 'delrho']]):
-                print('x1000') #testprint
+                # print('x1000') #testprint
                 df[col] = df[col].apply(lambda x: list(np.array(x) * 1000) if isinstance(x, list) else x * 1000) # from m kg/m3 to um g/cm3
-            elif 'grho' in col:
-                print('x1/1000') #testprint
+            elif any([st in col for st in ['grho', 'etarho']]):
+                # print('x1/1000') #testprint
                 df[col] = df[col].apply(lambda x: list(np.array(x) / 1000) if isinstance(x, list) else x / 1000) # from Pa kg/m3 to Pa g/cm3 (~ Pa)
             elif 'phi' in col:
-                print('rad2deg') #testprint
+                # print('rad2deg') #testprint
                 df[col] = df[col].apply(lambda x: list(np.rad2deg(x)) if isinstance(x, list) else np.rad2deg(x)) # from rad to deg
             else:
-                print('NA') #testprint
+                # print('NA') #testprint
+                pass
         return df
 
 
@@ -893,7 +906,7 @@ class QCM:
         to keep QCM and DataSaver independently, we don't use import for each other
         ['delf_calcs', 'delg_calcs', 'delg_delfsns', 'rds']
         '''
-        print(var) #testprint
+        # print(var) #testprint
         if var == 'delf_calcs':
             return qcm_df.delfs
         if var == 'delg_calcs':
@@ -965,7 +978,7 @@ class QCM:
         This function return n (int) of the layer with 'calc' is True
         '''
         if not film: # film has no layers
-            print('build a single layer film') #testprint
+            # print('build a single layer film') #testprint
             film = self.build_single_layer_film() # make a single layer film
 
         calcnum = self.get_calc_layer_num(film)

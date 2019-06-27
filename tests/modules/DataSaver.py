@@ -181,13 +181,12 @@ class DataSaver:
             return getattr(self, chn_name).index.tolist()
 
 
-    def update_mech_df_shape(self, chn_name, nhcalc, refh):
+    def update_mech_df_shape(self, chn_name, nhcalc):
         '''
-        initiate an empty df for storing the mechanic data in self.mech with nhcalc_refh as a key
+        initiate an empty df for storing the mechanic data in self.mech with nhcalc as a key
         if there is a key with the same name, check and add missed rows (queue_id)
         nhcalc: str '133'
-        refh: in, reference harmonic
-        the df will be saved/updated as nhcalc_str(refh)
+        the df will be saved/updated as nhcalc_str
         return the updated df
         '''
         # data_keys = ['queue_id', 't', 'temp', 'marks', 'delfs', 'delgs',]
@@ -276,7 +275,7 @@ class DataSaver:
         print(df_mech['delf_calcs'].head) #testprint
 
         # set it to class
-        self.update_mech_df_in_prop(chn_name, nhcalc, refh, df_mech)
+        self.update_mech_df_in_prop(chn_name, nhcalc, df_mech)
 
         return getattr(self, chn_name + '_prop')[mech_key].copy()
 
@@ -706,7 +705,7 @@ class DataSaver:
         self.saveflg = False
 
 
-    def update_mech_queue(self, chn_name, nhcalc, refh, queue):
+    def update_mech_queue(self, chn_name, nhcalc, queue):
         '''
         this function update queue (df) the df of dmech_df
         This function will check if the index of both dmech_df and queue with the same queue_id are the same. if not, the index of queue will be changed to it of dmech_df and use dataframe.update function to update
@@ -784,7 +783,7 @@ class DataSaver:
                     getattr(self, chn_name + '_prop')[mech_key] = df
 
 
-    def update_mech_df_in_prop(self, chn_name, nhcalc, refh, mech_df):
+    def update_mech_df_in_prop(self, chn_name, nhcalc, mech_df):
         '''
         save mech_df to self.'chn_nam'_mech[nhcalc]
         '''
@@ -1347,6 +1346,8 @@ class DataSaver:
         '''
 
         s = getattr(self, chn_name + '_prop')[mech_key][col].copy()
+        # s = self.update_mech_df_shape(chn_name, mech_key)[col].copy() # use update_mech_df_shape function will update the mech_prop in case its shape is not updated with data
+        
         print('chn_name/mech_key/col', chn_name, mech_key, col) #testprint
         print('mech_s head', s.head()) #testprint
         print('mech_s', type(s.values.tolist())) #testprint
@@ -2063,6 +2064,17 @@ class DataSaver:
             same size as input
         '''
 
+        if isinstance(temp, (int, float, np.ndarray)):
+            if unit.upper() == 'C':
+                return temp
+            elif unit.upper() == 'K':
+                return temp + 273.15
+            elif unit.upper() == 'F':
+                return temp * 9/5 + 32
+            else:
+                return temp
+
+        # dataframe series
         if temp.shape[0] == 0: # no data
             return temp
         else:
@@ -2518,3 +2530,8 @@ class DataSaver:
 
         self.saveflg = False
 
+
+if __name__ == '__main__':
+    data_saver = DataSaver(settings ={'max_harmonic': 9})
+    temp = data_saver.temp_C_to_unit( 25, unit='C')
+    print(temp)

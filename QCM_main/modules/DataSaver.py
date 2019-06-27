@@ -181,13 +181,12 @@ class DataSaver:
             return getattr(self, chn_name).index.tolist()
 
 
-    def update_mech_df_shape(self, chn_name, nhcalc, refh):
+    def update_mech_df_shape(self, chn_name, nhcalc):
         '''
-        initiate an empty df for storing the mechanic data in self.mech with nhcalc_refh as a key
+        initiate an empty df for storing the mechanic data in self.mech with nhcalc as a key
         if there is a key with the same name, check and add missed rows (queue_id)
         nhcalc: str '133'
-        refh: in, reference harmonic
-        the df will be saved/updated as nhcalc_str(refh)
+        the df will be saved/updated as nhcalc_str
         return the updated df
         '''
         # data_keys = ['queue_id', 't', 'temp', 'marks', 'delfs', 'delgs',]
@@ -215,6 +214,8 @@ class DataSaver:
 
             'grhos', # h dependent
             'grhos_err', # h dependent
+            'etarhos', # h dependent
+            'etarhos_err', # h dependent
             'dlams', # h dependent
             'lamrhos', # h dependent
             'delrhos', # h dependent
@@ -261,7 +262,7 @@ class DataSaver:
 
 
         # set it to class
-        self.update_mech_df_in_prop(chn_name, nhcalc, refh, df_mech)
+        self.update_mech_df_in_prop(chn_name, nhcalc, df_mech)
 
         return getattr(self, chn_name + '_prop')[mech_key].copy()
 
@@ -664,7 +665,7 @@ class DataSaver:
         self.saveflg = False
 
 
-    def update_mech_queue(self, chn_name, nhcalc, refh, queue):
+    def update_mech_queue(self, chn_name, nhcalc, queue):
         '''
         this function update queue (df) the df of dmech_df
         This function will check if the index of both dmech_df and queue with the same queue_id are the same. if not, the index of queue will be changed to it of dmech_df and use dataframe.update function to update
@@ -733,7 +734,7 @@ class DataSaver:
                     getattr(self, chn_name + '_prop')[mech_key] = df
 
 
-    def update_mech_df_in_prop(self, chn_name, nhcalc, refh, mech_df):
+    def update_mech_df_in_prop(self, chn_name, nhcalc, mech_df):
         '''
         save mech_df to self.'chn_nam'_mech[nhcalc]
         '''
@@ -1270,6 +1271,8 @@ class DataSaver:
         '''
 
         s = getattr(self, chn_name + '_prop')[mech_key][col].copy()
+        # s = self.update_mech_df_shape(chn_name, mech_key)[col].copy() # use update_mech_df_shape function will update the mech_prop in case its shape is not updated with data
+        
 
         if mark == False:
             return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col + str(x * 2 + 1))
@@ -1931,6 +1934,17 @@ class DataSaver:
             same size as input
         '''
 
+        if isinstance(temp, (int, float, np.ndarray)):
+            if unit.upper() == 'C':
+                return temp
+            elif unit.upper() == 'K':
+                return temp + 273.15
+            elif unit.upper() == 'F':
+                return temp * 9/5 + 32
+            else:
+                return temp
+
+        # dataframe series
         if temp.shape[0] == 0: # no data
             return temp
         else:
@@ -2014,6 +2028,7 @@ class DataSaver:
         make a new df with shape of a and iterpolated data of b
         columns = ['queue_id', 't', 'temp', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs', 'f0stars', 'f0s', 'g0s']
         '''
+        
         # make a new df with the same shape of df_a
         df = df_a.copy()
         # we don't need columns 't', and 'queue_id'
@@ -2035,8 +2050,16 @@ class DataSaver:
                 col_s = df_b[col].copy()
 
                 if mode['cryst'] == 'single':
+                    col_arr = np.array(col_s.values.tolist()) # convert series to array of array ??
+                    
+                    # col_l = col_s.values.tolist()
+                    # for i in range(len(col_l)):
+                    #     try:
+                    #         print(len(col_l[i]))
+                    #     except:
+                    #         print(i, col_l[i])
+
                     if mode['temp'] == 'const': # single crystal and constant temperature
-                        col_arr = np.array(col_s.values.tolist()) # convert series to array
                         col_mean = np.mean(col_arr, axis=0) # get mean of each column
                         df[col] = df[col].apply(lambda x: list(col_mean)) # save back to all rows
                     elif mode['temp'] == 'var': # single crystal and variable temperature
@@ -2050,7 +2073,6 @@ class DataSaver:
                             print('Check index format!')
                             return
 
-                        col_arr = np.array(col_s.values.tolist()) # convert series to array
                         # iterate columns in col_arr
                         n_arr_cols = col_arr.shape[1] if len(col_arr.shape) > 1 else 1
 
@@ -2338,3 +2360,8 @@ class DataSaver:
 
         self.saveflg = False
 
+
+if __name__ == '__main__':
+    data_saver = DataSaver(settings ={'max_harmonic': 9})
+    temp = data_saver.temp_C_to_unit( 25, unit='C')
+    print(temp)

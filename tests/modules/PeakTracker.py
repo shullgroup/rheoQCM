@@ -1,9 +1,10 @@
 '''
-class for peak tracking and fitting '''
+class for peak tracking and fitting 
+'''
 import numpy as np
 from lmfit import Model, Minimizer, minimize, Parameters, fit_report, printfuncs
 from lmfit.models import ConstantModel
-from scipy.signal import find_peaks 
+from scipy.signal import find_peaks, find_peaks_cwt, peak_widths, peak_prominences
 from random import randrange
 
 from UISettings import settings_init
@@ -16,6 +17,10 @@ import traceback
 # peak_min_width_Hz = 10 # in Hz full width
 # xtol = 1e-18 
 # ftol = 1e-18
+
+# peak finder method
+# peak_finder_method = 'simple_func'
+peak_finder_method = 'py_func'
 
 def fun_G(x, amp, cen, wid, phi):
     ''' 
@@ -291,21 +296,35 @@ def guess_peak_factors(freq, resonance):
         half_wid: half-maxium hal-width (HMHW)
     '''
 
-    cen_index = np.argmax(resonance) # use max value as peak
+    if peak_finder_method == 'simple_func':
+        cen_index = np.argmax(resonance) # use max value as peak
 
-    cen = freq[cen_index] # peak center
-    # determine the estimated associated conductance (or susceptance) value at the resonance peak
-    Rmax = resonance[cen_index] 
-    amp = Rmax-np.amin(resonance)
-    # determine the estimated half-max conductance (or susceptance) of the resonance peak
-    half_max = amp / 2 + np.amin(resonance)
-    print('Rmax', Rmax) #testprint
-    print('amp', amp) #testprint
+        cen = freq[cen_index] # peak center
+        # determine the estimated associated conductance (or susceptance) value at the resonance peak
+        Rmax = resonance[cen_index] 
+        amp = Rmax-np.amin(resonance)
+        # determine the estimated half-max conductance (or susceptance) of the resonance peak
+        half_max = amp / 2 + np.amin(resonance)
+        print('Rmax', Rmax) #testprint
+        print('amp', amp) #testprint
 
-    print('where', np.where(np.abs(half_max-resonance)==np.min(np.abs(half_max-resonance)))) #testprint
-    half_wid = np.absolute(freq[np.argmin(np.abs(half_max-resonance))] -  cen)
-    print(half_wid) #testprint
-    return amp, cen, half_wid, half_max
+        # print('where', np.where(np.abs(half_max-resonance)==np.min(np.abs(half_max-resonance)))) #testprint
+        half_wid = np.absolute(freq[np.argmin(np.abs(half_max-resonance))] -  cen)
+        print(half_wid) #testprint
+        return amp, cen, half_wid, half_max
+    elif peak_finder_method == 'py_func': 
+        #TODO if find_peaks(x) is necessary?
+        cen_index = np.argmax(resonance) # use max value as peak
+        prominences = peak_prominences(resonance, np.array([cen_index])) # tuple of 3 arrays
+        widths = peak_widths(resonance, np.array([cen_index]), prominence_data=prominences, rel_height=0.5)
+        
+        cen = freq[cen_index] # peak center
+        # use prominence as amp since the peak we are looking for is th tallest one
+        amp = prominences[0][0]
+        half_wid = min(cen_index-widths[2][0], widths[3][0]-cen_index) * (freq[1] - freq[0]) # min of left and right side
+        half_max = widths[1][0]
+
+        return amp, cen, half_wid, half_max
 
 
 class PeakTracker:
@@ -504,7 +523,7 @@ class PeakTracker:
 
 
     ########### peak tracking function ###########
-    def smart_peak_tracker(self):
+    def peak_tracker(self):
         '''
         track the peak and give the span for next scan
         NOTE: the returned span may out of span_range defined the the main UI!
@@ -531,7 +550,6 @@ class PeakTracker:
                 # use span center
                 # return np.mean(np.array([freq[0],freq[-1]]))
                 return np.mean(np.array(current_xlim))
-
 
         def set_new_span(current_span, half_wid):
             wid_ratio_range = settings_init['wid_ratio_range'] # width_ratio[0] <= span <= width_ratio[1]
@@ -1202,7 +1220,10 @@ class PeakTracker:
                         dummy.append(np.empty(self.harminput[chn_name][harm]['f'].shape) * np.nan)
                     return dummy
         else: # no result found
-            return np.empty(self.harminput[chn_name][harm]['f'].shape) * np.nan
+            if components is False: # total fitting
+                return np.empty(self.harminput[chn_name][harm]['f'].shape) * np.nan # array
+            else: # return divided peaks
+                return [np.empty(self.harminput[chn_name][harm]['f'].shape) * np.nan] # array of array
 
 
     ########### warp up functions ################
@@ -1217,7 +1238,7 @@ class PeakTracker:
             self.active_chn = chn_name
             self.active_harm = harm
 
-        self.smart_peak_tracker()
+        self.peak_tracker()
 
         return self.harmoutput[chn_name][harm]['span'], self.harmoutput[chn_name][harm]['cen_trk']
 

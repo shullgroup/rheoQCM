@@ -44,7 +44,6 @@ def list_modules(module):
     # return modules
 
     # from subclass
-    print(dir(module))  #testprint
     subcls_list = inspect.getmembers(module, inspect.isclass)
 
     return {subcls[0]: subcls[0] for subcls in subcls_list}
@@ -83,18 +82,11 @@ def index_from_str(idx_str, chn_idx, join_segs=True):
 
     # create a dummy data with index
     data = list(range(max(chn_idx)+1))
-    print(chn_idx) #testprint
-    print(data) #testprint
     try:
         # check if string contains [ ]
         segs = re.findall(r'\[([0-9\:][^]]*)\]', idx_str) # get [] as seg
-        print(segs) #testprint
         if segs:
             for seg in segs:
-                print('multi') #testprint
-                print(seg) #testprint
-                print('data' +'[' + seg + ']') #testprint
-                print(eval('data' +'[' + seg + ']')) #testprint
                 new_idx = eval('data' +'[' + seg + ']') 
                 print('type(new_idx)', type(new_idx))
                 if join_segs: # True: combine
@@ -109,9 +101,6 @@ def index_from_str(idx_str, chn_idx, join_segs=True):
                         idx.append(new_idx)
                 
         else:
-            print('single') #testprint
-            print('data' +'[' + idx_str + ']') #testprint
-            print(eval('data' +'[' + idx_str + ']')) #testprint
             new_idx = eval('data' +'[' + idx_str + ']')
             if isinstance(new_idx, int):
                 idx.append(new_idx)
@@ -149,10 +138,8 @@ def sel_ind_dict(harms, sel_idx_dict, mode, marks):
         sel_idx_dict = data_idx_dict  
     if mode == 'marked':
         for harm in harms:
-            print(harm) #testprint
             data_idx_dict[harm] = list(marks[marks['mark' + harm] == 1].index) # all the indices with data for each harm
         sel_idx_dict = data_idx_dict  
-        print(sel_idx_dict) #testprint 
             
     if mode == 'selpts':
         pass
@@ -186,7 +173,6 @@ def idx_dict_to_harm_dict(sel_idx_dict):
     for idxs in sel_idx_dict.values():
         idx_set |= set(idxs)
     idx_un = list(idx_set)
-    print('idx_un', idx_un)   #testprint
 
     sel_harm_dict = {}
     for idx in idx_un:

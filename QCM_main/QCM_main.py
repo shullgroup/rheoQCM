@@ -134,12 +134,16 @@ class VNATracker:
         '''
         cal = {'ADC1': '', 'ADC2': ''}
         if (UIModules.system_check() == 'win32') and (struct.calcsize('P') * 8 == 32): # windows (if is win32, struct will already be imported above)
-            for key in cal.keys():
-                files = os.listdir(settings_init['vna_cal_file_path']) # list all file in the given folder
-                for file in files:
-                    if (key + '.myVNA.cal').lower() in file.lower():
-                        cal[key] = os.path.abspath(os.path.join(settings_init['vna_cal_file_path'], file)) # use absolute path
-                        break
+            vna_cal_path = os.path.abspath(settings_init['vna_cal_file_path'])
+            if not os.path.isdir(vna_cal_path): # directory doesn't exist
+                os.makedirs(vna_cal_path) # create directory
+            else:
+                files = os.listdir(vna_cal_path) # list all file in the given folder
+                for key in cal.keys():
+                    for file in files:
+                        if (key + '.myVNA.cal').lower() in file.lower():
+                            cal[key] = os.path.join(vna_cal_path, file) # use absolute path
+                            break
         return cal
 
 
@@ -431,9 +435,17 @@ class QCMApp(QMainWindow):
         # set pushButton_resetreftime
         self.ui.pushButton_resetreftime.clicked.connect(self.reset_reftime)
 
-        # set lineEdit_scaninterval value
-        self.ui.lineEdit_recordinterval.editingFinished.connect(self.set_lineEdit_scaninterval)
-        self.ui.lineEdit_refreshresolution.editingFinished.connect(self.set_lineEdit_scaninterval)
+        # set recording time value
+        self.ui.spinBox_recordinterval.valueChanged.connect(self.update_widget)
+        self.ui.spinBox_recordinterval.valueChanged.connect(self.set_recording_time)
+        self.ui.spinBox_refreshresolution.valueChanged.connect(self.update_widget)
+        self.ui.spinBox_refreshresolution.valueChanged.connect(self.set_recording_time)
+        self.ui.spinBox_scaninterval.valueChanged.connect(self.update_widget)
+        self.ui.spinBox_scaninterval.valueChanged.connect(self.set_recording_time)
+        # # set spinBox_scaninterval background
+        # self.ui.spinBox_scaninterval.setStyleSheet(
+        #     "QLineEdit { background: transparent; }"
+        # )
 
         # add value to the comboBox_settings_control_dispmode
         self.build_comboBox(self.ui.comboBox_settings_control_dispmode, 'display_opts')
@@ -449,10 +461,6 @@ class QCMApp(QMainWindow):
         # set pushButton_appendfile
         self.ui.pushButton_appendfile.clicked.connect(self.on_triggered_load_exp)
 
-        # set lineEdit_scaninterval background
-        self.ui.lineEdit_scaninterval.setStyleSheet(
-            "QLineEdit { background: transparent; }"
-        )
 
         self.ui.checkBox_dynamicfit.stateChanged.connect(self.update_widget)
         self.ui.spinBox_fitfactor.valueChanged.connect(self.update_widget)
@@ -831,8 +839,6 @@ class QCMApp(QMainWindow):
             "QTabBar::tab:!selected { margin-top: 2px; }"
             )
 
-        self.ui.lineEdit_recordinterval.setValidator(QDoubleValidator(0, math.inf, 6))
-        self.ui.lineEdit_refreshresolution.setValidator(QIntValidator(0, 2147483647))
         self.ui.lineEdit_scan_harmstart.setValidator(QDoubleValidator(1, math.inf, 6))
         self.ui.lineEdit_scan_harmend.setValidator(QDoubleValidator(1, math.inf, 6))
         self.ui.lineEdit_scan_harmsteps.setValidator(QIntValidator(0, 2147483647))
@@ -1031,6 +1037,10 @@ class QCMApp(QMainWindow):
 
         self.ui.checkBox_settings_mech_liveupdate.toggled.connect(self.update_widget)
 
+        # actionfilm_construction_mode_switch
+        self.ui.stackedWidget_settings_mechanics_modeswitch.addAction(self.ui.actionfilm_construction_mode_switch)
+        self.ui.actionfilm_construction_mode_switch.triggered.connect(self.film_construction_mode_switch)
+
         for harm in range(1, self.settings['max_harmonic']+2, 2):
             getattr(self.ui, 'checkBox_nhplot' + str(harm)).toggled.connect(self.update_widget)
 
@@ -1069,9 +1079,18 @@ class QCMApp(QMainWindow):
         # hide groupBox_settings_mechanics_simulator
         self.ui.groupBox_settings_mechanics_simulator.hide()
 
-        self.build_comboBox(self.ui.comboBox_settings_mechanics_selectmodel, 'qcm_model_opts')
         self.ui.comboBox_settings_mechanics_selectmodel.currentIndexChanged.connect(self.update_widget)
         self.ui.comboBox_settings_mechanics_selectmodel.currentIndexChanged.connect(self.set_mechmodel_widgets)
+        self.build_comboBox(self.ui.comboBox_settings_mechanics_selectmodel, 'qcm_model_opts')
+
+        #### following widgets are not saved in self.settings
+        # label_settings_mechanics_model_overlayer
+        # comboBox_settings_mechanics_model_overlayer/samp_chn
+        # lineEdit_settings_mechanics_model_overlayer/samp _idx
+        # comboBox_settings_mechanics_model_overlayer/samp _chn
+        self.build_comboBox(self.ui.comboBox_settings_mechanics_model_overlayer_chn, 'ref_channel_opts')
+        # comboBox_settings_mechanics_model_samplayer_chn
+        self.build_comboBox(self.ui.comboBox_settings_mechanics_model_samplayer_chn, 'ref_channel_opts')
 
         #endregion
 
@@ -1321,12 +1340,14 @@ class QCMApp(QMainWindow):
         # toolButton_spectra_mechanics_plotrows
         self.ui.actionRows_Time.triggered.connect(self.mechanics_plot_r_time)
         self.ui.actionRows_Temp.triggered.connect(self.mechanics_plot_r_temp)
+        self.ui.actionRows_Index.triggered.connect(self.mechanics_plot_r_idx)
         self.ui.actionRow_s1_Row_s2.triggered.connect(self.mechanics_plot_r1_r2)
         self.ui.actionRow_s2_Row_s1.triggered.connect(self.mechanics_plot_r2_r1)
         # create menu: menu_spectra_mechanics_plotrows
         self.ui.menu_spectra_mechanics_plotrows = QMenu(self.ui.toolButton_spectra_mechanics_plotrows)
         self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRows_Time)
         self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRows_Temp)
+        self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRows_Index)
         self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRow_s1_Row_s2)
         self.ui.menu_spectra_mechanics_plotrows.addAction(self.ui.actionRow_s2_Row_s1)
         # add menu to toolbutton
@@ -1507,6 +1528,7 @@ class QCMApp(QMainWindow):
 
         #
         self.ui.pushButton_runstop.setText('START RECORD')
+
 
     # @pyqtSlot()
     def reset_reftime(self):
@@ -1708,39 +1730,29 @@ class QCMApp(QMainWindow):
         msg.exec_()
 
 
-    # @pyqtSlot()
-    def set_lineEdit_scaninterval(self):
+    def set_recording_time(self):
+        '''
+        the idea here is try to set record interval
+        if record interval is changed, set scan interval
+        '''
         # get text
-        record_interval = self.ui.lineEdit_recordinterval.text()
-        refresh_resolution = self.ui.lineEdit_refreshresolution.text()
+        record_interval = self.settings['spinBox_recordinterval']
+        refresh_resolution = self.settings['spinBox_refreshresolution']
+        scaninterval = self.settings['spinBox_scaninterval']
+        
+        # sender
+        if not self.sender():
+            sender = None
+        else:
+            sender = self.sender().objectName()
         #convert to flot
-        try:
-            record_interval = float(record_interval)
-            if record_interval <= 0: # illegal value
-                raise ZeroDivisionError
-        except:
-            record_interval = self.settings['lineEdit_recordinterval']
-            self.ui.lineEdit_recordinterval.setText(str(record_interval))
-            self.settings['lineEdit_recordinterval'] = record_interval
-        try:
-            refresh_resolution = float(refresh_resolution)
-            if refresh_resolution <= 0: # illegal value
-                raise ZeroDivisionError
-        except:
-            refresh_resolution = settings_init['lineEdit_refreshresolution']
-            self.ui.lineEdit_refreshresolution.setText(refresh_resolution)
-            self.settings['lineEdit_refreshresolution'] = refresh_resolution
-
-        # set lineEdit_scaninterval
-        # self.ui.lineEdit_scaninterval.setText(f'{record_interval * refresh_resolution}  s')
-        self.settings['lineEdit_recordinterval'] = float(record_interval)
-        self.settings['lineEdit_refreshresolution'] = float(refresh_resolution)
-        try:
-            self.settings['lineEdit_scaninterval'] = record_interval / refresh_resolution
-            self.ui.lineEdit_scaninterval.setText('{0:.3g}'.format(record_interval / refresh_resolution)) # python < 3.5
-        except ZeroDivisionError:
-            self.settings['lineEdit_scaninterval'] = 1
-            self.ui.lineEdit_scaninterval.setText('{0:.3g}'.format(math.inf)) # python < 3.5
+        
+        if sender == 'spinBox_recordinterval': 
+            # change scan interval
+            self.ui.spinBox_scaninterval.setValue(int(record_interval / refresh_resolution))
+        elif sender in ['spinBox_refreshresolution', 'spinBox_scaninterval', None]:
+            # change record interval
+            self.ui.spinBox_recordinterval.setValue(int(scaninterval * refresh_resolution))
 
 
     ## functions for open and save file
@@ -2616,8 +2628,12 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit.update_data({'ln': 'lsp', 'x': factor_span, 'y': gc_list})
 
         # sp_polar
-        idx = np.where((data_lG[0] >= factor_span[0]) & (data_lG[0] <= factor_span[1])) # determine the indices by f (data_lG[0])
+        idx = np.where((data_lG[0] >= factor_span[0]) & (data_lG[0] <= factor_span[1]))[0] # determine the indices by f (data_lG[0])
 
+        print(type(idx))
+        print(idx.dtype)
+        print(fit_result['fit_g'])
+        print(fit_result['fit_g'][idx])
         self.ui.mpl_spectra_fit_polar.update_data({'ln': 'lsp', 'x': fit_result['fit_g'][idx], 'y': fit_result['fit_b'][idx]})
 
         if self.get_spectraTab_mode() == 'center': # center mode
@@ -2969,6 +2985,8 @@ class QCMApp(QMainWindow):
         data_list = self.prepare_harm_data_for_mpl_update(plt_chnname, plt_harms, line_group, xdata, ydata, show_marked_when_all=True)
         '''
 
+        # clear .lt lines
+        getattr(self.ui, 'mpl_' + plt_str).clr_lines(l_list=['lt'])
         # update mpl_<plt_str>
         getattr(self.ui, 'mpl_' + plt_str).update_data(*data_list)
 
@@ -3531,6 +3549,16 @@ class QCMApp(QMainWindow):
 
 
     #### mech related funcs ###
+    def film_construction_mode_switch(self):
+        '''
+        switch the mode
+        '''
+        currInd = self.ui.stackedWidget_settings_mechanics_modeswitch.currentIndex()
+        count = self.ui.stackedWidget_settings_mechanics_modeswitch.count()
+        # increase currentIndex by (currInd+1)%count
+        self.ui.stackedWidget_settings_mechanics_modeswitch.setCurrentIndex((currInd + 1) % count)
+
+
     def build_mech_layers(self):
         '''
         insert/delete a gridlayout with items for layers between bulk and electrode
@@ -3620,7 +3648,7 @@ class QCMApp(QMainWindow):
                 # combobox: build with opts
                 self.build_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_indchn_'+str(i)), 'ref_channel_opts')
                 # combobox: build with opts
-                self.build_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)), 'qcm_layer_known_source_opts')
+                self.build_comboBox(getattr(self.ui, 'comboBox_mech_expertmode_source_'+str(i)), 'qcm_layer_source_opts')
 
         elif pre_nlayers > nlayers: # delete extra layers
             # delete layers from row 1 (leave bulk (0))
@@ -3669,6 +3697,9 @@ class QCMApp(QMainWindow):
             self.mech_chn = 'ref'
         
         self.set_film_layers_widgets()
+
+        # set comboBox_settings_mechanics_model_samplayer_chn
+        self.load_comboBox(self.ui.comboBox_settings_mechanics_model_samplayer_chn, val=self.mech_chn)
 
 
     def update_qcm_refh(self):
@@ -3820,7 +3851,7 @@ class QCMApp(QMainWindow):
             'val': 'lineEdit_mech_expertmode_value_',
         }
         # get number of layers 
-        n_layers = int(self.ui.spinBox_mech_expertmode_layernum.value())
+        n_layers = int(self.get_mechchndata('spinBox_mech_expertmode_layernum'))
         n_layers += 1 # add electrode layer
 
 
@@ -3843,13 +3874,13 @@ class QCMApp(QMainWindow):
 
         if layernum is None: # no data saved
             # use default layernum
-            layernum = self.settings['spinBox_mech_expertmode_layernum']
+            layernum = int(self.settings['spinBox_mech_expertmode_layernum'])
             # generate layers
             self.ui.spinBox_mech_expertmode_layernum.setValue(layernum) # use default value
             self.set_mechchndata('spinBox_mech_expertmode_layernum', layernum)
         else:
             # generate layers
-            self.ui.spinBox_mech_expertmode_layernum.setValue(layernum)
+            self.ui.spinBox_mech_expertmode_layernum.setValue(int(layernum))
 
         self.load_film_layers_widgets() # load values
         
@@ -3860,7 +3891,7 @@ class QCMApp(QMainWindow):
         if None
         save to mechndata
         '''
-        layernum = self.get_mechchndata('spinBox_mech_expertmode_layernum')
+        layernum = int(self.get_mechchndata('spinBox_mech_expertmode_layernum'))
         mech_chn = self.mech_chn
         for n in range(layernum+1): # all layers
             n = str(n) # convert to string for storing as json, which does not support int key
@@ -3884,10 +3915,12 @@ class QCMApp(QMainWindow):
                 getattr(self.ui, 'lineEdit_mech_expertmode_value_'+n).setText(str(self.get_mechchndata('lineEdit_mech_expertmode_value_'+n)))
 
 
-    def mech_solve_chn(self, chn_name=None, queue_ids=None, idx=None):
+    def mech_solve_chn(self, chn_name=None, chn_queue_ids=None, chn_idx=None):
         '''
         send the data to qcm module to solve in secquence by queue_ids and
         save the returned mechanic data to data_saver
+        chn_queue_ids: all available queue_ids for solving. it can be all or marked queue_ids
+        chn_idx: all available indices for solving. it can be all or marked indices
         '''
 
         if not self.data_saver.path:
@@ -3911,8 +3944,13 @@ class QCMApp(QMainWindow):
         layernum = self.get_mechchndata('spinBox_mech_expertmode_layernum', mech_chn=chn_name)
 
 
-        ## work with layers first 
-        film_dict = self.make_film_layers_dict()
+        # check which is using: model or layers
+        if self.ui.stackedWidget_settings_mechanics_modeswitch.currentIndex() == 0: # model mode
+            # convert model to mechchndata
+            film_dict = self.make_film_dict_by_mechmodel_widgets()
+        else: # layers mode
+            ## work with layers first. get film_dict from mechchndata
+            film_dict = self.make_film_layers_dict()
 
         # {'0': {'calc': False, 'source': 'ind', 'indchn': 'ref', 'val': '[2]'}, '1': {'calc': True, 'source': 'ind', 'indchn': 'samp', 'val': '[]'}}
 
@@ -3922,6 +3960,7 @@ class QCMApp(QMainWindow):
             if dic['calc']:
                 calc_num = int(n)
                 break
+            # dic is kept for following lines
         
         if calc_num is None:
             print('Stoped! No layer is marked to calculate')
@@ -3937,15 +3976,16 @@ class QCMApp(QMainWindow):
             chn_name = dic['indchn']
             print('set chn_name to indchn!')
 
-        if (queue_ids is None) or not (queue_ids): # if no queue_id given, use all in the channel
-            queue_ids = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanmarkrow=False)
+        if chn_queue_ids is None: # if no queue_id given, use all in the channel
+            chn_queue_ids = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanmarkrow=False)
 
-        chn_idx = list(queue_ids.index) # all available indics
-        if idx is None or not (idx): # if no idx given, use all in the channel
-            queue_ids = self.data_saver.get_queue_id_marked_rows(chn_name, dropnanmarkrow=False)
-            idx = chn_idx
-        
+        if chn_idx is None: # if no idx given, use all in the channel
+            chn_idx = list(chn_queue_ids.index) # all available indics
+
+        # initialize idx for solving
+        idx = chn_idx        
         idx_joined = idx
+        queue_ids = chn_queue_ids
 
         # 2. get qcm data (columns=['queue_id', 't', 'temp', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs', 'f0stars', 'f0s', 'g0s'])
         # 'delf', 'delgs' may not necessary
@@ -3956,12 +3996,16 @@ class QCMApp(QMainWindow):
         # 3. layer calc's source and index
         if dic['source'] == 'ind': # dic is still where the loop break
             # use ind to get queue_id
-            idx_str = dic['val']
-            idx = UIModules.index_from_str(idx_str, chn_idx, join_segs=False) # overwrite idx with given index
-            idx_joined = UIModules.index_from_str(idx_str, chn_idx, join_segs=True) # overwrite idx with given index
-            if idx_joined:
-                queue_ids = queue_ids[idx_joined] # overwrite queue_id with queue_id calculated with given idx
+            calc_idx_str = dic['val']
+            calc_idx = UIModules.index_from_str(calc_idx_str, chn_idx, join_segs=False) # overwrite idx with given index
+            calc_idx_joined = UIModules.index_from_str(calc_idx_str, chn_idx, join_segs=True) # overwrite idx with given index
+            if calc_idx_joined:
+                idx = calc_idx
+                idx_joined = calc_idx_joined
+                queue_ids = chn_queue_ids[idx_joined] # overwrite queue_id with queue_id calculated with given idx
                 qcm_df_calc = qcm_df.loc[idx_joined] # df of calc layer
+            else: # idx_joined = []
+                pass
         elif dic['source'] == 'prop':
             # set given prop 'prop_guess'
             film_dict[n]['prop_guess'] = (dic['val'])
@@ -4028,7 +4072,8 @@ class QCMApp(QMainWindow):
                         queue_ids_layer = layer_queue_ids[idx_layer_joined]
 
                     # create qcm_df
-                    qcm_df_layer = qcm_df.loc[idx_layer_joined] # df of current layer
+                    qcm_df_layer_chn = self.data_saver.df_qcm(layer_chn)
+                    qcm_df_layer = qcm_df_layer_chn.loc[idx_layer_joined] # df of current layer
                     # create qcm_df by interpolation
                     qcm_df_layer = self.data_saver.shape_qcmdf_b_to_a(qcm_df_calc, qcm_df_layer, idx, idx_layer)
                     # get values for each
@@ -4049,9 +4094,9 @@ class QCMApp(QMainWindow):
 
         
         # 5. do calc with each nhcalc
-        mech_df = self.data_saver.update_mech_df_shape(chn_name, nhcalc, refh) # this also update in data_saver
+        mech_df = self.data_saver.update_mech_df_shape(chn_name, nhcalc) # this also update in data_saver
 
-
+        
         # if live update is not needed, use QCM.analyze to replace. the codes should be the same
         nh = QCM.nhcalc2nh(nhcalc)
         for ind in idx_joined: # iterate all ids
@@ -4075,7 +4120,7 @@ class QCMApp(QMainWindow):
                 mech_queue.index = [ind] # not necessary
                 # mech_df.update(mech_queue)
                 # mech_df['queue_id'] = mech_df['queue_id'].astype('int')
-                self.data_saver.update_mech_queue(chn_name, nhcalc, refh, mech_queue) # update to mech_df in data_saver
+                self.data_saver.update_mech_queue(chn_name, nhcalc, mech_queue) # update to mech_df in data_saver
                 
                 if self.settings['checkBox_settings_mech_liveupdate']: # live update
                     # update tableWidget_spectra_mechanics_table
@@ -4092,7 +4137,7 @@ class QCMApp(QMainWindow):
 
         if not self.settings['checkBox_settings_mech_liveupdate']: 
             # update table
-            self.update_spectra_mechanics_table(chn_name, nhcalc, refh, qcm_queue, mech_queue)
+            self.update_spectra_mechanics_table(chn_name, qcm_queue, mech_queue)
 
 
     def backup_mech_solve_chn(self, chn_name, queue_ids):
@@ -4118,7 +4163,7 @@ class QCMApp(QMainWindow):
 
         # do calc with each nhcalc
         for nhcalc in nhcalc_list:
-            mech_df = self.data_saver.update_mech_df_shape(chn_name, nhcalc, refh) # this also update in data_saver
+            mech_df = self.data_saver.update_mech_df_shape(chn_name, nhcalc) # this also update in data_saver
 
 
             # if live update is not needed, use QCM.analyze to replace. the codes should be the same
@@ -4147,7 +4192,7 @@ class QCMApp(QMainWindow):
                     mech_queue.index = [idx] # not necessary
                     # mech_df.update(mech_queue)
                     # mech_df['queue_id'] = mech_df['queue_id'].astype('int')
-                    self.data_saver.update_mech_queue(chn_name, nhcalc, refh, mech_queue) # update to mech_df in data_saver
+                    self.data_saver.update_mech_queue(chn_name, nhcalc, mech_queue) # update to mech_df in data_saver
                     
                     if self.settings['checkBox_settings_mech_liveupdate']: # live update
                         # update tableWidget_spectra_mechanics_table
@@ -4164,7 +4209,7 @@ class QCMApp(QMainWindow):
 
             if not self.settings['checkBox_settings_mech_liveupdate']: 
                 # update table
-                self.update_spectra_mechanics_table(chn_name, nhcalc, refh, qcm_queue, mech_queue)
+                self.update_spectra_mechanics_table(chn_name, qcm_queue, mech_queue)
 
 
     def mech_clear(self):
@@ -4176,7 +4221,11 @@ class QCMApp(QMainWindow):
         '''
         for code testing
         '''
-        self.make_film_layers_dict()
+        if self.ui.stackedWidget_settings_mechanics_modeswitch.currentIndex() == 0: # model mode
+            # convert model to mechchndata
+            film_dict = self.make_film_dict_by_mechmodel_widgets()
+        else:
+            film_dict = self.make_film_layers_dict()
 
 
     def mech_solve_all(self):
@@ -4210,6 +4259,7 @@ class QCMApp(QMainWindow):
             self.set_mechchndata('comboBox_mech_expertmode_indchn_0', refrefsource, mech_chn='ref')
         else:
             pass
+        
         self.set_mechchndata('lineEdit_mech_expertmode_value_0', samprefidx, mech_chn='samp')
         self.set_mechchndata('lineEdit_mech_expertmode_value_0', refrefidx, mech_chn='ref')
         
@@ -4256,11 +4306,57 @@ class QCMApp(QMainWindow):
             qcm_queue = qcm_df.loc[[idx], :].copy() # as a dataframe
             # mechanic data of queue_id
             mech_queue = mech_df.loc[[idx], :].copy()  # as a dataframe 
-            print('qcm_queue', qcm_queue) #testpring
-            print('mech_queue', mech_queue) #testpring
             
             # updaate in mech table
-            self.update_spectra_mechanics_table(chn_name, nhcalc, refh, qcm_queue, mech_queue)
+            self.update_spectra_mechanics_table(chn_name, qcm_queue, mech_queue)
+
+
+    def make_film_dict_by_mechmodel_widgets(self):
+        '''
+        this function set mechchdata of 
+            spinBox_mech_expertmode_layernum value
+            comboBox_mech_expertmode_calc_0/1/2
+            comboBox_mech_expertmode_source_0/1/2
+            comboBox_mech_expertmode_indchn_0/1/2
+        by mechmodel_widgets value
+        We keep model and layers mode independent to make sure they don't influence each other
+        '''
+        layer_name = {
+            '1': 'samplayer', 
+            '2': 'overlayer',
+        }
+        # initialize fil_dict
+        film_dict = {}
+
+        if not self.settings['comboBox_settings_mechanics_selectmodel']: # in case comboBox_settings_mechanics_selectmodel is empty
+            self.settings['comboBox_settings_mechanics_selectmodel'] = self.ui.comboBox_settings_mechanics_selectmodel.itemData(self.ui.comboBox_settings_mechanics_selectmodel.currentIndex())
+
+        model = self.settings['comboBox_settings_mechanics_selectmodel'] # onelayer, bulk, twolayers
+        if model == 'onelayer' or model == 'bulk':
+            n_layers = 1
+        elif model == 'twolayers':
+            n_layers = 2        
+        else:
+            return film_dict
+        
+        # set layer 1/2
+        for n in range(1, n_layers+1):
+            n = str(n)
+            film_dict[n] = {
+                'calc': True if n == '1' else False,
+                'source': 'ind',
+                'indchn': getattr(self.ui, 'comboBox_settings_mechanics_model_' + layer_name[n] + '_chn').itemData(getattr(self.ui, 'comboBox_settings_mechanics_model_' + layer_name[n] + '_chn').currentIndex()),
+                'val': getattr(self.ui, 'lineEdit_settings_mechanics_model_' + layer_name[n] + '_idx').text(),
+            }
+
+        film_dict['0'] = {
+            'calc': False,
+            'source': 'ind',
+            'indchn': self.settings['comboBox_settings_data_'+self.mech_chn+'refsource'],
+            'val': self.settings['lineEdit_settings_data_'+self.mech_chn+'refidx'],
+        }
+
+        return film_dict
 
 
     def set_mechmodel_widgets(self):
@@ -4271,16 +4367,9 @@ class QCMApp(QMainWindow):
             lineEdit_settings_mechanics_model_overlayer_idx
         by comboBox_settings_mechanics_selectmodel value
         and
-        set spinBox_mech_expertmode_layernum value
         '''
         model = self.settings['comboBox_settings_mechanics_selectmodel'] # onelayer, bulk, twolayers
         if model == 'onelayer' or model == 'bulk':
-            self.ui.spinBox_mech_expertmode_layernum.setValue(1)
-            
-            # set values
-            self.set_mechchndata('comboBox_mech_expertmode_calc_1', val=True)
-            self.set_mechchndata('comboBox_mech_expertmode_source_1', val='ind')
-            self.set_mechchndata('comboBox_mech_expertmode_indchn_1', val=self.mech_chn)
 
             # show samplayer widgets
             self.show_widgets('mech_model_show_hide_samplayer_list')
@@ -4288,10 +4377,7 @@ class QCMApp(QMainWindow):
             self.hide_widgets('mech_model_show_hide_overlayer_list')
  
         elif model == 'twolayers':
-            self.ui.spinBox_mech_expertmode_layernum.setValue(2)
-            self.set_mechchndata('comboBox_mech_expertmode_calc_1', val=True)
-            self.set_mechchndata('comboBox_mech_expertmode_source_1', val='ind')
-            self.set_mechchndata('comboBox_mech_expertmode_source_2', val='ind')
+           
             # show samplayer widgets
             self.show_widgets('mech_model_show_hide_samplayer_list')
             # show overlayer widgets
@@ -4303,10 +4389,9 @@ class QCMApp(QMainWindow):
             self.hide_widgets('mech_model_show_hide_samplayer_list')
             # hide overlayer widgets
             self.hide_widgets('mech_model_show_hide_overlayer_list')
- 
 
 
-    def update_spectra_mechanics_table(self, chn_name, nhcalc, refh, qcm_queue, mech_queue):
+    def update_spectra_mechanics_table(self, chn_name, qcm_queue, mech_queue):
         '''
         this function update data in tableWidget_spectra_mechanics_table
         and relative information displaying
@@ -4390,6 +4475,9 @@ class QCMApp(QMainWindow):
         self.mechanics_plot('temp')
 
 
+    def mechanics_plot_r_idx(self):
+        self.mechanics_plot('idx')
+
     def mechanics_plot_r1_r2(self):
         self.mechanics_plot('r1r2')
 
@@ -4403,6 +4491,7 @@ class QCMApp(QMainWindow):
         make plot by plot_type
         variable is given by row selection of tableWidget_spectra_mechanics_table
         '''
+        x_list = ['t', 'temp', 'idx'] # common x-axis variables. t, temp is the column name, idx is not.
 
         # get chn_name
         chn_name = self.mech_chn
@@ -4410,7 +4499,7 @@ class QCMApp(QMainWindow):
         # get mech_key
         nhcalc = self.gen_nhcalc_str()
 
-        refh =int(self.settings['comboBox_settings_mechanics_refG']) # refh 
+        refh =int(self.settings['spinBox_settings_mechanics_nhcalc_n3']) # refh 
 
         mech_key = self.data_saver.get_mech_key(nhcalc)
 
@@ -4438,24 +4527,18 @@ class QCMApp(QMainWindow):
 
         # get data mode showall or marked
         # from tabWidget_settings
-        if self.show_marked_data(): # show marked data only
-            if self.data_saver.with_marks(chn_name):
-                prop_group = 'pm'
-                line_group = 'l'
-                mark = True
-            else:
-                prop_group = 'p'
-                line_group = 'l'
-                mark = False
+        if self.show_marked_data() and self.data_saver.with_marks(chn_name): # show marked data only
+            prop_group = 'pm'
+            line_group = 'l'
+            mark = True
         else: # show all data
-            mark = False
             prop_group = 'p'
             line_group = 'l'
+            mark = False
 
         # create varplots (list of [var_y, var_x] for plots)
-        if plot_type in ['t', 'temp']: # y vs. time/temp
+        if plot_type in x_list: # y vs. time/temp/idx
             varplots = [[var, plot_type] for var in varplot]
-
         elif plot_type in ['r1r2', 'r2r1']:
             if len(varplot) < 2: # not enough variables selected
                 print('Not enough rows are selected! Please select 2 rows.')
@@ -4558,6 +4641,9 @@ class QCMApp(QMainWindow):
                 err = self.qcm.convert_mech_unit(err)
             else:
                 err = None
+        elif var == 'idx': # get index
+            data = self.data_saver.get_idx_marked_rows(chn_name, dropnanmarkrow=False)
+            err = None
 
         return data, err
 
@@ -4670,9 +4756,9 @@ class QCMApp(QMainWindow):
             try:
             # get temp and change temp unit by self.settings['temp_unit_opts']
                 if curr_temp is None:
-                    curr_temp = self.temp_by_unit(self.temp_sensor.get_tempC())
+                    curr_temp = self.temp_sensor.get_tempC()
                 unit = settings_init['temp_unit_opts'].get(self.settings['comboBox_tempunit'])
-                self.ui.pushButton_status_temp_sensor.setText('{:.1f} {}'.format(curr_temp, unit))
+                self.ui.pushButton_status_temp_sensor.setText('{:.1f} {}'.format(self.data_saver.temp_C_to_unit(curr_temp, unit=unit), unit))
                 self.ui.pushButton_status_temp_sensor.setIcon(QIcon(":/icon/rc/temp_sensor.svg"))
                 self.ui.pushButton_status_temp_sensor.setToolTip('Temp. sensor is on.')
             except:
@@ -5325,12 +5411,11 @@ class QCMApp(QMainWindow):
         #                 comboBox.setCurrentIndex(comboBox.findData(key))
         #                 break
         if (harm is None) and (mech_chn is None): # normal combobox
-            if comboBoxName in self.settings:
-                if val is None:
-                    val = self.settings[comboBoxName]
-                set_ind = comboBox.findData(val)
-                if set_ind != -1: # key in list
-                    comboBox.setCurrentIndex(set_ind)
+            if val is None:
+                val = self.settings.get(comboBoxName, None)
+            set_ind = comboBox.findData(val)
+            if set_ind != -1: # key in list
+                comboBox.setCurrentIndex(set_ind)
         elif (harm is not None) and (mech_chn is None): # in harmdata
             if val is None:
                 val = self.get_harmdata(comboBoxName, harm)
@@ -5444,6 +5529,8 @@ class QCMApp(QMainWindow):
         # self.settings_harm = 1 #TODO
         # set active_chn
         self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
+        # set active mech calc method
+        self.ui.stackedWidget_settings_mechanics_modeswitch.setCurrentIndex(settings_init['mechanics_modeswitch'])
         # set progressbar
         self.set_progressbar(val=0, text='')
 
@@ -5497,11 +5584,11 @@ class QCMApp(QMainWindow):
             self.settings['dateTimeEdit_settings_data_t0shifted'] = temp
 
         # load default record interval
-        self.ui.lineEdit_recordinterval.setText(str(self.settings['lineEdit_recordinterval']))
+        self.ui.spinBox_recordinterval.setValue(self.settings['spinBox_recordinterval'])
         # load default spectra refresh resolution
-        self.ui.lineEdit_refreshresolution.setText(str(int(self.settings['lineEdit_refreshresolution'])))
-        # update lineEdit_scaninterval
-        self.set_lineEdit_scaninterval()
+        self.ui.spinBox_refreshresolution.setValue(self.settings['spinBox_refreshresolution'])
+        # update spinBox_scaninterval
+        self.set_recording_time()
 
         # load default fitting and display options
         self.ui.checkBox_dynamicfit.setChecked(self.settings['checkBox_dynamicfit'])
@@ -5682,6 +5769,7 @@ class QCMApp(QMainWindow):
         self.ui.progressBar_status_interval_time.setValue(val)
         self.ui.progressBar_status_interval_time.setFormat(text)
 
+
     def data_collection(self):
         '''
         data collecting routine
@@ -5689,7 +5777,7 @@ class QCMApp(QMainWindow):
 
         self.idle = False
         # self.timer.setSingleShot(True)
-        scan_interval = self.settings['lineEdit_scaninterval'] * 1000 # in ms
+        scan_interval = self.settings['spinBox_scaninterval'] * 1000 # in ms
 
         # update the interval of timer
         self.timer.setInterval(scan_interval)
@@ -5880,6 +5968,9 @@ class QCMApp(QMainWindow):
 
             # plot data
             self.update_mpl_plt12()
+        else: # data will not be saved (temperarily saved in peak_tracker)
+            #TODO we can still plot the data 
+            pass
 
         if not self.timer.isActive(): # if timer is stopped (test stopped while collecting data)
             # save data
@@ -6027,7 +6118,7 @@ class QCMApp(QMainWindow):
         if self.spectra_refresh_modulus() == 0: # going to save data
             txt = '{:.1f} s'.format(timer_remain)
         else:
-            txt = '{:.1f} s + {}'.format(timer_remain, int(self.settings['lineEdit_refreshresolution']) - self.spectra_refresh_modulus())
+            txt = '{:.1f} s + {}'.format(timer_remain, self.settings['spinBox_refreshresolution'] - self.spectra_refresh_modulus())
 
         self.set_progressbar(
             val=min(round((1 - timer_remain / timer_interval) * 100), 100),
@@ -6039,7 +6130,7 @@ class QCMApp(QMainWindow):
         '''
         calculate how many times refresh left before recording
         '''
-        return int(self.counter) % int(self.settings['lineEdit_refreshresolution'])
+        return int(self.counter) % int(self.settings['spinBox_refreshresolution'])
 
 
 
