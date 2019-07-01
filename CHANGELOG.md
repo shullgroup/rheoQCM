@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.17.2] - 2019-06-28
+
+### Added
+
+- Add code to reset peak track mark in spectra plots before auto refitting peaks.
+
+### Fixed
+
+- Fix manual fit bug when no peak found.
+- Fix bug when solving property of a single point data.
+
 ## [0.17.1] - 2019-06-19
 
 ### Added
@@ -8,8 +19,7 @@
 
 ### Fixed
 
-- Fix not "cal" path bug. Still needs to add the case no calibration file found.
-
+- Fix no "cal" path bug. TODO: Still needs to add the case no calibration file found.
 - Fix manual peak fitting crashes when no peak is found.
 
 ## [0.17.0] - 2019-05-29

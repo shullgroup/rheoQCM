@@ -278,113 +278,114 @@ class QCMApp(QMainWindow):
         self.ui.tableWidget_spectra_mechanics_table.setColumnCount(int((self.settings['max_harmonic']+1)/2))
         # loop for setting harmonics
         _translate = QCoreApplication.translate
-        for i in range(1, self.settings['max_harmonic']+2, 2):
-            if not getattr(self.ui, 'checkBox_harm' + str(i), None): # check if the item exist
+        for i in self.all_harm_list():
+            harm = str(i)
+            if not getattr(self.ui, 'checkBox_harm' + harm, None): # check if the item exist
                 # check box_harm<n>, lineEdit_<start/end>f<n></_r> all come togeter. So, only check one
                 ## create widget check box_harm<n>
-                setattr(self.ui, 'checkBox_harm' + str(i), QCheckBox(self.ui.groupBox_settings_harmonics))
+                setattr(self.ui, 'checkBox_harm' + harm, QCheckBox(self.ui.groupBox_settings_harmonics))
                 sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
                 sizePolicy.setHorizontalStretch(0)
                 sizePolicy.setVerticalStretch(0)
-                sizePolicy.setHeightForWidth(getattr(self.ui, 'checkBox_harm' + str(i)).sizePolicy().hasHeightForWidth())
-                getattr(self.ui, 'checkBox_harm' + str(i)).setSizePolicy(sizePolicy)
-                getattr(self.ui, 'checkBox_harm' + str(i)).setObjectName('checkBox_harm'+str(i))
-                getattr(self.ui, 'checkBox_harm' + str(i)).setText(_translate('MainWindow', str(i)))
+                sizePolicy.setHeightForWidth(getattr(self.ui, 'checkBox_harm' + harm).sizePolicy().hasHeightForWidth())
+                getattr(self.ui, 'checkBox_harm' + harm).setSizePolicy(sizePolicy)
+                getattr(self.ui, 'checkBox_harm' + harm).setObjectName('checkBox_harm'+harm)
+                getattr(self.ui, 'checkBox_harm' + harm).setText(_translate('MainWindow', harm))
 
                 for st1 in ['start', 'end']:
                     for st2 in ['', '_r']:
-                        setattr(self.ui, 'lineEdit_'+st1+'f'+str(i)+st2, QLineEdit(self.ui.groupBox_settings_harmonics))
-                        getattr(self.ui, 'lineEdit_'+st1+'f'+str(i)+st2).setReadOnly(True)
-                        getattr(self.ui, 'lineEdit_'+st1+'f'+str(i)+st2).setObjectName('lineEdit_'+st1+'f'+str(i)+st2)
+                        setattr(self.ui, 'lineEdit_'+st1+'f'+harm+st2, QLineEdit(self.ui.groupBox_settings_harmonics))
+                        getattr(self.ui, 'lineEdit_'+st1+'f'+harm+st2).setReadOnly(True)
+                        getattr(self.ui, 'lineEdit_'+st1+'f'+harm+st2).setObjectName('lineEdit_'+st1+'f'+harm+st2)
 
                 # add to layout
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'checkBox_harm' + str(i)), (i+1)/2, 0, 1, 1)
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_startf'+str(i)), (i+1)/2, 1, 1, 1)
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_endf'+str(i)), (i+1)/2, 2, 1, 1)
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_startf'+str(i)+'_r'), (i+1)/2, 4, 1, 1)
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_endf'+str(i)+'_r'), (i+1)/2, 5, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'checkBox_harm' + harm), (i+1)/2, 0, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_startf'+harm), (i+1)/2, 1, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_endf'+harm), (i+1)/2, 2, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_startf'+harm+'_r'), (i+1)/2, 4, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_endf'+harm+'_r'), (i+1)/2, 5, 1, 1)
 
             ## create frame_sp<n>
-            if not getattr(self.ui, 'frame_sp'+str(i), None): # check if the item exist
-                setattr(self.ui, 'frame_sp'+str(i), QFrame(self.ui.page_spectra_show))
+            if not getattr(self.ui, 'frame_sp'+harm, None): # check if the item exist
+                setattr(self.ui, 'frame_sp'+harm, QFrame(self.ui.page_spectra_show))
                 sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
                 sizePolicy.setHorizontalStretch(0)
                 sizePolicy.setVerticalStretch(1)
-                sizePolicy.setHeightForWidth(getattr(self.ui, 'frame_sp'+str(i)).sizePolicy().hasHeightForWidth())
-                getattr(self.ui, 'frame_sp'+str(i)).setSizePolicy(sizePolicy)
-                getattr(self.ui, 'frame_sp'+str(i)).setMinimumSize(QSize(0, 100))
-                getattr(self.ui, 'frame_sp'+str(i)).setMaximumSize(QSize(16777215, 400))
-                getattr(self.ui, 'frame_sp'+str(i)).setFrameShape(QFrame.StyledPanel)
-                getattr(self.ui, 'frame_sp'+str(i)).setFrameShadow(QFrame.Sunken)
-                getattr(self.ui, 'frame_sp'+str(i)).setObjectName('frame_sp'+str(i))
-                self.ui.verticalLayout_sp.addWidget(getattr(self.ui, 'frame_sp'+str(i)))
+                sizePolicy.setHeightForWidth(getattr(self.ui, 'frame_sp'+harm).sizePolicy().hasHeightForWidth())
+                getattr(self.ui, 'frame_sp'+harm).setSizePolicy(sizePolicy)
+                getattr(self.ui, 'frame_sp'+harm).setMinimumSize(QSize(0, 100))
+                getattr(self.ui, 'frame_sp'+harm).setMaximumSize(QSize(16777215, 400))
+                getattr(self.ui, 'frame_sp'+harm).setFrameShape(QFrame.StyledPanel)
+                getattr(self.ui, 'frame_sp'+harm).setFrameShadow(QFrame.Sunken)
+                getattr(self.ui, 'frame_sp'+harm).setObjectName('frame_sp'+harm)
+                self.ui.verticalLayout_sp.addWidget(getattr(self.ui, 'frame_sp'+harm))
 
             ## create checkBox_plt<1/2>_h<n>
             for plt_str in ['plt1', 'plt2']:
-                if not getattr(self.ui, 'checkBox_'+plt_str+'_h'+str(i), None): # check if the item exist
-                    setattr(self.ui, 'checkBox_'+plt_str+'_h'+str(i), QCheckBox(getattr(self.ui,'frame_'+plt_str+'set')))
-                    getattr(self.ui, 'checkBox_'+plt_str+'_h'+str(i)).setObjectName('checkBox_'+plt_str+'_h'+str(i))
-                    getattr(self.ui, 'horizontalLayout_'+plt_str+'set_harm').addWidget(getattr(self.ui, 'checkBox_'+plt_str+'_h'+str(i)))
-                    getattr(self.ui, 'checkBox_'+plt_str+'_h'+str(i)).setText(_translate('MainWindow', str(i)))
+                if not getattr(self.ui, 'checkBox_'+plt_str+'_h'+harm, None): # check if the item exist
+                    setattr(self.ui, 'checkBox_'+plt_str+'_h'+harm, QCheckBox(getattr(self.ui,'frame_'+plt_str+'set')))
+                    getattr(self.ui, 'checkBox_'+plt_str+'_h'+harm).setObjectName('checkBox_'+plt_str+'_h'+harm)
+                    getattr(self.ui, 'horizontalLayout_'+plt_str+'set_harm').addWidget(getattr(self.ui, 'checkBox_'+plt_str+'_h'+harm))
+                    getattr(self.ui, 'checkBox_'+plt_str+'_h'+harm).setText(_translate('MainWindow', harm))
 
             ## create tab_settings_settings_harm<n>
-            if not getattr(self.ui, 'tab_settings_settings_harm'+str(i), None): # check if the item exist
-                setattr(self.ui, 'tab_settings_settings_harm'+str(i), QWidget())
-                getattr(self.ui, 'tab_settings_settings_harm'+str(i)).setObjectName('tab_settings_settings_harm'+str(i))
-                setattr(self.ui, 'verticalLayout_tab_settings_settings_harm'+str(i), QVBoxLayout(getattr(self.ui, 'tab_settings_settings_harm'+str(i))))
-                getattr(self.ui, 'verticalLayout_tab_settings_settings_harm'+str(i)).setContentsMargins(0, 0, 0, 0)
-                getattr(self.ui, 'verticalLayout_tab_settings_settings_harm'+str(i)).setSpacing(0)
-                getattr(self.ui, 'verticalLayout_tab_settings_settings_harm'+str(i)).setObjectName('verticalLayout_tab_settings_settings_harm'+str(i))
-                self.ui.tabWidget_settings_settings_harm.addTab(getattr(self.ui, 'tab_settings_settings_harm'+str(i)), '')
-                self.ui.tabWidget_settings_settings_harm.setTabText(self.ui.tabWidget_settings_settings_harm.indexOf(getattr(self.ui, 'tab_settings_settings_harm'+str(i))), _translate('MainWindow', str(i)))
+            if not getattr(self.ui, 'tab_settings_settings_harm'+harm, None): # check if the item exist
+                setattr(self.ui, 'tab_settings_settings_harm'+harm, QWidget())
+                getattr(self.ui, 'tab_settings_settings_harm'+harm).setObjectName('tab_settings_settings_harm'+harm)
+                setattr(self.ui, 'verticalLayout_tab_settings_settings_harm'+harm, QVBoxLayout(getattr(self.ui, 'tab_settings_settings_harm'+harm)))
+                getattr(self.ui, 'verticalLayout_tab_settings_settings_harm'+harm).setContentsMargins(0, 0, 0, 0)
+                getattr(self.ui, 'verticalLayout_tab_settings_settings_harm'+harm).setSpacing(0)
+                getattr(self.ui, 'verticalLayout_tab_settings_settings_harm'+harm).setObjectName('verticalLayout_tab_settings_settings_harm'+harm)
+                self.ui.tabWidget_settings_settings_harm.addTab(getattr(self.ui, 'tab_settings_settings_harm'+harm), '')
+                self.ui.tabWidget_settings_settings_harm.setTabText(self.ui.tabWidget_settings_settings_harm.indexOf(getattr(self.ui, 'tab_settings_settings_harm'+harm)), _translate('MainWindow', harm))
 
 
             ## creat checkBox_nhplot<n>
-            if not getattr(self.ui, 'checkBox_nhplot'+str(i), None): # check if the item exist
-                setattr(self.ui, 'checkBox_nhplot'+str(i), QCheckBox(self.ui.groupBox_nhplot))
-                getattr(self.ui, 'checkBox_nhplot'+str(i)).setObjectName('checkBox_nhplot'+str(i))
-                self.ui.horizontalLayout_nhplot_harms.addWidget(getattr(self.ui, 'checkBox_nhplot'+str(i)))
-                getattr(self.ui, 'checkBox_nhplot'+str(i)).setText(_translate('MainWindow', str(i)))
+            if not getattr(self.ui, 'checkBox_nhplot'+harm, None): # check if the item exist
+                setattr(self.ui, 'checkBox_nhplot'+harm, QCheckBox(self.ui.groupBox_nhplot))
+                getattr(self.ui, 'checkBox_nhplot'+harm).setObjectName('checkBox_nhplot'+harm)
+                self.ui.horizontalLayout_nhplot_harms.addWidget(getattr(self.ui, 'checkBox_nhplot'+harm))
+                getattr(self.ui, 'checkBox_nhplot'+harm).setText(_translate('MainWindow', harm))
 
 
             # set to visable which is default. nothing to do
 
             # set all frame_sp<n> hided
-            getattr(self.ui, 'frame_sp' +str(i)).setVisible(False)
+            getattr(self.ui, 'frame_sp' +harm).setVisible(False)
 
             # add checkbox to tabWidget_ham for harmonic selection
-            setattr(self.ui, 'checkBox_tree_harm' + str(i), QCheckBox())
+            setattr(self.ui, 'checkBox_tree_harm' + harm, QCheckBox())
             self.ui.tabWidget_settings_settings_harm.tabBar().setTabButton(
                 self.ui.tabWidget_settings_settings_harm.indexOf(
-                    getattr(self.ui, 'tab_settings_settings_harm' + str(i))
+                    getattr(self.ui, 'tab_settings_settings_harm' + harm)
                 ),
                 QTabBar.LeftSide,
-                getattr(self.ui, 'checkBox_tree_harm' + str(i)
+                getattr(self.ui, 'checkBox_tree_harm' + harm
                 )
             )
 
             # set signal
-            getattr(self.ui, 'checkBox_tree_harm' + str(i)).toggled['bool'].connect(
-                getattr(self.ui, 'checkBox_harm' + str(i)).setChecked
+            getattr(self.ui, 'checkBox_tree_harm' + harm).toggled['bool'].connect(
+                getattr(self.ui, 'checkBox_harm' + harm).setChecked
             )
-            getattr(self.ui, 'checkBox_harm' + str(i)).toggled['bool'].connect(
-                getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked
+            getattr(self.ui, 'checkBox_harm' + harm).toggled['bool'].connect(
+                getattr(self.ui, 'checkBox_tree_harm' + harm).setChecked
             )
-            # getattr(self.ui, 'checkBox_tree_harm' + str(i)).toggled['bool'].connect(
-            #     getattr(self.ui, 'frame_sp' +str(i)).setVisible
+            # getattr(self.ui, 'checkBox_tree_harm' + harm).toggled['bool'].connect(
+            #     getattr(self.ui, 'frame_sp' +harm).setVisible
             # )
-            getattr(self.ui, 'checkBox_harm' + str(i)).toggled['bool'].connect(
-                getattr(self.ui, 'frame_sp' +str(i)).setVisible
+            getattr(self.ui, 'checkBox_harm' + harm).toggled['bool'].connect(
+                getattr(self.ui, 'frame_sp' +harm).setVisible
             )
 
-            getattr(self.ui, 'checkBox_harm' + str(i)).toggled['bool'].connect(self.update_widget)
+            getattr(self.ui, 'checkBox_harm' + harm).toggled['bool'].connect(self.update_widget)
 
             # checkBox_nhplot<n>
-            getattr(self.ui, 'checkBox_nhplot' + str(i)).toggled.connect(self.update_widget)
+            getattr(self.ui, 'checkBox_nhplot' + harm).toggled.connect(self.update_widget)
 
             ## add horizontal header to tableWidget_spectra_mechanics_table
             self.ui.tableWidget_spectra_mechanics_table.setHorizontalHeaderItem(int((i-1)/2), QTableWidgetItem())
-            self.ui.tableWidget_spectra_mechanics_table.horizontalHeaderItem(int((i-1)/2)).setText(_translate('MainWindow', 'n'+str(i)))
+            self.ui.tableWidget_spectra_mechanics_table.horizontalHeaderItem(int((i-1)/2)).setText(_translate('MainWindow', 'n'+harm))
 
 
 
@@ -425,17 +426,17 @@ class QCMApp(QMainWindow):
 
         #region settings_control
         # set lineEdit_startf<n> & lineEdit_endf<n> & lineEdit_startf<n>_r & lineEdit_endf<n>_r background
-        for i in range(1, self.settings['max_harmonic']+2, 2):
-            getattr(self.ui, 'lineEdit_startf' + str(i)).setStyleSheet(
+        for harm in self.all_harm_list(as_str=True):
+            getattr(self.ui, 'lineEdit_startf' + harm).setStyleSheet(
                 "QLineEdit { background: transparent; }"
             )
-            getattr(self.ui, 'lineEdit_endf' + str(i)).setStyleSheet(
+            getattr(self.ui, 'lineEdit_endf' + harm).setStyleSheet(
                 "QLineEdit { background: transparent; }"
             )
-            getattr(self.ui, 'lineEdit_startf' + str(i) + '_r').setStyleSheet(
+            getattr(self.ui, 'lineEdit_startf' + harm + '_r').setStyleSheet(
                 "QLineEdit { background: transparent; }"
             )
-            getattr(self.ui, 'lineEdit_endf' + str(i) + '_r').setStyleSheet(
+            getattr(self.ui, 'lineEdit_endf' + harm + '_r').setStyleSheet(
                 "QLineEdit { background: transparent; }"
             )
 
@@ -1041,7 +1042,7 @@ class QCMApp(QMainWindow):
         #endregion
 
 
-        #region settings_mechanis
+        #region settings_mechanics
         #########
         self.ui.tabWidget_mechanics_chn.currentChanged.connect(self.on_mech_chn_changed)
 
@@ -1051,8 +1052,8 @@ class QCMApp(QMainWindow):
         self.ui.stackedWidget_settings_mechanics_modeswitch.addAction(self.ui.actionfilm_construction_mode_switch)
         self.ui.actionfilm_construction_mode_switch.triggered.connect(self.film_construction_mode_switch)
 
-        for harm in range(1, self.settings['max_harmonic']+2, 2):
-            getattr(self.ui, 'checkBox_nhplot' + str(harm)).toggled.connect(self.update_widget)
+        for harm in self.all_harm_list(as_str=True):
+            getattr(self.ui, 'checkBox_nhplot' + harm).toggled.connect(self.update_widget)
 
         self.ui.spinBox_settings_mechanics_nhcalc_n1.valueChanged.connect(self.update_widget)
         self.ui.spinBox_settings_mechanics_nhcalc_n2.valueChanged.connect(self.update_widget)
@@ -1060,9 +1061,9 @@ class QCMApp(QMainWindow):
 
         self.ui.pushButton_settings_mechanics_clrallprops.clicked.connect(self.mech_clear)
 
-        for harm in range(1, self.settings['max_harmonic']+2, 2):
+        for harm in self.all_harm_list(as_str=True):
             # comboBox_settings_mechanics_refG
-            self.ui.comboBox_settings_mechanics_refG.addItem('G'+str(harm), userData=str(harm))
+            self.ui.comboBox_settings_mechanics_refG.addItem('G'+harm, userData=harm)
         self.ui.comboBox_settings_mechanics_refG.currentIndexChanged.connect(self.update_widget)
         self.ui.comboBox_settings_mechanics_refG.currentIndexChanged.connect(self.update_qcm_refh)
         # set an initial value to active the key in self.settings
@@ -1109,26 +1110,26 @@ class QCMApp(QMainWindow):
 
         #region spectra_show
         # add figure mpl_sp[n] into frame_sp[n]
-        for i in range(1, self.settings['max_harmonic']+2, 2):
+        for harm in self.all_harm_list(as_str=True):
             # add first ax
             setattr(
-                self.ui, 'mpl_sp' + str(i),
+                self.ui, 'mpl_sp' + harm,
                 MatplotlibWidget(
-                    parent=getattr(self.ui, 'frame_sp' + str(i)),
+                    parent=getattr(self.ui, 'frame_sp' + harm),
                     axtype='sp',
                     showtoolbar=False,
                 )
             )
-            # getattr(self.ui, 'mpl_sp' + str(i)).fig.text(0.01, 0.98, str(i), va='top',ha='left') # option: weight='bold'
-            getattr(self.ui, 'mpl_sp' + str(i)).update_sp_text_harm(str(i))
+            # getattr(self.ui, 'mpl_sp' + harm).fig.text(0.01, 0.98, harm, va='top',ha='left') # option: weight='bold'
+            getattr(self.ui, 'mpl_sp' + harm).update_sp_text_harm(harm)
             # set mpl_sp<n> border
-            getattr(self.ui, 'mpl_sp' + str(i)).setStyleSheet(
+            getattr(self.ui, 'mpl_sp' + harm).setStyleSheet(
                 "border: 0;"
             )
-            getattr(self.ui, 'mpl_sp' + str(i)).setContentsMargins(0, 0, 0, 0)
-            getattr(self.ui, 'frame_sp' + str(i)).setLayout(
+            getattr(self.ui, 'mpl_sp' + harm).setContentsMargins(0, 0, 0, 0)
+            getattr(self.ui, 'frame_sp' + harm).setLayout(
                 self.set_frame_layout(
-                    getattr(self.ui, 'mpl_sp' + str(i))
+                    getattr(self.ui, 'mpl_sp' + harm)
                 )
             )
 
@@ -1235,14 +1236,14 @@ class QCMApp(QMainWindow):
         self.ui.radioButton_data_showmarked.clicked.connect(self.update_mpl_plt12)
 
         # set signals to update plot 1 & 2 options
-        for i in range(1, self.settings['max_harmonic']+2, 2):
-            getattr(self.ui, 'checkBox_plt1_h' + str(i)).stateChanged.connect(self.update_widget)
-            getattr(self.ui, 'checkBox_plt1_h' + str(i)).stateChanged.connect(self.update_mpl_plt1)
-            getattr(self.ui, 'checkBox_plt1_h' + str(i)).stateChanged.connect(self.clr_mpl_harm)
+        for harm in self.all_harm_list(as_str=True):
+            getattr(self.ui, 'checkBox_plt1_h' + harm).stateChanged.connect(self.update_widget)
+            getattr(self.ui, 'checkBox_plt1_h' + harm).stateChanged.connect(self.update_mpl_plt1)
+            getattr(self.ui, 'checkBox_plt1_h' + harm).stateChanged.connect(self.clr_mpl_harm)
 
-            getattr(self.ui, 'checkBox_plt2_h' + str(i)).stateChanged.connect(self.update_widget)
-            getattr(self.ui, 'checkBox_plt2_h' + str(i)).stateChanged.connect(self.update_mpl_plt2)
-            getattr(self.ui, 'checkBox_plt2_h' + str(i)).stateChanged.connect(self.clr_mpl_harm)
+            getattr(self.ui, 'checkBox_plt2_h' + harm).stateChanged.connect(self.update_widget)
+            getattr(self.ui, 'checkBox_plt2_h' + harm).stateChanged.connect(self.update_mpl_plt2)
+            getattr(self.ui, 'checkBox_plt2_h' + harm).stateChanged.connect(self.clr_mpl_harm)
 
         # set signals to update plot 1 options
         self.ui.comboBox_plt1_optsy.currentIndexChanged.connect(self.update_widget)
@@ -1993,7 +1994,7 @@ class QCMApp(QMainWindow):
         message: list of strings
         forcepop: True, the message will popup anyway
 
-        return process: Ture/False for checking
+        return process: True/False for checking
         '''
 
         process = True
@@ -2457,7 +2458,7 @@ class QCMApp(QMainWindow):
         # constrain xlim
         print(f) #testprint
         print(type(f)) #testprint
-        if (f is not None) and (f[0] != f[-1]): # f is available
+        if (f is not None) and (len(f) > 0 ) and (f[0] != f[-1]): # f is available
             self.ui.mpl_spectra_fit.ax[0].set_xlim(f[0], f[-1])
             self.ui.mpl_spectra_fit.ax[1].set_xlim(f[0], f[-1])
             self.ui.mpl_spectra_fit.ax[0].set_ylim(min(G)-0.05*(max(G)-min(G)), max(G)+0.05*(max(G)-min(G)))
@@ -2647,7 +2648,7 @@ class QCMApp(QMainWindow):
             xlabel = r'$f$ (Hz)'
             y2label = r'$B_P$ (mS)'
 
-        for harm in range(1, self.settings['max_harmonic']+2, 2):
+        for harm in self.all_harm_list():
             harm = str(harm)
             # clear lines
             getattr(self.ui, 'mpl_sp' + harm).clr_lines()
@@ -2661,8 +2662,7 @@ class QCMApp(QMainWindow):
 
 
     def mpl_sp_clr_chis(self):
-        for harm in range(1, self.settings['max_harmonic']+2, 2):
-            harm = str(harm)
+        for harm in self.all_harm_list(as_str=True):
             # clear .t['chi']
             getattr(self.ui, 'mpl_sp' + harm).update_sp_text_chi()
 
@@ -2824,7 +2824,7 @@ class QCMApp(QMainWindow):
         marks = self.data_saver.get_marks(chn_name, tocolumns=True)
 
         # use all harms. the harmonics without data will be [] in sel_idx_dict
-        harms = [str(harm) for harm in range(1, self.settings['max_harmonic']+2, 2)]
+        harms = self.all_harm_list(as_str=True)
         print(harms) #testprint
         # initiate sel_idx_dict. Since will will use all data points overwrite, it can be any shape dict
         sel_idx_dict = {}
@@ -2979,7 +2979,7 @@ class QCMApp(QMainWindow):
         plt_str: 'plt1' or 'plt2'
         return list of harmonics in strings
         '''
-        return [str(harm) for harm in range(1, self.settings['max_harmonic']+2, 2) if self.settings.get('checkBox_' + plt_str + '_h' + str(harm), False)]
+        return [harm for harm in self.all_harm_list(as_str=True) if self.settings.get('checkBox_' + plt_str + '_h' + harm, False)]
 
 
     def get_plt_chnname(self, plt_str):
@@ -3117,7 +3117,7 @@ class QCMApp(QMainWindow):
         getattr(self.ui, 'mpl_' + plt_str).update_data(*data_list)
 
         # # get keys of harms don't want to plot
-        # clr_list = ['l'+str(harm) for harm in range(1, self.settings['max_harmonic']+2, 2) if not self.settings.get('checkBox_' + plt_str + '_h' + str(harm), False)]
+        # clr_list = ['l'+harm for harm in self.all_harm_list(as_str=True) if not self.settings.get('checkBox_' + plt_str + '_h' + harm, False)]
         # # clear harmonics don't plot
         # getattr(self.ui, 'mpl_' + plt_str).clr_lines(clr_list)
 
@@ -3140,13 +3140,13 @@ class QCMApp(QMainWindow):
             if len(xdata.shape) == 1: # one column e.g.: tuple (1,) is series
                 harm_xdata = xdata
             else: # multiple columns
-                harm_xdata = xdata.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze() # convert to series
+                harm_xdata = xdata.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze(axis=1) # convert to series
 
             # set ydata for harm
             if len(ydata.shape) == 1: # series
                 harm_ydata = ydata
             else: # multiple columns
-                harm_ydata = ydata.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze() # convert to series
+                harm_ydata = ydata.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze(axis=1) # convert to series
 
             data_list.append({'ln': line_group+harm, 'x': harm_xdata, 'y': harm_ydata})
 
@@ -3178,22 +3178,22 @@ class QCMApp(QMainWindow):
             if len(xdata.shape) == 1: # one column e.g.: tuple (1,) is series
                 harm_xdata = xdata
             else: # multiple columns
-                harm_xdata = xdata.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze() # convert to series
+                harm_xdata = xdata.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze(axis=1) # convert to series
             if xerr is not None: # there is err data
                 if len(xdata.shape) == 1: # one column e.g.: tuple (1,) is series
                     harm_xerr = xerr
                 else: # multiple columns
-                    harm_xerr = xerr.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze() # convert to series
+                    harm_xerr = xerr.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze(axis=1) # convert to series
             # set ydata for harm
             if len(ydata.shape) == 1: # series
                 harm_ydata = ydata
             else: # multiple columns
-                harm_ydata = ydata.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze() # convert to series
+                harm_ydata = ydata.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze(axis=1) # convert to series
             if yerr is not None: # there is err data
                 if len(ydata.shape) == 1: # series
                     harm_yerr = yerr
                 else: # multiple columns
-                    harm_yerr = yerr.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze() # convert to series
+                    harm_yerr = yerr.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze(axis=1) # convert to series
 
             if (xerr is not None) or (yerr is not None): # exist error
                 # change None to np.nan
@@ -3501,7 +3501,7 @@ class QCMApp(QMainWindow):
 
 
     def set_mpl_lm_style(self, signal):
-        line_list = ['lm'+str(i) for i in range(1, self.settings['max_harmonic']+2, 2)]
+        line_list = ['lm'+harm for harm in self.all_harm_list(as_str=True)]
         if signal:
             self.ui.mpl_plt1.change_style(line_list, linestyle='-')
             self.ui.mpl_plt2.change_style(line_list, linestyle='-')
@@ -3522,7 +3522,7 @@ class QCMApp(QMainWindow):
         clear .l['l<n>'] in mpl_<plt_str>
         '''
         if not harm_list:
-            harm_list = [str(harm) for harm in range(1, self.settings['max_harmonic']+2, 2)]
+            harm_list = self.all_harm_list(as_str=True)
         for line_group in line_group_list:
             # get keys of harms don't want to plot
             clr_list = [line_group+harm for harm in harm_list]
@@ -4167,7 +4167,7 @@ class QCMApp(QMainWindow):
 
         # {'0': {'calc': False, 'source': 'ind', 'indchn': 'ref', 'val': '[2]'}, '1': {'calc': True, 'source': 'ind', 'indchn': 'samp', 'val': '[]'}}
 
-        # 1. find the layer w/ calc = Ture
+        # 1. find the layer w/ calc = True
         calc_num = None
         for n, dic in film_dict.items(): # n is str
             if dic['calc']:
@@ -4504,7 +4504,7 @@ class QCMApp(QMainWindow):
         self.load_film_layers_widgets()
 
 
-    def on_changed_spinBox_spectra_mechanics_currid(self, idx):
+    def on_changed_spinBox_spectra_mechanics_currid(self, ind):
         '''
         collect data and send to update_spectra_mechanics_table
         '''
@@ -4516,19 +4516,19 @@ class QCMApp(QMainWindow):
         qcm_df = self.data_saver.df_qcm(chn_name)
         
         # check index range
-        if idx not in qcm_df.index:
-            idx = qcm_df.index[-1] # set idx as the max
-            self.ui.spinBox_spectra_mechanics_currid.setValue(idx)
-            print('exceeds the index. reset to {}'.format(idx)) #testprint
+        if ind not in qcm_df.index:
+            ind = qcm_df.index[-1] # set ind as the max
+            self.ui.spinBox_spectra_mechanics_currid.setValue(ind)
+            print('exceeds the index. reset to {}'.format(ind)) #testprint
         else:
-            print('idx in range.') #testprint
-            refh = int(self.settings['comboBox_settings_mechanics_refG'])
+            print('ind in range.') #testprint
+            # refh = int(self.settings['comboBox_settings_mechanics_refG'])
 
             nhcalc = self.gen_nhcalc_str()
 
-            print('idx', idx) #testprint
+            print('ind', ind) #testprint
             print('chn_name', chn_name) #testprint
-            print('refh', refh) #testprint
+            # print('refh', refh) #testprint
             print('nhcalc', nhcalc) #testprint
 
             # check if solution is in data_saver
@@ -4537,19 +4537,19 @@ class QCMApp(QMainWindow):
                 print('Solution of {} does not exist.'.format(mech_key))
                 return
 
-            mech_df = self.data_saver.get_mech_df_in_prop(chn_name, nhcalc, refh)
+            mech_df = self.data_saver.get_mech_df_in_prop(chn_name, nhcalc)
 
             # print('qcm_df', qcm_df) #testprint
             # print('mech_df', mech_df) #testprint
 
             # get queue_id
-            print(qcm_df.queue_id) #testprint
-            queue_id = qcm_df.queue_id.loc[idx]
+            # print(qcm_df.queue_id) #testprint
+            queue_id = qcm_df.queue_id.loc[ind]
 
             # qcm data of queue_id
-            qcm_queue = qcm_df.loc[[idx], :].copy() # as a dataframe
+            qcm_queue = qcm_df.loc[[ind], :].copy() # as a dataframe
             # mechanic data of queue_id
-            mech_queue = mech_df.loc[[idx], :].copy()  # as a dataframe 
+            mech_queue = mech_df.loc[[ind], :].copy()  # as a dataframe 
             # print('qcm_queue', qcm_queue) #testprint
             # print('mech_queue', mech_queue) #testprint
             
@@ -4778,7 +4778,7 @@ class QCMApp(QMainWindow):
             return
 
         # get harmonics to plot
-        plt_harms = [str(i) for i in range(1, self.settings['max_harmonic']+2, 2) if self.settings.get('checkBox_nhplot' + str(i), None)]
+        plt_harms = [harm for harm in self.all_harm_list(as_str=True) if self.settings.get('checkBox_nhplot' + harm, None)]
         print('plt_harms', plt_harms) #testprint
 
         if not plt_harms: # no harmonic selected
@@ -4869,9 +4869,13 @@ class QCMApp(QMainWindow):
 
             print('line_list', line_list) #testprint
             # update data in figure
-            self.prop_plot_list[-1].update_data(*prop_list, *line_list)
-            # add to scrollarea
-            self.update_mpl_to_prop_scrollarea()
+            if len(self.prop_plot_list) > 0: # there are prop plot
+                self.prop_plot_list[-1].update_data(*prop_list, *line_list)
+                # add to scrollarea
+                self.update_mpl_to_prop_scrollarea()
+            else: # there is no prop plot in the list or some thing wrong
+                print(self.prop_plot_list) #testprint to show the structrue for debug
+                pass
 
 
     def get_label_replace_refh_unit(self, var, refh):
@@ -5368,8 +5372,8 @@ class QCMApp(QMainWindow):
         fbase = float(self.settings['comboBox_base_frequency']) * 1e6 # in Hz
         BW = float(self.settings['comboBox_bandwidth']) * 1e6 # in Hz
         freq_range = {}
-        for harm in range(1, self.settings['max_harmonic']+2, 2):
-            freq_range[str(harm)] = [harm*fbase-BW, harm*fbase+BW]
+        for i in self.all_harm_list():
+            freq_range[str(i)] = [i*fbase-BW, i*fbase+BW]
         self.settings['freq_range'] = freq_range
         print('freq_range', self.settings['freq_range']) #testprint
 
@@ -5416,8 +5420,7 @@ class QCMApp(QMainWindow):
         if 'freq_span' in self.settings and self.settings['freq_span']:  # if self.settings['freq_span'] exist
             print('##################\n', self.settings['freq_span']) #testprint
             freq_span = {'samp': {}, 'ref': {}}
-            for harm in range(1, self.settings['max_harmonic']+2, 2):
-                harm = str(harm)  # convert from int to str
+            for harm in self.all_harm_list(as_str=True):
                 if harm in self.settings['freq_span']['samp']:
                     freq_span['samp'][harm] = self.span_check(harm, *self.settings['freq_span']['samp'][harm])
                     freq_span['ref'][harm] = self.span_check(harm, *self.settings['freq_span']['ref'][harm])
@@ -5439,8 +5442,7 @@ class QCMApp(QMainWindow):
         # get display mode (startstop or centerspan)
         disp_mode = self.settings['comboBox_settings_control_dispmode']
         # update lineEdit_startf<n> & lineEdit_endf<n>
-        for harm in range(1, self.settings['max_harmonic']+2, 2):
-            harm = str(harm)
+        for harm in self.all_harm_list(as_str=True):
             # f1, f2 = self.settings['freq_span']['samp'][harm] # in Hz
             f1, f2 = self.get_freq_span(harm=harm, chn_name='samp') # in Hz
             # f1r, f2r = self.settings['freq_span']['ref'][harm] # in Hz
@@ -5584,9 +5586,9 @@ class QCMApp(QMainWindow):
         self.ui.label_settings_control_samp.setVisible(value)
         self.ui.label_settings_control_label1.setVisible(value)
         self.ui.label_settings_control_label2.setVisible(value)
-        for i in range(1, self.settings['max_harmonic']+2, 2):
-            getattr(self.ui, 'lineEdit_startf' + str(i)).setVisible(value)
-            getattr(self.ui, 'lineEdit_endf' + str(i)).setVisible(value)
+        for harm in self.all_harm_list(as_str=True):
+            getattr(self.ui, 'lineEdit_startf' + harm).setVisible(value)
+            getattr(self.ui, 'lineEdit_endf' + harm).setVisible(value)
 
 
     def setvisible_refwidgets(self, value=False):
@@ -5596,9 +5598,9 @@ class QCMApp(QMainWindow):
         self.ui.label_settings_control_ref.setVisible(value)
         self.ui.label_settings_control_label1_r.setVisible(value)
         self.ui.label_settings_control_label2_r.setVisible(value)
-        for i in range(1, self.settings['max_harmonic']+2, 2):
-            getattr(self.ui, 'lineEdit_startf' + str(i) + '_r').setVisible(value)
-            getattr(self.ui, 'lineEdit_endf' + str(i) + '_r').setVisible(value)
+        for harm in self.all_harm_list(as_str=True):
+            getattr(self.ui, 'lineEdit_startf' + harm + '_r').setVisible(value)
+            getattr(self.ui, 'lineEdit_endf' + harm + '_r').setVisible(value)
 
 
     def update_vnachannel(self, index):
@@ -5879,11 +5881,11 @@ class QCMApp(QMainWindow):
         self.load_comboBox(self.ui.comboBox_settings_control_dispmode)
 
         # load harm state
-        for i in range(1, self.settings['max_harmonic']+2, 2):
+        for harm in self.all_harm_list(as_str=True):
             # settings/control/Harmonics
 
-            getattr(self.ui, 'checkBox_harm' + str(i)).setChecked(self.settings.get('checkBox_harm' + str(i), False))
-            getattr(self.ui, 'checkBox_tree_harm' + str(i)).setChecked(self.settings.get('checkBox_harm' + str(i), False))
+            getattr(self.ui, 'checkBox_harm' + harm).setChecked(self.settings.get('checkBox_harm' + harm, False))
+            getattr(self.ui, 'checkBox_tree_harm' + harm).setChecked(self.settings.get('checkBox_harm' + harm, False))
 
         # store t0_shift in a temp variable to prevent it been overwritten while loading reference time
         print(self.settings.keys()) #testprint
@@ -5993,9 +5995,9 @@ class QCMApp(QMainWindow):
         self.load_comboBox(self.ui.comboBox_plt2_optsx)
 
         # set checkBox_plt<1 and 2>_h<harm>
-        for harm in range(1, self.settings['max_harmonic']+2, 2):
-            getattr(self.ui, 'checkBox_plt1_h' + str(harm)).setChecked(self.settings.get('checkBox_plt1_h' + str(harm), False))
-            getattr(self.ui, 'checkBox_plt2_h' + str(harm)).setChecked(self.settings.get('checkBox_plt1_h' + str(harm), False))
+        for harm in self.all_harm_list(as_str=True):
+            getattr(self.ui, 'checkBox_plt1_h' + harm).setChecked(self.settings.get('checkBox_plt1_h' + harm, False))
+            getattr(self.ui, 'checkBox_plt2_h' + harm).setChecked(self.settings.get('checkBox_plt1_h' + harm, False))
 
         # set radioButton_plt<n>_samp/ref
         self.ui.radioButton_plt1_samp.setChecked(self.settings['radioButton_plt1_samp'])
@@ -6023,8 +6025,7 @@ class QCMApp(QMainWindow):
         # settings_mechanics
         self.ui.checkBox_settings_mech_liveupdate.setChecked(self.settings['checkBox_settings_mech_liveupdate'])
 
-        for harm in range(1, self.settings['max_harmonic']+2, 2):
-            harm = str(harm)
+        for harm in self.all_harm_list(as_str=True):
             getattr(self.ui, 'checkBox_nhplot' + harm).setChecked(self.settings.get('checkBox_nhplot' + harm, False))
 
         self.ui.spinBox_settings_mechanics_nhcalc_n1.setValue(self.settings['spinBox_settings_mechanics_nhcalc_n1'])
@@ -6135,7 +6136,7 @@ class QCMApp(QMainWindow):
         if self.settings['comboBox_ref_channel'] != 'none': # reference channel is not selected
             chn_name_list.append('ref')
 
-        harm_list = [str(i) for i in range(1, self.settings['max_harmonic']+2, 2) if self.settings.get('checkBox_harm' + str(i), None)] # get all checked harmonic into a list
+        harm_list = [harm for harm in self.all_harm_list(as_str=True) if self.settings.get('checkBox_harm' + harm, None)] # get all checked harmonic into a list
 
         print(self.settings['comboBox_samp_channel']) #testprint
         print(self.settings['comboBox_ref_channel']) #testprint
@@ -6358,6 +6359,10 @@ class QCMApp(QMainWindow):
         indeces = sel_harm_dict.keys()
         print('sel_harm_dict\n', sel_harm_dict) #testprint
 
+        # reset l['strk'] ("+")
+        for harm in self.all_harm_list(as_str=True):
+            getattr(self.ui, 'mpl_sp' + harm).clr_lines(l_list=['strk'])
+
         for idx in indeces:
             # initiate data of queue_id
 
@@ -6463,8 +6468,8 @@ class QCMApp(QMainWindow):
         '''
         return all checked harmonics in a list of str
         '''
-        return [str(i) for i in range(1, self.settings['max_harmonic']+2, 2) if
-        self.settings.get('checkBox_harm' + str(i), None)] # get all checked harmonics
+        return [harm for harm in self.all_harm_list(as_str=True) if
+        self.settings.get('checkBox_harm' + harm, None)] # get all checked harmonics
 
     def update_progressbar(self):
         '''
@@ -6496,6 +6501,15 @@ class QCMApp(QMainWindow):
         return int(self.counter) % int(self.settings['spinBox_refreshresolution'])
 
 
+    def all_harm_list(self, as_str=False):
+        '''
+        return a list with all harms as int
+        '''
+        if as_str:
+            return [str(i) for i in range(1, self.settings['max_harmonic']+2, 2)]
+            
+        else:
+            return list(range(1, self.settings['max_harmonic']+2, 2))
 
 
 #endregion

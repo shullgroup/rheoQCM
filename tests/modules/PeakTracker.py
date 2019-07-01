@@ -817,12 +817,13 @@ class PeakTracker:
             else: # for fixed number (n > len(indices))
                 # add some rough guess values
                 # use the last values of each variables
+                #TODO refine the initial data !!!
                 self.peak_guess[i] = {
-                    'amp': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['amp'],  
+                    'amp': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['amp'] if self.harmoutput[chn_name][harm]['found_n'] > 0 else np.max(self.resonance) - np.min(self.resonance),  
                     'cen': self.x[randrange(int(len(self.x) * 0.3), int(len(self.x) * 0.6), self.found_n)], 
                     # devide x range to n parts and randomly choose one. Try to keep the peaks not too close
-                    'wid': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['wid'], 
-                    'phi': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['phi'],
+                    'wid': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['wid'] if self.harmoutput[chn_name][harm]['found_n'] > 0 else (np.max(self.x) - np.min(self.x)) / 10, 
+                    'phi': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['phi'] if self.harmoutput[chn_name][harm]['found_n'] > 0 else 0,
                 }
         # now update 'found_n in harmoutput
         self.update_output(chn_name, harm, found_n=self.found_n)

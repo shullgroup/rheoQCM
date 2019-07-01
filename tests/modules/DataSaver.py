@@ -796,7 +796,7 @@ class DataSaver:
         self.saveflg = False
     
 
-    def get_mech_df_in_prop(self, chn_name, nhcalc, refh):
+    def get_mech_df_in_prop(self, chn_name, nhcalc):
         '''
         get mech_df from self.'chn_name'_mech[mech_key]
         '''
@@ -1113,7 +1113,7 @@ class DataSaver:
 
     def get_marked_harm_col_from_list_column(self, chn_name, harm, col, deltaval=False, norm=False, mark=False):
         cols = self.get_list_column_to_columns(chn_name, col, mark=False, deltaval=deltaval, norm=norm) # get all data
-        harm_col = cols.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze() # convert to series
+        harm_col = cols.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze(axis=1) # convert to series
 
         if mark:
             harm_marks = self.get_harm_marks(chn_name, harm)
@@ -1125,7 +1125,7 @@ class DataSaver:
 
     def get_marked_harm_mech_col_from_list_mech_column(self, chn_name, harm, mech_key, col, mark=False):
         cols = self.get_mech_column_to_columns(chn_name, mech_key, col, mark=False) # get all data
-        harm_col = cols.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze() # convert to series
+        harm_col = cols.filter(regex=r'\D{}$'.format(harm), axis=1).squeeze(axis=1) # convert to series
 
         if mark:
             harm_marks = self.get_harm_marks(chn_name, harm)
@@ -2106,8 +2106,8 @@ class DataSaver:
         df['marks'] = self.get_marks(chn_name)
 
         # get freqs and gamms in form of [n1, n3, n5, ...]
-        fs = self.get_cols(chn_name, cols=['fs']).squeeze() # convert to series
-        gs = self.get_cols(chn_name, cols=['gs']).squeeze() # convert to series
+        fs = self.get_cols(chn_name, cols=['fs']).squeeze(axis=1) # convert to series
+        gs = self.get_cols(chn_name, cols=['gs']).squeeze(axis=1) # convert to series
         # another way is to get the series directly as follow
         # fs = getattr(self, chn_name)['fs'].copy()
         # gs = getattr(self, chn_name)['gs'].copy()

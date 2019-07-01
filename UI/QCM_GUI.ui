@@ -352,8 +352,14 @@ background-color: red;
                    </item>
                    <item>
                     <widget class="QLabel" name="label_settings_control_samp">
+                     <property name="font">
+                      <font>
+                       <weight>75</weight>
+                       <bold>true</bold>
+                      </font>
+                     </property>
                      <property name="text">
-                      <string>S Channel (Hz)</string>
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#00aa00;&quot;&gt;S Channel (Hz)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>
@@ -362,8 +368,14 @@ background-color: red;
                    </item>
                    <item>
                     <widget class="QLabel" name="label_settings_control_ref">
+                     <property name="font">
+                      <font>
+                       <weight>75</weight>
+                       <bold>true</bold>
+                      </font>
+                     </property>
                      <property name="text">
-                      <string>R Channel (Hz)</string>
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#aa0000;&quot;&gt;R Channel (Hz)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="alignment">
                       <set>Qt::AlignCenter</set>
@@ -677,7 +689,7 @@ background-color: red;
                       </sizepolicy>
                      </property>
                      <property name="text">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Scan interval (s) &lt;span style=&quot; vertical-align:super;&quot;&gt;b&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Scan interval (s)&lt;span style=&quot; vertical-align:super;&quot;&gt;b&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                     </widget>
                    </item>
@@ -2773,7 +2785,7 @@ p, li { white-space: pre-wrap; }
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <widget class="QWidget" name="tab_settings_mechanis_sampchn">
                     <attribute name="title">
@@ -5200,12 +5212,12 @@ border: 1px solid blue;
                   </row>
                   <row>
                    <property name="text">
-                    <string>Δfcalc (Hz)</string>
+                    <string>ΔΓ (Hz)</string>
                    </property>
                   </row>
                   <row>
                    <property name="text">
-                    <string>ΔΓ (Hz)</string>
+                    <string>Δfcalc (Hz)</string>
                    </property>
                   </row>
                   <row>
@@ -5240,6 +5252,21 @@ border: 1px solid blue;
                   </row>
                   <row>
                    <property name="text">
+                    <string>d/λₙ</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>δρ (μm∙g/cm³)</string>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>7</pointsize>
+                    </font>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
                     <string>|η*|ρ (Pa∙s∙g/cm³)</string>
                    </property>
                    <property name="font">
@@ -5250,22 +5277,7 @@ border: 1px solid blue;
                   </row>
                   <row>
                    <property name="text">
-                    <string>d/λₙ</string>
-                   </property>
-                  </row>
-                  <row>
-                   <property name="text">
                     <string>λρ (μm∙g/cm³)</string>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>7</pointsize>
-                    </font>
-                   </property>
-                  </row>
-                  <row>
-                   <property name="text">
-                    <string>δρ (μm∙g/cm³)</string>
                    </property>
                    <property name="font">
                     <font>
