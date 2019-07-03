@@ -419,7 +419,8 @@ class QCM:
 
 
     def normdelfstar(self, n, dlam_refh, phi):
-        return -np.tan(2*np.pi*self.dlam(n, dlam_refh, phi)*(1-1j*np.tan(phi/2))) / (2*np.pi*self.dlam(n, dlam_refh, phi)*(1-1j*np.tan(phi/2)))
+        dlam_n = self.dlam(n, dlam_refh, phi)
+        return -np.tan(2*np.pi*dlam_n*(1-1j*np.tan(phi/2))) / (2*np.pi*dlam_n*(1-1j*np.tan(phi/2)))
 
 
     def calc_drho(self, n1, delfstar, dlam_refh, phi):
@@ -429,6 +430,7 @@ class QCM:
     def rhcalc(self, nh, dlam_refh, phi):
         ''' nh: list '''
         return np.real(self.normdelfstar(nh[0], dlam_refh, phi)) /  np.real(self.normdelfstar(nh[1], dlam_refh, phi))
+
 
     def rh_from_delfstar(self, nh, delfstar):
         ''' this func is the same as rhexp!!! '''

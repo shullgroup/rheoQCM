@@ -1483,8 +1483,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>286</width>
-                   <height>153</height>
+                   <width>98</width>
+                   <height>71</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -5287,12 +5287,12 @@ border: 1px solid blue;
                   </row>
                   <row>
                    <property name="text">
-                    <string>Δf/Δfₛₙ</string>
+                    <string>Δfₙ/Δfₛₙ</string>
                    </property>
                   </row>
                   <row>
                    <property name="text">
-                    <string>ΔΓ/Δfₛₙ</string>
+                    <string>ΔΓₙ/Δfₛₙ</string>
                    </property>
                   </row>
                   <row>

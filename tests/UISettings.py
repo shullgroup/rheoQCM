@@ -278,9 +278,10 @@ settings_init = {
         'dlams':             r'd/$\lambda_{n}$',
         'lamrhos':           r'$\lambda\rho$ ($\mu$m$\cdot$g/cm$^3$)',
         'delrhos':           r'$\delta\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-        'delf_delfsns':      r'$\Delta$f/$\Delta$f$_{sn}$',
-        'delg_delfsn_exps':  r'$(\Delta\Gamma$/$\Delta$f$_{sn})_{exp}$',
-        'delg_delfsn_calcs': r'$\Delta\Gamma$/$\Delta$f$_{sn}$',
+        'delf_delfsn_exps':  r'$\Delta$f_{n}/$\Delta$f$_{sn}_{exp}$',
+        'delf_delfsn_calcs': r'$\Delta$f_{n}/$\Delta$f$_{sn}$',
+        'delg_delfsn_exps':  r'$(\Delta\Gamma_{n}$/$\Delta$f$_{sn})_{exp}$',
+        'delg_delfsn_calcs': r'$\Delta\Gamma$_{n}/$\Delta$f$_{sn}$',
         'rh_exp':            r'r$_{h,exp}$',
         'rh_calc':           r'r$_h$',
         'rd_exps':           r'r$_{d,exp}$',
@@ -301,8 +302,8 @@ settings_init = {
         'dlams':             'd/' + u'\u03BB\u2099', # d/λₙ
         'lamrhos':           u'\u03BB\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # λρ (μm∙g/m³)
         'delrhos':           u'\u03B4\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # δρ (μm∙g/m³)
-        'delf_delfsns':      u'\u0394' + 'f/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
-        'delg_delfsn_calcs': u'\u0394\u0393' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓ/Δfₛₙ
+        'delf_delfsn_calcs':      u'\u0394' + 'f' + u'\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
+        'delg_delfsn_calcs': u'\u0394\u0393\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓ/Δfₛₙ
         'rh_calc':           'rh',
         'rd_calcs':          'rd',
         't':                 'Time (s)', # Time (s)

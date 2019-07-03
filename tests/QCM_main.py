@@ -4855,12 +4855,12 @@ class QCMApp(QMainWindow):
             prop_list = self.prepare_harm_data_for_mpl_prop_update(chn_name, figharms, prop_group, xdata, ydata, xerr, yerr, show_marked_when_all=False)
 
             # calc value from single harm for line_grop
-            if '_calcs' in var_yx[0] or '_calcs' in var_yx[1]: # var in mech_keys_multiple
+            if '_calc' in var_yx[0] or '_calc' in var_yx[1]: # var in mech_keys_multiple
                 line_xdata = xdata
                 line_ydata = ydata
-                if '_calcs' in var_yx[0]:
+                if '_calc' in var_yx[0]:
                     line_ydata, _ = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[0].replace('calc', 'exp'), mark)
-                if '_calcs' in var_yx[1]:
+                if '_calc' in var_yx[1]:
                     line_xdata, _ = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[1].replace('calc', 'exp'), mark)
                 line_list = self.prepare_harm_data_for_mpl_prop_update(chn_name, figharms, line_group, line_xdata, line_ydata, show_marked_when_all=False) # use the same value
 
