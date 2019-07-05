@@ -125,6 +125,10 @@ settings_init = {
 
     # list for disabled widges for current version
     'version_hide_list':[
+        'pushButton_settings_la', 
+        'pushButton_settings_ra', 
+        'pushButton_data_la', 
+        'pushButton_data_ra', 
         # hide reference time widgets to simplify the setup
         # reference time can always be changed by shifted_t0
         'dateTimeEdit_reftime',
@@ -302,8 +306,8 @@ settings_init = {
         'dlams':             'd/' + u'\u03BB\u2099', # d/λₙ
         'lamrhos':           u'\u03BB\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # λρ (μm∙g/m³)
         'delrhos':           u'\u03B4\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # δρ (μm∙g/m³)
-        'normdelf_calcs':      u'\u0394' + 'f' + u'\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
-        'normdelg_calcs': u'\u0394\u0393\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓ/Δfₛₙ
+        'normdelf_calcs':      u'\u0394' + 'f' + u'\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δfₙ/Δfₛₙ
+        'normdelg_calcs': u'\u0394\u0393\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓₙ/Δfₛₙ
         'rh_calc':           'rh',
         'rd_calcs':          'rd',
         't':                 'Time (s)', # Time (s)
@@ -494,15 +498,8 @@ settings_init = {
     'span_ctrl_steps': [1, 2, 5, 10, 20, 50, 100],
 
 
-    # mpl setings
+    ## mpl settings
     'max_mpl_toolbar_height': 20, # in px
-
-    'contour': {
-        'levels': 20, # contour levels
-        'num': 100, # percentage of step increase for phi and dlam
-        'phi_lim': [0, 90], # phi limit in degree
-        'dlam_lim': [0, 1], # d/lambda limit
-    },
 
     # font size for mpl_sp figures
     'mpl_sp_fontsize': 5,
@@ -534,6 +531,37 @@ settings_init = {
 
 
     'prop_plot_minmum_row_height': 300, # height of property figure when plotted in line
+
+    # contour settings
+    #comboBox_settings_mechanics_contourdata
+    'contour_data_opts': OrderedDict([
+        ('none',   'W/O Data'),
+        ('w_curr',   'W/ Current'),
+        ('w_data',   'W/ Data'),
+    ]),
+    #comboBox_settings_mechanics_contourtype
+    'contour_type_opts': OrderedDict([
+        ('normfnormg',   u'\u0394' + 'f' + u'\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099' + '&' + u'\u0394\u0393\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099'),
+        ('rhrd',   'rh & rd'),
+    ]),
+
+    # tableWidget_settings_mechanics_contoursettings
+    # limit values for ploting
+    'contour_plot_lim_tab':{
+        'dlam': [0, 0.5],
+        'phi': [0, 90],
+        'normf': [None, None],
+        'normg': [None, None],
+        'rh': [1, 1.2],
+        'rd': [-0.2, 0],
+    },
+
+    'contour_array': {
+        'levels': 20, # contour levels
+        'num': 100, # percentage of step increase for phi and dlam
+        'phi_lim': [0, np.pi / 2], # phi limit in degree
+        'dlam_lim': [0, 1], # d/lambda limit
+    },
 
 
     ############ params for temperature modules ###########
@@ -770,6 +798,10 @@ settings_default = {
     'checkBox_settings_mechanics_witherror': True, # errorbar
 
     'comboBox_settings_mechanics_selectmodel': 'onelayer',
+
+    'comboBox_settings_mechanics_contourdata': 'none',
+
+    'comboBox_settings_mechanics_contourtype': 'normfnormg',
 }
 
 

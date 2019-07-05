@@ -383,9 +383,19 @@ class QCMApp(QMainWindow):
             # checkBox_nhplot<n>
             getattr(self.ui, 'checkBox_nhplot' + harm).toggled.connect(self.update_widget)
 
-            ## add horizontal header to tableWidget_spectra_mechanics_table
+            ## add  headers to 
+            # horizontal headers
             self.ui.tableWidget_spectra_mechanics_table.setHorizontalHeaderItem(int((i-1)/2), QTableWidgetItem())
             self.ui.tableWidget_spectra_mechanics_table.horizontalHeaderItem(int((i-1)/2)).setText(_translate('MainWindow', 'n'+harm))
+
+        ## add vertival headers to tableWidget_spectra_mechanics_table
+        nrows = len(settings_init['mech_table_rowheaders'])
+        print('prop table n rows', nrows) #testprint
+        self.ui.tableWidget_spectra_mechanics_table.setRowCount(nrows)
+        for r, (key, val) in enumerate(settings_init['mech_table_rowheaders'].items()):
+            self.ui.tableWidget_spectra_mechanics_table.setVerticalHeaderItem(r, QTableWidgetItem())
+            self.ui.tableWidget_spectra_mechanics_table.verticalHeaderItem(r).setText(_translate('MainWindow', val))
+
 
 
 
@@ -1322,21 +1332,21 @@ class QCMApp(QMainWindow):
 
         # add menu to toolbutton
 
-        # toolButton_settings_data_refit
+        # toolButton_settings_data_recreate_from_raw
         # create menu: menu_settings_data_refit
-        self.ui.menu_settings_data_refit = QMenu(self.ui.toolButton_settings_data_refit)
+        self.ui.menu_settings_data_refit = QMenu(self.ui.toolButton_settings_data_recreate_from_raw)
         self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_allsamp)
-        self.ui.actionFit_allsamp.triggered.connect(lambda: self.autorefit_data(chn_name='samp', mode='all'))
-        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedsamp)
-        self.ui.actionFit_markedsamp.triggered.connect(lambda: self.autorefit_data(chn_name='samp', mode='marked'))
+        self.ui.actionFit_allsamp.triggered.connect(lambda: self.recreate_from_raw(chn_name='samp', mode='all'))
+        # self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedsamp)
+        # self.ui.actionFit_markedsamp.triggered.connect(lambda: self.recreate_from_raw(chn_name='samp', mode='marked'))
         self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_allref)
-        self.ui.actionFit_allref.triggered.connect(lambda: self.autorefit_data(chn_name='ref', mode='all'))
-        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedref)
-        self.ui.actionFit_markedref.triggered.connect(lambda: self.autorefit_data(chn_name='ref', mode='marked'))
+        self.ui.actionFit_allref.triggered.connect(lambda: self.recreate_from_raw(chn_name='ref', mode='all'))
+        # self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedref)
+        # self.ui.actionFit_markedref.triggered.connect(lambda: self.recreate_from_raw(chn_name='ref', mode='marked'))
         # self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_selected)
         # self.ui.actionFit_all.triggered.connect(self.)
         # add menu to toolbutton
-        self.ui.toolButton_settings_data_refit.setMenu(self.ui.menu_settings_data_refit)
+        self.ui.toolButton_settings_data_recreate_from_raw.setMenu(self.ui.menu_settings_data_refit)
 
         # toolButton_settings_mechanics_solve
         # create menu: menu_settings_mechanics_solve
@@ -2814,14 +2824,19 @@ class QCMApp(QMainWindow):
             self.data_saver.raw_exporter(fileName, self.active['chn_name'], queue_id, self.active['harm'])
 
 
-    def autorefit_data(self, chn_name='samp', mode='all'):
+    def recreate_from_raw(self, chn_name='samp', mode='all'):
         '''
-        This function is to auto refit all or marked data from raw of given chn_name
+        This function is to recreate data_saver.[chn_name] (df) all or marked data from raw of given chn_name
         '''
         print(chn_name) #testprint
         print(mode) #testprint
-        # get marks df with harms in columns
-        marks = self.data_saver.get_marks(chn_name, tocolumns=True)
+
+        # reset chn & chn ref
+
+        # get max_harmonic
+
+        # recreate df data_saver.[chn_name]
+        
 
         # use all harms. the harmonics without data will be [] in sel_idx_dict
         harms = self.all_harm_list(as_str=True)
@@ -6344,6 +6359,7 @@ class QCMApp(QMainWindow):
         sel_idx_dict = {
             'harm': [idx]
         }
+        from_raw: if get all (t, temp) information from raw
         '''
         if self.idle == False:
             print('Data collection is running!')

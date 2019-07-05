@@ -156,7 +156,7 @@ class DataSaver:
         func_f_list = [] # func for all freq
         func_g_list = [] # func for all gamma
         nan_func = lambda temp: np.array([np.nan] * len(temp))
-        for harm in range(1, self.settings['max_harmonic']+2, 2): # calculate each harm
+        for _ in range(1, self.settings['max_harmonic']+2, 2): # calculate each harm
             func_f_list.append(nan_func) # add a func return nan
             func_g_list.append(nan_func) # add a func return nan
             # make function for each ind_list

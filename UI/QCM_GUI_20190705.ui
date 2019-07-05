@@ -210,7 +210,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>2</number>
+             <number>3</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1621,7 +1621,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
+                   <width>83</width>
                    <height>71</height>
                   </rect>
                  </property>
@@ -2114,7 +2114,7 @@ border: none;
                <number>0</number>
               </property>
               <item>
-               <widget class="QToolButton" name="toolButton_settings_data_recreate_from_raw">
+               <widget class="QToolButton" name="toolButton_settings_data_refit">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -2128,7 +2128,7 @@ border: none;
                  </size>
                 </property>
                 <property name="text">
-                 <string>Refit from raw data</string>
+                 <string>Auto Refit</string>
                 </property>
                 <property name="popupMode">
                  <enum>QToolButton::InstantPopup</enum>
@@ -5205,6 +5205,116 @@ border: 1px solid blue;
                   <attribute name="verticalHeaderStretchLastSection">
                    <bool>false</bool>
                   </attribute>
+                  <row>
+                   <property name="text">
+                    <string>Δf (Hz)</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>ΔΓ (Hz)</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>Δfcalc (Hz)</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>ΔΓcalc (Hz)</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>dρ (μm∙g/cm³)</string>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>7</pointsize>
+                    </font>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>|G*|ρ (Pa∙g/cm³)</string>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>7</pointsize>
+                    </font>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>Φ (°)</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>d/λₙ</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>δρ (μm∙g/cm³)</string>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>7</pointsize>
+                    </font>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>|η*|ρ (Pa∙s∙g/cm³)</string>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>7</pointsize>
+                    </font>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>λρ (μm∙g/cm³)</string>
+                   </property>
+                   <property name="font">
+                    <font>
+                     <pointsize>7</pointsize>
+                    </font>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>Δfₙ/Δfₛₙ</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>ΔΓₙ/Δfₛₙ</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>rh</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>rd</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>Time (s)</string>
+                   </property>
+                  </row>
+                  <row>
+                   <property name="text">
+                    <string>Temp. (°C)</string>
+                   </property>
+                  </row>
                  </widget>
                 </item>
                </layout>
@@ -5256,6 +5366,8 @@ border: 1px solid blue;
                   <property name="frameShadow">
                    <enum>QFrame::Sunken</enum>
                   </property>
+                  <zorder>frame_spectra_mechanics_contour1</zorder>
+                  <zorder>frame_spectra_mechanics_contour1</zorder>
                  </widget>
                 </item>
                </layout>

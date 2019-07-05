@@ -760,10 +760,10 @@ class MatplotlibWidget(QWidget):
         self.initax_xy()
 
         # initiate X, Y, Z data
-        levels = settings_init['contour']['levels']
-        num = settings_init['contour']['num']
-        phi_lim = settings_init['contour']['phi_lim']
-        dlam_lim = settings_init['contour']['dlam_lim']
+        levels = settings_init['contour_array']['levels']
+        num = settings_init['contour_array']['num']
+        phi_lim = settings_init['contour_array']['phi_lim']
+        dlam_lim = settings_init['contour_array']['dlam_lim']
         x = np.linspace(phi_lim[0], phi_lim[1], num=num)
         y = np.linspace(dlam_lim[0], dlam_lim[1], num=num)
         X, Y = np.meshgrid(y, x)
