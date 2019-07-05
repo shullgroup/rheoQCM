@@ -99,6 +99,7 @@ class QCM:
 
     def sauerbreyf(self, n, drho):
         ''' delf_sn from Sauerbrey eq'''
+        # n = int(n) if isinstance(n, str) else n
         return 2 * n * self.f1**2 * drho / self.Zq
 
 
@@ -200,7 +201,7 @@ class QCM:
         calc = -(self.sauerbreyf(n, drho)*np.tan(self.D(n, drho, grho_refh, phi)) / self.D(n, drho, grho_refh, phi))*(1-rstar**2) / (1+1j*rstar*np.tan(self.D(n, drho, grho_refh, phi)))
         
         # handle case where drho = 0, if it exists
-        # calc[np.where(drho==0)]=0
+        calc[np.where(drho==0)]=0
         return calc
 
 
@@ -563,6 +564,8 @@ class QCM:
         calctype: 'SLA' / 'LL'
         film: dict of the film layers information
         return mech_queue
+
+        NOTE: n used in this function is int
         '''
         # print('calctype', calctype) #testprint
         #TODO this may be replaced
@@ -586,8 +589,9 @@ class QCM:
         nhplot = [i*2+1 for i, mark in enumerate(marks) if (not np.isnan(mark)) and (mark is not None)]
         
         delfstar_calc = {}
-        rd_exp = {}
-        rd_calc = {}
+        delfsn = {i*2+1: self.sauerbreyf(i*2+1, drho) for i, mark in enumerate(marks)} # fsn from sauerbrey eq
+        normdelfstar_calcs = {}
+
         delf_calcs = mech_queue.delf_calcs.iloc[0].copy()
         delg_calcs = mech_queue.delg_calcs.iloc[0].copy()
         rd_exps = mech_queue.rd_exps.iloc[0].copy()
@@ -597,8 +601,12 @@ class QCM:
         delrhos = mech_queue.delrhos.iloc[0].copy()
         grhos = mech_queue.dlams.iloc[0].copy()
         grhos_err = mech_queue.dlams.iloc[0].copy()
-        etarhos = mech_queue.dlams.iloc[0].copy()
-        etarhos_err = mech_queue.dlams.iloc[0].copy()
+        etarhos = mech_queue.etarhos.iloc[0].copy()
+        etarhos_err = mech_queue.etarhos_err.iloc[0].copy()
+        normdelf_exps = mech_queue.normdelf_exps.iloc[0].copy()
+        normdelf_calcs = mech_queue.normdelf_calcs.iloc[0].copy()
+        normdelg_exps = mech_queue.normdelg_exps.iloc[0].copy()
+        normdelg_calcs = mech_queue.normdelg_calcs.iloc[0].copy()
         # print('delf_calcs', delf_calcs) #testprint
         # print(type(delf_calcs)) #testprint
         for n in nhplot:
@@ -618,6 +626,15 @@ class QCM:
             etarhos_err[nh2i(n)] = self.etarho(n, grhos_err[nh2i(n)]) # supose errors follow power law, too
             lamrhos[nh2i(n)] = self.calc_lamrho(n, grhos[nh2i(n)], phi) 
             delrhos[nh2i(n)] = self.calc_delrho(n, grhos[nh2i(n)], phi) 
+
+            normdelfstar_calcs[n] = self.normdelfstar(n, dlam_refh, phi) # calculated normalized delfstar
+            # normdelf_exps[nh2i(n)] = np.real(delfstar_calc[n]) / delfsn[n] # this is a test. it should be the same as normdelf_calcs[nh2i(n)] NOTE: they are not the same as tested
+            normdelf_exps[nh2i(n)] = np.real(delfstar[n]) / delfsn[n] 
+            normdelf_calcs[nh2i(n)] = np.real(normdelfstar_calcs[n])
+            # normdelg_exps[nh2i(n)] = np.imag(delfstar_calc[n]) / delfsn[n] # this is a test. it should be the same as normdelg_calcs[nh2i(n)] NOTE: they are not the same as tested
+            normdelg_exps[nh2i(n)] = np.imag(delfstar[n]) / delfsn[n] 
+            normdelg_calcs[nh2i(n)] = np.imag(normdelfstar_calcs[n])
+            # normdelg_calcs[nh2i(n)] = np.imag(delfstar_calc[n]) / delfsn[n] # test
 
         rh_exp = self.rh_from_delfstar(nh, delfstar)
         rh_calc = self.rh_from_delfstar(nh, delfstar_calc)
@@ -648,10 +665,10 @@ class QCM:
         mech_queue['delf_calcs'] = [delf_calcs]
         mech_queue['delg_exps'] = qcm_queue['delgs']
         mech_queue['delg_calcs'] = [delg_calcs]
-        mech_queue['delg_delfsn_exps'] =[[np.nan] * tot_harms]
-        mech_queue['delg_delfsn_clacs'] =[[np.nan] * tot_harms]
-        mech_queue['delf_delfsn_exps'] =[[np.nan] * tot_harms]
-        mech_queue['delf_delfsn_clacs'] =[[np.nan] * tot_harms]
+        mech_queue['normdelf_exps'] =[normdelf_exps]
+        mech_queue['normdelf_calcs'] =[normdelf_calcs]
+        mech_queue['normdelg_exps'] =[normdelg_exps]
+        mech_queue['normdelg_calcs'] =[normdelg_calcs]
         mech_queue['rd_exps'] = [rd_exps]
         mech_queue['rd_calcs'] = [rd_calcs]
 
@@ -906,14 +923,14 @@ class QCM:
         get variables calculate from single harmonic
         variables listed in DataSaver.mech_keys_multiple
         to keep QCM and DataSaver independently, we don't use import for each other
-        ['delf_calcs', 'delg_calcs', 'delg_delfsns', 'rds']
+        ['delf_calcs', 'delg_calcs', 'normdelfs', 'rds']
         '''
         # print(var) #testprint
         if var == 'delf_calcs':
             return qcm_df.delfs
         if var == 'delg_calcs':
             return qcm_df.delgs
-        if var == 'delg_delfsns':
+        if var == 'normdelfs':
             return None # TODO
         if var == 'rds':
             # rd_from_delfstar(self, n, delfstar)

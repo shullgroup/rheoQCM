@@ -1,10 +1,14 @@
 # Changelog
 
-## [0.17.2] - 2019-06-28
+## [0.17.2] - 2019-07-05
 
 ### Added
 
 - Add code to reset peak track mark in spectra plots before auto refitting peaks.
+
+###  Changed
+
+- Change the mechanical column name of delf/delf_sn, delg/delf_sn. NOTE: if you want the data of those two, you need to recalculate the data.
 
 ### Fixed
 

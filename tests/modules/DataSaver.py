@@ -208,9 +208,10 @@ class DataSaver:
             'delf_calcs', # n
             'delg_exps',
             'delg_calcs', # n
-            'delf_delfsns', # h dependent
-            'delg_delfsn_exps', # n
-            'delg_delfsn_calcs', # n
+            'normdelf_exps', # h dependent
+            'normdelf_calcs', # h dependent
+            'normdelg_exps', # n
+            'normdelg_calcs', # n
 
             'grhos', # h dependent
             'grhos_err', # h dependent
