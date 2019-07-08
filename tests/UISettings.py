@@ -546,14 +546,29 @@ settings_init = {
     ]),
 
     # tableWidget_settings_mechanics_contoursettings
+    'mech_contour_lim_tab_vheaders': {
+        'dlam': 'd/' + u'\u03BB', # d/λ
+        'phi': u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
+        'normf': u'\u0394' + 'f' + u'\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δfₙ/Δfₛₙ
+        'normg': u'\u0394\u0393\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓₙ/Δfₛₙ
+        'rh': 'rh',
+        'rd': 'rd',
+    },
+
+    'mech_contour_lim_tab_hheaders': {
+        'min': 'min',
+        'max': 'max',
+    },
+
+    # tableWidget_settings_mechanics_contoursettings
     # limit values for ploting
-    'contour_plot_lim_tab':{
-        'dlam': [0, 0.5],
-        'phi': [0, 90],
-        'normf': [None, None],
-        'normg': [None, None],
-        'rh': [1, 1.2],
-        'rd': [-0.2, 0],
+    'contour_plot_lim_tab': {
+        'dlam':  {'min': 0,    'max': 0.5 },
+        'phi':   {'min': 0,    'max': 90  },
+        'normf': {'min': None, 'max': None},
+        'normg': {'min': None, 'max': None},
+        'rh':    {'min': 1,    'max': 1.2 },
+        'rd':    {'min': -0.2, 'max': 0   },
     },
 
     'contour_array': {
@@ -802,6 +817,11 @@ settings_default = {
     'comboBox_settings_mechanics_contourdata': 'none',
 
     'comboBox_settings_mechanics_contourtype': 'normfnormg',
+
+    # default value of tableWidget_settings_mechanics_contoursettings
+    # if it is empty, program will find the same key in settings_init
+    'contour_plot_lim_tab': {}, 
+    
 }
 
 

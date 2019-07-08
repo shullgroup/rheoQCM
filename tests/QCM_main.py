@@ -274,8 +274,6 @@ class QCMApp(QMainWindow):
         ##### harmonic widgets #####
         # Add widgets related number of harmonics here
 
-        # set number of coulmns in tableWidget_spectra_mechanics_table
-        self.ui.tableWidget_spectra_mechanics_table.setColumnCount(int((self.settings['max_harmonic']+1)/2))
         # loop for setting harmonics
         _translate = QCoreApplication.translate
         for i in self.all_harm_list():
@@ -382,22 +380,6 @@ class QCMApp(QMainWindow):
 
             # checkBox_nhplot<n>
             getattr(self.ui, 'checkBox_nhplot' + harm).toggled.connect(self.update_widget)
-
-            ## add  headers to 
-            # horizontal headers
-            self.ui.tableWidget_spectra_mechanics_table.setHorizontalHeaderItem(int((i-1)/2), QTableWidgetItem())
-            self.ui.tableWidget_spectra_mechanics_table.horizontalHeaderItem(int((i-1)/2)).setText(_translate('MainWindow', 'n'+harm))
-
-        ## add vertival headers to tableWidget_spectra_mechanics_table
-        nrows = len(settings_init['mech_table_rowheaders'])
-        print('prop table n rows', nrows) #testprint
-        self.ui.tableWidget_spectra_mechanics_table.setRowCount(nrows)
-        for r, (key, val) in enumerate(settings_init['mech_table_rowheaders'].items()):
-            self.ui.tableWidget_spectra_mechanics_table.setVerticalHeaderItem(r, QTableWidgetItem())
-            self.ui.tableWidget_spectra_mechanics_table.verticalHeaderItem(r).setText(_translate('MainWindow', val))
-
-
-
 
         ########
 
@@ -1115,8 +1097,19 @@ class QCMApp(QMainWindow):
         # comboBox_settings_mechanics_model_samplayer_chn
         self.build_comboBox(self.ui.comboBox_settings_mechanics_model_samplayer_chn, 'ref_channel_opts')
 
-        #endregion
+        # comboBox_settings_mechanics_contourdata
+        self.build_comboBox(self.ui.comboBox_settings_mechanics_contourdata, 'contour_data_opts')
 
+        # comboBox_settings_mechanics_contourtype
+        self.build_comboBox(self.ui.comboBox_settings_mechanics_contourtype, 'contour_type_opts')
+
+        # tableWidget_settings_mechanics_contoursettings
+        self.add_table_headers(
+            'tableWidget_settings_mechanics_contoursettings',
+            settings_init['mech_contour_lim_tab_vheaders'],
+            settings_init['mech_contour_lim_tab_hheaders'],
+        )
+        #endregion
 
         #region spectra_show
         # add figure mpl_sp[n] into frame_sp[n]
@@ -1194,6 +1187,19 @@ class QCMApp(QMainWindow):
         #region spectra_mechanics
 
         self.ui.spinBox_spectra_mechanics_currid.valueChanged.connect(self.on_changed_spinBox_spectra_mechanics_currid)
+
+        # tableWidget_spectra_mechanics_table
+        # make dict for horizontal headers
+        mech_table_hnames = {}
+        for i in self.all_harm_list():
+            mech_table_hnames[int((i-1)/2)] = 'n'+str(i)
+
+        self.add_table_headers(
+            'tableWidget_spectra_mechanics_table',
+            settings_init['mech_table_rowheaders'],
+            mech_table_hnames,
+        )
+
         #endregion
 
         #region data
@@ -1827,6 +1833,7 @@ class QCMApp(QMainWindow):
             fileName = ''
         return fileName
 
+
     def on_triggered_new_exp(self):
         process = self.process_messagebox(message=['Create a new experiment!'])
 
@@ -1920,6 +1927,7 @@ class QCMApp(QMainWindow):
 
             # reload widgets' setup
             self.load_settings()
+
 
     def on_triggered_export_settings(self):
         process = self.process_messagebox(message=['Export settings to a file!'])
@@ -2227,6 +2235,36 @@ class QCMApp(QMainWindow):
         '''
         self.data_saver.path = fileName
         self.ui.lineEdit_datafilestr.setText(fileName)
+
+
+    def add_table_headers(self, tablename, vnames, hnames):
+        '''
+        find vnames/hnames iterms as dict
+        add to an empty table self.ui.<tablename>
+        '''
+        # get bable object
+        table = getattr(self.ui, tablename)
+        # get n of rows
+        nrows = len(vnames)
+        # get n of columns
+        ncols = len(hnames)
+
+        _translate = QCoreApplication.translate
+        
+        # set number of coulmns in table
+        table.setColumnCount(ncols)
+        table.setRowCount(nrows)
+
+        ## add  headers to table
+        ## add vertival headers to table
+        for r, (key, val) in enumerate(vnames.items()):
+            table.setVerticalHeaderItem(r, QTableWidgetItem())
+            table.verticalHeaderItem(r).setText(_translate('MainWindow', val))
+
+        # horizontal headers
+        for c, (key, val) in enumerate(hnames.items()):
+            table.setHorizontalHeaderItem(c, QTableWidgetItem())
+            table.horizontalHeaderItem(c).setText(_translate('MainWindow', val))
 
 
     def on_acctiontriggered_slider_spanctrl(self, value):
@@ -6063,6 +6101,20 @@ class QCMApp(QMainWindow):
         # load film layers data 
         self.load_film_layers_widgets()
 
+        # comboBox_settings_mechanics_contourdata
+        self.load_comboBox(self.ui.comboBox_settings_mechanics_contourdata)
+
+        # comboBox_settings_mechanics_contourtype
+        self.load_comboBox(self.ui.comboBox_settings_mechanics_contourtype)
+
+        # tableWidget_settings_mechanics_contoursettings
+        self.set_init_table_value(
+            'tableWidget_settings_mechanics_contoursettings',
+            'mech_contour_lim_tab_vheaders',
+            'mech_contour_lim_tab_hheaders',
+            'contour_plot_lim_tab',
+        )
+
 
 
     def update_refsource(self):
@@ -6477,7 +6529,46 @@ class QCMApp(QMainWindow):
             self.update_mpl_plt12()
 
 
+    def update_table_value(self, tablename, vh_item, hh_item, val_dict):
+        '''
+        set value to self.ui.<tablename> from val_dict
+        vh_item: name of dict of which stored verticalheader names
+        hh_item: name of dict of which stored horizontalheader names
+        valdict:
+            'r0': {'col0': #, 'col1': #},
+            'r1': {'col0': #, 'col1': #},
+        '''
+        table = getattr(self.ui, tablename)
+        table.clearContents()
 
+        for r, (rkey, rval) in enumerate(val_dict.items()):
+            if rkey in settings_init[vh_item].keys(): # verticla name exist
+                for c, (ckey, cval) in enumerate(rval.items()):
+                    if ckey in settings_init[hh_item].keys():
+                        print('table name:', table.objectName()) #testprint
+                        print('table r c:', r, c) #testprint
+                        tableitem = table.item(r, c)
+                        if cval is not None:
+                            if tableitem: # tableitem != 0
+                                print('item is set') #testprint
+                                tableitem.setText(str(cval))
+                            else: # tableitem is not set
+                                print('item set') #testprint
+                                table.setItem(r, c, QTableWidgetItem(str(cval)))
+
+
+    def set_init_table_value(self, tablename, vh_item, hh_item, val_item):
+        '''
+        set value to self.ui.<tablename> from val_dict
+        vh_item: name of dict of which stored verticalheader names
+        hh_item: name of dict of which stored horizontalheader names
+        val_item: name of dict in self.settings. if the name doesn't exist or empty, find in settings_init
+        '''
+        val_dict = self.settings.get(val_item, {})
+        if not val_dict:
+            val_dict = settings_init.get(val_item, {})
+        if val_dict:
+            self.update_table_value(tablename, vh_item, hh_item, val_dict)
 
 
     def get_all_checked_harms(self):
@@ -6486,6 +6577,7 @@ class QCMApp(QMainWindow):
         '''
         return [harm for harm in self.all_harm_list(as_str=True) if
         self.settings.get('checkBox_harm' + harm, None)] # get all checked harmonics
+
 
     def update_progressbar(self):
         '''
