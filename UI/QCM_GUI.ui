@@ -1621,7 +1621,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
+                   <width>83</width>
                    <height>71</height>
                   </rect>
                  </property>
@@ -2918,7 +2918,7 @@ p, li { white-space: pre-wrap; }
                     </sizepolicy>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <widget class="QWidget" name="stackedWidgetPage_mech_normalmode">
                     <property name="sizePolicy">
@@ -3695,22 +3695,21 @@ border-image: url(:/button/rc/plus_p.svg);
                   <number>0</number>
                  </property>
                  <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_33">
-                   <item>
-                    <widget class="QComboBox" name="comboBox_settings_mechanics_contourdata">
-                     <property name="enabled">
-                      <bool>true</bool>
+                  <layout class="QGridLayout" name="gridLayout_7">
+                   <property name="horizontalSpacing">
+                    <number>4</number>
+                   </property>
+                   <property name="verticalSpacing">
+                    <number>0</number>
+                   </property>
+                   <item row="1" column="1">
+                    <widget class="QPushButton" name="pushButton_settings_mechanics_contourplot">
+                     <property name="text">
+                      <string>Update Data</string>
                      </property>
                     </widget>
                    </item>
-                   <item>
-                    <widget class="QComboBox" name="comboBox_settings_mechanics_contourtype">
-                     <property name="enabled">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
+                   <item row="1" column="2">
                     <widget class="QPushButton" name="pushButton_settings_mechanics_contoursettings">
                      <property name="enabled">
                       <bool>true</bool>
@@ -3735,6 +3734,23 @@ border-image: url(:/button/rc/plus_p.svg);
                      </property>
                      <property name="checked">
                       <bool>false</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QComboBox" name="comboBox_settings_mechanics_contourtype">
+                     <property name="enabled">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QComboBox" name="comboBox_settings_mechanics_contourcmap"/>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QComboBox" name="comboBox_settings_mechanics_contourdata">
+                     <property name="enabled">
+                      <bool>true</bool>
                      </property>
                     </widget>
                    </item>

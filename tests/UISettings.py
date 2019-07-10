@@ -47,7 +47,6 @@ settings_init = {
         'comboBox_base_frequency',
         'comboBox_bandwidth',
         'checkBox_settings_temp_sensor',
-        'comboBox_settings_mechanics_selectmodel',
         'comboBox_tempdevice',
         'comboBox_thrmcpltype',
     ],
@@ -282,10 +281,10 @@ settings_init = {
         'dlams':             r'd/$\lambda_{n}$',
         'lamrhos':           r'$\lambda\rho$ ($\mu$m$\cdot$g/cm$^3$)',
         'delrhos':           r'$\delta\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-        'normdelf_exps':  r'$\Delta$f$_{n}$/$\Delta$f$_{sn}_{exp}$',
-        'normdelf_calcs': r'$\Delta$f$_{n}$/$\Delta$f$_{sn}$',
-        'normdelg_exps':  r'$(\Delta\Gamma_{n}$/$\Delta$f$_{sn})_{exp}$',
-        'normdelg_calcs': r'$\Delta\Gamma_{n}$/$\Delta$f$_{sn}$',
+        'normdelf_exps':     r'$\Delta$f$_{n}$/$\Delta$f$_{sn}_{exp}$',
+        'normdelf_calcs':    r'$\Delta$f$_{n}$/$\Delta$f$_{sn}$',
+        'normdelg_exps':     r'$(\Delta\Gamma_{n}$/$\Delta$f$_{sn})_{exp}$',
+        'normdelg_calcs':    r'$\Delta\Gamma_{n}$/$\Delta$f$_{sn}$',
         'rh_exp':            r'r$_{h,exp}$',
         'rh_calc':           r'r$_h$',
         'rd_exps':           r'r$_{d,exp}$',
@@ -544,6 +543,14 @@ settings_init = {
         ('normfnormg',   u'\u0394' + 'f' + u'\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099' + '&' + u'\u0394\u0393\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099'),
         ('rhrd',   'rh & rd'),
     ]),
+    #comboBox_settings_mechanics_contourcmap
+    'contour_cmap_opts': OrderedDict([
+        ('hsv',   'hsv'),
+        ('jet',   'jet'),
+        ('hot',   'hot'),
+        ('rainbow',   'rainbow'),
+        ('gist_rainbow',   'gist_rainbow'),
+    ]),
 
     # tableWidget_settings_mechanics_contoursettings
     'mech_contour_lim_tab_vheaders': {
@@ -560,25 +567,20 @@ settings_init = {
         'max': 'max',
     },
 
-    # tableWidget_settings_mechanics_contoursettings
-    # limit values for ploting
-    'contour_plot_lim_tab': {
-        'dlam':  {'min': 0,    'max': 0.5 },
-        'phi':   {'min': 0,    'max': 90  },
-        'normf': {'min': None, 'max': None},
-        'normg': {'min': None, 'max': None},
-        'rh':    {'min': 1,    'max': 1.2 },
-        'rd':    {'min': -0.2, 'max': 0   },
-    },
-
-    'contour_array': {
-        'levels': 20, # contour levels
-        'num': 100, # percentage of step increase for phi and dlam
+    'contour_array': { # values for initializing contour plot
+        'levels': 100, # contour levels
+        'num': 100, # data size num*num
         'phi_lim': [0, np.pi / 2], # phi limit in degree
-        'dlam_lim': [0, 1], # d/lambda limit
+        'dlam_lim': [0, 1], # d/lambda limit 
+        'cmap': 'hsv', # jet, hsv, hot, rainbow, gist_rainbow colormap string
     },
 
-
+    'contour_title': {
+        'normf': r'$\Delta$f$_{n}$/$\Delta$f$_{sn}$',
+        'normg': r'$\Delta\Gamma_{n}$/$\Delta$f$_{sn}$',
+        'rh':    r'r$_h$',
+        'rd':    r'r$_d$',
+    },
     ############ params for temperature modules ###########
     # # temperature modules path
     # 'tempmodules_path': r'./modules/temp/', 
@@ -818,9 +820,18 @@ settings_default = {
 
     'comboBox_settings_mechanics_contourtype': 'normfnormg',
 
+    'comboBox_settings_mechanics_contourcmap': 'gist_rainbow',
+
     # default value of tableWidget_settings_mechanics_contoursettings
-    # if it is empty, program will find the same key in settings_init
-    'contour_plot_lim_tab': {}, 
+    # limit values for ploting
+    'contour_plot_lim_tab': {
+        'dlam':  {'min': 0,    'max': 0.5},
+        'phi':   {'min': 0,    'max': 90 },
+        'normf': {'min': -2,   'max': 0  },
+        'normg': {'min': 0,    'max': 2  },
+        'rh':    {'min': 1,    'max': 1.2},
+        'rd':    {'min': -0.2, 'max': 0  },
+    },
     
 }
 

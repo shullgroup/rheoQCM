@@ -32,6 +32,7 @@ from matplotlib.projections import register_projection
 from matplotlib.widgets import RectangleSelector, SpanSelector
 import matplotlib.ticker as ticker
 from matplotlib.container import ErrorbarContainer # for checking if l[ln] is ErrorbarContainer
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import types
 
@@ -754,29 +755,96 @@ class MatplotlibWidget(QWidget):
         '''
         initialize the mechanics_contour1 & mechanics_contour2
         initialize plot: 
-            l['C'] (contour) 
+            .l['C'] (contour) 
             .l['cbar'] (colorbar)
+            .l['l<n>]
+            .l['lm<n>]
+        NOTE: this function should be used every time contour is changed
         '''
-        self.initax_xy()
+        print("self.l.get('C')", self.l.get('C')) #testprint
+        print('kwargs', kwargs.keys()) #testprint
 
-        # initiate X, Y, Z data
-        levels = settings_init['contour_array']['levels']
-        num = settings_init['contour_array']['num']
-        phi_lim = settings_init['contour_array']['phi_lim']
-        dlam_lim = settings_init['contour_array']['dlam_lim']
-        x = np.linspace(phi_lim[0], phi_lim[1], num=num)
-        y = np.linspace(dlam_lim[0], dlam_lim[1], num=num)
-        X, Y = np.meshgrid(y, x)
-        Z = np.ones(X.shape)
+        # if self.l.get('colorbar'):
+        #     self.l['colorbar'].remove()
+        if self.ax:
+            self.ax[0].cla()
+            self.ax[1].clear()
+        else:
+            self.initax_xy()
+            # create axes for the colorbar
+            self.ax.append(make_axes_locatable(self.ax[0]).append_axes("right", size="5%", pad="2%"))
+
+        if not 'X' in kwargs or not 'Y' in kwargs or not 'Z' in kwargs:
+            num = settings_init['contour_array']['num']
+            phi_lim = settings_init['contour_array']['phi_lim']
+            dlam_lim = settings_init['contour_array']['dlam_lim']
+
+            # initiate X, Y, Z data
+            x = np.linspace(phi_lim[0], phi_lim[1], num=num)
+            y = np.linspace(dlam_lim[0], dlam_lim[1], num=num)
+            X, Y = np.meshgrid(y, x)
+            Z = np.random.rand(*X.shape)
+        else:
+            X = kwargs.get('X')
+            Y = kwargs.get('Y')
+            Z = kwargs.get('Z')
+
+        if 'levels' in kwargs:
+            levels = kwargs.get('levels')
+        else:
+            levels = settings_init['contour_array']['levels']
+            levels = np.linspace(np.min(Z), np.max(Z), levels)
+        
+        if 'cmap' in kwargs:
+            cmap = kwargs.get('cmap')
+        else:
+            print('cmap not in kwargs') #testprint
+            cmap = settings_init['contour_array']['cmap']
+        
+        print('levels', type(levels), ) #testprint
         self.l['C'] = self.ax[0].contourf(
-            X, Y, Z, levels, # X, Y, Z, N
-        ) # l
-        self.l['colorbar'] = plt.colorbar(self.l['C'], ax=self.ax[0]) # lm
-        self.canvas_draw()
+            X, Y, Z, # X, Y, Z
+            levels=levels, 
+            cmap=cmap,
+        ) # contour
+
+        self.l['colorbar'] = plt.colorbar(self.l['C'], cax=self.ax[1]) # colorbar
+        self.l['colorbar'].locator = ticker.MaxNLocator(nbins=6)
+        self.l['colorbar'].update_ticks()
+       
+        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+            self.l['p' + str(i)] = self.ax[0].errorbar(
+                [], [], 
+                yerr=np.nan,
+                xerr=np.nan,
+                marker='o', 
+                markerfacecolor='none', 
+                linestyle='none',
+                color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
+                # picker=5, # 5 points tolerance
+                label=str(i),
+                alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
+                capsize=settings_init['mpl_capsize'],
+            ) # prop
+
+        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+            self.l['pm' + str(i)] = self.ax[0].errorbar(
+                [], [], 
+                yerr=np.nan,
+                xerr=np.nan,
+                marker='o', 
+                linestyle='none',
+                color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
+                # picker=5, # 5 points tolerance
+                label=str(i),
+                alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
+                capsize=settings_init['mpl_capsize'],
+            ) # prop marked   
 
         # set label of ax[1]
-        self.set_ax(self.ax[0], xlabel=r'$d/\lambda$',ylabel=r'$\Phi$ ($\degree$)')
+        self.set_ax(self.ax[0], xlabel=r'$d/\lambda$',ylabel=r'$\Phi$ ($\degree$)', title=title)
 
+        self.canvas_draw()
         # self.ax[0].autoscale()
 
 
@@ -986,7 +1054,7 @@ class MatplotlibWidget(QWidget):
         elif self.axtype == 'data':
             self.init_data(title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
         elif self.axtype == 'contour':
-            self.init_contour(title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale)
+            self.init_contour(title=title, xlabel=xlabel, ylabel=ylabel, xlim=xlim, ylim=ylim, xscale=xscale, yscale=yscale, *args, **kwargs)
         elif self.axtype == 'legend':
             self.init_legendfig()
         elif self.axtype == 'prop':
@@ -1002,6 +1070,7 @@ class MatplotlibWidget(QWidget):
             x : x data
             y : y data
             yerr: y error
+        NOTE: don't use this func to update contour
         '''
         axs = set() # initialize a empty set
         

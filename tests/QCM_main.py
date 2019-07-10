@@ -1099,9 +1099,17 @@ class QCMApp(QMainWindow):
 
         # comboBox_settings_mechanics_contourdata
         self.build_comboBox(self.ui.comboBox_settings_mechanics_contourdata, 'contour_data_opts')
+        self.ui.comboBox_settings_mechanics_contourdata.currentIndexChanged.connect(self.update_widget)
 
         # comboBox_settings_mechanics_contourtype
         self.build_comboBox(self.ui.comboBox_settings_mechanics_contourtype, 'contour_type_opts')
+        self.ui.comboBox_settings_mechanics_contourtype.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_settings_mechanics_contourtype.currentIndexChanged.connect(self.make_contours)
+
+        # comboBox_settings_mechanics_contourcmap
+        self.build_comboBox(self.ui.comboBox_settings_mechanics_contourcmap, 'contour_cmap_opts')
+        self.ui.comboBox_settings_mechanics_contourcmap.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_settings_mechanics_contourcmap.currentIndexChanged.connect(self.make_contours)
 
         # tableWidget_settings_mechanics_contoursettings
         self.add_table_headers(
@@ -1109,6 +1117,10 @@ class QCMApp(QMainWindow):
             settings_init['mech_contour_lim_tab_vheaders'],
             settings_init['mech_contour_lim_tab_hheaders'],
         )
+        self.ui.tableWidget_settings_mechanics_contoursettings.itemChanged.connect(self.on_changed_mech_contour_lim_tab)
+
+        self.ui.pushButton_settings_mechanics_contourplot.click.connect(self.add_data_to_contour)
+
         #endregion
 
         #region spectra_show
@@ -3957,6 +3969,7 @@ class QCMApp(QMainWindow):
     def update_qcm_refh(self):
         '''
         update reference harmonic in qcm
+        NOTE: currentlly, spinBox_settings_mechanics_nhcalc_n3 is used as refh
         '''
         self.qcm.refh = int(self.settings['comboBox_settings_mechanics_refG'])
 
@@ -4803,10 +4816,12 @@ class QCMApp(QMainWindow):
         self.mechanics_plot('r2r1')
 
 
-    def mechanics_plot(self, plot_type):
+    def mechanics_plot(self, plot_type, varplot=[], prop_plot_list=[], idx=[]):
         '''
         make plot by plot_type
         variable is given by row selection of tableWidget_spectra_mechanics_table
+        varplot: variables to plot
+        if prop_plot_list: plot to given prop_plot_list
         '''
         x_list = ['t', 'temp', 'idx'] # common x-axis variables. t, temp is the column name, idx is not.
         print('plot_type', plot_type) #testprint
@@ -4838,18 +4853,19 @@ class QCMApp(QMainWindow):
             return
 
         # get variables to plot
-        varplot = []
-        selrowidx = self.ui.tableWidget_spectra_mechanics_table.selectionModel().selectedRows() # fully selected rows
-        for idx in selrowidx:
-            print(idx.row()) #testprint
-            vh = self.ui.tableWidget_spectra_mechanics_table.verticalHeaderItem(idx.row()).text()
-            print(vh) #testprint
-            for key, val in settings_init['mech_table_rowheaders'].items():
-                if vh == val:
-                    varplot.append(key)
+        if not varplot:
+            varplot = []
+            selrowidx = self.ui.tableWidget_spectra_mechanics_table.selectionModel().selectedRows() # fully selected rows
+            for idx in selrowidx:
+                print(idx.row()) #testprint
+                vh = self.ui.tableWidget_spectra_mechanics_table.verticalHeaderItem(idx.row()).text()
+                print(vh) #testprint
+                for key, val in settings_init['mech_table_rowheaders'].items():
+                    if vh == val:
+                        varplot.append(key)
 
-        if not varplot: # no variable selected
-            return
+            if not varplot: # no variable selected
+                return
 
         # get data mode showall or marked
         # from tabWidget_settings
@@ -4888,17 +4904,18 @@ class QCMApp(QMainWindow):
             xlabel = self.get_label_replace_refh_unit(var_yx[1], refh)
 
             ## make the plot
-            # create figure
-            self.prop_plot_list.append(
-                MatplotlibWidget(
-                    parent=self.ui.scrollArea_data_mechanics_plots,
-                    axtype='prop',
-                    showtoolbar=True,
-                    xlabel=xlabel,
-                    ylabel=ylabel,
-                    title=mech_key,
+            if not prop_plot_list:
+                # create figure
+                self.prop_plot_list.append(
+                    MatplotlibWidget(
+                        parent=self.ui.scrollArea_data_mechanics_plots,
+                        axtype='prop',
+                        showtoolbar=True,
+                        xlabel=xlabel,
+                        ylabel=ylabel,
+                        title=mech_key,
+                    )
                 )
-            )
             # check if data is harmonic dependent
             if var_yx[0].endswith('s') or var_yx[1].endswith('s'):
                 figharms = plt_harms
@@ -5009,6 +5026,120 @@ class QCMApp(QMainWindow):
 
 
     #### end mech related funcs ###
+
+
+    #### mech contour funcs ####
+
+
+    def prep_contour_mesh(self, contour_type=None):
+        '''
+        create contour mesh for both normf/normg & rh/rd
+        mesh1 = {'X': array, 'Y': array, 'Z': array}
+        mesh2 = {'X': array, 'Y': array, 'Z': array}
+        '''
+        # initialize return values
+        mesh1, mesh2 = {}, {}
+
+        contour_lim = self.settings['contour_plot_lim_tab']
+        contour_array = settings_init['contour_array']
+
+        # make meshgrid for contour
+        phi = np.linspace(contour_lim['phi']['min'], contour_lim['phi']['max'], contour_array['num']) 
+        dlam = np.linspace(contour_lim['dlam']['min'], contour_lim['dlam']['max'], contour_array['num'])
+
+        dlam_i, phi_i = np.meshgrid(dlam, phi * np.pi / 180) # convert phi to rad
+
+        mesh1['X'], mesh1['Y'] = dlam_i, phi_i * 180 / np.pi # convert back to deg
+        mesh2['X'], mesh2['Y'] = dlam_i, phi_i * 180 / np.pi # convert back to deg
+
+        # set self.qcm.refh
+        self.qcm.refh = self.settings['spinBox_settings_mechanics_nhcalc_n3'] # int
+
+        nhcalc = self.gen_nhcalc_str() # str of harmonics
+        nh = QCM.nhcalc2nh(nhcalc) # list of harmonics in int
+
+        if contour_type.lower() == 'normfnormg':
+            # calculate the z values and reset things to -1 at dlam=0
+            normdelfstar = self.qcm.normdelfstar(self.qcm.refh, dlam_i, phi_i)
+            normdelfstar[:,0] = -1
+
+            mesh1['Z'], mesh2['Z'] = np.real(normdelfstar), np.imag(normdelfstar)
+            
+        elif contour_type.lower() == 'rhrd':
+            rh_i = self.qcm.rhcalc(nh, dlam_i, phi_i)
+            rd_i = self.qcm.rdcalc(nh, dlam_i, phi_i)
+            mesh1['Z'], mesh2['Z'] = rh_i, rd_i
+        else: # contour_type not found
+            mesh1['Z'], mesh2['Z'] = np.random.rand(*dlam_i.shape), np.random.rand(*dlam_i.shape) # just make some random numbers for fun
+
+        return mesh1, mesh2
+
+
+    def make_contours(self):
+        '''
+        plot contours by settings
+        '''
+        # get factors
+        contour_type = self.settings['comboBox_settings_mechanics_contourtype']
+        contour_array = settings_init['contour_array']
+        contour_lim = self.settings['contour_plot_lim_tab']
+        # print('contour_array', contour_array) #testprint
+        # print('contour_lim', contour_lim) #testprint
+        cmap = self.settings['comboBox_settings_mechanics_contourcmap']
+        print('cmap', cmap)
+
+        if contour_type.lower() == 'normfnormg':
+            levels1 = self.make_contour_levels(contour_lim['normf']['min'], contour_lim['normf']['max'], contour_array['levels'])
+            levels2 = self.make_contour_levels(contour_lim['normg']['min'], contour_lim['normg']['max'], contour_array['levels'])
+            title1 = settings_init['contour_title']['normf']
+            title2 = settings_init['contour_title']['normg']
+        elif contour_type.lower() == 'rhrd':
+            levels1 = self.make_contour_levels(contour_lim['rh']['min'], contour_lim['rh']['max'], contour_array['levels'])
+            levels2 = self.make_contour_levels(contour_lim['rd']['min'], contour_lim['rd']['max'], contour_array['levels'])
+            title1 = settings_init['contour_title']['rh']
+            title2 = settings_init['contour_title']['rd']
+        else:
+            levels1, levels2 = contour_array['levels'], contour_array['levels']
+
+        mesh1, mesh2 = self.prep_contour_mesh(contour_type=contour_type)
+        self.ui.mpl_countour1.init_contour(**mesh1, levels=levels1, cmap=cmap, title=title1)
+        self.ui.mpl_countour2.init_contour(**mesh2, levels=levels2, cmap=cmap, title=title2)
+
+        # linkxy
+        self.ui.mpl_countour1.ax[0].get_shared_x_axes().join(
+            self.ui.mpl_countour1.ax[0],
+            self.ui.mpl_countour2.ax[0]
+        )
+        self.ui.mpl_countour1.ax[0].get_shared_y_axes().join(
+            self.ui.mpl_countour1.ax[0],
+            self.ui.mpl_countour2.ax[0]
+        )
+
+        # add data to contour
+        self.add_data_to_contour()
+
+
+    def add_data_to_contour(self):
+        contour_data = self.settings['comboBox_settings_mechanics_contourdata']
+        ## add data to contour
+        if contour_data == 'none': # w/o data
+            return
+        elif contour_data == 'w_curr': # w/ current data
+            pass
+        elif contour_data == 'w_data': # w/ data (all or marked)
+            self.mechanics_plot(
+                'r1r2', 
+                varplot=['phi', 'dlams'], 
+                prop_plot_list=[self.ui.mpl_countour1, self.ui.mpl_countour2],
+                idx = [],
+                )
+
+
+    def make_contour_levels(self, lmin, lmax, interv):
+        '''
+        generate an array for contour_levels
+        '''
+        return np.linspace(lmin, lmax, interv)
 
 
     def on_clicked_set_temp_sensor(self, checked):
@@ -6107,6 +6238,9 @@ class QCMApp(QMainWindow):
         # comboBox_settings_mechanics_contourtype
         self.load_comboBox(self.ui.comboBox_settings_mechanics_contourtype)
 
+        # comboBox_settings_mechanics_contourcmap
+        self.load_comboBox(self.ui.comboBox_settings_mechanics_contourcmap)
+
         # tableWidget_settings_mechanics_contoursettings
         self.set_init_table_value(
             'tableWidget_settings_mechanics_contoursettings',
@@ -6114,6 +6248,11 @@ class QCMApp(QMainWindow):
             'mech_contour_lim_tab_hheaders',
             'contour_plot_lim_tab',
         )
+
+        # plot contours
+        self.make_contours()
+
+        ## end of load_settings
 
 
 
@@ -6529,7 +6668,38 @@ class QCMApp(QMainWindow):
             self.update_mpl_plt12()
 
 
-    def update_table_value(self, tablename, vh_item, hh_item, val_dict):
+    def update_table_value(self, tablename, val_item):
+        '''
+        updat value of self.ui.<tablename> current item to val_item
+        val_item: key in self.settings
+        '''
+        table = getattr(self.ui, tablename)
+        item = table.currentItem()
+        print(table)
+        print(item)
+        if item:
+            text, r, c = item.text(), item.row(), item.column()
+            print('currentItem', item, text, r, c)
+        else:
+            return
+            
+        val_dict = self.settings.get(val_item, {})
+
+        for ri, (rkey, rval) in enumerate(val_dict.items()):
+            if ri == r: # find the same row key
+                for ci, (ckey, cval) in enumerate(rval.items()): # find the same row column key
+                    if ci == c:
+                        if text:
+                            val_dict[rkey][ckey] = float(text)
+                        else:
+                            val_dict[rkey][ckey] = None
+
+                        break # stop the loop
+                break
+        self.settings[val_item] = val_dict # update to self.settings
+
+
+    def set_table_value(self, tablename, vh_item, hh_item, val_dict):
         '''
         set value to self.ui.<tablename> from val_dict
         vh_item: name of dict of which stored verticalheader names
@@ -6562,13 +6732,28 @@ class QCMApp(QMainWindow):
         set value to self.ui.<tablename> from val_dict
         vh_item: name of dict of which stored verticalheader names
         hh_item: name of dict of which stored horizontalheader names
-        val_item: name of dict in self.settings. if the name doesn't exist or empty, find in settings_init
+        val_item: name of dict in self.settings. 
         '''
         val_dict = self.settings.get(val_item, {})
-        if not val_dict:
-            val_dict = settings_init.get(val_item, {})
         if val_dict:
-            self.update_table_value(tablename, vh_item, hh_item, val_dict)
+            self.set_table_value(tablename, vh_item, hh_item, val_dict)
+
+
+    def on_changed_mech_contour_lim_tab(self):
+        # tableWidget_settings_mechanics_contoursettings
+        # update table in self.settings
+        self.update_table_value(
+            'tableWidget_settings_mechanics_contoursettings',
+            'contour_plot_lim_tab',
+        )
+
+        # 
+        table = self.ui.tableWidget_settings_mechanics_contoursettings
+        item = table.currentItem()
+        print(table)
+        print(item)
+        if item:
+            self.make_contours()
 
 
     def get_all_checked_harms(self):
