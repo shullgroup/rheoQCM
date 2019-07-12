@@ -1280,6 +1280,17 @@ class DataSaver:
             return cols_df
 
 
+    def get_list_column_to_columns_by_idx(self, chn_name, col, idx=[], deltaval=False, norm=False):
+        '''        
+        return rows with idx of df from self.get_list_column_to_columns
+        '''
+        cols_df = self.get_list_column_to_columns(chn_name, col, mark=False, deltaval=deltaval, norm=norm)
+        if idx:
+            return cols_df.loc[idx, :]
+        else:
+            return cols_df
+
+
     def get_list_column_to_columns(self, chn_name, col, mark=False, deltaval=False, norm=False):
         '''
         get a df of marks, fs or gs by open the columns with list to colums by harmonics
@@ -1332,6 +1343,17 @@ class DataSaver:
         cols_df = self.get_mech_column_to_columns(chn_name, mech_key, col, mark=mark)
         if dropnanmarkrow == True:
             return cols_df[[self.rows_with_marks(chn_name)]][:]
+        else:
+            return cols_df
+
+
+    def get_mech_column_to_columns_by_idx(self, chn_name, mech_key, col, idx=[]):
+        '''        
+        return rows with idx of mech_df from self.get_mech_column_to_columns
+        '''
+        cols_df = self.get_mech_column_to_columns(chn_name, mech_key, col, mark=False)
+        if idx:
+            return cols_df.loc[idx, :]
         else:
             return cols_df
 

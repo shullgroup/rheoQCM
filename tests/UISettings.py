@@ -550,6 +550,10 @@ settings_init = {
         ('hot',   'hot'),
         ('rainbow',   'rainbow'),
         ('gist_rainbow',   'gist_rainbow'),
+        # ('prism',   'prism'),
+        ('gray',   'gray'),
+        ('bone',   'bone'),
+        ('binary',   'binary'),
     ]),
 
     # tableWidget_settings_mechanics_contoursettings
@@ -829,8 +833,8 @@ settings_default = {
         'phi':   {'min': 0,    'max': 90 },
         'normf': {'min': -2,   'max': 0  },
         'normg': {'min': 0,    'max': 2  },
-        'rh':    {'min': 1,    'max': 1.2},
-        'rd':    {'min': -0.2, 'max': 0  },
+        'rh':    {'min': 0,    'max': 1.2},
+        'rd':    {'min': 0,    'max': 1.2},
     },
     
 }

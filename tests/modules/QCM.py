@@ -9,10 +9,9 @@ NOTE: Differnt to other modules, the harmonics used in this module are all INT.
 
 
 import numpy as np
+import pandas as pd
 from scipy import optimize
 from lmfit import Minimizer, minimize, Parameters, fit_report, printfuncs
-
-import pandas as pd
 
 
 # variable limitions
@@ -25,11 +24,11 @@ phi_range = (0, np.pi/2) # rad
 #  Zq (shear acoustic impedance) of quartz = rho_q * v_q
 Zq = {
     'AT': 8.84e6,  # kg m−2 s−1
-    'BT': 0e6,  # kg m−2 s−1
+    'BT': 0e6,     # kg m−2 s−1
 }
 
 e26 = 9.65e-2 # piezoelectric stress coefficient (e = 9.65·10−2 C/m2 for AT-cut quartz)
-d26 = 3.1e-12 # piezoelectric strain coefficient (d = 3.1·10−9 m/V for AT-cut quartz)
+d26 = 3.1e-9 # piezoelectric strain coefficient (d = 3.1·10−9 m/V for AT-cut quartz)
 g0 = 10 # 10 Hz, Half bandwidth (HWHM) of unloaed resonator (intrinsic dissipation on crystalline quartz)
 dq = 330e-6  # only needed for piezoelectric stiffening calc.
 epsq = 4.54

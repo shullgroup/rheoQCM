@@ -811,7 +811,17 @@ class MatplotlibWidget(QWidget):
         self.l['colorbar'] = plt.colorbar(self.l['C'], cax=self.ax[1]) # colorbar
         self.l['colorbar'].locator = ticker.MaxNLocator(nbins=6)
         self.l['colorbar'].update_ticks()
-       
+
+        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+            self.l['l' + str(i)] = self.ax[0].plot(
+                [], [], 
+                # marker='o', 
+                markerfacecolor='none', 
+                picker=5, # 5 points tolerance
+                label='l'+str(i),
+                alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
+            ) # l
+
         for i in range(1, int(settings_init['max_harmonic']+2), 2):
             self.l['p' + str(i)] = self.ax[0].errorbar(
                 [], [], 
@@ -845,7 +855,7 @@ class MatplotlibWidget(QWidget):
         self.set_ax(self.ax[0], xlabel=r'$d/\lambda$',ylabel=r'$\Phi$ ($\degree$)', title=title)
 
         self.canvas_draw()
-        # self.ax[0].autoscale()
+        self.ax[0].autoscale(enable=False)
 
 
     def init_legendfig(self, *args, **kwargs):
@@ -1178,20 +1188,21 @@ class MatplotlibWidget(QWidget):
         for key in self.l:
             # print(key) #testprint
             if key not in ['temp', 'C', 'colorbar']:
-                if  l_list is None: # clear all
+                if  l_list is None or key in l_list: # clear all or key
                     # self.l[key][0].set_xdata([])
                     # self.l[key][0].set_ydata([])
                     self.l[key][0].set_data([], [])
+
                 else:
-                    if key in l_list:
-                        # self.l[key][0].set_xdata([])
-                        # self.l[key][0].set_ydata([])
-                        self.l[key][0].set_data([], [])
+                    pass
             elif key == 'temp':
                 for ax in self.ax:
                     self.del_templines(ax=ax)
 
-        self.reset_ax_lim(ax)
+        print('it is a contour', 'C' in self.l) #testprint
+        if 'C' not in self.l: # not contour
+            # we don't reset contour limit
+            self.reset_ax_lim(ax)
         self.canvas_draw()
 
 

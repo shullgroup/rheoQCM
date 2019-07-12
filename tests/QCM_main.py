@@ -1119,7 +1119,7 @@ class QCMApp(QMainWindow):
         )
         self.ui.tableWidget_settings_mechanics_contoursettings.itemChanged.connect(self.on_changed_mech_contour_lim_tab)
 
-        self.ui.pushButton_settings_mechanics_contourplot.click.connect(self.add_data_to_contour)
+        self.ui.pushButton_settings_mechanics_contourplot.clicked.connect(self.add_data_to_contour)
 
         #endregion
 
@@ -1308,19 +1308,19 @@ class QCMApp(QMainWindow):
 
         #region data_mechanics
 
-        # add figure mpl_countour1 into frame_spectra_mechanics_contour1
-        self.ui.mpl_countour1 = MatplotlibWidget(
+        # add figure mpl_contour1 into frame_spectra_mechanics_contour1
+        self.ui.mpl_contour1 = MatplotlibWidget(
             parent=self.ui.frame_spectra_mechanics_contour1,
             axtype='contour'
             )
-        self.ui.frame_spectra_mechanics_contour1.setLayout(self.set_frame_layout(self.ui.mpl_countour1))
+        self.ui.frame_spectra_mechanics_contour1.setLayout(self.set_frame_layout(self.ui.mpl_contour1))
 
-        # add figure mpl_countour2 into frame_spectra_mechanics_contour2
-        self.ui.mpl_countour2 = MatplotlibWidget(
+        # add figure mpl_contour2 into frame_spectra_mechanics_contour2
+        self.ui.mpl_contour2 = MatplotlibWidget(
             parent=self.ui.frame_spectra_mechanics_contour2,
             axtype='contour',
             )
-        self.ui.frame_spectra_mechanics_contour2.setLayout(self.set_frame_layout(self.ui.mpl_countour2))
+        self.ui.frame_spectra_mechanics_contour2.setLayout(self.set_frame_layout(self.ui.mpl_contour2))
 
         self.ui.pushButton_spectra_mechanics_clear.clicked.connect(self.del_prop_plot)
         #endregion
@@ -3325,7 +3325,7 @@ class QCMApp(QMainWindow):
         return data
 
 
-    def get_data_by_typestr(self, typestr, chn_name, mark=False, unit_t=None, unit_temp=None):
+    def get_data_by_typestr(self, typestr, chn_name, mark=False, idx=[], unit_t=None, unit_temp=None):
         '''
         get data of all harmonics from data_saver by given type (str)
         str: 'df', 'dfn', 'mdf', 'mdfn', 'dg', 'dgn', 'f', 'g', 'temp', 't'
@@ -4816,12 +4816,10 @@ class QCMApp(QMainWindow):
         self.mechanics_plot('r2r1')
 
 
-    def mechanics_plot(self, plot_type, varplot=[], prop_plot_list=[], idx=[]):
+    def mechanics_plot(self, plot_type):
         '''
         make plot by plot_type
         variable is given by row selection of tableWidget_spectra_mechanics_table
-        varplot: variables to plot
-        if prop_plot_list: plot to given prop_plot_list
         '''
         x_list = ['t', 'temp', 'idx'] # common x-axis variables. t, temp is the column name, idx is not.
         print('plot_type', plot_type) #testprint
@@ -4853,12 +4851,14 @@ class QCMApp(QMainWindow):
             return
 
         # get variables to plot
-        if not varplot:
+        if plot_type == 'contourdata':
+            varplots = [['phi', 'dlams']]
+        else:
             varplot = []
             selrowidx = self.ui.tableWidget_spectra_mechanics_table.selectionModel().selectedRows() # fully selected rows
-            for idx in selrowidx:
-                print(idx.row()) #testprint
-                vh = self.ui.tableWidget_spectra_mechanics_table.verticalHeaderItem(idx.row()).text()
+            for r in selrowidx:
+                print(r.row()) #testprint
+                vh = self.ui.tableWidget_spectra_mechanics_table.verticalHeaderItem(r.row()).text()
                 print(vh) #testprint
                 for key, val in settings_init['mech_table_rowheaders'].items():
                     if vh == val:
@@ -4869,7 +4869,29 @@ class QCMApp(QMainWindow):
 
         # get data mode showall or marked
         # from tabWidget_settings
-        if self.show_marked_data() and self.data_saver.with_marks(chn_name): # show marked data only
+        idx = []
+        prop_plot_list = []
+        if (plot_type == 'contourdata'): # contour data 
+            prop_plot_list.extend([
+                self.ui.mpl_contour1,
+                self.ui.mpl_contour2,
+            ])
+
+        if (plot_type == 'contourdata') and (self.settings['comboBox_settings_mechanics_contourdata'] == 'w_curr'): # contour data with current data
+            prop_plot_list.extend([
+                self.ui.mpl_contour1,
+                self.ui.mpl_contour2,
+            ])
+            print('current ind', idx) #testprint
+            prop_group = 'p'
+            line_group = 'l'
+            mark = False
+
+            # get current idx
+            # since spinBox_spectra_mechanics_currid is not saved in self.settings we access it directly
+            idx.append(self.ui.spinBox_spectra_mechanics_currid.value())
+
+        elif self.show_marked_data() and self.data_saver.with_marks(chn_name): # show marked data only
             prop_group = 'pm'
             line_group = 'l'
             mark = True
@@ -4896,15 +4918,15 @@ class QCMApp(QMainWindow):
 
         for var_yx in varplots: # for each plot to plot
             # var_yx[0] as y
-            ydata, yerr = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[0], mark)
+            ydata, yerr = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[0], mark=mark, idx=idx)
             ylabel = self.get_label_replace_refh_unit(var_yx[0], refh)
 
             # var_yx[1] as x
-            xdata, xerr = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[1], mark)
+            xdata, xerr = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[1],  mark=mark, idx=idx)
             xlabel = self.get_label_replace_refh_unit(var_yx[1], refh)
 
             ## make the plot
-            if not prop_plot_list:
+            if plot_type not in ['contourdata']: # not contour data, no plot given
                 # create figure
                 self.prop_plot_list.append(
                     MatplotlibWidget(
@@ -4921,31 +4943,40 @@ class QCMApp(QMainWindow):
                 figharms = plt_harms
             else:
                 figharms = [str(refh)]
-            # prepare data
-            prop_list = self.prepare_harm_data_for_mpl_prop_update(chn_name, figharms, prop_group, xdata, ydata, xerr, yerr, show_marked_when_all=False)
+            # prepare marker data
+            prop_list = self.prepare_harm_data_for_mpl_prop_update(chn_name, figharms, prop_group, xdata, ydata, xerr, yerr, show_marked_when_all=False) #
+
+            print('prop_list', prop_list) #testprint
 
             # calc value from single harm for line_grop
             if '_calc' in var_yx[0] or '_calc' in var_yx[1]: # var in mech_keys_multiple
                 line_xdata = xdata
                 line_ydata = ydata
                 if '_calc' in var_yx[0]:
-                    line_ydata, _ = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[0].replace('calc', 'exp'), mark)
+                    line_ydata, _ = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[0].replace('calc', 'exp'),  mark=mark, idx=idx)
                 if '_calc' in var_yx[1]:
-                    line_xdata, _ = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[1].replace('calc', 'exp'), mark)
+                    line_xdata, _ = self.get_data_from_data_or_prop(chn_name, mech_key, var_yx[1].replace('calc', 'exp'),  mark=mark, idx=idx)
+                # prepare line data
                 line_list = self.prepare_harm_data_for_mpl_prop_update(chn_name, figharms, line_group, line_xdata, line_ydata, show_marked_when_all=False) # use the same value
 
             else:
+                # line data
                 line_list = self.prepare_harm_data_for_mpl_prop_update(chn_name, figharms, line_group, xdata, ydata, show_marked_when_all=False) # use the same value
 
             print('line_list', line_list) #testprint
             # update data in figure
-            if len(self.prop_plot_list) > 0: # there are prop plot
-                self.prop_plot_list[-1].update_data(*prop_list, *line_list)
-                # add to scrollarea
-                self.update_mpl_to_prop_scrollarea()
-            else: # there is no prop plot in the list or some thing wrong
-                print(self.prop_plot_list) #testprint to show the structrue for debug
-                pass
+            if plot_type in ['contourdata']: 
+                # we have two plots to update
+                for prop_plot in prop_plot_list:
+                    prop_plot.update_data(*prop_list, *line_list)
+            else:
+                if len(self.prop_plot_list) > 0: # there are prop plot
+                    self.prop_plot_list[-1].update_data(*prop_list, *line_list)
+                    # add to scrollarea
+                    self.update_mpl_to_prop_scrollarea()
+                else: # there is no prop plot in the list or some thing wrong
+                    print(self.prop_plot_list) #testprint to show the structrue for debug
+                    pass
 
 
     def get_label_replace_refh_unit(self, var, refh):
@@ -4962,7 +4993,7 @@ class QCMApp(QMainWindow):
         return label
 
 
-    def get_data_from_data_or_prop(self, chn_name, mech_key, var, mark):
+    def get_data_from_data_or_prop(self, chn_name, mech_key, var, mark=False, idx=[]):
         '''
         get data from data_saver.<chn_name> or data_saver.<chn_name + _prop>[mech_key]
         '''
@@ -4972,6 +5003,8 @@ class QCMApp(QMainWindow):
         data_cols = list(getattr(self.data_saver, chn_name).columns)
         prop_cols = list(getattr(self.data_saver, chn_name+'_prop')[mech_key].columns)
 
+        # NOTE: for now, we don't select single index from the data. So by index is only used to prop data set!
+        
         if var in data_cols + ['delf_exps', 'delg_exps']: # delg delf is in data, so add them to the check list
             # get timeunit
             timeunit = self.settings['comboBox_timeunit']
@@ -4981,7 +5014,10 @@ class QCMApp(QMainWindow):
             data = self.get_data_by_typestr(var, chn_name, mark=mark, unit_t=timeunit, unit_temp=tempunit)
 
         elif var in prop_cols: # delg delf is in data, so add them to the check list
-            data = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var, mark=mark, dropnanmarkrow=False)
+            if not idx: # use mark
+                data = self.data_saver.get_mech_column_to_columns_marked_rows(chn_name, mech_key, var, mark=mark, dropnanmarkrow=False)
+            else: # use index list
+                data = self.data_saver.get_mech_column_to_columns_by_idx(chn_name, mech_key, var, idx=idx)
             data = self.qcm.convert_mech_unit(data) # convert unit for plot
             # get yerr
             if self.settings['checkBox_settings_mechanics_witherror'] and (var + '_err' in getattr(self.data_saver, chn_name + '_prop')[mech_key].keys()): # corresponding error exists
@@ -5102,17 +5138,17 @@ class QCMApp(QMainWindow):
             levels1, levels2 = contour_array['levels'], contour_array['levels']
 
         mesh1, mesh2 = self.prep_contour_mesh(contour_type=contour_type)
-        self.ui.mpl_countour1.init_contour(**mesh1, levels=levels1, cmap=cmap, title=title1)
-        self.ui.mpl_countour2.init_contour(**mesh2, levels=levels2, cmap=cmap, title=title2)
+        self.ui.mpl_contour1.init_contour(**mesh1, levels=levels1, cmap=cmap, title=title1)
+        self.ui.mpl_contour2.init_contour(**mesh2, levels=levels2, cmap=cmap, title=title2)
 
         # linkxy
-        self.ui.mpl_countour1.ax[0].get_shared_x_axes().join(
-            self.ui.mpl_countour1.ax[0],
-            self.ui.mpl_countour2.ax[0]
+        self.ui.mpl_contour1.ax[0].get_shared_x_axes().join(
+            self.ui.mpl_contour1.ax[0],
+            self.ui.mpl_contour2.ax[0]
         )
-        self.ui.mpl_countour1.ax[0].get_shared_y_axes().join(
-            self.ui.mpl_countour1.ax[0],
-            self.ui.mpl_countour2.ax[0]
+        self.ui.mpl_contour1.ax[0].get_shared_y_axes().join(
+            self.ui.mpl_contour1.ax[0],
+            self.ui.mpl_contour2.ax[0]
         )
 
         # add data to contour
@@ -5121,18 +5157,35 @@ class QCMApp(QMainWindow):
 
     def add_data_to_contour(self):
         contour_data = self.settings['comboBox_settings_mechanics_contourdata']
-        ## add data to contour
+        # clear contour data
+        self.clear_all_contour_data()
+        # add data to contour
+        print('contour_data', contour_data) #testprint
         if contour_data == 'none': # w/o data
             return
-        elif contour_data == 'w_curr': # w/ current data
-            pass
-        elif contour_data == 'w_data': # w/ data (all or marked)
-            self.mechanics_plot(
-                'r1r2', 
-                varplot=['phi', 'dlams'], 
-                prop_plot_list=[self.ui.mpl_countour1, self.ui.mpl_countour2],
-                idx = [],
-                )
+        elif contour_data in ['w_curr', 'w_data']: # w/ current data or w/ data (all or marked)
+            self.mechanics_plot('contourdata')
+        
+        self.set_contour_lims()
+
+
+    def clear_all_contour_data(self):
+        '''
+        clear contour data but not contour
+        '''
+        self.ui.mpl_contour1.clr_all_lines()
+        self.ui.mpl_contour2.clr_all_lines()
+
+    
+    def set_contour_lims(self):
+        # set limit by settings
+        contour_plot_lim_tab = self.settings['contour_plot_lim_tab']
+        dlam_lims = contour_plot_lim_tab['dlam']
+        phi_lims = contour_plot_lim_tab['phi']
+        self.ui.mpl_contour1.ax[0].set_xlim(dlam_lims['min'], dlam_lims['max'])
+        self.ui.mpl_contour1.ax[0].set_ylim(phi_lims['min'], phi_lims['max'])
+        self.ui.mpl_contour2.ax[0].set_xlim(dlam_lims['min'], dlam_lims['max'])
+        self.ui.mpl_contour2.ax[0].set_ylim(phi_lims['min'], phi_lims['max'])
 
 
     def make_contour_levels(self, lmin, lmax, interv):
