@@ -1191,7 +1191,28 @@ class MatplotlibWidget(QWidget):
                 if  l_list is None or key in l_list: # clear all or key
                     # self.l[key][0].set_xdata([])
                     # self.l[key][0].set_ydata([])
-                    self.l[key][0].set_data([], [])
+                    
+                    
+                    if isinstance(self.l[key], ErrorbarContainer): # errorbar plot
+                        # clear errorbar
+                        line, caplines, barlinecols = self.l[key]
+                        line.set_data([], [])
+
+                        error_positions = ([],[]), ([],[]), ([],[]), ([],[]) 
+                        # Update the caplines 
+                        for i, pos in enumerate(error_positions): 
+                            # print('i', i) #testprint
+                            # print(caplines) #testprint
+                            # print('caplines_len', len(caplines)) #testprint
+                            caplines[i].set_data(pos) 
+                        # Update the error bars 
+                        barlinecols[0].set_segments(zip(zip([],[]), zip([],[]))) 
+                        barlinecols[1].set_segments(zip(zip([],[]), zip([],[]))) 
+                    else:
+                        self.l[key][0].set_data([], []) # line plot
+
+
+
 
                 else:
                     pass
