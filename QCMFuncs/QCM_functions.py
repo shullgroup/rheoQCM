@@ -14,15 +14,6 @@ import hdf5storage
 from pathlib import Path
 import pandas as pd
 
-# for reading h5 data file
-try:
-    from DataSaver_copy import DataSaver
-except:
-    from QCMFuncs.DataSaver_copy import DataSaver
-
-data_saver = DataSaver()
-
-
 Zq = 8.84e6  # shear acoustic impedance of at cut quartz
 f1 = 5e6  # fundamental resonant frequency
 openplots = 4
@@ -57,7 +48,7 @@ def close_on_click(event):
 def add_D_axis(ax):
     # add right hand axis with dissipation
     axD = ax.twinx()
-    axD.set_ylabel('$\Delta D_n$ (ppm)')
+    axD.set_ylabel(r'$\Delta D_n$ (ppm)')
     axlim = ax.get_ylim()
     ylim = tuple(2*lim/5 for lim in axlim)
     axD.set_ylim(ylim)
@@ -146,24 +137,35 @@ def deltarho_bulk(n, delfstar):
     return (np.pi*Zq*abs(delfstar[n])/f1) ** 2
 
 
-def calc_D(n, material, delfstar):
+def calc_D(n, material, delfstar,calctype):
     drho = material['drho']
     # set switch to handle ase where drho = 0
     if drho == 0:
         return 0
     else:
-        return 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n, material)
+        return 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n, 
+                       material,calctype)
 
-def zstar_bulk(n, material):
+
+def zstar_bulk(n, material, calctype):
     grho3 = material['grho3']
-    grho = grho3*(n/3)**(material['phi']/90)  #check for error here
-    grhostar = grho*np.exp(1j*np.pi*material['phi']/180)
+    if calctype != 'QCMD':
+        grho = grho3*(n/3)**(material['phi']/90) 
+        grhostar = grho*np.exp(1j*np.pi*material['phi']/180)
+    else:
+        # Qsense version: constant G', G" linear in omega
+        greal=grho3*np.cos(np.radians(material['phi']))
+        gimag=(n/3)*np.sin(np.radians(material['phi']))
+        grhostar=(gimag**2+greal**2)**(0.5)*(np.exp(1j*
+                 np.radians(material['phi'])))        
     return grhostar ** 0.5
+
 
 def calc_delfstar_sla(ZL):
     return f1*1j/(np.pi*Zq)*ZL
 
-def calc_ZL(n, layers, delfstar):
+
+def calc_ZL(n, layers, delfstar, calctype):
     # layers is a dictionary of dictionaries
     # each dictionary is named according to the layer number
     # layer 1 is closest to the quartz
@@ -173,14 +175,14 @@ def calc_ZL(n, layers, delfstar):
 
     # we use the matrix formalism to avoid typos.
     for i in np.arange(1, N):
-        Z[i] = zstar_bulk(n, layers[i])
-        D[i] = calc_D(n, layers[i], delfstar)
+        Z[i] = zstar_bulk(n, layers[i],calctype)
+        D[i] = calc_D(n, layers[i], delfstar, calctype)
         L[i] = np.array([[np.cos(D[i])+1j*np.sin(D[i]), 0],
                  [0, np.cos(D[i])-1j*np.sin(D[i])]])
 
     # get the terminal matrix from the properties of the last layer
-    D[N] = calc_D(n, layers[N], delfstar)
-    Zf_N = 1j*zstar_bulk(n, layers[N])*np.tan(D[N])
+    D[N] = calc_D(n, layers[N], delfstar, calctype)
+    Zf_N = 1j*zstar_bulk(n, layers[N], calctype)*np.tan(D[N])
 
     # if there is only one layer, we're already done
     if N == 1:
@@ -200,18 +202,18 @@ def calc_ZL(n, layers, delfstar):
     return Z[1]*(1-rstar)/(1+rstar)
 
 
-
 def calc_delfstar(n, layers, calctype):
     if not layers: # layers is empty {}
         return np.nan
 
     # there is data
     if 'overlayer' in layers:
-        ZL = calc_ZL(n, {1:layers['film'], 2:layers['overlayer']}, 0)
-        ZL_ref = calc_ZL(n, {1:layers['overlayer']}, 0)
+        ZL = calc_ZL(n, {1:layers['film'], 2:layers['overlayer']},
+                         0,calctype)
+        ZL_ref = calc_ZL(n, {1:layers['overlayer']}, 0, calctype)
         del_ZL = ZL-ZL_ref
     else:
-        del_ZL = calc_ZL(n, {1:layers['film']}, 0)
+        del_ZL = calc_ZL(n, {1:layers['film']}, 0, calctype)
 
     if calctype != 'LL':
         # use the small load approximation in all cases where calctype
@@ -230,15 +232,15 @@ def calc_delfstar(n, layers, calctype):
             layers_all[3]=layers['overlayer']
             layers_ref[2] = layers['overlayer']
 
-        ZL_all = calc_ZL(n, layers_all, 0)
+        ZL_all = calc_ZL(n, layers_all, 0, calctype)
         delfstar_sla_all = calc_delfstar_sla(ZL_all)
-        ZL_ref = calc_ZL(n, layers_ref, 0)
+        ZL_ref = calc_ZL(n, layers_ref, 0,calctype)
         delfstar_sla_ref = calc_delfstar_sla(ZL_ref)
 
 
         def solve_Zmot(x):
             delfstar = x[0] + 1j*x[1]
-            Zmot = calc_Zmot(n,  layers_all, delfstar)
+            Zmot = calc_Zmot(n,  layers_all, delfstar, calctype)
             return [Zmot.real, Zmot.imag]
 
         sol = optimize.root(solve_Zmot, [delfstar_sla_all.real,
@@ -247,7 +249,7 @@ def calc_delfstar(n, layers, calctype):
 
         def solve_Zmot_ref(x):
             delfstar = x[0] + 1j*x[1]
-            Zmot = calc_Zmot(n,  layers_ref, delfstar)
+            Zmot = calc_Zmot(n,  layers_ref, delfstar, calctype)
             return [Zmot.real, Zmot.imag]
 
         sol = optimize.root(solve_Zmot_ref, [delfstar_sla_ref.real,
@@ -257,8 +259,7 @@ def calc_delfstar(n, layers, calctype):
         return dfc-dfc_ref
 
 
-
-def calc_Zmot(n, layers, delfstar):
+def calc_Zmot(n, layers, delfstar, calctype):
     om = 2 * np.pi *(n*f1 + delfstar)
     g0 = 10 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
     Zqc = Zq * (1 + 1j*2*g0/(n*f1))
@@ -269,7 +270,7 @@ def calc_Zmot(n, layers, delfstar):
 
     Dq = om*drho_q/Zq
     secterm = -1j*Zqc/np.sin(Dq)
-    ZL = calc_ZL(n, layers, delfstar)
+    ZL = calc_ZL(n, layers, delfstar,calctype)
     # eq. 4.5.9 in book
     thirdterm = ((1j*Zqc*np.tan(Dq/2))**-1 + (1j*Zqc*np.tan(Dq/2) + ZL)**-1)**-1
     Zmot = secterm + thirdterm  +ZPE
@@ -277,8 +278,8 @@ def calc_Zmot(n, layers, delfstar):
     return Zmot
 
 
-def calc_dlam(n, film):
-    return calc_D(n, film, 0).real/(2*np.pi)
+def calc_dlam(n, film, calctype):
+    return calc_D(n, film, 0, calctype).real/(2*np.pi)
 
 
 def calc_lamrho(n, grho3, phi):
@@ -289,7 +290,7 @@ def calc_lamrho(n, grho3, phi):
 
 def calc_deltarho(n, grho3, phi):
     # calculate delta*rho (decay length times density)
-    return calc_lamrho(n, grho3, phi)/(2*np.pi*np.tan(np.degrees(phi/2)))
+    return calc_lamrho(n, grho3, phi)/(2*np.pi*np.tan(np.radians(phi/2)))
 
 
 def dlam(n, dlam3, phi):
@@ -321,7 +322,6 @@ def rdcalc(nh, dlam3, phi):
 def rd_from_delfstar(n, delfstar):
     # dissipation ratio calculated for the relevant harmonic
     return -delfstar[n].imag/delfstar[n].real
-
 
     
 def bulk_guess(delfstar):
@@ -391,16 +391,14 @@ def solve_for_props(soln_input):
     elif rd_exp > 0.5:
         drho, grho3, phi = bulk_guess(delfstar)
     else:
-        drho, grho3, phi = thinfilm_guess(delfstar)
+        drho, grho3, phi = thinfilm_guess(delfstar, nh)
 
-    # we solve it again to get the Jacobian with respect to our actual
-    # input variables - this is helpfulf for the error analysis
+    # set initial guess and upper and lower bounds
     x0 = np.array([drho, grho3, phi])
     lb = np.array([0, 1e5, 0])  # lower bounds drho, grho3, phi
     ub = np.array([1e-2, 1e13, 90])  # upper bounds drho, grho3, phi
 
-    # now solve a second time in order to get the proper jacobian for the
-    # error calculation, using either the SLA or LL methods
+    # otain the solutoin, using either the SLA or LL methods
 
     def ftosolve(x):
         layers['film'] = {'drho':x[0], 'grho3':x[1], 'phi':x[2]}
@@ -426,7 +424,7 @@ def solve_for_props(soln_input):
         grho3 = soln2['x'][1]
         phi = soln2['x'][2]
         film = {'drho':drho, 'grho3':grho3, 'phi':phi}
-        dlam3 = calc_dlam(3, film)
+        dlam3 = calc_dlam(3, film, calctype)
         jac = soln2['jac']
         try:
             jac_inv = np.linalg.inv(jac)
@@ -472,7 +470,6 @@ def solve_for_props(soln_input):
     return soln_output
 
 
-
 def null_solution(nhplot):
     film = {'drho':np.nan, 'grho3':np.nan, 'phi':np.nan, 'dlam3':np.nan}
 
@@ -491,6 +488,7 @@ def null_solution(nhplot):
     soln_output['delfstar_calc'] = delfstar_calc
 
     return soln_output
+
 
 def find_base_fig_name(sample, parms):
     # specify the location for the output figure files
@@ -520,6 +518,7 @@ def find_base_fig_name(sample, parms):
     print('path', base_fig_name)
 
     return base_fig_name
+
 
 def analyze(sample, parms):
     global openplots
@@ -578,8 +577,7 @@ def analyze(sample, parms):
             data_dict['fstar_err'][n] = np.zeros(data_dict['n_all'], dtype=np.complex128)
             for i in idx:
                 data_dict['fstar_err'][n][i] = (
-                   fstar_err_calc(n, data_dict['fstar'][n][i]),
-                   sample['layers'])
+                   fstar_err_calc(n, data_dict['fstar'][n][i], sample['layers']))
                 t = data_dict['t'][i]
                 f = data_dict['fstar'][n][i].real/n
                 g = data_dict['fstar'][n][i].imag
@@ -684,13 +682,11 @@ def solve_from_delfstar(sample, parms):
     # now set the markers used for the different calculation types
     markers = {'131': '>', '133': '^', '353': '+', '355': 'x', '3': 'x'}
     colors = parms.get('colors',{1: [1, 0, 0], 3: [0, 0.5, 0], 5: [0, 0, 1]})
-    imagetype = parms.get('imagetype', 'svg')
+    calctype = parms.get('calctype', 'SLA')
     # get film info (containing raw data plot, etc. if it exists)
     sample['film']=sample.get('film',{})
     sample['samplename']= sample.get('samplename','noname')
     close_on_click_switch = parms.get('close_on_click_switch', True)
-    base_fig_name = find_base_fig_name(sample, parms)
-    imagetype = parms.get('imagetype', 'svg')
     nhplot = sample.get('nhplot', [1, 3, 5])
     delfstar = sample['delfstar']
     nx = len(delfstar)  # this is the number of data points
@@ -714,7 +710,7 @@ def solve_from_delfstar(sample, parms):
             checkfig[nh]['figure'].canvas.mpl_connect('key_press_event',
                                                     close_on_click)
     # now do all of the calculations and plot the data
-    soln_input = {'nhplot': nhplot}
+    soln_input = {'nhplot': nhplot, 'calctype':calctype}
     if 'overlayer' in sample:
         soln_input['overlayer']=sample['overlayer']
     if 'prop_guess' in sample:
@@ -792,9 +788,7 @@ def solve_from_delfstar(sample, parms):
         # tidy up the solution check figure
         checkfig[nh]['D_ax'] = add_D_axis(checkfig[nh]['delg_ax'])
         checkfig[nh]['figure'].tight_layout()
-        checkfig[nh]['figure'].savefig(base_fig_name + '_'+nh +
-                                       '.' + imagetype)
-        # get the property data to add to the property figure
+         # get the property data to add to the property figure
         drho = 1000*results[nh]['film']['drho']
         grho3 = results[nh]['film']['grho3']/1000
         phi = results[nh]['film']['phi']
@@ -812,9 +806,6 @@ def solve_from_delfstar(sample, parms):
                                     marker=markers[nh], label=nh)
         propfig['phi_ax'].errorbar(xdata, phi, yerr=phi_err,
                                    marker=markers[nh], label=nh)
-        output_data = np.stack((xdata, drho, grho3, phi), axis=-1)
-        np.savetxt(base_fig_name+'_'+nh+'.txt', output_data,
-                   delimiter=',', header='xdata,drho,grho,phi', comments='')
         # add values of d/lam3 to the film raw data figure
         if 'rawfig' in sample['film']:
             sample['film']['dlam3_ax'].plot(xdata, results[nh]['dlam3'], '+', label=nh)
@@ -822,7 +813,6 @@ def solve_from_delfstar(sample, parms):
     if 'rawfig' in sample['film']:
         sample['film']['dlam3_ax'].legend()
         sample['film']['dlam3_ax'].set_xlabel(sample['xlabel'])
-    print('done with ', base_fig_name, 'press any key to close plots and continue')
     if close_on_click_switch and not run_from_ipython():
         # when code is run with IPython, don't use the event
         propfig['figure'].canvas.mpl_connect('key_press_event', close_on_click)
@@ -867,7 +857,6 @@ def cleanup_propfig(sample, parms):
     # write to standard location specified in sample definition
     propfig['figure'].savefig(find_base_fig_name(sample, parms)+
           '_prop.'+parms.get('imagetype', 'svg'))
-
 
 
 def pickpoints(Temp, nx, data_dict):
@@ -931,6 +920,7 @@ def make_prop_axes(propfigname, xlabel):
 
     return {'figure': fig, 'drho_ax': drho_ax, 'grho3_ax': grho3_ax,
             'phi_ax': phi_ax}
+
     
 def make_prop_axes_bulk(propfigname, xlabel):
     # set up the standard property plot
@@ -952,7 +942,6 @@ def make_prop_axes_bulk(propfigname, xlabel):
 
     return {'figure': fig, 'drho_ax': drho_ax, 'grho3_ax': grho3_ax,
             'phi_ax': phi_ax}
-
 
 
 def make_vgp_axes(vgpfigname):
@@ -1017,13 +1006,13 @@ def process_raw(sample, data_type):
         data_dict['file'] = os.path.join(sample['dataroot'], datadir, sample['filmfile'] + '.' + filetype)
         filmchn = sample.get('filmchn', 'samp') # default is samp
         # load file
-        data_saver.load_file(data_dict['file'])
+        load_file(data_dict['file'])
 
         # read data from file
         if data_type == 'film': # get film data
-            df = data_saver.reshape_data_df(filmchn, mark=True, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
+            df = reshape_data_df(filmchn, mark=True, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
         elif data_type == 'bare': # get bare data
-            df = data_saver.reshape_data_df(filmchn+'_ref', mark=True, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
+            df = reshape_data_df(filmchn+'_ref', mark=True, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
             pass
 
         # reference frequencies are the first data points for the bare crystal data
@@ -1136,6 +1125,7 @@ def make_check_axes(sample, nh):
 
     return {'figure': fig, 'delf_ax': delf_ax, 'delg_ax': delg_ax,
             'rh_ax': rh_ax, 'rd_ax': rd_ax}
+
 
 def plot_spectra(fig_dict, sample, idx_vals):
     datadir = sample.get('datadir','')
@@ -1269,6 +1259,7 @@ def contour(function, parms):
 
     return
 
+
 def bulk_props(delfstar):
     # get the bulk solution for grho and phi
     grho3 = (np.pi*Zq*abs(delfstar[3])/f1) ** 2
@@ -1285,6 +1276,7 @@ def make_knots(numpy_array, num_knots):
     maxval = np.max(numpy_array)-knot_interval
     knots = np.linspace(minval, maxval, num_knots)
     return knots
+
 
 def springpot(f, sp_parms):
     # this function supports a combination of different springpot elments
@@ -1338,5 +1330,109 @@ def run_from_ipython():
     except NameError:
         return False
 
+
 def print_test(variable):
     print(f1)
+
+
+def reshape_data_df(self, chn_name, mark=False, dropnanrow=True, dropnancolumn=True, deltaval=False, norm=False, unit_t=None, unit_temp=None, keep_mark=True):
+    '''
+    reshape and tidy data df (samp and ref) for exporting
+    keep_mark works when dropnanrow == False
+    '''
+    cols = ['fs', 'gs']
+    df = getattr(self, chn_name).copy()
+
+    # convert t column to datetime object
+    df['t'] = self.get_t_by_unit(chn_name, unit=unit_t)
+    df['temp'] = self.get_temp_by_unit(chn_name, unit=unit_temp)
+
+    for col in cols:
+        df = df.assign(**self.get_list_column_to_columns(chn_name, col, mark=mark, deltaval=deltaval, norm=norm)) # split columns: fs and gs
+        df = df.drop(columns=col) # drop columns: fs and gs
+
+
+    # drop columns with all 
+    if dropnancolumn == True:
+        df = df.dropna(axis='columns', how='all')
+        if 'temp' not in df.columns: # no temperature data
+            df['temp'] = np.nan # add temp column back
+
+    if dropnanrow == True: # rows with marks only
+        # select rows with marks
+        df = df[self.rows_with_marks(chn_name)][:]
+        if 'marks' in df.columns:
+            df = df.drop(columns='marks') # drop marks column
+    else:
+        print('there is no marked data.\n no data will be deleted.') 
+
+
+    if 'marks' in df.columns:
+        # split marks column
+        if keep_mark:
+            df = df.assign(**self.get_list_column_to_columns(chn_name, 'marks', mark=mark, norm=False))
+        # finally drop the marks column
+        df = df.drop(columns='marks') # drop marks column
+
+    return df
+
+
+def load_file(self, path):
+    '''
+    load data information from exist hdf5 file
+    '''
+    self._init_attrs()
+
+    self.mode = 'load'
+    self.path = path
+
+    # get data information
+    with h5py.File(self.path, 'r') as fh:
+        key_list = list(fh.keys())
+        
+        # check if the file is data file with right format
+        # if all groups/attrs in files
+
+        # get data save to attributes
+        
+        self.settings = json.loads(fh['settings'][()])
+        self.settings_init = json.loads(fh['settings_init'][()])
+        self.exp_ref = json.loads(fh['exp_ref'][()])
+        self.ver = fh.attrs['ver']
+        # get queue_list
+        # self.queue_list = list(fh['raw/samp'].keys())
+        # self.queue_list = [int(s) for s in fh['raw/samp'].keys()]
+
+        for chn_name in self._chn_keys:
+            # df for data from samp/ref chn
+            setattr(self, chn_name, pd.read_json(fh['data/' + chn_name][()]).sort_values(by=['queue_id'])) 
+            
+            # df for data form samp_ref/ref_ref chn
+            setattr(self, chn_name + '_ref', pd.read_json(fh['data/' + chn_name + '_ref'][()]).sort_values(by=['queue_id'])) 
+
+            # load prop
+            if ('prop' in fh.keys()) and (chn_name in fh['prop'].keys()): # prop exists
+                for mech_key in fh['prop/' + chn_name].keys():
+                    getattr(self, chn_name + '_prop')[mech_key] = pd.read_json(fh['prop/' + chn_name + '/' + mech_key][()]).sort_values(by=['queue_id']) 
+            
+            
+        # replace None with nan in self.samp and self.ref
+        self.replace_none_with_nan_after_loading() 
+
+        # get queue_list for each channel
+        # method 1: from raw. problem of this method is repeat queue_id may be created after deleting data points. 
+        # queue_samp = []
+        # queue_ref = []
+        # if 'samp' in fh['raw'].keys():
+        #     queue_samp = [int(s) for s in fh['raw/samp'].keys()]
+        # if 'ref' in fh['raw'].keys():
+        #     queue_ref = [int(s) for s in fh['raw/ref'].keys()]
+        # method 2: from data
+        queue_samp = self.samp.queue_id.values # TODO add checking marker != -1
+        queue_ref = self.ref.queue_id.values
+        self.queue_list = list(set(queue_samp) | set(queue_ref))
+
+        self.raw  = {} # raw data from last queue
+
+        self.saveflg = True
+
