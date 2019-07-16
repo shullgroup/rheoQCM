@@ -54,6 +54,16 @@ def close_on_click(event):
     return
 
 
+def add_D_axis(ax):
+    # add right hand axis with dissipation
+    axD = ax.twinx()
+    axD.set_ylabel('$\Delta D_n$ (ppm)')
+    axlim = ax.get_ylim()
+    ylim = tuple(2*lim/5 for lim in axlim)
+    axD.set_ylim(ylim)
+    return axD
+
+
 def find_dataroot(owner):
     # returns root data directory as first potential option from an input list
     # if none of the possibilities exist, we return 'none'
@@ -86,11 +96,17 @@ def find_dataroot(owner):
     return 'none'
 
 
-def fstar_err_calc(fstar):
+def fstar_err_calc(n, delfstar, layers):
     # calculate the error in delfstar
-    g_err_min = 10 # error floor for gamma
-    f_err_min = 50 # error floor for fd
-    err_frac = 3e-2 # error in f or gamma as a fraction of gamma
+    g_err_min = 1 # error floor for gamma
+    f_err_min = 1 # error floor for fd
+    err_frac = 1e-2 # error in f or gamma as a fraction of gamma
+    if 'overlayer' in layers:
+        fstar = delfstar + calc_delfstar(n, {'film':layers['overlayer']}, 
+                                             'SLA')
+    else:
+        fstar = delfstar
+            
     # start by specifying the error input parameters
     fstar_err = np. zeros(1, dtype=np.complex128)
     fstar_err = (f_err_min + err_frac*fstar.imag + 1j*
@@ -261,9 +277,19 @@ def calc_Zmot(n, layers, delfstar):
     return Zmot
 
 
-
 def calc_dlam(n, film):
     return calc_D(n, film, 0).real/(2*np.pi)
+
+
+def calc_lamrho(n, grho3, phi):
+    # calculate lambda*rho
+    grho=grho3*(n/3) ** (phi/90)
+    return np.sqrt(grho)/(n*f1*np.cos(np.deg2rad(phi/2)))
+
+
+def calc_deltarho(n, grho3, phi):
+    # calculate delta*rho (decay length times density)
+    return calc_lamrho(n, grho3, phi)/(2*np.pi*np.tan(np.degrees(phi/2)))
 
 
 def dlam(n, dlam3, phi):
@@ -297,9 +323,59 @@ def rd_from_delfstar(n, delfstar):
     return -delfstar[n].imag/delfstar[n].real
 
 
+    
+def bulk_guess(delfstar):
+    # get the bulk solution for grho and phi
+    grho3 = (np.pi*Zq*abs(delfstar[3])/f1) ** 2
+    phi = -np.degrees(2*np.arctan(delfstar[3].real /
+                      delfstar[3].imag))
+
+    # calculate rho*lambda
+    lamrho3 = np.sqrt(grho3)/(3*f1*np.cos(np.deg2rad(phi/2)))
+
+    # we need an estimate for drho.  We oNy use thi approach if it is
+    # reasonably large.  We'll put it at the quarter wavelength condition
+    # for now
+    drho = lamrho3/4
+
+    return [drho, grho3, min(phi, 90)]
+
+
+def thinfilm_guess(delfstar, nh):
+    # really a placeholder function until we develop a more creative strategy
+    # for estimating the starting point
+    n1 = int(nh[0])
+    n2 = int(nh[1])
+    n3 = int(nh[2])
+
+
+    rd_exp = -delfstar[n3].imag/delfstar[n3].real
+    rh_exp = (n2/n1)*delfstar[n1].real/delfstar[n2].real
+    lb = np.array([0, 0])  # lower bounds on dlam3 and phi
+    ub = np.array([5, 90])  # upper bonds on dlam3 and phi
+
+    # we solve the problem initially using the harmonic and dissipation
+    # ratios, using the small load approximation
+    # we also neglect the overlayer in this first calculation
+    def ftosolve(x):
+        return [rhcalc(nh, x[0], x[1])-rh_exp, rdcalc(nh, x[0], x[1])-rd_exp]
+    guess = [0.05, 5]
+    soln = optimize.least_squares(ftosolve, guess, bounds=(lb, ub))
+
+    dlam3 = soln['x'][0]
+    phi = soln['x'][1]
+    drho = (sauerbreym(n1, delfstar[n1].real) /
+            normdelfstar(n1, dlam3, phi).real)
+    grho3 = grho_from_dlam(3, drho, dlam3, phi)
+    return drho, grho3, phi
+
+
 def solve_for_props(soln_input):
     # solve the QCM equations to determine the properties
-    layers = soln_input['layers']
+    if 'overlayer' in soln_input:
+        layers={'overlayer':soln_input['overlayer']}
+    else:
+        layers={}
     nhplot = soln_input.get('nhplot', [1, 3, 5])
     calctype = soln_input.get('calctype', 'SLA')
     nh = soln_input['nh']
@@ -307,45 +383,26 @@ def solve_for_props(soln_input):
     n2 = int(nh[1])
     n3 = int(nh[2])
     delfstar = soln_input['delfstar']
-
-    # first pass at solution comes from rh and rd
     rd_exp = -delfstar[n3].imag/delfstar[n3].real
-    rh_exp = (n2/n1)*delfstar[n1].real/delfstar[n2].real
 
     if 'prop_guess' in soln_input:
-        soln1_guess = guess_from_props(soln_input['propguess'])
+        guess=soln_input['prop_guess']
+        drho, grho3, phi = guess['drho'], guess['grho3'], guess['phi']
     elif rd_exp > 0.5:
-        soln1_guess = bulk_guess(delfstar)
+        drho, grho3, phi = bulk_guess(delfstar)
     else:
-        soln1_guess = thinfilm_guess(delfstar)
-
-    lb = np.array([0, 0])  # lower bounds on dlam3 and phi
-    ub = np.array([5, 90])  # upper bonds on dlam3 and phi
-
-    # we solve the problem initially using the harmonic and dissipation
-    # ratios, using the small load approximation
-    def ftosolve(x):
-        return [rhcalc(nh, x[0], x[1])-rh_exp, rdcalc(nh, x[0], x[1])-rd_exp]
-
-    soln1 = optimize.least_squares(ftosolve, soln1_guess, bounds=(lb, ub))
-
-    dlam3 = soln1['x'][0]
-    phi = soln1['x'][1]
-    drho = (sauerbreym(n1, delfstar[n1].real) /
-            normdelfstar(n1, dlam3, phi).real)
-    grho3 = grho_from_dlam(3, drho, dlam3, phi)
+        drho, grho3, phi = thinfilm_guess(delfstar)
 
     # we solve it again to get the Jacobian with respect to our actual
     # input variables - this is helpfulf for the error analysis
     x0 = np.array([drho, grho3, phi])
-
-    lb = np.array([0, 1e7, 0])  # lower bounds drho, grho3, phi
+    lb = np.array([0, 1e5, 0])  # lower bounds drho, grho3, phi
     ub = np.array([1e-2, 1e13, 90])  # upper bounds drho, grho3, phi
 
     # now solve a second time in order to get the proper jacobian for the
     # error calculation, using either the SLA or LL methods
 
-    def ftosolve2(x):
+    def ftosolve(x):
         layers['film'] = {'drho':x[0], 'grho3':x[1], 'phi':x[2]}
         return ([delfstar[n1].real-calc_delfstar(n1, layers, calctype).real,
                  delfstar[n2].real-calc_delfstar(n2, layers, calctype).real,
@@ -354,16 +411,17 @@ def solve_for_props(soln_input):
     # put the input uncertainties into a 3 element vector
     delfstar_err = np.zeros(3)
 
-    delfstar_err[0] = fstar_err_calc(delfstar[n1]).real
-    delfstar_err[1] = fstar_err_calc(delfstar[n2]).real
-    delfstar_err[2] = fstar_err_calc(delfstar[n3]).imag
+    delfstar_err[0] = fstar_err_calc(n1, delfstar[n1], layers).real
+    delfstar_err[1] = fstar_err_calc(n2, delfstar[n2], layers).real
+    delfstar_err[2] = fstar_err_calc(n3, delfstar[n3], layers).imag
 
     # initialize the output uncertainties
     err = {}
     err_names = ['drho', 'grho3', 'phi']
     # recalculate solution to give the uncertainty, if solution is viable
-    if np.all(lb < x0) and np.all(x0 < ub):
-        soln2 = optimize.least_squares(ftosolve2, x0, bounds=(lb, ub))
+
+    if np.all(lb < x0) and np.all(x0 < 1.1*ub):
+        soln2 = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
         drho = soln2['x'][0]
         grho3 = soln2['x'][1]
         phi = soln2['x'][2]
@@ -375,7 +433,7 @@ def solve_for_props(soln_input):
         except:
             jac_inv = np.zeros([3,3])
 
-        # define sensibly names partial derivatives for further use
+        # define sensibly named partial derivatives for further use
         deriv = {}
         for k in [0, 1, 2]:
             deriv[err_names[k]]={0:jac_inv[k, 0], 1:jac_inv[k, 1], 2:jac_inv[k, 2]}
@@ -519,7 +577,9 @@ def analyze(sample, parms):
         for n in nhplot:
             data_dict['fstar_err'][n] = np.zeros(data_dict['n_all'], dtype=np.complex128)
             for i in idx:
-                data_dict['fstar_err'][n][i] = fstar_err_calc(data_dict['fstar'][n][i])
+                data_dict['fstar_err'][n][i] = (
+                   fstar_err_calc(n, data_dict['fstar'][n][i]),
+                   sample['layers'])
                 t = data_dict['t'][i]
                 f = data_dict['fstar'][n][i].real/n
                 g = data_dict['fstar'][n][i].imag
@@ -560,7 +620,8 @@ def analyze(sample, parms):
         delfstar_err[i] ={}
         for n in nhplot:
             delfstar[i][n] = (film['fstar'][n][idxf] - film['fstar_ref'][n][idxf])
-            delfstar_err[i][n] = fstar_err_calc(film['fstar'][n][idxf])
+            delfstar_err[i][n] = fstar_err_calc(n, delfstar[i][n], 
+                        sample['layers'])
 
     sample['delfstar'] = delfstar
     sample['delfstar_err'] = delfstar_err
@@ -626,6 +687,7 @@ def solve_from_delfstar(sample, parms):
     imagetype = parms.get('imagetype', 'svg')
     # get film info (containing raw data plot, etc. if it exists)
     sample['film']=sample.get('film',{})
+    sample['samplename']= sample.get('samplename','noname')
     close_on_click_switch = parms.get('close_on_click_switch', True)
     base_fig_name = find_base_fig_name(sample, parms)
     imagetype = parms.get('imagetype', 'svg')
@@ -653,7 +715,10 @@ def solve_from_delfstar(sample, parms):
                                                     close_on_click)
     # now do all of the calculations and plot the data
     soln_input = {'nhplot': nhplot}
-    soln_input['layers']=sample.get('layers',{})
+    if 'overlayer' in sample:
+        soln_input['overlayer']=sample['overlayer']
+    if 'prop_guess' in sample:
+        soln_input['prop_guess']=sample['prop_guess']
     results = {}
     for nh in sample['nhcalc']:
         # initialize all the dictionaries
@@ -684,6 +749,7 @@ def solve_from_delfstar(sample, parms):
             results[nh]['film']['grho3_err'][i] = soln['err']['grho3']
             results[nh]['film']['phi_err'][i] = soln['err']['phi']
             results[nh]['dlam3'][i] = soln['dlam3']
+            soln_input['prop_guess']=soln['film']
             for n in nhplot:
                 results[nh]['delfstar_calc'][n][i] = (
                  soln['delfstar_calc'][n])
@@ -692,9 +758,9 @@ def solve_from_delfstar(sample, parms):
             # add actual values of delf, delg for each harmonic to the
             # solution check figure
             for n in nhplot:
-                checkfig[nh]['delf_ax'].plot(xdata[i], delfstar[i][n].real
-                                             / n, '+', color=colors[n])
-                checkfig[nh]['delg_ax'].plot(xdata[i], delfstar[i][n].imag,
+                checkfig[nh]['delf_ax'].plot(xdata[i], delfstar[i][n].real/n,
+                                             '+', color=colors[n])
+                checkfig[nh]['delg_ax'].plot(xdata[i], delfstar[i][n].imag/n,
                                              '+', color=colors[n])
             # add experimental rh, rd to solution check figure
             checkfig[nh]['rh_ax'].plot(xdata[i], rh_from_delfstar(nh,
@@ -710,10 +776,10 @@ def solve_from_delfstar(sample, parms):
         # add calculated delf and delg to solution check figures
         for n in nhplot:
             (checkfig[nh]['delf_ax'].plot(xdata,
-             results[nh]['delfstar_calc'][n].real / n, '-',
+             results[nh]['delfstar_calc'][n].real/n, '-',
              color=colors[n], label='n='+str(n)))
             (checkfig[nh]['delg_ax'].plot(xdata,
-             results[nh]['delfstar_calc'][n].imag, '-', color=colors[n],
+             results[nh]['delfstar_calc'][n].imag/n, '-', color=colors[n],
              label='n='+str(n)))
         # add legend to the solution check figures
         checkfig[nh]['delf_ax'].legend()
@@ -724,6 +790,7 @@ def solve_from_delfstar(sample, parms):
             checkfig[nh]['rh_ax'].set_xscale(sample['xscale'])
             checkfig[nh]['rd_ax'].set_xscale(sample['xscale'])
         # tidy up the solution check figure
+        checkfig[nh]['D_ax'] = add_D_axis(checkfig[nh]['delg_ax'])
         checkfig[nh]['figure'].tight_layout()
         checkfig[nh]['figure'].savefig(base_fig_name + '_'+nh +
                                        '.' + imagetype)
@@ -771,6 +838,7 @@ def solve_from_delfstar(sample, parms):
     sample['results'] = results
     # tidy up the property figure
     cleanup_propfig(sample, parms)
+    sample['checkfig'] = checkfig
     return sample
 
 
@@ -849,7 +917,7 @@ def make_prop_axes(propfigname, xlabel):
     fig = plt.figure(propfigname, figsize=(9, 3))
     drho_ax = fig.add_subplot(131)
     drho_ax.set_xlabel(xlabel)
-    drho_ax.set_ylabel(r'$d\rho$ (g/m$^2$)')
+    drho_ax.set_ylabel(r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)')
 
     grho3_ax = fig.add_subplot(132)
     grho3_ax.set_xlabel(xlabel)
@@ -1010,7 +1078,7 @@ def process_raw(sample, data_type):
 
     data_dict['g_ax'] = data_dict['rawfig'].add_subplot(1,numplots,2)
     data_dict['g_ax'].set_xlabel('t (min.)')
-    data_dict['g_ax'].set_ylabel(r'$\Gamma$ (Hz)')
+    data_dict['g_ax'].set_ylabel(r'$\Delta\Gamma/n$ (Hz)')
     data_dict['g_ax'].set_title(data_type)
 
     if numplots == 3:
@@ -1030,7 +1098,7 @@ def process_raw(sample, data_type):
     for n in nhplot:
         t = data_dict['t'][data_dict['idx_in_range']]
         f = data_dict['fstar'][n][data_dict['idx_in_range']].real/n
-        g = data_dict['fstar'][n][data_dict['idx_in_range']].imag
+        g = data_dict['fstar'][n][data_dict['idx_in_range']].imag/n
         (data_dict['f_ax'].plot(t, f, color=colors[n], label='n='+str(n)))
         (data_dict['g_ax'].plot(t, g, color=colors[n], label='n='+str(n)))
 
@@ -1054,7 +1122,7 @@ def make_check_axes(sample, nh):
 
     delg_ax = fig.add_subplot(222)
     delg_ax.set_xlabel(sample['xlabel'])
-    delg_ax.set_ylabel(r'$\Delta \Gamma$ (Hz)')
+    delg_ax.set_ylabel(r'$\Delta \Gamma/n$ (Hz)')
 
     rh_ax = fig.add_subplot(223)
     rh_ax.set_xlabel(sample['xlabel'])
@@ -1068,7 +1136,6 @@ def make_check_axes(sample, nh):
 
     return {'figure': fig, 'delf_ax': delf_ax, 'delg_ax': delg_ax,
             'rh_ax': rh_ax, 'rd_ax': rd_ax}
-
 
 def plot_spectra(fig_dict, sample, idx_vals):
     datadir = sample.get('datadir','')
@@ -1210,35 +1277,6 @@ def bulk_props(delfstar):
 
     return [grho3, phi]
 
-
-def bulk_guess(delfstar):
-    # get the bulk solution for grho and phi
-    grho3 = (np.pi*Zq*abs(delfstar[3])/f1) ** 2
-    phi = -np.degrees(2*np.arctan(delfstar[3].real /
-                      delfstar[3].imag))
-
-    # calculate rho*lambda
-    lamrho3 = np.sqrt(grho3)/(3*f1*np.cos(np.deg2rad(phi/2)))
-
-    # we need an estimate for drho.  We oNy use thi approach if it is
-    # reasonably large.  We'll put it at the quarter wavelength condition
-    # for now
-    drho = lamrho3/4
-    film = {'drho':drho, 'grho3':grho3, 'phi':phi}
-    dlam3 = calc_dlam(3, film)
-
-    return [dlam3, min(phi, 90)]
-
-
-def guess_from_props(film):
-    dlam3 = calc_dlam(3, film)
-    return [dlam3, film['phi']]
-
-
-def thinfilm_guess(delfstar):
-    # really a placeholder function until we develop a more creative strategy
-    # for estimating the starting point
-    return [0.05, 5]
 
 def make_knots(numpy_array, num_knots):
     # makes num_knots eveNy spaced knots along array
