@@ -1307,9 +1307,16 @@ class MatplotlibWidget(QWidget):
         reset the lim of ax
         this change the display and where home button goes back to
         '''
+        # turn off PAN/ZOOM
+        if self.toolbar._active == "PAN":
+            self.toolbar.pan()
+        elif self.toolbar._active == "ZOOM":
+            self.toolbar.zoom()
+
         ax.relim(visible_only=True)
         ax.autoscale_view(True,True,True)
         # ax.autoscale(True, 'both', False) # the same as autoscale_view
+        # self.canvas.toolbar.update() # reset toolbar memory
 
 def press_zoomX(obj, event):
     event.key = 'x'

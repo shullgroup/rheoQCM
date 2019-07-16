@@ -1371,9 +1371,11 @@ class QCMApp(QMainWindow):
         self.ui.menu_settings_mechanics_solve = QMenu(self.ui.toolButton_settings_mechanics_solve)
         self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_all)
         self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_marked)
+        self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_new)
         self.ui.menu_settings_mechanics_solve.addAction(self.ui.actionSolve_test)
         self.ui.actionSolve_all.triggered.connect(self.mech_solve_all)
         self.ui.actionSolve_marked.triggered.connect(self.mech_solve_marked)
+        self.ui.actionSolve_new.triggered.connect(self.mech_solve_new)
         self.ui.actionSolve_test.triggered.connect(self.mech_solve_test)
         # add menu to toolbutton
         self.ui.toolButton_settings_mechanics_solve.setMenu(self.ui.menu_settings_mechanics_solve)
@@ -4539,6 +4541,20 @@ class QCMApp(QMainWindow):
     def mech_solve_marked(self):
         queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanmarkrow=True)
         self.mech_solve_chn(self.mech_chn, queue_ids)
+
+
+    def mech_solve_new(self):
+        data_queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanmarkrow=False)
+        
+        nhcalc = self.gen_nhcalc_str()
+        mech_queue_ids = self.data_saver.get_mech_queue_id(self.mech_chn, nhcalc)
+
+        queue_ids =  data_queue_ids[data_queue_ids.isin(set(data_queue_ids) - set(mech_queue_ids))]
+
+        if queue_ids.empty:
+            print('No new data to calculate.')
+        else:
+            self.mech_solve_chn(self.mech_chn, queue_ids)
 
 
     def set_mech_layer_0_indchn_val(self):
