@@ -1032,7 +1032,6 @@ def process_raw(sample, data_type):
         data_dict['filmindex'] = None
 
 
-
     # figure out how man total points we have
     data_dict['n_all'] = data_dict['t'].shape[0]
 
