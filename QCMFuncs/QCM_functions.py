@@ -13,6 +13,7 @@ import os
 import hdf5storage
 from pathlib import Path
 import pandas as pd
+import h5py
 
 Zq = 8.84e6  # shear acoustic impedance of at cut quartz
 f1 = 5e6  # fundamental resonant frequency
@@ -1333,106 +1334,4 @@ def run_from_ipython():
 
 def print_test(variable):
     print(f1)
-
-
-def reshape_data_df(self, chn_name, mark=False, dropnanrow=True, dropnancolumn=True, deltaval=False, norm=False, unit_t=None, unit_temp=None, keep_mark=True):
-    '''
-    reshape and tidy data df (samp and ref) for exporting
-    keep_mark works when dropnanrow == False
-    '''
-    cols = ['fs', 'gs']
-    df = getattr(self, chn_name).copy()
-
-    # convert t column to datetime object
-    df['t'] = self.get_t_by_unit(chn_name, unit=unit_t)
-    df['temp'] = self.get_temp_by_unit(chn_name, unit=unit_temp)
-
-    for col in cols:
-        df = df.assign(**self.get_list_column_to_columns(chn_name, col, mark=mark, deltaval=deltaval, norm=norm)) # split columns: fs and gs
-        df = df.drop(columns=col) # drop columns: fs and gs
-
-
-    # drop columns with all 
-    if dropnancolumn == True:
-        df = df.dropna(axis='columns', how='all')
-        if 'temp' not in df.columns: # no temperature data
-            df['temp'] = np.nan # add temp column back
-
-    if dropnanrow == True: # rows with marks only
-        # select rows with marks
-        df = df[self.rows_with_marks(chn_name)][:]
-        if 'marks' in df.columns:
-            df = df.drop(columns='marks') # drop marks column
-    else:
-        print('there is no marked data.\n no data will be deleted.') 
-
-
-    if 'marks' in df.columns:
-        # split marks column
-        if keep_mark:
-            df = df.assign(**self.get_list_column_to_columns(chn_name, 'marks', mark=mark, norm=False))
-        # finally drop the marks column
-        df = df.drop(columns='marks') # drop marks column
-
-    return df
-
-
-def load_file(self, path):
-    '''
-    load data information from exist hdf5 file
-    '''
-    self._init_attrs()
-
-    self.mode = 'load'
-    self.path = path
-
-    # get data information
-    with h5py.File(self.path, 'r') as fh:
-        key_list = list(fh.keys())
-        
-        # check if the file is data file with right format
-        # if all groups/attrs in files
-
-        # get data save to attributes
-        
-        self.settings = json.loads(fh['settings'][()])
-        self.settings_init = json.loads(fh['settings_init'][()])
-        self.exp_ref = json.loads(fh['exp_ref'][()])
-        self.ver = fh.attrs['ver']
-        # get queue_list
-        # self.queue_list = list(fh['raw/samp'].keys())
-        # self.queue_list = [int(s) for s in fh['raw/samp'].keys()]
-
-        for chn_name in self._chn_keys:
-            # df for data from samp/ref chn
-            setattr(self, chn_name, pd.read_json(fh['data/' + chn_name][()]).sort_values(by=['queue_id'])) 
-            
-            # df for data form samp_ref/ref_ref chn
-            setattr(self, chn_name + '_ref', pd.read_json(fh['data/' + chn_name + '_ref'][()]).sort_values(by=['queue_id'])) 
-
-            # load prop
-            if ('prop' in fh.keys()) and (chn_name in fh['prop'].keys()): # prop exists
-                for mech_key in fh['prop/' + chn_name].keys():
-                    getattr(self, chn_name + '_prop')[mech_key] = pd.read_json(fh['prop/' + chn_name + '/' + mech_key][()]).sort_values(by=['queue_id']) 
-            
-            
-        # replace None with nan in self.samp and self.ref
-        self.replace_none_with_nan_after_loading() 
-
-        # get queue_list for each channel
-        # method 1: from raw. problem of this method is repeat queue_id may be created after deleting data points. 
-        # queue_samp = []
-        # queue_ref = []
-        # if 'samp' in fh['raw'].keys():
-        #     queue_samp = [int(s) for s in fh['raw/samp'].keys()]
-        # if 'ref' in fh['raw'].keys():
-        #     queue_ref = [int(s) for s in fh['raw/ref'].keys()]
-        # method 2: from data
-        queue_samp = self.samp.queue_id.values # TODO add checking marker != -1
-        queue_ref = self.ref.queue_id.values
-        self.queue_list = list(set(queue_samp) | set(queue_ref))
-
-        self.raw  = {} # raw data from last queue
-
-        self.saveflg = True
 
