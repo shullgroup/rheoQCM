@@ -13,7 +13,6 @@ import os
 import hdf5storage
 from pathlib import Path
 import pandas as pd
-import h5py
 
 Zq = 8.84e6  # shear acoustic impedance of at cut quartz
 f1 = 5e6  # fundamental resonant frequency
@@ -1003,35 +1002,11 @@ def process_raw(sample, data_type):
         # set key for getting index to plot from txt file
         data_dict['idx_file'] = os.path.join(sample['dataroot'], datadir, sample[data_type+'file']+'_film_idx.txt')
 
-    elif filetype == 'h5': # h5 file to read
-        data_dict['file'] = os.path.join(sample['dataroot'], datadir, sample['filmfile'] + '.' + filetype)
-        filmchn = sample.get('filmchn', 'samp') # default is samp
-        # load file
-        load_file(data_dict['file'])
-
-        # read data from file
-        if data_type == 'film': # get film data
-            df = reshape_data_df(filmchn, mark=True, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
-        elif data_type == 'bare': # get bare data
-            df = reshape_data_df(filmchn+'_ref', mark=True, dropnanrow=False, dropnancolumn=False, deltaval=False, norm=False, unit_t='m', unit_temp='C')
-            pass
-
-        # reference frequencies are the first data points for the bare crystal data
-        # get t
-        data_dict['t'] = df.t.values # make it as ndarray, unit in min
-        data_dict['fstar'] = {}
-        for n in nhplot:
-            data_dict['fstar'][n] = df['f'+str(n)].values +1j*df['g'+str(n)].values
-
-        # set key for getting index to plot from txt file
-        data_dict['idx_file'] = os.path.join(sample['dataroot'], datadir, sample['filmfile']+'_film_idx.txt')
-
     # get index to plot from *_sampledefs.py
     if 'filmindex' in sample:
         data_dict['filmindex'] = np.array(sample['filmindex'], dtype=int)
     else:
         data_dict['filmindex'] = None
-
 
     # figure out how man total points we have
     data_dict['n_all'] = data_dict['t'].shape[0]
