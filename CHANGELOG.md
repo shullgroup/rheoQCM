@@ -1,10 +1,18 @@
 # Changelog
 
-## [0.18.0] - 2019-07-11
+## [0.18.0] - 2019-07-15
 
 ### Added
 
 - Add contour plots.
+- Add slove new property to save the time from solving all.
+- Add D (dissipition from QCM-D) to calculated properties. 
+ 
+### Changed
+
+- Change code that property calculation remove previous data. Note: If you want to recalculate previous data, make sure use `slove all`.
+
+### Fixed
   
 ## [0.17.2] - 2019-07-05
 

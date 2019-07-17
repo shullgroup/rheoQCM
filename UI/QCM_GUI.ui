@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>986</width>
-    <height>963</height>
+    <height>983</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1212,7 +1212,7 @@ background-color: red;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>2</number>
                    </property>
                    <property name="documentMode">
                     <bool>false</bool>
@@ -1484,7 +1484,7 @@ background-color: red;
                    <x>0</x>
                    <y>0</y>
                    <width>286</width>
-                   <height>153</height>
+                   <height>163</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -3704,12 +3704,42 @@ border-image: url(:/button/rc/plus_p.svg);
                    </property>
                    <item row="1" column="1">
                     <widget class="QPushButton" name="pushButton_settings_mechanics_contourplot">
+                     <property name="toolTip">
+                      <string>Update data in contours.</string>
+                     </property>
                      <property name="text">
                       <string>Update Data</string>
                      </property>
                     </widget>
                    </item>
-                   <item row="1" column="2">
+                   <item row="0" column="1">
+                    <widget class="QComboBox" name="comboBox_settings_mechanics_contourtype">
+                     <property name="enabled">
+                      <bool>true</bool>
+                     </property>
+                     <property name="toolTip">
+                      <string>Select contour type.</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QComboBox" name="comboBox_settings_mechanics_contourcmap">
+                     <property name="toolTip">
+                      <string>Select color map for contours.</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QComboBox" name="comboBox_settings_mechanics_contourdata">
+                     <property name="enabled">
+                      <bool>true</bool>
+                     </property>
+                     <property name="toolTip">
+                      <string>Select how to plot data in contour.</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="2">
                     <widget class="QPushButton" name="pushButton_settings_mechanics_contoursettings">
                      <property name="enabled">
                       <bool>true</bool>
@@ -3726,6 +3756,9 @@ border-image: url(:/button/rc/plus_p.svg);
                        <height>16777215</height>
                       </size>
                      </property>
+                     <property name="toolTip">
+                      <string>Set contour limits.</string>
+                     </property>
                      <property name="text">
                       <string>...</string>
                      </property>
@@ -3734,23 +3767,6 @@ border-image: url(:/button/rc/plus_p.svg);
                      </property>
                      <property name="checked">
                       <bool>false</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="1">
-                    <widget class="QComboBox" name="comboBox_settings_mechanics_contourtype">
-                     <property name="enabled">
-                      <bool>true</bool>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="0">
-                    <widget class="QComboBox" name="comboBox_settings_mechanics_contourcmap"/>
-                   </item>
-                   <item row="1" column="0">
-                    <widget class="QComboBox" name="comboBox_settings_mechanics_contourdata">
-                     <property name="enabled">
-                      <bool>true</bool>
                      </property>
                     </widget>
                    </item>
@@ -6191,7 +6207,7 @@ border: 1px solid blue;
     <string>Solve all</string>
    </property>
    <property name="toolTip">
-    <string>Solve all data</string>
+    <string>Solve all data in current channel.</string>
    </property>
   </action>
   <action name="actionSolve_marked">
@@ -6199,7 +6215,7 @@ border: 1px solid blue;
     <string>Solve marked</string>
    </property>
    <property name="toolTip">
-    <string>Solve marked data</string>
+    <string>Solve marked data in current channel.</string>
    </property>
   </action>
   <action name="actionRows_Time">
@@ -6313,6 +6329,14 @@ border: 1px solid blue;
    </property>
    <property name="toolTip">
     <string>Plot variables vs. indices</string>
+   </property>
+  </action>
+  <action name="actionSolve_new">
+   <property name="text">
+    <string>Solve_new</string>
+   </property>
+   <property name="toolTip">
+    <string>Solve new collected data in current channel.</string>
    </property>
   </action>
  </widget>

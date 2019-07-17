@@ -159,9 +159,14 @@ class QCM:
 
     def calc_delrho(self, n, grho, phi):
         '''
-        decaa quarter of wavelength
+        wavelength
         '''
-        return self.calc_lamrho(n, grho, phi) / 4
+        return self.calc_lamrho(n, grho, phi) / (2 * np.pi * np.tan(phi / 2))
+
+    
+    def delrho_bulk(self, n, delfstar):
+        '''decay length multiplied by density'''
+        return (np.pi * self.Zq * abs(delfstar[n]) / self.f1) ** 2
 
 
     def D(self, n, drho, grho_refh, phi):
@@ -501,6 +506,21 @@ class QCM:
         '''
         return [0.05, np.pi/180*5] # in rad
 
+    def convert_D_to_gamma(self, D_dsiptn, n):
+        '''
+        this function convert given D_dsiptn (QCM-D) to gamma used in this program
+        D_dsiptn: dissipation of QCM-D
+        harm: str. 
+        '''
+        return 0.5 * n * self.f1 * D_dsiptn
+
+    def convert_gamma_to_D(self, gamma, n):
+        '''
+        this function convert given gamma to D (QCM-D)
+        D_dsiptn: dissipation of QCM-D
+        harm: str. 
+        '''
+        return 2 * gamma / (n * self.f1)
 
     ########################################################
 
@@ -593,6 +613,8 @@ class QCM:
 
         delf_calcs = mech_queue.delf_calcs.iloc[0].copy()
         delg_calcs = mech_queue.delg_calcs.iloc[0].copy()
+        D_exps = mech_queue.D_exps.iloc[0].copy()
+        D_calcs = mech_queue.D_calcs.iloc[0].copy()
         rd_exps = mech_queue.rd_exps.iloc[0].copy()
         rd_calcs = mech_queue.rd_calcs.iloc[0].copy()
         dlams = mech_queue.dlams.iloc[0].copy()
@@ -612,6 +634,9 @@ class QCM:
             delfstar_calc[n] = self.calc_delfstar(n, film, calctype)
             delf_calcs[nh2i(n)] = np.real(delfstar_calc[n])
             delg_calcs[nh2i(n)] = np.imag(delfstar_calc[n])
+
+            D_exps[nh2i(n)] = self.convert_gamma_to_D(np.imag(delfstar[n]), n)
+            D_calcs[nh2i(n)] = self.convert_gamma_to_D(np.imag(delfstar_calc[n]), n)
             
             rd_calcs[nh2i(n)] = self.rd_from_delfstar(n, delfstar_calc)
 
@@ -664,6 +689,8 @@ class QCM:
         mech_queue['delf_calcs'] = [delf_calcs]
         mech_queue['delg_exps'] = qcm_queue['delgs']
         mech_queue['delg_calcs'] = [delg_calcs]
+        mech_queue['D_exps'] = [D_exps]
+        mech_queue['D_calcs'] = [D_calcs]
         mech_queue['normdelf_exps'] =[normdelf_exps]
         mech_queue['normdelf_calcs'] =[normdelf_calcs]
         mech_queue['normdelg_exps'] =[normdelg_exps]
@@ -911,6 +938,8 @@ class QCM:
             elif 'phi' in col:
                 # print('rad2deg') #testprint
                 df[col] = df[col].apply(lambda x: list(np.rad2deg(x)) if isinstance(x, list) else np.rad2deg(x)) # from rad to deg
+            elif 'D_' in col: # dissipation
+                df[col] = df[col].apply(lambda x: list(np.array(x) * 1e6) if isinstance(x, list) else x * 1e6) # D to ppm
             else:
                 # print('NA') #testprint
                 pass
@@ -944,9 +973,9 @@ class QCM:
         ''' 
         film ={
             0:{'calc': True/False,
-                'drho': float, # in um g/cm^3
-                'grho': float, # in Pa g/cm^3
-                'drho': float, # in deg
+                'drho': float, # in m kg/m^3 = 1000 um g/cm^3
+                'grho': float, # in Pa kg/m^3 = 1/1000 Pa g/cm^3
+                'drho': float, # in rad
                },
             1:
             2:

@@ -208,6 +208,8 @@ class DataSaver:
             'delf_calcs', # n
             'delg_exps',
             'delg_calcs', # n
+            'D_exps',
+            'D_calcs',
             'normdelf_exps', # h dependent
             'normdelf_calcs', # h dependent
             'normdelg_exps', # n
@@ -251,9 +253,9 @@ class DataSaver:
                 print(df_mech) #testprint
                 # replace na with self.nan_harm_list
                 for col in mech_keys_single:
-                    df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list() if isinstance(x, list) or pd.isnull(x) else x) # add list of nan to all null
+                    df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list() if (isinstance(x, list) and all(np.isnan(x))) or pd.isnull(x) else x) # add list of nan to all null
                 for col in mech_keys_multiple:
-                    df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list() if isinstance(x, list) or pd.isnull(x) else x) # add list of nan to all null
+                    df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list() if (isinstance(x, list) and all(np.isnan(x))) or pd.isnull(x) else x) # add list of nan to all null
                 print(df_mech) # testprint
         else: # not exist, make a new dataframe
             print('mech_key doesn''t exist') #testprint
@@ -1191,6 +1193,24 @@ class DataSaver:
         get queue indices as pd.series
         '''
         return getattr(self, chn_name)['queue_id'].copy()
+
+
+    def get_mech_queue_id(self, chn_name, nhcalc):
+        '''
+        get queue_id from self.prop[chn_name]
+        '''
+
+        mech_key = self.get_mech_key(nhcalc)
+        print(mech_key) #testprint
+
+        # data_queue_id = getattr(self, chn_name)['queue_id']
+
+        if mech_key in getattr(self, chn_name + '_prop').keys():
+            print('mech_key exists') #testprint
+            return getattr(self, chn_name + '_prop')[mech_key]['queue_id'].copy()
+        else:
+            return []
+
 
 
     def get_idx_marked_rows(self, chn_name, dropnanmarkrow=False):
@@ -2318,6 +2338,13 @@ class DataSaver:
         '''
         return 0.5 * int(harm) * f1 * D
 
+    def convert_gamma_to_D(self, D, f1, harm):
+        '''
+        this function convert given gamma to D (QCM-D)
+        D: dissipation from QCM-D
+        harm: str. 
+        '''
+        return 0.5 * int(harm) * f1 * D
 
     def import_qcm_with_other_format(self, format, path, settings_init, settings=None, f1=None, t0=None, init_file=True):
         '''

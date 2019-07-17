@@ -273,6 +273,8 @@ settings_init = {
         'delf_calcs':        r'$\Delta$f (Hz)',
         'delf_exps':         r'$\Delta$f$_{exp}$ (Hz)',
         'delg_calcs':        r'$\Delta\Gamma$ (Hz)',
+        'D_calcs':           r'D $\times 10^{-6}$',
+        'D_exps':            r'D$_{exp}$ $\times 10^{-6}$',
         'delg_exps':         r'$\Delta\Gamma_{exp}$ (Hz)',
         'drho':              r'd$\rho$ ($\mu$m$\cdot$g/cm$^3$)',
         'grhos':             r'$|G_{n}^*|\rho$ (Pa$\cdot$g/cm$^3$)',
@@ -298,6 +300,8 @@ settings_init = {
         'delf_calcs':        u'\u0394' + 'fcalc (Hz)', # Δfcalc (Hz)
         'delg_exps':         u'\u0394\u0393' + ' (Hz)', # ΔΓ (Hz)
         'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
+        'D_exps':           'D ' + u'\u00D7' + '10' + '\u207B\u2076', # D ×10⁻⁶
+        'D_calcs':           'D ' + u'\u00D7' + '10' + '\u207B\u2076' + 'calc', # Dcalc ×10⁻⁶
         'drho':              'd' + u'\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # dρ (μm∙g/m³)
         'grhos':             '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
         'phi':               u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
