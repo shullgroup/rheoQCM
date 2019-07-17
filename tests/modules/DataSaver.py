@@ -208,8 +208,8 @@ class DataSaver:
             'delf_calcs', # n
             'delg_exps',
             'delg_calcs', # n
-            'D_exps',
-            'D_calcs',
+            'delD_exps',
+            'delD_calcs',
             'normdelf_exps', # h dependent
             'normdelf_calcs', # h dependent
             'normdelg_exps', # n
@@ -1891,6 +1891,17 @@ class DataSaver:
             # print(self.exp_ref[chn_name]) #testprint
             return ref_dict
 
+    
+    def get_f1(self, chn_name):
+        '''
+        return a series with the same rows as self.<chn_name> df
+        '''
+        # get f0
+        f0s = self.interp_film_ref(chn_name, col='fs')
+        # get the 1st harmonic
+        f0s = f0s.apply(lambda x: x[0])
+        return f0s
+
 
     def get_marks(self, chn_name, tocolumns=False):
         '''
@@ -2338,18 +2349,18 @@ class DataSaver:
         '''
         return 0.5 * int(harm) * f1 * D
 
-    def convert_gamma_to_D(self, D, f1, harm):
+    def convert_gamma_to_D(self, gamma, f1, harm):
         '''
         this function convert given gamma to D (QCM-D)
         D: dissipation from QCM-D
         harm: str. 
         '''
-        return 0.5 * int(harm) * f1 * D
+        return 2 * gamma / (int(harm) * f1)
 
-    def import_qcm_with_other_format(self, format, path, settings_init, settings=None, f1=None, t0=None, init_file=True):
+    def import_qcm_with_other_format(self, data_format, path, settings_init, settings=None, f1=None, t0=None, init_file=True):
         '''
         import QCM data to data_saver from other software
-        format: 'qcmd', QCM-D data with dissipation data "D"
+        data_format: 'qcmd', QCM-D data with dissipation data "D"
                 'qcmz', QCM data from impedance measurement
         path: excel file path
         settings_init: basic UI settings (a full copy of settings_init for format ditecting)
@@ -2369,7 +2380,7 @@ class DataSaver:
                 t0 = datetime.datetime.now()
             t0_str = t0.strftime(self.settings['time_str_format'])
 
-        self.mode = 'qcmd' # set mode. it will be used to determine how to import data
+        self.mode = data_format # set mode. it will be used to determine how to import data
 
         # initialize file
         if init_file and settings:

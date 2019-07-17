@@ -613,8 +613,8 @@ class QCM:
 
         delf_calcs = mech_queue.delf_calcs.iloc[0].copy()
         delg_calcs = mech_queue.delg_calcs.iloc[0].copy()
-        D_exps = mech_queue.D_exps.iloc[0].copy()
-        D_calcs = mech_queue.D_calcs.iloc[0].copy()
+        delD_exps = mech_queue.delD_exps.iloc[0].copy()
+        delD_calcs = mech_queue.delD_calcs.iloc[0].copy()
         rd_exps = mech_queue.rd_exps.iloc[0].copy()
         rd_calcs = mech_queue.rd_calcs.iloc[0].copy()
         dlams = mech_queue.dlams.iloc[0].copy()
@@ -635,8 +635,8 @@ class QCM:
             delf_calcs[nh2i(n)] = np.real(delfstar_calc[n])
             delg_calcs[nh2i(n)] = np.imag(delfstar_calc[n])
 
-            D_exps[nh2i(n)] = self.convert_gamma_to_D(np.imag(delfstar[n]), n)
-            D_calcs[nh2i(n)] = self.convert_gamma_to_D(np.imag(delfstar_calc[n]), n)
+            delD_exps[nh2i(n)] = self.convert_gamma_to_D(np.imag(delfstar[n]), n)
+            delD_calcs[nh2i(n)] = self.convert_gamma_to_D(np.imag(delfstar_calc[n]), n)
             
             rd_calcs[nh2i(n)] = self.rd_from_delfstar(n, delfstar_calc)
 
@@ -689,8 +689,8 @@ class QCM:
         mech_queue['delf_calcs'] = [delf_calcs]
         mech_queue['delg_exps'] = qcm_queue['delgs']
         mech_queue['delg_calcs'] = [delg_calcs]
-        mech_queue['D_exps'] = [D_exps]
-        mech_queue['D_calcs'] = [D_calcs]
+        mech_queue['delD_exps'] = [delD_exps]
+        mech_queue['delD_calcs'] = [delD_calcs]
         mech_queue['normdelf_exps'] =[normdelf_exps]
         mech_queue['normdelf_calcs'] =[normdelf_calcs]
         mech_queue['normdelg_exps'] =[normdelg_exps]

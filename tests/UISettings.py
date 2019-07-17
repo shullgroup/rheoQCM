@@ -247,8 +247,10 @@ settings_init = {
         ('mdfn', '-' + u'\u0394' + 'f/n'),
         ('dg',   u'\u0394\u0393'),
         ('dgn',  u'\u0394\u0393' + '/n'),
+        ('dD',   u'\u0394' + 'D '),
         ('f',    'f'),
         ('g',     u'\u0393'),
+        ('D',    'D'),
         ('temp', 'temp.'),
         ('t', 'time'),
         ('idx', 'index'),
@@ -262,8 +264,10 @@ settings_init = {
         'mdfn': r'-$\Delta$f/n (Hz)', 
         'dg':   r'$\Delta\Gamma$ (Hz)',
         'dgn':  r'$\Delta\Gamma$/n (Hz)',
+        'dD':   r'$\Delta$D $\times 10^{-6}$',
         'f':    r'f (Hz)',
         'g':    r'$\Gamma$ (Hz)',
+        'D':    r'D $\times 10^{-6}$',
         'temp': r'Temp. (unit)', # unit is going to be replaced by temperature unit
         't':    r'Time (unit)', # unit is going to be replaced by time unit
         'id':  r'Test ID', # queue_id
@@ -273,8 +277,8 @@ settings_init = {
         'delf_calcs':        r'$\Delta$f (Hz)',
         'delf_exps':         r'$\Delta$f$_{exp}$ (Hz)',
         'delg_calcs':        r'$\Delta\Gamma$ (Hz)',
-        'D_calcs':           r'D $\times 10^{-6}$',
-        'D_exps':            r'D$_{exp}$ $\times 10^{-6}$',
+        'delD_calcs':        r'$\Delta$D $\times 10^{-6}$',
+        'delD_exps':         r'$\Delta$D$_{exp}$ $\times 10^{-6}$',
         'delg_exps':         r'$\Delta\Gamma_{exp}$ (Hz)',
         'drho':              r'd$\rho$ ($\mu$m$\cdot$g/cm$^3$)',
         'grhos':             r'$|G_{n}^*|\rho$ (Pa$\cdot$g/cm$^3$)',
@@ -300,8 +304,8 @@ settings_init = {
         'delf_calcs':        u'\u0394' + 'fcalc (Hz)', # Δfcalc (Hz)
         'delg_exps':         u'\u0394\u0393' + ' (Hz)', # ΔΓ (Hz)
         'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
-        'D_exps':           'D ' + u'\u00D7' + '10' + '\u207B\u2076', # D ×10⁻⁶
-        'D_calcs':           'D ' + u'\u00D7' + '10' + '\u207B\u2076' + 'calc', # Dcalc ×10⁻⁶
+        'delD_exps':         u'\u0394' + 'D ' + u'\u00D7' + '10' + '\u207B\u2076', # D ×10⁻⁶
+        'delD_calcs':        u'\u0394' + 'D ' + u'\u00D7' + '10' + '\u207B\u2076' + 'calc', # Dcalc ×10⁻⁶
         'drho':              'd' + u'\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # dρ (μm∙g/m³)
         'grhos':             '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
         'phi':               u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
