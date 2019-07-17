@@ -120,7 +120,7 @@ Useful QCM Info
 
 \begin_layout Author
 Kenneth R.
- Shull et al.
+ Shull and Qifeng Wang
 \end_layout
 
 \begin_layout Standard
@@ -130,6 +130,16 @@ LatexCommand tableofcontents
 \end_inset
 
 
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+This document accompanies the open source rheoQCM software written and maintaine
+d by Dr.
+ Qifeng Wang at Northwestern University.
 \end_layout
 
 \begin_layout Section
@@ -420,7 +430,7 @@ reference "eq:SLA"
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\Delta Z_{sn}^{*}=2\pi inf_{1}\rho_{f}d_{f}\label{eq:Sauerbrey load impendance}
+\Delta Z_{sn}^{*}=2\pi inf_{1}\rho_{f}d_{f},\label{eq:Sauerbrey load impendance}
 \end{equation}
 
 \end_inset
@@ -469,8 +479,36 @@ G_{n}^{*}=|G_{n}^{*}|\mathrm{exp}(i\phi_{n})\label{eq:G*}
 \end_layout
 
 \begin_layout Standard
-Use of this 
-\begin_inset Formula $Z_{n}^{*}$
+For a variety of reasons it is more convenient to express the complex shear
+ modulus in terms of its magnitude and phase.
+ The storage and loss moduli, 
+\begin_inset Formula $G_{n}^{\prime}$
+\end_inset
+
+ and 
+\begin_inset Formula $G_{n}^{\prime\prime}$
+\end_inset
+
+ respectively, can easily be obtained form the magnitude and phase:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\begin{array}{c}
+G_{n}^{\prime}=|G_{n}^{*}|\cos(\phi_{n})\\
+G_{n}^{\prime\prime}=|G_{n}^{*}|\sin(\phi_{n})
+\end{array}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Use of 
+\begin_inset Formula $Z_{n,bulk}^{*}$
 \end_inset
 
  for the load impedance gives the following for 
@@ -481,7 +519,7 @@ Use of this
 \begin_inset Formula $\Delta\Gamma_{n}$
 \end_inset
 
-:
+ in the bulk limit:
 \end_layout
 
 \begin_layout Standard
@@ -583,7 +621,7 @@ These equations can be inverted to give the following for
 \end_layout
 
 \begin_layout Standard
-The decay length is:
+The decay length is given by the following expression:
 \end_layout
 
 \begin_layout Standard
@@ -595,6 +633,15 @@ The decay length is:
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+As a general rule of thumb, the bulk limit applies when the film thickness
+ is larger than 
+\begin_inset Formula $\approx2\delta_{n}$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsection
@@ -653,22 +700,7 @@ literal "true"
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\lambda_{n}=\frac{2\pi}{\mathrm{Re}\left(k_{n}^{*}\right)}=\frac{1}{f_{n}}\left(\frac{\left|G_{n}^{*}\right|}{\rho}\right)^{1/2}\frac{1}{\cos\left(\phi_{n}/2\right)}\label{eq:lambdan}
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-or
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{equation}
-\lambda_{n}\rho=\frac{\left(\rho\left|G_{n}^{*}\right|\right)^{1/2}}{f_{n}\cos\left(\phi_{n}/2\right)}\label{eq:lambdan-1}
+\lambda_{n}=\frac{2\pi}{\mathrm{Re}\left(k_{n}^{*}\right)};\,\,\,\lambda_{n}\rho=\frac{\left(\rho\left|G_{n}^{*}\right|\right)^{1/2}}{f_{n}\cos\left(\phi_{n}/2\right)}\label{eq:lambdan}
 \end{equation}
 
 \end_inset
@@ -690,15 +722,6 @@ D_{n}^{*}=k_{n}^{*}d=\frac{2\pi d}{\lambda_{n}}\left(1-i\tan\left(\phi_{n}/2\rig
 \end_inset
 
 
-\end_layout
-
-\begin_layout Standard
-The bulk limit applies when the film thickness is much larger than the decay
- length, 
-\begin_inset Formula $\delta$
-\end_inset
-
-, which is given by the following expression:
 \end_layout
 
 \begin_layout Standard
@@ -725,7 +748,7 @@ The impedance of a layer (which we refer to hear as layer 1) of mass thickness
 \color none
 \begin_inset Formula 
 \begin{equation}
-Z_{ni,film}^{*}=iZ_{ni,bulk}^{*}\tan(D_{n1}^{*})\label{eq:film zstar-1}
+Z_{n,film}^{*}=iZ_{n,bulk}^{*}\tan(D_{n}^{*})\label{eq:film zstar-1}
 \end{equation}
 
 \end_inset
@@ -734,10 +757,43 @@ Z_{ni,film}^{*}=iZ_{ni,bulk}^{*}\tan(D_{n1}^{*})\label{eq:film zstar-1}
 \end_layout
 
 \begin_layout Standard
-Some expressions for quartz:
+Note that we define 
+\begin_inset Formula $\Delta f_{sn}$
+\end_inset
+
+ as a positive number (see Eq.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Sauerbrey"
+
+\end_inset
+
+), so in the case where the Sauerbrey limit applies (
+\begin_inset Formula $d/\lambda_{n}\ll1)$
+\end_inset
+
+, and when there is sufficient acoustic contrast between the film and the
+ surrounding liquid (
+\begin_inset Formula $\left|Z_{nf}^{*}\right|\gg\left|Z_{n\ell}^{*}\right|$
+\end_inset
+
+), we have 
+\begin_inset Formula $\Delta f_{n}^{*}=-\Delta f_{sn}$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+Some expressions for quartz:
+\end_layout
+
+\begin_layout Plain Layout
 \begin_inset Formula 
 \[
 k_{q}=\frac{2\pi f_{n}\rho_{q}}{Z_{q}};\,\,\,2\pi f_{n}^{*}=Z_{q}^{*}k_{q}^{*}/\rho_{q}
@@ -748,8 +804,13 @@ k_{q}=\frac{2\pi f_{n}\rho_{q}}{Z_{q}};\,\,\,2\pi f_{n}^{*}=Z_{q}^{*}k_{q}^{*}/\
 
 \end_layout
 
+\end_inset
+
+
+\end_layout
+
 \begin_layout Subsection
-Extension to 2 Layers
+Extension to Multiple Layers
 \end_layout
 
 \begin_layout Standard
@@ -800,6 +861,10 @@ name "fig:Two-layer-geometry"
 \end_layout
 
 \begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
 In a variety of situations we are interested in two layer geometries, where
  the film we are interested in is sandwiched between the electrode surface
  of the QCM and a second layer, which we refer to the membrane layer.
@@ -865,7 +930,7 @@ literal "true"
 :
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 Z_{n12}^{*}=iZ_{n1}^{*}\frac{Z_{n1}^{*}\tan(D_{n1}^{*})+Z_{n2}^{*}\tan(D_{n2}^{*})}{Z_{n1}^{*}-Z_{n2}^{*}\tan(D_{n1}^{*})\tan(D_{n2}^{*})}
@@ -876,7 +941,7 @@ Z_{n12}^{*}=iZ_{n1}^{*}\frac{Z_{n1}^{*}\tan(D_{n1}^{*})+Z_{n2}^{*}\tan(D_{n2}^{*
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Note: what happens when 
 \begin_inset Formula $D_{1n}=0:$
 \end_inset
@@ -884,7 +949,7 @@ Note: what happens when
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 Z_{n12}^{*}=i\frac{Z_{n2}^{*}\tan(D_{n2}^{*})}{}
@@ -895,11 +960,11 @@ Z_{n12}^{*}=i\frac{Z_{n2}^{*}\tan(D_{n2}^{*})}{}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 checks out.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 We can write this in a more useful way by writing the membrane impedance,
  in the following way (following our previous notation) 
 \begin_inset CommandInset citation
@@ -912,7 +977,7 @@ literal "true"
 :
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 
 \family roman
 \series medium
@@ -935,12 +1000,12 @@ Z_{nm,0}^{*}=iZ_{nm}^{*}\tan(k_{nm}^{*}d_{m})\label{eq:film zstar}
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The difference between the 2-layer impedance and the impedance of the membrane
  layer itself is defined as:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \Delta Z_{nfm}^{*}\equiv Z_{nf}^{*}\frac{iZ_{n1,bulk}^{*}\tan(D_{n1}^{*})+Z_{n2,film}^{*}}{Z_{n1,bulk}^{*}+iZ_{n2,film}^{*}\tan(D_{n1}^{*})}-Z_{n2,film}^{*}
@@ -949,6 +1014,15 @@ The difference between the 2-layer impedance and the impedance of the membrane
 \end_inset
 
 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Bilayer
 \end_layout
 
 \begin_layout Standard
@@ -995,7 +1069,7 @@ reference "eq:SLA"
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-\frac{\Delta f_{n}^{*}}{f_{sn}}=-\frac{\tan(D_{n1}^{*})}{D_{n1}^{*}}\left[\frac{1-\left(r_{nfm}^{*}\right)^{2}}{1+ir_{n12}^{*}\tan(D_{nf}^{*})}\right]\label{eq:2-layer master}
+\frac{\Delta f_{n}^{*}}{f_{sn}}=-\frac{\tan(D_{n1}^{*})}{D_{n1}^{*}}\left[\frac{1-\left(r_{n12}^{*}\right)^{2}}{1+ir_{n12}^{*}\tan(D_{n1}^{*})}\right]\label{eq:2-layer master}
 \end{equation}
 
 \end_inset
@@ -1027,49 +1101,15 @@ r_{n12}^{*}=\frac{Z_{n2,film}^{*}}{Z_{n1,bulk}^{*}}
 Written in this way it's a bit more obvious that there is no net response
  for the trivial case when a thin film and thick membrane have identical
  properties (
-\begin_inset Formula $r_{nfm}^{*}=1$
+\begin_inset Formula $r_{n12}^{*}=1$
 \end_inset
 
 ), and that the single layer master equation is recovered for experiments
  done in air (
-\begin_inset Formula $r_{nfm}^{*}=0$
+\begin_inset Formula $r_{n12}^{*}=0$
 \end_inset
 
 ).
-\end_layout
-
-\begin_layout Standard
-Note that we define 
-\begin_inset Formula $\Delta f_{sn}$
-\end_inset
-
- as a positive number (see Eq.
- 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "eq:Sauerbrey"
-
-\end_inset
-
-), so in the case where the Sauerbrey limit applies (
-\begin_inset Formula $d/\lambda_{n}\ll1)$
-\end_inset
-
-, and when there is sufficient acoustic contrast between the film and the
- surrounding liquid (
-\begin_inset Formula $\left|Z_{nf}^{*}\right|\gg\left|Z_{n\ell}^{*}\right|$
-\end_inset
-
-), we have 
-\begin_inset Formula $\Delta f_{n}^{*}=-\Delta f_{sn}$
-\end_inset
-
-.
- 
-\end_layout
-
-\begin_layout Subsubsection
-Special Case - Film Immersed in Liquid
 \end_layout
 
 \begin_layout Standard
@@ -1202,13 +1242,13 @@ with
 \begin_layout Standard
 In a liquid medium, the 'membrane' actually corresponds to a bulk, infinitely
  thick liquid.
- The impedance ratio is now a ratio of pure material properties: 
+ The impedance ratio is now a ratio of pure material properties:
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-r_{nf\text{m}}^{*}=\left(\frac{\rho_{m}G_{nm}^{*}}{\rho_{f}G_{nf}^{*}}\right)^{1/2}
+r_{n12}^{*}=\left(\frac{\rho_{2}G_{n2}^{*}}{\rho_{1}G_{n1}^{*}}\right)^{1/2}
 \end{equation}
 
 \end_inset
@@ -1217,6 +1257,10 @@ r_{nf\text{m}}^{*}=\left(\frac{\rho_{m}G_{nm}^{*}}{\rho_{f}G_{nf}^{*}}\right)^{1
 \end_layout
 
 \begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
 In the past, we have expressed Eq.
  
 \begin_inset CommandInset ref
@@ -1236,7 +1280,7 @@ reference "eq:2-layer master"
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Here 
 \begin_inset Formula $R_{n\ell}^{*}$
 \end_inset
@@ -1245,11 +1289,16 @@ Here
  Sauerbrey frequency shift for the film:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 R_{n\ell}^{*}=\frac{\Delta f_{n\ell}+i\Delta\Gamma_{n\ell}}{\Delta f_{sn}}
 \end{equation}
+
+\end_inset
+
+
+\end_layout
 
 \end_inset
 
@@ -1925,6 +1974,10 @@ looks okay.
 
 \end_layout
 
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
 \begin_layout Section
 Thin Films
 \end_layout
@@ -1933,7 +1986,7 @@ Thin Films
 Single Layer
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 For small 
 \begin_inset Formula $d/\lambda_{n}$
 \end_inset
@@ -1945,7 +1998,7 @@ For small
  to obtain the following for the dissipation ratio:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Note Note
 status collapsed
 
@@ -2020,7 +2073,7 @@ status collapsed
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \frac{-\Delta\Gamma_{n}}{\Delta f_{ns}}\approx\frac{8\pi^{2}}{3}\left(\frac{d}{\lambda_{n}}\right)^{2}\tan\left(\frac{\phi_{n}}{2}\right)=\frac{4\pi^{2}f_{n}^{2}M_{A}^{2}}{3}\frac{\sin\left(\phi_{n}\right)}{\left|G_{n}^{*}\right|\rho}.\label{eq:imag part of TE thin film limit}
@@ -2031,7 +2084,7 @@ status collapsed
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The correction to the Sauerbrey form of 
 \begin_inset Formula $\Delta f_{n}$
 \end_inset
@@ -2059,7 +2112,7 @@ reference "eq:Sauerbrey"
 :
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \[
 \Delta\Gamma_{nt}=\frac{8\pi^{2}n^{3}f_{1}^{4}M_{A}^{3}}{3Z_{q}}\frac{\sin\left(\phi_{n}\right)}{\left|G_{n}^{*}\right|\rho}=\frac{8\pi^{2}n^{3}f_{1}^{4}M_{A}^{3}J_{n}^{\prime\prime}}{3Z_{q}\rho}.
@@ -2070,7 +2123,7 @@ reference "eq:Sauerbrey"
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Here 
 \begin_inset Formula $J_{n}^{\prime\prime}$
 \end_inset
@@ -2105,7 +2158,7 @@ reference "eq:imag part of TE thin film limit"
 , normalized by the form thin film limit:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \frac{\Delta\Gamma}{\Delta\Gamma_{t}}=-\mathrm{imag}\left(\frac{3}{8\pi^{2}\tan\left(\phi_{n}/2\right)\left(d/\lambda_{n}\right)^{2}}\frac{\tan\left(D_{nf}^{*}\right)\left(1-\left(r_{nfm}^{*}\right)^{2}\right)}{D_{nf}^{*}+i\tan\left(D_{nf}^{*}\right)r_{nfm}^{*}}\right)
@@ -2116,7 +2169,7 @@ reference "eq:imag part of TE thin film limit"
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 This is what this looks like for different values of the phase angle, and
  for 
 \begin_inset Formula $r_{nfm}^{*}=0.$
@@ -2137,12 +2190,12 @@ Obtaining
  from the dissipation
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 for thin films we can neglect the tangent term in the denominator and replace
  the leading tangent function with its argument to get:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \frac{\Delta f_{n}^{*}}{f_{snf}}\approx\left(\left(r^{*}\right)^{2}-1\right)
@@ -2153,7 +2206,7 @@ for thin films we can neglect the tangent term in the denominator and replace
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \frac{\Delta f_{n}^{*}}{f_{sn}}\approx\left(\frac{Z_{nm,0}}{Z_{nf}^{*}}\right)^{2}-1=\frac{\left(Z_{nm,0}\right)^{2}}{\rho_{f}G_{f}^{*}}-1
@@ -2168,7 +2221,7 @@ for thin films we can neglect the tangent term in the denominator and replace
 Perfectly Rigid Membrane
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 We can use the Sauerbrey form for 
 \begin_inset Formula $Z_{nm,0}$
 \end_inset
@@ -2184,7 +2237,7 @@ reference "eq:Sauerbrey load impendance"
 ) to get a useful estimate of the response.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \frac{\Delta f_{n}^{*}+f_{snf}}{f_{snf}}\approx-\left(2\pi nf_{1}\rho_{m}d_{m}\right)^{2}\frac{J_{nf}^{*}}{\rho_{f}}\label{eq:delfstar thin layer with membrane}
@@ -2195,7 +2248,7 @@ reference "eq:Sauerbrey load impendance"
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Note that the reference point for 
 \begin_inset Formula $\Delta f_{n}^{*}$
 \end_inset
@@ -2217,7 +2270,7 @@ Note that the reference point for
 :
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \Delta\Gamma\approx\frac{8\pi^{2}n^{3}f_{1}^{4}}{Z_{q}}\left(\rho_{f}d_{f}\right)\left(\rho_{m}d_{m}\right)^{2}\frac{J_{nf}^{\prime\prime}}{\rho_{f}}
@@ -2228,7 +2281,7 @@ Note that the reference point for
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \frac{\Delta\Gamma}{d_{f}}\approx\frac{8\pi^{2}n^{3}f_{1}^{4}}{Z_{q}}\left(\rho_{m}d_{m}\right)^{2}J_{nf}^{\prime\prime}
@@ -2239,7 +2292,7 @@ Note that the reference point for
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 Rearranging for 
 \begin_inset Formula $J_{nf}^{\prime\prime},$
 \end_inset
@@ -2247,7 +2300,7 @@ Rearranging for
  we have:membrane impedance is 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 J_{nf}^{\prime\prime}=\frac{\rho_{f}\Delta\Gamma_{n}}{f_{snf}\left(2\pi nf_{1}\rho_{m}d_{m}\right)^{2}}\label{eq:delfstar thin layer with membrane-1}
@@ -2270,7 +2323,7 @@ Obtaining
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 If we do a temperature scan from low temperatures (where the film is glassy
  and the Sauerbrey expression works for everything), then subtract the low
  temperature value of 
@@ -2292,7 +2345,7 @@ reference "eq:delfstar thin layer with membrane"
  can be written in the following way:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \frac{\Delta f_{nT}^{*}}{f_{snf}}\approx-\left(2\pi nf_{1}\rho_{m}d_{m}\right)^{2}\frac{J_{nf}^{*}}{\rho_{f}}
@@ -2303,7 +2356,7 @@ reference "eq:delfstar thin layer with membrane"
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The expression for 
 \begin_inset Formula $G_{nf}^{*}=1/J_{nf}^{*}$
 \end_inset
@@ -2311,11 +2364,16 @@ The expression for
  is:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 G_{nf}^{*}\approx-\frac{f_{snf}}{\rho_{f}\Delta f_{nT}^{*}}\left(2\pi nf_{1}\rho_{m}d_{m}\right)^{2}
 \end{equation}
+
+\end_inset
+
+
+\end_layout
 
 \end_inset
 
@@ -2463,11 +2521,15 @@ This same analysis can be applied to more complicated models as well.
  
 \end_layout
 
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
 \begin_layout Section
 Some Other Expressions
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 We can simplify the area analysis considerably by writing a single function
  with three equations and three unknowns.
  For an x:y,z calculation the variables are 
@@ -2504,7 +2566,7 @@ We can simplify the area analysis considerably by writing a single function
  care about:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 d/\lambda_{n}=d\rho f_{n}\left(\frac{1}{\rho\left|G_{n}^{*}\right|}\right)^{1/2}\cos\left(\phi_{n}/2\right)\label{eq:d over lambda vs Gstar}
@@ -2515,7 +2577,7 @@ d/\lambda_{n}=d\rho f_{n}\left(\frac{1}{\rho\left|G_{n}^{*}\right|}\right)^{1/2}
 The inverse relationship is:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \rho\left|G_{n}^{*}\right|=\left(\frac{d\rho nf_{1}\cos\left(\phi_{n}/2\right)}{\left(d/\lambda_{n}\right)}\right)^{2}
@@ -2526,7 +2588,7 @@ The inverse relationship is:
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 This leads to the following expression for 
 \begin_inset Formula $D_{n}^{*}$
 \end_inset
@@ -2534,7 +2596,7 @@ This leads to the following expression for
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 D_{n}^{*}=k_{n}^{*}d=\frac{2\pi d\rho f_{n}}{\left(\rho\left|G_{n}^{*}\right|\right)^{1/2}}\left(\cos\left(\phi_{n}/2\right)-i\sin\left(\phi_{n}/2\right)\right)=\frac{2\pi f_{n}d\rho}{Z_{n}^{*}}
@@ -2545,7 +2607,7 @@ D_{n}^{*}=k_{n}^{*}d=\frac{2\pi d\rho f_{n}}{\left(\rho\left|G_{n}^{*}\right|\ri
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 We'll use the constant phase approximation, so 
 \begin_inset Formula $\phi$
 \end_inset
@@ -2566,7 +2628,7 @@ We'll use the constant phase approximation, so
 :
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \left|G_{n}^{*}\right|=\left|G_{3}^{*}\right|\left(n/3\right)^{\phi/90}
@@ -2577,7 +2639,7 @@ We'll use the constant phase approximation, so
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \frac{d}{\lambda_{n}}=\frac{d}{\lambda_{3}}\left(\frac{n}{3}\right)^{1-\phi/180}\label{eq:power law d/lambds}
@@ -2588,7 +2650,7 @@ We'll use the constant phase approximation, so
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 We can also get a relationship between 
 \begin_inset Formula $\phi$
 \end_inset
@@ -2613,7 +2675,7 @@ We can also get a relationship between
 :
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \[
 d/\lambda_{n}=d\rho nf_{1}\left(\frac{\left|J_{n}^{*}\right|\sin\phi_{n}}{\rho}\right)^{1/2}\frac{\cos\left(\phi_{n}/2\right)}{\left(\sin\phi_{n}\right)^{1/2}}
@@ -2624,7 +2686,7 @@ d/\lambda_{n}=d\rho nf_{1}\left(\frac{\left|J_{n}^{*}\right|\sin\phi_{n}}{\rho}\
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 The following expression for the load impedance of a film is also useful,
  which combines Eqs.
  
@@ -2644,7 +2706,7 @@ reference "eq:film zstar"
 :
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 
 \family roman
 \series medium
@@ -2667,12 +2729,12 @@ Z_{n,0}^{*}=iZ_{n}^{*}\tan\left(\frac{2\pi nf_{1}\rho d}{Z_{n}^{*}}\right)
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 We can also relate the resonance frequency to the crystal thickness, starting
  with the shear wave velocity in quartz.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \[
 c_{q}=\left(\frac{G_{q}}{\rho_{q}}\right)^{1/2}=\frac{1}{\rho_{q}}\left(G_{q}\rho_{q}\right)^{1/2}=\frac{Z_{q}}{\rho_{q}}
@@ -2683,12 +2745,12 @@ c_{q}=\left(\frac{G_{q}}{\rho_{q}}\right)^{1/2}=\frac{1}{\rho_{q}}\left(G_{q}\rh
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 This velocity is then related to the fundamental resonant frequency and
  the thickness through the following expression:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \[
 d_{q}=\frac{c_{q}}{2f_{1}}=\frac{Z_{q}}{2\rho_{q}f_{1}};\,\,\,\,d_{q}\rho_{q}=\frac{Z_{q}}{2f_{1}}
@@ -2699,7 +2761,7 @@ d_{q}=\frac{c_{q}}{2f_{1}}=\frac{Z_{q}}{2\rho_{q}f_{1}};\,\,\,\,d_{q}\rho_{q}=\f
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 D_{nq}^{*}=\frac{2\pi nf_{1}d_{q}\rho_{q}}{Z_{q}}=\pi n
@@ -2710,11 +2772,20 @@ D_{nq}^{*}=\frac{2\pi nf_{1}d_{q}\rho_{q}}{Z_{q}}=\pi n
 
 \end_layout
 
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
 \begin_layout Subsection
 Voigt Model
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 In the power law model commonly employed in our group, 
 \begin_inset Formula $\phi$
 \end_inset
@@ -2759,7 +2830,7 @@ reference "eq:power law d/lambds"
 :
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 G_{n}^{\prime}=G_{3}^{\prime}=\left|G_{3}^{*}\right|\cos\phi_{3}\label{eq:G prime vs n}
@@ -2770,7 +2841,7 @@ G_{n}^{\prime}=G_{3}^{\prime}=\left|G_{3}^{*}\right|\cos\phi_{3}\label{eq:G prim
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 G_{n}^{\prime\prime}=\frac{n}{3}G_{3}^{\prime\prime}=\frac{n}{3}\left|G_{3}^{*}\right|\sin\phi_{3}\label{eq:G double prime vs n}
@@ -2781,7 +2852,7 @@ G_{n}^{\prime\prime}=\frac{n}{3}G_{3}^{\prime\prime}=\frac{n}{3}\left|G_{3}^{*}\
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 This model is not rheologically self-consistent, as pointed out by Reviakine
  
 \emph on
@@ -2836,7 +2907,7 @@ reference "eq:G double prime vs n"
 :
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \phi_{n}=\arctan\left(\frac{n}{3}\tan\phi_{3}\right)
@@ -2847,7 +2918,7 @@ reference "eq:G double prime vs n"
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \left|G_{n}^{*}\right|=\left|G_{3}^{*}\right|\left(\cos^{2}\left(\phi_{3}\right)+\frac{n^{2}}{9}\sin^{2}\left(\phi_{3}\right)\right)^{1/2}
@@ -2858,7 +2929,7 @@ reference "eq:G double prime vs n"
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 These expressions can then be used in conjunction with Eq.
  
 \begin_inset CommandInset ref
@@ -2882,11 +2953,16 @@ reference "eq:d over lambda vs Gstar"
 :
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \frac{d}{\lambda_{n}}=\frac{d}{\lambda_{3}}\frac{n}{3}\left(\cos^{2}\left(\phi_{3}\right)+\frac{n^{2}}{9}\sin^{2}\left(\phi_{3}\right)\right)^{-1/4}\frac{\cos\left(\frac{1}{2}\arctan\left(\frac{n}{3}\tan\phi_{3}\right)\right)}{\cos\left(\phi_{3}/2\right)}
 \end{equation}
+
+\end_inset
+
+
+\end_layout
 
 \end_inset
 
@@ -3032,6 +3108,22 @@ d/\lambda_{n}=\left(d/\lambda_{3}\right)\left(n/3\right)^{1-\phi/180}
 
 \end_layout
 
+\begin_layout Standard
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Note Note
+status collapsed
+
 \begin_layout Section
 Error determination for 
 \begin_inset Formula $J_{3}^{\prime\prime}$
@@ -3040,7 +3132,7 @@ Error determination for
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 For thin films, we are most sensitive to 
 \begin_inset Formula $J_{3}^{\prime\prime}=\sin\phi/\left|G_{3}^{*}\right|$
 \end_inset
@@ -3049,7 +3141,7 @@ For thin films, we are most sensitive to
  Equivalently, we have:
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 J_{3}^{\prime\prime}/\rho=\sin\phi/\left|G_{3}^{*}\right|\rho
@@ -3060,11 +3152,11 @@ J_{3}^{\prime\prime}/\rho=\sin\phi/\left|G_{3}^{*}\right|\rho
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 or
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \begin{equation}
 \left|G_{3}^{*}\right|\rho=\sin\phi/\left(J_{3}^{\prime\prime}/\rho\right)
@@ -3075,11 +3167,11 @@ or
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 From the chain rule, we have
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 
 \family roman
 \series medium
@@ -3102,7 +3194,7 @@ From the chain rule, we have
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 So to get the Jacobian for for the case where 
 \family roman
 \series medium
@@ -3128,7 +3220,11 @@ So to get the Jacobian for for the case where
 \end_inset
 
 .
- 
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
