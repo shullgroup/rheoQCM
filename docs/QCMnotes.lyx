@@ -2381,6 +2381,227 @@ G_{nf}^{*}\approx-\frac{f_{snf}}{\rho_{f}\Delta f_{nT}^{*}}\left(2\pi nf_{1}\rho
 \end_layout
 
 \begin_layout Section
+Lu-Lewis Equation
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename fig3.svg
+	width 70text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Result from the Lu-Lewis model for the parameters listed in Eqs.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:electrode props"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:film props"
+
+\end_inset
+
+ varying the values of 
+\begin_inset Formula $\phi$
+\end_inset
+
+ for the film as indicated.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:vary phi"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Thicker films
+\end_layout
+
+\begin_layout Standard
+Things look quite a bit different if we use thicker films.
+ Suppose we use a 5 
+\begin_inset Formula $\mu$
+\end_inset
+
+m glassy polymer film, representative of some of our experiments.
+ Here's the set of film properties:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{gather}
+\left(d\rho\right)_{film}=5\,\mathrm{g/m^{2}}\nonumber \\
+\left(\left|G_{3}^{*}\right|\rho\right)_{film}=10^{9}\,\mathrm{Pa\cdot g/cm^{3}}\label{eq:thick glassy film}\\
+\phi_{film}=1.5^{\circ}\nonumber 
+\end{gather}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here's what the comparison of the LL and SLA models looks like in this case:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename fig4.svg
+	width 70text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Comparison of the LL and SLA models for the electrode properties given in
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:electrode props"
+
+\end_inset
+
+ and the film properties given in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:thick glassy film"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:SLA comparison thick glass"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If we replot this as a function of linear 
+\begin_inset Formula $n$
+\end_inset
+
+ and just worry about the first few harmonics, it looks like the plot below.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename fig5.svg
+	width 70text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Comparison of the LL and SLA models for the electrode properties given in
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:electrode props"
+
+\end_inset
+
+ and the film properties given in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:thick glassy film"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:SLA comparison thick glass-1"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
 Solution Method and Error Analysis
 \end_layout
 
