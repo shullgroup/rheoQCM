@@ -11,6 +11,7 @@
 ### Changed
 
 - Change code that property calculation remove previous data. Note: If you want to recalculate previous data, make sure use `slove all`.
+- Change exported Excel file format. The columns with repeated data are combined.
 
 ### Fixed
   

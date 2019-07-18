@@ -963,7 +963,7 @@ class DataSaver:
                 df['temp'] = np.nan # add temp column back
         print(df.head()) #testprint
 
-        if dropnanmarkrow == True: # rows with marks only
+        if dropnanmarkrow == True: # keep rows with marks only
             # select rows with marks
             print('reshape_data_df: dropnanmarkrow = True') #testprint
             df = df[self.rows_with_marks(chn_name)][:]
@@ -1050,8 +1050,11 @@ class DataSaver:
         cols = list(df.columns)
         cols.remove('queue_id')
         for col in cols:
-            df = df.assign(**self.get_mech_column_to_columns(chn_name, mech_key, col, mark=mark)) # split columns: fs and gs
-            df = df.drop(columns=col) # drop columns: fs and gs
+            if col.endswith(('s', 's_err')): # value varies with harmonic 
+                df = df.assign(**self.get_mech_column_to_columns(chn_name, mech_key, col, mark=mark)) # split columns: fs and gs
+                df = df.drop(columns=col) # drop columns: fs and gs
+            else: # single value
+                df[col] = df[col].apply(lambda x: x[0])
 
         print(df.head()) #testprint
 

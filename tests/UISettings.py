@@ -465,7 +465,7 @@ settings_init = {
     # calctype
     'calctype_opts':{
         'SLA': 'Small-load approximation',
-        'LL': 'Large-load',
+        'LL': 'Lu-Lewis',
     },
 
     'qcm_layer_source_opts': {
