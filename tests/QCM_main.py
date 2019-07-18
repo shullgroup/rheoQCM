@@ -3311,10 +3311,26 @@ class QCMApp(QMainWindow):
             data = self.data_saver.minus_columns(data)
         elif 'dgn' == typestr: # get delgn
             data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'gs', deltaval=True, norm=True, mark=mark)
+        elif 'dD' == typestr: # get delta D
+            # get delg first
+            data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'gs', deltaval=True, norm=False, mark=mark)
+            f1 = self.data_saver.get_f1(chn_name)
+            # convert delg to delD
+            data = self.data_saver.convert_gamma_to_D(data, f1, harm)
+            # convert unit
+            data = data * 1e6
         elif 'f' == typestr: # get f
             data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'fs', deltaval=False, norm=False, mark=mark)
         elif 'g' == typestr: # get g
             data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'gs', deltaval=False, norm=False, mark=mark)
+        elif 'D' == typestr: # get delta D
+            # get delg first
+            data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'gs', deltaval=False, norm=False, mark=mark)
+            f1 = self.data_saver.get_f1(chn_name)
+            # convert delg to delD
+            data = self.data_saver.convert_gamma_to_D(data, f1, harm)
+            # convert unit
+            data = data * 1e6
         elif 't' == typestr: # get t
             data = self.data_saver.get_marked_harm_t(chn_name, harm, mark=mark, unit=unit_t)
         elif 'temp' == typestr: # get temp
