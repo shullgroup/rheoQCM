@@ -631,11 +631,16 @@ class MatplotlibWidget(QWidget):
 
         # add it to toolbar
         self.toolbar.addWidget(self.pushButton_selectorswitch)
-        # # add selector switch button to toolbar
+        toolbar_children = self.toolbar.children()
+        # toolbar_children.insert(6, toolbar_children.pop(-1)) # this does not move the icon position
+        toolbar_children[4].clicked.connect(self.data_show_all) # 4 is the home button
+
+        # below does not work
+        # add selector switch button to toolbar
         # self.fig.canvas.manager.toolmanager.add_tool('Data Selector', SelectorSwitch, selector=self.rect_selector)
 
-        # # add button to toolbar
-        # self.canvas.manager.toolbar.add_tool('DataSelector', 'zoom_pan', 1)
+        # add button to toolbar
+        # self.canvas.manager.toolbar.add_tool(self.fig.canvas.manager.toolmanager.get_tool('DataSelector'), 'toolgroup')
 
 
     def data_rectsleector_picker_switch(self, checked):
@@ -1302,25 +1307,31 @@ class MatplotlibWidget(QWidget):
         self.canvas.flush_events() # flush the GUI events 
 
 
+    def data_show_all(self):
+        for ax in self.ax:
+            ax.set_autoscale_on(True) # this reactive autoscale which might be turnned of by zoom/pan
+            self.reset_ax_lim(ax)
+
+
     def reset_ax_lim(self, ax):
         '''
         reset the lim of ax
         this change the display and where home button goes back to
         '''
         # turn off PAN/ZOOM
-        if self.toolbar._active == "PAN":
-            self.toolbar.pan()
-        elif self.toolbar._active == "ZOOM":
-            self.toolbar.zoom()
+        # if self.toolbar._active == "PAN":
+        #     self.toolbar.pan()
+        # elif self.toolbar._active == "ZOOM":
+        #     self.toolbar.zoom()
         
-        self.canvas.toolbar.update() # reset toolbar memory
-        self.canvas.toolbar.push_current() # set current to memory
+        # self.canvas.toolbar.update() # reset toolbar memory
+        # self.canvas.toolbar.push_current() # set current to memory
 
-        ax.set_autoscale_on(True) # this reactive autoscale which might be turnned of by zoom/pan
+        # ax.set_autoscale_on(True) # this reactive autoscale which might be turnned of by zoom/pan
         ax.relim(visible_only=True)
         ax.autoscale_view(True,True,True)
         # ax.autoscale(True, 'both', False) # the same as autoscale_view
-        self.canvas.toolbar.push_current() # set current to memory
+        # self.canvas.toolbar.push_current() # set current to memory
 
         # self.canvas.toolbar._views._elements 
         # self.canvas.toolbar._positions._elements 
