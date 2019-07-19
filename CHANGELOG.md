@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.18.0] - 2019-07-15
+## [0.18.0] - 2019-07-18
 
 ### Added
 
@@ -14,6 +14,8 @@
 - Change exported Excel file format. The columns with repeated data are combined.
 
 ### Fixed
+
+- Fix data plot does not change limit after ZOOM OR PAN.
   
 ## [0.17.2] - 2019-07-05
 

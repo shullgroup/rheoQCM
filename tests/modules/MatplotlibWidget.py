@@ -1312,11 +1312,19 @@ class MatplotlibWidget(QWidget):
             self.toolbar.pan()
         elif self.toolbar._active == "ZOOM":
             self.toolbar.zoom()
+        
+        self.canvas.toolbar.update() # reset toolbar memory
+        self.canvas.toolbar.push_current() # set current to memory
 
+        ax.set_autoscale_on(True) # this reactive autoscale which might be turnned of by zoom/pan
         ax.relim(visible_only=True)
         ax.autoscale_view(True,True,True)
         # ax.autoscale(True, 'both', False) # the same as autoscale_view
-        # self.canvas.toolbar.update() # reset toolbar memory
+        self.canvas.toolbar.push_current() # set current to memory
+
+        # self.canvas.toolbar._views._elements 
+        # self.canvas.toolbar._positions._elements 
+
 
 def press_zoomX(obj, event):
     event.key = 'x'
