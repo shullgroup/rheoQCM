@@ -1316,8 +1316,8 @@ class MatplotlibWidget(QWidget):
         self.canvas.toolbar.update() # reset toolbar memory
         self.canvas.toolbar.push_current() # set current to memory
 
+        ax.set_autoscale_on(True) # this reactive autoscale which might be turnned of by zoom/pan
         ax.relim(visible_only=True)
-        ax.set_autoscale_on(True)
         ax.autoscale_view(True,True,True)
         # ax.autoscale(True, 'both', False) # the same as autoscale_view
         self.canvas.toolbar.push_current() # set current to memory
