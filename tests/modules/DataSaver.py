@@ -2083,11 +2083,11 @@ class DataSaver:
         with h5py.File(self.path, 'a') as fh:
             for harm, idxs in sel_idx_dict.items():
                 # delete from raw
-                for idx in idxs:
-                    print(df_chn.queue_id[idx]) #testprint
-                    if 'raw' in fh.keys() and chn_name in fh['raw'] and str(int(df_chn.queue_id[idx])) in fh['raw/'+chn_name] and harm in fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[idx]))]: # raw data exist
-                        print(fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[idx])) + '/' + harm]) #testprint
-                        del fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[idx])) + '/' + harm]
+                for ind in idxs:
+                    if 'raw' in fh.keys() and chn_name in fh['raw'] and ind in df_chn.queue_id.index and str(int(df_chn.queue_id[ind])) in fh['raw/'+chn_name] and harm in fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind]))]: # raw data exist
+                        print(df_chn.queue_id[ind]) #testprint
+                        print(fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind])) + '/' + harm]) #testprint
+                        del fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind])) + '/' + harm]
 
 
     ######## functions for unit convertion #################

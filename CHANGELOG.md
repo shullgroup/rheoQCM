@@ -6,12 +6,13 @@
 
 - Add contour plots.
 - Add slove new property to save the time from solving all.
-- Add D (dissipition from QCM-D) to calculated properties. 
+- Add D (dissipition from QCM-D) to calculated properties.  
  
 ### Changed
 
 - Change code that property calculation remove previous data. Note: If you want to recalculate previous data, make sure use `slove all`.
 - Change exported Excel file format. The columns with repeated data are combined.
+- Change HOME button of data plots to show all & auto scale.  
 
 ### Fixed
 
