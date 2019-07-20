@@ -2739,12 +2739,11 @@ In our linearized analysis we just multiply the uncertainties by the appropriate
 
 \begin_layout Standard
 This same analysis can be applied to more complicated models as well.
- 
 \end_layout
 
 \begin_layout Standard
 \begin_inset Note Note
-status collapsed
+status open
 
 \begin_layout Section
 Some Other Expressions
@@ -2982,11 +2981,174 @@ d_{q}=\frac{c_{q}}{2f_{1}}=\frac{Z_{q}}{2\rho_{q}f_{1}};\,\,\,\,d_{q}\rho_{q}=\f
 
 \end_layout
 
+\begin_layout Subsection
+Bulk expressions
+\end_layout
+
+\begin_layout Plain Layout
+In the bulk limit, we can get 
+\begin_inset Formula $\left|G_{n}^{*}\right|\rho$
+\end_inset
+
+ and 
+\begin_inset Formula $\phi_{n}$
+\end_inset
+
+ directly from 
+\begin_inset Formula $\Delta f_{n}^{*}$
+\end_inset
+
+:
+\end_layout
+
 \begin_layout Plain Layout
 \begin_inset Formula 
-\begin{equation}
-D_{nq}^{*}=\frac{2\pi nf_{1}d_{q}\rho_{q}}{Z_{q}}=\pi n
-\end{equation}
+\[
+\left|G_{n}^{*}\right|\rho=\left(\frac{\pi Z_{q}\left|\Delta f_{n}^{*}\right|}{f_{1}}\right)^{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\phi_{n}=-2\arctan\left(\frac{\Delta f_{n}^{*}}{\Delta\Gamma_{n}^{*}}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+The decay length is
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\delta_{n}\rho=\frac{\rho}{\mathrm{Im}\left(k^{*}\right)}=\frac{\left(\rho\left|G_{n}^{*}\right|\right)^{1/2}}{2\pi f_{n}\sin\left(\phi_{n}/2\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\delta_{n}\rho=-\frac{\left(\rho\left|G_{n}^{*}\right|\right)^{1/2}}{2\pi f_{n}\sin\left(\arctan\left(\frac{\Delta f_{n}}{\Delta\Gamma_{n}}\right)\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+But 
+\begin_inset Formula $\sin\left(\arctan\left(x\right)\right)=x/\sqrt{1+x^{2}}$
+\end_inset
+
+, so we have:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\delta_{n}\rho=\frac{\frac{\pi Z_{q}\left|\Delta f_{n}^{*}\right|}{f_{1}}\left(1+\left(\frac{\Delta f_{n}}{\Delta\Gamma_{n}}\right)^{2}\right)^{1/2}}{2\pi f_{n}\frac{\Delta f_{n}}{\Delta\Gamma_{n}}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\delta_{n}\rho=\frac{Z_{q}}{2f_{1}f_{n}}\frac{\left(\Delta f_{n}^{2}+\Delta\Gamma_{n}^{2}\right)^{1/2}\left(1+\left(\frac{\Delta f_{n}}{\Delta\Gamma_{n}}\right)^{2}\right)^{1/2}}{\frac{\Delta f_{n}}{\Delta\Gamma_{n}}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\delta_{n}\rho=\frac{Z_{q}}{2nf_{1}^{2}\Delta f_{n}}\left|\Delta f_{n}^{*}\right|^{2}
+\]
 
 \end_inset
 

@@ -9,9 +9,6 @@ Created on Thu Jan  4 09:19:59 2018
 import numpy as np
 import scipy.optimize as optimize
 import matplotlib.pyplot as plt
-import os
-import hdf5storage
-from pathlib import Path
 import pandas as pd
 
 Zq = 8.84e6  # shear acoustic impedance of at cut quartz
@@ -102,7 +99,7 @@ def phi_bulk(n, delfstar):
     
 def deltarho_bulk(n, delfstar):
     #decay length multiplied by density
-    return (np.pi*Zq*abs(delfstar[n])/f1) ** 2
+    return -Zq*abs(delfstar[n])**2/(2*n*f1**2*delfstar[n].real)
 
 
 def calc_D(n, material, delfstar,calctype):
@@ -484,15 +481,18 @@ def solve_from_delfstar_bulk(delfstar, ncalc):
     # this function is used if we already have a bunch of delfstar values
     # and want to obtain the solution to bulk layers with a semiinfinite thickness
     # get film info (containing raw data plot, etc. if it exists)
+    deltarho={}
     grho={}
     phi={}
     for n in ncalc:
+        deltarho[n]=np.zeros(len(delfstar))
         grho[n]=np.zeros(len(delfstar))
         phi[n]=np.zeros(len(delfstar))
         for i in np.arange(len(delfstar)):
+            deltarho[n][i]=deltarho_bulk(n, delfstar[i])
             grho[n][i]=grho_bulk(n, delfstar[i])
             phi[n][i]=phi_bulk(n, delfstar[i]) 
-    return grho, phi
+    return deltarho, grho, phi
 
 
 def solve_from_delfstar(sample, parms):
@@ -709,22 +709,25 @@ def make_prop_axes_bulk(propfigname, xlabel):
     # set up the standard property plot
     close_existing_fig(propfigname)
     fig = plt.figure(propfigname, figsize=(9, 3))
-    drho_ax = fig.add_subplot(131)
-    drho_ax.set_xlabel(xlabel)
-    drho_ax.set_ylabel(r'$\delta\rho$ (g/m$^2$)')
+    deltarho_ax = fig.add_subplot(131)
+    deltarho_ax.set_xlabel(xlabel)
+    deltarho_ax.set_ylabel(r'$\delta\rho$ ($\mu m\cdot$g/cm$^3$)')
 
-    grho3_ax = fig.add_subplot(132)
-    grho3_ax.set_xlabel(xlabel)
-    grho3_ax.set_ylabel(r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)')
+    grho_ax = fig.add_subplot(132)
+    grho_ax.set_xlabel(xlabel)
+    grho_ax.set_ylabel(r'$|G_n^*|\rho$ (Pa $\cdot$ g/cm$^3$)')
+    # adjust tick label format for grho_ax    
+    grho_ax.ticklabel_format(axis='y', style='sci', 
+       scilimits=(0,0), useMathText=True)
 
     phi_ax = fig.add_subplot(133)
     phi_ax.set_xlabel(xlabel)
-    phi_ax.set_ylabel(r'$\phi$ (deg.)')
+    phi_ax.set_ylabel(r'$\phi_n$ (deg.)')
 
     fig.tight_layout()
 
-    return {'figure': fig, 'drho_ax': drho_ax, 'grho3_ax': grho3_ax,
-            'phi_ax': phi_ax}
+    return {'figure': fig, 'deltarho_ax':deltarho_ax, 'grho_ax':grho_ax,
+            'phi_ax':phi_ax}
 
 
 def make_vgp_axes(vgpfigname):
