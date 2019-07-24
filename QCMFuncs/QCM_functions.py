@@ -34,6 +34,15 @@ def find_nearest_idx(values, array):
     return idx
 
 
+def find_idx_in_range(t, t_range):
+    if t_range[0] == t_range[1]:
+        idx = np.arange(t.shape[0]).astype(int)
+    else:
+        idx = np.where((t >= t_range[0]) &
+                       (t <= t_range[1]))[0]
+    return idx
+
+
 def close_on_click(event):
     # used so plots close in response to a some event
     global openplots
@@ -455,15 +464,6 @@ def null_solution(nhplot):
     return soln_output
 
 
-def find_idx_in_range(t, t_range):
-    if t_range[0] == t_range[1]:
-        idx = np.arange(t.shape[0]).astype(int)
-    else:
-        idx = np.where((t >= t_range[0]) &
-                       (t <= t_range[1]))[0]
-    return idx
-
-
 def nhcalc_in_nhplot(nhcalc_in, nhplot):
     # there is probably a more elegant way to do this
     # only consider harmonics in nhcalc that exist in nhplot
@@ -838,8 +838,3 @@ def run_from_ipython():
         return True
     except NameError:
         return False
-
-
-def print_test(variable):
-    print(f1)
-
