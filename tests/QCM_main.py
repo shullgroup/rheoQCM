@@ -77,7 +77,7 @@ if 'time_str_format' not in settings_default:
 if 'vna_path' not in settings_default:
     settings_default['vna_path'] = settings_init['vna_path']
 
-
+# packages from program itself
 from modules import UIModules, PeakTracker, DataSaver
 from modules import QCM as QCM #test
 from modules.MatplotlibWidget import MatplotlibWidget
@@ -6898,7 +6898,13 @@ if __name__ == '__main__':
     import sys
     import logging
     import traceback
-    logging.basicConfig(filename='error.log', filemode='w', level=logging.ERROR)
+
+    logging.basicConfig(
+        filename='error.log', 
+        filemode='w', 
+        level=logging.ERROR, 
+        format='%(name)s - %(levelname)s - %(message)s'
+    )
     try:
         app = QApplication(sys.argv)
         qcm_app = QCMApp()
