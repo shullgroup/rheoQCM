@@ -39,6 +39,9 @@ import types
 import numpy as np
 import pandas as pd
 
+import logging
+logger = logging.getLogger(__name__)
+
 from UISettings import settings_init
 from modules import UIModules
 
@@ -133,9 +136,9 @@ class MatplotlibWidget(QWidget):
         self.toolbar.setMaximumHeight(settings_init['max_mpl_toolbar_height'])
         self.toolbar.setStyleSheet("QToolBar { border: 0px;}")
         # if isinstance(showtoolbar, tuple):
-        #     print(self.toolbar.toolitems) #testprint
+        #     logger.info(self.toolbar.toolitems) 
         #     NavigationToolbar.toolitems = (t for t in NavigationToolbar2QT.toolitems if t[0] in showtoolbar)
-        #     print(self.toolbar.toolitems) #testprint
+        #     logger.info(self.toolbar.toolitems) 
 
         # self.toolbar.hide() # hide toolbar (or setHidden(bool))
         self.toolbar.isMovable()
@@ -178,8 +181,8 @@ class MatplotlibWidget(QWidget):
         #     ax1 = self.fig.add_subplot(111, facecolor='none')
 
         # ax1.autoscale()
-        # print(ax.format_coord) #testprint
-        # print(ax.format_cursor_data) #testprint
+        # logger.info(ax.format_coord) 
+        # logger.info(ax.format_cursor_data) 
         # plt.tight_layout()
         # plt.tight_layout(pad=None, w_pad=None, h_pad=None,  rect=None)
         
@@ -487,11 +490,11 @@ class MatplotlibWidget(QWidget):
         new_fc = curr_fc * (1 + ratio) - sel_fc * ratio
         # center/span to f1/f2
         new_f1, new_f2 = UIModules.converter_centerspan_to_startstop(new_fc, new_fs)
-        # print('curr_fs', curr_fs) #testprint
-        # print('sel_fs', sel_fs) #testprint
-        # print('new_fs', new_fs) #testprint
-        # print('curr', curr_f1, curr_f2) #testprint
-        # print('new', new_f1, new_f2) #testprint
+        # logger.info('curr_fs', curr_fs) 
+        # logger.info('sel_fs', sel_fs) 
+        # logger.info('new_fs', new_fs) 
+        # logger.info('curr', curr_f1, curr_f2) 
+        # logger.info('new', new_f1, new_f2) 
         # set new xlim
         self.ax[0].set_xlim(new_f1, new_f2)
        
@@ -645,7 +648,7 @@ class MatplotlibWidget(QWidget):
 
     def data_rectsleector_picker_switch(self, checked):
         if checked:
-            print(True) #testprint
+            logger.info(True) 
             # active rectangle selector
             self.rect_selector.set_active(True)
             # connect pick event
@@ -677,9 +680,9 @@ class MatplotlibWidget(QWidget):
         # clear pick data .l['lp']
         self.clr_lines(l_list=['lp'])
 
-        # print(dir(eclick)) #testprint
-        print(eclick) #testprint
-        print(erelease) #testprint
+        # logger.info(dir(eclick)) 
+        logger.info(eclick) 
+        logger.info(erelease) 
         x1, x2 = sorted([eclick.xdata, erelease.xdata]) # x1 < x2
         y1, y2 = sorted([eclick.ydata, erelease.ydata]) # y1 < y2
         
@@ -691,13 +694,13 @@ class MatplotlibWidget(QWidget):
         for l_str in ['l', 'lm']: # only one will be not empty
             for harm in range(1, settings_init['max_harmonic']+2, 2):
                 harm = str(harm)
-                # print(harm) #testprint
+                # logger.info(harm) 
                 # get data from current plotted lines
                 # clear .l['ls<n>']
                 self.clr_lines(l_list=['ls'+harm])
                 
-                # print(l_str) #testprint
-                # print(self.l[l_str + harm][0].get_data()) #testprint
+                # logger.info(l_str) 
+                # logger.info(self.l[l_str + harm][0].get_data()) 
                 harm_x, harm_y = self.l[l_str + harm][0].get_data()
                 
                 if isinstance(harm_x, pd.Series): # if data is series (not empty)
@@ -708,7 +711,7 @@ class MatplotlibWidget(QWidget):
 
                     # # save indices for later process
                     # sel_idx = harm_x[sel_bool].index
-                    # print(sel_idx) #testprint
+                    # logger.info(sel_idx) 
                     # # update selected indices
                     # sel_idx_dict[harm] = sel_idx
             if (l_str == 'l') and sel_list: # UI mode showall
@@ -720,7 +723,7 @@ class MatplotlibWidget(QWidget):
         else:
             self.sel_mode = 'none'
 
-        # print(sel_list) #testprint
+        # logger.info(sel_list) 
         # plot the selected data
         self.update_data(*sel_list)
 
@@ -732,22 +735,22 @@ class MatplotlibWidget(QWidget):
         # clear selector data .l['ls<n>']
         self.clr_lines(l_list=['ls'+ str(i) for i in range(1, int(settings_init['max_harmonic']+2), 2)])
 
-        # print(dir(event)) #testprint
+        # logger.info(dir(event)) 
         thisline = event.artist
         x_p = thisline.get_xdata()
         y_p = thisline.get_ydata()
         ind = event.ind[0]
-        print(thisline) #testprint
-        # print(dir(thisline)) #testprint
-        print(thisline.get_label()) #testprint
-        print(x_p.name) #testprint
+        logger.info(thisline) 
+        # logger.info(dir(thisline)) 
+        logger.info(thisline.get_label()) 
+        logger.info(x_p.name) 
         print(y_p.name)  #testprint
         print(ind)    #testprintk
-        # print('onpick1 line:', zip(np.take(xdata, ind), np.take(ydata, ind))) #testprint
+        # logger.info('onpick1 line:', zip(np.take(xdata, ind), np.take(ydata, ind))) 
 
         # plot
-        print('x_p', x_p) #testprint
-        print(x_p.iloc[ind], y_p.iloc[ind]) #testprint
+        logger.info('x_p', x_p) 
+        logger.info(x_p.iloc[ind], y_p.iloc[ind]) 
         self.l['lp'][0].set_data(x_p.iloc[ind], y_p.iloc[ind])
         self.l['lp'][0].set_label(thisline.get_label() + '_' + str(ind)) # transfer the label of picked line and ind to 'lp'
         self.canvas_draw()
@@ -766,8 +769,8 @@ class MatplotlibWidget(QWidget):
             .l['lm<n>]
         NOTE: this function should be used every time contour is changed
         '''
-        print("self.l.get('C')", self.l.get('C')) #testprint
-        print('kwargs', kwargs.keys()) #testprint
+        logger.info("self.l.get('C')", self.l.get('C')) 
+        logger.info('kwargs', kwargs.keys()) 
 
         # if self.l.get('colorbar'):
         #     self.l['colorbar'].remove()
@@ -803,10 +806,10 @@ class MatplotlibWidget(QWidget):
         if 'cmap' in kwargs:
             cmap = kwargs.get('cmap')
         else:
-            print('cmap not in kwargs') #testprint
+            logger.info('cmap not in kwargs') 
             cmap = settings_init['contour_array']['cmap']
         
-        print('levels', type(levels), ) #testprint
+        logger.info('levels', type(levels), ) 
         self.l['C'] = self.ax[0].contourf(
             X, Y, Z, # X, Y, Z
             levels=levels, 
@@ -891,11 +894,11 @@ class MatplotlibWidget(QWidget):
 
         self.ax[0].set_axis_off() # turn off the axis
 
-        # print(dir(self.leg)) #testprint
+        # logger.info(dir(self.leg)) 
         # p = self.leg.get_window_extent() #Bbox of legend
         # # set window height
         # dpi = self.fig.get_dpi()
-        # # print(dir(self.fig)) #testprint
+        # # logger.info(dir(self.fig)) 
         # fsize = self.fig.get_figheight()
  
 
@@ -1040,13 +1043,13 @@ class MatplotlibWidget(QWidget):
         #     (int(figw * dpi) - borders[2]) / int(figw * dpi), # right
         #     (int(figh * dpi) - borders[3]) / int(figh * dpi), # top
         # ]
-        # print(figw, figh) #testprint
-        # print(borders) #testprint
+        # logger.info(figw, figh) 
+        # logger.info(borders) 
         # self.fig.subplots_adjust(left=borders[0], bottom=borders[1], right=borders[2], top=borders[3], wspace=0, hspace=0)
         
         self.fig.tight_layout(pad=1.08)
         # x,y = self.ax[0].transAxes.transform((0,0))
-        # print(x, y) #testprint
+        # logger.info(x, y) 
         # figw, figh = self.fig.get_size_inches()
         # ynew = figh*self.fig.dpi-y - self.toolbar.frameGeometry().height()
         # self.toolbar.move(x,ynew)        
@@ -1094,7 +1097,7 @@ class MatplotlibWidget(QWidget):
 
             if ('xerr' in keys) or ('yerr' in keys): # errorbar with caps and barlines
                 if isinstance(self.l[arg['ln']], ErrorbarContainer): # type match 
-                    # print(arg) #testprint
+                    # logger.info(arg) 
                     # since we initialize the errorbar plots with xerr and yerr, we don't check if they exist here. If you want, use self.l[ln].has_yerr
                     ln = arg['ln'] 
                     x = arg['x'] 
@@ -1108,9 +1111,9 @@ class MatplotlibWidget(QWidget):
                     error_positions = (x-xerr,y), (x+xerr,y), (x,y-yerr), (x,y+yerr) 
                     # Update the caplines 
                     for i, pos in enumerate(error_positions): 
-                        # print('i', i) #testprint
-                        # print(caplines) #testprint
-                        # print('caplines_len', len(caplines)) #testprint
+                        # logger.info('i', i) 
+                        # logger.info(caplines) 
+                        # logger.info('caplines_len', len(caplines)) 
                         caplines[i].set_data(pos) 
                     # Update the error bars 
                     barlinecols[0].set_segments(zip(zip(x-xerr,y), zip(x+xerr,y))) 
@@ -1125,7 +1128,7 @@ class MatplotlibWidget(QWidget):
                 ln = arg['ln'] 
                 x = arg['x'] 
                 y = arg['y']
-                # print(len(x), len(y)) #testprint
+                # logger.info(len(x), len(y)) 
                 # self.l[ln][0].set_xdata(x)
                 # self.l[ln][0].set_ydata(y)
                 self.l[ln][0].set_data(x, y)
@@ -1136,7 +1139,7 @@ class MatplotlibWidget(QWidget):
 
             # ax = self.l[ln][0].axes
             # axbackground = self.canvas.copy_from_bbox(ax.bbox)
-            # print(ax) #testprint
+            # logger.info(ax) 
             # self.canvas.restore_region(axbackground)
             # ax.draw_artist(self.l[ln][0])
             # self.canvas.blit(ax.bbox)
@@ -1168,12 +1171,12 @@ class MatplotlibWidget(QWidget):
         if ax is None:
             ax = self.ax[0]
 
-        # print(ax.lines) #testprint
-        # print('len temp', len(self.l['temp'])) #testprint
-        # print('temp', self.l['temp']) #testprint
+        # logger.info(ax.lines) 
+        # logger.info('len temp', len(self.l['temp'])) 
+        # logger.info('temp', self.l['temp']) 
 
         for l_temp in self.l['temp']:
-            # print('l_temp', l_temp) #testprint
+            # logger.info('l_temp', l_temp) 
             ax.lines.remove(l_temp[0]) # remove from ax
         self.l['temp'] = [] # inintiate
 
@@ -1189,9 +1192,9 @@ class MatplotlibWidget(QWidget):
         ''' 
         clear all lines in .l (but not .l['temp'][:]) of key in l_list
         '''
-        # print(self.l) #testprint
+        # logger.info(self.l) 
         for key in self.l:
-            # print(key) #testprint
+            # logger.info(key) 
             if key not in ['temp', 'C', 'colorbar']:
                 if  l_list is None or key in l_list: # clear all or key
                     # self.l[key][0].set_xdata([])
@@ -1206,9 +1209,9 @@ class MatplotlibWidget(QWidget):
                         error_positions = ([],[]), ([],[]), ([],[]), ([],[]) 
                         # Update the caplines 
                         for i, pos in enumerate(error_positions): 
-                            # print('i', i) #testprint
-                            # print(caplines) #testprint
-                            # print('caplines_len', len(caplines)) #testprint
+                            # logger.info('i', i) 
+                            # logger.info(caplines) 
+                            # logger.info('caplines_len', len(caplines)) 
                             caplines[i].set_data(pos) 
                         # Update the error bars 
                         barlinecols[0].set_segments(zip(zip([],[]), zip([],[]))) 
@@ -1225,7 +1228,7 @@ class MatplotlibWidget(QWidget):
                 for ax in self.ax:
                     self.del_templines(ax=ax)
 
-        print('it is a contour', 'C' in self.l) #testprint
+        logger.info('it is a contour', 'C' in self.l) 
         if 'C' not in self.l: # not contour
             # we don't reset contour limit
             self.reset_ax_lim(ax)
@@ -1237,9 +1240,9 @@ class MatplotlibWidget(QWidget):
         set style of artists in class
         artists: 'linestyle', 'markersize' etc. the same keywords as in matplotlib
         '''
-        print(line_list) #testprint
-        print(self.l) #testprint
-        print(self.l.keys()) #testprint
+        logger.info(line_list) 
+        logger.info(self.l) 
+        logger.info(self.l.keys()) 
         for key, val in kwargs.items():
             for l in line_list:
                 eval("self.l['{0}'][0].set_{1}('{2}')".format(l, key, val))
@@ -1275,10 +1278,10 @@ class MatplotlibWidget(QWidget):
         if len(label_list) == 0:
             label_list = [''] * len(xlist) # make up a label_list with all ''
         for (x, y, label) in zip(xlist, ylist, label_list):
-            # print('len x: ', len(x)) #testprint
-            # print('len y: ', len(y)) #testprint
-            # print(x) #testprint
-            # print(y) #testprint
+            # logger.info('len x: ', len(x)) 
+            # logger.info('len y: ', len(y)) 
+            # logger.info(x) 
+            # logger.info(y) 
             
             if ax is None:
                 ax = self.ax[0]
@@ -1339,6 +1342,6 @@ class MatplotlibWidget(QWidget):
 
 def press_zoomX(obj, event):
     event.key = 'x'
-    print('event',event) #testprint
+    logger.info('event',event) 
     NavigationToolbar2QT.press_zoom(obj, event)
-    print('zoomed on x') #testprint
+    logger.info('zoomed on x') 

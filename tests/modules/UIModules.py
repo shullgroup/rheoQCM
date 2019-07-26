@@ -8,6 +8,9 @@ import inspect
 import re
 import numpy as np
 
+import logging
+logger = logging.getLogger(__name__)
+
 def open_file(path):
     '''
     open the folder given by path
@@ -83,18 +86,18 @@ def index_from_str(idx_str, chn_idx, join_segs=True):
 
     # create a dummy data with index
     data = list(range(max(chn_idx)+1))
-    print(chn_idx) #testprint
-    print(data) #testprint
+    logger.info(chn_idx) 
+    logger.info(data) 
     try:
         # check if string contains [ ]
         segs = re.findall(r'\[([0-9\:][^]]*)\]', idx_str) # get [] as seg
-        print(segs) #testprint
+        logger.info(segs) 
         if segs:
             for seg in segs:
-                print('multi') #testprint
-                print(seg) #testprint
-                print('data' +'[' + seg + ']') #testprint
-                print(eval('data' +'[' + seg + ']')) #testprint
+                logger.info('multi') 
+                logger.info(seg) 
+                logger.info('data' +'[' + seg + ']') 
+                logger.info(eval('data' +'[' + seg + ']')) 
                 new_idx = eval('data' +'[' + seg + ']') 
                 print('type(new_idx)', type(new_idx))
                 if join_segs: # True: combine
@@ -109,9 +112,9 @@ def index_from_str(idx_str, chn_idx, join_segs=True):
                         idx.append(new_idx)
                 
         else:
-            print('single') #testprint
-            print('data' +'[' + idx_str + ']') #testprint
-            print(eval('data' +'[' + idx_str + ']')) #testprint
+            logger.info('single') 
+            logger.info('data' +'[' + idx_str + ']') 
+            logger.info(eval('data' +'[' + idx_str + ']')) 
             new_idx = eval('data' +'[' + idx_str + ']')
             if isinstance(new_idx, int):
                 idx.append(new_idx)
@@ -149,7 +152,7 @@ def sel_ind_dict(harms, sel_idx_dict, mode, marks):
         sel_idx_dict = data_idx_dict  
     if mode == 'marked':
         for harm in harms:
-            print(harm) #testprint
+            logger.info(harm) 
             data_idx_dict[harm] = list(marks[marks['mark' + harm] == 1].index) # all the indices with data for each harm
         sel_idx_dict = data_idx_dict  
         print(sel_idx_dict) #testprint 

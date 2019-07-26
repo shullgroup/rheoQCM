@@ -32,6 +32,13 @@ settings_init = {
     # time string format
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
 
+    # logger configeration
+    'logger_config':{
+        'config_file': 'logger_config.json', # logger configeration file name
+        'output_file': 'err.log', # logger out put file name. Generally for errors
+
+    },
+
     # if marked data shown when showing all data
     'show_marked_when_all': True,
 
@@ -156,6 +163,9 @@ settings_init = {
         # 'groupBox_nhplot',
         # 'groupBox_settings_mechanics_nhcalc',
         # 'checkBox_settings_mechanics_witherror',
+        'pushButton_settings_mechanics_harmadd',
+        'pushButton_settings_mechanics_harmremove',
+
         'pushButton_settings_mechanics_errorsettings',
         'label_settings_mechanics_refG',
         'comboBox_settings_mechanics_refG',
@@ -457,9 +467,16 @@ settings_init = {
 
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {
-        'onelayer': 'In air',
-        # 'bulk': 'Bulk',
-        'twolayers': 'In medium',
+        'onelayer': 'Thin layer in air',
+        'twolayers': 'Thin layer in medium',
+        # 'bulk': 'Bulk material',
+    },
+
+    # doubleSpinBox_settings_mechanics_bulklimit
+    'mech_bulklimit':{
+        'min': 0,
+        'max': 2,
+        'step': 0.01,
     },
 
     # calctype
@@ -823,7 +840,7 @@ settings_default = {
     'spinBox_mech_expertmode_layernum': 2, # number of layers for expert mode mechanic 
 
     'comboBox_settings_mechanics_calctype': 'LL', # 'LL' or 'SLA'
-
+    'doubleSpinBox_settings_mechanics_bulklimit': 0.500, # bulk limit of rd
     'checkBox_settings_mechanics_witherror': True, # errorbar
 
     'comboBox_settings_mechanics_selectmodel': 'onelayer',

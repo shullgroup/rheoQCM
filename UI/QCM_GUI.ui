@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>986</width>
-    <height>983</height>
+    <height>986</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1484,7 +1484,7 @@ background-color: red;
                    <x>0</x>
                    <y>0</y>
                    <width>286</width>
-                   <height>163</height>
+                   <height>165</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1621,7 +1621,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>83</width>
+                   <width>98</width>
                    <height>71</height>
                   </rect>
                  </property>
@@ -2881,8 +2881,11 @@ p, li { white-space: pre-wrap; }
                  </property>
                  <item>
                   <layout class="QHBoxLayout" name="horizontalLayout_32">
+                   <property name="spacing">
+                    <number>6</number>
+                   </property>
                    <property name="topMargin">
-                    <number>10</number>
+                    <number>2</number>
                    </property>
                    <item>
                     <widget class="QLabel" name="label_6">
@@ -2895,13 +2898,58 @@ p, li { white-space: pre-wrap; }
                     <widget class="QComboBox" name="comboBox_settings_mechanics_calctype"/>
                    </item>
                    <item>
+                    <spacer name="horizontalSpacer_35">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeType">
+                      <enum>QSizePolicy::Fixed</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>10</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="label_13">
+                     <property name="text">
+                      <string>Bulk limit</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QDoubleSpinBox" name="doubleSpinBox_settings_mechanics_bulklimit">
+                     <property name="toolTip">
+                      <string>The minimum value of rd to be considered as bulk.</string>
+                     </property>
+                     <property name="buttonSymbols">
+                      <enum>QAbstractSpinBox::NoButtons</enum>
+                     </property>
+                     <property name="decimals">
+                      <number>2</number>
+                     </property>
+                     <property name="maximum">
+                      <double>2.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>0.010000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>0.500000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
                     <spacer name="horizontalSpacer_34">
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
-                       <width>40</width>
+                       <width>6</width>
                        <height>20</height>
                       </size>
                      </property>

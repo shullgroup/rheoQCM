@@ -263,12 +263,12 @@ class QCM:
         fstars = qcm_queue.fstars.iloc[0] # list
         # get delfstar
         delfstars = qcm_queue.delfstars.iloc[0] # list
-        # print('fstars', fstars) #testprint
-        # print(delfstars) #testprint
+        # logger.info('fstars', fstars) 
+        # logger.info(delfstars) 
         # convert list to dict to make it easier to do the calculation
         # fstar = {int(i*2+1): fstar[i] for i, fstar in enumerate(fstars)}
         delfstar = {int(i*2+1): dfstar for i, dfstar in enumerate(delfstars)}
-        # print(delfstar) #testprint
+        # logger.info(delfstar) 
         # get the marks [1st, 3rd, 5th, ...]
         marks = qcm_queue.marks.iloc[0]
         # find where the mark is not nan or None
@@ -298,8 +298,8 @@ class QCM:
         delg_calcs = mech_queue.delg_calcs.iloc[0].copy()
         rd_exps = mech_queue.rd_exps.iloc[0].copy()
         rd_calcs = mech_queue.rd_calcs.iloc[0].copy()
-        # print('delf_calcs', delf_calcs) #testprint
-        # print(type(delf_calcs)) #testprint
+        # logger.info('delf_calcs', delf_calcs) 
+        # logger.info(type(delf_calcs)) 
         for n in nhplot:
             delfstar_calc[n] = self.delfstarcalc(n, drho, grho_rh, phi, overlayer)
             delf_calcs[nh2i(n)] = np.real(delfstar_calc[n])
@@ -310,8 +310,8 @@ class QCM:
             rd_exp[n] = self.rd_from_delfstar(n, delfstar)
             rd_exps[nh2i(n)] = rd_exp[n]
         rh = self.rh_from_delfstar(nh, delfstar_calc)
-        # print('delf_calcs', delf_calcs) #testprint
-        # print('delg_calcs', delg_calcs) #testprint
+        # logger.info('delf_calcs', delf_calcs) 
+        # logger.info('delg_calcs', delg_calcs) 
 
         # drho = 1000*results[nh]['drho']
         # grho3 = results[nh]['grho3']/1000
@@ -355,8 +355,8 @@ class QCM:
         mech_queue['rd_exps'] = [rd_exps]
         mech_queue['rd_calcs'] = [rd_calcs]
 
-        # print(mech_queue['delf_calcs']) #testprint
-        # print(mech_queue['delg_calcs']) #testprint
+        # logger.info(mech_queue['delf_calcs']) 
+        # logger.info(mech_queue['delg_calcs']) 
         # TODO save delfstar, deriv {n1:, n2:, n3:}
         # print(mech_queue)    #testprint
         return mech_queue
@@ -380,8 +380,8 @@ class QCM:
         # first pass at solution comes from rh and rd
         rd_exp = self.rdexp(nh, delfstar) # nh[2]
         rh_exp = self.rhexp(nh, delfstar) # nh[0], nh[1]
-        print('rd_exp', rd_exp) #testprint
-        print('rh_exp', rh_exp) #testprint
+        logger.info('rd_exp', rd_exp) 
+        logger.info('rh_exp', rh_exp) 
 
         n1 = nh[0]
         n2 = nh[1]
@@ -389,7 +389,7 @@ class QCM:
 
         # solve the problem
         if ~np.isnan(rd_exp) or ~np.isnan(rh_exp):
-            print('rd_exp, rh_exp is not nan') #testprint
+            logger.info('rd_exp, rh_exp is not nan') 
             # TODO change here for the model selection
             if prop_guess: # value{'drho', 'grho_rh', 'phi'}
                 dlam_rh, phi = self.guess_from_props(**prop_guess)
@@ -398,8 +398,8 @@ class QCM:
             else:
                 dlam_rh, phi = self.thinfilm_guess(delfstar)
 
-            print('dlam_rh', dlam_rh) #testprint
-            print('phi', phi) #testprint
+            logger.info('dlam_rh', dlam_rh) 
+            logger.info('phi', phi) 
             
             if fit_method == 'lmfit':
                 params1 = Parameters()
@@ -423,9 +423,9 @@ class QCM:
                 )
 
                 print(fit_report(soln1))  #testprint
-                print('success', soln1.success) #testprint
-                print('message', soln1.message) #testprint
-                print('lmdif_message', soln1.lmdif_message) #testprint
+                logger.info('success', soln1.success) 
+                logger.info('message', soln1.message) 
+                logger.info('lmdif_message', soln1.lmdif_message) 
 
                 dlam_rh = soln1.params.get('dlam_rh').value
                 phi =soln1.params.get('phi').value
@@ -439,24 +439,24 @@ class QCM:
                     return [self.rhcalc(nh, x[0], x[1])-rh_exp, self.rdcalc(nh, x[0], x[1])-rd_exp]
 
                 x0 = np.array([dlam_rh, phi])
-                print(x0) #testprint
+                logger.info(x0) 
                 soln1 = least_squares(ftosolve, x0, bounds=(lb, ub))
-                print(soln1['x']) #testprint
+                logger.info(soln1['x']) 
                 dlam_rh = soln1['x'][0]
                 phi =soln1['x'][1]
                 drho = self.drho(n1, delfstar, dlam_rh, phi)
                 grho_rh = self.grho_from_dlam(self.rh, drho, dlam_rh, phi)
 
-            print('solution of 1st solving:') #testprint
-            print('dlam_rh', dlam_rh) #testprint
-            print('phi', phi) #testprint
-            print('drho', phi) #testprint
-            print('grho_rh', grho_rh) #testprint
+            logger.info('solution of 1st solving:') 
+            logger.info('dlam_rh', dlam_rh) 
+            logger.info('phi', phi) 
+            logger.info('drho', phi) 
+            logger.info('grho_rh', grho_rh) 
 
             # we solve it again to get the Jacobian with respect to our actual
             if drho_range[0]<=drho<=drho_range[1] and grho_rh_range[0]<=grho_rh<=grho_rh_range[1] and phi_range[0]<=phi<=phi_range[1]:
                 
-                print('1st solution in range') #testprint
+                logger.info('1st solution in range') 
                 if fit_method == 'lmfit':
                     params2 = Parameters()
 
@@ -485,8 +485,8 @@ class QCM:
                         # xtol=1e-7,
                         # ftol=1e-7,
                     )
-                    print(soln2.params.keys()) #testprint
-                    print(soln2.params['drho']) #testprint
+                    logger.info(soln2.params.keys()) 
+                    logger.info(soln2.params['drho']) 
                     print(fit_report(soln2)) 
                     print('success', soln2.success)
                     print('message', soln2.message)
@@ -506,7 +506,7 @@ class QCM:
                     phi = soln2.params.get('phi').value
                     dlam_rh = self.d_lamcalc(self.rh, drho, grho_rh, phi)
                     jac = soln2.params.get('jac') #TODO ???
-                    print('jac', jac) #testprint
+                    logger.info('jac', jac) 
                     jac_inv = np.linalg.inv(jac)
 
                     for i, k in enumerate(err_names):
@@ -541,9 +541,9 @@ class QCM:
                     phi = soln2['x'][2]
                     dlam_rh = self.d_lamcalc(self.rh, drho, grho_rh, phi)
                     jac = soln2['jac']
-                    print('jac', jac) #testprint
+                    logger.info('jac', jac) 
                     jac_inv = np.linalg.inv(jac)
-                    print('jac_inv', jac_inv) #testprint
+                    logger.info('jac_inv', jac_inv) 
 
                     for i, k in enumerate(err_names):
                         deriv[k]={0:jac_inv[i, 0], 1:jac_inv[i, 1], 2:jac_inv[i, 2]}
@@ -561,11 +561,11 @@ class QCM:
             for k in err_names:
                 err[k] = np.nan
 
-        print('drho', drho) #testprint
-        print('grho_rh', grho_rh) #testprint
-        print('phi', phi) #testprint
-        print('dlam_rh', phi) #testprint
-        print('err', err) #testprint
+        logger.info('drho', drho) 
+        logger.info('grho_rh', grho_rh) 
+        logger.info('phi', phi) 
+        logger.info('dlam_rh', phi) 
+        logger.info('err', err) 
 
         return drho, grho_rh, phi, dlam_rh, err
 
@@ -577,10 +577,10 @@ class QCM:
         qcm_queue: qcm data (df) of a single queue
         return: True/False
         '''
-        print(nh) #testprint
-        print(nh2i(nh[0])) #testprint
-        print(qcm_queue.delfstars.values) #testprint
-        print(qcm_queue.delfstars.iloc[0]) #testprint
+        logger.info(nh) 
+        logger.info(nh2i(nh[0])) 
+        logger.info(qcm_queue.delfstars.values) 
+        logger.info(qcm_queue.delfstars.iloc[0]) 
         if np.isnan(qcm_queue.delfstars.iloc[0][nh2i(nh[0])].real) or np.isnan(qcm_queue.delfstars.iloc[0][nh2i(nh[1])].real) or np.isnan(qcm_queue.delfstars.iloc[0][nh2i(nh[2])].imag):
             return False
         else:
@@ -599,9 +599,9 @@ class QCM:
         '''
         nh = nhcalc2nh(nhcalc) # list of harmonics (int) in nhcalc
         for queue_id in queue_ids: # iterate all ids
-            print('queue_id', queue_id) #testprint
-            # print('qcm_df', qcm_df) #testprint
-            print(type(qcm_df)) #testprint
+            logger.info('queue_id', queue_id) 
+            # logger.info('qcm_df', qcm_df) 
+            logger.info(type(qcm_df)) 
             # queue index
             idx = qcm_df[qcm_df.queue_id == queue_id].index.astype(int)[0]
             # qcm data of queue_id
@@ -614,14 +614,14 @@ class QCM:
                 # solve a single queue
                 mech_queue = self.solve_single_queue(nh, qcm_queue, mech_queue)
                 # save back to mech_df
-                print(mech_df.loc[[idx], :].to_dict()) #testprint
-                print(mech_queue.to_dict()) #testprint
+                logger.info(mech_df.loc[[idx], :].to_dict()) 
+                logger.info(mech_queue.to_dict()) 
                 # set mech_queue index the same as where it is from for update
-                print(mech_df.delg_calcs) #testprint
+                logger.info(mech_df.delg_calcs) 
                 mech_queue.index = [idx]
                 mech_df.update(mech_queue)
-                # print(mech_df) #testprint
-                print(mech_df.delg_calcs) #testprint
+                # logger.info(mech_df) 
+                logger.info(mech_df.delg_calcs) 
             else:
                 # since the df already initialized with nan values, nothing todo
                 pass
@@ -633,10 +633,10 @@ class QCM:
         convert unit of drho, grho, phi from IS to those convient to use
         input: df or series 
         '''
-        print(type(mech_df)) #testprint
-        print(mech_df) #testprint
-        # print(mech_df.drho) #testprint
-        # print(mech_df.drho.values) #testprint
+        logger.info(type(mech_df)) 
+        logger.info(mech_df) 
+        # logger.info(mech_df.drho) 
+        # logger.info(mech_df.drho.values) 
         df = mech_df.copy()
         cols = mech_df.columns
         for col in cols:
@@ -656,7 +656,7 @@ class QCM:
         to keep QCM and DataSaver independently, we don't use import for each other
         ['delf_calcs', 'delg_calcs', 'delg_delfsns', 'rds']
         '''
-        print(var) #testprint
+        logger.info(var) 
         if var == 'delf_calcs':
             return qcm_df.delfs
         if var == 'delg_calcs':
