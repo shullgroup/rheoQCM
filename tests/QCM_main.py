@@ -22,7 +22,7 @@ import scipy.signal
 # import types
 from PyQt5.QtCore import pyqtSlot, Qt, QEvent, QTimer, QEventLoop, QCoreApplication, QSize
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QRadioButton, QMenu, QAction, QMessageBox, QTableWidgetItem, QSizePolicy, QFrame, QLabel, QPlainTextEdit
+    QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QDoubleSpinBox, QRadioButton, QMenu, QAction, QMessageBox, QTableWidgetItem, QSizePolicy, QFrame, QLabel, QPlainTextEdit
 )
 from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, QDoubleValidator, QRegExpValidator
 
@@ -4041,7 +4041,7 @@ class QCMApp(QMainWindow):
                 value = self.sender().itemText(signal)
             self.set_mechchndata(self.sender().objectName(), value)
         # if the sender of the signal isA QSpinBox object, udpate QComboBox vals in dict
-        elif isinstance(self.sender(), QSpinBox):
+        elif isinstance(self.sender(), (QSpinBox, QDoubleSpinBox)):
             self.set_mechchndata(self.sender().objectName(), signal)
 
 
@@ -4412,7 +4412,7 @@ class QCMApp(QMainWindow):
                             prop_dict[ind][n].update(**electrode)
                         else: # upper layers
                             qcm_queue = qcm_df_layer.loc[[ind], :].copy() # as a dataframe
-                        # get prop
+                            # get prop
                             drho, grho_refh, phi, dlam_refh, err = self.qcm.solve_single_queue_to_prop(nh, qcm_queue, calctype, bulklimit=bulklimit)
 
                             prop_dict[ind][n].update(drho=drho, grho=grho_refh, phi=phi, n=refh)
@@ -4445,7 +4445,7 @@ class QCMApp(QMainWindow):
             # obtain the solution for the properties
             if self.qcm.all_nhcaclc_harm_not_na(nh, qcm_queue):
                 # solve a single queue
-                mech_queue = self.qcm.solve_single_queue(nh, qcm_queue, mech_queue, calctype=calctype, film=prop_dict[ind])
+                mech_queue = self.qcm.solve_single_queue(nh, qcm_queue, mech_queue, calctype=calctype, film=prop_dict[ind], bulklimit=bulklimit)
 
                 # save back to mech_df
                 mech_queue.index = [ind] # not necessary
@@ -5427,7 +5427,7 @@ class QCMApp(QMainWindow):
             self.settings[self.sender().objectName()] = value
             logger.info(self.settings[self.sender().objectName()]) 
         # if the sender of the signal isA QSpinBox object, udpate QComboBox vals in dict
-        elif isinstance(self.sender(), QSpinBox):
+        elif isinstance(self.sender(), (QSpinBox, QDoubleSpinBox)):
             self.settings[self.sender().objectName()] = signal
         elif isinstance(self.sender(), QTabWidget):
             self.settings[self.sender().objectName()] = signal # index
@@ -5463,7 +5463,7 @@ class QCMApp(QMainWindow):
                 value = self.sender().itemText(signal)
             self.set_harmdata(self.sender().objectName(), value, harm=harm)
         # if the sender of the signal isA QSpinBox object, udpate QComboBox vals in dict
-        elif isinstance(self.sender(), QSpinBox):
+        elif isinstance(self.sender(), (QSpinBox, QDoubleSpinBox)):
             self.set_harmdata(self.sender().objectName(), signal, harm=harm)
 
 

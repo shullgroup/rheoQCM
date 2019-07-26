@@ -702,8 +702,8 @@ class QCM:
         tot_harms = len(delf_calcs)
         mech_queue['drho'] = [[drho] * tot_harms] # in kg/m2
         mech_queue['drho_err'] = [[err['drho']] * tot_harms] # in kg/m2
-        # mech_queue['phi'] = [[phi] * tot_harms] # in rad
-        mech_queue['phi'] = [[min(np.pi/2, phi)] * tot_harms] # in rad limit phi <= pi/2
+        mech_queue['phi'] = [[phi] * tot_harms] # in rad
+        # mech_queue['phi'] = [[min(np.pi/2, phi)] * tot_harms] # in rad limit phi <= pi/2
         mech_queue['phi_err'] = [[err['phi']] * tot_harms] # in rad
         mech_queue['rh_exp'] = [[rh_exp] * tot_harms]
         mech_queue['rh_calc'] = [[rh_calc] * tot_harms]
@@ -1177,7 +1177,7 @@ if __name__ == '__main__':
             2: {'calc': False, 'drho': 0.5347e-3, 'grho': 86088e3, 'phi': np.pi/2, 'n': 3}}
 
 
-    drho, grho_refh, phi, dlam_refh, err = qcm.solve_general(nh, delfstar, 'LL', film, bulklimit=2.5)
+    drho, grho_refh, phi, dlam_refh, err = qcm.solve_general(nh, delfstar, 'LL', film, bulklimit=.5)
 
     print('drho', drho)
     print('grho_refh', grho_refh)
