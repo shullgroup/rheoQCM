@@ -2782,7 +2782,7 @@ class QCMApp(QMainWindow):
         self.ui.mpl_spectra_fit_polar.del_templines()
         # add devided peaks
         logger.info('to see when no peak found') 
-        print(fit_result['comp_g']) # testprint to see when no peak found
+        logger.info(fit_result['comp_g']) # to see when no peak found
         self.ui.mpl_spectra_fit.add_temp_lines(self.ui.mpl_spectra_fit.ax[0], xlist=[data_lG[0]] * len(fit_result['comp_g']), ylist=fit_result['comp_g'])
         self.ui.mpl_spectra_fit_polar.add_temp_lines(self.ui.mpl_spectra_fit_polar.ax[0], xlist=fit_result['comp_g'], ylist=fit_result['comp_b'])
 
@@ -4177,7 +4177,7 @@ class QCMApp(QMainWindow):
         '''
         set widgets related film_layers construction from self.settings['mechchndata']
         '''
-        print('mech_ch', self.mech_chn) #testprint 
+        logger.info('mech_ch %s', self.mech_chn)  
         logger.info("self.settings['mechchndata']") 
         logger.info(self.settings['mechchndata']) 
         # get number of layers 
@@ -4425,7 +4425,7 @@ class QCMApp(QMainWindow):
         # 5. do calc with each nhcalc
         mech_df = self.data_saver.update_mech_df_shape(chn_name, nhcalc) # this also update in data_saver
 
-        # print(mech_df) #testprint mech_df from data_saver is all nan (passed)
+        # logger.info(mech_df) # mech_df from data_saver is all nan (passed)
         
         # if live update is not needed, use QCM.analyze to replace. the codes should be the same
         nh = QCM.nhcalc2nh(nhcalc)
@@ -4497,7 +4497,7 @@ class QCMApp(QMainWindow):
         for nhcalc in nhcalc_list:
             mech_df = self.data_saver.update_mech_df_shape(chn_name, nhcalc) # this also update in data_saver
 
-            print(mech_df) #testprint mech_df from data_saver is all nan (passed)
+            logger.info(mech_df) # mech_df from data_saver is all nan (passed)
 
             # if live update is not needed, use QCM.analyze to replace. the codes should be the same
             nh = QCM.nhcalc2nh(nhcalc)
@@ -4803,7 +4803,7 @@ class QCMApp(QMainWindow):
             if df_colname:
                 row_data = df_queue[df_colname].iloc[0]
                 # logger.info('type(row_data): %s', type(row_data)) 
-                # print(df_queue[df_colname]) #testprint (it is a series)
+                # logger.info(df_queue[df_colname]) # (it is a series)
                 for tb_col in range(tb_cols):
                     # logger.info('r,c: %s %s', tb_row, tb_col) 
                     # if df_colname.endswith('s'): # multiple values
@@ -5029,7 +5029,7 @@ class QCMApp(QMainWindow):
                     # add to scrollarea
                     self.update_mpl_to_prop_scrollarea()
                 else: # there is no prop plot in the list or some thing wrong
-                    print(self.prop_plot_list) #testprint to show the structrue for debug
+                    logger.info(self.prop_plot_list) # to show the structrue for debug
                     pass
 
 

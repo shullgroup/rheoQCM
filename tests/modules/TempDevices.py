@@ -49,7 +49,7 @@ def device_info(devtype):
     '''
     return a single device 
     '''
-    logger.info('devtype', devtype) 
+    logger.info('devtype %s', devtype) 
     devices = list_devices()
     for device in devices:
     #     if device.product_type != devtype:

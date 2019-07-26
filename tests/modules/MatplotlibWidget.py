@@ -744,8 +744,8 @@ class MatplotlibWidget(QWidget):
         # logger.info(dir(thisline)) 
         logger.info(thisline.get_label()) 
         logger.info(x_p.name) 
-        print(y_p.name)  #testprint
-        print(ind)    #testprintk
+        logger.info(y_p.name) 
+        logger.info(ind) 
         # logger.info('onpick1 line:', zip(np.take(xdata, ind), np.take(ydata, ind))) 
 
         # plot

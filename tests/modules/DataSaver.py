@@ -260,7 +260,7 @@ class DataSaver:
                     df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list() if np.isnan(x).all() else x) # add list of nan to all null
                 for col in mech_keys_multiple:
                     df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list() if np.isnan(x).all() else x) # add list of nan to all null
-                print(df_mech) # testprint
+                logger.info(df_mech) 
         else: # not exist, make a new dataframe
             logger.info('mech_key doesn''t exist') 
             df_mech = pd.DataFrame(columns=data_keys+mech_keys_single+mech_keys_multiple)
@@ -460,8 +460,8 @@ class DataSaver:
         # get 
         fs_all = self.get_queue(chn_name, queue_id, col='fs').iloc[0]
         gs_all = self.get_queue(chn_name, queue_id, col='gs').iloc[0]
-        logger.info('fs_all', fs_all) 
-        logger.info('type fs_all', type(fs_all)) 
+        logger.info('fs_all %s', fs_all) 
+        logger.info('type fs_all %s', type(fs_all)) 
 
         # append to the form by chn_name
         # prepare data: change list to the size of harm_list by inserting nan to the empty harm
@@ -702,8 +702,8 @@ class DataSaver:
         update col data of a queue_id
         '''
         logger.info(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col]) 
-        logger.info('col', col) 
-        logger.info('val', val) 
+        logger.info('col %s', col) 
+        logger.info('val %s', val) 
         logger.info(pd.Series([val])) 
         # getattr(self, chn_name).at[getattr(self, chn_name).queue_id == queue_id, [col]] = pd.Series([val])
         logger.info(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col]) 
@@ -1276,7 +1276,7 @@ class DataSaver:
         else: # no t0 saved in self.exp_ref
             # find t0 in self.settings
             t0 = self.settings.get('t0', self.settings.get('dateTimeEdit_reftime', None))
-            logger.info('t0', t0) 
+            logger.info('t0 %s', t0) 
             if not t0:
                 if self.samp.shape[0]> 0: # use the first queque time
                     t0 = datetime.datetime.strptime(self.samp['t'][0], self.settings['time_str_format'])
@@ -1398,11 +1398,11 @@ class DataSaver:
         s = getattr(self, chn_name + '_prop')[mech_key][col].copy()
         # s = self.update_mech_df_shape(chn_name, mech_key)[col].copy() # use update_mech_df_shape function will update the mech_prop in case its shape is not updated with data
         
-        logger.info('chn_name/mech_key/col', chn_name, mech_key, col) 
-        logger.info('mech_s head', s.head()) 
-        logger.info('mech_s', type(s.values.tolist())) 
-        logger.info('mech_s', s.values.tolist()[0]) 
-        logger.info('mech_s', type(s.values.tolist()[0])) 
+        logger.info('chn_name/mech_key/col %s %s', chn_name, mech_key, col) 
+        logger.info('mech_s head %s', s.head()) 
+        logger.info('mech_s %s', type(s.values.tolist())) 
+        logger.info('mech_s %s', s.values.tolist()[0]) 
+        logger.info('mech_s %s', type(s.values.tolist()[0])) 
 
         if mark == False:
             return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col + str(x * 2 + 1))
@@ -1467,7 +1467,7 @@ class DataSaver:
 
                 ref_s = self.interp_film_ref(chn_name, col=col) # get reference for col (fs or gs)
 
-                logger.info('ref_s\n', ref_s) 
+                logger.info('ref_s\n%s', ref_s) 
                 
                 # convert series value to ndarray
                 col_arr = np.array(col_s.values.tolist())
@@ -1573,14 +1573,14 @@ class DataSaver:
             return
 
         # check idx_list structure
-        logger.info('idx_list', idx_list) 
+        logger.info('idx_list %s', idx_list) 
         if any([isinstance(l, list) for l in idx_list]): # idx_list is list of lists
             idx_list_opened =[]
             for l in idx_list:
                 idx_list_opened.extend(l)
         else:
             idx_list_opened = idx_list
-        logger.info('idx_list_opened', idx_list_opened) 
+        logger.info('idx_list_opened %s', idx_list_opened) 
 
         mode = self.exp_ref.get('mode')
         if mode['cryst'] == 'single':
@@ -1614,9 +1614,9 @@ class DataSaver:
             # copy df to ref
             if source in self._chn_keys: # use data from current test
                 df = getattr(self, source)
-                logger.info('source', source) 
-                logger.info('idx_list_opened', idx_list_opened) 
-                logger.info('df.loc[idx_list_opened]', df.loc[idx_list_opened, :]) 
+                logger.info('source %s', source) 
+                logger.info('idx_list_opened %s', idx_list_opened) 
+                logger.info('df.loc[idx_list_opened] %s', df.loc[idx_list_opened, :]) 
                 logger.info(df) 
                 self.copy_to_ref(chn_name, df.loc[idx_list_opened, :]) # copy to reference data set
             elif source == 'ext': # data from external file
@@ -1651,7 +1651,7 @@ class DataSaver:
                     logger.info('>0') 
                     # calculate f0 and g0 
                     for col, key in self._ref_keys.items():
-                        logger.info(chn_name, col, key) 
+                        logger.info('%s %s', chn_name, col, key) 
                         df = self.get_list_column_to_columns_marked_rows(chn_name + '_ref', col, mark=mark, dropnanmarkrow=False, deltaval=False)
                         logger.info(getattr(self, chn_name + '_ref')[col]) 
                         # logger.info(df) 
@@ -1691,8 +1691,8 @@ class DataSaver:
                 gs = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'gs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute gamma in Hz. If marked, set mark=True
 
                 func_list = [] # list of funcs 
-                logger.info('reference_idx', reference_idx) 
-                logger.info('exp_ref', self.exp_ref) 
+                logger.info('reference_idx %s', reference_idx) 
+                logger.info('exp_ref %s', self.exp_ref) 
                 for ind_list in reference_idx: # iterate each list
                     print('ind_list', ind_list)
                     if len(ind_list) == 1: # single point
@@ -1709,8 +1709,8 @@ class DataSaver:
                         if np.isnan(fharmind).all(): # no data in harm and ind_list
                             pass # already initiated
                         else: # there is data
-                            logger.info('tempind', tempind) 
-                            logger.info('fharmind', fharmind) 
+                            logger.info('tempind %s', tempind) 
+                            logger.info('fharmind %s', fharmind) 
                             func_f_list.append(interp1d(tempind, fharmind, kind=self.exp_ref['mode']['fit'], fill_value=np.nan, bounds_error=False))
                         
                         # calc gamma
@@ -1828,15 +1828,15 @@ class DataSaver:
                     tempind = chn_temp[ind_list]
                     logger.info(self.exp_ref['func']) 
                     chn_func = self.exp_ref['func'][chn_name]
-                    logger.info('len(ind_list)', len(ind_list)) 
-                    logger.info('len(fun)', len(chn_func)) 
+                    logger.info('len(ind_list) %s', len(ind_list)) 
+                    logger.info('len(fun) %s', len(chn_func)) 
                     # get interpolated f, g of temp in ind_list (tempind) 
                     # len(ind_list) can be longer than len(chn_func) 
                     # use modulus 
                     f_list, g_list = chn_func[seg % len(chn_func)](tempind)
                     # transpose 
                     fs_list = np.transpose(np.array(f_list)).tolist()
-                    logger.info('len(fs_list)', len(fs_list)) 
+                    logger.info('len(fs_list) %s', len(fs_list)) 
 
                     gs_list = np.transpose(np.array(g_list)).tolist()
 
@@ -1844,7 +1844,7 @@ class DataSaver:
                     cols.fs[ind_list] = fs_list
                     cols.gs[ind_list] = gs_list
 
-                logger.info('cols[ind_list]\n', cols.iloc[ind_list]) 
+                logger.info('cols[ind_list]\n%s', cols.iloc[ind_list]) 
                 print(cols[col].head())
         elif mode['cryst'] == 'dual': #TODO
             if mode['temp'] == 'const': # dual crystal and constant temperature
@@ -2219,8 +2219,8 @@ class DataSaver:
         make a new df with shape of a and iterpolated data of b
         columns = ['queue_id', 't', 'temp', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs', 'f0stars', 'f0s', 'g0s']
         '''
-        logger.info('df_a', df_a) 
-        logger.info('df_b', df_b) 
+        logger.info('df_a %s', df_a) 
+        logger.info('df_b %s', df_b) 
         
         # make a new df with the same shape of df_a
         df = df_a.copy()
@@ -2238,7 +2238,7 @@ class DataSaver:
         for col in df.columns:
             if col not in ['queue_id', 't', 'temp', 'marks']: # f/g columns with columns
                 # clear all values execpt queue_id, t, temp
-                logger.info('col', col) 
+                logger.info('col %s', col) 
                 df[col] = df[col].apply(lambda x: self.nan_harm_list())
                 # get value
                 col_s = df_b[col].copy()
@@ -2255,8 +2255,8 @@ class DataSaver:
 
                     if mode['temp'] == 'const': # single crystal and constant temperature
                         col_mean = np.mean(col_arr, axis=0) # get mean of each column
-                        logger.info('col_arr', col_arr) 
-                        logger.info('col_mean', col_mean) 
+                        logger.info('col_arr %s', col_arr) 
+                        logger.info('col_mean %s', col_mean) 
                         df[col] = df[col].apply(lambda x: list(col_mean)) # save back to all rows
                     elif mode['temp'] == 'var': # single crystal and variable temperature
                         ## calc interp fun
@@ -2269,13 +2269,13 @@ class DataSaver:
                             print('Check index format!')
                             return
 
-                        logger.info('col_s', col_s.iloc[0]) 
-                        logger.info('col_fs', df_b['fs'].iloc[0]) 
-                        # logger.info('col_arr', col_arr) 
-                        logger.info('col_arr.shape', col_arr.shape) 
+                        logger.info('col_s %s', col_s.iloc[0]) 
+                        logger.info('col_fs %s', df_b['fs'].iloc[0]) 
+                        # logger.info('col_arr %s', col_arr) 
+                        logger.info('col_arr.shape %s', col_arr.shape) 
                         # iterate columns in col_arr
                         n_arr_cols = col_arr.shape[1] if len(col_arr.shape) > 1 else 1
-                        logger.info('n_arr_cols', n_arr_cols) 
+                        logger.info('n_arr_cols %s', n_arr_cols) 
 
                         func_list = []
                         # calc the fun
@@ -2322,7 +2322,7 @@ class DataSaver:
                             v_list = func_list[seg % len(func_list)](temp_a_ind)
                             # transpose 
                             val_list = np.transpose(np.array(v_list)).tolist()
-                            logger.info('len(val_list)', len(val_list)) 
+                            logger.info('len(val_list) %s', len(val_list)) 
 
                             df[col][ind_list] = val_list
 
@@ -2401,7 +2401,7 @@ class DataSaver:
         g1 = 0 # in Hz
 
         # read QCM-D data
-        logger.info('ext', ext) 
+        logger.info('ext %s', ext) 
         if ext == '.csv':
             df = pd.read_csv(path)
         elif ext == '.xlsx':
@@ -2479,14 +2479,14 @@ class DataSaver:
             num_list = sorted(list(set(num_list))) # remove the duplicated numbers
         
         base_num = num_list[0] # the smallest number is considered as the base number
-        logger.info('base_num', base_num) 
+        logger.info('base_num %s', base_num) 
 
         # suppose 1st harmonic in data
         if base_num == round(f1/1e6): # number is frequency (assume f1 != 1 MHz)
             harm_list = [n/round(f1/1e6) for n in num_list]
         elif base_num == 1: # number is harmonic
             harm_list = num_list
-        logger.info('harm_list', harm_list) 
+        logger.info('harm_list %s', harm_list) 
 
         # initiate reference and create the make up raw data
         ref_fs = {'ref':[]}
@@ -2569,7 +2569,7 @@ class DataSaver:
         ## save to self.samp 
         # self.samp = self.samp.append(df, ignore_index=True, sort=False)
 
-        logger.info('df before dynamic_save', df.head()) 
+        logger.info('df before dynamic_save %s', df.head()) 
         ## ANOTHER WAY to save is use self.dynamic_save and save the data to self.samp row by row
 
         # convert harm_list from list of int to list of str

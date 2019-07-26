@@ -96,7 +96,7 @@ def get_hWnd(win_name=win_names[0]):
         # pid = win32process.GetWindowThreadProcessId(hWnd)[1]
     except:
         hWnd = None
-    print('hWnd', hWnd, '"' + win_name + '"')  #testprint
+    logger.info('hWnd %s "%s"', hWnd, win_name) 
     return hWnd
 
     # hWnd = win32ui.GetMainFrame.GetSafeHwnd
@@ -114,9 +114,9 @@ def close_win():
     # close myVNA initiated by AccessMyVNA
     for win_name in win_names:
         hWnd = get_hWnd(win_name)
-        logger.info('hWnd', hWnd) 
+        logger.info('hWnd %s', hWnd) 
         pid = get_pid(hWnd)
-        logger.info('pid', pid) 
+        logger.info('pid %s', pid) 
         if pid:
             os.kill(pid, signal.SIGTERM)
 
@@ -981,19 +981,19 @@ class AccessMyVNA():
         # close vna window
         close_win()
         ret = _MyVNAInit()
-        logger.info('MyVNAInit\n', ret) 
+        logger.info('MyVNAInit\n%s', ret) 
         return ret
 
     def Close(self):
         ret = _MyVNAClose()
-        print('MyVNAClose\n', ret) #MyVNAAutoscale #testprint
+        logger.info('MyVNAClose\n%s', ret) #MyVNAAutoscale
 
     def ShowWindow(self, nValue=1):
         '''
         nValue 0: show; 1:minimize
         '''
         ret = _MyVNAShowWindow(nValue)
-        logger.info('MyVNAShowWindow\n', ret) 
+        logger.info('MyVNAShowWindow\n %s', ret) 
         return ret
 
     def SetScanSteps(self, nSteps=400):
@@ -1004,14 +1004,14 @@ class AccessMyVNA():
         # if not ret:
         #     self._nsteps = nSteps # save to class
 
-        logger.info('MyVNASetScanSteps\n', ret, nSteps) 
+        logger.info('MyVNASetScanSteps\n %s %s', ret, nSteps) 
         return ret, nSteps
 
     def GetScanSteps(self):
         nSteps = np.array(0, dtype=int)
         ret = _MyVNAGetScanSteps(nSteps.ctypes.data_as(POINTER(c_int)))
         # ret = MyVNAGetScanSteps(byref(nSteps))
-        logger.info('MyVNAGetScanSteps\n', ret, nSteps) 
+        logger.info('MyVNAGetScanSteps\n %s %s', ret, nSteps) 
 
         nStp = nSteps
         del nSteps
@@ -1023,7 +1023,7 @@ class AccessMyVNA():
         #     nAverage = np.array(nAverage, dtype=int)
         ret = _MyVNASetScanAverage(nAverage)
         # ret = MyVNASetScanAverage(nAverage)
-        logger.info('MyVNASetScanAverage\n', ret, nAverage) 
+        logger.info('MyVNASetScanAverage\n %s %s', ret, nAverage) 
         # if not ret:
         #     self._naverage = nAverage
         return ret, nAverage
@@ -1032,7 +1032,7 @@ class AccessMyVNA():
         # nAverage = c_int()
         nAverage = np.array(1, dtype=int)
         ret = _MyVNAGetScanAverage(nAverage.ctypes.data_as(POINTER(c_int)))
-        logger.info('MyVNAGetScanAverage\n', ret, nAverage) 
+        logger.info('MyVNAGetScanAverage\n %s %s', ret, nAverage) 
 
         nAve = nAverage
         del nAverage
@@ -1078,7 +1078,7 @@ class AccessMyVNA():
         ndRes = nResult[:] 
         del nResult
 
-        logger.info(ret, ndRes) 
+        logger.info('%s %s', ret, ndRes) 
         return ret, ndRes
 
 
@@ -1100,7 +1100,7 @@ class AccessMyVNA():
         ret = _MyVNASetDoubleArray(nWhat, nIndex, nArraySize, ptr)
         # ret = _MyVNASetDoubleArray(nWhat, nIndex, nArraySize, c_void_p(nData.ctypes.data))
 
-        logger.info(ret, nData) 
+        logger.info('%s %s', ret, nData) 
         
         nD = nData
         rt = ret
@@ -1129,7 +1129,7 @@ class AccessMyVNA():
         ndRes = nResult[:] 
         del nResult
 
-        logger.info(ret, ndRes) 
+        logger.info('%s %s', ret, ndRes) 
         return ret, ndRes
 
 
@@ -1150,7 +1150,7 @@ class AccessMyVNA():
         ptr = nData.ctypes.data_as(POINTER(c_int))
         ret = _MyVNASetIntegerArray(nWhat, nIndex, nArraySize, ptr)
 
-        logger.info(ret, nData) 
+        logger.info('%s %s', ret, nData) 
         
         nD = nData
         rt = ret
@@ -1162,7 +1162,7 @@ class AccessMyVNA():
     def Getinstrmode(self):
         nMode = np.array(0, dtype=int)
         ret = _MyVNAGetInstrumentMode(nMode.ctypes.data_as(POINTER(c_int)))
-        logger.info('MyVNAGetInstrumentMode\n', ret, nMode) 
+        logger.info('MyVNAGetInstrumentMode\n%s %s', ret, nMode) 
 
         nM = nMode
         del nMode
@@ -1175,7 +1175,7 @@ class AccessMyVNA():
         nMode: 0, Reflection
         '''
         ret = _MyVNASetInstrumentMode(nMode)
-        logger.info('MyVNASetInstrumentMode\n', ret, nMode) 
+        logger.info('MyVNASetInstrumentMode\n%s %s', ret, nMode) 
         # if not ret:
         #     self._instrmode = nMode        
         return ret, nMode
@@ -1184,13 +1184,13 @@ class AccessMyVNA():
     def Getdisplaymode(self):
         nMode = np.array(0, dtype=int)
         ret = _MyVNAGetDisplayMode(nMode.ctypes.data_as(POINTER(c_int)))
-        logger.info('MyVNAGetDisplayMode\n', ret, nMode) 
+        logger.info('MyVNAGetDisplayMode\n%s %s', ret, nMode) 
         return ret, nMode
 
 
     def Setdisplaymode(self, nMode=0):
         ret = _MyVNASetDisplayMode(nMode)
-        logger.info('MyVNASetDisplayMode\n', ret, nMode) 
+        logger.info('MyVNASetDisplayMode\n%s %s', ret, nMode) 
         # if not ret:
         #     self._displaymode = nMode        
         return ret, nMode
@@ -1205,7 +1205,7 @@ class AccessMyVNA():
         # ret = MyVNASingleScan(0x0111, get_hWnd(), 0x0400 + 0x1234, 0)
         hWnd = get_hWnd()
         ret = _MyVNASingleScan(WM_COMMAND, hWnd, MESSAGE_SCAN_ENDED, 0)
-        logger.info('MyVNASingleScan\n', ret, hWnd) 
+        logger.info('MyVNASingleScan\n%s %s', ret, hWnd) 
         return ret, hWnd
 
 
@@ -1221,7 +1221,7 @@ class AccessMyVNA():
         nFlags: 1 = start / stop
         '''
         ret = _MyVNASetFequencies(f1, f2, 1)
-        print('MyVNASetFequencies\n', ret, f1, f2) #MyVNASetFequencies #testprint
+        logger.info('MyVNASetFequencies\n%s %s %s', ret, f1, f2) #MyVNASetFequencies
         # if not ret:
         #     self._f = [f1, f2]
         return ret, f1, f2
@@ -1250,10 +1250,10 @@ class AccessMyVNA():
         #  0: 
         # -1: nSteps < 1
         #  1: crushes before l682: (errcode = MyVNAInit()) == 0
-        logger.info(ret, data_a[0], data_b[0]) 
+        logger.info('%s %s %s', ret, data_a[0], data_b[0]) 
 
-        logger.info('len', len(data_a)) 
-        logger.info('end', data_a[nEnd]) 
+        logger.info('len %s', len(data_a)) 
+        logger.info('end %s', data_a[nEnd]) 
         da = data_a[:]
         db = data_b[:]
         rt = ret
@@ -1267,14 +1267,14 @@ class AccessMyVNA():
 
     def Autoscale(self):
         ret = _MyVNAAutoscale()
-        print('MyVNAAutoscale\n', ret) #MyVNAAutoscale #testprint
+        logger.info('MyVNAAutoscale\n%s', ret) #MyVNAAutoscale
         return ret
 
 
     def LoadCalibration(self, fileName):
         pfn = c_wchar_p(fileName)
         ret = _MyVNALoadCalibration(pfn)
-        logger.info('MyVNALoadCalibration\n', ret) 
+        logger.info('MyVNALoadCalibration\n%s', ret) 
         print(pfn.value)
         return ret
 
@@ -1282,7 +1282,7 @@ class AccessMyVNA():
     def SaveCalibration(self, fileName):
         pfn = c_wchar_p(fileName)
         ret = _MyVNASaveCalibration(pfn)
-        logger.info('MyVNASaveCalibration\n', ret) 
+        logger.info('MyVNASaveCalibration\n%s', ret) 
         print(pfn.value)
         return ret
 
@@ -1290,7 +1290,7 @@ class AccessMyVNA():
     def LoadConfiguration(self, fileName):
         pfn = c_wchar_p(fileName)
         ret = _MyVNALoadCalibration(pfn)
-        logger.info('MyVNALoadConfiguration\n', ret) 
+        logger.info('MyVNALoadConfiguration\n%s', ret) 
         print(pfn.value)
         return ret
 
@@ -1298,7 +1298,7 @@ class AccessMyVNA():
     def SaveConfiguration(self, fileName):
         pfn = c_wchar_p(fileName)
         ret = _MyVNASaveConfiguration(pfn)
-        logger.info('MyVNASaveConfiguration\n', ret) 
+        logger.info('MyVNASaveConfiguration\n%s', ret) 
         print(pfn.value)
         return ret
 
@@ -1306,27 +1306,27 @@ class AccessMyVNA():
     ################ combined functions #################
     def single_scan(self):
         logger.info('single_scan') 
-        logger.info('self._nsteps', self._nsteps) 
+        logger.info('self._nsteps%s', self._nsteps) 
         # self.Init()
         self.SingleScan()
-        logger.info('self._nsteps', self._nsteps) 
+        logger.info('self._nsteps%s', self._nsteps) 
         self.setDisplayFreq()
         self.Autoscale()
-        logger.info('self._nsteps', self._nsteps) 
+        logger.info('self._nsteps%s', self._nsteps) 
         # wait for some time
         t_wait = time.time() + self._get_wait_time()
 
         while time.time() < t_wait:
             # logger.info('wait...') 
             time.sleep(0.1)
-        logger.info('self._nsteps', self._nsteps) 
+        logger.info('self._nsteps%s', self._nsteps) 
         # ret, nSteps = self.GetScanSteps()
         ret, f, G = self.GetScanData(nStart=0, nEnd=int(self._nsteps-1), nWhata=-1, nWhatb=15)
         # time.sleep(1)
-        logger.info('self._nsteps', self._nsteps) 
+        logger.info('self._nsteps%s', self._nsteps) 
         ret, f, B = self.GetScanData(nStart=0, nEnd=int(self._nsteps-1), nWhata=-1, nWhatb=16)
         # self.Close()
-        logger.info('self._nsteps', self._nsteps) 
+        logger.info('self._nsteps%s', self._nsteps) 
         return ret, f, G * 1e3, B * 1e3 # f in Hz; G & B in mS
 
 
@@ -1499,11 +1499,11 @@ class AccessMyVNA():
         start_delay = self._start_delay
         phase_delay = self._phase_delay
 
-        logger.info('nsteps', nsteps) 
-        logger.info('naverage', naverage) 
-        logger.info('step_delay', step_delay) 
-        logger.info('start_delay', start_delay) 
-        logger.info('phase_delay', phase_delay) 
+        logger.info('nsteps %s', nsteps) 
+        logger.info('naverage %s', naverage) 
+        logger.info('step_delay %s', step_delay) 
+        logger.info('start_delay %s', start_delay) 
+        logger.info('phase_delay %s', phase_delay) 
 
         average_delay = 95 # in us, delay between scans for an average
         mbuffer=70
@@ -1540,7 +1540,7 @@ class AccessMyVNA():
         logger.info(num_conversions / conversion_rate) 
         total_time = dds_load * 1e-6 + start_delay * 1e-6 + num_conversions / conversion_rate + delay * 1e-6 # get total time in seconds
         logger.info(total_time) 
-        print(total_time * naverage + average_delay * (naverage - 1) * 1e-6 + extra_time)  #testprint
+        loger.info(total_time * naverage + average_delay * (naverage - 1) * 1e-6 + extra_time)
         return total_time * naverage + average_delay * (naverage - 1) * 1e-6 + extra_time
         
             

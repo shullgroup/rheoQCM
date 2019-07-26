@@ -239,9 +239,9 @@ def findpeaks_py(x, resonance, output=None, sortstr=None, threshold=None, promin
         exit(0)
 
     logger.info(threshold) 
-    logger.info('f distance', distance / (x[1] - x[0])) 
+    logger.info('f distance %s', distance / (x[1] - x[0])) 
     logger.info(prominence) 
-    logger.info('f width', width / (x[1] - x[0])) 
+    logger.info('f width %s', width / (x[1] - x[0])) 
     peaks, props = find_peaks(
         resonance, 
         threshold=threshold, 
@@ -308,10 +308,10 @@ def guess_peak_factors(freq, resonance):
         amp = Rmax-np.amin(resonance)
         # determine the estimated half-max conductance (or susceptance) of the resonance peak
         half_max = amp / 2 + np.amin(resonance)
-        logger.info('Rmax', Rmax) 
-        logger.info('amp', amp) 
+        logger.info('Rmax %s', Rmax) 
+        logger.info('amp %s', amp) 
 
-        # logger.info('where', np.where(np.abs(half_max-resonance)==np.min(np.abs(half_max-resonance)))) 
+        # logger.info('where %s', np.where(np.abs(half_max-resonance)==np.min(np.abs(half_max-resonance)))) 
         half_wid = np.absolute(freq[np.argmin(np.abs(half_max-resonance))] -  cen)
         logger.info(half_wid) 
         return amp, cen, half_wid, half_max
@@ -385,9 +385,9 @@ class PeakTracker:
             harm_dict = harmdata[chn_name][harm]
         
             logger.info('#### update_input ####') 
-            logger.info('chn_name', chn_name, 'harm', harm) 
-            logger.info('f[chn][harm]', len(f)) 
-            logger.info('harmdata[chn][harm]', harm_dict) 
+            logger.info('chn_name:  %s, harm: %s', chn_name, harm) 
+            logger.info('f[chn][harm] %s', len(f)) 
+            logger.info('harmdata[chn][harm] %s', harm_dict) 
             logger.info(' #####################') 
 
         # setattr(self.harminput, chn_name, setattr())
@@ -535,9 +535,9 @@ class PeakTracker:
             ''' set new center '''
             cen_range = settings_init['cen_range'] # cen of span +/- cen_range*span as the accessible range
             cen_diff = cen - np.mean(np.array([freq[0],freq[-1]]))
-            logger.info('cen_diff', cen_diff) 
+            logger.info('cen_diff %s', cen_diff) 
             half_cen_span = cen_range * current_span
-            logger.info('half_cen_span', half_cen_span) 
+            logger.info('half_cen_span %s', half_cen_span) 
             if np.absolute(cen_diff) > half_cen_span: # out of range
                 # new start and end frequencies in Hz
                 # return cen # return current peak center as new center
@@ -636,12 +636,12 @@ class PeakTracker:
             new_xlim = set_new_xlim(new_cen, new_span)
 
 
-            logger.info('current_center', current_center) 
-            logger.info('current_span', current_span) 
-            logger.info('current_xlim', current_xlim) 
-            logger.info('new_cen', new_cen) 
-            logger.info('new_span', new_span) 
-            logger.info('new_xlim', new_xlim) 
+            logger.info('current_center %s', current_center) 
+            logger.info('current_span %s', current_span) 
+            logger.info('current_xlim %s', current_xlim) 
+            logger.info('new_cen %s', new_cen) 
+            logger.info('new_span %s', new_span) 
+            logger.info('new_xlim %s', new_xlim) 
 
             ''' # adjust window if neither span or center is fixed (default)
             if(np.mean(current_xlim)-cen) > 1*current_span/12: # peak center freq too low
@@ -705,9 +705,9 @@ class PeakTracker:
         harm = self.active_harm
         n_policy = self.harminput[chn_name][harm]['n_policy']
         p_policy = self.harminput[chn_name][harm]['p_policy']
-        logger.info('chn_name', chn_name) 
-        logger.info('harm', harm) 
-        logger.info('p_policy', p_policy) 
+        logger.info('chn_name %s', chn_name) 
+        logger.info('harm %s', harm) 
+        logger.info('p_policy %s', p_policy) 
         
         # ordering by peak height decreasing
         if p_policy == 'maxamp':
@@ -725,7 +725,7 @@ class PeakTracker:
             width=settings_init['peak_min_width_Hz']
         )
         
-        logger.info('indices', indices) 
+        logger.info('indices %s', indices) 
         if indices.size == 0:
             self.found_n = 0
             self.update_output(found_n=0)
@@ -777,7 +777,7 @@ class PeakTracker:
                     'phi': phi
                 }
         self.update_output(found_n=self.found_n)
-        logger.info('out found', self.harmoutput[chn_name][harm]['found_n']) 
+        logger.info('out found %s', self.harmoutput[chn_name][harm]['found_n']) 
 
 
     def prev_guess(self, chn_name=None, harm=None):
@@ -875,7 +875,7 @@ class PeakTracker:
         wid_rough = (np.amax(f) - np.amin(f)) / 6
         phi_rough = 0
 
-        logger.info('prek_guess', self.peak_guess) 
+        logger.info('prek_guess %s', self.peak_guess) 
 
         if self.found_n == 0: # no peak found by find_peak_py
             self.found_n = 1 # force it to at least 1 for fitting
@@ -948,15 +948,15 @@ class PeakTracker:
         harm = self.active_harm
         factor =self.get_input(key='factor')
 
-        logger.info('chn', chn_name, 'harm', harm) 
+        logger.info('chn: %s, harm: %s', chn_name, harm) 
         logger.info(self.get_output()) 
-        logger.info('mm factor', factor) 
-        logger.info('self n', self.found_n) 
+        logger.info('mm factor %s', factor) 
+        logger.info('self n %s', self.found_n) 
         # set params with data
         self.auto_guess()
         self.set_params()
 
-        logger.info('self n', self.found_n) 
+        logger.info('self n %s', self.found_n) 
 
         # set the models
         gmod, bmod = make_gbmodel(self.found_n)
@@ -981,8 +981,8 @@ class PeakTracker:
             for i in range(self.found_n): # for loop for each single peak from guessed val
                 # get peak cen and wid
                 cen_i, wid_i = val['p' + str(i) + '_cen'], val['p' + str(i) + '_wid']
-                logger.info('cen_i', cen_i) 
-                logger.info('wid_i', wid_i) 
+                logger.info('cen_i %s', cen_i) 
+                logger.info('wid_i %s', wid_i) 
                 ind_min = np.abs(self.harminput[chn_name][harm]['f'] - (cen_i - wid_i * factor)).argmin()
                 ind_max = np.abs(self.harminput[chn_name][harm]['f'] - (cen_i + wid_i * factor)).argmin()
                 # factor_idx_list.append(ind_min) # add min index 
@@ -1004,12 +1004,12 @@ class PeakTracker:
             G = G[idx_list]
             B = B[idx_list]
 
-            logger.info('data len after factor', len(f)) 
+            logger.info('data len after factor %s', len(f)) 
 
-        logger.info('factor\n', factor) 
-        # logger.info('cen_guess\n', cen_guess) 
-        # logger.info('half_wid_guess\n', half_wid_guess) 
-        # logger.info('factor_span\n', factor_span) 
+        logger.info('factor\n%s', factor) 
+        # logger.info('cen_guess\n %s', cen_guess) 
+        # logger.info('half_wid_guess\n %s', half_wid_guess) 
+        # logger.info('factor_span\n %s', factor_span) 
         # minimize with leastsq
         # mini = Minimizer(residual, params, fcn_args=(f, G, B))
         # result = mini.leastsq(xtol=1.e-10, ftol=1.e-10)
@@ -1018,7 +1018,7 @@ class PeakTracker:
         # logger.info(f) 
         # logger.info(G) 
         # logger.info(B) 
-        logger.info('mm params', self.harmoutput[chn_name][harm]['params']) 
+        logger.info('mm params %s', self.harmoutput[chn_name][harm]['params']) 
         try:
             result = minimize(
                 res_GB, 
@@ -1061,9 +1061,9 @@ class PeakTracker:
             amp_array = np.array([result.params.get('p' + str(i) + '_amp').value for i in range(found_n)])
             cen_array = np.array([result.params.get('p' + str(i) + '_cen').value for i in range(found_n)])
 
-            logger.info('found_n', found_n) 
+            logger.info('found_n %s', found_n) 
             logger.info(result.params) 
-            logger.info('params', result.params.valuesdict()) 
+            logger.info('params %s', result.params.valuesdict()) 
             logger.info(amp_array) 
             logger.info(cen_array) 
             # get max amp index
@@ -1127,7 +1127,7 @@ class PeakTracker:
             val['sucess'] = result.success # bool
             val['chisqr'] = result.chisqr # float
 
-            logger.info('params', result.params.valuesdict()) 
+            logger.info('params %s', result.params.valuesdict()) 
         else:
             # values for tracking peak
             val['amp_trk'] = {
@@ -1264,8 +1264,8 @@ class PeakTracker:
             self.active_harm = harm
         
         self.init_active_val(chn_name=chn_name, harm=harm)
-        logger.info('chn:', chn_name, 'harm:', harm) 
-        logger.info('self.chn:', self.active_chn, 'self.harm:', self.active_harm) 
+        logger.info('chn: %s, harm: %s', chn_name, harm) 
+        logger.info('self.chn: %s,self.harm: %s', self.active_chn, self.active_harm) 
 
         self.minimize_GB()
         

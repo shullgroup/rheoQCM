@@ -387,7 +387,7 @@ class QCM:
 
 
     def dlam(self, n, dlam_refh, phi):
-        return dlam_refh*(n/self.refh) ** (1-phi/np.pi)
+        return dlam_refh * (n/self.refh)**(1-phi/np.pi)
 
 
     def normdelfstar(self, n, dlam_refh, phi):
@@ -459,7 +459,7 @@ class QCM:
 
         dlam_refh = self.bulk_dlam_refh(grho_refh, phi)
 
-        return [dlam_refh, min(phi, np.pi/2)]
+        return [dlam_refh, phi]
 
 
     def bulk_dlam_refh(self, grho_refh, phi):
@@ -496,7 +496,8 @@ class QCM:
         '''
         if n is None:
             n = self.refh
-        return min(np.pi / 2, -2 * np.arctan(np.real(delfstar[n]) / np.imag(delfstar[n]))) # limit phi <= pi/2
+        # return min(np.pi / 2, -2 * np.arctan(np.real(delfstar[n]) / np.imag(delfstar[n]))) # limit phi <= pi/2
+        return -2 * np.arctan(np.real(delfstar[n]) / np.imag(delfstar[n])) # phi will be limited to < pi/2 when exported in solve_single_queue
 
 
     def bulk_props(self, delfstar, n=None):
@@ -701,7 +702,8 @@ class QCM:
         tot_harms = len(delf_calcs)
         mech_queue['drho'] = [[drho] * tot_harms] # in kg/m2
         mech_queue['drho_err'] = [[err['drho']] * tot_harms] # in kg/m2
-        mech_queue['phi'] = [[phi] * tot_harms] # in rad
+        # mech_queue['phi'] = [[phi] * tot_harms] # in rad
+        mech_queue['phi'] = [[min(np.pi/2, phi)] * tot_harms] # in rad limit phi <= pi/2
         mech_queue['phi_err'] = [[err['phi']] * tot_harms] # in rad
         mech_queue['rh_exp'] = [[rh_exp] * tot_harms]
         mech_queue['rh_calc'] = [[rh_calc] * tot_harms]
@@ -732,7 +734,7 @@ class QCM:
         # logger.info(mech_queue['delf_calcs']) 
         # logger.info(mech_queue['delg_calcs']) 
         # TODO save delfstar, deriv {n1:, n2:, n3:}
-        # print(mech_queue)    #testprint
+        # logger.info(mech_queue) 
 
         return mech_queue
         ########## TODO 
@@ -1120,7 +1122,7 @@ if __name__ == '__main__':
 
     nh = [3,5,3]
 
-    samp = 'PS_water'
+    samp = 'water'
 
     if samp == 'BCB':
         delfstar = {
@@ -1175,7 +1177,7 @@ if __name__ == '__main__':
             2: {'calc': False, 'drho': 0.5347e-3, 'grho': 86088e3, 'phi': np.pi/2, 'n': 3}}
 
 
-    drho, grho_refh, phi, dlam_refh, err = qcm.solve_general(nh, delfstar, 'LL', film)
+    drho, grho_refh, phi, dlam_refh, err = qcm.solve_general(nh, delfstar, 'LL', film, bulklimit=2.5)
 
     print('drho', drho)
     print('grho_refh', grho_refh)
