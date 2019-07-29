@@ -44,7 +44,7 @@
         "class": "logging.handlers.WatchedFileHandler",
         "formatter": "verbose",
         "filename": "",
-        "mode": "a",
+        "mode": "w",
         "encoding": "utf-8"
       },
       "smtp": {

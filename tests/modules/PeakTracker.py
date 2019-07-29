@@ -559,7 +559,7 @@ class PeakTracker:
             change_thresh = settings_init['change_thresh'] # span change threshold current_span * change_thresh[0/1]
             ''' set new span '''
             wid_ratio = 0.5 * current_span / half_wid
-            logger.info('wid_ratio', wid_ratio) 
+            logger.info('wid_ratio %s', wid_ratio) 
             if wid_ratio < wid_ratio_range[0]: # too fat
                 return max(
                     min(

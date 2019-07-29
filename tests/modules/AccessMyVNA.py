@@ -1212,7 +1212,7 @@ class AccessMyVNA():
     def EqCctRefine(self):
         hWnd = get_hWnd()
         ret = _MyVNAEqCctRefine(WM_COMMAND, hWnd, MESSAGE_SCAN_ENDED, 0)
-        logger.info('MyVNAEqCctRefine\n', ret, hWnd) 
+        logger.info('MyVNAEqCctRefine\n%s %s', ret, hWnd) 
         return ret, hWnd
 
 

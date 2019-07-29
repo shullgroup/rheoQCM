@@ -72,7 +72,6 @@ class DataSaver:
 
         self._init_attrs()
 
-
     def _init_attrs(self):
         '''
         attributes needs to be initiated with new file
@@ -1398,7 +1397,7 @@ class DataSaver:
         s = getattr(self, chn_name + '_prop')[mech_key][col].copy()
         # s = self.update_mech_df_shape(chn_name, mech_key)[col].copy() # use update_mech_df_shape function will update the mech_prop in case its shape is not updated with data
         
-        logger.info('chn_name/mech_key/col %s %s', chn_name, mech_key, col) 
+        logger.info('chn_name/mech_key/col %s %s %s', chn_name, mech_key, col) 
         logger.info('mech_s head %s', s.head()) 
         logger.info('mech_s %s', type(s.values.tolist())) 
         logger.info('mech_s %s', s.values.tolist()[0]) 

@@ -207,8 +207,8 @@ class QCM:
         '''
         take the material from a single layer {'drho': 0, 'grho': 0, 'phi': 0, 'n': 1}
         '''
-        # logger.info('material', material) 
-        # logger.info('delfstar', delfstar) 
+        # logger.info('material %s', material) 
+        # logger.info('delfstar %s', delfstar) 
         drho = material['drho']
         # set switch to handle as where drho = 0
         if drho == 0:
@@ -220,7 +220,7 @@ class QCM:
 
 
     def zstar_bulk(self, n, material):
-        # logger.info('material', material) 
+        # logger.info('material %s', material) 
         grho = self.grho_from_material(n, material)  #check for error here
         phi = material['phi']
         grhostar = grho * np.exp(1j * phi)
@@ -374,8 +374,8 @@ class QCM:
         thirdterm = ((1j * Zqc * np.tan(Dq/2))**-1 + (1j * Zqc * np.tan(Dq / 2) + ZL)**-1)**-1
         Zmot = secterm + thirdterm  + ZPE
 
-        # logger.info('Zmot shape', Zmot.shape) 
-        # logger.info('Zmot', Zmot) 
+        # logger.info('Zmot shape %s', Zmot.shape) 
+        # logger.info('Zmot %s', Zmot) 
         return Zmot
 
 
@@ -466,8 +466,8 @@ class QCM:
         ''' get bulk dlam by setting it a quarter wavelength for now'''
         # calculate rho*lambda
         lamrho_refh = self.calc_lamrho(self.refh, grho_refh, phi)
-        # logger.info('grho_refh', grho_refh) 
-        # logger.info('lamrho_refh', lamrho_refh) 
+        # logger.info('grho_refh %s', grho_refh) 
+        # logger.info('lamrho_refh %s', lamrho_refh) 
         # we need an estimate for drho. We only use this approach if it is
         # reasonably large. We'll put it at the quarter wavelength condition for now
         drho = lamrho_refh / 4
@@ -566,7 +566,7 @@ class QCM:
         fstars = qcm_queue.fstars.iloc[0] # list
         # get delfstar
         delfstars = qcm_queue.delfstars.iloc[0] # list
-        # logger.info('fstars', fstars) 
+        # logger.info('fstars %s', fstars) 
         # logger.info(delfstars) 
         # convert list to dict to make it easier to do the calculation
         # fstar = {int(i*2+1): fstar[i] for i, fstar in enumerate(fstars)}
@@ -581,7 +581,7 @@ class QCM:
             first_notnan = np.argwhere(~np.isnan(f0s))[0][0] # find out index of the first freq is not nan
             # use this value calculate f1 = fn/n (in case f1 is not recorded)
             self.f1 = f0s[first_notnan] / (first_notnan * 2 + 1)
-        # logger.info('f1', self.f1) 
+        # logger.info('f1 %s, self.f1) 
 
         # fstar_err ={}
         # for n in nhplot: 
@@ -610,16 +610,16 @@ class QCM:
 
         NOTE: n used in this function is int
         '''
-        # logger.info('calctype', calctype) 
+        # logger.info('calctype %s', calctype) 
         #TODO this may be replaced
         film = self.replace_layer_0_prop_with_known(film)
 
-        # logger.info('film before calc', film) 
+        # logger.info('film before calc %s', film) 
         drho, grho_refh, phi, dlam_refh, err = self.solve_single_queue_to_prop(nh, qcm_queue, calctype=calctype, film=film, bulklimit=bulklimit)
 
         # update calc layer prop
         film = self.set_calc_layer_val(film, drho, grho_refh, phi)
-        # logger.info('film after calc', film) 
+        # logger.info('film after calc %s', film) 
 
         # now back calculate delfstar, rh and rd from the solution
         # get the marks [1st, 3rd, 5th, ...]
@@ -654,7 +654,7 @@ class QCM:
         normdelf_calcs = mech_queue.normdelf_calcs.iloc[0].copy()
         normdelg_exps = mech_queue.normdelg_exps.iloc[0].copy()
         normdelg_calcs = mech_queue.normdelg_calcs.iloc[0].copy()
-        # logger.info('delf_calcs', delf_calcs) 
+        # logger.info('delf_calcs %s', delf_calcs) 
         # logger.info(type(delf_calcs)) 
         for n in nhplot:
             if self.isbulk(rd_exp, bulklimit):
@@ -695,8 +695,8 @@ class QCM:
         rh_exp = self.rh_from_delfstar(nh, delfstar)
         rh_calc = self.rh_from_delfstar(nh, delfstar_calc)
         # rh_calc = self.rhcalc(nh, dlam_refh, phi)
-        # logger.info('delf_calcs', delf_calcs) 
-        # logger.info('delg_calcs', delg_calcs) 
+        # logger.info('delf_calcs %s', delf_calcs) 
+        # logger.info('delg_calcs %s', delg_calcs) 
 
         # repeat values for single value
         tot_harms = len(delf_calcs)
@@ -765,8 +765,8 @@ class QCM:
         # first pass at solution comes from rh and rd
         rd_exp = self.rd_from_delfstar(nh[2], delfstar) # nh[2]
         rh_exp = self.rh_from_delfstar(nh, delfstar) # nh[0], nh[1]
-        # logger.info('rd_exp', rd_exp) 
-        # logger.info('rh_exp', rh_exp) 
+        # logger.info('rd_exp %s', rd_exp) 
+        # logger.info('rh_exp %s', rh_exp) 
         
         n1 = nh[0]
         n2 = nh[1]
@@ -788,8 +788,8 @@ class QCM:
                     # logger.info('use thin film guess') 
                     dlam_refh, phi = self.thinfilm_guess(delfstar)
 
-                # logger.info('dlam_refh', dlam_refh) 
-                # logger.info('phi', phi) 
+                # logger.info('dlam_refh %s', dlam_refh) 
+                # logger.info('phi %s', phi) 
                 
                 if fit_method == 'lmfit': # this part is the old protocal w/o jacobian
                     pass
@@ -812,10 +812,10 @@ class QCM:
                     grho_refh = self.grho_from_dlam(self.refh, drho, dlam_refh, phi)
 
                 # logger.info('solution of 1st solving:') 
-                # logger.info('dlam_refh', dlam_refh) 
-                # logger.info('phi', phi) 
-                # logger.info('drho', drho) 
-                # logger.info('grho_refh', grho_refh) 
+                # logger.info('dlam_refh %s', dlam_refh) 
+                # logger.info('phi %s', phi) 
+                # logger.info('drho %s', drho) 
+                # logger.info('grho_refh %s', grho_refh) 
                 
                 # we solve it again to get the Jacobian with respect to our actual
                 # input variables - this is helpfulf for the error analysis
@@ -847,7 +847,7 @@ class QCM:
                         
                         # update calc layer prop
                         film = self.set_calc_layer_val(film, drho, grho_refh, phi)
-                        # logger.info('film after 2nd sol', film) 
+                        # logger.info('film after 2nd sol %s', film) 
                         
                         # dlam_refh = self.calc_dlam(self.refh, film)
                         # comment above line to use the dlam_refh from soln1
@@ -859,10 +859,10 @@ class QCM:
                         delfstar_err[2] = np.imag(self.fstar_err_calc(delfstar[n3]))
 
                         jac = soln2['jac']
-                        # logger.info('jac', jac) 
+                        # logger.info('jac %s', jac) 
                         try:
                             jac_inv = np.linalg.inv(jac)
-                            # logger.info('jac_inv', jac_inv) 
+                            # logger.info('jac_inv %s', jac_inv) 
 
                             for i, k in enumerate(err_names):
                                 deriv[k]={0:jac_inv[i, 0], 1:jac_inv[i, 1], 2:jac_inv[i, 2]}
@@ -889,13 +889,13 @@ class QCM:
         else:
             drho, grho_refh, phi, dlam_refh = np.nan, np.nan, np.nan, np.nan
 
-        # logger.info('drho', drho) 
-        # logger.info('grho_refh', grho_refh) 
-        # logger.info('phi', phi) 
-        # logger.info('dlam_refh', phi) 
-        # logger.info('err', err) 
+        # logger.info('drho %s', drho) 
+        # logger.info('grho_refh %s', grho_refh) 
+        # logger.info('phi %s', phi) 
+        # logger.info('dlam_refh %s', phi) 
+        # logger.info('err %s', err) 
         delrho = self.calc_delrho(self.refh, grho_refh, phi)
-        # logger.info('delrho', delrho) 
+        # logger.info('delrho %s', delrho) 
 
         return drho, grho_refh, phi, dlam_refh, err
 
@@ -929,8 +929,8 @@ class QCM:
         '''
         nh = nhcalc2nh(nhcalc) # list of harmonics (int) in nhcalc
         for queue_id in queue_ids: # iterate all ids
-            # logger.info('queue_id', queue_id) 
-            # logger.info('qcm_df', qcm_df) 
+            # logger.info('queue_id %s', queue_id) 
+            # logger.info('qcm_df %s', qcm_df) 
             # logger.info(type(qcm_df)) 
             # queue index
             idx = qcm_df[qcm_df.queue_id == queue_id].index.astype(int)[0]

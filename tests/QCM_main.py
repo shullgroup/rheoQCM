@@ -88,6 +88,7 @@ from modules.MatplotlibWidget import MatplotlibWidget
 import _version
 
 # set logger
+# this should be after loading all modules to overwrite the loggers in them
 with open(settings_init['logger_config']['config_file'], 'r') as f:
     logger_config = json.load(f)
     logger_config['handlers']['file_handler']['filename'] = settings_init['logger_config']['output_file']
@@ -95,9 +96,10 @@ logging.config.dictConfig(logger_config)
 del logger_config
 
 # Get the logger specified in the file
-# logger = logging.getLogger(__name__)
-logger = logging.getLogger('infoLogger')
-
+logger = logging.getLogger(__name__)
+# logger = logging.getLogger('infoLogger')
+logger = logging.getLogger('fileLogger')
+# logger.setLevel(logging.ERROR)
 
 
 if UIModules.system_check() == 'win32': # windows
@@ -125,6 +127,7 @@ else: # linux or MacOS
     # for test only
     # from modules.AccessMyVNA_dummy import AccessMyVNA
         print('Current version of MyVNA does not work with MacOS and Linux!\nData analysis only!')
+
 
 
 class VNATracker:
@@ -4560,6 +4563,7 @@ class QCMApp(QMainWindow):
         '''
         for code testing
         '''
+        print("i am an error", err)
         logger.info('stackedWidget_settings_mechanics_modeswitch: %s', self.ui.stackedWidget_settings_mechanics_modeswitch.currentIndex()) 
         if self.ui.stackedWidget_settings_mechanics_modeswitch.currentIndex() == 0: # model mode
             # convert model to mechchndata
@@ -6815,7 +6819,7 @@ class QCMApp(QMainWindow):
             if rkey in settings_init[vh_item].keys(): # verticla name exist
                 for c, (ckey, cval) in enumerate(rval.items()):
                     if ckey in settings_init[hh_item].keys():
-                        logger.info('table name:', table.objectName()) 
+                        logger.info('table name: %s', table.objectName()) 
                         logger.info('table r c: %s %s', r, c) 
                         tableitem = table.item(r, c)
                         if cval is not None:
@@ -6918,7 +6922,7 @@ if __name__ == '__main__':
         qcm_app.show()
         sys.exit(app.exec_())
     except Exception as err:
-        traceback.print_tb(err.__traceback__)
+        # traceback.print_tb(err.__traceback__)
         print(err)
-        logger.exception('Exception occurred')
+        logger.error('Exception occurred\n%s', err)
 
