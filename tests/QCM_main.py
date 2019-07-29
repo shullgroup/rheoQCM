@@ -5904,27 +5904,18 @@ class QCMApp(QMainWindow):
         samp_channel = self.settings['comboBox_samp_channel']
         ref_channel = self.settings['comboBox_ref_channel']
 
-        # this part sets the sender to none if conflict found
-        '''
-        if ref_channel == samp_channel:
-            # make sure sample and ref channels are not the same
-            self.settings[sender_name] = 'none' # set the sender to 'none'
-            #TODO update in statusbar
-        # load_comboBox has to be used after the value saved in self.settings
-        self.load_comboBox(getattr(self.ui, sender_name))
 
-        '''
 
         # this park sets the other channel to none if conflict found
-        if ref_channel == samp_channel:
-            if 'samp' in sender_name:
-                self.settings['comboBox_ref_channel'] = 'none'
-                self.load_comboBox(self.ui.comboBox_ref_channel)
-            elif 'ref' in sender_name:
-                self.settings['comboBox_samp_channel'] = 'none'
-                self.load_comboBox(self.ui.comboBox_samp_channel)
-            else:
-                pass
+        # if ref_channel == samp_channel:
+        #     if 'samp' in sender_name:
+        #         self.settings['comboBox_ref_channel'] = 'none'
+        #         self.load_comboBox(self.ui.comboBox_ref_channel)
+        #     elif 'ref' in sender_name:
+        #         self.settings['comboBox_samp_channel'] = 'none'
+        #         self.load_comboBox(self.ui.comboBox_samp_channel)
+        #     else:
+        #         pass
 
         # set visibility of samp & ref related widgets 
         self.setvisible_samprefwidgets()

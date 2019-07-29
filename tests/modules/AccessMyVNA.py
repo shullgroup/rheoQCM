@@ -1540,7 +1540,7 @@ class AccessMyVNA():
         logger.info(num_conversions / conversion_rate) 
         total_time = dds_load * 1e-6 + start_delay * 1e-6 + num_conversions / conversion_rate + delay * 1e-6 # get total time in seconds
         logger.info(total_time) 
-        loger.info(total_time * naverage + average_delay * (naverage - 1) * 1e-6 + extra_time)
+        logger.info(total_time * naverage + average_delay * (naverage - 1) * 1e-6 + extra_time)
         return total_time * naverage + average_delay * (naverage - 1) * 1e-6 + extra_time
         
             
