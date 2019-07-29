@@ -1,0 +1,37 @@
+{
+    "vna_path": [
+        "C:\\Program Files (x86)\\G8KBB\\myVNA\\myVNA.exe",
+        "C:\\Program Files\\G8KBB\\myVNA\\myVNA.exe"
+    ],
+    "vna_cal_file_path": "./cal/",
+    "version_hide_list": [
+        "dateTimeEdit_reftime",
+        "pushButton_resetreftime",
+        "label_reftime",
+        "groupBox_settings_output",
+        "groupBox_settings_fitting",
+        "pushButton_settings_harm_cntr",
+        "pushButton_spectra_fit_autocntr",
+        "pushButton_settings_data_tostart",
+        "pushButton_settings_data_toprevious",
+        "pushButton_settings_data_tonext",
+        "pushButton_settings_data_toend",
+        "pushButton_settings_mechanics_errorsettings",
+        "pushButton_status_reftype"
+    ],
+    "version_delete_list": [
+    ],
+    "max_mech_layers": 2,
+    "mpl_sp_fontsize": 5,
+    "mpl_fontsize": 8,
+    "mpl_sp_legfontsize": 5,
+    "mpl_legfontsize": 8,
+    "mpl_capsize": 4,
+    "mpl_txtfontsize": 8,
+    "mpl_sp_txtfontsize": 5,
+    "mpl_sp_harmfontsize": 9,
+    "peak_min_distance_Hz": 1000.0,
+    "peak_min_width_Hz": 10,
+    "xtol": 1e-10,
+    "ftol": 1e-10
+}

@@ -9,13 +9,21 @@ Change the following factors will change the apperiance of the GUI
 from collections import OrderedDict
 import numpy as np
 
-settings_init = {
+config_default = {
 
     # window default size
     'window_size': [1200, 800], # px
 
     # UI will looking for the file to load the default setup
     'default_settings_file_name': 'user_settings.json',
+    'default_config_file_name': 'config_default.json',
+
+    # logger configeration
+    'logger_config':{
+        'config_file': 'logger_config.json', # logger configeration file name
+        'output_file': 'err.log', # logger out put file name. Generally for errors
+
+    },
 
     # myVNA path
     'vna_path': [
@@ -31,13 +39,6 @@ settings_init = {
     
     # time string format
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
-
-    # logger configeration
-    'logger_config':{
-        'config_file': 'logger_config.json', # logger configeration file name
-        'output_file': 'err.log', # logger out put file name. Generally for errors
-
-    },
 
     # if marked data shown when showing all data
     'show_marked_when_all': True,
@@ -701,10 +702,10 @@ settings_default = {
 #### default settings control ####
 
     # add na_path on your computer if it is not in the 
-    # default path listed in settings_init['vna_path']
+    # default path listed in config_default['vna_path']
     # add the string as 
     # 'vna_path': r'C:/...../myVNA.exe'.
-    # if this key is empty, the program will look for the file in the default list in settings_init['vna_path']
+    # if this key is empty, the program will look for the file in the default list in config_default['vna_path']
     'vna_path': r'',
     # keep key below (vna_wait_time_extra) commented.
     # it can be actived in user setting file
@@ -886,7 +887,7 @@ harm_tree = {
 }
 
 # set harmdata value
-for harm in range(1, settings_init['max_harmonic']+2, 2):
+for harm in range(1, config_default['max_harmonic']+2, 2):
     harm = str(harm)
     settings_default['harmdata']['samp'][harm] = harm_tree.copy()
     settings_default['harmdata']['ref'][harm] = harm_tree.copy()

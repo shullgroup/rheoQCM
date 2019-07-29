@@ -42,7 +42,7 @@ import pandas as pd
 import logging
 logger = logging.getLogger(__name__)
 
-from UISettings import settings_init
+from UISettings import config_default
 from modules import UIModules
 
 # color map for plot
@@ -133,7 +133,7 @@ class MatplotlibWidget(QWidget):
                 pass                    
 
         self.toolbar = NavigationToolbar(self.canvas, self)
-        self.toolbar.setMaximumHeight(settings_init['max_mpl_toolbar_height'])
+        self.toolbar.setMaximumHeight(config_default['max_mpl_toolbar_height'])
         self.toolbar.setStyleSheet("QToolBar { border: 0px;}")
         # if isinstance(showtoolbar, tuple):
         #     logger.info(self.toolbar.toolitems) 
@@ -490,11 +490,11 @@ class MatplotlibWidget(QWidget):
         new_fc = curr_fc * (1 + ratio) - sel_fc * ratio
         # center/span to f1/f2
         new_f1, new_f2 = UIModules.converter_centerspan_to_startstop(new_fc, new_fs)
-        # logger.info('curr_fs', curr_fs) 
-        # logger.info('sel_fs', sel_fs) 
-        # logger.info('new_fs', new_fs) 
-        # logger.info('curr', curr_f1, curr_f2) 
-        # logger.info('new', new_f1, new_f2) 
+        # logger.info('curr_fs %s', curr_fs) 
+        # logger.info('sel_fs %s', sel_fs) 
+        # logger.info('new_fs %s', new_fs) 
+        # logger.info('curr %s %s', curr_f1, curr_f2) 
+        # logger.info('new %s', new_f1, new_f2) 
         # set new xlim
         self.ax[0].set_xlim(new_f1, new_f2)
        
@@ -541,7 +541,7 @@ class MatplotlibWidget(QWidget):
 
         self.initax_xy()
 
-        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+        for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['l' + str(i)] = self.ax[0].plot(
                 [], [], 
                 marker='o', 
@@ -551,7 +551,7 @@ class MatplotlibWidget(QWidget):
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
             ) # l
         
-        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+        for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['lm' + str(i)] = self.ax[0].plot(
                 [], [], 
                 marker='o', 
@@ -663,7 +663,7 @@ class MatplotlibWidget(QWidget):
             # deactive rectangle selector
             self.rect_selector.set_active(False)
             # reset .l['ls<n>']
-            self.clr_lines(l_list=['ls'+ str(i) for i in range(1, int(settings_init['max_harmonic']+2), 2)])
+            self.clr_lines(l_list=['ls'+ str(i) for i in range(1, int(config_default['max_harmonic']+2), 2)])
             # deactive pick event            
             self.canvas.mpl_disconnect(self.cid)
             # clear data .l['lp']
@@ -692,7 +692,7 @@ class MatplotlibWidget(QWidget):
         sel_list = []
         # find the points in rect
         for l_str in ['l', 'lm']: # only one will be not empty
-            for harm in range(1, settings_init['max_harmonic']+2, 2):
+            for harm in range(1, config_default['max_harmonic']+2, 2):
                 harm = str(harm)
                 # logger.info(harm) 
                 # get data from current plotted lines
@@ -733,7 +733,7 @@ class MatplotlibWidget(QWidget):
         callback function of mpl_data pick_event
         '''
         # clear selector data .l['ls<n>']
-        self.clr_lines(l_list=['ls'+ str(i) for i in range(1, int(settings_init['max_harmonic']+2), 2)])
+        self.clr_lines(l_list=['ls'+ str(i) for i in range(1, int(config_default['max_harmonic']+2), 2)])
 
         # logger.info(dir(event)) 
         thisline = event.artist
@@ -746,11 +746,11 @@ class MatplotlibWidget(QWidget):
         logger.info(x_p.name) 
         logger.info(y_p.name) 
         logger.info(ind) 
-        # logger.info('onpick1 line:', zip(np.take(xdata, ind), np.take(ydata, ind))) 
+        # logger.info('onpick1 line: %s %s', zip(np.take(xdata, ind), np.take(ydata, ind))) 
 
         # plot
-        logger.info('x_p', x_p) 
-        logger.info(x_p.iloc[ind], y_p.iloc[ind]) 
+        logger.info('x_p %s', x_p) 
+        logger.info('%s %s', x_p.iloc[ind], y_p.iloc[ind]) 
         self.l['lp'][0].set_data(x_p.iloc[ind], y_p.iloc[ind])
         self.l['lp'][0].set_label(thisline.get_label() + '_' + str(ind)) # transfer the label of picked line and ind to 'lp'
         self.canvas_draw()
@@ -769,8 +769,8 @@ class MatplotlibWidget(QWidget):
             .l['lm<n>]
         NOTE: this function should be used every time contour is changed
         '''
-        logger.info("self.l.get('C')", self.l.get('C')) 
-        logger.info('kwargs', kwargs.keys()) 
+        logger.info("self.l.get('C'): %s", self.l.get('C')) 
+        logger.info('kwargs: %s', kwargs.keys()) 
 
         # if self.l.get('colorbar'):
         #     self.l['colorbar'].remove()
@@ -783,9 +783,9 @@ class MatplotlibWidget(QWidget):
             self.ax.append(make_axes_locatable(self.ax[0]).append_axes("right", size="5%", pad="2%"))
 
         if not 'X' in kwargs or not 'Y' in kwargs or not 'Z' in kwargs:
-            num = settings_init['contour_array']['num']
-            phi_lim = settings_init['contour_array']['phi_lim']
-            dlam_lim = settings_init['contour_array']['dlam_lim']
+            num = config_default['contour_array']['num']
+            phi_lim = config_default['contour_array']['phi_lim']
+            dlam_lim = config_default['contour_array']['dlam_lim']
 
             # initiate X, Y, Z data
             x = np.linspace(phi_lim[0], phi_lim[1], num=num)
@@ -800,16 +800,16 @@ class MatplotlibWidget(QWidget):
         if 'levels' in kwargs:
             levels = kwargs.get('levels')
         else:
-            levels = settings_init['contour_array']['levels']
+            levels = config_default['contour_array']['levels']
             levels = np.linspace(np.min(Z), np.max(Z), levels)
         
         if 'cmap' in kwargs:
             cmap = kwargs.get('cmap')
         else:
             logger.info('cmap not in kwargs') 
-            cmap = settings_init['contour_array']['cmap']
+            cmap = config_default['contour_array']['cmap']
         
-        logger.info('levels', type(levels), ) 
+        logger.info('levels %s', type(levels), ) 
         self.l['C'] = self.ax[0].contourf(
             X, Y, Z, # X, Y, Z
             levels=levels, 
@@ -820,7 +820,7 @@ class MatplotlibWidget(QWidget):
         self.l['colorbar'].locator = ticker.MaxNLocator(nbins=6)
         self.l['colorbar'].update_ticks()
 
-        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+        for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['l' + str(i)] = self.ax[0].plot(
                 [], [], 
                 # marker='o', 
@@ -830,7 +830,7 @@ class MatplotlibWidget(QWidget):
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
             ) # l
 
-        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+        for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['p' + str(i)] = self.ax[0].errorbar(
                 [], [], 
                 yerr=np.nan,
@@ -842,10 +842,10 @@ class MatplotlibWidget(QWidget):
                 # picker=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
-                capsize=settings_init['mpl_capsize'],
+                capsize=config_default['mpl_capsize'],
             ) # prop
 
-        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+        for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['pm' + str(i)] = self.ax[0].errorbar(
                 [], [], 
                 yerr=np.nan,
@@ -856,7 +856,7 @@ class MatplotlibWidget(QWidget):
                 # picker=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
-                capsize=settings_init['mpl_capsize'],
+                capsize=config_default['mpl_capsize'],
             ) # prop marked   
 
         # set label of ax[1]
@@ -872,16 +872,16 @@ class MatplotlibWidget(QWidget):
         '''
         self.initax_xy()
 
-        for i in range(1, settings_init['max_harmonic']+2, 2):
+        for i in range(1, config_default['max_harmonic']+2, 2):
             l = self.ax[0].plot([], [], label=i) # l[i]
         self.leg = self.fig.legend(
             # handles=l,
-            # labels=range(1, settings_init['max_harmonic']+2, 2),
+            # labels=range(1, config_default['max_harmonic']+2, 2),
             loc='upper center', 
             bbox_to_anchor=(0.5, 1),
             borderaxespad=0.,
             borderpad=0.,
-            ncol=int((settings_init['max_harmonic']+1)/2), 
+            ncol=int((config_default['max_harmonic']+1)/2), 
             frameon=False, 
             facecolor='none',
             labelspacing=0.0, 
@@ -911,7 +911,7 @@ class MatplotlibWidget(QWidget):
         '''
         self.initax_xy()
 
-        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+        for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['l' + str(i)] = self.ax[0].plot(
                 [], [], 
                 # marker='o', 
@@ -921,7 +921,7 @@ class MatplotlibWidget(QWidget):
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
             ) # l
         
-        # for i in range(1, int(settings_init['max_harmonic']+2), 2):
+        # for i in range(1, int(config_default['max_harmonic']+2), 2):
         #     self.l['lm' + str(i)] = self.ax[0].plot(
         #         [], [], 
         #         # marker='o', 
@@ -931,7 +931,7 @@ class MatplotlibWidget(QWidget):
         #         alpha=0.75,
         #     ) # maked points of line
 
-        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+        for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['p' + str(i)] = self.ax[0].errorbar(
                 [], [], 
                 yerr=np.nan,
@@ -943,10 +943,10 @@ class MatplotlibWidget(QWidget):
                 # picker=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
-                capsize=settings_init['mpl_capsize'],
+                capsize=config_default['mpl_capsize'],
             ) # prop
 
-        for i in range(1, int(settings_init['max_harmonic']+2), 2):
+        for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['pm' + str(i)] = self.ax[0].errorbar(
                 [], [], 
                 yerr=np.nan,
@@ -957,7 +957,7 @@ class MatplotlibWidget(QWidget):
                 # picker=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
-                capsize=settings_init['mpl_capsize'],
+                capsize=config_default['mpl_capsize'],
             ) # prop marked
         
         # set label of ax[1]
@@ -994,13 +994,13 @@ class MatplotlibWidget(QWidget):
 
     def set_ax_font(self, ax, *args, **kwargs):
         if self.axtype == 'sp':
-            fontsize = settings_init['mpl_sp_fontsize']
-            legfontsize = settings_init['mpl_sp_legfontsize']
-            txtfontsize = settings_init['mpl_sp_txtfontsize']
+            fontsize = config_default['mpl_sp_fontsize']
+            legfontsize = config_default['mpl_sp_legfontsize']
+            txtfontsize = config_default['mpl_sp_txtfontsize']
         else:
-            fontsize = settings_init['mpl_fontsize']
-            legfontsize = settings_init['mpl_legfontsize']
-            txtfontsize = settings_init['mpl_txtfontsize']
+            fontsize = config_default['mpl_fontsize']
+            legfontsize = config_default['mpl_legfontsize']
+            txtfontsize = config_default['mpl_txtfontsize']
 
         if self.axtype == 'contour':
             for ticklabel in self.l['colorbar'].ax.yaxis.get_ticklabels():
@@ -1023,7 +1023,7 @@ class MatplotlibWidget(QWidget):
         # set text fontsize
         for key in self.txt.keys():
             if key == 'sp_harm':
-                self.txt[key].set_fontsize(settings_init['mpl_sp_harmfontsize'])
+                self.txt[key].set_fontsize(config_default['mpl_sp_harmfontsize'])
             else: # normal text
                 self.txt[key].set_fontsize(txtfontsize)
         
@@ -1043,13 +1043,13 @@ class MatplotlibWidget(QWidget):
         #     (int(figw * dpi) - borders[2]) / int(figw * dpi), # right
         #     (int(figh * dpi) - borders[3]) / int(figh * dpi), # top
         # ]
-        # logger.info(figw, figh) 
+        # logger.info('%s %s', figw, figh) 
         # logger.info(borders) 
         # self.fig.subplots_adjust(left=borders[0], bottom=borders[1], right=borders[2], top=borders[3], wspace=0, hspace=0)
         
         self.fig.tight_layout(pad=1.08)
         # x,y = self.ax[0].transAxes.transform((0,0))
-        # logger.info(x, y) 
+        # logger.info('%s %s', x, y) 
         # figw, figh = self.fig.get_size_inches()
         # ynew = figh*self.fig.dpi-y - self.toolbar.frameGeometry().height()
         # self.toolbar.move(x,ynew)        
@@ -1111,9 +1111,9 @@ class MatplotlibWidget(QWidget):
                     error_positions = (x-xerr,y), (x+xerr,y), (x,y-yerr), (x,y+yerr) 
                     # Update the caplines 
                     for i, pos in enumerate(error_positions): 
-                        # logger.info('i', i) 
+                        # logger.info('i %s', i) 
                         # logger.info(caplines) 
-                        # logger.info('caplines_len', len(caplines)) 
+                        # logger.info('caplines_len %s', len(caplines)) 
                         caplines[i].set_data(pos) 
                     # Update the error bars 
                     barlinecols[0].set_segments(zip(zip(x-xerr,y), zip(x+xerr,y))) 
@@ -1128,7 +1128,7 @@ class MatplotlibWidget(QWidget):
                 ln = arg['ln'] 
                 x = arg['x'] 
                 y = arg['y']
-                # logger.info(len(x), len(y)) 
+                # logger.info(len(x: %s), len(y)) 
                 # self.l[ln][0].set_xdata(x)
                 # self.l[ln][0].set_ydata(y)
                 self.l[ln][0].set_data(x, y)
@@ -1172,11 +1172,11 @@ class MatplotlibWidget(QWidget):
             ax = self.ax[0]
 
         # logger.info(ax.lines) 
-        # logger.info('len temp', len(self.l['temp'])) 
-        # logger.info('temp', self.l['temp']) 
+        # logger.info('len temp %s', len(self.l['temp'])) 
+        # logger.info('temp %s', self.l['temp']) 
 
         for l_temp in self.l['temp']:
-            # logger.info('l_temp', l_temp) 
+            # logger.info('l_temp %s', l_temp) 
             ax.lines.remove(l_temp[0]) # remove from ax
         self.l['temp'] = [] # inintiate
 
@@ -1209,9 +1209,9 @@ class MatplotlibWidget(QWidget):
                         error_positions = ([],[]), ([],[]), ([],[]), ([],[]) 
                         # Update the caplines 
                         for i, pos in enumerate(error_positions): 
-                            # logger.info('i', i) 
+                            # logger.info('i %s', i) 
                             # logger.info(caplines) 
-                            # logger.info('caplines_len', len(caplines)) 
+                            # logger.info('caplines_len %s', len(caplines)) 
                             caplines[i].set_data(pos) 
                         # Update the error bars 
                         barlinecols[0].set_segments(zip(zip([],[]), zip([],[]))) 
@@ -1228,7 +1228,7 @@ class MatplotlibWidget(QWidget):
                 for ax in self.ax:
                     self.del_templines(ax=ax)
 
-        logger.info('it is a contour', 'C' in self.l) 
+        logger.info('it is a contour: %s', 'C' in self.l) 
         if 'C' not in self.l: # not contour
             # we don't reset contour limit
             self.reset_ax_lim(ax)
@@ -1278,8 +1278,8 @@ class MatplotlibWidget(QWidget):
         if len(label_list) == 0:
             label_list = [''] * len(xlist) # make up a label_list with all ''
         for (x, y, label) in zip(xlist, ylist, label_list):
-            # logger.info('len x: ', len(x)) 
-            # logger.info('len y: ', len(y)) 
+            # logger.info('len x: %s', len(x)) 
+            # logger.info('len y: %s', len(y)) 
             # logger.info(x) 
             # logger.info(y) 
             
@@ -1342,6 +1342,6 @@ class MatplotlibWidget(QWidget):
 
 def press_zoomX(obj, event):
     event.key = 'x'
-    logger.info('event',event) 
+    logger.info('event %s',event) 
     NavigationToolbar2QT.press_zoom(obj, event)
     logger.info('zoomed on x') 

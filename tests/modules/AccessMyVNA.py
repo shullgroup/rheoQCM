@@ -20,13 +20,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 try:
-    from UISettings import settings_init
+    from UISettings import config_default
 except:
-    settings_init = {}
+    config_default = {}
 
 extra_time = None # initialize 
-if settings_init:
-    usersettings_file = os.path.join(os.getcwd(), settings_init['default_settings_file_name'])
+if config_default:
+    usersettings_file = os.path.join(os.getcwd(), config_default['default_settings_file_name'])
     if os.path.exists(usersettings_file):
         try:
             with open(usersettings_file, 'r') as f:
@@ -35,7 +35,7 @@ if settings_init:
                     extra_time = settings_user['vna_wait_time_extra']
             print('use user settings')
         except:
-            print('Error occured while loading {}\nuse default settings'.format(settings_init['default_settings_file_name']))
+            print('Error occured while loading {}\nuse default settings'.format(config_default['default_settings_file_name']))
     else:
         pass
     del usersettings_file
@@ -43,7 +43,7 @@ if settings_init:
         del f
 
 if extra_time is None:
-    extra_time = settings_init.get('vna_wait_time_extra', 0.05) # in s. This extra time will be added to the calculated value
+    extra_time = config_default.get('vna_wait_time_extra', 0.05) # in s. This extra time will be added to the calculated value
 
 # try: # run from main
 #     from modules.retrying import retry

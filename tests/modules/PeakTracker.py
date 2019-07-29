@@ -7,7 +7,7 @@ from lmfit.models import ConstantModel
 from scipy.signal import find_peaks, find_peaks_cwt, peak_widths, peak_prominences
 from random import randrange
 
-from UISettings import settings_init
+from UISettings import config_default
 from modules import UIModules
 
 # for debugging
@@ -533,7 +533,7 @@ class PeakTracker:
         '''
         def set_new_cen(freq, cen, current_span, current_xlim):
             ''' set new center '''
-            cen_range = settings_init['cen_range'] # cen of span +/- cen_range*span as the accessible range
+            cen_range = config_default['cen_range'] # cen of span +/- cen_range*span as the accessible range
             cen_diff = cen - np.mean(np.array([freq[0],freq[-1]]))
             logger.info('cen_diff %s', cen_diff) 
             half_cen_span = cen_range * current_span
@@ -542,9 +542,9 @@ class PeakTracker:
                 # new start and end frequencies in Hz
                 # return cen # return current peak center as new center
                 # OR move the center to the oppsite direction a little incase of a big move of the peak center
-                if cen_diff / half_cen_span < -settings_init['big_move_thresh']: # peak on the left side of center range
+                if cen_diff / half_cen_span < -config_default['big_move_thresh']: # peak on the left side of center range
                     return cen - half_cen_span
-                elif cen_diff / half_cen_span > settings_init['big_move_thresh']: # peak on the right side of center range
+                elif cen_diff / half_cen_span > config_default['big_move_thresh']: # peak on the right side of center range
                     return cen + half_cen_span
                 else: # small move use center
                     return cen
@@ -555,8 +555,8 @@ class PeakTracker:
                 return np.mean(np.array(current_xlim))
 
         def set_new_span(current_span, half_wid):
-            wid_ratio_range = settings_init['wid_ratio_range'] # width_ratio[0] <= span <= width_ratio[1]
-            change_thresh = settings_init['change_thresh'] # span change threshold current_span * change_thresh[0/1]
+            wid_ratio_range = config_default['wid_ratio_range'] # width_ratio[0] <= span <= width_ratio[1]
+            change_thresh = config_default['change_thresh'] # span change threshold current_span * change_thresh[0/1]
             ''' set new span '''
             wid_ratio = 0.5 * current_span / half_wid
             logger.info('wid_ratio %s', wid_ratio) 
@@ -721,8 +721,8 @@ class PeakTracker:
             sortstr=sortstr, 
             threshold=self.harminput[chn_name][harm]['threshold'], 
             prominence=self.harminput[chn_name][harm]['prominence'],
-            distance=settings_init['peak_min_distance_Hz'], 
-            width=settings_init['peak_min_width_Hz']
+            distance=config_default['peak_min_distance_Hz'], 
+            width=config_default['peak_min_width_Hz']
         )
         
         logger.info('indices %s', indices) 
@@ -908,7 +908,7 @@ class PeakTracker:
             params.add(
                 'p'+str(i)+'_wid',                 # width (hwhm)
                 value=wid,                         # init: half range
-                # min= settings_init['peak_min_width_Hz'] / 2,         # lb in Hz (this limit sometime makes the peaks to thin)
+                # min= config_default['peak_min_width_Hz'] / 2,         # lb in Hz (this limit sometime makes the peaks to thin)
                 min= wid / 10,         # lb in Hz (limit the width >= 1/10 of the guess value!!)
                 max=(np.amax(f) - np.amin(f)) * 2, # ub in Hz: assume peak is in the range of f
             )
@@ -1026,7 +1026,7 @@ class PeakTracker:
                 method='leastsq', 
                 args=(f, G, B), 
                 kws={'gmod': gmod, 'bmod': bmod, 'eps': eps}, 
-                xtol=settings_init['xtol'], ftol=settings_init['ftol'],
+                xtol=config_default['xtol'], ftol=config_default['ftol'],
                 nan_policy='omit', # ('raise' default, 'propagate', 'omit')
                 )
             print(fit_report(result)) 

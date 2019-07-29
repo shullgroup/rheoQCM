@@ -41,7 +41,7 @@ dictionaries and dataframes are converted to json and are saved as text in the f
      |
      |-settings      (json) # UI settings (it can be loaded to set the UI)
      |
-     --settings_init (json) # maximum harmonic and time string format for the collected data
+     --config_default (json) # maximum harmonic and time string format for the collected data
 '''
 
 import os
@@ -253,7 +253,7 @@ class DataSaver:
 
         self.mode = 'init'
         self.path = path
-        # save some keys from settings_init for future data manipulation
+        # save some keys from config_default for future data manipulation
         self.settings = settings
 
         # self.exp_ref = self._make_exp_ref() # use the settings_int values to format referene dict
@@ -380,9 +380,9 @@ class DataSaver:
         try: # try to load settings from file
             with h5py.File(path, 'r') as fh:
                 settings = json.loads(fh['settings'][()])
-                if 'settings_init' in fh.keys(): # saved by version < 0.17.0
-                    settings_init = json.loads(fh['settings_init'][()])
-                    for key, val in settings_init.items():
+                if 'config_default' in fh.keys(): # saved by version < 0.17.0
+                    config_default = json.loads(fh['config_default'][()])
+                    for key, val in config_default.items():
                         settings[key] = val
                 
                 settings['max_harmonic'] = 9
@@ -540,10 +540,10 @@ class DataSaver:
             if 'settings' in fh:
                 del fh['settings']
             fh.create_dataset('settings', data=json.dumps(settings))
-            if 'settings_init' in fh: # saved by version < 0.17.0
+            if 'config_default' in fh: # saved by version < 0.17.0
                 # it is not necessary, since version >= 0.17.0 saves a copy of information in settings.
-                del fh['settings_init']
-            # fh.create_dataset('settings_init', data=json.dumps(settings_init))
+                del fh['config_default']
+            # fh.create_dataset('config_default', data=json.dumps(config_default))
 
 
     def save_data_settings(self, settings={}):
@@ -2089,13 +2089,13 @@ class DataSaver:
         return 0.5 * int(harm) * f1 * D
 
 
-    def import_qcm_with_other_format(self, format, path, settings_init, settings=None, f1=None, t0=None, init_file=True):
+    def import_qcm_with_other_format(self, format, path, config_default, settings=None, f1=None, t0=None, init_file=True):
         '''
         import QCM data to data_saver from other software
         format: 'qcmd', QCM-D data with dissipation data "D"
                 'qcmz', QCM data from impedance measurement
         path: excel file path
-        settings_init: basic UI settings (a full copy of settings_init for format ditecting)
+        config_default: basic UI settings (a full copy of config_default for format ditecting)
         settings: UI settings (dict)
         f1: base frequency in MHz
         init_file: True, intialize h5 file for storing the data. By default the UI will save the h5 file with the same name as excel file.
@@ -2136,28 +2136,28 @@ class DataSaver:
         logger.info(df.head()) 
 
         # import data to class
-        self.import_data_from_df(df, t0, t0_str, f1, g1, settings_init)
+        self.import_data_from_df(df, t0, t0_str, f1, g1, config_default)
 
 
-    def import_data_from_df(self, df, t0, t0_str, f1, g1, settings_init):
+    def import_data_from_df(self, df, t0, t0_str, f1, g1, config_default):
         '''
         import data (already read as df) to class.
-        The format is defined by self.settings_init.data_saver_import_data
+        The format is defined by self.config_default.data_saver_import_data
         df: dataframe
         t0: starting time
         f1: base frequency in Hz
         g1: base dissipation in Hz
-        settings_init: basic UI settings (a full copy of settings_init for format ditecting)
+        config_default: basic UI settings (a full copy of config_default for format ditecting)
         '''
         # get column names 
         columns = df.columns
         logger.info(columns) 
 
         # the way to determine the corresponding column is:
-        # check the same key in settings_init.data_saver_import_data and find if any name string is in columns and use the name string to import data
+        # check the same key in config_default.data_saver_import_data and find if any name string is in columns and use the name string to import data
 
         # time: t
-        t_str = list(set(settings_init['data_saver_import_data']['t']) & set(columns))
+        t_str = list(set(config_default['data_saver_import_data']['t']) & set(columns))
 
         if not t_str: # no time column is found
             print('No column for time is found!\nPlease check the format of your data file of change the setup of program!')
@@ -2168,11 +2168,11 @@ class DataSaver:
         else: # time column is found
             df.rename(columns={t_str[0]: 't'}, inplace=True) # rename time column
         # save t as (delt + t0) 
-        # df['t'] = (df['t'] + t0).strftime(settings_init['time_str_format'])
-        df['t'] = df['t'].apply(lambda x: (t0 + datetime.timedelta(seconds=x)).strftime(settings_init['time_str_format']))
+        # df['t'] = (df['t'] + t0).strftime(config_default['time_str_format'])
+        df['t'] = df['t'].apply(lambda x: (t0 + datetime.timedelta(seconds=x)).strftime(config_default['time_str_format']))
         
         # temperature: temp
-        temp_str = list(set(settings_init['data_saver_import_data']['temp']) & set(columns))
+        temp_str = list(set(config_default['data_saver_import_data']['temp']) & set(columns))
 
         if not temp_str: # no temperature column is found
             print('No column for temperature is found!')
@@ -2224,13 +2224,13 @@ class DataSaver:
             fGB['ref'][str(harm)] = np.nan
 
 
-        for fs_str in settings_init['data_saver_import_data']['fs']:
+        for fs_str in config_default['data_saver_import_data']['fs']:
             if fs_str.format(base_num) in col_with_num:
                 break
             else:
                 fs_str = ''
 
-        for gs_str in settings_init['data_saver_import_data']['gs']:
+        for gs_str in config_default['data_saver_import_data']['gs']:
             if gs_str.format(base_num) in col_with_num:
                 break
             else:
@@ -2239,12 +2239,12 @@ class DataSaver:
         if fs_str and gs_str: # absolute values found
             pass
         else: # no absolute values         
-            for delfs_str in settings_init['data_saver_import_data']['delfs']:
+            for delfs_str in config_default['data_saver_import_data']['delfs']:
                 if delfs_str.format(base_num) in col_with_num:
                     break
                 else:
                     delfs_str = ''
-            for delgs_str in settings_init['data_saver_import_data']['delgs']:
+            for delgs_str in config_default['data_saver_import_data']['delgs']:
                 if delgs_str.format(base_num) in col_with_num:
                     break
                 else:

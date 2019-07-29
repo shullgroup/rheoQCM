@@ -14,6 +14,8 @@
 - Change exported Excel file format. The columns with repeated data are combined.
 - Change HOME button of data plots to show all & auto scale.  
 - Change debuging to logger. 
+- Change the name `settings_ini` to `config_default` for the basic settings.
+
 
 ### Fixed
 

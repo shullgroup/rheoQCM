@@ -28,31 +28,31 @@ from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, 
 
 # packages
 from MainWindow import Ui_MainWindow # UI from QT5
-from UISettings import settings_init # UI basic settings
+from UISettings import config_default # UI basic settings
 from UISettings import settings_default
 from UISettings import harm_tree as harm_tree_default
 
 
-settings_init_json = os.path.join(os.getcwd(), 'settings_init.json')
-if os.path.exists(settings_init_json):
+config_default_json = os.path.join(os.getcwd(), config_default['default_config_file_name'])
+if os.path.exists(config_default_json):
     try:
-        with open(settings_init_json, 'r') as f:
+        with open(config_default_json, 'r') as f:
             settings_msater = json.load(f) # read user default settings
             for key, val in settings_msater.items():
-                # overwrite keys to settings_init
-                if key in settings_init:
-                    settings_init[key] = val
+                # overwrite keys to config_default
+                if key in config_default:
+                    config_default[key] = val
     except:
         pass
 else:
-    print('use default settings_init')
-del settings_init_json
+    print('use default config_default')
+del config_default_json
 if 'f' in locals():
     del f
 
 # check default settings file
 print(os.getcwd())
-usersettings_file = os.path.join(os.getcwd(), settings_init['default_settings_file_name'])
+usersettings_file = os.path.join(os.getcwd(), config_default['default_settings_file_name'])
 if os.path.exists(usersettings_file):
     try:
         with open(usersettings_file, 'r') as f:
@@ -65,7 +65,7 @@ if os.path.exists(usersettings_file):
             settings_default = settings_user
         print('use user settings')
     except:
-        print('Error occured while loading {}\nuse default settings'.format(settings_init['default_settings_file_name']))
+        print('Error occured while loading {}\nuse default settings'.format(config_default['default_settings_file_name']))
 else:
     print('use default settings')
 del usersettings_file
@@ -74,11 +74,35 @@ if 'f' in locals():
 
 # copy some data related sets from settigs_init to settings_default if not exist
 if 'max_harmonic' not in settings_default:
-    settings_default['max_harmonic'] = settings_init['max_harmonic']
+    settings_default['max_harmonic'] = config_default['max_harmonic']
 if 'time_str_format' not in settings_default:
-    settings_default['time_str_format'] = settings_init['time_str_format']
+    settings_default['time_str_format'] = config_default['time_str_format']
 if 'vna_path' not in settings_default:
-    settings_default['vna_path'] = settings_init['vna_path']
+    settings_default['vna_path'] = config_default['vna_path']
+
+
+# # packages from program itself
+# from modules import UIModules, PeakTracker, DataSaver
+# from modules import QCM as QCM #test
+# from modules.MatplotlibWidget import MatplotlibWidget
+
+# import _version
+
+
+# set logger
+# this should be before loading all modules to overwrite the loggers in them
+with open(config_default['logger_config']['config_file'], 'r') as f:
+    logger_config = json.load(f)
+    logger_config['handlers']['file_handler']['filename'] = config_default['logger_config']['output_file']
+logging.config.dictConfig(logger_config)
+del logger_config
+
+# Get the logger specified in the file
+# logger = logging.getLogger(__name__)
+# logger = logging.getLogger('infoLogger')
+logger = logging.getLogger('fileLogger')
+# logger.setLevel(logging.ERROR)
+
 
 # packages from program itself
 from modules import UIModules, PeakTracker, DataSaver
@@ -86,20 +110,6 @@ from modules import QCM as QCM #test
 from modules.MatplotlibWidget import MatplotlibWidget
 
 import _version
-
-# set logger
-# this should be after loading all modules to overwrite the loggers in them
-with open(settings_init['logger_config']['config_file'], 'r') as f:
-    logger_config = json.load(f)
-    logger_config['handlers']['file_handler']['filename'] = settings_init['logger_config']['output_file']
-logging.config.dictConfig(logger_config)
-del logger_config
-
-# Get the logger specified in the file
-logger = logging.getLogger(__name__)
-# logger = logging.getLogger('infoLogger')
-logger = logging.getLogger('fileLogger')
-# logger.setLevel(logging.ERROR)
 
 
 if UIModules.system_check() == 'win32': # windows
@@ -149,11 +159,11 @@ class VNATracker:
     def get_cal_filenames(self):
         '''
         find calc file for ADC1 and ADC2 separately
-        The fill should be stored in settings_init['vna_cal_file_path'] for each channel
+        The fill should be stored in config_default['vna_cal_file_path'] for each channel
         '''
         cal = {'ADC1': '', 'ADC2': ''}
         if (UIModules.system_check() == 'win32') and (struct.calcsize('P') * 8 == 32): # windows (if is win32, struct will already be imported above)
-            vna_cal_path = os.path.abspath(settings_init['vna_cal_file_path'])
+            vna_cal_path = os.path.abspath(config_default['vna_cal_file_path'])
             if not os.path.isdir(vna_cal_path): # directory doesn't exist
                 os.makedirs(vna_cal_path) # create directory
             else:
@@ -609,12 +619,12 @@ class QCMApp(QMainWindow):
         )
 
         # set max value availabe
-        self.ui.spinBox_harmfitfactor.setMaximum(settings_init['fitfactor_max'])
+        self.ui.spinBox_harmfitfactor.setMaximum(config_default['fitfactor_max'])
 
         # comboBox_tracking_method
         self.create_combobox(
             'comboBox_tracking_method',
-            settings_init['span_mehtod_opts'],
+            config_default['span_mehtod_opts'],
             100,
             'Method',
             self.ui.treeWidget_settings_settings_harmtree
@@ -623,7 +633,7 @@ class QCMApp(QMainWindow):
         # add span track_method
         self.create_combobox(
             'comboBox_tracking_condition',
-            settings_init['span_track_opts'],
+            config_default['span_track_opts'],
             100,
             'Condition',
             self.ui.treeWidget_settings_settings_harmtree
@@ -632,7 +642,7 @@ class QCMApp(QMainWindow):
         # insert samp_channel
         self.create_combobox(
             'comboBox_samp_channel',
-            settings_init['vna_channel_opts'],
+            config_default['vna_channel_opts'],
             100,
             'S Channel',
             self.ui.treeWidget_settings_settings_hardware
@@ -641,7 +651,7 @@ class QCMApp(QMainWindow):
         # inser ref_channel
         self.create_combobox(
             'comboBox_ref_channel',
-            settings_init['vna_channel_opts'],
+            config_default['vna_channel_opts'],
             100,
             'R Channel',
             self.ui.treeWidget_settings_settings_hardware
@@ -672,7 +682,7 @@ class QCMApp(QMainWindow):
         # insert base_frequency
         self.create_combobox(
             'comboBox_base_frequency',
-            settings_init['base_frequency_opts'],
+            config_default['base_frequency_opts'],
             100,
             'Base Frequency',
             self.ui.treeWidget_settings_settings_hardware
@@ -681,7 +691,7 @@ class QCMApp(QMainWindow):
         # insert bandwidth
         self.create_combobox(
             'comboBox_bandwidth',
-            settings_init['bandwidth_opts'],
+            config_default['bandwidth_opts'],
             100,
             'Bandwidth',
             self.ui.treeWidget_settings_settings_hardware
@@ -690,7 +700,7 @@ class QCMApp(QMainWindow):
         # insert crystal cut
         self.create_combobox(
             'comboBox_crystalcut',
-            settings_init['crystal_cut_opts'],
+            config_default['crystal_cut_opts'],
             100,
             'Cut',
             self.ui.treeWidget_settings_settings_hardware
@@ -698,13 +708,13 @@ class QCMApp(QMainWindow):
 
         # add comBox_tempmodule to treeWidget_settings_settings_hardware
         try:
-            settings_init['temp_class_opts_list'] = TempModules.class_list # when TempModules is loaded
+            config_default['temp_class_opts_list'] = TempModules.class_list # when TempModules is loaded
         except:
-            settings_init['temp_class_opts_list'] = None # no temp module is loaded
+            config_default['temp_class_opts_list'] = None # no temp module is loaded
         self.create_combobox(
             'comboBox_tempmodule',
             # UIModules.list_modules(TempModules),
-            settings_init['temp_class_opts_list'],
+            config_default['temp_class_opts_list'],
             100,
             'Module',
             self.ui.treeWidget_settings_settings_hardware,
@@ -714,10 +724,10 @@ class QCMApp(QMainWindow):
 
         # add comboBox_tempdevice to treeWidget_settings_settings_hardware
         if self.vna and self.system == 'win32':
-            settings_init['tempdevs_opts'] = TempDevices.dict_available_devs(settings_init['tempdevices_dict'])
+            config_default['tempdevs_opts'] = TempDevices.dict_available_devs(config_default['tempdevices_dict'])
             self.create_combobox(
                 'comboBox_tempdevice',
-                settings_init['tempdevs_opts'],
+                config_default['tempdevs_opts'],
                 100,
                 'Device',
                 self.ui.treeWidget_settings_settings_hardware,
@@ -737,7 +747,7 @@ class QCMApp(QMainWindow):
         # insert thrmcpl type
         self.create_combobox(
             'comboBox_thrmcpltype',
-            settings_init['thrmcpl_opts'],
+            config_default['thrmcpl_opts'],
             100,
             'Thrmcpl Type',
             self.ui.treeWidget_settings_settings_hardware
@@ -754,7 +764,7 @@ class QCMApp(QMainWindow):
         # insert time_unit
         self.create_combobox(
             'comboBox_timeunit',
-            settings_init['time_unit_opts'],
+            config_default['time_unit_opts'],
             100,
             'Time Unit',
             self.ui.treeWidget_settings_settings_plots
@@ -763,7 +773,7 @@ class QCMApp(QMainWindow):
         # insert temp_unit
         self.create_combobox(
             'comboBox_tempunit',
-            settings_init['temp_unit_opts'],
+            config_default['temp_unit_opts'],
             100,
             'Temp. Unit',
             self.ui.treeWidget_settings_settings_plots
@@ -772,7 +782,7 @@ class QCMApp(QMainWindow):
         # insert X Scale
         self.create_combobox(
             'comboBox_xscale',
-            settings_init['scale_opts'],
+            config_default['scale_opts'],
             100,
             'X Scale',
             self.ui.treeWidget_settings_settings_plots
@@ -781,7 +791,7 @@ class QCMApp(QMainWindow):
         # insert gamma scale
         self.create_combobox(
             'comboBox_yscale',
-            settings_init['scale_opts'],
+            config_default['scale_opts'],
             100,
             'Y Scale',
             self.ui.treeWidget_settings_settings_plots
@@ -1083,8 +1093,8 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_settings_mechanics_witherror.toggled.connect(self.update_widget)
 
         # spinBox_mech_expertmode_layernum
-        self.ui.spinBox_mech_expertmode_layernum.setMinimum(settings_init['min_mech_layers'])
-        self.ui.spinBox_mech_expertmode_layernum.setMaximum(settings_init['max_mech_layers'])
+        self.ui.spinBox_mech_expertmode_layernum.setMinimum(config_default['min_mech_layers'])
+        self.ui.spinBox_mech_expertmode_layernum.setMaximum(config_default['max_mech_layers'])
         self.ui.spinBox_mech_expertmode_layernum.valueChanged.connect(self.update_mechchnwidget)
         self.ui.spinBox_mech_expertmode_layernum.valueChanged.connect(self.build_mech_layers)
 
@@ -1095,8 +1105,8 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_mechanics_calctype.currentIndexChanged.connect(self.update_widget)
 
         # doubleSpinBox_settings_mechanics_bulklimit
-        self.ui.doubleSpinBox_settings_mechanics_bulklimit.setMinimum(settings_init['mech_bulklimit']['min'])
-        self.ui.doubleSpinBox_settings_mechanics_bulklimit.setSingleStep(settings_init['mech_bulklimit']['step'])
+        self.ui.doubleSpinBox_settings_mechanics_bulklimit.setMinimum(config_default['mech_bulklimit']['min'])
+        self.ui.doubleSpinBox_settings_mechanics_bulklimit.setSingleStep(config_default['mech_bulklimit']['step'])
         self.ui.doubleSpinBox_settings_mechanics_bulklimit.valueChanged.connect(self.update_widget)
                 
         # hide tableWidget_settings_mechanics_errortab
@@ -1138,8 +1148,8 @@ class QCMApp(QMainWindow):
         # tableWidget_settings_mechanics_contoursettings
         self.add_table_headers(
             'tableWidget_settings_mechanics_contoursettings',
-            settings_init['mech_contour_lim_tab_vheaders'],
-            settings_init['mech_contour_lim_tab_hheaders'],
+            config_default['mech_contour_lim_tab_vheaders'],
+            config_default['mech_contour_lim_tab_hheaders'],
         )
         self.ui.tableWidget_settings_mechanics_contoursettings.itemChanged.connect(self.on_changed_mech_contour_lim_tab)
 
@@ -1232,7 +1242,7 @@ class QCMApp(QMainWindow):
 
         self.add_table_headers(
             'tableWidget_spectra_mechanics_table',
-            settings_init['mech_table_rowheaders'],
+            config_default['mech_table_rowheaders'],
             mech_table_hnames,
         )
 
@@ -1524,7 +1534,7 @@ class QCMApp(QMainWindow):
                 if self.tempPath: # new file name is set
                     path = self.tempPath
                 else: # no file name is set. save data to a temp file
-                    path = os.path.abspath(os.path.join(settings_init['unsaved_path'], datetime.datetime.now().strftime(settings_init['unsaved_filename']) + '.h5'))
+                    path = os.path.abspath(os.path.join(config_default['unsaved_path'], datetime.datetime.now().strftime(config_default['unsaved_filename']) + '.h5'))
                     # display path in lineEdit_datafilestr
                     self.set_filename(fileName=path)
                 self.data_saver.init_file(
@@ -1616,7 +1626,7 @@ class QCMApp(QMainWindow):
         '''
         get time in dateTimeEdit_reftime and save it to self.settings
         '''
-        self.settings['dateTimeEdit_reftime'] = self.ui.dateTimeEdit_reftime.dateTime().toPyDateTime().strftime(settings_init['time_str_format'])
+        self.settings['dateTimeEdit_reftime'] = self.ui.dateTimeEdit_reftime.dateTime().toPyDateTime().strftime(config_default['time_str_format'])
         logger.info(self.settings['dateTimeEdit_reftime']) 
         self.ui.label_settings_data_t0.setText(self.settings['dateTimeEdit_reftime'][:-3]) # [:-3] remove the extra 000 at the end
         self.data_saver.set_t0(t0=self.settings['dateTimeEdit_reftime'])
@@ -1627,7 +1637,7 @@ class QCMApp(QMainWindow):
         get time in dateTimeEdit_settings_data_t0shifted
         and save it to self.settings and data_saver
         '''
-        self.settings['dateTimeEdit_settings_data_t0shifted'] = self.ui.dateTimeEdit_settings_data_t0shifted.dateTime().toPyDateTime().strftime(settings_init['time_str_format'])
+        self.settings['dateTimeEdit_settings_data_t0shifted'] = self.ui.dateTimeEdit_settings_data_t0shifted.dateTime().toPyDateTime().strftime(config_default['time_str_format'])
         logger.info(self.settings['dateTimeEdit_settings_data_t0shifted']) 
 
         self.data_saver.set_t0(t0_shifted=self.settings['dateTimeEdit_settings_data_t0shifted'])
@@ -1637,7 +1647,7 @@ class QCMApp(QMainWindow):
         '''
         reset shiftedt0 to t0
         '''
-        self.ui.dateTimeEdit_settings_data_t0shifted.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], settings_init['time_str_format']))
+        self.ui.dateTimeEdit_settings_data_t0shifted.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], config_default['time_str_format']))
 
 
     def save_data_saver_sampidx(self):
@@ -1736,10 +1746,10 @@ class QCMApp(QMainWindow):
             logger.info('vna_path in self.settings') 
             pass
         else: # use default path list
-            logger.info('vna_path try settings_init') 
-            for myvna_path in settings_init['vna_path']:
+            logger.info('vna_path try config_default') 
+            for myvna_path in config_default['vna_path']:
                 if os.path.exists(myvna_path):
-                    logger.info('vna_path in settings_init') 
+                    logger.info('vna_path in config_default') 
                     break
                 else:
                     logger.info('vna_path not found') 
@@ -1753,7 +1763,7 @@ class QCMApp(QMainWindow):
             logger.info('vna_path msg box') 
             process = self.process_messagebox(
                 text='Failed to open myVNA.exe',
-                message=['Cannot find myVNA.exe in: \n{}\nPlease add the path for "vna_path" in "settings_default.json"!'.format('\n'.join(settings_init['vna_path'])),
+                message=['Cannot find myVNA.exe in: \n{}\nPlease add the path for "vna_path" in "settings_default.json"!'.format('\n'.join(config_default['vna_path'])),
                 'The format of the path should like this:',
                 r'"C:\\Program Files (x86)\\G8KBB\\myVNA\\myVNA.exe"'
                 ],
@@ -1771,10 +1781,10 @@ class QCMApp(QMainWindow):
         if not process:
             return
 
-        fileName = self.openFileNameDialog(title='Choose an existing file to append', filetype=settings_init['external_qcm_datafiletype']) # !! add path of last opened folder
+        fileName = self.openFileNameDialog(title='Choose an existing file to append', filetype=config_default['external_qcm_datafiletype']) # !! add path of last opened folder
 
         if fileName:
-            self.data_saver.import_qcm_with_other_format('qcmd', fileName, settings_init, settings=self.settings)
+            self.data_saver.import_qcm_with_other_format('qcmd', fileName, config_default, settings=self.settings)
 
 
     def on_triggered_actionImport_QCM_Z(self):
@@ -1786,10 +1796,10 @@ class QCMApp(QMainWindow):
         if not process:
             return
 
-        fileName = self.openFileNameDialog(title='Choose an existing file to append', filetype=settings_init['external_qcm_datafiletype']) # !! add path of last opened folder
+        fileName = self.openFileNameDialog(title='Choose an existing file to append', filetype=config_default['external_qcm_datafiletype']) # !! add path of last opened folder
 
         if fileName:
-            self.data_saver.import_qcm_with_other_format('qcmz', fileName, settings_init, settings=self.settings)
+            self.data_saver.import_qcm_with_other_format('qcmz', fileName, config_default, settings=self.settings)
 
 
     def msg_about(self):
@@ -1844,7 +1854,7 @@ class QCMApp(QMainWindow):
 
 
     ## functions for open and save file
-    def openFileNameDialog(self, title, path='', filetype=settings_init['default_datafiletype']):
+    def openFileNameDialog(self, title, path='', filetype=config_default['default_datafiletype']):
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self, title, path, filetype, options=options)
@@ -1861,7 +1871,7 @@ class QCMApp(QMainWindow):
     #     if files:
     #         logger.info(files) 
 
-    def saveFileDialog(self, title, path='', filetype=settings_init['default_datafiletype']):
+    def saveFileDialog(self, title, path='', filetype=config_default['default_datafiletype']):
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(self,title, os.path.splitext(path)[0], filetype, options=options)
@@ -1935,7 +1945,7 @@ class QCMApp(QMainWindow):
         if not process:
             return
 
-        fileName = self.openFileNameDialog('Choose a file to load its settings', path=self.data_saver.path, filetype=settings_init['default_settings_load_filetype']) # TODO add path of last opened folder
+        fileName = self.openFileNameDialog('Choose a file to load its settings', path=self.data_saver.path, filetype=config_default['default_settings_load_filetype']) # TODO add path of last opened folder
 
         if fileName:
 
@@ -1972,7 +1982,7 @@ class QCMApp(QMainWindow):
         if not process:
             return
 
-        fileName = self.saveFileDialog('Choose a file to save settings', path=self.data_saver.path, filetype=settings_init['default_settings_export_filetype']) # TODO add path of last opened folder
+        fileName = self.saveFileDialog('Choose a file to save settings', path=self.data_saver.path, filetype=config_default['default_settings_export_filetype']) # TODO add path of last opened folder
 
         if fileName:
             # load settings from file
@@ -2014,7 +2024,7 @@ class QCMApp(QMainWindow):
         self.set_manual_refit_mode(val=False)
 
         # export data to a selected form
-        fileName = self.saveFileDialog(title='Choose a new file', filetype=settings_init['default_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
+        fileName = self.saveFileDialog(title='Choose a new file', filetype=config_default['default_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
         # codes for data exporting
         if fileName:
             if self.data_saver.path: # there is file
@@ -2038,7 +2048,7 @@ class QCMApp(QMainWindow):
         if not process:
             return
 
-        fileName = self.saveFileDialog(title='Choose a file and data type', filetype=settings_init['export_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
+        fileName = self.saveFileDialog(title='Choose a file and data type', filetype=config_default['export_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
         # codes for data exporting
         if fileName:
             self.data_saver.data_exporter(fileName) # do the export
@@ -2217,9 +2227,9 @@ class QCMApp(QMainWindow):
         logger.info('show') 
         logger.info(args) 
         for name_list in args:
-            for name in settings_init[name_list]:
+            for name in config_default[name_list]:
                 logger.info(name) 
-                if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list':
+                if name not in config_default['version_hide_list'] or name_list == 'version_hide_list':
                     # getattr(self.ui, name).show()
                     getattr(self.ui, name).setVisible(True)
 
@@ -2232,9 +2242,9 @@ class QCMApp(QMainWindow):
         logger.info('hide') 
         logger.info(args) 
         for name_list in args:
-            for name in settings_init[name_list]:
+            for name in config_default[name_list]:
                 logger.info(name) 
-                if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list':
+                if name not in config_default['version_hide_list'] or name_list == 'version_hide_list':
                     # getattr(self.ui, name).hide()
                     getattr(self.ui, name).setVisible(False)
 
@@ -2246,10 +2256,10 @@ class QCMApp(QMainWindow):
         '''
         logger.info(args) 
         for name_list in args:
-            for name in settings_init[name_list]:
+            for name in config_default[name_list]:
                 getattr(self.ui, name).setEnabled(True)
                 # the following check if is hidden by the version may not be necessary in some case. e.g. hide ref_time widgets need them to be disabled
-                # if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list':
+                # if name not in config_default['version_hide_list'] or name_list == 'version_hide_list':
                 #     getattr(self.ui, name).setEnabled(True)
 
 
@@ -2260,10 +2270,10 @@ class QCMApp(QMainWindow):
         '''
         logger.info(args) 
         for name_list in args:
-            for name in settings_init[name_list]:
+            for name in config_default[name_list]:
                 getattr(self.ui, name).setEnabled(False)
                 # the following check if is hidden by the version may not be necessary in some case. e.g. hide ref_time widgets need them to be disabled
-                # if name not in settings_init['version_hide_list'] or name_list == 'version_hide_list':
+                # if name not in config_default['version_hide_list'] or name_list == 'version_hide_list':
                 #     getattr(self.ui, name).setEnabled(False)
 
 
@@ -2321,10 +2331,10 @@ class QCMApp(QMainWindow):
         # format n
         if n >= 1:
             # n = f'{round(n)} *'
-            n = '{} *'.format(min(settings_init['span_ctrl_steps'], key=lambda x:abs(x-n))) # python < 3.5
+            n = '{} *'.format(min(config_default['span_ctrl_steps'], key=lambda x:abs(x-n))) # python < 3.5
         else:
             # n = f'1/{round(1/n)} *'
-            n = '1/{} *'.format(min(settings_init['span_ctrl_steps'], key=lambda x:abs(x-1/n))) # python < 3.5
+            n = '1/{} *'.format(min(config_default['span_ctrl_steps'], key=lambda x:abs(x-1/n))) # python < 3.5
         # set label_spectra_fit_zoomtimes value
         self.ui.label_spectra_fit_zoomtimes.setText(str(n))
 
@@ -2335,9 +2345,9 @@ class QCMApp(QMainWindow):
         n = 10 ** (self.ui.horizontalSlider_spectra_fit_spanctrl.value() / 10)
         # format n
         if n >= 1:
-            n = min(settings_init['span_ctrl_steps'], key=lambda x:abs(x-n))
+            n = min(config_default['span_ctrl_steps'], key=lambda x:abs(x-n))
         else:
-            n = 1/min(settings_init['span_ctrl_steps'], key=lambda x:abs(x-1/n))
+            n = 1/min(config_default['span_ctrl_steps'], key=lambda x:abs(x-1/n))
 
         # get f1, f2
         # f1, f2 = self.ui.mpl_spectra_fit.ax[0].get_xlim()
@@ -2892,7 +2902,7 @@ class QCMApp(QMainWindow):
         fileName = self.saveFileDialog(
             'Choose a file to save raw data',
             path=path,
-            filetype=settings_init['export_rawfiletype']
+            filetype=config_default['export_rawfiletype']
         )
         logger.info(fileName) 
         if fileName:
@@ -3170,7 +3180,7 @@ class QCMApp(QMainWindow):
             harm_xdata = self.get_harm_data_by_typestr(plt_opt[1], plt_chnname, plt_harm, mark=mark, unit_t=timeuint, unit_temp=tempunit)
             data_list.append({'ln': line_group + plt_harm, 'x': harm_xdata, 'y': harm_ydata})     
 
-            if settings_init['show_marked_when_all']:
+            if config_default['show_marked_when_all']:
                 ## display marked data (solid) along with all data (open) (can be removed if don't like)
                 if self.settings['radioButton_data_showall']:
                     if self.data_saver.with_marks(plt_chnname):
@@ -3424,13 +3434,13 @@ class QCMApp(QMainWindow):
                 self.update_temp_unit(plt_str, plt_opt)
 
             if plt_opt[0] not in ['t', 'temp']: # other type in y-axis w/o changing the unit
-                ylabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
+                ylabel = config_default['data_plt_axis_label'].get(plt_opt[0], 'label error')
                 # set y labels
                 getattr(self.ui, 'mpl_' + plt_str).ax[0].set_ylabel(ylabel)
                 getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
 
             if plt_opt[1] not in ['t', 'temp']: # other type in x-axis w/o changing the unit
-                xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
+                xlabel = config_default['data_plt_axis_label'].get(plt_opt[1], 'label error')
                 # set x labels
                 getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
                 getattr(self.ui, 'mpl_' + plt_str).canvas.draw()
@@ -3516,14 +3526,14 @@ class QCMApp(QMainWindow):
             return
 
         if 't' == plt_opt[0]: # is y axis
-            ylabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
+            ylabel = config_default['data_plt_axis_label'].get(plt_opt[0], 'label error')
             logger.info(ylabel) 
             ylabel = self.time_str_unit_replace(ylabel)
             logger.info(ylabel) 
             getattr(self.ui, 'mpl_' + plt_str).ax[0].set_ylabel(ylabel)
             logger.info(getattr(self.ui, 'mpl_' + plt_str).ax[0].get_ylabel()) 
         if 't' == plt_opt[1]: # is x axis
-            xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
+            xlabel = config_default['data_plt_axis_label'].get(plt_opt[1], 'label error')
             xlabel = self.time_str_unit_replace(xlabel)
             getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
             logger.info(getattr(self.ui, 'mpl_' + plt_str).ax[0].get_xlabel()) 
@@ -3545,12 +3555,12 @@ class QCMApp(QMainWindow):
         # logger.info(idx_temp) 
 
         if 'temp' == plt_opt[0]: # is y axis
-            ylabel = settings_init['data_plt_axis_label'].get(plt_opt[0], 'label error')
+            ylabel = config_default['data_plt_axis_label'].get(plt_opt[0], 'label error')
             ylabel = self.temp_str_unit_replace(ylabel)
             getattr(self.ui, 'mpl_' + plt_str).ax[0].set_ylabel(ylabel)
             logger.info(ylabel) 
         if 'temp' == plt_opt[1]: # is x axis
-            xlabel = settings_init['data_plt_axis_label'].get(plt_opt[1], 'label error')
+            xlabel = config_default['data_plt_axis_label'].get(plt_opt[1], 'label error')
             xlabel = self.temp_str_unit_replace(xlabel)
             getattr(self.ui, 'mpl_' + plt_str).ax[0].set_xlabel(xlabel)
             logger.info(xlabel) 
@@ -4787,7 +4797,7 @@ class QCMApp(QMainWindow):
             vh = table.verticalHeaderItem(tb_row).text()
             # logger.info('vh: %s', vh) 
             # find corresponding key in qcm_queue or mech_queue
-            for key, val in settings_init['mech_table_rowheaders'].items():
+            for key, val in config_default['mech_table_rowheaders'].items():
                 if vh == val:
                     df_colname = key
                     # logger.info(key) 
@@ -4918,7 +4928,7 @@ class QCMApp(QMainWindow):
                 logger.info(r.row()) 
                 vh = self.ui.tableWidget_spectra_mechanics_table.verticalHeaderItem(r.row()).text()
                 logger.info(vh) 
-                for key, val in settings_init['mech_table_rowheaders'].items():
+                for key, val in config_default['mech_table_rowheaders'].items():
                     if vh == val:
                         varplot.append(key)
 
@@ -5039,9 +5049,9 @@ class QCMApp(QMainWindow):
 
     def get_label_replace_refh_unit(self, var, refh):
         '''
-        get label from settings_init and replace '_refh' and 'unit' in it
+        get label from config_default and replace '_refh' and 'unit' in it
         '''
-        label = settings_init['data_plt_axis_label'][var]
+        label = config_default['data_plt_axis_label'][var]
         if '_refh' in var: # variable referenced to refh
             label = label.replace('{refh}', '{' + str(refh) + '}')
         if var == 't':
@@ -5100,7 +5110,7 @@ class QCMApp(QMainWindow):
 
         self.ui.gridLayout_propplot.addWidget(mpl, (n-1)//2, (n-1)%2)
         if not (n-1)%2: # n is odd
-            self.ui.gridLayout_propplot.setRowMinimumHeight((n-1)//2, settings_init['prop_plot_minmum_row_height'])
+            self.ui.gridLayout_propplot.setRowMinimumHeight((n-1)//2, config_default['prop_plot_minmum_row_height'])
         # return
         # self.ui.scrollArea_data_mechanics_plots.setWidget(mpl)
         # self.ui.scrollArea_data_mechanics_plots.show()
@@ -5135,7 +5145,7 @@ class QCMApp(QMainWindow):
         mesh1, mesh2 = {}, {}
 
         contour_lim = self.settings['contour_plot_lim_tab']
-        contour_array = settings_init['contour_array']
+        contour_array = config_default['contour_array']
 
         # make meshgrid for contour
         phi = np.linspace(contour_lim['phi']['min'], contour_lim['phi']['max'], contour_array['num']) 
@@ -5175,7 +5185,7 @@ class QCMApp(QMainWindow):
         '''
         # get factors
         contour_type = self.settings['comboBox_settings_mechanics_contourtype']
-        contour_array = settings_init['contour_array']
+        contour_array = config_default['contour_array']
         contour_lim = self.settings['contour_plot_lim_tab']
         # logger.info('contour_array: %s', contour_array) 
         # logger.info('contour_lim: %s', contour_lim) 
@@ -5185,13 +5195,13 @@ class QCMApp(QMainWindow):
         if contour_type.lower() == 'normfnormg':
             levels1 = self.make_contour_levels(contour_lim['normf']['min'], contour_lim['normf']['max'], contour_array['levels'])
             levels2 = self.make_contour_levels(contour_lim['normg']['min'], contour_lim['normg']['max'], contour_array['levels'])
-            title1 = settings_init['contour_title']['normf']
-            title2 = settings_init['contour_title']['normg']
+            title1 = config_default['contour_title']['normf']
+            title2 = config_default['contour_title']['normg']
         elif contour_type.lower() == 'rhrd':
             levels1 = self.make_contour_levels(contour_lim['rh']['min'], contour_lim['rh']['max'], contour_array['levels'])
             levels2 = self.make_contour_levels(contour_lim['rd']['min'], contour_lim['rd']['max'], contour_array['levels'])
-            title1 = settings_init['contour_title']['rh']
-            title2 = settings_init['contour_title']['rd']
+            title1 = config_default['contour_title']['rh']
+            title2 = config_default['contour_title']['rd']
         else:
             levels1, levels2 = contour_array['levels'], contour_array['levels']
 
@@ -5265,7 +5275,7 @@ class QCMApp(QMainWindow):
                 tempdevice = TempDevices.device_info(self.settings['comboBox_tempdevice']) #get temp device info
 
                 # # check senor availability
-                # package_str = settings_init['tempmodules_path'][2:].replace('/', '.') + tempmodule_name
+                # package_str = config_default['tempmodules_path'][2:].replace('/', '.') + tempmodule_name
                 # logger.info(package_str) 
                 # import package
                 temp_sensor = getattr(TempModules, tempmodule_name)
@@ -5273,7 +5283,7 @@ class QCMApp(QMainWindow):
                 try:
                     self.temp_sensor = temp_sensor(
                         tempdevice,
-                        settings_init['tempdevices_dict'][tempdevice.product_type],
+                        config_default['tempdevices_dict'][tempdevice.product_type],
                         thrmcpltype,
                     )
                 except Exception as e: # if failed return
@@ -5332,7 +5342,7 @@ class QCMApp(QMainWindow):
                 if curr_temp is None:
                     curr_temp = self.temp_sensor.get_tempC()
                 logger.info(curr_temp) 
-                unit = settings_init['temp_unit_opts'].get(self.settings['comboBox_tempunit'])
+                unit = config_default['temp_unit_opts'].get(self.settings['comboBox_tempunit'])
                 self.ui.pushButton_status_temp_sensor.setText('{:.1f} {}'.format(self.data_saver.temp_C_to_unit(curr_temp, unit=unit), unit))
                 self.ui.pushButton_status_temp_sensor.setIcon(QIcon(":/icon/rc/temp_sensor.svg"))
                 self.ui.pushButton_status_temp_sensor.setToolTip('Temp. sensor is on.')
@@ -6001,8 +6011,8 @@ class QCMApp(QMainWindow):
             the combobox is in harmwidget
         '''
         comboBoxName = comboBox.objectName()
-        # if settings_init[opts]:
-        #     for key in settings_init[opts].keys():
+        # if config_default[opts]:
+        #     for key in config_default[opts].keys():
         #         # TODO look for value from itemdata and loop use for in combox.count()
         #         if harm is None: # not embeded in subdict
         #             if key == self.settings[comboBoxName]:
@@ -6040,9 +6050,9 @@ class QCMApp(QMainWindow):
 
     def build_comboBox(self, combobox, opts):
         '''
-        build comboBox by addItem from opts in settings_init[opts]
+        build comboBox by addItem from opts in config_default[opts]
         '''
-        for key, val in settings_init[opts].items():
+        for key, val in config_default[opts].items():
             combobox.addItem(val, userData=key)
 
 
@@ -6119,7 +6129,7 @@ class QCMApp(QMainWindow):
         self.setWindowTitle(_version.__projectname__ + ' Version ' + _version.__version__ )
         # set window size
         if not self.isMaximized(): # resize window to default if is not maxized
-            self.resize(*settings_init['window_size'])
+            self.resize(*config_default['window_size'])
 
         # set deflault displaying of tab_settings
         self.ui.tabWidget_settings.setCurrentIndex(0)
@@ -6138,7 +6148,7 @@ class QCMApp(QMainWindow):
         # set active_chn
         self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
         # set active mech calc method
-        self.ui.stackedWidget_settings_mechanics_modeswitch.setCurrentIndex(settings_init['mechanics_modeswitch'])
+        self.ui.stackedWidget_settings_mechanics_modeswitch.setCurrentIndex(config_default['mechanics_modeswitch'])
         # set progressbar
         self.set_progressbar(val=0, text='')
 
@@ -6183,10 +6193,10 @@ class QCMApp(QMainWindow):
         # load reference time
         if 'dateTimeEdit_reftime' in self.settings.keys(): # reference time has been defined
             logger.info(self.settings['dateTimeEdit_reftime']) 
-            logger.info(type(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], settings_init['time_str_format']))) 
+            logger.info(type(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], config_default['time_str_format']))) 
             logger.info(type(datetime.datetime.now())) 
             # exit(0)
-            self.ui.dateTimeEdit_reftime.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], settings_init['time_str_format']))
+            self.ui.dateTimeEdit_reftime.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], config_default['time_str_format']))
 
         else: # reference time is not defined
             # use current time
@@ -6295,11 +6305,11 @@ class QCMApp(QMainWindow):
         # load t0_shifted time
         if 'dateTimeEdit_settings_data_t0shifted' in self.settings: # t0_shifted has been defined
             logger.info(self.settings['dateTimeEdit_settings_data_t0shifted']) 
-            self.ui.dateTimeEdit_settings_data_t0shifted.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_settings_data_t0shifted'], settings_init['time_str_format']))
+            self.ui.dateTimeEdit_settings_data_t0shifted.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_settings_data_t0shifted'], config_default['time_str_format']))
 
         else: # t0_shifted is not defined
             # use reference time
-            self.ui.dateTimeEdit_settings_data_t0shifted.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], settings_init['time_str_format']))
+            self.ui.dateTimeEdit_settings_data_t0shifted.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], config_default['time_str_format']))
 
         # set widgets to display the channel reference setup
         # the value will be load from data_saver
@@ -6423,11 +6433,11 @@ class QCMApp(QMainWindow):
         self.timer.setInterval(scan_interval)
 
         # update the bartimer set up
-        bar_interval = scan_interval / settings_init['progressbar_update_steps']
-        if bar_interval < settings_init['progressbar_min_interval']: # interval is to small
-            bar_interval = settings_init['progressbar_min_interval']
-        elif bar_interval > settings_init['progressbar_min_interval']: # interval is to big
-            bar_interval = settings_init['progressbar_max_interval']
+        bar_interval = scan_interval / config_default['progressbar_update_steps']
+        if bar_interval < config_default['progressbar_min_interval']: # interval is to small
+            bar_interval = config_default['progressbar_min_interval']
+        elif bar_interval > config_default['progressbar_min_interval']: # interval is to big
+            bar_interval = config_default['progressbar_max_interval']
 
         logger.info(scan_interval) 
         logger.info(bar_interval) 
@@ -6468,7 +6478,7 @@ class QCMApp(QMainWindow):
 
             self.reading = True
             # read time
-            curr_time[chn_name] = datetime.datetime.now().strftime(settings_init['time_str_format'])
+            curr_time[chn_name] = datetime.datetime.now().strftime(config_default['time_str_format'])
             print(curr_time)
 
             # read temp if checked
@@ -6816,9 +6826,9 @@ class QCMApp(QMainWindow):
         table.clearContents()
 
         for r, (rkey, rval) in enumerate(val_dict.items()):
-            if rkey in settings_init[vh_item].keys(): # verticla name exist
+            if rkey in config_default[vh_item].keys(): # verticla name exist
                 for c, (ckey, cval) in enumerate(rval.items()):
-                    if ckey in settings_init[hh_item].keys():
+                    if ckey in config_default[hh_item].keys():
                         logger.info('table name: %s', table.objectName()) 
                         logger.info('table r c: %s %s', r, c) 
                         tableitem = table.item(r, c)
@@ -6924,5 +6934,5 @@ if __name__ == '__main__':
     except Exception as err:
         # traceback.print_tb(err.__traceback__)
         print(err)
-        logger.error('Exception occurred\n%s', err)
+        logger.exception('Exception occurred\n%s', err)
 
