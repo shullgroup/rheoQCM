@@ -702,8 +702,8 @@ class QCM:
         tot_harms = len(delf_calcs)
         mech_queue['drho'] = [[drho] * tot_harms] # in kg/m2
         mech_queue['drho_err'] = [[err['drho']] * tot_harms] # in kg/m2
-        mech_queue['phi'] = [[phi] * tot_harms] # in rad
-        # mech_queue['phi'] = [[min(np.pi/2, phi)] * tot_harms] # in rad limit phi <= pi/2
+        # mech_queue['phi'] = [[phi] * tot_harms] # in rad
+        mech_queue['phi'] = [[min(np.pi/2, phi)] * tot_harms] # in rad limit phi <= pi/2
         mech_queue['phi_err'] = [[err['phi']] * tot_harms] # in rad
         mech_queue['rh_exp'] = [[rh_exp] * tot_harms]
         mech_queue['rh_calc'] = [[rh_calc] * tot_harms]
@@ -754,7 +754,6 @@ class QCM:
         deriv = {}
         err = {}
         err_names=['drho', 'grho_refh', 'phi']
-
         # initiate deriv and err
         for key in err_names:
             deriv[key] = np.nan
@@ -886,6 +885,9 @@ class QCM:
                     dlam_refh = np.nan
                     for k in err_names:
                         err[k] = np.nan
+
+        else:
+            drho, grho_refh, phi, dlam_refh = np.nan, np.nan, np.nan, np.nan
 
         # logger.info('drho', drho) 
         # logger.info('grho_refh', grho_refh) 
