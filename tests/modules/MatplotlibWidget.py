@@ -1274,7 +1274,7 @@ class MatplotlibWidget(QWidget):
         add line in self.l['temp'][i]
         all the lines share the same xdata
         '''
-        print('add_temp_lines')
+        logger.infor('add_temp_lines')
         if len(label_list) == 0:
             label_list = [''] * len(xlist) # make up a label_list with all ''
         for (x, y, label) in zip(xlist, ylist, label_list):

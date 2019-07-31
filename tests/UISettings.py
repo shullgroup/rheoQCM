@@ -8,6 +8,7 @@ Change the following factors will change the apperiance of the GUI
 # Use OrderedDict for those dicts need to be shown in order
 from collections import OrderedDict
 import numpy as np
+import logging
 
 config_default = {
 
@@ -19,10 +20,9 @@ config_default = {
     'default_config_file_name': 'config_default.json',
 
     # logger configeration
-    'logger_config':{
+    'logger_setting_config':{
         'config_file': 'logger_config.json', # logger configeration file name
-        'output_file': 'err.log', # logger out put file name. Generally for errors
-
+        'default_level': logging.ERROR, # default level for logging
     },
 
     # myVNA path
@@ -682,6 +682,54 @@ config_default = {
     #     current_span * (1 - change_thresh[0/1]) # 
     # )
 
+    ########### logging settings ##############
+
+    'logger_config': {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'simple': {
+                'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            },
+        },    
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': 'ERROR',
+                'formatter': 'simple',
+                'stream': 'ext://sys.stdout',
+            },    
+            'info_file_handler': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'level': 'INFO',
+                'formatter': 'simple',
+                'filename': 'info.log',
+                'maxBytes': 1048576,
+                'backupCount': 2,
+                'encoding': 'utf8',
+            },    
+            'error_file_handler': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'level': 'ERROR',
+                'formatter': 'simple',
+                'filename': 'err.log',
+                'maxBytes': 1048576,
+                'backupCount': 2,
+                'encoding': 'utf8',
+            }
+        },    
+        'loggers': {
+            'console_logger': {
+                'level': 'ERROR',
+                'handlers': ['console'],
+                'propagate': False,
+            }
+        },    
+        'root': {
+            'level': 'INFO',
+            'handlers': ['console', 'info_file_handler', 'error_file_handler'],
+        },
+    },
 }
 
 
@@ -891,3 +939,7 @@ for harm in range(1, config_default['max_harmonic']+2, 2):
     harm = str(harm)
     settings_default['harmdata']['samp'][harm] = harm_tree.copy()
     settings_default['harmdata']['ref'][harm] = harm_tree.copy()
+
+
+###########################################
+

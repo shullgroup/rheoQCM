@@ -99,7 +99,7 @@ def index_from_str(idx_str, chn_idx, join_segs=True):
                 logger.info('data' +'[' + seg + ']') 
                 logger.info(eval('data' +'[' + seg + ']')) 
                 new_idx = eval('data' +'[' + seg + ']') 
-                print('type(new_idx)', type(new_idx))
+                logger.info('type(new_idx) %s', type(new_idx))
                 if join_segs: # True: combine
                     if isinstance(new_idx, int):
                         idx.append(new_idx)
@@ -123,13 +123,13 @@ def index_from_str(idx_str, chn_idx, join_segs=True):
         
         # check the index with chn_idx
         if join_segs: # combine all
-            print('joined', sorted(list(set(idx) & set(chn_idx))))
+            logger.info('joined %s', sorted(list(set(idx) & set(chn_idx))))
             return sorted(list(set(idx) & set(chn_idx)))
         else: # keep separate
             # return thel list
             return [sorted(list(set(ind) & set(chn_idx))) for ind in idx]
     except Exception as err:
-        print(err)
+        logger.excetion('exception in index_from_str')
         return idx
 
 

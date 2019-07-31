@@ -6,11 +6,11 @@
 
 - Add contour plots.
 - Add slove new property to save the time from solving all.
-- Add D (dissipition from QCM-D) to calculated properties.   
+- Add D (dissipition from QCM-D) to calculated properties.  
  
 ### Changed
 
-- Change code that property calculation remove previous data. Note: If you want to recalculate previous data, make sure use `slove all`.
+- Change code to that property calculation will not remove previous data. <span style="color:red">NOTE</span>: If you want to recalculate previous data, make sure use `slove all`.
 - Change exported Excel file format. The columns with repeated data are combined.
 - Change HOME button of data plots to show all & auto scale.  
 - Change debuging to logger. 
@@ -20,6 +20,7 @@
 ### Fixed
 
 - Fix data plot does not change limit after ZOOM OR PAN.
+- Fix issues of peak tracking condition settings with constrained conditions didn't work. <span style="color:red">NOTE</span>: When `Fix center` is set, the peak may come of the scan range!
   
 ## [0.17.2] - 2019-07-05
 
@@ -29,7 +30,7 @@
 
 ### Changed
 
-- Change the mechanical column name of delf/delf_sn, delg/delf_sn. NOTE: if you want the data of those two, you need to recalculate the data.
+- Change the mechanical column name of delf/delf_sn, delg/delf_sn. <span style="color:red">NOTE</span>: if you want the data of those two, you need to recalculate the data.
 
 ### Fixed
 

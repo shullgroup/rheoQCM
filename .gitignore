@@ -194,3 +194,7 @@ QCMFuncs/QCM_functions_bak.py
 docs/QCMnotes.lyx
 docs/#QCMnotes.lyx#
 QCMFuncs/QCM_functions_extra.py
+
+# app logging file
+.log
+.log.*

@@ -8,6 +8,11 @@ import subprocess
 
 import logging
 import logging.config
+# Get the logger specified in the file
+logger = logging.getLogger(__name__)
+# logger = logging.getLogger('infoLogger')
+# logger = logging.getLogger('fileLogger')
+# logger.setLevel(logging.ERROR)
 
 # import csv
 # import importlib
@@ -81,29 +86,6 @@ if 'vna_path' not in settings_default:
     settings_default['vna_path'] = config_default['vna_path']
 
 
-# # packages from program itself
-# from modules import UIModules, PeakTracker, DataSaver
-# from modules import QCM as QCM #test
-# from modules.MatplotlibWidget import MatplotlibWidget
-
-# import _version
-
-
-# set logger
-# this should be before loading all modules to overwrite the loggers in them
-with open(config_default['logger_config']['config_file'], 'r') as f:
-    logger_config = json.load(f)
-    logger_config['handlers']['file_handler']['filename'] = config_default['logger_config']['output_file']
-logging.config.dictConfig(logger_config)
-del logger_config
-
-# Get the logger specified in the file
-# logger = logging.getLogger(__name__)
-# logger = logging.getLogger('infoLogger')
-logger = logging.getLogger('fileLogger')
-# logger.setLevel(logging.ERROR)
-
-
 # packages from program itself
 from modules import UIModules, PeakTracker, DataSaver
 from modules import QCM as QCM #test
@@ -125,18 +107,39 @@ if UIModules.system_check() == 'win32': # windows
                     try:
                         from modules import TempDevices,TempModules
                     except Exception as e:
-                        print('Failed to import TempDevices and/or TempModules.\nTemperature functions of the UI will not avaiable!')
+                        logger.warning('Failed to import TempDevices and/or TempModules.\nTemperature functions of the UI will not avaiable!')
+                        logger.exception('Failed to import TempDevices and/or TempModules.')
 
         except Exception as e: # no myVNA connected. Analysis only
-            print('Failed to import AccessMyVNA module!')
-            print(e)
+            logger.error('Failed to import AccessMyVNA module!')
+            logger.exception('Failed to import AccessMyVNA module!')
     else: # 64-bit version Python which doesn't work with AccessMyVNA
         # A 32-bit server may help 64-bit Python work with 32-bit dll
-        print('Current version of MyVNA does not work with 64-bit Python!\nData analysis only!')
+        logger.warning('Current version of MyVNA does not work with 64-bit Python!\nData analysis only!')
 else: # linux or MacOS
     # for test only
     # from modules.AccessMyVNA_dummy import AccessMyVNA
-        print('Current version of MyVNA does not work with MacOS and Linux!\nData analysis only!')
+        logger.warning('Current version of MyVNA does not work with MacOS and Linux!\nData analysis only!')
+
+
+############# end of importing modules ####################
+
+
+def setup_logging():
+    '''Setup logging configuration'''
+
+    try:
+        if os.path.exists(config_default['logger_setting_config']['config_file']): # use json file
+            with open(config_default['logger_setting_config']['config_file'], 'r') as f:
+                logger_config = json.load(f)
+        else: # default setting
+                logger_config = config_default['logger_config']
+        
+        logging.config.dictConfig(logger_config)
+    except Exception as e:
+        print('Setting logger failed! Use default logging level!')
+        logging.basicConfig(level=config_default['logger_setting_config']['default_level'])
+        print(e)
 
 
 
@@ -1464,7 +1467,7 @@ class QCMApp(QMainWindow):
 
 
 
-        #region #########  functions ##############
+    #region #########  functions ##############
 
     def link_tab_page(self, tab_idx):
         self.UITab = tab_idx
@@ -2781,7 +2784,7 @@ class QCMApp(QMainWindow):
 
         ## fitting peak
         logger.info('main set harm: %s', self.settings_harm) 
-        self.peak_tracker.update_input(self.settings_chn['name'], self.settings_harm, data_lG[0], data_lG[1], data_lB[1], self.settings['harmdata'], self.settings['freq_span'])
+        self.peak_tracker.update_input(self.settings_chn['name'], self.settings_harm, harmdata=self.settings['harmdata'], freq_span=self.settings['freq_span'], fGB=[data_lG[0], data_lG[1], data_lB[1]])
 
         fit_result = self.peak_tracker.peak_fit(self.settings_chn['name'], self.settings_harm, components=True)
         logger.info(fit_result['v_fit']) 
@@ -3996,7 +3999,7 @@ class QCMApp(QMainWindow):
         self.load_film_layers_widgets()
 
     
-        logger.info('rowcount', self.ui.gridLayout_mech_expertmode_layers.rowCount()) 
+        logger.info('rowcount %s', self.ui.gridLayout_mech_expertmode_layers.rowCount()) 
 
 
     def on_mech_chn_changed(self):
@@ -4808,7 +4811,7 @@ class QCMApp(QMainWindow):
                         df_queue = mech_queue
                         # logger.info(mech_cols) 
                     else:
-                        print('did not find', key, val)
+                        logger.info('did not find %s %s', key, val)
                     break
                 else:
                     # logger.info(vh.encode('utf-8')) 
@@ -5190,7 +5193,7 @@ class QCMApp(QMainWindow):
         # logger.info('contour_array: %s', contour_array) 
         # logger.info('contour_lim: %s', contour_lim) 
         cmap = self.settings['comboBox_settings_mechanics_contourcmap']
-        print('cmap', cmap)
+        logger.info('cmap %s', cmap)
 
         if contour_type.lower() == 'normfnormg':
             levels1 = self.make_contour_levels(contour_lim['normf']['min'], contour_lim['normf']['max'], contour_array['levels'])
@@ -5452,6 +5455,7 @@ class QCMApp(QMainWindow):
     def update_harmwidget(self, signal):
         '''
         update widgets in treeWidget_settings_settings_harmtree
+        to self.settings
         except lineEdit_harmstart & lineEdit_harmend
         '''
         #  of the signal isA QLineEdit object, update QLineEdit vals in dict
@@ -5479,6 +5483,9 @@ class QCMApp(QMainWindow):
         # if the sender of the signal isA QSpinBox object, udpate QComboBox vals in dict
         elif isinstance(self.sender(), (QSpinBox, QDoubleSpinBox)):
             self.set_harmdata(self.sender().objectName(), signal, harm=harm)
+
+        # And we need to update harmdata and freq_span to peak_tracker
+        self.peak_tracker.update_input(self.settings_chn['name'], harm, harmdata=self.settings['harmdata'], freq_span=self.settings['freq_span'], fGB=None)
 
 
     def update_settings_chn(self):
@@ -5637,7 +5644,7 @@ class QCMApp(QMainWindow):
         try:
             self.settings['harmdata'][chn_name][harm][objname] = val
         except:
-            print(objname, 'is not found!')
+            logger.info('%s is not found!', objname)
 
 
     def update_base_freq(self, base_freq_index):
@@ -5964,7 +5971,7 @@ class QCMApp(QMainWindow):
         display current selection of temp_sensor & thrmcpl
         in label_temp_devthrmcpl
         '''
-        logger.info(self.settings['comboBox_tempdevice'], self.settings['comboBox_thrmcpltype']) 
+        logger.info('%s %s', self.settings['comboBox_tempdevice'], self.settings['comboBox_thrmcpltype']) 
         self.ui.label_temp_devthrmcpl.setText(
             'Dev/Thermocouple: {}/{}'.format(
                 self.settings['comboBox_tempdevice'],
@@ -6479,7 +6486,7 @@ class QCMApp(QMainWindow):
             self.reading = True
             # read time
             curr_time[chn_name] = datetime.datetime.now().strftime(config_default['time_str_format'])
-            print(curr_time)
+            logger.info(curr_time)
 
             # read temp if checked
             if self.settings['checkBox_settings_temp_sensor'] == True: # record temperature data
@@ -6512,7 +6519,7 @@ class QCMApp(QMainWindow):
                         return
 
                     # put f, G, B to peak_tracker for later fitting and/or tracking
-                    self.peak_tracker.update_input(chn_name, harm, f[chn_name][harm], G[chn_name][harm], B[chn_name][harm], self.settings['harmdata'], self.settings['freq_span'])
+                    self.peak_tracker.update_input(chn_name, harm, harmdata=self.settings['harmdata'], freq_span=self.settings['freq_span'], fGB=[f[chn_name][harm], G[chn_name][harm], B[chn_name][harm]])
 
                     # plot data in sp<harm>
                     if self.settings['radioButton_spectra_showGp']: # checked
@@ -6702,7 +6709,7 @@ class QCMApp(QMainWindow):
                 logger.info((len(f), len(G), len(B))) 
 
                 # put f, G, B to peak_tracker for later fitting and/or tracking
-                self.peak_tracker.update_input(chn_name, harm, f, G, B, self.settings['harmdata'], []) # freq_span set to [], since we don't need to track the peak
+                self.peak_tracker.update_input(chn_name, harm, harmdata=self.settings['harmdata'], freq_span=[], fGB=[f, G, B]) # freq_span set to [], since we don't need to track the peak
 
                 # fitting
                 fit_result = self.peak_tracker.peak_fit(chn_name, harm, components=False)
@@ -6789,11 +6796,11 @@ class QCMApp(QMainWindow):
         '''
         table = getattr(self.ui, tablename)
         item = table.currentItem()
-        print(table)
-        print(item)
+        logger.info(table)
+        logger.info(item)
         if item:
             text, r, c = item.text(), item.row(), item.column()
-            print('currentItem', item, text, r, c)
+            logger.info('currentItem %s %s %s %s', item, text, r, c)
         else:
             return
             
@@ -6864,8 +6871,8 @@ class QCMApp(QMainWindow):
         # 
         table = self.ui.tableWidget_settings_mechanics_contoursettings
         item = table.currentItem()
-        print(table)
-        print(item)
+        logger.info(table)
+        logger.info(item)
         if item:
             self.make_contours()
 
@@ -6926,13 +6933,62 @@ class QCMApp(QMainWindow):
 if __name__ == '__main__':
     import sys
     import traceback
+    import logging
+    import logging.config
+
+    # set logger
+    setup_logging()
+
+    # Get the logger specified in the file
+    logger = logging.getLogger(__name__)
+    
+    # ####### test 1 ############
+    # def exit_func(arg):
+    #     sys.exit(arg)
+    
+    # app = QApplication(sys.argv)
+    # qcm_app = QCMApp()
+    # qcm_app.show()
+    # try:
+    #     exit_func(app.exec_())
+    # except Exception as err:
+    #     print('Exception except')
+    #     # traceback.print_tb(err.__traceback__)
+    #     logger.error('Exception occurred', exc_info=True)
+    #     logger.exception('Exception occurred')
+    #     raise
+    # finally:
+    #     print('finally')
+    #     logger.exception('finally Exception occurred')
+    #     sys.exit(app.exec_())
+
+
+
+
+    # exit(0)
+    ########## test 2 ###################
+
     try:
         app = QApplication(sys.argv)
         qcm_app = QCMApp()
-        qcm_app.show()
-        sys.exit(app.exec_())
+        print('aaa')
+        try:
+            print('bbb')
+            qcm_app.show()
+            print('ccc')
+            sys.exit(app.exec_())
+        except:
+            print('app except')
+            logger.exception('Exception occurred')
     except Exception as err:
+        print('Exception except')
         # traceback.print_tb(err.__traceback__)
-        print(err)
-        logger.exception('Exception occurred\n%s', err)
+        logger.error('Exception occurred', exc_info=True)
+        logger.exception('Exception occurred')
+    # finally:
+    #     print('finally')
+    #     logger.exception('finally Exception occurred')
+    #     sys.exit(app.exec_())
+    #     print('end')
+
 

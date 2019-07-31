@@ -4,18 +4,12 @@ import json
 
 import logging
 import logging.config
+import json
 
-with open('logger_config.json', 'r') as f:
-    logger_config = json.load(f)
-    logger_config['handlers']['file_handler']['filename'] = 'err.log'
-logging.config.dictConfig(logger_config)
-del logger_config
-# Get the logger specified in the file
-# logger = logging.getLogger(__name__)
-logger = logging.getLogger('errorLogger')
-
+from QCM_main import setup_logging
 import loggertest_module
 
+setup_longing
 i = 1
 l = [1, '3', 'aa' , {'c': 'abc'}]
 d = {
@@ -37,5 +31,6 @@ try:
 except Exception as err:
     pass
     logger.exception('Exception occurred')
-
-loggertest_module.module_test()
+finally:
+    logger.exception('finally')
+# loggertest_module.module_test()

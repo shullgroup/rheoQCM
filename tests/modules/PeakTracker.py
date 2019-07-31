@@ -338,8 +338,8 @@ class PeakTracker:
         self.harmoutput = self.init_harmdict()
         for harm in range(1, self.max_harm+2, 2):
             harm = str(harm)
-            self.update_input('samp', harm , [], [], [], {}, {})
-            self.update_input('ref', harm , [], [], [], {}, {})
+            self.update_input('samp', harm , harmdata={}, freq_span={}, fGB=[[], [], []])
+            self.update_input('ref', harm , harmdata={}, freq_span={}, fGB=[[], [], []])
 
             self.update_output('samp', harm )
             self.update_output('ref', harm )
@@ -372,29 +372,33 @@ class PeakTracker:
         return chn_dict
 
 
-    def update_input(self, chn_name, harm, f, G, B, harmdata, freq_span):
+    def update_input(self, chn_name, harm, harmdata, freq_span, fGB=None):
         '''
         harmdata: it should be from the main ui self.settings['harmdata']
         if empty harmdata, initialize the key to None
         chn_name: 'samp' or 'ref'
+        if f, G, B  all(is None): update harmdata, freq_span only. (This make sure every change of the settings will be updated when there is no scan)
         harm: int
         '''
+        logger.info('#### update_input ####') 
+        # setattr(self.harminput, chn_name, setattr())
+        if fGB is not None:
+            f, G, B = fGB
+            self.harminput[chn_name][harm]['isfitted'] = False # if the data has been fitted
+            self.harminput[chn_name][harm]['f'] = f
+            self.harminput[chn_name][harm]['G'] = G
+            self.harminput[chn_name][harm]['B'] = B
+            logger.info('f[chn][harm] %s', len(f)) 
+
         if not harmdata: # harmdata is empty (for initialize)
             harm_dict = {}
         else:
             harm_dict = harmdata[chn_name][harm]
         
-            logger.info('#### update_input ####') 
-            logger.info('chn_name:  %s, harm: %s', chn_name, harm) 
-            logger.info('f[chn][harm] %s', len(f)) 
+            logger.info('chn_name:  %s, harm: %s', chn_name, harm)
             logger.info('harmdata[chn][harm] %s', harm_dict) 
-            logger.info(' #####################') 
+        logger.info(' #####################') 
 
-        # setattr(self.harminput, chn_name, setattr())
-        self.harminput[chn_name][harm]['isfitted'] = False # if the data has been fitted
-        self.harminput[chn_name][harm]['f'] = f
-        self.harminput[chn_name][harm]['G'] = G
-        self.harminput[chn_name][harm]['B'] = B
         if not freq_span:
             self.harminput[chn_name][harm]['current_span'] = [None, None]
         else:
@@ -569,7 +573,7 @@ class PeakTracker:
                     current_span * (1 + change_thresh[0])
                 )
             elif wid_ratio > wid_ratio_range[1]: # too thin
-                print('peak too thin\n',
+                logger.info('peak too thin\n %s %s %s %s',
                     half_wid,
                     wid_ratio_range[1] * half_wid * 2,
                     current_span * (1 - change_thresh[1]),
@@ -600,22 +604,30 @@ class PeakTracker:
         else:
             resonance = self.harminput[chn_name][harm]['G']
 
-        if self.get_output('isfitted', chn_name=chn_name, harm=harm): # data has been fitted
-            cen = self.get_fit_values(chn_name=chn_name, harm=harm)['cen_trk']['value']
-            half_wid = self.get_fit_values(chn_name=chn_name, harm=harm)['wid_trk']['value']
-        else:
-            _, cen, half_wid, _ = guess_peak_factors(freq, resonance)
+        ## the fitted data might be wrong when the peak is dampped too much !! So, we don't use the fitted data for now
+        # if self.get_output('isfitted', chn_name=chn_name, harm=harm): # data has been fitted
+        #     cen = self.get_fit_values(chn_name=chn_name, harm=harm)['cen_trk']['value']
+        #     half_wid = self.get_fit_values(chn_name=chn_name, harm=harm)['wid_trk']['value']
+        # else:
+        #     _, cen, half_wid, _ = guess_peak_factors(freq, resonance)
     
+        # use the guessed value
+        _, cen, half_wid, _ = guess_peak_factors(freq, resonance)
+
         current_xlim = np.array(self.harminput[chn_name][harm]['current_span'])
         # get the current center and current span of the data in Hz
         current_center, current_span = UIModules.converter_startstop_to_centerspan(*self.harminput[chn_name][harm]['current_span'])
         
+        logger.info('current_center %s', current_center)
+        logger.info('current_span %s', current_span)
+        logger.info('current_xlim %s', current_xlim)
+        logger.info('f1f2 %s %s', freq[0], freq[-1])
         # initiate new_xlim == previous span
         new_xlim = self.harminput[chn_name][harm]['current_span']
 
-        # find the starting and ending frequency of only the peak in Hz
+        # find the starting and ending frequency of the peak in Hz
         if track_condition == 'fixspan':
-            new_cen = set_new_cen(freq, cen, current_span, current_xlim)
+            new_cen = set_new_cen(freq, cen, current_span, current_xlim) # replace current_xlim with current_span
             new_xlim = set_new_xlim(new_cen, current_span)
             ''' if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > 0.1 * current_span:
                 # new start and end frequencies in Hz
@@ -1231,7 +1243,7 @@ class PeakTracker:
 
 
     ########### warp up functions ################
-    # MAKE SURE: run self.update_input(chn_name, harm, f, G, B, harmdata) first to import scan data
+    # MAKE SURE: run self.update_input(...) first to import scan data
     def peak_track(self, chn_name=None, harm=None):
         '''
         The whole process of peak tracking
