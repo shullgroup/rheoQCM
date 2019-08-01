@@ -254,7 +254,7 @@ class DataSaver:
                 logger.info(df_mech) 
                 # replace na with self.nan_harm_list
                 for col in mech_keys_single:
-                    print('col: %s; type: %s', col, type(df_mech[col]))
+                    logger.info('col: %s; type: %s', col, type(df_mech[col]))
                     #TODO error here: use a.all() or a.any()
                     df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list() if np.isnan(x).all() else x) # add list of nan to all null
                 for col in mech_keys_multiple:
@@ -428,7 +428,7 @@ class DataSaver:
         '''
         # check file
         if not self.check_file_format(path):
-            print('File does not have the right format!\nPlease check data file.')
+            logger.warning('File does not have the right format!\nPlease check data file.')
             return
 
         try: # try to load settings from file
@@ -443,7 +443,7 @@ class DataSaver:
                 ver = fh.attrs['ver']
             return settings
         except: # failed to load settings
-            print('Failed to load settings!\nPlease check data file.')
+            logger.warning('Failed to load settings!\nPlease check data file.')
             return {}
 
 
@@ -722,7 +722,7 @@ class DataSaver:
 
         mech_key = self.get_mech_key(nhcalc)
         if not mech_key in getattr(self, chn_name + '_prop'):
-            print('no df of {} in {}'.format(mech_key, chn_name))
+            logger.warning('no df of {} in {}'.format(mech_key, chn_name))
             return
 
         # set index to int
@@ -826,15 +826,15 @@ class DataSaver:
         if chn_name is None: # remove all from all channels
             for chn in self._chn_keys:
                 getattr(self, chn + '_prop').clear()
-                print('All properties data removed.')
+                logger.warning('All properties data removed.')
                 self.saveflg = False
         else:
             for mech_key in mech_keys:
                 complete = getattr(self, chn_name + '_prop').pop(mech_keys, None)
                 if complete is None:
-                    print('{} does not exist'.format(mech_key))
+                    logger.warning('{} does not exist'.format(mech_key))
                 else:
-                    print('{} removed from {}'.format(mech_key, chn_name))
+                    logger.warning('{} removed from {}'.format(mech_key, chn_name))
                     self.saveflg = False
             
 
@@ -937,7 +937,7 @@ class DataSaver:
 
                     # json.dump(data, f)
         except PermissionError as err:
-            print('Permission denied.\nCheck if your file is open.')
+            logger.warning('Permission denied.\nCheck if your file is open.')
 
     
     def reshape_data_df(self, chn_name, mark=False, dropnanmarkrow=True, dropnancolumn=True, deltaval=False, norm=False, unit_t=None, unit_temp=None, keep_mark=True):
@@ -974,7 +974,7 @@ class DataSaver:
             if 'marks' in df.columns:
                 df = df.drop(columns='marks') # drop marks column
         else:
-            print('there is no marked data.\n no data will be deleted.') 
+            logger.warning('there is no marked data.\n no data will be deleted.') 
 
 
         if 'marks' in df.columns:
@@ -1073,7 +1073,7 @@ class DataSaver:
             if 'marks' in df.columns:
                 df = df.drop(columns='marks') # drop marks column
         else:
-            print('there is no marked data.\n no data will be deleted.')
+            logger.warning('there is no marked data.\n no data will be deleted.')
 
         return df
 
@@ -1174,7 +1174,7 @@ class DataSaver:
         t = pd.to_datetime(t)
         # convert t to delta t in seconds
         if t.shape[0] == 0:
-            print('no data saved!')
+            logger.warning('no data saved!')
             return t
         else:
             logger.info(self.get_t_ref()) 
@@ -1446,7 +1446,7 @@ class DataSaver:
         if mode['cryst'] == 'single': # single crystal
             if mode['temp'] == 'const': # single crystal and constant temperature
                 if all(np.isnan(np.array(self.exp_ref[chn_name][self._ref_keys[col]]))): # no reference or no constant reference exist
-                    print('ref still not set')
+                    logger.warning('ref still not set')
                     return col_s.apply(lambda x: list(np.array(x, dtype=np.float) * np.nan)) # return all nan
                 else: # use constant ref in self.<chn_name>_ref
                     logger.info('constant reference') 
@@ -1462,7 +1462,7 @@ class DataSaver:
                     else: 
                         return col_s
             elif mode['temp'] == 'var': # single crystal and constant temperature
-                print('single, temp') 
+                logger.info('single, temp') 
 
                 ref_s = self.interp_film_ref(chn_name, col=col) # get reference for col (fs or gs)
 
@@ -1490,7 +1490,7 @@ class DataSaver:
             elif mode['temp'] == 'var': # dual crystal and constant temperature
                 return 
                 #TODO temperarilly save the code below
-                print('dynamic reference') 
+                logger.info('dynamic reference') 
                 ref_s = getattr(self, self.exp_ref[chn_name + '_ref'][0]).copy()
 
                 # convert series value to ndarray
@@ -1552,8 +1552,6 @@ class DataSaver:
                 df = getattr(self, self.exp_ref[chn_name + '_ref'][0]).copy()
         elif df is None: # chn_name is not samp/ref and df is not given
             logger.info('out file reference and df is None') 
-            # print('df should not be None when {} is reference source.'.fromat(self.exp_ref[chn_name + '_ref'][0]))
-            # return
             raise ValueError('df should not be None when {} is reference source.'.fromat(self.exp_ref[chn_name + '_ref'][0]))            
 
         df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
@@ -1567,7 +1565,7 @@ class DataSaver:
         '''
         # logger.info('idx_list', idx_list) 
         if getattr(self, chn_name).shape[0] == 0: # data is empty
-            print('no data')
+            logger.warning('no data')
             self.refflg[chn_name] = False
             return
 
@@ -1622,7 +1620,7 @@ class DataSaver:
                 if df is not None:
                     self.copy_to_ref(chn_name, df.loc[idx_list_opened, :]) # copy to reference data set
                 else:
-                    print('no dataframe is provided!')
+                    logger.warning('no dataframe is provided!')
             else:
                 pass
                                        
@@ -1650,7 +1648,7 @@ class DataSaver:
                     logger.info('>0') 
                     # calculate f0 and g0 
                     for col, key in self._ref_keys.items():
-                        logger.info('%s %s', chn_name, col, key) 
+                        logger.info('%s %s %s', chn_name, col, key) 
                         df = self.get_list_column_to_columns_marked_rows(chn_name + '_ref', col, mark=mark, dropnanmarkrow=False, deltaval=False)
                         logger.info(getattr(self, chn_name + '_ref')[col]) 
                         # logger.info(df) 
@@ -1671,7 +1669,7 @@ class DataSaver:
                 temp = self.get_temp_by_uint_marked_rows(chn_ref_source, dropnanmarkrow=False, unit='C') # in C. If marked only, set dropnanmarkrow=True
                 logger.info(temp) 
                 if np.isnan(temp).all(): # no temp data
-                    print('no temperature data in reference!')
+                    logger.warning('no temperature data in reference!')
                     self.refflg[chn_name] = False
                     return
 
@@ -1681,7 +1679,7 @@ class DataSaver:
                 elif all([isinstance(l, int) for l in self.exp_ref[chn_name+'_ref'][1]]): # all int
                     reference_idx = [self.exp_ref[chn_name+'_ref'][1]] # put into a list
                 else:
-                    print('Check reference reference index!')
+                    logger.warning('Check reference reference index!')
                     self.refflg[chn_name] = False
                     return
                 
@@ -1693,7 +1691,7 @@ class DataSaver:
                 logger.info('reference_idx %s', reference_idx) 
                 logger.info('exp_ref %s', self.exp_ref) 
                 for ind_list in reference_idx: # iterate each list
-                    print('ind_list', ind_list)
+                    logger.info('ind_list %s', ind_list)
                     if len(ind_list) == 1: # single point
                         # cause single point is not allowed for interp1d, doubling the length by repeating
                         ind_list = ind_list * 2
@@ -1802,7 +1800,7 @@ class DataSaver:
 
             elif mode['temp'] == 'var': # single crystal and variable temperature
                 if np.isnan(chn_temp).all(): # no temp data
-                    print('no temperature data in film!')
+                    logger.warning('no temperature data in film!')
                     if col is None:
                         return cols
                     else:
@@ -1820,7 +1818,7 @@ class DataSaver:
                 elif all([isinstance(l, int) for l in chn_idx]): # all int
                     film_idx = [chn_idx] # put into a list
                 else:
-                    print('Check sample reference index!')
+                    logger.warning('Check sample reference index!')
                 
                 # get interpolated f and g by chn_temp
                 for seg, ind_list in enumerate(film_idx): # iterate each list
@@ -1844,7 +1842,7 @@ class DataSaver:
                     cols.gs[ind_list] = gs_list
 
                 logger.info('cols[ind_list]\n%s', cols.iloc[ind_list]) 
-                print(cols[col].head())
+                logger.info(cols[col].head())
         elif mode['cryst'] == 'dual': #TODO
             if mode['temp'] == 'const': # dual crystal and constant temperature
                 pass
@@ -1956,10 +1954,10 @@ class DataSaver:
         '''
         marked_rows = getattr(self, chn_name).marks.apply(lambda x: True if 1 in x else False)
         if marked_rows.any(): # there are marked rows
-            print('There are marked rows')
+            logger.info('There are marked rows')
             return marked_rows
         else: # no amrked rows, return all
-            print('There is no marked row.\nReturn all')
+            logger.info('There is no marked row.\nReturn all')
             return ~marked_rows
 
 
@@ -2204,10 +2202,10 @@ class DataSaver:
         df['f0s'] = f0s
         df['g0s'] = g0s
 
-        print(f_arr.shape)
-        print(g_arr.shape)
-        print(fstar_arr.shape)
-        print(df['fstars'].iloc[0])
+        logger.info(f_arr.shape)
+        logger.info(g_arr.shape)
+        logger.info(fstar_arr.shape)
+        logger.info(df['fstars'].iloc[0])
 
         return df
 
@@ -2248,9 +2246,9 @@ class DataSaver:
                     # col_l = col_s.values.tolist()
                     # for i in range(len(col_l)):
                     #     try:
-                    #         print(len(col_l[i]))
+                    #         logger.info(len(col_l[i]))
                     #     except:
-                    #         print(i, col_l[i])
+                    #         logger.info(i, col_l[i])
 
                     if mode['temp'] == 'const': # single crystal and constant temperature
                         col_mean = np.mean(col_arr, axis=0) # get mean of each column
@@ -2265,7 +2263,7 @@ class DataSaver:
                         elif all([isinstance(l, int) for l in idx_b]): # all int
                             idx_b = [idx_b] # put into a list
                         else:
-                            print('Check index format!')
+                            logger.warning('Check index format!')
                             return
 
                         logger.info('col_s %s', col_s.iloc[0]) 
@@ -2302,7 +2300,7 @@ class DataSaver:
                                 if np.isnan(col_arr_i).all(): # no data in harm and ind_list
                                     func_seg_list.append(lambda temp: np.array([np.nan] * len(temp))) # add a func return nan
                                 else: # there is data
-                                    print(temp_b_ind.shape, col_arr_i.shape)
+                                    logger.info('%s %s', temp_b_ind.shape, col_arr_i.shape)
                                     func_seg_list.append(interp1d(temp_b_ind, col_arr_i, kind=self.exp_ref['mode']['fit'], fill_value=np.nan, bounds_error=False))
                             func_list.append(lambda temp: [func_seg(temp) for func_seg in func_seg_list])    
  
@@ -2312,7 +2310,7 @@ class DataSaver:
                         elif all([isinstance(l, int) for l in idx_a]): # all int
                             idx_a = [idx_a] # put into a list
                         else:
-                            print('Check index format!')
+                            logger.warning('Check index format!')
                         
                         # get interpolated f and g by temp_a
                         for seg, ind_list in enumerate(idx_a): # iterate each list
@@ -2434,10 +2432,10 @@ class DataSaver:
         t_str = list(set(config_default['data_saver_import_data']['t']) & set(columns))
 
         if not t_str: # no time column is found
-            print('No column for time is found!\nPlease check the format of your data file of change the setup of program!')
+            logger.warning('No column for time is found!\nPlease check the format of your data file of change the setup of program!')
             return
         elif len(t_str) != 1: # multiple time columns is found
-            print('multiple columns for time is found!\nPlease check the format of your data file of change the setup of program!')
+            logger.warning('multiple columns for time is found!\nPlease check the format of your data file of change the setup of program!')
             return
         else: # time column is found
             df.rename(columns={t_str[0]: 't'}, inplace=True) # rename time column
@@ -2449,12 +2447,12 @@ class DataSaver:
         temp_str = list(set(config_default['data_saver_import_data']['temp']) & set(columns))
 
         if not temp_str: # no temperature column is found
-            print('No column for temperature is found!')
+            logger.warning('No column for temperature is found!')
             # add an temp column
             df['temp'] = np.nan
 
         elif len(temp_str) != 1: # multiple temperature columns is found
-            print('multiple columns for temperature is found!\nPlease check the format of your data file or change the setup of program!')
+            logger.warning('multiple columns for temperature is found!\nPlease check the format of your data file or change the setup of program!')
             return
         else: # temperature column is found
             df.rename(columns={temp_str[0]: 'temp'}, inplace=True) # rename temp column
@@ -2469,10 +2467,10 @@ class DataSaver:
         logger.info(num_list) 
 
         if not num_list: # no number found
-            print('No columns with harmonics was found!')
+            logger.warning('No columns with harmonics was found!')
             return
         elif len(num_list) % 2: # odd length
-            print('Number of harmonic columns are incorrect!')
+            logger.warning('Number of harmonic columns are incorrect!')
             return
         else: # even length
             num_list = sorted(list(set(num_list))) # remove the duplicated numbers
@@ -2524,7 +2522,7 @@ class DataSaver:
                 else:
                     delgs_str = ''
             if not delfs_str or not delfs_str:
-                print('No frequency or dissipation data found!\nPlease check the format of your data file or change the setup of program!')
+                logger.warning('No frequency or dissipation data found!\nPlease check the format of your data file or change the setup of program!')
                 return
             else: # data found
                 # convert delta data to absolute data and keep the column names

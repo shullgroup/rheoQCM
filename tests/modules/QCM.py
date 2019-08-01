@@ -870,14 +870,14 @@ class QCM:
                                         (jac_inv[i, 1]*delfstar_err[1])**2 +
                                         (jac_inv[i, 2]*delfstar_err[2])**2)**0.5
                         except:
-                            print('error calculation failed!') 
+                            logger.warning('error calculation failed!') 
                             pass
                 else:
-                    print('1st solution out of range') 
+                    logger.info('1st solution out of range') 
 
 
                 if np.isnan(rd_exp) or np.isnan(rh_exp) or not deriv or not err: # failed to solve the problem
-                    print('2nd solving failed') 
+                    logger.info('2nd solving failed') 
                     # assign the default value first
                     drho = np.nan
                     grho_refh = np.nan

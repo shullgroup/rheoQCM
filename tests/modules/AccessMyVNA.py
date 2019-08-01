@@ -33,9 +33,9 @@ if config_default:
                 settings_user = json.load(f) # read user default settings
                 if 'vna_wait_time_extra' in settings_user:
                     extra_time = settings_user['vna_wait_time_extra']
-            print('use user settings')
+            logger.info('use user settings')
         except:
-            print('Error occured while loading {}\nuse default settings'.format(config_default['default_settings_file_name']))
+            logger.warning('Error occured while loading {}\nuse default settings'.format(config_default['default_settings_file_name']))
     else:
         pass
     del usersettings_file
@@ -1275,7 +1275,7 @@ class AccessMyVNA():
         pfn = c_wchar_p(fileName)
         ret = _MyVNALoadCalibration(pfn)
         logger.info('MyVNALoadCalibration\n%s', ret) 
-        print(pfn.value)
+        logger.info(pfn.value)
         return ret
 
 
@@ -1283,7 +1283,7 @@ class AccessMyVNA():
         pfn = c_wchar_p(fileName)
         ret = _MyVNASaveCalibration(pfn)
         logger.info('MyVNASaveCalibration\n%s', ret) 
-        print(pfn.value)
+        logger.info(pfn.value)
         return ret
 
 
@@ -1291,7 +1291,7 @@ class AccessMyVNA():
         pfn = c_wchar_p(fileName)
         ret = _MyVNALoadCalibration(pfn)
         logger.info('MyVNALoadConfiguration\n%s', ret) 
-        print(pfn.value)
+        logger.info(pfn.value)
         return ret
 
 
@@ -1299,7 +1299,7 @@ class AccessMyVNA():
         pfn = c_wchar_p(fileName)
         ret = _MyVNASaveConfiguration(pfn)
         logger.info('MyVNASaveConfiguration\n%s', ret) 
-        print(pfn.value)
+        logger.info(pfn.value)
         return ret
 
 
@@ -1381,7 +1381,7 @@ class AccessMyVNA():
         #TODO seems not work (may check C++ source code)
 
         ret, nData = self.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
-        print('getADCChannel', nData)
+        logger.info('getADCChannel %s', nData)
 
         if nData[0] == 1.:
             reflectchn = 1
@@ -1419,33 +1419,33 @@ class AccessMyVNA():
                     logger.info(len(val)) 
                     ret, self._f[0], self._f[1] = self.SetFequencies(f1=val[0], f2=val[1], nFlags=1)
                     if ret != 0:
-                        print(ret)
-                        print('SetFrequencies')
+                        logger.info(ret)
+                        logger.warning('SetFrequencies')
                         exit(0)
                 elif (flg == 'steps') and self._nsteps != val: # set scan steps
                     ret, self._nsteps = self.SetScanSteps(nSteps=val)
                     if ret != 0:
-                        print(ret)
-                        print('SettScanSteps')
+                        logger.info(ret)
+                        logger.warning('SettScanSteps')
                         exit(0)
                 elif (flg == 'chn'): # set scan channel
                     if val != 'none' and (self._chn != int(val)):
                         ret, self._chn = self.setADCChannel(reflectchn=int(val), paths=setflg['cal'])
                         if ret != 0:
-                            print(ret)
-                            print('SetADCChannel')
+                            logger.info(ret)
+                            logger.warning('SetADCChannel')
                             exit(0)
                 elif (flg == 'avg') and (self._naverage != val): # set scan average
                     ret, self._naverage = self.SetScanAverage(nAverage=val)
                     if ret != 0:
-                        print(ret)
-                        print('SetScanAverage')
+                        logger.info(ret)
+                        logger.warning('SetScanAverage')
                         exit(0)
                 elif (flg == 'instrmode') and (self._instrmode != val): # set instrument mode
                     ret, self._instrmode = self.Setinstrmode(nMode=0)
                     if ret != 0:
-                        print(ret)
-                        print('Setinstrmode')
+                        logger.info(ret)
+                        logger.warning('Setinstrmode')
                         exit(0)
                 elif (flg == 'speed') and (self._speed != val): # set scan speed
                     # we don't need to change it through python now

@@ -114,7 +114,6 @@ def index_from_str(idx_str, chn_idx, join_segs=True):
         else:
             logger.info('single') 
             logger.info('data' +'[' + idx_str + ']') 
-            logger.info(eval('data' +'[' + idx_str + ']')) 
             new_idx = eval('data' +'[' + idx_str + ']')
             if isinstance(new_idx, int):
                 idx.append(new_idx)
@@ -129,7 +128,7 @@ def index_from_str(idx_str, chn_idx, join_segs=True):
             # return thel list
             return [sorted(list(set(ind) & set(chn_idx))) for ind in idx]
     except Exception as err:
-        logger.excetion('exception in index_from_str')
+        logger.exception('exception in index_from_str')
         return idx
 
 

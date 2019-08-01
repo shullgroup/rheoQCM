@@ -235,7 +235,7 @@ def findpeaks_py(x, resonance, output=None, sortstr=None, threshold=None, promin
     '''
     # logger.info(resonance) 
     if x is None or len(x) == 1: # for debuging
-        print('findpeaks_py input x is not well assigned!\nx = {}'.format(x))
+        logger.warning('findpeaks_py input x is not well assigned!\nx = {}'.format(x))
         exit(0)
 
     logger.info(threshold) 
@@ -1047,8 +1047,8 @@ class PeakTracker:
             print('lmdif_message', result.lmdif_message)
         except Exception as err:
             result = {}
-            traceback.print_tb(err.__traceback__)
-            print(err)
+            # traceback.print_tb(err.__traceback__)
+            logger.exception('fitting error occurred.')
 
         self.update_output(chn_name, harm, result=result)
 

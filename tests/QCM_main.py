@@ -1085,13 +1085,7 @@ class QCMApp(QMainWindow):
 
         self.ui.pushButton_settings_mechanics_clrallprops.clicked.connect(self.mech_clear)
 
-        for harm in self.all_harm_list(as_str=True):
-            # comboBox_settings_mechanics_refG
-            self.ui.comboBox_settings_mechanics_refG.addItem('G'+harm, userData=harm)
-        self.ui.comboBox_settings_mechanics_refG.currentIndexChanged.connect(self.update_widget)
-        self.ui.comboBox_settings_mechanics_refG.currentIndexChanged.connect(self.update_qcm_refh)
-        # set an initial value to active the key in self.settings
-        self.ui.comboBox_settings_mechanics_refG.setCurrentIndex(0)
+
 
         self.ui.checkBox_settings_mechanics_witherror.toggled.connect(self.update_widget)
 
@@ -2448,7 +2442,7 @@ class QCMApp(QMainWindow):
         f = None
         G = None
         B = None
-        print('self.get_spectraTab_mode()', self.get_spectraTab_mode())
+        logger.info('self.get_spectraTab_mode() %s', self.get_spectraTab_mode())
         if self.get_spectraTab_mode() == 'center': # for peak centering
             if not self.vna:
                 return f, G, B
@@ -2990,7 +2984,7 @@ class QCMApp(QMainWindow):
         '''
         initiate widgets for manual refit
         '''
-        logger.info('refit isChecked', self.ui.pushButton_manual_refit.isChecked()) 
+        logger.info('refit isChecked %s', self.ui.pushButton_manual_refit.isChecked()) 
         if self.ui.pushButton_manual_refit.isChecked():
             # make a copy of self.freq_span and self.harmdata for refit
             logger.info('copy to active') 
@@ -4020,14 +4014,6 @@ class QCMApp(QMainWindow):
         self.load_comboBox(self.ui.comboBox_settings_mechanics_model_samplayer_chn, val=self.mech_chn)
 
 
-    def update_qcm_refh(self):
-        '''
-        update reference harmonic in qcm
-        NOTE: currentlly, spinBox_settings_mechanics_nhcalc_n3 is used as refh
-        '''
-        self.qcm.refh = int(self.settings['comboBox_settings_mechanics_refG'])
-
-
     def update_mechchnwidget(self, signal):
         '''
         update widgets in stackedWidgetPage_mech_expertmode
@@ -4260,7 +4246,6 @@ class QCMApp(QMainWindow):
 
         # set f1 to qcm module (leave this to qcm modue for each single solution)
 
-        # self.qcm.refh = int(self.settings['comboBox_settings_mechanics_refG']) # use user defined reference harmonic
         self.qcm.refh = self.settings['spinBox_settings_mechanics_nhcalc_n3'] # use the dissipatione harmonic as reference
         refh = self.qcm.refh # reference harmonic
 
@@ -4659,7 +4644,6 @@ class QCMApp(QMainWindow):
             logger.info('exceeds the index. reset to %s', ind) 
         else:
             logger.info('ind in range.') 
-            # refh = int(self.settings['comboBox_settings_mechanics_refG'])
 
             nhcalc = self.gen_nhcalc_str()
 
@@ -4893,21 +4877,21 @@ class QCMApp(QMainWindow):
         variable is given by row selection of tableWidget_spectra_mechanics_table
         '''
         x_list = ['t', 'temp', 'idx'] # common x-axis variables. t, temp is the column name, idx is not.
-        logger.info('plot_type', plot_type) 
+        logger.info('plot_type %s', plot_type) 
 
         # get chn_name
         chn_name = self.mech_chn
-        logger.info('chn_name', chn_name) 
+        logger.info('chn_name %s', chn_name) 
 
         # get mech_key
         nhcalc = self.gen_nhcalc_str()
-        logger.info('nhcalc', nhcalc) 
+        logger.info('nhcalc %s', nhcalc) 
 
         refh =int(self.settings['spinBox_settings_mechanics_nhcalc_n3']) # refh 
-        logger.info('refh', refh) 
+        logger.info('refh %s', refh) 
 
         mech_key = self.data_saver.get_mech_key(nhcalc)
-        logger.info('mech_key', mech_key) 
+        logger.info('mech_key %s', mech_key) 
         logger.info('prop_chn_keys: %s', getattr(self.data_saver, chn_name + '_prop').keys()) 
 
         # check if data exists mech_key
@@ -5628,6 +5612,7 @@ class QCMApp(QMainWindow):
             print(objname, 'is not found!\nUse default data')
             return harm_tree_default[objname]
 
+
     def set_harmdata(self, objname, val, harm=None, chn_name=None):
         '''
         set data with given objname in
@@ -5812,7 +5797,7 @@ class QCMApp(QMainWindow):
         harmstart = float(self.ui.lineEdit_scan_harmstart.text()) # in Hz
         harmend = float(self.ui.lineEdit_scan_harmend.text()) # in Hz
         harm=self.settings_harm
-        logger.info(harm, harmstart, harmend) 
+        logger.info('%s %s %s', harm, harmstart, harmend) 
         f1, f2 = self.span_check(harm=harm, f1=harmstart, f2=harmend)
         logger.info((f1, f2)) 
         self.set_freq_span([f1, f2])
@@ -5863,7 +5848,6 @@ class QCMApp(QMainWindow):
         '''
         set the pushButton_status_signal_ch
         '''
-        print('statusbar_signal_chn_update')
         samp_value = self.settings['comboBox_samp_channel']
         ref_value = self.settings['comboBox_ref_channel']
         
@@ -6334,10 +6318,6 @@ class QCMApp(QMainWindow):
         self.ui.spinBox_settings_mechanics_nhcalc_n1.setValue(self.settings['spinBox_settings_mechanics_nhcalc_n1'])
         self.ui.spinBox_settings_mechanics_nhcalc_n2.setValue(self.settings['spinBox_settings_mechanics_nhcalc_n2'])
         self.ui.spinBox_settings_mechanics_nhcalc_n3.setValue(self.settings['spinBox_settings_mechanics_nhcalc_n3'])
-
-        # self.ui.comboBox_settings_mechanics_refG.setCurrentIndex(self.ui.comboBox_settings_mechanics_refG.findData(self.settings['comboBox_settings_mechanics_refG']))
-        self.load_comboBox(self.ui.comboBox_settings_mechanics_refG)
-
 
         self.ui.checkBox_settings_mechanics_witherror.setChecked(self.settings['checkBox_settings_mechanics_witherror'])
 

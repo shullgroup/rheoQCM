@@ -3470,29 +3470,6 @@ border-image: url(:/button/rc/plus_p.svg);
                     </widget>
                    </item>
                    <item>
-                    <widget class="QLabel" name="label_settings_mechanics_refG">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="text">
-                      <string>Reference</string>
-                     </property>
-                     <property name="buddy">
-                      <cstring>comboBox_settings_mechanics_refG</cstring>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QComboBox" name="comboBox_settings_mechanics_refG">
-                     <property name="currentIndex">
-                      <number>-1</number>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
                     <spacer name="horizontalSpacer_11">
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>

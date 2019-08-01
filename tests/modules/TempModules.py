@@ -35,7 +35,7 @@ class NITempSensor():
         self.nsamples = device_params['nsamples']
 
         if not self.nsamples:
-            print('device is not found or not available.')
+            logger.warning('device is not found or not available.')
             return
 
         # init task
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         
         nsample = devices_dict.get(device.product_type, [])
         if not nsample:
-            print('device is not found of not available.')
+            logger.warning('device is not found of not available.')
             return
 
         thrmcpl_chan = device.name + '/' + ai_channel
