@@ -10,6 +10,9 @@ import numpy as np
 import scipy.optimize as optimize
 import matplotlib.pyplot as plt
 import pandas as pd
+from kww import kwwc, kwws  # from http://apps.jcns.fz-juelich.de/kww
+# kwwc returns: integral from 0 to +infinity dt cos(omega*t) exp(-t^beta)
+# kwws returns: integral from 0 to +infinity dt sin(omega*t) exp(-t^beta)
 
 Zq = 8.84e6  # shear acoustic impedance of at cut quartz
 f1 = 5e6  # fundamental resonant frequency
@@ -787,32 +790,56 @@ def bulk_props(delfstar):
     return [grho3, phi]
 
 
-def springpot(f, sp_parms):
+def gstar_maxwell(wtau):  # Maxwell element
+    return 1j*wtau/(1+1j*wtau)
+
+
+def gstar_kww_single(wtau, beta):  # Transform of the KWW function
+    return wtau*(kwws(wtau, beta)+1j*kwwc(wtau, beta)) 
+gstar_kww = np.vectorize(gstar_kww_single)
+
+def springpot(w, sp_parms):
     # this function supports a combination of different springpot elments
-    # combined in series, and then in parallel.  For example, if typ is
+    # combined in series, and then in parallel.  For example, if type is
     # [1,2,3],  there are three branches
     # in parallel with one another:  the first one is element 1, the
     # second one is a series comination of eleents 2 and 3, and the third
     # one is a series combination of 4, 5 and 6.
-    fref = sp_parms['fref']
-    phi = sp_parms['phi']
-    E = sp_parms['E']
-    typ = sp_parms['typ']
-    nf = f.shape[0]  # number of frequencies
-    n_br = typ.shape[0]  # number of series branches
-    n_sp = typ.sum()  # number of springpot elements
-    sp_comp = np.empty((nf, n_sp), dtype=np.complex)  # element compliance
-    br_E = np.empty((nf, n_br), dtype=np.complex)  # branch stiffness
+    
+    # specify which elements are kww or Maxwell elements
+    kww = sp_parms.get('kww',[])
+    maxwell = sp_parms.get('maxwell',[])
+    
+    # beta doesn't exist for maxwell element
+    beta = sp_parms.get('beta',[0]) # 1 be default indicates mawell elment
+    type = sp_parms.get('type',[1]) # single element by default
+    
+    # make values numpy arrays if they aren't already
+    tau = np.asarray(sp_parms['tau']).reshape(1, -1)[0,:]
+    beta = np.asarray(beta).reshape(1, -1)[0,:]
+    g0 = np.asarray(sp_parms['g0']).reshape(1, -1)[0,:]
+    type = np.asarray(type).reshape(1, -1)[0,:]
+    
+    nw = len(w)  # number of frequencies
+    n_br = len(type)  # number of series branches
+    n_sp = type.sum()  # number of springpot elements
+    sp_comp = np.empty((nw, n_sp), dtype=np.complex)  # element compliance
+    br_g = np.empty((nw, n_br), dtype=np.complex)  # branch stiffness
 
     for i in np.arange(n_sp):
-        sp_comp[:, i] = 1/(E[i]*(1j*(f/fref)) ** (phi[i]/90))
+        if i in maxwell:  # Maxwell element
+            sp_comp[:, i] = 1/(g0[i]*gstar_maxwell(w*tau[i]))            
+        elif i in kww:  #  kww (stretched exponential) elment
+            sp_comp[:, i] = 1/(g0[i]*gstar_kww(w*tau[i], beta[i]))
+        else:  # power law springpot element
+            sp_comp[:, i] = 1/(g0[i]*(1j*w*tau[i]) ** beta[i])
 
-    sp_vec = np.append(0, typ.cumsum())
+    sp_vec = np.append(0, type.cumsum())
     for i in np.arange(n_br):
         sp_i = np.arange(sp_vec[i], sp_vec[i+1])
-        br_E[:, i] = 1/sp_comp[:, sp_i].sum(1)
+        br_g[:, i] = 1/sp_comp[:, sp_i].sum(1)
 
-    return br_E.sum(1)
+    return br_g.sum(1)
 
 
 def springpot_f(sp_parms):
@@ -838,3 +865,5 @@ def run_from_ipython():
         return True
     except NameError:
         return False
+    
+
