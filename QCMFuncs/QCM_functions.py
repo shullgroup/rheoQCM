@@ -798,6 +798,7 @@ def gstar_kww_single(wtau, beta):  # Transform of the KWW function
     return wtau*(kwws(wtau, beta)+1j*kwwc(wtau, beta)) 
 gstar_kww = np.vectorize(gstar_kww_single)
 
+
 def springpot(w, sp_parms):
     # this function supports a combination of different springpot elments
     # combined in series, and then in parallel.  For example, if type is
@@ -812,17 +813,18 @@ def springpot(w, sp_parms):
     
     # beta doesn't exist for maxwell element
     beta = sp_parms.get('beta',[0]) # 1 be default indicates mawell elment
-    type = sp_parms.get('type',[1]) # single element by default
+    # type is a build in function name. we can try to use other name
+    sp_type = sp_parms.get('type',[1]) # single element by default
     
     # make values numpy arrays if they aren't already
     tau = np.asarray(sp_parms['tau']).reshape(1, -1)[0,:]
     beta = np.asarray(beta).reshape(1, -1)[0,:]
     g0 = np.asarray(sp_parms['g0']).reshape(1, -1)[0,:]
-    type = np.asarray(type).reshape(1, -1)[0,:]
+    sp_type = np.asarray(sp_type).reshape(1, -1)[0,:]
     
     nw = len(w)  # number of frequencies
-    n_br = len(type)  # number of series branches
-    n_sp = type.sum()  # number of springpot elements
+    n_br = len(sp_type)  # number of series branches
+    n_sp = sp_type.sum()  # number of springpot elements
     sp_comp = np.empty((nw, n_sp), dtype=np.complex)  # element compliance
     br_g = np.empty((nw, n_br), dtype=np.complex)  # branch stiffness
 

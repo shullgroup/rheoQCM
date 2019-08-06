@@ -4,7 +4,9 @@ This is the main code of the QCM acquization program
 '''
 
 import os
+import sys
 import subprocess
+import traceback
 
 import logging
 import logging.config
@@ -25,7 +27,7 @@ import pandas as pd
 import scipy.signal
 # from collections import OrderedDict
 # import types
-from PyQt5.QtCore import pyqtSlot, Qt, QEvent, QTimer, QEventLoop, QCoreApplication, QSize
+from PyQt5.QtCore import pyqtSlot, Qt, QEvent, QTimer, QEventLoop, QCoreApplication, QSize, qFatal, QT_VERSION 
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QMainWindow, QFileDialog, QActionGroup, QComboBox, QCheckBox, QTabBar, QTabWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLineEdit, QCheckBox, QComboBox, QSpinBox, QDoubleSpinBox, QRadioButton, QMenu, QAction, QMessageBox, QTableWidgetItem, QSizePolicy, QFrame, QLabel, QPlainTextEdit
 )
@@ -339,7 +341,7 @@ class QCMApp(QMainWindow):
                 sizePolicy.setVerticalStretch(1)
                 sizePolicy.setHeightForWidth(getattr(self.ui, 'frame_sp'+harm).sizePolicy().hasHeightForWidth())
                 getattr(self.ui, 'frame_sp'+harm).setSizePolicy(sizePolicy)
-                getattr(self.ui, 'frame_sp'+harm).setMinimumSize(QSize(0, 100))
+                # getattr(self.ui, 'frame_sp'+harm).setMinimumSize(QSize(0, 100))
                 getattr(self.ui, 'frame_sp'+harm).setMaximumSize(QSize(16777215, 400))
                 getattr(self.ui, 'frame_sp'+harm).setFrameShape(QFrame.StyledPanel)
                 getattr(self.ui, 'frame_sp'+harm).setFrameShadow(QFrame.Sunken)
@@ -6091,15 +6093,21 @@ class QCMApp(QMainWindow):
         '''
         load those widgets don't require special setup
         find the type by widget's name
-        #TODO
         '''
         for name in name_list:
+            obj = getattr(self.ui, name)
             if name.startswith('lineEdit_'):
-                getattr(self.ui, name).setText(self.settings[name])
+                obj.setText(self.settings[name])
             elif name.startswith('checkBox_') or name.startswith('radioButton_'):
-                getattr(self.ui, name).setChecked(self.settings[name])
-
-
+                obj.setChecked(self.settings[name])
+            elif name.startswith('dateTimeEdit_'):
+                obj.setDateTime(datetime.datetime.strptime(self.settings[name], config_default['time_str_format']))
+            elif name.startswith('spinBox_'):
+                obj.setText(self.settings[name])
+            elif name.startswith('plainTextEdit_'):
+                obj.setPlainText(self.settings[name])
+            elif name.startswith('comboBox_'):
+                self.load_comboBox(obj)
 
 
     def load_settings(self):
@@ -6149,21 +6157,7 @@ class QCMApp(QMainWindow):
 
 
         ## following data is read from self.settings
-        # # hide harmonic related widgets which > max_disp_harmonic & < max_harmonic
-        # for i in range(self.settings['max_disp_harmonic']+2, self.settings['max_harmonic']+2, 2):
-        #     logger.info(i) 
-        #     getattr(self.ui, 'checkBox_harm' +str(i)).setVisible(False)
-        #     getattr(self.ui, 'lineEdit_startf' +str(i)).setVisible(False)
-        #     getattr(self.ui, 'lineEdit_endf' +str(i)).setVisible(False)
-        #     getattr(self.ui, 'lineEdit_startf' +str(i) + '_r').setVisible(False)
-        #     getattr(self.ui, 'lineEdit_endf' +str(i) + '_r').setVisible(False)
-        #     getattr(self.ui, 'tab_settings_settings_harm' +str(i)).setVisible(False)
-        #     getattr(self.ui, 'checkBox_plt1_h' +str(i)).setVisible(False)
-        #     getattr(self.ui, 'checkBox_plt2_h' +str(i)).setVisible(False)
-        #     getattr(self.ui, 'tab_settings_data_harm_' +str(i)).setVisible(False)
-        #     # more to be added here
-
-
+ 
         # load display_mode
         self.load_comboBox(self.ui.comboBox_settings_control_dispmode)
 
@@ -6251,6 +6245,7 @@ class QCMApp(QMainWindow):
         try:
             self.load_comboBox(self.ui.comboBox_tempdevice)
         except:
+            logger.warning('No tempdevice found.')
             pass
         self.load_comboBox(self.ui.comboBox_thrmcpltype)
         # update display on label_temp_devthrmcpl
@@ -6911,64 +6906,32 @@ class QCMApp(QMainWindow):
 
 
 if __name__ == '__main__':
-    import sys
-    import traceback
-    import logging
-    import logging.config
+    # import sys
+    # import traceback
+    # import logging
+    # import logging.config
 
     # set logger
     setup_logging()
 
     # Get the logger specified in the file
     logger = logging.getLogger(__name__)
-    
-    # ####### test 1 ############
-    # def exit_func(arg):
-    #     sys.exit(arg)
-    
-    # app = QApplication(sys.argv)
-    # qcm_app = QCMApp()
-    # qcm_app.show()
-    # try:
-    #     exit_func(app.exec_())
-    # except Exception as err:
-    #     print('Exception except')
-    #     # traceback.print_tb(err.__traceback__)
-    #     logger.error('Exception occurred', exc_info=True)
-    #     logger.exception('Exception occurred')
-    #     raise
-    # finally:
-    #     print('finally')
-    #     logger.exception('finally Exception occurred')
-    #     sys.exit(app.exec_())
 
+    # replace system exception hook
+    if QT_VERSION >= 0x50501:
+        sys._excepthook = sys.excepthook 
+        def exception_hook(exctype, value, traceback):
+            print(exctype, value, traceback)
+            # logger.exception('Exception occurred')
+            logger.error('Exceptiion error', exc_info=(exctype, value, traceback))
+            qFatal('sdfkd')
+            sys._excepthook(exctype, value, traceback) 
+            sys.exit(1) 
+        sys.excepthook = exception_hook 
 
-
-
-    # exit(0)
-    ########## test 2 ###################
-
-    try:
-        app = QApplication(sys.argv)
-        qcm_app = QCMApp()
-        print('aaa')
-        try:
-            print('bbb')
-            qcm_app.show()
-            print('ccc')
-            sys.exit(app.exec_())
-        except:
-            print('app except')
-            logger.exception('Exception occurred')
-    except Exception as err:
-        print('Exception except')
-        # traceback.print_tb(err.__traceback__)
-        logger.error('Exception occurred', exc_info=True)
-        logger.exception('Exception occurred')
-    # finally:
-    #     print('finally')
-    #     logger.exception('finally Exception occurred')
-    #     sys.exit(app.exec_())
-    #     print('end')
+    app = QApplication(sys.argv)
+    qcm_app = QCMApp()
+    qcm_app.show()
+    sys.exit(app.exec_())
 
 

@@ -128,7 +128,7 @@ def index_from_str(idx_str, chn_idx, join_segs=True):
             # return thel list
             return [sorted(list(set(ind) & set(chn_idx))) for ind in idx]
     except Exception as err:
-        logger.exception('exception in index_from_str')
+        logger.warning('exception in index_from_str')
         return idx
 
 

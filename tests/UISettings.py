@@ -160,6 +160,14 @@ config_default = {
         'comboBox_settings_data_ref_tempmode',
         'comboBox_settings_data_ref_fitttype',
 
+        # temperary hide unfinished part
+        'tabWidget_settings_data_markindex',
+        'verticalSpacer_18',
+        'pushButton_settings_data_marksadd',
+        'pushButton_settings_data_marksdel',
+        'pushButton_settings_data_marksclear',
+        'verticalSpacer_19',
+
         # 'toolButton_settings_mechanics_solve',
         # 'groupBox_nhplot',
         # 'groupBox_settings_mechanics_nhcalc',
