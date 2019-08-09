@@ -12,7 +12,7 @@ QCMFuncs/test.pdf
 QCMFuncs/test.pptx
 
 # test files
-settings_init.json
+config_default.json
 
 # myVNA calibration file
 *.myVNA.cal

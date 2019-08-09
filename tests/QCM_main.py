@@ -38,6 +38,7 @@ from MainWindow import Ui_MainWindow # UI from QT5
 from UISettings import config_default # UI basic settings
 from UISettings import settings_default
 from UISettings import harm_tree as harm_tree_default
+from UISettings import logger_config as logger_config_default
 
 
 config_default_json = os.path.join(os.getcwd(), config_default['default_config_file_name'])
@@ -49,10 +50,12 @@ if os.path.exists(config_default_json):
                 # overwrite keys to config_default
                 if key in config_default:
                     config_default[key] = val
+        logger.warning('use user config.')
     except:
+        logger.warning('failed to load user config file.')
         pass
 else:
-    print('use default config_default')
+    logger.warning('use config_default')
 del config_default_json
 if 'f' in locals():
     del f
@@ -135,7 +138,7 @@ def setup_logging():
             with open(config_default['logger_setting_config']['config_file'], 'r') as f:
                 logger_config = json.load(f)
         else: # default setting
-                logger_config = config_default['logger_config']
+                logger_config = logger_config_default
         
         logging.config.dictConfig(logger_config)
     except Exception as e:
@@ -1060,6 +1063,9 @@ class QCMApp(QMainWindow):
 
        # set treeWidget_settings_data_refs expanded
         self.ui.treeWidget_settings_data_refs.expandToDepth(0)
+
+        # pushButton_settings_data_marknpts
+        self.ui.pushButton_settings_data_marknpts.clicked.connect(self.marknpts)
 
         #endregion
 
@@ -3849,6 +3855,29 @@ class QCMApp(QMainWindow):
             pass
 
 
+    def marknpts(self):
+        '''
+        mark n points by the settings
+        There are two ways:
+        1. clear all marks and then set new
+        2. when npt == 0, it is always remove all marks
+        FOR NOW, use way 2.
+        '''
+
+        if not self.data_saver.path:
+            print('No data available!')
+            return
+
+        # get settings (the widgets don't saved in self.settings)
+        npt = self.ui.spinBox_settings_data_marknpts.value()
+        marklinear = self.ui.radioButton_settings_data_marklinear.isChecked()
+        marklog = self.ui.radioButton_settings_data_marklog.isChecked()
+        print(npt, marklinear, marklog)
+
+        
+
+
+
     #### mech related funcs ###
     def film_construction_mode_switch(self):
         '''
@@ -6098,12 +6127,12 @@ class QCMApp(QMainWindow):
             obj = getattr(self.ui, name)
             if name.startswith('lineEdit_'):
                 obj.setText(self.settings[name])
-            elif name.startswith('checkBox_') or name.startswith('radioButton_'):
-                obj.setChecked(self.settings[name])
+            elif name.startswith(('checkBox_', 'radioButton_')):
+                obj.setChecked(self.settings.get(name, False))
             elif name.startswith('dateTimeEdit_'):
                 obj.setDateTime(datetime.datetime.strptime(self.settings[name], config_default['time_str_format']))
-            elif name.startswith('spinBox_'):
-                obj.setText(self.settings[name])
+            elif name.startswith(('spinBox_', 'doubleSpinBox_')):
+                obj.setValue(self.settings[name])
             elif name.startswith('plainTextEdit_'):
                 obj.setPlainText(self.settings[name])
             elif name.startswith('comboBox_'):
@@ -6159,11 +6188,15 @@ class QCMApp(QMainWindow):
         ## following data is read from self.settings
  
         # load display_mode
-        self.load_comboBox(self.ui.comboBox_settings_control_dispmode)
+        self.load_normal_widgets(['comboBox_settings_control_dispmode'])
 
         # load harm state
         for harm in self.all_harm_list(as_str=True):
             # settings/control/Harmonics
+            # self.load_normal_widgets([
+            #     'checkBox_harm' + harm,
+            #     'checkBox_tree_harm' + harm,
+            # ])
 
             getattr(self.ui, 'checkBox_harm' + harm).setChecked(self.settings.get('checkBox_harm' + harm, False))
             getattr(self.ui, 'checkBox_tree_harm' + harm).setChecked(self.settings.get('checkBox_harm' + harm, False))
@@ -6181,7 +6214,9 @@ class QCMApp(QMainWindow):
             logger.info(type(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], config_default['time_str_format']))) 
             logger.info(type(datetime.datetime.now())) 
             # exit(0)
-            self.ui.dateTimeEdit_reftime.setDateTime(datetime.datetime.strptime(self.settings['dateTimeEdit_reftime'], config_default['time_str_format']))
+            self.load_normal_widgets([
+                'dateTimeEdit_reftime',
+            ])
 
         else: # reference time is not defined
             # use current time
@@ -6191,31 +6226,29 @@ class QCMApp(QMainWindow):
         if temp:
             self.settings['dateTimeEdit_settings_data_t0shifted'] = temp
 
-        # load default record interval
-        self.ui.spinBox_recordinterval.setValue(self.settings['spinBox_recordinterval'])
-        # load default spectra refresh resolution
-        self.ui.spinBox_refreshresolution.setValue(self.settings['spinBox_refreshresolution'])
+        self.load_normal_widgets([
+            'spinBox_recordinterval', # load default record interval
+            'spinBox_refreshresolution', # load default spectra refresh resolution
+        ])
+        
         # update spinBox_scaninterval
         self.set_recording_time()
+        
+        self.load_normal_widgets([
+            'checkBox_dynamicfit', # load default fitting and display options
+            'spinBox_fitfactor', # load default fit factor range
+            'checkBox_dynamicfitbyharm', # load default dynamicfitbyharm
+            'checkBox_fitfactorbyharm',  # load default fitfactorbyharm
+            'plainTextEdit_settings_samplediscription', # plainTextEdit_settings_samplediscription
+        ])
 
-        # load default fitting and display options
-        self.ui.checkBox_dynamicfit.setChecked(self.settings['checkBox_dynamicfit'])
-        # load default fit factor range
-        self.ui.spinBox_fitfactor.setValue(self.settings['spinBox_fitfactor'])
-        # load default dynamicfitbyharm
-        self.ui.checkBox_dynamicfitbyharm.setChecked(self.settings['checkBox_dynamicfitbyharm'])
-        # load default fitfactorbyharm
-        self.ui.checkBox_fitfactorbyharm.setChecked(self.settings['checkBox_fitfactorbyharm'])
-        # plainTextEdit_settings_samplediscription
-        self.ui.plainTextEdit_settings_samplediscription.setPlainText(self.settings['plainTextEdit_settings_samplediscription'])
+        self.load_normal_widgets([
+            'comboBox_base_frequency', # load this first to create self.settings['freq_range'] & self.settings['freq_span']
+            'comboBox_bandwidth', 
+        ])
 
-        # load this first to create self.settings['freq_range'] & self.settings['freq_span']
-        self.load_comboBox(self.ui.comboBox_base_frequency)
-        self.load_comboBox(self.ui.comboBox_bandwidth)
         # update statusbar
         self.statusbar_f0bw_update()
-        # update crystalcut
-        self.load_comboBox(self.ui.comboBox_crystalcut)
 
         # create self.settings['freq_range'].
         # this has to be initated before any
@@ -6225,9 +6258,13 @@ class QCMApp(QMainWindow):
         # update frequencies display
         self.update_frequencies()
 
-        # load default VNA settings
-        self.load_comboBox(self.ui.comboBox_samp_channel)
-        self.load_comboBox(self.ui.comboBox_ref_channel)
+        self.load_normal_widgets([
+            # update crystalcut
+            'comboBox_crystalcut', 
+            # load default VNA settings
+            'comboBox_samp_channel', 
+            'comboBox_ref_channel',
+        ])
 
         # show samp & ref related widgets
         self.setvisible_samprefwidgets()
@@ -6238,55 +6275,64 @@ class QCMApp(QMainWindow):
         self.update_harmonic_tab()
 
         # load default temperature settings
-        self.ui.checkBox_settings_temp_sensor.setChecked(self.settings['checkBox_settings_temp_sensor'])
-
-        self.load_comboBox(self.ui.comboBox_tempmodule)
-
+        self.load_normal_widgets([
+            'checkBox_settings_temp_sensor',
+            'comboBox_tempmodule',
+            'comboBox_thrmcpltype',
+        ])
         try:
             self.load_comboBox(self.ui.comboBox_tempdevice)
         except:
             logger.warning('No tempdevice found.')
             pass
-        self.load_comboBox(self.ui.comboBox_thrmcpltype)
         # update display on label_temp_devthrmcpl
         self.set_label_temp_devthrmcpl() # this should be after temp_sensor & thrmcpl
 
         # load default plots settings
-        self.load_comboBox(self.ui.comboBox_timeunit)
-        self.load_comboBox(self.ui.comboBox_tempunit)
-        self.load_comboBox(self.ui.comboBox_xscale)
-        self.load_comboBox(self.ui.comboBox_yscale)
-
-        self.ui.checkBox_linkx.setChecked(self.settings['checkBox_linkx'])
+        self.load_normal_widgets([
+            'comboBox_timeunit',
+            'comboBox_tempunit',
+            'comboBox_xscale',
+            'comboBox_yscale',
+            'checkBox_linkx',
+        ])
 
         # set default displaying of spectra show options
-        self.ui.radioButton_spectra_showBp.setChecked(self.settings['radioButton_spectra_showBp'])
-        self.ui.radioButton_spectra_showpolar.setChecked(self.settings['radioButton_spectra_showpolar'])
-        self.ui.checkBox_spectra_showchi.setChecked(self.settings['checkBox_spectra_showchi'])
+        self.load_normal_widgets([
+            'radioButton_spectra_showBp',
+            'radioButton_spectra_showpolar',
+            'checkBox_spectra_showchi',
+        ])
 
         # set data radioButton_data_showall
-        self.ui.radioButton_data_showall.setChecked(self.settings['radioButton_data_showall'])
-        self.ui.radioButton_data_showmarked.setChecked(self.settings['radioButton_data_showmarked'])
+        self.load_normal_widgets([
+            'radioButton_data_showall',
+            'radioButton_data_showmarked',
+        ])
 
-        # set default displaying of plot 1 options
-        self.load_comboBox(self.ui.comboBox_plt1_optsy)
-        self.load_comboBox(self.ui.comboBox_plt1_optsx)
-
-        # set default displaying of plot 2 options
-        self.load_comboBox(self.ui.comboBox_plt2_optsy)
-        self.load_comboBox(self.ui.comboBox_plt2_optsx)
+        self.load_normal_widgets([
+            # set default displaying of plot 1 options
+            'comboBox_plt1_optsy',
+            'comboBox_plt1_optsx',
+            # set default displaying of plot 2 options
+            'comboBox_plt2_optsy',
+            'comboBox_plt2_optsx',
+        ])
 
         # set checkBox_plt<1 and 2>_h<harm>
         for harm in self.all_harm_list(as_str=True):
-            getattr(self.ui, 'checkBox_plt1_h' + harm).setChecked(self.settings.get('checkBox_plt1_h' + harm, False))
-            getattr(self.ui, 'checkBox_plt2_h' + harm).setChecked(self.settings.get('checkBox_plt1_h' + harm, False))
+            self.load_normal_widgets([
+                'checkBox_plt1_h' + harm, 
+                'checkBox_plt2_h' + harm, 
+            ])
 
         # set radioButton_plt<n>_samp/ref
-        self.ui.radioButton_plt1_samp.setChecked(self.settings['radioButton_plt1_samp'])
-        self.ui.radioButton_plt1_ref.setChecked(self.settings['radioButton_plt1_ref'])
-        self.ui.radioButton_plt2_samp.setChecked(self.settings['radioButton_plt2_samp'])
-        self.ui.radioButton_plt2_ref.setChecked(self.settings['radioButton_plt2_ref'])
-
+        self.load_normal_widgets([
+            'radioButton_plt1_samp',
+            'radioButton_plt1_ref',
+            'radioButton_plt2_samp',
+            'radioButton_plt2_ref',
+        ])
 
         # load t0_shifted time
         if 'dateTimeEdit_settings_data_t0shifted' in self.settings: # t0_shifted has been defined
@@ -6305,37 +6351,31 @@ class QCMApp(QMainWindow):
         self.update_mpl_plt12()
 
         # settings_mechanics
-        self.ui.checkBox_settings_mech_liveupdate.setChecked(self.settings['checkBox_settings_mech_liveupdate'])
-
         for harm in self.all_harm_list(as_str=True):
-            getattr(self.ui, 'checkBox_nhplot' + harm).setChecked(self.settings.get('checkBox_nhplot' + harm, False))
+            self.load_normal_widgets([
+                'checkBox_nhplot' + harm,
+            ])
 
-        self.ui.spinBox_settings_mechanics_nhcalc_n1.setValue(self.settings['spinBox_settings_mechanics_nhcalc_n1'])
-        self.ui.spinBox_settings_mechanics_nhcalc_n2.setValue(self.settings['spinBox_settings_mechanics_nhcalc_n2'])
-        self.ui.spinBox_settings_mechanics_nhcalc_n3.setValue(self.settings['spinBox_settings_mechanics_nhcalc_n3'])
-
-        self.ui.checkBox_settings_mechanics_witherror.setChecked(self.settings['checkBox_settings_mechanics_witherror'])
-
-        self.load_comboBox(self.ui.comboBox_settings_mechanics_selectmodel)
-
-        self.load_comboBox(self.ui.comboBox_settings_mechanics_calctype)
-
-        self.ui.doubleSpinBox_settings_mechanics_bulklimit.setValue(self.settings['doubleSpinBox_settings_mechanics_bulklimit'])
+        self.load_normal_widgets([
+            'checkBox_settings_mech_liveupdate',
+            'spinBox_settings_mechanics_nhcalc_n1',
+            'spinBox_settings_mechanics_nhcalc_n2',
+            'spinBox_settings_mechanics_nhcalc_n3',
+            'checkBox_settings_mechanics_witherror',
+            'comboBox_settings_mechanics_selectmodel',
+            'comboBox_settings_mechanics_calctype',
+            'doubleSpinBox_settings_mechanics_bulklimit',
+            # contour
+            'comboBox_settings_mechanics_contourdata',
+            'comboBox_settings_mechanics_contourtype',
+            'comboBox_settings_mechanics_contourcmap',
+        ])
 
         # spinBox_mech_expertmode_layernum
         self.ui.spinBox_mech_expertmode_layernum.setValue(self.get_mechchndata('spinBox_mech_expertmode_layernum'))
         
         # load film layers data 
         self.load_film_layers_widgets()
-
-        # comboBox_settings_mechanics_contourdata
-        self.load_comboBox(self.ui.comboBox_settings_mechanics_contourdata)
-
-        # comboBox_settings_mechanics_contourtype
-        self.load_comboBox(self.ui.comboBox_settings_mechanics_contourtype)
-
-        # comboBox_settings_mechanics_contourcmap
-        self.load_comboBox(self.ui.comboBox_settings_mechanics_contourcmap)
 
         # tableWidget_settings_mechanics_contoursettings
         self.set_init_table_value(
@@ -6924,7 +6964,7 @@ if __name__ == '__main__':
             print(exctype, value, traceback)
             # logger.exception('Exception occurred')
             logger.error('Exceptiion error', exc_info=(exctype, value, traceback))
-            qFatal('sdfkd')
+            qFatal('UI error occured!')
             sys._excepthook(exctype, value, traceback) 
             sys.exit(1) 
         sys.excepthook = exception_hook 

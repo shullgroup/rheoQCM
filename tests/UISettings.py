@@ -161,7 +161,9 @@ config_default = {
         'comboBox_settings_data_ref_fitttype',
 
         # temperary hide unfinished part
-        'tabWidget_settings_data_markindex',
+        # 'tabWidget_settings_data_markindex',
+        'textEdit_settings_data_sampmarks',
+        'textEdit_settings_data_refmarks',
         'verticalSpacer_18',
         'pushButton_settings_data_marksadd',
         'pushButton_settings_data_marksdel',
@@ -689,54 +691,6 @@ config_default = {
     #     current_span * (1 - change_thresh[0/1]) # 
     # )
 
-    ########### logging settings ##############
-
-    'logger_config': {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': {
-            'simple': {
-                'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            },
-        },    
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'level': 'ERROR',
-                'formatter': 'simple',
-                'stream': 'ext://sys.stdout',
-            },    
-            'info_file_handler': {
-                'class': 'logging.handlers.RotatingFileHandler',
-                'level': 'INFO',
-                'formatter': 'simple',
-                'filename': 'info.log',
-                'maxBytes': 1048576,
-                'backupCount': 2,
-                'encoding': 'utf8',
-            },    
-            'error_file_handler': {
-                'class': 'logging.handlers.RotatingFileHandler',
-                'level': 'ERROR',
-                'formatter': 'simple',
-                'filename': 'err.log',
-                'maxBytes': 1048576,
-                'backupCount': 2,
-                'encoding': 'utf8',
-            }
-        },    
-        'loggers': {
-            'console_logger': {
-                'level': 'ERROR',
-                'handlers': ['console'],
-                'propagate': False,
-            }
-        },    
-        'root': {
-            'level': 'INFO',
-            'handlers': ['console', 'info_file_handler', 'error_file_handler'],
-        },
-    },
 }
 
 
@@ -949,3 +903,51 @@ for harm in range(1, config_default['max_harmonic']+2, 2):
 
 ###########################################
 
+########### logging settings ##############
+
+logger_config = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        },
+    },    
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'ERROR',
+            'formatter': 'simple',
+            'stream': 'ext://sys.stdout',
+        },    
+        'info_file_handler': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'level': 'INFO',
+            'formatter': 'simple',
+            'filename': 'info.log',
+            'maxBytes': 1048576,
+            'backupCount': 2,
+            'encoding': 'utf8',
+        },    
+        'error_file_handler': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'level': 'ERROR',
+            'formatter': 'simple',
+            'filename': 'err.log',
+            'maxBytes': 1048576,
+            'backupCount': 2,
+            'encoding': 'utf8',
+        }
+    },    
+    'loggers': {
+        'console_logger': {
+            'level': 'ERROR',
+            'handlers': ['console'],
+            'propagate': False,
+        }
+    },    
+    'root': {
+        'level': 'INFO',
+        'handlers': ['console', 'info_file_handler', 'error_file_handler'],
+    },
+}
