@@ -2373,9 +2373,16 @@ border: none;
                      </widget>
                     </item>
                     <item>
-                     <widget class="QPushButton" name="pushButton_settings_data_marknpts">
+                     <widget class="QPushButton" name="pushButton_settings_data_marknptss">
                       <property name="text">
-                       <string>Mark</string>
+                       <string>Mark S</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_settings_data_marknptsr">
+                      <property name="text">
+                       <string>Mark R</string>
                       </property>
                      </widget>
                     </item>

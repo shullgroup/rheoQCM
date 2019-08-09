@@ -873,9 +873,12 @@ class Ui_MainWindow(object):
         self.radioButton_settings_data_marklog = QtWidgets.QRadioButton(self.frame_settings_data_marknpts)
         self.radioButton_settings_data_marklog.setObjectName("radioButton_settings_data_marklog")
         self.frame_2.addWidget(self.radioButton_settings_data_marklog)
-        self.pushButton_settings_data_marknpts = QtWidgets.QPushButton(self.frame_settings_data_marknpts)
-        self.pushButton_settings_data_marknpts.setObjectName("pushButton_settings_data_marknpts")
-        self.frame_2.addWidget(self.pushButton_settings_data_marknpts)
+        self.pushButton_settings_data_marknptss = QtWidgets.QPushButton(self.frame_settings_data_marknpts)
+        self.pushButton_settings_data_marknptss.setObjectName("pushButton_settings_data_marknptss")
+        self.frame_2.addWidget(self.pushButton_settings_data_marknptss)
+        self.pushButton_settings_data_marknptsr = QtWidgets.QPushButton(self.frame_settings_data_marknpts)
+        self.pushButton_settings_data_marknptsr.setObjectName("pushButton_settings_data_marknptsr")
+        self.frame_2.addWidget(self.pushButton_settings_data_marknptsr)
         self.verticalLayout_42.addWidget(self.frame_settings_data_marknpts)
         self.horizontalLayout_36 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_36.setObjectName("horizontalLayout_36")
@@ -2735,7 +2738,8 @@ class Ui_MainWindow(object):
         self.label_settings_data_marknpts.setText(_translate("MainWindow", "# of pts:"))
         self.radioButton_settings_data_marklinear.setText(_translate("MainWindow", "linear"))
         self.radioButton_settings_data_marklog.setText(_translate("MainWindow", "log"))
-        self.pushButton_settings_data_marknpts.setText(_translate("MainWindow", "Mark"))
+        self.pushButton_settings_data_marknptss.setText(_translate("MainWindow", "Mark S"))
+        self.pushButton_settings_data_marknptsr.setText(_translate("MainWindow", "Mark R"))
         self.textEdit_settings_data_sampmarks.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"

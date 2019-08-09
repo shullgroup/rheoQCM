@@ -1061,8 +1061,10 @@ class QCMApp(QMainWindow):
        # set treeWidget_settings_data_refs expanded
         self.ui.treeWidget_settings_data_refs.expandToDepth(0)
 
-        # pushButton_settings_data_marknpts
-        self.ui.pushButton_settings_data_marknpts.clicked.connect(self.marknpts)
+        # pushButton_settings_data_marknptss
+        self.ui.pushButton_settings_data_marknptss.clicked.connect(lambda: self.marknpts('samp'))
+        # pushButton_settings_data_marknptsr
+        self.ui.pushButton_settings_data_marknptsr.clicked.connect(lambda: self.marknpts('ref'))
 
         #endregion
 
@@ -3852,24 +3854,68 @@ class QCMApp(QMainWindow):
             pass
 
 
-    def marknpts(self):
+    def marknpts(self, chn_name):
         '''
         mark n points by the settings
         There are two ways:
-        1. clear all marks and then set new
-        2. when npt == 0, it is always remove all marks
-        FOR NOW, use way 2.
+        NOTE: This function doesn't clear previous marks
         '''
 
         if not self.data_saver.path:
-            print('No data available!')
+            logger.warning('No data available!')
             return
 
         # get settings (the widgets don't saved in self.settings)
         npt = self.ui.spinBox_settings_data_marknpts.value()
         marklinear = self.ui.radioButton_settings_data_marklinear.isChecked()
         marklog = self.ui.radioButton_settings_data_marklog.isChecked()
-        print(npt, marklinear, marklog)
+
+        if npt == 0: # no point to mark
+            return
+        
+        # get channel indices
+        chn_idx = self.data_saver.get_idx(chn_name).values # use list of index for comperison (ndarray)
+        # get channel t
+        chn_t = self.data_saver.get_t_s(chn_name).values # time in second (ndarray)
+        
+        if marklinear:
+            mark_t = np.linspace(chn_t[0], chn_t[-1], num=npt)
+        elif marklog:
+            mark_t = np.logspace(np.log10(chn_t[0]), np.log10(chn_t[-1]), num=npt)
+        else:
+            return
+
+        # find indices of t close to mark_t
+        mark_idx = np.zeros(mark_t.shape, dtype='int')
+        for i, t in enumerate(mark_t):
+            mark_idx[i] = np.argmin(np.abs(chn_t - t))
+        
+        # remove duplicate
+        mark_idx = np.unique(mark_idx)
+        
+        # apply mark_idx to chn_idx in case chn_idx not continous
+        mark_idx = list(chn_idx[mark_idx]) # ndarray to list
+
+        # make the sel_idx_dict
+        sel_idx_dict = {}
+        for harm in self.all_harm_list(as_str=True):
+            sel_idx_dict[harm] = mark_idx
+        
+        self.data_saver.selector_mark_sel(chn_name, sel_idx_dict, 1)
+
+        # plot data
+        self.update_mpl_plt12()
+        
+        
+
+
+
+
+
+
+
+
+
 
         
 
@@ -6961,7 +7007,7 @@ if __name__ == '__main__':
             print(exctype, value, traceback)
             # logger.exception('Exception occurred')
             logger.error('Exceptiion error', exc_info=(exctype, value, traceback))
-            qFatal('sdfkd')
+            qFatal('UI error occured.')
             sys._excepthook(exctype, value, traceback) 
             sys.exit(1) 
         sys.excepthook = exception_hook 
