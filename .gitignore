@@ -11,6 +11,7 @@ pyqt_gui_compile.bat
 QCMFuncs/test.pdf
 QCMFuncs/test.pptx
 
+
 # user setting files
 *.json
 

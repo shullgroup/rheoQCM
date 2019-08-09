@@ -162,11 +162,11 @@ config_default = {
 
         # temperary hide unfinished part
         'tabWidget_settings_data_markindex',
-        'verticalSpacer_18',
+        # 'verticalSpacer_18',
         'pushButton_settings_data_marksadd',
         'pushButton_settings_data_marksdel',
         'pushButton_settings_data_marksclear',
-        'verticalSpacer_19',
+        # 'verticalSpacer_19',
 
         # 'toolButton_settings_mechanics_solve',
         # 'groupBox_nhplot',

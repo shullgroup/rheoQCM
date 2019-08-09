@@ -2925,7 +2925,7 @@ class QCMApp(QMainWindow):
         # use all harms. the harmonics without data will be [] in sel_idx_dict
         harms = self.all_harm_list(as_str=True)
         logger.info(harms) 
-        # initiate sel_idx_dict. Since will will use all data points overwrite, it can be any shape dict
+        # initiate sel_idx_dict. Since we will use all data points overwrite, it can be any shape dict
         sel_idx_dict = {}
         sel_idx_dict = UIModules.sel_ind_dict(harms, sel_idx_dict, mode, marks)
         logger.info('sel_idx_dict from main: \n%s', sel_idx_dict) 

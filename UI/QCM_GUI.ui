@@ -2387,7 +2387,7 @@ border: none;
                    <item>
                     <widget class="QTabWidget" name="tabWidget_settings_data_markindex">
                      <property name="currentIndex">
-                      <number>1</number>
+                      <number>0</number>
                      </property>
                      <widget class="QWidget" name="tab_sampmarks">
                       <attribute name="title">
@@ -2542,7 +2542,7 @@ p, li { white-space: pre-wrap; }
                          <property name="sizeHint" stdset="0">
                           <size>
                            <width>20</width>
-                           <height>40</height>
+                           <height>0</height>
                           </size>
                          </property>
                         </spacer>
