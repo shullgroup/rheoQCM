@@ -2321,6 +2321,68 @@ border: none;
                   <number>0</number>
                  </property>
                  <item>
+                  <widget class="QFrame" name="frame_settings_data_marknpts">
+                   <layout class="QHBoxLayout" name="frame_2">
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="label_settings_data_marknpts">
+                      <property name="text">
+                       <string># of pts:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QSpinBox" name="spinBox_settings_data_marknpts">
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                      <property name="buttonSymbols">
+                       <enum>QAbstractSpinBox::NoButtons</enum>
+                      </property>
+                      <property name="maximum">
+                       <number>10000</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QRadioButton" name="radioButton_settings_data_marklinear">
+                      <property name="text">
+                       <string>linear</string>
+                      </property>
+                      <property name="checked">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QRadioButton" name="radioButton_settings_data_marklog">
+                      <property name="text">
+                       <string>log</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_settings_data_marknpts">
+                      <property name="text">
+                       <string>Mark</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
                   <layout class="QHBoxLayout" name="horizontalLayout_36">
                    <item>
                     <widget class="QTabWidget" name="tabWidget_settings_data_markindex">
@@ -2490,68 +2552,6 @@ p, li { white-space: pre-wrap; }
                     </layout>
                    </item>
                   </layout>
-                 </item>
-                 <item>
-                  <widget class="QFrame" name="frame_settings_data_marknpts">
-                   <layout class="QHBoxLayout" name="frame_2">
-                    <property name="leftMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <widget class="QLabel" name="label_settings_data_marknpts">
-                      <property name="text">
-                       <string># of pts:</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QSpinBox" name="spinBox_settings_data_marknpts">
-                      <property name="alignment">
-                       <set>Qt::AlignCenter</set>
-                      </property>
-                      <property name="buttonSymbols">
-                       <enum>QAbstractSpinBox::NoButtons</enum>
-                      </property>
-                      <property name="maximum">
-                       <number>10000</number>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QRadioButton" name="radioButton_settings_data_marklinear">
-                      <property name="text">
-                       <string>linear</string>
-                      </property>
-                      <property name="checked">
-                       <bool>true</bool>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QRadioButton" name="radioButton_settings_data_marklog">
-                      <property name="text">
-                       <string>log</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="pushButton_settings_data_marknpts">
-                      <property name="text">
-                       <string>Mark</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
                  </item>
                 </layout>
                 <zorder></zorder>
