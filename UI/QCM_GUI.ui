@@ -1483,8 +1483,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>286</width>
-                   <height>165</height>
+                   <width>98</width>
+                   <height>71</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1621,7 +1621,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>83</width>
+                   <width>98</width>
                    <height>71</height>
                   </rect>
                  </property>
@@ -2147,7 +2147,7 @@ border: none;
               <item>
                <widget class="QGroupBox" name="groupBox_settings_data_settings">
                 <property name="title">
-                 <string>Settings for data refit</string>
+                 <string>Data Settings</string>
                 </property>
                 <property name="flat">
                  <bool>true</bool>
@@ -2561,8 +2561,6 @@ p, li { white-space: pre-wrap; }
                   </layout>
                  </item>
                 </layout>
-                <zorder></zorder>
-                <zorder>frame_settings_data_marknpts</zorder>
                </widget>
               </item>
               <item>

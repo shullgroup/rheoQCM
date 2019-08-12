@@ -475,8 +475,8 @@ config_default = {
 
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {
-        'onelayer': 'Thin layer in air',
-        'twolayers': 'Thin layer in medium',
+        'onelayer': 'in air',
+        'twolayers': 'in medium',
         # 'bulk': 'Bulk material',
     },
 
@@ -721,7 +721,7 @@ config_default = {
                 'formatter': 'simple',
                 'filename': 'err.log',
                 'maxBytes': 1048576,
-                'backupCount': 2,
+                'backupCount': 1,
                 'encoding': 'utf8',
             }
         },    
