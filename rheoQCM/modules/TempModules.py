@@ -2,6 +2,9 @@ import nidaqmx
 # from nidaqmx import Task
 import numpy as np
 
+import logging
+logger = logging.getLogger(__name__)
+
 # another way to let the main code find the temp class in this file is just put a dict here
 class_list = {
     'NITempSensor': 'NITempSensor', # name to access / name to display
@@ -32,7 +35,7 @@ class NITempSensor():
         self.nsamples = device_params['nsamples']
 
         if not self.nsamples:
-            print('device is not found or not available.')
+            logger.warning('device is not found or not available.')
             return
 
         # init task
@@ -93,7 +96,7 @@ if __name__ == "__main__":
         
         nsample = devices_dict.get(device.product_type, [])
         if not nsample:
-            print('device is not found of not available.')
+            logger.warning('device is not found of not available.')
             return
 
         thrmcpl_chan = device.name + '/' + ai_channel
@@ -123,8 +126,10 @@ if __name__ == "__main__":
     ai_channel = 'ai0'
     thrmpl = 'J'
     temp = get_temp(device, ai_channel, thrmpl)
+    logger.info(temp) 
 
     tempsensor = TempSensor(device, ai_channel, thrmpl)
+    logger.info(tempsensor.get_temp()) 
 
     def test():
         plt.ion()
@@ -148,3 +153,4 @@ if __name__ == "__main__":
                 plt.scatter(i, np.mean(data), c='r')
                 plt.pause(0.05)
                 i += 1
+            logger.info(data) 

@@ -5,6 +5,8 @@ eg.: device.name ('Dev1'), device.product_category ('ProductCategory.USBDAQ'), d
 """
 
 import nidaqmx
+import logging
+logger = logging.getLogger(__name__)
 
 
 # add NI sensors into the dict and the code will check if the devices in its keys.
@@ -18,7 +20,7 @@ def list_devices():
     devices = []
     try: # TODO find way to test if device connected
         for device in system.devices:
-            print('Device Name: {0}, Product Category: {1}, Product Type: {2}'.format(
+            logger.info('Device Name: {0}, Product Category: {1}, Product Type: {2}'.format(
                 device.name, device.product_category, device.product_type))
             devices.append(device)
     except:
@@ -47,6 +49,7 @@ def device_info(devtype):
     '''
     return a single device 
     '''
+    logger.info('devtype %s', devtype) 
     devices = list_devices()
     for device in devices:
     #     if device.product_type != devtype:
