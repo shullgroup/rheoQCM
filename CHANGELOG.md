@@ -9,6 +9,7 @@
 ### Fixed
 
 - Correct some text in UI.
+- Fix raw doesn't find bug.
 
 ## [0.18.0] - 2019-08-09
 

@@ -675,7 +675,11 @@ class DataSaver:
             else:
                 temp = np.nan
 
-            self.raw = fh['raw/' + chn_name + '/' + str(queue_id) + '/' + harm][()]
+            if 'raw' in fh.keys() and chn_name in fh['raw'] and str(queue_id) in fh['raw/'+chn_name] and harm in fh['raw/' + chn_name + '/' + str(queue_id)]: # raw data exist
+                self.raw = fh['raw/' + chn_name + '/' + str(queue_id) + '/' + harm][()]
+            else: # raw data doesn't exist
+                self.raw = np.array([[np.nan], [np.nan], [np.nan]])
+                logger.warning('No raw data found for %s, %s, %s', chn_name, queue_id, harm)
         logger.info(type(self.raw)) 
         if with_t_temp:
             return [self.raw[0, :], self.raw[1, :], self.raw[2, :], t, temp]
