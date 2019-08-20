@@ -675,7 +675,7 @@ class DataSaver:
             else:
                 temp = np.nan
 
-            if 'raw' in fh.keys() and chn_name in fh['raw'] and str(queue_id) in fh['raw/'+chn_name] and harm in fh['raw/' + chn_name + '/' + str(queue_id)]: # raw data exist
+            if self._raw_exists(fh, chn_name, queue_id, harm): # raw data exist
                 self.raw = fh['raw/' + chn_name + '/' + str(queue_id) + '/' + harm][()]
             else: # raw data doesn't exist
                 self.raw = np.array([[np.nan], [np.nan], [np.nan]])
@@ -685,6 +685,17 @@ class DataSaver:
             return [self.raw[0, :], self.raw[1, :], self.raw[2, :], t, temp]
         else: 
             return [self.raw[0, :], self.raw[1, :], self.raw[2, :]]
+
+
+    def _raw_exists(self, file_handle, chn_name, queue_id, harm):
+        '''
+        check if corresponding raw data exists
+        file_handle: handle to the file
+        '''
+        if 'raw' in fh.keys() and chn_name in fh['raw'] and str(queue_id) in fh['raw/'+chn_name] and harm in fh['raw/' + chn_name + '/' + str(queue_id)]: 
+            return True
+        else:
+            return False
 
 
     def get_queue(self, chn_name, queue_id, col=''):
@@ -2092,8 +2103,8 @@ class DataSaver:
         with h5py.File(self.path, 'a') as fh:
             for harm, idxs in sel_idx_dict.items():
                 # delete from raw
-                for ind in idxs:
-                    if 'raw' in fh.keys() and chn_name in fh['raw'] and ind in df_chn.queue_id.index and str(int(df_chn.queue_id[ind])) in fh['raw/'+chn_name] and harm in fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind]))]: # raw data exist
+                for ind in idxs: 
+                    if self._raw_exists(fh, chn_name, int(df_chn.queue_id[ind]), harm): # raw data exist
                         logger.info(df_chn.queue_id[ind]) 
                         logger.info(fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind])) + '/' + harm]) 
                         del fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind])) + '/' + harm]

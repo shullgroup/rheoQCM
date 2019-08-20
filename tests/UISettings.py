@@ -482,7 +482,7 @@ config_default = {
     # doubleSpinBox_settings_mechanics_bulklimit
     'mech_bulklimit':{
         'min': 0,
-        'max': 2,
+        'max': 5,
         'step': 0.01,
     },
 
