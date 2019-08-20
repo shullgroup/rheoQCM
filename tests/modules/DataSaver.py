@@ -692,7 +692,7 @@ class DataSaver:
         check if corresponding raw data exists
         file_handle: handle to the file
         '''
-        if 'raw' in fh.keys() and chn_name in fh['raw'] and str(queue_id) in fh['raw/'+chn_name] and harm in fh['raw/' + chn_name + '/' + str(queue_id)]: 
+        if 'raw' in file_handle.keys() and chn_name in file_handle['raw'] and str(queue_id) in file_handle['raw/'+chn_name] and harm in file_handle['raw/' + chn_name + '/' + str(queue_id)]: 
             return True
         else:
             return False
