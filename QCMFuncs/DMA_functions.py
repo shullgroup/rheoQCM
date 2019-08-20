@@ -213,7 +213,7 @@ def DMAplot(sample, parms, Tref):
 
         dma_ax3 = dmafig.add_subplot(1, 3, 3)
         dma_ax3.semilogy(True)
-        dma_ax3.set_xlabel(r'$T\:(^ \circ$C)')
+        dma_ax3.set_xlabel(r'$T\:(^{\circ}$C)')
         dma_ax3.set_ylabel('$a_T$')
     else:
         dmafig = figinfo['dmafig']

@@ -10,9 +10,13 @@ import numpy as np
 import scipy.optimize as optimize
 import matplotlib.pyplot as plt
 import pandas as pd
-from kww import kwwc, kwws  # from http://apps.jcns.fz-juelich.de/kww
-# kwwc returns: integral from 0 to +infinity dt cos(omega*t) exp(-t^beta)
-# kwws returns: integral from 0 to +infinity dt sin(omega*t) exp(-t^beta)
+
+try:
+  from kww import kwwc, kwws
+  # kwwc returns: integral from 0 to +infinity dt cos(omega*t) exp(-t^beta)
+  # kwws returns: integral from 0 to +infinity dt sin(omega*t) exp(-t^beta)
+except ImportError:
+  pass
 
 Zq = 8.84e6  # shear acoustic impedance of at cut quartz
 f1 = 5e6  # fundamental resonant frequency
