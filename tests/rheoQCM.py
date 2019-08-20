@@ -1110,6 +1110,7 @@ class QCMApp(QMainWindow):
 
         # doubleSpinBox_settings_mechanics_bulklimit
         self.ui.doubleSpinBox_settings_mechanics_bulklimit.setMinimum(config_default['mech_bulklimit']['min'])
+        self.ui.doubleSpinBox_settings_mechanics_bulklimit.setMaximum(config_default['mech_bulklimit']['max'])
         self.ui.doubleSpinBox_settings_mechanics_bulklimit.setSingleStep(config_default['mech_bulklimit']['step'])
         self.ui.doubleSpinBox_settings_mechanics_bulklimit.valueChanged.connect(self.update_widget)
                 
