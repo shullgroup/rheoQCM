@@ -8,14 +8,22 @@ Change the following factors will change the apperiance of the GUI
 # Use OrderedDict for those dicts need to be shown in order
 from collections import OrderedDict
 import numpy as np
+import logging
 
-settings_init = {
+config_default = {
 
     # window default size
     'window_size': [1200, 800], # px
 
     # UI will looking for the file to load the default setup
     'default_settings_file_name': 'user_settings.json',
+    'default_config_file_name': 'config_default.json',
+
+    # logger configeration
+    'logger_setting_config':{
+        'config_file': 'logger_config.json', # logger configeration file name
+        'default_level': logging.ERROR, # default level for logging
+    },
 
     # myVNA path
     'vna_path': [
@@ -47,7 +55,6 @@ settings_init = {
         'comboBox_base_frequency',
         'comboBox_bandwidth',
         'checkBox_settings_temp_sensor',
-        'comboBox_settings_mechanics_selectmodel',
         'comboBox_tempdevice',
         'comboBox_thrmcpltype',
     ],
@@ -125,6 +132,10 @@ settings_init = {
 
     # list for disabled widges for current version
     'version_hide_list':[
+        'pushButton_settings_la', 
+        'pushButton_settings_ra', 
+        'pushButton_data_la', 
+        'pushButton_data_ra', 
         # hide reference time widgets to simplify the setup
         # reference time can always be changed by shifted_t0
         'dateTimeEdit_reftime',
@@ -149,13 +160,22 @@ settings_init = {
         'comboBox_settings_data_ref_tempmode',
         'comboBox_settings_data_ref_fitttype',
 
+        # temperary hide unfinished part
+        'tabWidget_settings_data_markindex',
+        # 'verticalSpacer_18',
+        'pushButton_settings_data_marksadd',
+        'pushButton_settings_data_marksdel',
+        'pushButton_settings_data_marksclear',
+        # 'verticalSpacer_19',
+
         # 'toolButton_settings_mechanics_solve',
         # 'groupBox_nhplot',
         # 'groupBox_settings_mechanics_nhcalc',
         # 'checkBox_settings_mechanics_witherror',
+        'pushButton_settings_mechanics_harmadd',
+        'pushButton_settings_mechanics_harmremove',
+
         'pushButton_settings_mechanics_errorsettings',
-        'label_settings_mechanics_refG',
-        'comboBox_settings_mechanics_refG',
         # 'comboBox_settings_mechanics_selectmodel',
         # 'groupBox_settings_mechanics_mech_film',
 
@@ -244,8 +264,10 @@ settings_init = {
         ('mdfn', '-' + u'\u0394' + 'f/n'),
         ('dg',   u'\u0394\u0393'),
         ('dgn',  u'\u0394\u0393' + '/n'),
+        ('dD',   u'\u0394' + 'D '),
         ('f',    'f'),
         ('g',     u'\u0393'),
+        ('D',    'D'),
         ('temp', 'temp.'),
         ('t', 'time'),
         ('idx', 'index'),
@@ -259,8 +281,10 @@ settings_init = {
         'mdfn': r'-$\Delta$f/n (Hz)', 
         'dg':   r'$\Delta\Gamma$ (Hz)',
         'dgn':  r'$\Delta\Gamma$/n (Hz)',
+        'dD':   r'$\Delta$D $\times 10^{-6}$',
         'f':    r'f (Hz)',
         'g':    r'$\Gamma$ (Hz)',
+        'D':    r'D $\times 10^{-6}$',
         'temp': r'Temp. (unit)', # unit is going to be replaced by temperature unit
         't':    r'Time (unit)', # unit is going to be replaced by time unit
         'id':  r'Test ID', # queue_id
@@ -270,6 +294,8 @@ settings_init = {
         'delf_calcs':        r'$\Delta$f (Hz)',
         'delf_exps':         r'$\Delta$f$_{exp}$ (Hz)',
         'delg_calcs':        r'$\Delta\Gamma$ (Hz)',
+        'delD_calcs':        r'$\Delta$D $\times 10^{-6}$',
+        'delD_exps':         r'$\Delta$D$_{exp}$ $\times 10^{-6}$',
         'delg_exps':         r'$\Delta\Gamma_{exp}$ (Hz)',
         'drho':              r'd$\rho$ ($\mu$m$\cdot$g/cm$^3$)',
         'grhos':             r'$|G_{n}^*|\rho$ (Pa$\cdot$g/cm$^3$)',
@@ -278,9 +304,10 @@ settings_init = {
         'dlams':             r'd/$\lambda_{n}$',
         'lamrhos':           r'$\lambda\rho$ ($\mu$m$\cdot$g/cm$^3$)',
         'delrhos':           r'$\delta\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-        'delf_delfsns':      r'$\Delta$f/$\Delta$f$_{sn}$',
-        'delg_delfsn_exps':  r'$(\Delta\Gamma$/$\Delta$f$_{sn})_{exp}$',
-        'delg_delfsn_calcs': r'$\Delta\Gamma$/$\Delta$f$_{sn}$',
+        'normdelf_exps':     r'$\Delta$f$_{n}$/$\Delta$f$_{sn}_{exp}$',
+        'normdelf_calcs':    r'$\Delta$f$_{n}$/$\Delta$f$_{sn}$',
+        'normdelg_exps':     r'$(\Delta\Gamma_{n}$/$\Delta$f$_{sn})_{exp}$',
+        'normdelg_calcs':    r'$\Delta\Gamma_{n}$/$\Delta$f$_{sn}$',
         'rh_exp':            r'r$_{h,exp}$',
         'rh_calc':           r'r$_h$',
         'rd_exps':           r'r$_{d,exp}$',
@@ -294,6 +321,8 @@ settings_init = {
         'delf_calcs':        u'\u0394' + 'fcalc (Hz)', # Δfcalc (Hz)
         'delg_exps':         u'\u0394\u0393' + ' (Hz)', # ΔΓ (Hz)
         'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
+        'delD_exps':         u'\u0394' + 'D ' + u'\u00D7' + '10' + '\u207B\u2076', # D ×10⁻⁶
+        'delD_calcs':        u'\u0394' + 'D ' + u'\u00D7' + '10' + '\u207B\u2076' + 'calc', # Dcalc ×10⁻⁶
         'drho':              'd' + u'\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # dρ (μm∙g/m³)
         'grhos':             '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
         'phi':               u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
@@ -301,8 +330,8 @@ settings_init = {
         'dlams':             'd/' + u'\u03BB\u2099', # d/λₙ
         'lamrhos':           u'\u03BB\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # λρ (μm∙g/m³)
         'delrhos':           u'\u03B4\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # δρ (μm∙g/m³)
-        'delf_delfsns':      u'\u0394' + 'f/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δf/Δfₛₙ
-        'delg_delfsn_calcs': u'\u0394\u0393' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓ/Δfₛₙ
+        'normdelf_calcs':      u'\u0394' + 'f' + u'\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δfₙ/Δfₛₙ
+        'normdelg_calcs': u'\u0394\u0393\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓₙ/Δfₛₙ
         'rh_calc':           'rh',
         'rd_calcs':          'rd',
         't':                 'Time (s)', # Time (s)
@@ -445,15 +474,22 @@ settings_init = {
 
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {
-        'onelayer': 'In air',
-        # 'bulk': 'Bulk',
-        'twolayers': 'In medium',
+        'onelayer': 'in air',
+        'twolayers': 'in medium',
+        # 'bulk': 'Bulk material',
+    },
+
+    # doubleSpinBox_settings_mechanics_bulklimit
+    'mech_bulklimit':{
+        'min': 0,
+        'max': 2,
+        'step': 0.01,
     },
 
     # calctype
     'calctype_opts':{
         'SLA': 'Small-load approximation',
-        'LL': 'Large-load',
+        'LL': 'Lu-Lewis',
     },
 
     'qcm_layer_source_opts': {
@@ -493,15 +529,8 @@ settings_init = {
     'span_ctrl_steps': [1, 2, 5, 10, 20, 50, 100],
 
 
-    # mpl setings
+    ## mpl settings
     'max_mpl_toolbar_height': 20, # in px
-
-    'contour': {
-        'levels': 20, # contour levels
-        'num': 100, # percentage of step increase for phi and dlam
-        'phi_lim': [0, 90], # phi limit in degree
-        'dlam_lim': [0, 1], # d/lambda limit
-    },
 
     # font size for mpl_sp figures
     'mpl_sp_fontsize': 5,
@@ -534,7 +563,60 @@ settings_init = {
 
     'prop_plot_minmum_row_height': 300, # height of property figure when plotted in line
 
+    # contour settings
+    #comboBox_settings_mechanics_contourdata
+    'contour_data_opts': OrderedDict([
+        ('none',   'W/O Data'),
+        ('w_curr',   'W/ Current'),
+        ('w_data',   'W/ Data'),
+    ]),
+    #comboBox_settings_mechanics_contourtype
+    'contour_type_opts': OrderedDict([
+        ('normfnormg',   u'\u0394' + 'f' + u'\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099' + '&' + u'\u0394\u0393\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099'),
+        ('rhrd',   'rh & rd'),
+    ]),
+    #comboBox_settings_mechanics_contourcmap
+    'contour_cmap_opts': OrderedDict([
+        ('hsv',   'hsv'),
+        ('jet',   'jet'),
+        ('hot',   'hot'),
+        ('rainbow',   'rainbow'),
+        ('gist_rainbow',   'gist_rainbow'),
+        # ('prism',   'prism'),
+        ('gray',   'gray'),
+        ('bone',   'bone'),
+        ('binary',   'binary'),
+    ]),
 
+    # tableWidget_settings_mechanics_contoursettings
+    'mech_contour_lim_tab_vheaders': {
+        'dlam': 'd/' + u'\u03BB', # d/λ
+        'phi': u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
+        'normf': u'\u0394' + 'f' + u'\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δfₙ/Δfₛₙ
+        'normg': u'\u0394\u0393\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓₙ/Δfₛₙ
+        'rh': 'rh',
+        'rd': 'rd',
+    },
+
+    'mech_contour_lim_tab_hheaders': {
+        'min': 'min',
+        'max': 'max',
+    },
+
+    'contour_array': { # values for initializing contour plot
+        'levels': 100, # contour levels
+        'num': 100, # data size num*num
+        'phi_lim': [0, np.pi / 2], # phi limit in degree
+        'dlam_lim': [0, 1], # d/lambda limit 
+        'cmap': 'hsv', # jet, hsv, hot, rainbow, gist_rainbow colormap string
+    },
+
+    'contour_title': {
+        'normf': r'$\Delta$f$_{n}$/$\Delta$f$_{sn}$',
+        'normg': r'$\Delta\Gamma_{n}$/$\Delta$f$_{sn}$',
+        'rh':    r'r$_h$',
+        'rd':    r'r$_d$',
+    },
     ############ params for temperature modules ###########
     # # temperature modules path
     # 'tempmodules_path': r'./modules/temp/', 
@@ -606,6 +688,45 @@ settings_init = {
     #     current_span * (1 - change_thresh[0/1]) # 
     # )
 
+    ########### logging settings ##############
+
+    'logger_config': {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'simple': {
+                'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            },
+        },    
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': 'ERROR',
+                'formatter': 'simple',
+                'stream': 'ext://sys.stdout',
+            },    
+            'error_file_handler': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'level': 'ERROR',
+                'formatter': 'simple',
+                'filename': 'err.log',
+                'maxBytes': 1048576,
+                'backupCount': 1,
+                'encoding': 'utf8',
+            }
+        },    
+        'loggers': {
+            'console_logger': {
+                'level': 'ERROR',
+                'handlers': ['console'],
+                'propagate': False,
+            }
+        },    
+        'root': {
+            'level': 'INFO',
+            'handlers': ['console', 'error_file_handler'],
+        },
+    },
 }
 
 
@@ -626,10 +747,10 @@ settings_default = {
 #### default settings control ####
 
     # add na_path on your computer if it is not in the 
-    # default path listed in settings_init['vna_path']
+    # default path listed in config_default['vna_path']
     # add the string as 
     # 'vna_path': r'C:/...../myVNA.exe'.
-    # if this key is empty, the program will look for the file in the default list in settings_init['vna_path']
+    # if this key is empty, the program will look for the file in the default list in config_default['vna_path']
     'vna_path': r'',
     # keep key below (vna_wait_time_extra) commented.
     # it can be actived in user setting file
@@ -761,14 +882,31 @@ settings_default = {
     'spinBox_settings_mechanics_nhcalc_n2': 5,
     'spinBox_settings_mechanics_nhcalc_n3': 3,
 
-    'comboBox_settings_mechanics_refG': '3', # reference harmonic for property
     'spinBox_mech_expertmode_layernum': 2, # number of layers for expert mode mechanic 
 
     'comboBox_settings_mechanics_calctype': 'LL', # 'LL' or 'SLA'
-
+    'doubleSpinBox_settings_mechanics_bulklimit': 0.500, # bulk limit of rd
     'checkBox_settings_mechanics_witherror': True, # errorbar
 
     'comboBox_settings_mechanics_selectmodel': 'onelayer',
+
+    'comboBox_settings_mechanics_contourdata': 'none',
+
+    'comboBox_settings_mechanics_contourtype': 'normfnormg',
+
+    'comboBox_settings_mechanics_contourcmap': 'gist_rainbow',
+
+    # default value of tableWidget_settings_mechanics_contoursettings
+    # limit values for ploting
+    'contour_plot_lim_tab': {
+        'dlam':  {'min': 0,    'max': 0.5},
+        'phi':   {'min': 0,    'max': 90 },
+        'normf': {'min': -2,   'max': 0  },
+        'normg': {'min': 0,    'max': 2  },
+        'rh':    {'min': 0,    'max': 1.2},
+        'rd':    {'min': 0,    'max': 1.2},
+    },
+    
 }
 
 
@@ -793,7 +931,11 @@ harm_tree = {
 }
 
 # set harmdata value
-for harm in range(1, settings_init['max_harmonic']+2, 2):
+for harm in range(1, config_default['max_harmonic']+2, 2):
     harm = str(harm)
     settings_default['harmdata']['samp'][harm] = harm_tree.copy()
     settings_default['harmdata']['ref'][harm] = harm_tree.copy()
+
+
+###########################################
+

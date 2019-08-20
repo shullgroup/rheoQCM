@@ -11,8 +11,9 @@ pyqt_gui_compile.bat
 QCMFuncs/test.pdf
 QCMFuncs/test.pptx
 
-# test files
-settings_init.json
+
+# user setting files
+*.json
 
 # myVNA calibration file
 *.myVNA.cal

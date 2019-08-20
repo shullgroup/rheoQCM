@@ -1,12 +1,13 @@
 # Changelog
 
-## [0.18.0] - 2019-07-23
+## [0.18.0] - 2019-08-09
 
 ### Added
 
 - Add contour plots.
 - Add slove new property to save the time from solving all.
 - Add D (dissipition from QCM-D) to calculated properties.  
+- Add a simple function to mark data in linear or log.
  
 ### Changed
 

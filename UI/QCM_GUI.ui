@@ -210,7 +210,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>2</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1483,8 +1483,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>286</width>
-                   <height>165</height>
+                   <width>98</width>
+                   <height>71</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -2147,7 +2147,7 @@ border: none;
               <item>
                <widget class="QGroupBox" name="groupBox_settings_data_settings">
                 <property name="title">
-                 <string>Settings for data refit</string>
+                 <string>Data Settings</string>
                 </property>
                 <property name="flat">
                  <bool>true</bool>
@@ -2321,11 +2321,80 @@ border: none;
                   <number>0</number>
                  </property>
                  <item>
+                  <widget class="QFrame" name="frame_settings_data_marknpts">
+                   <layout class="QHBoxLayout" name="frame_2">
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QLabel" name="label_settings_data_marknpts">
+                      <property name="text">
+                       <string># of pts:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QSpinBox" name="spinBox_settings_data_marknpts">
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                      <property name="buttonSymbols">
+                       <enum>QAbstractSpinBox::NoButtons</enum>
+                      </property>
+                      <property name="maximum">
+                       <number>10000</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QRadioButton" name="radioButton_settings_data_marklinear">
+                      <property name="text">
+                       <string>linear</string>
+                      </property>
+                      <property name="checked">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QRadioButton" name="radioButton_settings_data_marklog">
+                      <property name="text">
+                       <string>log</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_settings_data_marknptss">
+                      <property name="text">
+                       <string>Mark S</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_settings_data_marknptsr">
+                      <property name="text">
+                       <string>Mark R</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
                   <layout class="QHBoxLayout" name="horizontalLayout_36">
                    <item>
                     <widget class="QTabWidget" name="tabWidget_settings_data_markindex">
                      <property name="currentIndex">
-                      <number>1</number>
+                      <number>0</number>
                      </property>
                      <widget class="QWidget" name="tab_sampmarks">
                       <attribute name="title">
@@ -2480,7 +2549,7 @@ p, li { white-space: pre-wrap; }
                          <property name="sizeHint" stdset="0">
                           <size>
                            <width>20</width>
-                           <height>40</height>
+                           <height>0</height>
                           </size>
                          </property>
                         </spacer>
@@ -2492,7 +2561,6 @@ p, li { white-space: pre-wrap; }
                   </layout>
                  </item>
                 </layout>
-                <zorder></zorder>
                </widget>
               </item>
               <item>
@@ -4510,7 +4578,7 @@ border: 1px solid blue;
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>100</height>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="maximumSize">

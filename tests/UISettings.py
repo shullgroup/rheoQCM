@@ -160,6 +160,14 @@ config_default = {
         'comboBox_settings_data_ref_tempmode',
         'comboBox_settings_data_ref_fitttype',
 
+        # temperary hide unfinished part
+        'tabWidget_settings_data_markindex',
+        # 'verticalSpacer_18',
+        'pushButton_settings_data_marksadd',
+        'pushButton_settings_data_marksdel',
+        'pushButton_settings_data_marksclear',
+        # 'verticalSpacer_19',
+
         # 'toolButton_settings_mechanics_solve',
         # 'groupBox_nhplot',
         # 'groupBox_settings_mechanics_nhcalc',
@@ -467,8 +475,8 @@ config_default = {
 
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {
-        'onelayer': 'Thin layer in air',
-        'twolayers': 'Thin layer in medium',
+        'onelayer': 'in air',
+        'twolayers': 'in medium',
         # 'bulk': 'Bulk material',
     },
 
@@ -713,7 +721,7 @@ config_default = {
                 'formatter': 'simple',
                 'filename': 'err.log',
                 'maxBytes': 1048576,
-                'backupCount': 2,
+                'backupCount': 1,
                 'encoding': 'utf8',
             }
         },    
