@@ -888,6 +888,10 @@ class DataSaver:
                     # time reference
                     t_ref = {key: self.exp_ref[key] for key in self.exp_ref.keys() if 't0' in key}
                     pd.DataFrame.from_dict(t_ref, orient='index').to_excel(writer, sheet_name='time_reference', header=False)
+                    # sample discription
+                    t_ref = {key: self.exp_ref[key] for key in self.exp_ref.keys() if 't0' in key}
+                    pd.DataFrame.from_dict(t_ref, orient='index').to_excel(writer, sheet_name='time_reference', header=False)
+
                     # property
                     for chn_name in self._chn_keys:
                         if getattr(self, chn_name + '_prop'): 
@@ -2377,7 +2381,7 @@ class DataSaver:
 
         # make a fake reference time t0
         if settings:
-            t0_str = settings['label_reftime']
+            t0_str = settings['dateTimeEdit_reftime']
             t0 = datetime.datetime.strptime(t0_str, self.settings['time_str_format'])
         else:
             if not t0:

@@ -90,7 +90,7 @@ if 'vna_path' not in settings_default:
 
 # packages from program itself
 from modules import UIModules, PeakTracker, DataSaver
-from modules import QCM as QCM #test
+from modules import QCM as QCM 
 from modules.MatplotlibWidget import MatplotlibWidget
 
 import _version
@@ -693,12 +693,12 @@ class QCMApp(QMainWindow):
             self.ui.treeWidget_settings_settings_hardware
         )
 
-        # insert bandwidth
+        # insert range
         self.create_combobox(
-            'comboBox_bandwidth',
-            config_default['bandwidth_opts'],
+            'comboBox_range',
+            config_default['range_opts'],
             100,
-            'Bandwidth',
+            'Range',
             self.ui.treeWidget_settings_settings_hardware
         )
 
@@ -882,7 +882,7 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_scan_harmstart.editingFinished.connect(self.on_editingfinished_harm_freq)
         self.ui.lineEdit_scan_harmend.editingFinished.connect(self.on_editingfinished_harm_freq)
         self.ui.comboBox_base_frequency.currentIndexChanged.connect(self.update_base_freq)
-        self.ui.comboBox_bandwidth.currentIndexChanged.connect(self.update_bandwidth)
+        self.ui.comboBox_range.currentIndexChanged.connect(self.update_range)
 
         # set signals to update span settings_settings
         self.ui.lineEdit_scan_harmsteps.textEdited.connect(self.update_harmwidget)
@@ -1378,8 +1378,8 @@ class QCMApp(QMainWindow):
         self.ui.statusbar.addPermanentWidget(self.ui.pushButton_status_signal_ch)
        # move pushButton_status_temp_sensor to statusbar
         self.ui.statusbar.addPermanentWidget(self.ui.pushButton_status_temp_sensor)
-        # move label_status_f0BW to statusbar
-        self.ui.statusbar.addPermanentWidget(self.ui.label_status_f0BW)
+        # move label_status_f0RNG to statusbar
+        self.ui.statusbar.addPermanentWidget(self.ui.label_status_f0RNG)
 
         #endregion
 
@@ -1700,10 +1700,10 @@ class QCMApp(QMainWindow):
         set the data_saver.exp_ref[chn_name]
         '''
         logger.info('save_data_saver_refsource') 
-        logger.info('chn_name', chn_name) 
+        logger.info('chn_name %s', chn_name) 
         ref_source = self.settings['comboBox_settings_data_'+ chn_name + 'refsource']
         ref_idx_str = self.settings['lineEdit_settings_data_'+ chn_name + 'refidx']
-        logger.info('ref_source', ref_source) 
+        logger.info('ref_source %s', ref_source) 
         logger.info('ref_idx_str: %s %s', ref_idx_str, type(ref_idx_str))
 
         # chn_queue_list = list(self.data_saver.get_queue_id(ref_source).tolist()) # list of available index in the target chn
@@ -2398,10 +2398,10 @@ class QCMApp(QMainWindow):
 
         if f1 and (f1 < bf1 or f1 >= bf2): # f1 out of limt
             f1 = bf1
-            #TODO update statusbar 'lower bound out of limit and reseted. (You can increase the bandwidth in settings)'
+            #TODO update statusbar 'lower bound out of limit and reseted. (You can increase the range in settings)'
         if f2 and (f2 > bf2 or f2 <= bf1): # f2 out of limt
             f2 = bf2
-            #TODO update statusbar 'upper bond out of limit and reseted. (You can increase the bandwidth in settings)'
+            #TODO update statusbar 'upper bond out of limit and reseted. (You can increase the range in settings)'
         if f1 and f2 and (f1 >= f2):
             f2 = bf2
 
@@ -5718,9 +5718,9 @@ class QCMApp(QMainWindow):
         # update statusbar
         self.statusbar_f0bw_update()
 
-    def update_bandwidth(self, bandwidth_index):
-        self.settings['comboBox_bandwidth'] = self.ui.comboBox_bandwidth.itemData(bandwidth_index) # in MHz
-        logger.info(self.settings['comboBox_bandwidth']) 
+    def update_range(self, range_index):
+        self.settings['comboBox_range'] = self.ui.comboBox_range.itemData(range_index) # in MHz
+        logger.info(self.settings['comboBox_range']) 
         # update freq_range
         self.update_freq_range()
         # check freq_span
@@ -5732,16 +5732,16 @@ class QCMApp(QMainWindow):
 
     def statusbar_f0bw_update(self):
         fbase = self.settings['comboBox_base_frequency']
-        BW = self.settings['comboBox_bandwidth']
-        self.ui.label_status_f0BW.setText('{}\u00B1{} MHz'.format(fbase, BW))
-        self.ui.label_status_f0BW.setToolTip('base frequency = {} MHz; band width = {} MHz'.format(fbase, BW))
+        BW = self.settings['comboBox_range']
+        self.ui.label_status_f0RNG.setText('{}\u00B1{} MHz'.format(fbase, BW))
+        self.ui.label_status_f0RNG.setToolTip('base frequency = {} MHz; range = {} MHz'.format(fbase, BW))
 
     def update_freq_range(self):
         '''
         update settings['freq_range'] (freq range allowed for scan)
         '''
         fbase = float(self.settings['comboBox_base_frequency']) * 1e6 # in Hz
-        BW = float(self.settings['comboBox_bandwidth']) * 1e6 # in Hz
+        BW = float(self.settings['comboBox_range']) * 1e6 # in Hz
         freq_range = {}
         for i in self.all_harm_list():
             freq_range[str(i)] = [i*fbase-BW, i*fbase+BW]
@@ -6287,7 +6287,7 @@ class QCMApp(QMainWindow):
 
         self.load_normal_widgets([
             'comboBox_base_frequency', # load this first to create self.settings['freq_range'] & self.settings['freq_span']
-            'comboBox_bandwidth', 
+            'comboBox_range', 
         ])
 
         # update statusbar

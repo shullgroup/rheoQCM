@@ -53,7 +53,7 @@ config_default = {
         'comboBox_samp_channel',
         'comboBox_ref_channel',
         'comboBox_base_frequency',
-        'comboBox_bandwidth',
+        'comboBox_range',
         'checkBox_settings_temp_sensor',
         'comboBox_tempdevice',
         'comboBox_thrmcpltype',
@@ -176,7 +176,6 @@ config_default = {
         'pushButton_settings_mechanics_harmremove',
 
         'pushButton_settings_mechanics_errorsettings',
-        'label_settings_mechanics_refG',
         # 'comboBox_settings_mechanics_selectmodel',
         # 'groupBox_settings_mechanics_mech_film',
 
@@ -450,9 +449,9 @@ config_default = {
         ('10', '10 MHz'),
     ]),
 
-    # available bandwidth limitation for each harmonic
+    # available range limitation for each harmonic
     # key: number; val: for display in combobox
-    'bandwidth_opts': OrderedDict([
+    'range_opts': OrderedDict([
         ('0.1', '0.1 MHz'),
         ('0.25', '0.25 MHz'),
         ('0.5',  '0.5 MHz'),
@@ -828,7 +827,7 @@ settings_default = {
 
     # default crystal settings
     'comboBox_base_frequency': 5,
-    'comboBox_bandwidth': 0.1,
+    'comboBox_range': 0.1,
     'comboBox_crystalcut': 'AT',
 
     # default temperature settings

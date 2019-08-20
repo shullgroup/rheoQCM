@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.18.1] - 2019-08-20
+
+### Added
+
+### Changed
+
+### Fixed
+
+- Correct some text in UI.
+
 ## [0.18.0] - 2019-08-09
 
 ### Added
@@ -16,7 +26,6 @@
 - Change HOME button of data plots to show all & auto scale.  
 - Change debuging to logger. 
 - Change the name `settings_ini` to `config_default` for the basic settings.
-
 
 ### Fixed
 
