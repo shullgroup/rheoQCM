@@ -64,7 +64,7 @@
 ### Added
 
 - Add spinBox for selecting index for displaying property in table.  
-- Add sample discription.
+- Add sample description.
 - Add scipy functions to peak factors guess.
 - Add viscocity to property calculation.
 

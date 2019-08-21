@@ -247,6 +247,8 @@ def num2str(A,precision=None):
             A = format(float(A), '.'+str(precision)+'f').rstrip('0').rstrip('.')
             # A = '{:.6g}'.format(float(A))
             return A
+    else: 
+        return str(A)
 
 
 def converter_startstop_to_centerspan(f1, f2):

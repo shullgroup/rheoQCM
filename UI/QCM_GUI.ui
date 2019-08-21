@@ -210,7 +210,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1078,7 +1078,7 @@ background-color: red;
                  </size>
                 </property>
                 <property name="title">
-                 <string>Sample Discription</string>
+                 <string>Sample Description</string>
                 </property>
                 <property name="flat">
                  <bool>true</bool>
@@ -1100,7 +1100,7 @@ background-color: red;
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QPlainTextEdit" name="plainTextEdit_settings_samplediscription">
+                  <widget class="QPlainTextEdit" name="plainTextEdit_settings_sampledescription">
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
@@ -2706,7 +2706,7 @@ p, li { white-space: pre-wrap; }
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QLabel" name="label_settings_data_refdiscription">
+                  <widget class="QLabel" name="label_settings_data_refdescription">
                    <property name="text">
                     <string>Reference - [indices]</string>
                    </property>
@@ -3000,7 +3000,7 @@ p, li { white-space: pre-wrap; }
                       <number>2</number>
                      </property>
                      <property name="maximum">
-                      <double>2.000000000000000</double>
+                      <double>5.000000000000000</double>
                      </property>
                      <property name="singleStep">
                       <double>0.010000000000000</double>

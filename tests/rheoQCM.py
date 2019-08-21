@@ -499,9 +499,9 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_dynamicfitbyharm.clicked['bool'].connect(self.update_widget)
         self.ui.checkBox_fitfactorbyharm.clicked['bool'].connect(self.update_widget)
 
-        # plainTextEdit_settings_samplediscription
-        self.ui.plainTextEdit_settings_samplediscription.textChanged.connect(lambda: self.update_widget(
-            self.ui.plainTextEdit_settings_samplediscription.document().toPlainText()
+        # plainTextEdit_settings_sampledescription
+        self.ui.plainTextEdit_settings_sampledescription.textChanged.connect(lambda: self.update_widget(
+            self.ui.plainTextEdit_settings_sampledescription.document().toPlainText()
         ))
 
         # set signals to update spectra show display options
@@ -2184,7 +2184,7 @@ class QCMApp(QMainWindow):
         self.clr_spectra_fit()
 
         # clear plainTextEdit
-        self.ui.plainTextEdit_settings_samplediscription.clear()
+        self.ui.plainTextEdit_settings_sampledescription.clear()
 
 
     def clr_spectra_fit(self):
@@ -4895,13 +4895,16 @@ class QCMApp(QMainWindow):
                         data = row_data
                     # logger.info(data) 
 
+                    # format data 
+                    data = format(data, config_default['mech_table_number_format'])
+
                     tableitem = self.ui.tableWidget_spectra_mechanics_table.item(tb_row, tb_col)
                     if tableitem: # tableitem != 0
-                        logger.info('item not set') 
-                        tableitem.setText(str(data))
+                        logger.info('item set') 
+                        tableitem.setText(data)
                     else: # item is not set
-                        # logger.info('item set') 
-                        self.ui.tableWidget_spectra_mechanics_table.setItem(tb_row, tb_col, QTableWidgetItem(str(data)))
+                        # logger.info('item not set') 
+                        self.ui.tableWidget_spectra_mechanics_table.setItem(tb_row, tb_col, QTableWidgetItem(data))
         # logger.info(self.ui.tableWidget_spectra_mechanics_table.item(0,0)) 
         self.ui.tableWidget_spectra_mechanics_table.viewport().update() # TODO update doesn't work. update in UI
 
@@ -6283,7 +6286,7 @@ class QCMApp(QMainWindow):
             'spinBox_fitfactor', # load default fit factor range
             'checkBox_dynamicfitbyharm', # load default dynamicfitbyharm
             'checkBox_fitfactorbyharm',  # load default fitfactorbyharm
-            'plainTextEdit_settings_samplediscription', # plainTextEdit_settings_samplediscription
+            'plainTextEdit_settings_sampledescription', # plainTextEdit_settings_sampledescription
         ])
 
         self.load_normal_widgets([

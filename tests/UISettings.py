@@ -330,13 +330,16 @@ config_default = {
         'dlams':             'd/' + u'\u03BB\u2099', # d/λₙ
         'lamrhos':           u'\u03BB\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # λρ (μm∙g/m³)
         'delrhos':           u'\u03B4\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # δρ (μm∙g/m³)
-        'normdelf_calcs':      u'\u0394' + 'f' + u'\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δfₙ/Δfₛₙ
-        'normdelg_calcs': u'\u0394\u0393\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓₙ/Δfₛₙ
+        'normdelf_calcs':    u'\u0394' + 'f' + u'\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δfₙ/Δfₛₙ
+        'normdelg_calcs':    u'\u0394\u0393\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓₙ/Δfₛₙ
         'rh_calc':           'rh',
         'rd_calcs':          'rd',
         't':                 'Time (s)', # Time (s)
         'temp':              'Temp. (' + u'\u00B0' + 'C)', # Temp. (°C)
     }, # add the colum when activate column here
+
+    # mech table number format
+    'mech_table_number_format': '.5g',
 
     # spinBox_harmfitfactor max value
     'fitfactor_max': 20, # int
@@ -346,7 +349,7 @@ config_default = {
         ('auto',   'Auto'),
         ('gmax',   'Gmax'),
         ('bmax',   'Bmax'),
-        ('derv',    'Derivative'),
+        ('derv',   'Derivative'),
         ('prev',   'Previous value'),
         # ('usrdef', 'User-defined...'),
     ]),
@@ -786,8 +789,8 @@ settings_default = {
     'checkBox_dynamicfitbyharm': False,
     'checkBox_fitfactorbyharm': False,
 
-    # default sampe discription
-    'plainTextEdit_settings_samplediscription': '',
+    # default sampe description
+    'plainTextEdit_settings_sampledescription': '',
 
     # default frequency ranges for each harmonic
     'freq_range': {},
