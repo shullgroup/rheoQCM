@@ -1,15 +1,17 @@
 # Changelog
 
-## [0.18.1] - 2019-08-20
+## [0.18.1] - 2019-08-21
 
 ### Added
+
+- Add format settings for property table.
 
 ### Changed
 
 ### Fixed
 
 - Correct some text in UI.
-- Fix raw doesn't find bug.
+- Fix raw not find bug.
 
 ## [0.18.0] - 2019-08-09
 

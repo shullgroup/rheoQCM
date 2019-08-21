@@ -5687,8 +5687,9 @@ class QCMApp(QMainWindow):
         try:
             return self.settings['harmdata'][chn_name][str(harm)][objname]
         except:
+            self.settings['harmdata'][chn_name][str(harm)][objname] = harm_tree_default[objname]
             print(objname, 'is not found!\nUse default data')
-            return harm_tree_default[objname]
+            return self.settings['harmdata'][chn_name][str(harm)][objname]
 
 
     def set_harmdata(self, objname, val, harm=None, chn_name=None):

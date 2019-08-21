@@ -2021,6 +2021,7 @@ class DataSaver:
         idx: list of indices (rows)
         harm: str of a single harmonic to mark
         mark_val: int 
+        return: new df
         '''
         df_new = df.copy()
         def mark_func(row_marks):

@@ -339,7 +339,7 @@ config_default = {
     }, # add the colum when activate column here
 
     # mech table number format
-    'mech_table_number_format': '.5g',
+    'mech_table_number_format': '.5g', # Python format string
 
     # spinBox_harmfitfactor max value
     'fitfactor_max': 20, # int
