@@ -228,7 +228,6 @@ def calc_delfstar(n, layers, calctype):
         sol = optimize.root(solve_Zmot_ref, [delfstar_sla_ref.real,
                                              delfstar_sla_ref.imag])
         dfc_ref = sol.x[0] + 1j* sol.x[1]
-
         return dfc-dfc_ref
 
 
@@ -247,7 +246,6 @@ def calc_Zmot(n, layers, delfstar, calctype):
     # eq. 4.5.9 in book
     thirdterm = ((1j*Zqc*np.tan(Dq/2))**-1 + (1j*Zqc*np.tan(Dq/2) + ZL)**-1)**-1
     Zmot = secterm + thirdterm  +ZPE
-
     return Zmot
 
 
@@ -477,7 +475,6 @@ def solve_for_props(delfstar, **kwargs):
     # add these calculated values to existing dataframe
     new_info = pd.DataFrame(data)
     new_df = pd.concat([delfstar, new_info], axis=1)
-
     return new_df
 
 
@@ -501,10 +498,7 @@ def make_prop_axes(**kwargs):
     # set xlabel to 'index' by default
     for i in np.arange(len(ax)):
         ax[i].set_xlabel('index')
-
-
     fig.tight_layout()
-
     return fig, ax
 
 
@@ -618,7 +612,3 @@ def springpot_f(sp_parms):
 def vogel(T, Tref, B, Tinf):
     logaT = -B/(Tref-Tinf) + B/(T-Tinf)
     return logaT
-
-
-    
-
