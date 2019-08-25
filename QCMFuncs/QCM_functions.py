@@ -50,14 +50,6 @@ def find_idx_in_range(t, t_range):
     return idx
 
 
-def close_on_click(event):
-    # used so plots close in response to a some event
-    global openplots
-    plt.close()
-    openplots = openplots - 1
-    return
-
-
 def add_D_axis(ax):
     # add right hand axis with dissipation
     axD = ax.twinx()
@@ -305,30 +297,26 @@ def rd_from_delfstar(n, delfstar):
     return -delfstar[n].imag/delfstar[n].real
 
     
-def bulk_guess(delfstar):
+def bulk_props(delfstar):
     # get the bulk solution for grho and phi
     grho3 = (np.pi*Zq*abs(delfstar[3])/f1) ** 2
     phi = -np.degrees(2*np.arctan(delfstar[3].real /
                       delfstar[3].imag))
-
-    # calculate rho*lambda
-    lamrho3 = np.sqrt(grho3)/(3*f1*np.cos(np.deg2rad(phi/2)))
-
-    # we need an estimate for drho.  We oNy use thi approach if it is
-    # reasonably large.  We'll put it at the quarter wavelength condition
-    # for now
-    drho = lamrho3/4
-
-    return [drho, grho3, min(phi, 90)]
+    return [grho3, min(phi, 90)]
 
 
 def thinfilm_guess(delfstar, nh):
     # really a placeholder function until we develop a more creative strategy
     # for estimating the starting point
     n1 = int(nh[0])
-    n2 = int(nh[1])
+    n2 = int(nh[1])def make_delf_fig():    
+    fig, ax = plt.subplots(1,2, figsize=(6,3))
+    for num in [0, 1]:  
+        ax[num].set_xlabel(r'$d\rho$ ($\mu$m $\cdot$g/cm$^3$)')    
+    ax[0].set_ylabel(r'$\Delta f$ (kHz)')
+    ax[1].set_ylabel(r'$\Delta \Gamma$ (kHz)')
+    return fig, ax
     n3 = int(nh[2])
-
 
     rd_exp = -delfstar[n3].imag/delfstar[n3].real
     rh_exp = (n2/n1)*delfstar[n1].real/delfstar[n2].real
@@ -351,448 +339,215 @@ def thinfilm_guess(delfstar, nh):
     return drho, grho3, phi
 
 
-def solve_for_props(soln_input):
+def solve_for_props(delfstar, **kwargs):
     # solve the QCM equations to determine the properties
-    if 'overlayer' in soln_input:
-        layers={'overlayer':soln_input['overlayer']}
+
+    df = delfstar.T  # transpose the input dataframe
+    if 'overlayer' in kwargs.keys():
+        layers={'overlayer':kwargs['overlayer']}
     else:
         layers={}
-    nhplot = soln_input.get('nhplot', [1, 3, 5])
-    calctype = soln_input.get('calctype', 'SLA')
-    nh = soln_input['nh']
-    n1 = int(nh[0])
-    n2 = int(nh[1])
-    n3 = int(nh[2])
-    delfstar = soln_input['delfstar']
-    rd_exp = -delfstar[n3].imag/delfstar[n3].real
 
-    if 'prop_guess' in soln_input:
-        guess=soln_input['prop_guess']
+    nhplot = kwargs.get('nhplot', [1, 3, 5])
+    calctype = kwargs.get('calctype', 'SLA')
+    filmtype = kwargs.get('filmtype', 'thin')
+
+    nh = kwargs.get('nh') # specify the values used in the n1:n2,n3 calculation
+    n1 = int(nh[0]); n2 = int(nh[1]); n3 = int(nh[2])
+
+    # set upper and lower bounds
+    lb = kwargs.get('lb', [1e5, 0, 0])
+    ub = kwargs.get('ub', [1e13, 90, 3e-2])
+    lb = np.array(lb)  # lower bounds drho, grho3, phi
+    ub = np.array(ub)  # upper bounds drho, grho3, phi
+
+
+    # we use the first data point to get an initial guess
+    if 'prop_guess' in kwargs.keys():
+        guess=kwargs['prop_guess']
         drho, grho3, phi = guess['drho'], guess['grho3'], guess['phi']
-    elif rd_exp > 0.5:
-        drho, grho3, phi = bulk_guess(delfstar)
+    elif filmtype=='bulk':
+        n3=n1 # bulk solution uses delta f and delta gamma from same harmonic
+        grho3, phi = bulk_props(df[0])
+        drho = np.inf
+        lb = lb[0:2]
+        ub = ub[0:2]
     else:
-        drho, grho3, phi = thinfilm_guess(delfstar, nh)
+        drho, grho3, phi = thinfilm_guess(df[0], nh)
 
-    # set initial guess and upper and lower bounds
-    x0 = np.array([drho, grho3, phi])
-    lb = np.array([0, 1e5, 0])  # lower bounds drho, grho3, phi
-    ub = np.array([1e-2, 1e13, 90])  # upper bounds drho, grho3, phi
+    # set up the initial guess
+    if filmtype == 'bulk':
+        x0 = np.array([grho3, phi])
+    else:
+        x0 = np.array([grho3, phi, drho])
 
-    # otain the solutoin, using either the SLA or LL methods
+    # add extra rows to the dataframe for all the calculated values
+    newrows = []
+    for n in nhplot:
+        newrows = newrows + ['df_calc'+str(n)]
+        
+    newrows = newrows+['drho', 'drho_err', 'grho3', 'grho3_err', 'phi', 'phi_err',
+                       'dlam3',  'delfstar_err', 'deriv']
 
-    def ftosolve(x):
-        layers['film'] = {'drho':x[0], 'grho3':x[1], 'phi':x[2]}
-        return ([delfstar[n1].real-calc_delfstar(n1, layers, calctype).real,
-                 delfstar[n2].real-calc_delfstar(n2, layers, calctype).real,
-                 delfstar[n3].imag-calc_delfstar(n3, layers, calctype).imag])
+    data = {}
+    for element in newrows:
+        data[element] = {}
+        for i in np.arange(df.shape[1]):
+            data[element][i] = {}
 
-    # put the input uncertainties into a 3 element vector
-    delfstar_err = np.zeros(3)
+    newrows = pd.DataFrame(columns=df.columns, index=newrows)
+    df=df.append(newrows)
 
-    delfstar_err[0] = fstar_err_calc(n1, delfstar[n1], layers).real
-    delfstar_err[1] = fstar_err_calc(n2, delfstar[n2], layers).real
-    delfstar_err[2] = fstar_err_calc(n3, delfstar[n3], layers).imag
+    # obtain the solution, using either the SLA or LL methods
+    for i in df.columns:
+        if filmtype != 'bulk':
+            def ftosolve(x):
+                layers['film'] = {'grho3':x[0], 'phi':x[1], 'drho':x[2]}
+                return ([df[i][n1].real-calc_delfstar(n1, layers, calctype).real,
+                         df[i][n2].real-calc_delfstar(n2, layers, calctype).real,
+                         df[i][n3].imag-calc_delfstar(n3, layers, calctype).imag])
+        else:
+            def ftosolve(x):
+                layers['film'] = {'drho':np.inf, 'grho3':x[0], 'phi':x[1]}
+                return ([df[i][n1].real-calc_delfstar(n1, layers, calctype).real,
+                         df[i][n1].imag-calc_delfstar(n1, layers, calctype).imag])
 
-    # initialize the output uncertainties
-    err = {}
-    err_names = ['drho', 'grho3', 'phi']
-    # recalculate solution to give the uncertainty, if solution is viable
+        # initialize the output uncertainties
+        err = {}
+        soln = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
+        grho3 = soln['x'][0]
+        phi = soln['x'][1]
 
-    if np.all(lb < x0) and np.all(x0 < 1.1*ub):
-        soln2 = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
-        drho = soln2['x'][0]
-        grho3 = soln2['x'][1]
-        phi = soln2['x'][2]
-        film = {'drho':drho, 'grho3':grho3, 'phi':phi}
-        dlam3 = calc_dlam(3, film, calctype)
-        jac = soln2['jac']
+        if filmtype != 'bulk':
+            drho = soln['x'][2]
+
+        layers['film'] = {'drho':drho, 'grho3':grho3, 'phi':phi}
+        dlam3 = calc_dlam(3, layers['film'], calctype)
+        jac = soln['jac']
+
         try:
-            jac_inv = np.linalg.inv(jac)
+            deriv = np.linalg.inv(jac)
         except:
-            jac_inv = np.zeros([3,3])
+            deriv = np.zeros([len(x0),len(x0)])
 
-        # define sensibly named partial derivatives for further use
-        deriv = {}
-        for k in [0, 1, 2]:
-            deriv[err_names[k]]={0:jac_inv[k, 0], 1:jac_inv[k, 1], 2:jac_inv[k, 2]}
-            err[err_names[k]] = ((jac_inv[k, 0]*delfstar_err[0])**2 +
-                                (jac_inv[k, 1]*delfstar_err[1])**2 +
-                                (jac_inv[k, 2]*delfstar_err[2])**2)**0.5
-        # reset erros to zero if they are bigger than the actual values
-        if err['drho']>drho:
-            err['drho']=0
-        if err['grho3']>grho3:
-            err['grho3']=0
-        if err['phi']>phi:
-            err['phi']=0
-    else:
-        film = {'drho':np.nan, 'grho3':np.nan, 'phi':np.nan, 'dlam3':np.nan}
-        deriv = {}
-        for k in [0, 1, 2]:
-            err[err_names[k]] = np.nan
+        # put the input uncertainties into a 3 element vector
+        delfstar_err = np.zeros(3)
+        delfstar_err[0] = fstar_err_calc(n1, df[i][n1], layers).real
+        delfstar_err[1] = fstar_err_calc(n2, df[i][n2], layers).real
+        delfstar_err[2] = fstar_err_calc(n3, df[i][n3], layers).imag
 
-    # now back calculate delfstar, rh and rd from the solution
-    delfstar_calc = {}
-    rh = {}
-    rd = {}
-    for n in nhplot:
-        print('layers', layers)
-        delfstar_calc[n] = calc_delfstar(n, layers, calctype)
-        rd[n] = rd_from_delfstar(n, delfstar_calc)
-    rh = rh_from_delfstar(nh, delfstar_calc)
+        # determine error from Jacobian
+        err = {}
+        for k in np.arange(len(x0)):
+            for m in np.arange(len(x0)):
+                err[k]=0
+                err[k] = err[k]+(deriv[k, m]*delfstar_err[m])**2
+            err[k] = np.sqrt(err[k])
 
-    soln_output = {'film': film, 'dlam3': dlam3,
-                   'delfstar_calc': delfstar_calc, 'rh': rh, 'rd': rd}
+        if filmtype == 'bulk':
+            err[2]=np.nan
 
-    soln_output['err'] = err
-    soln_output['delfstar_err'] = delfstar_err
-    soln_output['deriv'] = deriv
-    return soln_output
+        # now back calculate delfstar from the solution
+        delfstar_calc = {}
 
-
-def null_solution(nhplot):
-    film = {'drho':np.nan, 'grho3':np.nan, 'phi':np.nan, 'dlam3':np.nan}
-
-    soln_output = {'film':film, 'dlam3':np.nan,
-                   'err':{'drho':np.nan, 'grho3':np.nan, 'phi': np.nan}}
-
-    delfstar_calc = {}
-    rh = {}
-    rd = {}
-    for n in nhplot:
-        delfstar_calc[n] = np.nan
-        rd[n] = np.nan
-    rh = np.nan
-    soln_output['rd'] = rd
-    soln_output['rh'] = rh
-    soln_output['delfstar_calc'] = delfstar_calc
-
-    return soln_output
-
-
-def nhcalc_in_nhplot(nhcalc_in, nhplot):
-    # there is probably a more elegant way to do this
-    # only consider harmonics in nhcalc that exist in nhplot
-    nhcalc_out = []
-    nhplot = list(set(nhplot))
-    for nh in nhcalc_in:
-        nhlist = list(set(nh))
-        nhlist = [int(i) for i in nhlist]
-        if all(elem in nhplot for elem in nhlist):
-            nhcalc_out.append(nh)
-    return nhcalc_out
-
-
-def solve_from_delfstar_bulk(delfstar, ncalc):
-    # this function is used if we already have a bunch of delfstar values
-    # and want to obtain the solution to bulk layers with a semiinfinite thickness
-    # get film info (containing raw data plot, etc. if it exists)
-    deltarho={}
-    grho={}
-    phi={}
-    for n in ncalc:
-        deltarho[n]=np.zeros(len(delfstar))
-        grho[n]=np.zeros(len(delfstar))
-        phi[n]=np.zeros(len(delfstar))
-        for i in np.arange(len(delfstar)):
-            deltarho[n][i]=deltarho_bulk(n, delfstar[i])
-            grho[n][i]=grho_bulk(n, delfstar[i])
-            phi[n][i]=phi_bulk(n, delfstar[i]) 
-    return deltarho, grho, phi
-
-
-def solve_from_delfstar(sample, parms):
-    # this function is used if we already have a bunch of delfstar values
-    # and want to obtain the solutions from there
-    # now set the markers used for the different calculation types
-    markers = {'131': '>', '133': '^', '353': '+', '355': 'x', '3': 'x'}
-    colors = parms.get('colors',{1: [1, 0, 0], 3: [0, 0.5, 0], 5: [0, 0, 1]})
-    calctype = parms.get('calctype', 'SLA')
-    # get film info (containing raw data plot, etc. if it exists)
-    sample['film']=sample.get('film',{})
-    sample['samplename']= sample.get('samplename','noname')
-    close_on_click_switch = parms.get('close_on_click_switch', True)
-    nhplot = sample.get('nhplot', [1, 3, 5])
-    delfstar = sample['delfstar']
-    nx = len(delfstar)  # this is the number of data points
-    if 'xdata' in sample:
-        xdata = sample['xdata']
-    else:
-        xdata=np.arange(nx)
-        sample['xlabel'] = 'index'
-    if 'propfig' in sample:
-        propfig = sample['propfig']
-    else:
-        propfig = make_prop_axes('props', sample['xlabel'])
-        sample['propfig']=propfig
-
-    # set up the consistency check axes
-    checkfig = {}
-    for nh in sample['nhcalc']:
-        checkfig[nh] = make_check_axes(sample, nh)
-        if close_on_click_switch and not run_from_ipython():
-            # when code is run with IPython don't use the event
-            checkfig[nh]['figure'].canvas.mpl_connect('key_press_event',
-                                                    close_on_click)
-    # now do all of the calculations and plot the data
-    soln_input = {'nhplot': nhplot, 'calctype':calctype}
-    if 'overlayer' in sample:
-        soln_input['overlayer']=sample['overlayer']
-    if 'prop_guess' in sample:
-        soln_input['prop_guess']=sample['prop_guess']
-    results = {}
-    for nh in sample['nhcalc']:
-        # initialize all the dictionaries
-        results[nh] = {'film':{'drho':np.zeros(nx), 'drho_err':np.zeros(nx),
-                              'grho3':np.zeros(nx), 'grho3_err':np.zeros(nx),
-                              'phi':np.zeros(nx), 'phi_err':np.zeros(nx)},
-                       'dlam3':np.zeros(nx),
-                       'rd': {}, 'rh': {}, 'delfstar_calc': {}}
         for n in nhplot:
-            results[nh]['delfstar_calc'][n] = (np.zeros(nx,
-                                               dtype=np.complex128))
-            results[nh]['rd'][n] = np.zeros(nx)
-        results[nh]['rh'] = np.zeros(nx)
-        for i in np.arange(nx):
-            # obtain the solution for the properties
-            soln_input['nh'] = nh
-            soln_input['delfstar'] = delfstar[i]
-            if (np.isnan(delfstar[i][int(nh[0])].real) or
-                np.isnan(delfstar[i][int(nh[1])].real) or
-                np.isnan(delfstar[i][int(nh[2])].imag)):
-                soln = null_solution(nhplot)
-            else:
-                soln = solve_for_props(soln_input)
-            results[nh]['film']['drho'][i] = soln['film']['drho']
-            results[nh]['film']['grho3'][i] = soln['film']['grho3']
-            results[nh]['film']['phi'][i] = soln['film']['phi']
-            results[nh]['film']['drho_err'][i] = soln['err']['drho']
-            results[nh]['film']['grho3_err'][i] = soln['err']['grho3']
-            results[nh]['film']['phi_err'][i] = soln['err']['phi']
-            results[nh]['dlam3'][i] = soln['dlam3']
-            soln_input['prop_guess']=soln['film']
-            for n in nhplot:
-                results[nh]['delfstar_calc'][n][i] = (
-                 soln['delfstar_calc'][n])
-                results[nh]['rd'][n][i] = soln['rd'][n]
-            results[nh]['rh'][i] = soln['rh']
-            # add actual values of delf, delg for each harmonic to the
-            # solution check figure
-            for n in nhplot:
-                checkfig[nh]['delf_ax'].plot(xdata[i], delfstar[i][n].real/n,
-                                             '+', color=colors[n])
-                checkfig[nh]['delg_ax'].plot(xdata[i], delfstar[i][n].imag/n,
-                                             '+', color=colors[n])
-            # add experimental rh, rd to solution check figure
-            checkfig[nh]['rh_ax'].plot(xdata[i], rh_from_delfstar(nh,
-                                       delfstar[i]), '+', color=colors[n])
-            for n in nhplot:
-                checkfig[nh]['rd_ax'].plot(xdata[i], rd_from_delfstar(n,
-                                           delfstar[i]), '+', color=colors[n])
-        # add the calculated values of rh, rd to the solution check figures
-        checkfig[nh]['rh_ax'].plot(xdata, results[nh]['rh'], '-')
-        for n in nhplot:
-            checkfig[nh]['rd_ax'].plot(xdata, results[nh]['rd'][n], '-',
-                                       color=colors[n])
-        # add calculated delf and delg to solution check figures
-        for n in nhplot:
-            (checkfig[nh]['delf_ax'].plot(xdata,
-             results[nh]['delfstar_calc'][n].real/n, '-',
-             color=colors[n], label='n='+str(n)))
-            (checkfig[nh]['delg_ax'].plot(xdata,
-             results[nh]['delfstar_calc'][n].imag/n, '-', color=colors[n],
-             label='n='+str(n)))
-        # add legend to the solution check figures
-        checkfig[nh]['delf_ax'].legend()
-        checkfig[nh]['delg_ax'].legend()
-        if 'xscale' in sample:
-            checkfig[nh]['delf_ax'].set_xscale(sample['xscale'])
-            checkfig[nh]['delg_ax'].set_xscale(sample['xscale'])
-            checkfig[nh]['rh_ax'].set_xscale(sample['xscale'])
-            checkfig[nh]['rd_ax'].set_xscale(sample['xscale'])
-        # tidy up the solution check figure
-        checkfig[nh]['D_ax'] = add_D_axis(checkfig[nh]['delg_ax'])
-        checkfig[nh]['figure'].tight_layout()
-         # get the property data to add to the property figure
-        drho = 1000*results[nh]['film']['drho']
-        grho3 = results[nh]['film']['grho3']/1000
-        phi = results[nh]['film']['phi']
-        drho_err = 1000*results[nh]['film']['drho_err']
-        grho3_err = results[nh]['film']['grho3_err']/1000
-        phi_err = results[nh]['film']['phi_err']
-        # this is where we determine what marker to use.  We change it if
-        # we have specified a different marker in the sample dictionary
-        if 'forcemarker' in sample:
-            markers[nh] = sample['forcemarker']
-        # add property data with error bars to the figure
-        propfig['drho_ax'].errorbar(xdata, drho, yerr=drho_err,
-                                    marker=markers[nh], label=nh)
-        propfig['grho3_ax'].errorbar(xdata, grho3, yerr=grho3_err,
-                                    marker=markers[nh], label=nh)
-        propfig['phi_ax'].errorbar(xdata, phi, yerr=phi_err,
-                                   marker=markers[nh], label=nh)
-        # add values of d/lam3 to the film raw data figure
-        if 'rawfig' in sample['film']:
-            sample['film']['dlam3_ax'].plot(xdata, results[nh]['dlam3'], '+', label=nh)
-    # add legend to the the dlam3 figure and set the x axis label
-    if 'rawfig' in sample['film']:
-        sample['film']['dlam3_ax'].legend()
-        sample['film']['dlam3_ax'].set_xlabel(sample['xlabel'])
-    if close_on_click_switch and not run_from_ipython():
-        # when code is run with IPython, don't use the event
-        propfig['figure'].canvas.mpl_connect('key_press_event', close_on_click)
-        if 'rawfig' in sample['film']:
-            sample['film']['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
-            sample['bare']['rawfig'].canvas.mpl_connect('key_press_event', close_on_click)
-    openplots = 3 + len(checkfig)
-    if not run_from_ipython():
-        # when code is run with IPython, don't use key_press_event
-        while openplots>0:
-            plt.pause(1)
+            delfstar_calc[n] = calc_delfstar(n, layers, calctype)
 
-    sample['results'] = results
-    # tidy up the property figure
-    cleanup_propfig(sample, parms)
-    sample['checkfig'] = checkfig
-    return sample
+        for n in nhplot:   
+            data['df_calc'+str(n)][i]=round(delfstar_calc[n],1)
+
+        data['grho3'][i] = grho3
+        data['phi'][i] = phi
+        data['drho'][i] = drho
+
+        data['grho3_err'][i] = err[0]
+        data['phi_err'][i] = err[1]
+        data['drho_err'][i] = err[2]
+
+        data['dlam3'][i] = dlam3
+        data['delfstar_err'][i] = delfstar_err
+        data['deriv'][i] = deriv
+
+        # set up the initial guess
+        if filmtype == 'bulk':
+            x0 = np.array([grho3, phi])
+        else:
+            x0 = np.array([grho3, phi, drho])
+
+    # add these calculated values to existing dataframe
+    new_info = pd.DataFrame(data)
+    new_df = pd.concat([delfstar, new_info], axis=1)
+
+    return new_df
 
 
-def cleanup_propfig(sample, parms):
-    make_legend = parms.get('make_legend', True)
-    make_titles = parms.get('make_titles', True)
-    propfig = sample['propfig']
-    # add legends to the property figure
-    if make_legend:
-        propfig['drho_ax'].legend()
-        propfig['grho3_ax'].legend()
-        propfig['phi_ax'].legend()
-    # add axes titles to the property figure
-    if make_titles:
-        propfig['drho_ax'].set_title('(a)')
-        propfig['grho3_ax'].set_title('(b)')
-        propfig['phi_ax'].set_title('(c)')
-    # adjust linear and log axes as desired
-    if 'xscale' in sample:
-        propfig['drho_ax'].set_xscale(sample['xscale'])
-        propfig['grho3_ax'].set_xscale(sample['xscale'])
-        propfig['phi_ax'].set_xscale(sample['xscale'])
-    if 'grho3scale' in sample:
-        propfig['grho3_ax'].set_yscale(sample['grho3scale'])
-    propfig['figure'].tight_layout()
-    # write to standard location specified in sample definition
-    return propfig
 
-
-def close_existing_fig(figname):
-    if plt.fignum_exists(figname):
-        plt.close(figname)
-    return
-
-
-def make_prop_axes(propfigname, xlabel):
+def make_prop_axes(**kwargs):
     # set up the standard property plot
-    close_existing_fig(propfigname)
-    fig = plt.figure(propfigname, figsize=(9, 3))
-    drho_ax = fig.add_subplot(131)
-    drho_ax.set_xlabel(xlabel)
-    drho_ax.set_ylabel(r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)')
+    filmtype = kwargs.get('filmtype','thin')
+    num = kwargs.get('num','property fig')
 
-    grho3_ax = fig.add_subplot(132)
-    grho3_ax.set_xlabel(xlabel)
-    grho3_ax.set_ylabel(r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)')
+    if filmtype != 'bulk':
+        fig, ax = plt.subplots(1,3, figsize=(9, 3), num=num)
+        ax[2].set_ylabel(r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)')
+    else:
+        fig, ax = plt.subplots(1,2, figsize=(6, 3), num=num)
 
-    phi_ax = fig.add_subplot(133)
-    phi_ax.set_xlabel(xlabel)
-    phi_ax.set_ylabel(r'$\phi$ (deg.)')
+    ax[0].set_ylabel(r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)')
+    ax[0].ticklabel_format(axis='y', style='sci', scilimits=(0,0))
+
+    ax[1].set_ylabel(r'$\phi$ (deg.)')
+
+    # set xlabel to 'index' by default
+    for i in np.arange(len(ax)):
+        ax[i].set_xlabel('index')
+
 
     fig.tight_layout()
 
-    return {'figure': fig, 'drho_ax': drho_ax, 'grho3_ax': grho3_ax,
-            'phi_ax': phi_ax}
+    return fig, ax
 
-    
-def make_prop_axes_bulk(propfigname, xlabel):
-    # set up the standard property plot
-    close_existing_fig(propfigname)
-    fig = plt.figure(propfigname, figsize=(9, 3))
-    deltarho_ax = fig.add_subplot(131)
-    deltarho_ax.set_xlabel(xlabel)
-    deltarho_ax.set_ylabel(r'$\delta\rho$ ($\mu m\cdot$g/cm$^3$)')
 
-    grho_ax = fig.add_subplot(132)
-    grho_ax.set_xlabel(xlabel)
-    grho_ax.set_ylabel(r'$|G_n^*|\rho$ (Pa $\cdot$ g/cm$^3$)')
-    # adjust tick label format for grho_ax    
-    grho_ax.ticklabel_format(axis='y', style='sci', 
-       scilimits=(0,0), useMathText=True)
-
-    phi_ax = fig.add_subplot(133)
-    phi_ax.set_xlabel(xlabel)
-    phi_ax.set_ylabel(r'$\phi_n$ (deg.)')
-
+def make_delf_axes(**kwargs):
+    num = kwargs.get('num','delf fig')
+    fig, ax = plt.subplots(1,2, figsize=(6,3), num=num)
+    for i in [0, 1]:
+        ax[i].set_xlabel(r'index')
+    ax[0].set_ylabel(r'$\Delta f/n$ (kHz)')
+    ax[1].set_ylabel(r'$\Delta \Gamma /n$ (kHz)')
     fig.tight_layout()
-
-    return {'figure': fig, 'deltarho_ax':deltarho_ax, 'grho_ax':grho_ax,
-            'phi_ax':phi_ax}
+    return fig, ax
 
 
-def make_vgp_axes(vgpfigname):
-    close_existing_fig(vgpfigname)
-    fig = plt.figure(vgpfigname, figsize=(3, 3))
-    vgp_ax = fig.add_subplot(111)
-    vgp_ax.set_xlabel((r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)'))
-    vgp_ax.set_ylabel(r'$\phi$ (deg.)')
+def make_vgp_axes():
+    fig, ax = plt.subplots(1,1, figsize=(3, 3))
+    ax.set_xlabel((r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)'))
+    ax.set_ylabel(r'$\phi$ (deg.)')
     fig.tight_layout()
-    return {'figure': fig, 'vgp_ax':vgp_ax}
+    return fig, ax
 
 
-def make_check_axes(sample, nh):
-    close_existing_fig(nh + 'solution check')
-    #  compare actual annd recaulated frequency and dissipation shifts.
-    fig = plt.figure(nh + '_solution check_'+sample['samplename'])
-    delf_ax = fig.add_subplot(221)
-    delf_ax.set_xlabel(sample['xlabel'])
-    delf_ax.set_ylabel(r'$\Delta f/n$ (Hz)')
+def delfstar_from_xlsx(directory, file, **kwargs):  # delfstar datafrome from excel file
+    # exclude all rows where the sindicated harmonics are not marked
+    restrict_to_marked = kwargs.get('restrict_to_marked',[3])
+    nvals = kwargs.get('nvals',[1,3,5])
 
-    delg_ax = fig.add_subplot(222)
-    delg_ax.set_xlabel(sample['xlabel'])
-    delg_ax.set_ylabel(r'$\Delta \Gamma/n$ (Hz)')
-
-    rh_ax = fig.add_subplot(223)
-    rh_ax.set_xlabel(sample['xlabel'])
-    rh_ax.set_ylabel(r'$r_h$')
-
-    rd_ax = fig.add_subplot(224)
-    rd_ax.set_xlabel(sample['xlabel'])
-    rd_ax.set_ylabel(r'$r_d$')
-
-    fig.tight_layout()
-
-    return {'figure': fig, 'delf_ax': delf_ax, 'delg_ax': delg_ax,
-            'rh_ax': rh_ax, 'rd_ax': rd_ax}
-
-
-def delfstar_from_xlsx(directory, file):  # build delfstar dictionary from excel file
     df = pd.read_excel(directory+file, sheet_name=None, header=0)['S_channel']
-    delfstar={}
-    for i in np.arange(len(df)):
-        delfstar[i]={}
-        for n in [1, 3, 5, 7, 9]:
-            if 'delf'+str(n) in df.keys():
-                delfstar[i][n] = df['delf'+str(n)][i] + 1j*df['delg'+str(n)][i]
-    time = df['t']  # time in seconds
-    return time, delfstar
+    df = df.round(1)
+    df['keep_row']=1  # keep all rows we are told to check for specific marks
+    for n in restrict_to_marked:
+        df['keep_row'] = df['keep_row']*df['mark'+str(n)]
 
+    # delete rows we don't want to keep
+    df = df[df.keep_row==1] # Delete all rows that are not appropriately marked
 
-def bulk_props(delfstar):
-    # get the bulk solution for grho and phi
-    grho3 = (np.pi*Zq*abs(delfstar[3])/f1) ** 2
-    phi = -np.degrees(2*np.arctan(delfstar[3].real /
-                      delfstar[3].imag))
+    # add each of the values of delfstar
+    for n in nvals:
+        df[n] = df['delf'+str(n)] + 1j*df['delg'+str(n)]
 
-    return [grho3, phi]
-
+    df = df.filter(items=['t']+['temp']+nvals)
+    df = df.reset_index()
+    return df
 
 def gstar_maxwell(wtau):  # Maxwell element
     return 1j*wtau/(1+1j*wtau)
@@ -865,11 +620,5 @@ def vogel(T, Tref, B, Tinf):
     return logaT
 
 
-def run_from_ipython():
-    try:
-        __IPYTHON__
-        return True
-    except NameError:
-        return False
     
 
