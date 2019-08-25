@@ -17,10 +17,9 @@ The analysis portions of the software should work on Windows/Mac/Linux platforms
 
 ### Prerequisites
 
-* Python 3.5+ is required. For data analysis only, it can run with both 32-bit and 64-bit Python. If you want to use the data collection portion with myVNA, 32-bit Python and Windows are required.  
+* If you only want to run the stand -alone program, there is no Python environment needed. If you want to run it with Python, Python 3.5+ is required. For data analysis only, it can run with both 32-bit and 64-bit Python. If you want to use the data collection portion with myVNA, 32-bit Python and Windows are required. Python labroaries needed to run the software are listed in the `requirements.txt` file.  
 
-* Hardware and external software for data collection: The AccessMyVNA and myVNA programs were obtained from <http://g8kbb.co.uk/html/downloads.html>.
-* Python labroaries needed to run the software are listed in the `requirements.txt` file.  
+* If you want to run data collection, hardware and external software for data collection: The AccessMyVNA and myVNA programs were obtained from <http://g8kbb.co.uk/html/downloads.html>.
   
 * The Anaconda python environment is suggested.  You can  download and install the Anaconda distribution of python from [anaconda.com](https://anaconda.com/download).  
 
@@ -30,7 +29,14 @@ The analysis portions of the software should work on Windows/Mac/Linux platforms
 conda install -c conda-forge hdf5storage  
 ```
 
-### Installation
+## Using the Stand-alone Program (exe)
+
+A single executable file (exe file) which is precompiled from source code under 32-bit Python is located in the `stand_alone/` folder. It can be run without any additional installation on a Windows system, without the need to install a Python distribution. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (<span style="color:red">NOTE: You can customize the program by exporting you default settings as  `user_settings.json`  file (See below about the way it works.)</span>)  
+The single executable file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (NOTE: You can customize the program with `settings_default.json`  file comes with the executable file. See below about the way how it works.)  
+
+The single executable file version might not be updated as frequently as the source code.
+
+### Installation (Python code)
 
 To install everything you need from this repository, run the following command from a command window in the directory where you want everthing to be installed:
 
@@ -40,18 +46,11 @@ git clone https://github.com/zhczq/QCM_py
 
 If you just need the updated analysis script, everything you need is in QCMFuncs/QCM_functions.py. In this same directory you will also find some example data obtained with polystyrene films at different temperatures, and a run file called PS_plots.py. You should be able to run PS_plots.py directly and end up with some property plots that illustrate how the process works, and how you need to set up the file structure to include your own data.
 
-All the modules needed for the data collection program are in the `QCM_main/` folder. Go to that folder and run QCM_main.py will open the program.  
-
-## Using the Stand-alone Program (exe)
-
-A single executable file (exe file) which is precompiled from source code under 32-bit Python is located in the `stand_alone/` folder. It can be run without any additional installation on a Windows system, without the need to install a Python distribution. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (<span style="color:red">NOTE: You can customize the program with the  `settings_default.json`  file that comes with the executable file (See below about the way it works.)</span>)  
-The single executable file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (NOTE: You can customize the program with `settings_default.json`  file comes with the executable file. See below about the way how it works.)  
-
-The single executable file version might not be updated as frequently as the source code.
+All the modules needed for the data collection program are in the `rheoQCM/` folder. Go to that folder and run rheoQCM.py will open the program.  
 
 ## Running the UI from Terminal
 
-Go to the `QCM_main/` folder and run `QCM_main.py` will start the UI and it will check the environment by itself.  
+Go to the `rheoQCM/` folder and run `rheoQCM.py` will start the UI and it will check the environment by itself.  
 
 ## Using UI with QCM-D Data
 
@@ -83,10 +82,10 @@ Modules `DataSaver` and `QCM` in `Modules/` folder are availabe for dealing with
 
 The functions for the Matlab version of the data are locoalized in `QCMFuncs/` folder.  
 
-Export the current settings as a json file named `settings_default.json` and save in the same folder as `QCM_main.py` or `QCM_main.exe`. The UI will use the settings you saved as default after the next time you opend it. If you want the setup go back the original one, just simply delete or rename that file.  
+Export the current settings as a json file named `settings_default.json` and save in the same folder as `rheoQCM.py` or `rheoQCM.exe`. The UI will use the settings you saved as default after the next time you opend it. If you want the setup go back the original one, just simply delete or rename that file.  
 
-There is a `QCM_main.bat` file in  `QCM_main/` for running the program with Python by just double clicking it. You need to change the path of python and QCM_main.py to them on your computer to make it work. Meanwhile, you can make a shortcut of this bat file and put the shortcut in a location of your choosing.
-There is a `QCM_main.bat` file in  `QCM_main/` for running the program with Python by just double clicking it on Windows. You need to change the path of python and QCM_main.py to them on your computer to make it work. Meanwhile, you can make a shortcut of this bat file and put the shortcut somewhere you want.
+There is a `rheoQCM.bat` file in  `rheoQCM/` for running the program with Python by just double clicking it. You need to change the path of python and rheoQCM.py to them on your computer to make it work. Meanwhile, you can make a shortcut of this bat file and put the shortcut in a location of your choosing.
+There is a `rheoQCM.bat` file in  `rheoQCM/` for running the program with Python by just double clicking it on Windows. You need to change the path of python and rheoQCM.py to them on your computer to make it work. Meanwhile, you can make a shortcut of this bat file and put the shortcut somewhere you want.
 
 ### Known Issues
 
