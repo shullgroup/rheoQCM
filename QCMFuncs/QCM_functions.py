@@ -307,13 +307,7 @@ def thinfilm_guess(delfstar, nh):
     # really a placeholder function until we develop a more creative strategy
     # for estimating the starting point
     n1 = int(nh[0])
-    n2 = int(nh[1])def make_delf_fig():    
-    fig, ax = plt.subplots(1,2, figsize=(6,3))
-    for num in [0, 1]:  
-        ax[num].set_xlabel(r'$d\rho$ ($\mu$m $\cdot$g/cm$^3$)')    
-    ax[0].set_ylabel(r'$\Delta f$ (kHz)')
-    ax[1].set_ylabel(r'$\Delta \Gamma$ (kHz)')
-    return fig, ax
+    n2 = int(nh[1])
     n3 = int(nh[2])
 
     rd_exp = -delfstar[n3].imag/delfstar[n3].real
@@ -476,7 +470,6 @@ def solve_for_props(delfstar, **kwargs):
     new_info = pd.DataFrame(data)
     new_df = pd.concat([delfstar, new_info], axis=1)
     return new_df
-
 
 
 def make_prop_axes(**kwargs):
