@@ -1734,8 +1734,8 @@ class QCMApp(QMainWindow):
         '''
         recalculate delf and delg by reference set saved in data_saver
         '''
-        self.data_saver.calc_fg_ref('samp', mark=True)
-        self.data_saver.calc_fg_ref('ref', mark=True)
+        self.data_saver.calc_fg_ref('samp', mark=False) # False or True??
+        self.data_saver.calc_fg_ref('ref', mark=False) # False or True??
 
 
     def on_triggered_actionOpen_MyVNA(self):
@@ -2550,6 +2550,10 @@ class QCMApp(QMainWindow):
 
     def tab_spectra_fit_update_mpls(self, f, G, B):
         ''' update mpl_spectra_fit and mpl_spectra_fit_polar '''
+        print(f)
+        if f is None or G is None or B is None:
+            logger.warning('None data.')
+            return
         ## disconnect axes event
         self.mpl_disconnect_cid(self.ui.mpl_spectra_fit)
 
@@ -2822,10 +2826,7 @@ class QCMApp(QMainWindow):
         idx = np.where((data_lG[0] >= factor_span[0]) & (data_lG[0] <= factor_span[1]))[0] # determine the indices by f (data_lG[0])
 
         logger.info('idx: %s', idx) 
-        print(type(idx))
-        print(idx.dtype)
-        print(fit_result['fit_g'])
-        print(fit_result['fit_g'][idx])
+
         self.ui.mpl_spectra_fit_polar.update_data({'ln': 'lsp', 'x': fit_result['fit_g'][idx], 'y': fit_result['fit_b'][idx]})
 
         if self.get_spectraTab_mode() == 'center': # center mode
@@ -2885,7 +2886,6 @@ class QCMApp(QMainWindow):
 
         # get data from data saver
         f, G, B = self.get_active_raw()
-        logger.info('%s, %s, %s', len(f), len(G), len(B)) 
 
         # update raw
         self.tab_spectra_fit_update_mpls(f, G, B)
@@ -3809,20 +3809,15 @@ class QCMApp(QMainWindow):
         logger.info(pk_data[0]) 
         logger.info(type(pk_data)) 
         logger.info(type(pk_data[0])) 
-        logger.info(isinstance(pk_data[0], float)) 
-        logger.info(isinstance(pk_data[0], np.float)) 
-        logger.info(isinstance(pk_data[0], np.float64)) 
-        logger.info(isinstance(pk_data[0], int)) 
-        logger.info(isinstance(pk_data[0], np.int)) 
-        logger.info(isinstance(pk_data[0], np.int32)) 
-        logger.info(isinstance(pk_data[0], np.int64)) 
+
         if isinstance(pk_data[0], (float, int, np.int64)): # data is not empty (float for values, int for index and queue_id)
             label = mpl.l['lp'][0].get_label()
             line, ind = label.split('_')
             l, harm = line[:-1], line[-1]
             logger.info('label: %s', label) 
             logger.info(line) 
-            logger.info(l, harm) 
+            logger.info(l) 
+            logger.info(harm) 
             logger.info(ind) 
 
             self.active['chn_name'] = self.get_plt_chnname(plt_str)
