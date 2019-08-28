@@ -1876,6 +1876,7 @@ class QCMApp(QMainWindow):
     #     if files:
     #         logger.info(files) 
 
+
     def saveFileDialog(self, title, path='', filetype=config_default['default_datafiletype']):
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog

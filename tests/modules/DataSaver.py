@@ -576,6 +576,7 @@ class DataSaver:
                 # fh['data/' + key] = json.dumps(getattr(self, key).to_dict())        
                 fh.create_dataset('data/' + key, data=getattr(self, key).to_json(), dtype=h5py.special_dtype(vlen=str))  
 
+                # save <key>_ref
                 logger.info(getattr(self, key + '_ref').columns) 
                 logger.info(getattr(self, key + '_ref').head()) 
                 logger.info(getattr(self, key + '_ref').head().to_json()) 
