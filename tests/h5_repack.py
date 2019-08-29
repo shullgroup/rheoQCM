@@ -4,6 +4,7 @@ import argparse
 import shlex
 import time
 import subprocess
+import random
 
 
 ext = ('.h5',) # legal extensions of hdf5 file
@@ -16,10 +17,14 @@ def repack_command(inpath):
     print('to ' + tempfilename + ' ...')
     command = ["ptrepack", "-o", "--chunkshape=auto", "--propindexes", inpath, tempfilename]
     p = subprocess.Popen(command)
+    # delete tempfile
+    print('removing original file ...')
+    os.remove(inpath)
     print('saving tempfile back to ' + inpath + ' ...')
-    os.rename(tempfilname, inpath)
+    os.rename(tempfilename, inpath)
+
     print('done for ' + inpath)
-    pritn('\n')
+    print('\n')
 
 parser = argparse.ArgumentParser(description='Process ptrepack to shrink overwritten .h5 file size.')
 parser.add_argument('integers', metavar='path', type=str, nargs='?', help='path of a file or a folder (repack all .h5 files in the folder).')
@@ -36,7 +41,7 @@ else: # no path given and input
     paths = list(set(paths))
 
 # check file/folder exist
-paths = list(filter(lambda p: os.path.exists(p) and p.endswith(ext) or os.path.isdir(p), paths))
+paths = list(filter(lambda p: (os.path.exists(p) and p.endswith(ext)) or os.path.isdir(p), paths))
 
 print('Input unique path(s):\n{}'.format('\n'.join(paths)))
 
@@ -49,13 +54,11 @@ else:
         if os.path.isdir(path): # is a folder
             pass
             # get all legal files by extensions
-            
+            path_files = list(filter(lambda p: os.path.exists(p) and p.endswith(ext), paths))
+            # run all files
+            for pathfile in path_files:
+                repack_command(pathfile)
         else: # is a file
             repack_command(path)
 
-# outpath = 'out.h5'
-# command = ["ptrepack", "-o", "--chunkshape=auto", "--propindexes", filename, outfilename]
-
-# p = subprocess.Popen(args)
-
-    # os.path.isdir(direct)
+    print('All repacking finished')
