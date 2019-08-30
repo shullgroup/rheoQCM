@@ -273,21 +273,21 @@ def normdelfstar(n, dlam3, phi):
         (2*np.pi*dlam(n, dlam3, phi)*(1-1j*np.tan(np.deg2rad(phi/2))))
 
 
-def rhcalc(nh, dlam3, phi):
-    return normdelfstar(nh[0], dlam3, phi).real / \
-        normdelfstar(nh[1], dlam3, phi).real
+def rhcalc(calc, dlam3, phi):
+    return normdelfstar(calc[0], dlam3, phi).real / \
+        normdelfstar(calc[1], dlam3, phi).real
 
 
-def rh_from_delfstar(nh, delfstar):
-    # nh here is the calc string (i.e., '353')
-    n1 = int(nh[0])
-    n2 = int(nh[1])
+def rh_from_delfstar(calc, delfstar):
+    # calc here is the calc string (i.e., '353')
+    n1 = int(calc[0])
+    n2 = int(calc[1])
     return (n2/n1)*delfstar[n1].real/delfstar[n2].real
 
 
-def rdcalc(nh, dlam3, phi):
-    return -(normdelfstar(nh[2], dlam3, phi).imag / \
-        normdelfstar(nh[2], dlam3, phi).real)
+def rdcalc(calc, dlam3, phi):
+    return -(normdelfstar(calc[2], dlam3, phi).imag / \
+        normdelfstar(calc[2], dlam3, phi).real)
 
 
 def rd_from_delfstar(n, delfstar):
@@ -303,12 +303,12 @@ def bulk_props(delfstar):
     return [grho3, min(phi, 90)]
 
 
-def thinfilm_guess(delfstar, nh):
+def thinfilm_guess(delfstar, calc):
     # really a placeholder function until we develop a more creative strategy
     # for estimating the starting point
-    n1 = int(nh[0])
-    n2 = int(nh[1])
-    n3 = int(nh[2])
+    n1 = int(calc[0])
+    n2 = int(calc[1])
+    n3 = int(calc[2])
 
     rd_exp = -delfstar[n3].imag/delfstar[n3].real
     rh_exp = (n2/n1)*delfstar[n1].real/delfstar[n2].real
@@ -319,7 +319,7 @@ def thinfilm_guess(delfstar, nh):
     # ratios, using the small load approximation
     # we also neglect the overlayer in this first calculation
     def ftosolve(x):
-        return [rhcalc(nh, x[0], x[1])-rh_exp, rdcalc(nh, x[0], x[1])-rd_exp]
+        return [rhcalc(calc, x[0], x[1])-rh_exp, rdcalc(calc, x[0], x[1])-rd_exp]
     guess = [0.05, 5]
     soln = optimize.least_squares(ftosolve, guess, bounds=(lb, ub))
 
@@ -340,12 +340,12 @@ def solve_for_props(delfstar, **kwargs):
     else:
         layers={}
 
-    nhplot = kwargs.get('nhplot', [1, 3, 5])
+    nplot = kwargs.get('nplot', [1, 3, 5])
     calctype = kwargs.get('calctype', 'SLA')
     filmtype = kwargs.get('filmtype', 'thin')
 
-    nh = kwargs.get('nh') # specify the values used in the n1:n2,n3 calculation
-    n1 = int(nh[0]); n2 = int(nh[1]); n3 = int(nh[2])
+    calc = kwargs.get('calc') # specify the values used in the n1:n2,n3 calculation
+    n1 = int(calc[0]); n2 = int(calc[1]); n3 = int(calc[2])
 
     # set upper and lower bounds
     lb = kwargs.get('lb', [1e5, 0, 0])
@@ -355,8 +355,8 @@ def solve_for_props(delfstar, **kwargs):
 
 
     # we use the first data point to get an initial guess
-    if 'prop_guess' in kwargs.keys():
-        guess=kwargs['prop_guess']
+    if 'guess' in kwargs.keys():
+        guess=kwargs['guess']
         drho, grho3, phi = guess['drho'], guess['grho3'], guess['phi']
     elif filmtype=='bulk':
         n3=n1 # bulk solution uses delta f and delta gamma from same harmonic
@@ -365,7 +365,7 @@ def solve_for_props(delfstar, **kwargs):
         lb = lb[0:2]
         ub = ub[0:2]
     else:
-        drho, grho3, phi = thinfilm_guess(df[0], nh)
+        drho, grho3, phi = thinfilm_guess(df[0], calc)
 
     # set up the initial guess
     if filmtype == 'bulk':
@@ -375,7 +375,7 @@ def solve_for_props(delfstar, **kwargs):
 
     # add extra rows to the dataframe for all the calculated values
     newrows = []
-    for n in nhplot:
+    for n in nplot:
         newrows = newrows + ['df_calc'+str(n)]
         
     newrows = newrows+['drho', 'drho_err', 'grho3', 'grho3_err', 'phi', 'phi_err',
@@ -442,10 +442,10 @@ def solve_for_props(delfstar, **kwargs):
         # now back calculate delfstar from the solution
         delfstar_calc = {}
 
-        for n in nhplot:
+        for n in nplot:
             delfstar_calc[n] = calc_delfstar(n, layers, calctype)
 
-        for n in nhplot:   
+        for n in nplot:
             data['df_calc'+str(n)][i]=round(delfstar_calc[n],1)
 
         data['grho3'][i] = grho3
@@ -520,7 +520,7 @@ def delfstar_from_xlsx(directory, file, **kwargs):  # delfstar datafrome from ex
     nvals = kwargs.get('nvals',[1,3,5])
 
     df = pd.read_excel(directory+file, sheet_name=None, header=0)['S_channel']
-    df = df.round(1)
+
     df['keep_row']=1  # keep all rows we are told to check for specific marks
     for n in restrict_to_marked:
         df['keep_row'] = df['keep_row']*df['mark'+str(n)]
@@ -530,7 +530,7 @@ def delfstar_from_xlsx(directory, file, **kwargs):  # delfstar datafrome from ex
 
     # add each of the values of delfstar
     for n in nvals:
-        df[n] = df['delf'+str(n)] + 1j*df['delg'+str(n)]
+        df[n] = df['delf'+str(n)] + 1j*df['delg'+str(n)].round(1)
 
     df = df.filter(items=['t']+['temp']+nvals)
     df = df.reset_index()
