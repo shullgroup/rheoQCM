@@ -1864,7 +1864,7 @@ class QCMApp(QMainWindow):
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self, title, path, filetype, options=options)
         if fileName:
-            print(fileName)
+            logger.info(fileName)
         else:
             fileName = ''
         return fileName
@@ -1882,7 +1882,7 @@ class QCMApp(QMainWindow):
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(self,title, os.path.splitext(path)[0], filetype, options=options)
         if fileName:
-            print(fileName)
+            logger.info(fileName)
         else:
             fileName = ''
         return fileName
@@ -2058,6 +2058,8 @@ class QCMApp(QMainWindow):
         # codes for data exporting
         if fileName:
             self.data_saver.data_exporter(fileName) # do the export
+        print('Data exporting finshed.')
+        
 
     def process_messagebox(self, text='Your selection was paused!', message=[], opts=True, forcepop=False):
         '''
@@ -2578,7 +2580,6 @@ class QCMApp(QMainWindow):
 
     def tab_spectra_fit_update_mpls(self, f, G, B):
         ''' update mpl_spectra_fit and mpl_spectra_fit_polar '''
-        print(f)
         if f is None or G is None or B is None:
             logger.warning('None data.')
             return
@@ -4441,6 +4442,8 @@ class QCMApp(QMainWindow):
             print('source not defined!')
             return
 
+        print('Calculating {} ...'.format(nhcalc))
+
         # 4. iterate all layers to get props
         # prop_dict = {}
         prop_dict = {ind: {int(n): {'calc': film_dict[n]['calc']} for n in film_dict.keys()} for ind in idx_joined} # initiate dict for storing the prop 
@@ -4651,7 +4654,6 @@ class QCMApp(QMainWindow):
 
 
     def mech_clear(self):
-        print('pushButton_settings_mechanics_clrallprops clicked')
         self.data_saver.clr_mech_df_in_prop()
 
 
@@ -7032,7 +7034,6 @@ if __name__ == '__main__':
     if QT_VERSION >= 0x50501:
         sys._excepthook = sys.excepthook 
         def exception_hook(exctype, value, traceback):
-            print(exctype, value, traceback)
             # logger.exception('Exception occurred')
             logger.error('Exceptiion error', exc_info=(exctype, value, traceback))
             qFatal('UI error occured.')

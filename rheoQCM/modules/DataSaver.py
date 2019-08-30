@@ -398,7 +398,7 @@ class DataSaver:
 
             # calculate func which cannot be saved in file
             for chn_name in self._chn_keys:
-                self.calc_fg_ref(chn_name, mark=True)
+                self.calc_fg_ref(chn_name, mark=False) # False or True??
 
             self.raw  = {} # raw data from last queue
 
@@ -576,6 +576,7 @@ class DataSaver:
                 # fh['data/' + key] = json.dumps(getattr(self, key).to_dict())        
                 fh.create_dataset('data/' + key, data=getattr(self, key).to_json(), dtype=h5py.special_dtype(vlen=str))  
 
+                # save <key>_ref
                 logger.info(getattr(self, key + '_ref').columns) 
                 logger.info(getattr(self, key + '_ref').head()) 
                 logger.info(getattr(self, key + '_ref').head().to_json()) 
@@ -669,18 +670,51 @@ class DataSaver:
         return a set of raw data (f, G, B) or (f, G, B, t, temp)
         '''
         with h5py.File(self.path, 'r') as fh:
-            t = fh['raw/' + chn_name + '/' + str(queue_id)].attrs['t']
-            if 'temp' in fh['raw/' + chn_name + '/' + str(queue_id)].attrs.keys():
-                temp = fh['raw/' + chn_name + '/' + str(queue_id)].attrs['temp']
+            t = fh['raw/' + chn_name + '/' + str(int(queue_id))].attrs['t']
+            if 'temp' in fh['raw/' + chn_name + '/' + str(int(queue_id))].attrs.keys():
+                temp = fh['raw/' + chn_name + '/' + str(int(queue_id))].attrs['temp']
             else:
                 temp = np.nan
 
-            self.raw = fh['raw/' + chn_name + '/' + str(queue_id) + '/' + harm][()]
-        logger.info(type(self.raw)) 
+            if self._raw_exists(fh, chn_name, queue_id, harm): # raw data exist
+                raw = fh['raw/' + chn_name + '/' + str(int(queue_id)) + '/' + harm][()]
+                self.raw = {
+                    'f': raw[0, :],
+                    'G': raw[1, :],
+                    'B': raw[2, :],
+                }
+        
+            else: # raw data doesn't exist
+                logger.warning('No raw data found for %s, %s, %s', chn_name, queue_id, harm)
+                self.raw = {
+                    'f': None,
+                    'G': None,
+                    'B': None,
+                }
+
         if with_t_temp:
-            return [self.raw[0, :], self.raw[1, :], self.raw[2, :], t, temp]
+            return [self.raw['f'], self.raw['G'], self.raw['B'], t, temp]
         else: 
-            return [self.raw[0, :], self.raw[1, :], self.raw[2, :]]
+            return [self.raw['f'], self.raw['G'], self.raw['B']]
+
+
+    def _raw_exists(self, file_handle, chn_name, queue_id, harm):
+        '''
+        check if corresponding raw data exists
+        file_handle: handle to the file
+        '''
+        logger.info('raw chn:%s id:%s harm:%s', chn_name, queue_id, harm)
+        logger.info('raw in fh: %s', 'raw' in file_handle.keys())
+        logger.info('chn_name in fh["raw"]: %s', chn_name in file_handle['raw'])
+        logger.info('queue_id in raw/chn_name: %s', str(int(queue_id)) in file_handle['raw/'+chn_name])
+        logger.info('harm in raw/chn_name/queue_id: %s', harm in file_handle['raw/' + chn_name + '/' + str(int(queue_id))])
+
+        if 'raw' in file_handle.keys() and chn_name in file_handle['raw'] and str(int(queue_id)) in file_handle['raw/'+chn_name] and harm in file_handle['raw/' + chn_name + '/' + str(int(queue_id))]: 
+            logger.info('raw exists')
+            return True
+        else:
+            logger.info('raw does not exists')
+            return False
 
 
     def get_queue(self, chn_name, queue_id, col=''):
@@ -870,7 +904,7 @@ class DataSaver:
                 self.reshape_data_df('ref', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp, keep_mark=True), # keep only one marks
                 on=['queue_id', 't', 'temp']
             )
-
+        if self.ref_ref.shape[0] > 0:
             df_ref_ref = self.reshape_data_df('ref_ref', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp)
 
          # get ext
@@ -888,6 +922,10 @@ class DataSaver:
                     # time reference
                     t_ref = {key: self.exp_ref[key] for key in self.exp_ref.keys() if 't0' in key}
                     pd.DataFrame.from_dict(t_ref, orient='index').to_excel(writer, sheet_name='time_reference', header=False)
+                    # sample description
+                    sample_description = {'sample Description': self.settings['plainTextEdit_settings_sampledescription'].split('\n')} # split convert string to list of strings
+                    pd.DataFrame.from_dict(sample_description, orient='columns').to_excel(writer, sheet_name='sample_description', header=False, index=False)
+
                     # property
                     for chn_name in self._chn_keys:
                         if getattr(self, chn_name + '_prop'): 
@@ -1598,12 +1636,12 @@ class DataSaver:
                 # samp as sample and ref as reference
                 # use fitting of reference  
 
-                # clear self.samp_ref
-                if self.samp_ref.shape[0] > 0: 
-                    self.samp_ref = self._make_df()
+                # clear self.<chn_name>_ref
+                if getattr(self, chn_name + '_ref').shape[0] > 0: 
+                    setattr(self, chn_name + '_ref', self._make_df())
                 # clear all self.exp_ref[chn_name]
-                for chn_name in self._chn_keys: 
-                    self.exp_ref[chn_name] = {
+                for chn_name_temp in self._chn_keys: 
+                    self.exp_ref[chn_name_temp] = {
                         'f0': self.nan_harm_list(), # list for each harmonic
                         'g0': self.nan_harm_list(), # list for each harmonic
                     }
@@ -1722,14 +1760,12 @@ class DataSaver:
                 self.exp_ref['func'][chn_name] = func_list # save to class
 
                 # calculate ref for each sample (samp) temp and save to self.samp_ref
-                cols_df = self.interp_film_ref('samp')
 
                 # copy df from samp_ref_source
                 df = getattr(self, chn_name).copy()
 
-                # copy film ref to df
-                df.fs = cols_df.fs
-                df.gs = cols_df.gs
+                df['fs'] = self.interp_film_ref(chn_name, col='fs')
+                df['gs'] = self.interp_film_ref(chn_name, col='gs')
 
                 # change mark 1 to 1
                 df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
@@ -2002,6 +2038,7 @@ class DataSaver:
         idx: list of indices (rows)
         harm: str of a single harmonic to mark
         mark_val: int 
+        return: new df
         '''
         df_new = df.copy()
         def mark_func(row_marks):
@@ -2084,11 +2121,18 @@ class DataSaver:
         with h5py.File(self.path, 'a') as fh:
             for harm, idxs in sel_idx_dict.items():
                 # delete from raw
-                for ind in idxs:
-                    if 'raw' in fh.keys() and chn_name in fh['raw'] and ind in df_chn.queue_id.index and str(int(df_chn.queue_id[ind])) in fh['raw/'+chn_name] and harm in fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind]))]: # raw data exist
-                        logger.info(df_chn.queue_id[ind]) 
-                        logger.info(fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind])) + '/' + harm]) 
-                        del fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind])) + '/' + harm]
+                for ind in idxs: 
+                    if ind in df_chn.queue_id.index: # index in queue_id
+                        if self._raw_exists(fh, chn_name, int(df_chn.queue_id[ind]), harm): # raw data exist
+                            logger.info(df_chn.queue_id[ind]) 
+                            logger.info(fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind])) + '/' + harm]) 
+                            del fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind])) + '/' + harm]
+                            logger.warning('raw data deleted (%s, %s, %s)', chn_name, df_chn.queue_id[ind], harm)
+                        else:
+                            logger.warning('raw data does not exist (%s, %s, %s)', chn_name, df_chn.queue_id[ind], harm)
+                    else:
+                        logger.warning('index %s does not exist (%s, %s)', ind, chn_name, harm)
+
 
 
     ######## functions for unit convertion #################
@@ -2377,7 +2421,7 @@ class DataSaver:
 
         # make a fake reference time t0
         if settings:
-            t0_str = settings['label_reftime']
+            t0_str = settings['dateTimeEdit_reftime']
             t0 = datetime.datetime.strptime(t0_str, self.settings['time_str_format'])
         else:
             if not t0:

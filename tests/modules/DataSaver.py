@@ -923,7 +923,7 @@ class DataSaver:
                     t_ref = {key: self.exp_ref[key] for key in self.exp_ref.keys() if 't0' in key}
                     pd.DataFrame.from_dict(t_ref, orient='index').to_excel(writer, sheet_name='time_reference', header=False)
                     # sample description
-                    sample_description = {'sample Description': self.settings['plainTextEdit_settings_sampledescription'].split('\n')} # split convert string to list of strings
+                    sample_description = {'sample Description': self.settings.get('plainTextEdit_settings_sampledescription', '').split('\n')} # split convert string to list of strings
                     pd.DataFrame.from_dict(sample_description, orient='columns').to_excel(writer, sheet_name='sample_description', header=False, index=False)
 
                     # property

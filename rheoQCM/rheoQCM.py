@@ -90,7 +90,7 @@ if 'vna_path' not in settings_default:
 
 # packages from program itself
 from modules import UIModules, PeakTracker, DataSaver
-from modules import QCM as QCM #test
+from modules import QCM as QCM 
 from modules.MatplotlibWidget import MatplotlibWidget
 
 import _version
@@ -499,9 +499,9 @@ class QCMApp(QMainWindow):
         self.ui.checkBox_dynamicfitbyharm.clicked['bool'].connect(self.update_widget)
         self.ui.checkBox_fitfactorbyharm.clicked['bool'].connect(self.update_widget)
 
-        # plainTextEdit_settings_samplediscription
-        self.ui.plainTextEdit_settings_samplediscription.textChanged.connect(lambda: self.update_widget(
-            self.ui.plainTextEdit_settings_samplediscription.document().toPlainText()
+        # plainTextEdit_settings_sampledescription
+        self.ui.plainTextEdit_settings_sampledescription.textChanged.connect(lambda: self.update_widget(
+            self.ui.plainTextEdit_settings_sampledescription.document().toPlainText()
         ))
 
         # set signals to update spectra show display options
@@ -693,12 +693,12 @@ class QCMApp(QMainWindow):
             self.ui.treeWidget_settings_settings_hardware
         )
 
-        # insert bandwidth
+        # insert range
         self.create_combobox(
-            'comboBox_bandwidth',
-            config_default['bandwidth_opts'],
+            'comboBox_range',
+            config_default['range_opts'],
             100,
-            'Bandwidth',
+            'Range',
             self.ui.treeWidget_settings_settings_hardware
         )
 
@@ -882,7 +882,7 @@ class QCMApp(QMainWindow):
         self.ui.lineEdit_scan_harmstart.editingFinished.connect(self.on_editingfinished_harm_freq)
         self.ui.lineEdit_scan_harmend.editingFinished.connect(self.on_editingfinished_harm_freq)
         self.ui.comboBox_base_frequency.currentIndexChanged.connect(self.update_base_freq)
-        self.ui.comboBox_bandwidth.currentIndexChanged.connect(self.update_bandwidth)
+        self.ui.comboBox_range.currentIndexChanged.connect(self.update_range)
 
         # set signals to update span settings_settings
         self.ui.lineEdit_scan_harmsteps.textEdited.connect(self.update_harmwidget)
@@ -1110,6 +1110,7 @@ class QCMApp(QMainWindow):
 
         # doubleSpinBox_settings_mechanics_bulklimit
         self.ui.doubleSpinBox_settings_mechanics_bulklimit.setMinimum(config_default['mech_bulklimit']['min'])
+        self.ui.doubleSpinBox_settings_mechanics_bulklimit.setMaximum(config_default['mech_bulklimit']['max'])
         self.ui.doubleSpinBox_settings_mechanics_bulklimit.setSingleStep(config_default['mech_bulklimit']['step'])
         self.ui.doubleSpinBox_settings_mechanics_bulklimit.valueChanged.connect(self.update_widget)
                 
@@ -1378,8 +1379,8 @@ class QCMApp(QMainWindow):
         self.ui.statusbar.addPermanentWidget(self.ui.pushButton_status_signal_ch)
        # move pushButton_status_temp_sensor to statusbar
         self.ui.statusbar.addPermanentWidget(self.ui.pushButton_status_temp_sensor)
-        # move label_status_f0BW to statusbar
-        self.ui.statusbar.addPermanentWidget(self.ui.label_status_f0BW)
+        # move label_status_f0RNG to statusbar
+        self.ui.statusbar.addPermanentWidget(self.ui.label_status_f0RNG)
 
         #endregion
 
@@ -1700,10 +1701,10 @@ class QCMApp(QMainWindow):
         set the data_saver.exp_ref[chn_name]
         '''
         logger.info('save_data_saver_refsource') 
-        logger.info('chn_name', chn_name) 
+        logger.info('chn_name %s', chn_name) 
         ref_source = self.settings['comboBox_settings_data_'+ chn_name + 'refsource']
         ref_idx_str = self.settings['lineEdit_settings_data_'+ chn_name + 'refidx']
-        logger.info('ref_source', ref_source) 
+        logger.info('ref_source %s', ref_source) 
         logger.info('ref_idx_str: %s %s', ref_idx_str, type(ref_idx_str))
 
         # chn_queue_list = list(self.data_saver.get_queue_id(ref_source).tolist()) # list of available index in the target chn
@@ -1733,8 +1734,8 @@ class QCMApp(QMainWindow):
         '''
         recalculate delf and delg by reference set saved in data_saver
         '''
-        self.data_saver.calc_fg_ref('samp', mark=True)
-        self.data_saver.calc_fg_ref('ref', mark=True)
+        self.data_saver.calc_fg_ref('samp', mark=False) # False or True??
+        self.data_saver.calc_fg_ref('ref', mark=False) # False or True??
 
 
     def on_triggered_actionOpen_MyVNA(self):
@@ -1863,7 +1864,7 @@ class QCMApp(QMainWindow):
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getOpenFileName(self, title, path, filetype, options=options)
         if fileName:
-            print(fileName)
+            logger.info(fileName)
         else:
             fileName = ''
         return fileName
@@ -1875,12 +1876,13 @@ class QCMApp(QMainWindow):
     #     if files:
     #         logger.info(files) 
 
+
     def saveFileDialog(self, title, path='', filetype=config_default['default_datafiletype']):
         options = QFileDialog.Options()
         # options |= QFileDialog.DontUseNativeDialog
         fileName, _ = QFileDialog.getSaveFileName(self,title, os.path.splitext(path)[0], filetype, options=options)
         if fileName:
-            print(fileName)
+            logger.info(fileName)
         else:
             fileName = ''
         return fileName
@@ -2056,6 +2058,8 @@ class QCMApp(QMainWindow):
         # codes for data exporting
         if fileName:
             self.data_saver.data_exporter(fileName) # do the export
+        print('Data exporting finshed.')
+        
 
     def process_messagebox(self, text='Your selection was paused!', message=[], opts=True, forcepop=False):
         '''
@@ -2183,7 +2187,34 @@ class QCMApp(QMainWindow):
         self.clr_spectra_fit()
 
         # clear plainTextEdit
-        self.ui.plainTextEdit_settings_samplediscription.clear()
+        self.ui.plainTextEdit_settings_sampledescription.clear()
+
+
+    def on_triggered_del_menu(self, chn_name, plt_harms, sel_idx_dict, mode, marks):
+        '''
+        this function delete the raw data by given variables
+        
+        '''
+
+        # define the alert by mode (str)
+        alert_dic = {
+            # mode: alert string
+            'all': 'all showing data',
+            'marked': 'showing marked data',
+            'selpts': 'selected data',
+            'selidx': 'selected indices of all showing harmonics',
+            'selharm': 'all data of selected harmonics',
+        }
+
+        if not self.data_saver.path: # no data
+            return
+
+        process = self.process_messagebox(message=['Raw data of \n{}\nin the file will be PERMANENTLY DELETED!'.format(alert_dic.get(mode, None))], forcepop=True)
+
+        if not process:
+            return
+
+        self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, mode, marks))
 
 
     def clr_spectra_fit(self):
@@ -2398,10 +2429,10 @@ class QCMApp(QMainWindow):
 
         if f1 and (f1 < bf1 or f1 >= bf2): # f1 out of limt
             f1 = bf1
-            #TODO update statusbar 'lower bound out of limit and reseted. (You can increase the bandwidth in settings)'
+            #TODO update statusbar 'lower bound out of limit and reseted. (You can increase the range in settings)'
         if f2 and (f2 > bf2 or f2 <= bf1): # f2 out of limt
             f2 = bf2
-            #TODO update statusbar 'upper bond out of limit and reseted. (You can increase the bandwidth in settings)'
+            #TODO update statusbar 'upper bond out of limit and reseted. (You can increase the range in settings)'
         if f1 and f2 and (f1 >= f2):
             f2 = bf2
 
@@ -2549,6 +2580,9 @@ class QCMApp(QMainWindow):
 
     def tab_spectra_fit_update_mpls(self, f, G, B):
         ''' update mpl_spectra_fit and mpl_spectra_fit_polar '''
+        if f is None or G is None or B is None:
+            logger.warning('None data.')
+            return
         ## disconnect axes event
         self.mpl_disconnect_cid(self.ui.mpl_spectra_fit)
 
@@ -2821,10 +2855,7 @@ class QCMApp(QMainWindow):
         idx = np.where((data_lG[0] >= factor_span[0]) & (data_lG[0] <= factor_span[1]))[0] # determine the indices by f (data_lG[0])
 
         logger.info('idx: %s', idx) 
-        print(type(idx))
-        print(idx.dtype)
-        print(fit_result['fit_g'])
-        print(fit_result['fit_g'][idx])
+
         self.ui.mpl_spectra_fit_polar.update_data({'ln': 'lsp', 'x': fit_result['fit_g'][idx], 'y': fit_result['fit_b'][idx]})
 
         if self.get_spectraTab_mode() == 'center': # center mode
@@ -2884,7 +2915,6 @@ class QCMApp(QMainWindow):
 
         # get data from data saver
         f, G, B = self.get_active_raw()
-        logger.info('%s, %s, %s', len(f), len(G), len(B)) 
 
         # update raw
         self.tab_spectra_fit_update_mpls(f, G, B)
@@ -3752,14 +3782,14 @@ class QCMApp(QMainWindow):
 
         menuDel = QMenu('Delete', self)
         actionDel_all = QAction('Delete all showing data', self)
-        actionDel_all.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', marks)))
+        actionDel_all.triggered.connect(lambda: self.on_triggered_del_menu(chn_name, plt_harms, sel_idx_dict, 'all', marks))
         if selflg:
             actionDel_selpts = QAction('Delete selected points', self)
-            actionDel_selpts.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', marks)))
+            actionDel_selpts.triggered.connect(lambda: self.on_triggered_del_menu(chn_name, plt_harms, sel_idx_dict, 'selpts', marks))
             actionDel_selidx = QAction('Delete selected indices', self)
-            actionDel_selidx.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', marks)))
+            actionDel_selidx.triggered.connect(lambda: self.on_triggered_del_menu(chn_name, plt_harms, sel_idx_dict, 'selidx', marks))
             actionDel_selharm = QAction('Delete selected harmonics', self)
-            actionDel_selharm.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', marks)))
+            actionDel_selharm.triggered.connect(lambda: self.on_triggered_del_menu(chn_name, plt_harms, sel_idx_dict, 'selharm', marks))
 
         menuDel.addAction(actionDel_all)
         if selflg:
@@ -3808,20 +3838,15 @@ class QCMApp(QMainWindow):
         logger.info(pk_data[0]) 
         logger.info(type(pk_data)) 
         logger.info(type(pk_data[0])) 
-        logger.info(isinstance(pk_data[0], float)) 
-        logger.info(isinstance(pk_data[0], np.float)) 
-        logger.info(isinstance(pk_data[0], np.float64)) 
-        logger.info(isinstance(pk_data[0], int)) 
-        logger.info(isinstance(pk_data[0], np.int)) 
-        logger.info(isinstance(pk_data[0], np.int32)) 
-        logger.info(isinstance(pk_data[0], np.int64)) 
+
         if isinstance(pk_data[0], (float, int, np.int64)): # data is not empty (float for values, int for index and queue_id)
             label = mpl.l['lp'][0].get_label()
             line, ind = label.split('_')
             l, harm = line[:-1], line[-1]
             logger.info('label: %s', label) 
             logger.info(line) 
-            logger.info(l, harm) 
+            logger.info(l) 
+            logger.info(harm) 
             logger.info(ind) 
 
             self.active['chn_name'] = self.get_plt_chnname(plt_str)
@@ -4213,7 +4238,7 @@ class QCMApp(QMainWindow):
 
             # set lineEdit_mech_expertmode_value_<n>
             if sender_val == 'prop': # use property
-                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText("{0}'drho': {drho}, 'grho': {grho}, 'phi': {phi}, 'n': {n}{1}".format('{', '}', **QCM.prop_default['air']))
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText("{0}''grho': {grho}, 'phi': {phi}, drho': {drho}, 'n': {n}{1}".format('{', '}', **QCM.prop_default['air']))
             elif sender_val == 'name': # use name
                 getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText("air")
             elif sender_val == 'fg': # use freq and gamma value
@@ -4416,6 +4441,8 @@ class QCMApp(QMainWindow):
         else: 
             print('source not defined!')
             return
+
+        print('Calculating {} ...'.format(nhcalc))
 
         # 4. iterate all layers to get props
         # prop_dict = {}
@@ -4627,7 +4654,6 @@ class QCMApp(QMainWindow):
 
 
     def mech_clear(self):
-        print('pushButton_settings_mechanics_clrallprops clicked')
         self.data_saver.clr_mech_df_in_prop()
 
 
@@ -4894,13 +4920,16 @@ class QCMApp(QMainWindow):
                         data = row_data
                     # logger.info(data) 
 
+                    # format data 
+                    data = format(data, config_default['mech_table_number_format'])
+
                     tableitem = self.ui.tableWidget_spectra_mechanics_table.item(tb_row, tb_col)
                     if tableitem: # tableitem != 0
-                        logger.info('item not set') 
-                        tableitem.setText(str(data))
+                        logger.info('item set') 
+                        tableitem.setText(data)
                     else: # item is not set
-                        # logger.info('item set') 
-                        self.ui.tableWidget_spectra_mechanics_table.setItem(tb_row, tb_col, QTableWidgetItem(str(data)))
+                        # logger.info('item not set') 
+                        self.ui.tableWidget_spectra_mechanics_table.setItem(tb_row, tb_col, QTableWidgetItem(data))
         # logger.info(self.ui.tableWidget_spectra_mechanics_table.item(0,0)) 
         self.ui.tableWidget_spectra_mechanics_table.viewport().update() # TODO update doesn't work. update in UI
 
@@ -5683,8 +5712,9 @@ class QCMApp(QMainWindow):
         try:
             return self.settings['harmdata'][chn_name][str(harm)][objname]
         except:
+            self.settings['harmdata'][chn_name][str(harm)][objname] = harm_tree_default[objname]
             print(objname, 'is not found!\nUse default data')
-            return harm_tree_default[objname]
+            return self.settings['harmdata'][chn_name][str(harm)][objname]
 
 
     def set_harmdata(self, objname, val, harm=None, chn_name=None):
@@ -5718,9 +5748,9 @@ class QCMApp(QMainWindow):
         # update statusbar
         self.statusbar_f0bw_update()
 
-    def update_bandwidth(self, bandwidth_index):
-        self.settings['comboBox_bandwidth'] = self.ui.comboBox_bandwidth.itemData(bandwidth_index) # in MHz
-        logger.info(self.settings['comboBox_bandwidth']) 
+    def update_range(self, range_index):
+        self.settings['comboBox_range'] = self.ui.comboBox_range.itemData(range_index) # in MHz
+        logger.info(self.settings['comboBox_range']) 
         # update freq_range
         self.update_freq_range()
         # check freq_span
@@ -5732,16 +5762,16 @@ class QCMApp(QMainWindow):
 
     def statusbar_f0bw_update(self):
         fbase = self.settings['comboBox_base_frequency']
-        BW = self.settings['comboBox_bandwidth']
-        self.ui.label_status_f0BW.setText('{}\u00B1{} MHz'.format(fbase, BW))
-        self.ui.label_status_f0BW.setToolTip('base frequency = {} MHz; band width = {} MHz'.format(fbase, BW))
+        BW = self.settings['comboBox_range']
+        self.ui.label_status_f0RNG.setText('{}\u00B1{} MHz'.format(fbase, BW))
+        self.ui.label_status_f0RNG.setToolTip('base frequency = {} MHz; range = {} MHz'.format(fbase, BW))
 
     def update_freq_range(self):
         '''
         update settings['freq_range'] (freq range allowed for scan)
         '''
         fbase = float(self.settings['comboBox_base_frequency']) * 1e6 # in Hz
-        BW = float(self.settings['comboBox_bandwidth']) * 1e6 # in Hz
+        BW = float(self.settings['comboBox_range']) * 1e6 # in Hz
         freq_range = {}
         for i in self.all_harm_list():
             freq_range[str(i)] = [i*fbase-BW, i*fbase+BW]
@@ -6282,12 +6312,12 @@ class QCMApp(QMainWindow):
             'spinBox_fitfactor', # load default fit factor range
             'checkBox_dynamicfitbyharm', # load default dynamicfitbyharm
             'checkBox_fitfactorbyharm',  # load default fitfactorbyharm
-            'plainTextEdit_settings_samplediscription', # plainTextEdit_settings_samplediscription
+            'plainTextEdit_settings_sampledescription', # plainTextEdit_settings_sampledescription
         ])
 
         self.load_normal_widgets([
             'comboBox_base_frequency', # load this first to create self.settings['freq_range'] & self.settings['freq_span']
-            'comboBox_bandwidth', 
+            'comboBox_range', 
         ])
 
         # update statusbar
@@ -7004,7 +7034,6 @@ if __name__ == '__main__':
     if QT_VERSION >= 0x50501:
         sys._excepthook = sys.excepthook 
         def exception_hook(exctype, value, traceback):
-            print(exctype, value, traceback)
             # logger.exception('Exception occurred')
             logger.error('Exceptiion error', exc_info=(exctype, value, traceback))
             qFatal('UI error occured.')

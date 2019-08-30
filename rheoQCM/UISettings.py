@@ -53,7 +53,7 @@ config_default = {
         'comboBox_samp_channel',
         'comboBox_ref_channel',
         'comboBox_base_frequency',
-        'comboBox_bandwidth',
+        'comboBox_range',
         'checkBox_settings_temp_sensor',
         'comboBox_tempdevice',
         'comboBox_thrmcpltype',
@@ -330,13 +330,16 @@ config_default = {
         'dlams':             'd/' + u'\u03BB\u2099', # d/λₙ
         'lamrhos':           u'\u03BB\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # λρ (μm∙g/m³)
         'delrhos':           u'\u03B4\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # δρ (μm∙g/m³)
-        'normdelf_calcs':      u'\u0394' + 'f' + u'\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δfₙ/Δfₛₙ
-        'normdelg_calcs': u'\u0394\u0393\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓₙ/Δfₛₙ
+        'normdelf_calcs':    u'\u0394' + 'f' + u'\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # Δfₙ/Δfₛₙ
+        'normdelg_calcs':    u'\u0394\u0393\u2099' + '/' + u'\u0394' + 'f' + u'\u209B\u2099', # ΔΓₙ/Δfₛₙ
         'rh_calc':           'rh',
         'rd_calcs':          'rd',
         't':                 'Time (s)', # Time (s)
         'temp':              'Temp. (' + u'\u00B0' + 'C)', # Temp. (°C)
     }, # add the colum when activate column here
+
+    # mech table number format
+    'mech_table_number_format': '.5g', # Python format string
 
     # spinBox_harmfitfactor max value
     'fitfactor_max': 20, # int
@@ -346,7 +349,7 @@ config_default = {
         ('auto',   'Auto'),
         ('gmax',   'Gmax'),
         ('bmax',   'Bmax'),
-        ('derv',    'Derivative'),
+        ('derv',   'Derivative'),
         ('prev',   'Previous value'),
         # ('usrdef', 'User-defined...'),
     ]),
@@ -449,9 +452,9 @@ config_default = {
         ('10', '10 MHz'),
     ]),
 
-    # available bandwidth limitation for each harmonic
+    # available range limitation for each harmonic
     # key: number; val: for display in combobox
-    'bandwidth_opts': OrderedDict([
+    'range_opts': OrderedDict([
         ('0.1', '0.1 MHz'),
         ('0.25', '0.25 MHz'),
         ('0.5',  '0.5 MHz'),
@@ -482,7 +485,7 @@ config_default = {
     # doubleSpinBox_settings_mechanics_bulklimit
     'mech_bulklimit':{
         'min': 0,
-        'max': 2,
+        'max': 5,
         'step': 0.01,
     },
 
@@ -777,8 +780,8 @@ settings_default = {
     'checkBox_dynamicfitbyharm': False,
     'checkBox_fitfactorbyharm': False,
 
-    # default sampe discription
-    'plainTextEdit_settings_samplediscription': '',
+    # default sampe description
+    'plainTextEdit_settings_sampledescription': '',
 
     # default frequency ranges for each harmonic
     'freq_range': {},
@@ -818,7 +821,7 @@ settings_default = {
 
     # default crystal settings
     'comboBox_base_frequency': 5,
-    'comboBox_bandwidth': 0.1,
+    'comboBox_range': 0.1,
     'comboBox_crystalcut': 'AT',
 
     # default temperature settings
