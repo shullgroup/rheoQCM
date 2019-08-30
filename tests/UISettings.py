@@ -714,7 +714,7 @@ config_default = {
                 'formatter': 'simple',
                 'filename': 'info.log',
                 'maxBytes': 1048576,
-                'backupCount': 2,
+                'backupCount': 1,
                 'encoding': 'utf8',
             },    
             'error_file_handler': {

@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.18.1] - 2019-08-21
+## [0.18.1] - 2019-08-27
 
 ### Added
 
@@ -12,6 +12,7 @@
 
 - Correct some text in UI.
 - Fix raw not find bug.
+- Fix reference calculation bug.
 
 ## [0.18.0] - 2019-08-09
 
