@@ -2122,13 +2122,17 @@ class DataSaver:
             for harm, idxs in sel_idx_dict.items():
                 # delete from raw
                 for ind in idxs: 
-                    if self._raw_exists(fh, chn_name, int(df_chn.queue_id[ind]), harm): # raw data exist
-                        logger.info(df_chn.queue_id[ind]) 
-                        logger.info(fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind])) + '/' + harm]) 
-                        del fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind])) + '/' + harm]
-                        logger.warning('raw data deleted (%s, %s, %s)', chn_name, df_chn.queue_id[ind], harm)
+                    if ind in df_chn.queue_id.index: # index in queue_id
+                        if self._raw_exists(fh, chn_name, int(df_chn.queue_id[ind]), harm): # raw data exist
+                            logger.info(df_chn.queue_id[ind]) 
+                            logger.info(fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind])) + '/' + harm]) 
+                            del fh['raw/' + chn_name + '/' + str(int(df_chn.queue_id[ind])) + '/' + harm]
+                            logger.warning('raw data deleted (%s, %s, %s)', chn_name, df_chn.queue_id[ind], harm)
+                        else:
+                            logger.warning('raw data does not exist (%s, %s, %s)', chn_name, df_chn.queue_id[ind], harm)
                     else:
-                        logger.warning('raw data does not exist (%s, %s, %s)', chn_name, df_chn.queue_id[ind], harm)
+                        logger.warning('index %s does not exist (%s, %s)', ind, chn_name, harm)
+
 
 
     ######## functions for unit convertion #################

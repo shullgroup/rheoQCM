@@ -1,12 +1,15 @@
 # Changelog
 
-## [0.18.1] - 2019-08-27
+## [0.18.1] - 2019-08-30
 
 ### Added
 
 - Add format settings for property table.
+- Add alert to data delete contex menu.
 
 ### Changed
+
+- Change bulk calculation and add errors to the solutions.
 
 ### Fixed
 

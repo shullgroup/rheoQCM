@@ -2188,6 +2188,33 @@ class QCMApp(QMainWindow):
         self.ui.plainTextEdit_settings_sampledescription.clear()
 
 
+    def on_triggered_del_menu(self, chn_name, plt_harms, sel_idx_dict, mode, marks):
+        '''
+        this function delete the raw data by given variables
+        
+        '''
+
+        # define the alert by mode (str)
+        alert_dic = {
+            # mode: alert string
+            'all': 'all showing data',
+            'marked': 'showing marked data',
+            'selpts': 'selected data',
+            'selidx': 'selected indices of all showing harmonics',
+            'selharm': 'all data of selected harmonics',
+        }
+
+        if not self.data_saver.path: # no data
+            return
+
+        process = self.process_messagebox(message=['Raw data of \n{}\nin the file will be PERMANENTLY DELETED!'.format(alert_dic.get(mode, None))], forcepop=True)
+
+        if not process:
+            return
+
+        self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, mode, marks))
+
+
     def clr_spectra_fit(self):
         # delete prop plot
         self.del_prop_plot()
@@ -3754,14 +3781,14 @@ class QCMApp(QMainWindow):
 
         menuDel = QMenu('Delete', self)
         actionDel_all = QAction('Delete all showing data', self)
-        actionDel_all.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'all', marks)))
+        actionDel_all.triggered.connect(lambda: self.on_triggered_del_menu(chn_name, plt_harms, sel_idx_dict, 'all', marks))
         if selflg:
             actionDel_selpts = QAction('Delete selected points', self)
-            actionDel_selpts.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', marks)))
+            actionDel_selpts.triggered.connect(lambda: self.on_triggered_del_menu(chn_name, plt_harms, sel_idx_dict, 'selpts', marks))
             actionDel_selidx = QAction('Delete selected indices', self)
-            actionDel_selidx.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selidx', marks)))
+            actionDel_selidx.triggered.connect(lambda: self.on_triggered_del_menu(chn_name, plt_harms, sel_idx_dict, 'selidx', marks))
             actionDel_selharm = QAction('Delete selected harmonics', self)
-            actionDel_selharm.triggered.connect(lambda: self.data_saver.selector_del_sel(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selharm', marks)))
+            actionDel_selharm.triggered.connect(lambda: self.on_triggered_del_menu(chn_name, plt_harms, sel_idx_dict, 'selharm', marks))
 
         menuDel.addAction(actionDel_all)
         if selflg:
@@ -4210,7 +4237,7 @@ class QCMApp(QMainWindow):
 
             # set lineEdit_mech_expertmode_value_<n>
             if sender_val == 'prop': # use property
-                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText("{0}'drho': {drho}, 'grho': {grho}, 'phi': {phi}, 'n': {n}{1}".format('{', '}', **QCM.prop_default['air']))
+                getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText("{0}''grho': {grho}, 'phi': {phi}, drho': {drho}, 'n': {n}{1}".format('{', '}', **QCM.prop_default['air']))
             elif sender_val == 'name': # use name
                 getattr(self.ui, 'lineEdit_mech_expertmode_value_'+layer_num).setText("air")
             elif sender_val == 'fg': # use freq and gamma value

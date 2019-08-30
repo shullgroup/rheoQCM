@@ -729,7 +729,7 @@ config_default = {
         },    
         'loggers': {
             'console_logger': {
-                'level': 'ERROR',
+                'level': 'WARNING',
                 'handlers': ['console'],
                 'propagate': False,
             }
