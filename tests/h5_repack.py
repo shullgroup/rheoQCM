@@ -1,6 +1,6 @@
 '''
-This code is not finished 
-DO NOT use it with your data!
+This code uses h5repack from "HDF5 TOOlS". 
+Install it before running this code.'
 '''
 
 import os
@@ -14,82 +14,104 @@ import h5py
 
 
 ext = ('.h5',) # legal extensions of hdf5 file
-
-
-parser = argparse.ArgumentParser(description='Process ptrepack to shrink overwritten .h5 file size.')
-parser.add_argument('integers', metavar='path', type=str, nargs='?', help='path of a file or a folder (repack all .h5 files in the folder).')
-args = parser.parse_args()
-parser.print_help() # print the help information when run the code w/ -h or --help. Can be commonted if don't want to show
+org_prefix = 'orgfile_' # the prefix to be added to rename the original file
 
 # command to process the repack
 def repack_command(inpath):
+    # convert to absolute path
+    inpath = os.path.abspath(inpath)
+    print('File: ' + inpath)
+    size0 = os.path.getsize(inpath)
+    # get dir, name, extension
     indir = os.path.dirname(inpath)
-    infilename, infileext = os.path.splitext(inpath)
-    tempfilename = 'tempfile' + str(random.randrange(1e5, 9e5)) + infileext
-    temppath = os.path.join(indir, tempfilename) # use the same folder to save the tempfile
-    print('repacking ' + inpath)
-    print('to ' + temppath + ' ...')
-    print('Original file size: {}'.format(os.path.getsize(inpath)))
+    infilename = os.path.basename(inpath)
+    _, infileext = os.path.splitext(inpath)
 
-    # ptrepack seams does not work with 
-    # command = ["ptrepack", "-o", "--chunkshape=auto", "--propindexes", inpath, temppath]
-    # p = subprocess.Popen(command)
+    orgfilename = org_prefix + infilename
+    orgfilepath = os.path.join(indir, orgfilename)
+    # rename input file
+    print('rename original file "{}" to "{}"'.format(infilename, orgfilename))
+    os.rename(inpath, orgfilepath)
 
-    # just use simple creating a new file and copy the data
-    with h5py.File(inpath, 'r') as fh_in:
-        with h5py.File(temppath, 'w') as fh_out:
-            fh_out.create_group('data')
-            fh_out.create_group('raw')
-            fh_out.create_group('prop')
-            
-            # copy attribute of file
-            for attr in fh_in.attrs:
-                print('attr: ', attr)
-                fh_out.attrs[attr] = fh_in.attrs[attr]
-            # copy datasets and groups
-            for key in fh_in.keys():
-                print('key: ', key)
-                fh_in.copy(key, fh_out[key], shallow=True)
+    print('repacking...')
+    # use h5repack 
+    command = ['h5repack', '-i', orgfilepath, '-o', inpath]
+    p = subprocess.Popen(command)
+    (output, err) = p.communicate()
+    p_status = p.wait()
+    print('command output: ', output)
+    print('repacking is done')
 
-    # delete tempfile
-    print('removing original file ...')
-    os.remove(inpath)
-    print('saving tempfile back to ' + inpath + ' ...')
-    os.rename(temppath, inpath)
-    print('New file size: {}'.format(os.path.getsize(inpath)))
+    size1 = os.path.getsize(inpath)
 
-    print('done for ' + inpath)
+    # delete original file
+    if os.path.exists(inpath): # new file exists
+        print('removing original file ...')
+        os.remove(orgfilepath)
+        print('done')
+        print('Original file size: {}; New file size: {}'.format(size0, size1))
+    else:
+        print('new file not found!')
+
     print('\n')
 
-print('\n===============\n')
-# check the args
-if len(sys.argv[1:]) > 1: # path is given
-    paths = sys.argv[1:]
-else: # no path given and input
-    paths = shlex.split(input('Tpye path(s): '))
 
-# get unique paths
-    paths = list(set(paths))
+def loop_paths(paths):
+    '''
+    paths should be absolute paths
+    '''
+    if isinstance(paths, str):
+        paths = [paths]
 
-# check file/folder exist
-paths = list(filter(lambda p: (os.path.exists(p) and p.endswith(ext)) or os.path.isdir(p), paths))
-
-print('Input unique path(s):\n{}'.format('\n'.join(paths)))
-
-print('\n\n')
-if not paths: # no available path
-    print('No available path. Code stoped!')
-else:
-    # run all paths
     for path in paths:
         if os.path.isdir(path): # is a folder
-            pass
+            print('repacking folder: {}'.format(path))
             # get all legal files by extensions
-            path_files = list(filter(lambda p: os.path.exists(p) and p.endswith(ext), paths))
+            sub_paths = os.listdir(path)
+            sub_paths = [os.path.join(os.path.abspath(path), sub_path) for sub_path in sub_paths]
+            path_files = list(filter(lambda p: os.path.isfile(p) and p.endswith(ext), sub_paths))
+            path_dirs = list(filter(lambda p: os.path.isdir(p), sub_paths))
+            print(path_dirs)
+
             # run all files
             for pathfile in path_files:
                 repack_command(pathfile)
-        else: # is a file
-            repack_command(path)
 
-    print('All repacking finished')
+            # run all folders
+            for pathdir in path_dirs:
+                loop_paths([pathdir])
+        else: # is a file
+            if path.endswith(ext):
+                repack_command(path)
+                pass
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Process ptrepack to shrink .h5 file size. NOTE: This code uses h5repack from "HDF5 TOOlS". Install it before running this code.')
+    parser.add_argument('path', metavar='path', type=str, nargs='*', help='path of a file or a folder (repack all .h5 files in the folder). Multiple paths are available.')
+    parser.add_argument('-sf', '--subfolder', action='store_true', default='False', help='Include files in subfolders')
+    args = parser.parse_args()
+    # parser.print_help() # print the help information when run the code w/ -h or --help. Can be commonted if don't want to show
+
+
+    print('\n===============\n')
+    # check the args
+    if args.path: # path is given
+        paths = args.path
+    else: # no path given and input
+        paths = shlex.split(input('Tpye path(s): '))
+
+    # get unique paths
+    paths = list(set(paths))
+    # check file/folder exist
+    paths = list(filter(lambda p: (os.path.exists(p) and p.endswith(ext)) or os.path.isdir(p), paths))
+
+    print('Input unique path(s):\n{}'.format('\n'.join(paths)))
+
+    print('\n')
+    if not paths: # no available path
+        print('No available path. Code stoped!')
+    else:
+        # run all paths
+        loop_paths(paths)
+        print('All repacking finished')

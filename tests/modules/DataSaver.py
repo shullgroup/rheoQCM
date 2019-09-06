@@ -581,7 +581,6 @@ class DataSaver:
                 logger.info(getattr(self, key + '_ref').head()) 
                 logger.info(getattr(self, key + '_ref').head().to_json()) 
                 data = getattr(self, key + '_ref').head().to_json()
-                fh.create_dataset('data/' + key + '_ref', data=data, dtype=h5py.special_dtype(vlen=str))  
 
 
     def save_settings(self, settings={}):

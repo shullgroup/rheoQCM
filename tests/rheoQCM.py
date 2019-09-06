@@ -2057,8 +2057,9 @@ class QCMApp(QMainWindow):
         fileName = self.saveFileDialog(title='Choose a file and data type', filetype=config_default['export_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
         # codes for data exporting
         if fileName:
+            print('Exporting data ...')
             self.data_saver.data_exporter(fileName) # do the export
-        print('Data exporting finshed.')
+            print('Data is exported.')
         
 
     def process_messagebox(self, text='Your selection was paused!', message=[], opts=True, forcepop=False):
@@ -4921,7 +4922,8 @@ class QCMApp(QMainWindow):
                     # logger.info(data) 
 
                     # format data 
-                    data = format(data, config_default['mech_table_number_format'])
+                    if data is not None: # the following format does not work with None
+                        data = format(data, config_default['mech_table_number_format'])
 
                     tableitem = self.ui.tableWidget_spectra_mechanics_table.item(tb_row, tb_col)
                     if tableitem: # tableitem != 0
