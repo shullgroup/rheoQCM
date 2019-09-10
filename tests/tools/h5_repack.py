@@ -71,7 +71,6 @@ def loop_paths(paths):
             sub_paths = [os.path.join(os.path.abspath(path), sub_path) for sub_path in sub_paths]
             path_files = list(filter(lambda p: os.path.isfile(p) and p.endswith(ext), sub_paths))
             path_dirs = list(filter(lambda p: os.path.isdir(p), sub_paths))
-            print(path_dirs)
 
             # run all files
             for pathfile in path_files:

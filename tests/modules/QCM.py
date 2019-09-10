@@ -874,7 +874,7 @@ class QCM:
                     ])
 
                
-            if ~np.isnan(np.array([grho_refh, phi, drho, dlam_refh]).any()):
+            if ~np.isnan(np.array([grho_refh, phi, drho, dlam_refh]).any()) and grho_refh_range[0]<=grho_refh<=grho_refh_range[1] and phi_range[0]<=phi<=phi_range[1] and drho_range[0]<=drho<=drho_range[1]:
                 logger.warning('film guess in range') 
                 
                 if fit_method == 'lmfit': # this part is the old protocal w/o jacobian 
