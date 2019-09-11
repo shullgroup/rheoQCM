@@ -2057,8 +2057,9 @@ class QCMApp(QMainWindow):
         fileName = self.saveFileDialog(title='Choose a file and data type', filetype=config_default['export_datafiletype'], path=self.data_saver.path) # !! add path of last opened folder
         # codes for data exporting
         if fileName:
+            print('Exporting data ...')
             self.data_saver.data_exporter(fileName) # do the export
-        print('Data exporting finshed.')
+            print('Data is exported.')
         
 
     def process_messagebox(self, text='Your selection was paused!', message=[], opts=True, forcepop=False):
@@ -2077,7 +2078,7 @@ class QCMApp(QMainWindow):
             if self.data_saver.saveflg == False:
                 message.append('There is data unsaved!')
             if self.timer.isActive():
-                message.append('Test is Running!')
+                message.append('Test is Running! You may stop the test first.')
                 buttons = QMessageBox.Ok
             else:
                 if not opts:
@@ -4684,17 +4685,26 @@ class QCMApp(QMainWindow):
 
 
     def mech_solve_new(self):
+        queue_id_diff = self.data_mech_queue_ids_diff()
+
+        if queue_id_diff.empty:
+            print('No new data to calculate.')
+        else:
+            self.mech_solve_chn(self.mech_chn, queue_id_diff)
+
+
+    def data_mech_queue_ids_diff(self):
+        '''
+        return the difference between data and mech queue_id
+        '''
         data_queue_ids = self.data_saver.get_queue_id_marked_rows(self.mech_chn, dropnanmarkrow=False)
         
         nhcalc = self.gen_nhcalc_str()
         mech_queue_ids = self.data_saver.get_mech_queue_id(self.mech_chn, nhcalc)
 
-        queue_ids =  data_queue_ids[data_queue_ids.isin(set(data_queue_ids) - set(mech_queue_ids))]
+        queue_id_diff =  data_queue_ids[data_queue_ids.isin(set(data_queue_ids) - set(mech_queue_ids))]
 
-        if queue_ids.empty:
-            print('No new data to calculate.')
-        else:
-            self.mech_solve_chn(self.mech_chn, queue_ids)
+        return queue_id_diff
 
 
     def set_mech_layer_0_indchn_val(self):
@@ -4921,7 +4931,8 @@ class QCMApp(QMainWindow):
                     # logger.info(data) 
 
                     # format data 
-                    data = format(data, config_default['mech_table_number_format'])
+                    if data is not None: # the following format does not work with None
+                        data = format(data, config_default['mech_table_number_format'])
 
                     tableitem = self.ui.tableWidget_spectra_mechanics_table.item(tb_row, tb_col)
                     if tableitem: # tableitem != 0
@@ -4999,6 +5010,11 @@ class QCMApp(QMainWindow):
 
         # check if data exists mech_key
         if mech_key not in getattr(self.data_saver, chn_name + '_prop').keys(): # no corresponding prop data
+            print('There is no property data of {}'.format(mech_key))
+            return
+
+        if not self.data_mech_queue_ids_diff().empty:
+            print('there are new data not calculated. Slove those before plotting.')
             return
 
         # get harmonics to plot

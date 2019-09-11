@@ -1042,9 +1042,9 @@ class PeakTracker:
                 nan_policy='omit', # ('raise' default, 'propagate', 'omit')
                 )
             print(fit_report(result)) 
-            print('success', result.success)
-            print('message', result.message)
-            print('lmdif_message', result.lmdif_message)
+            print('success: ', result.success)
+            print('message: ', result.message)
+            print('lmdif_message: ', result.lmdif_message)
         except Exception as err:
             result = {}
             # traceback.print_tb(err.__traceback__)

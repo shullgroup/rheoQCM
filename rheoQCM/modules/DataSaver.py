@@ -72,6 +72,7 @@ class DataSaver:
 
         self._init_attrs()
 
+
     def _init_attrs(self):
         '''
         attributes needs to be initiated with new file
@@ -569,6 +570,25 @@ class DataSaver:
                 logger.info(key) 
                 # logger.info(fh['data/' + key]) 
                 if key in fh['data']:
+                    data = fh['data/' + key]
+                    logger.info(data) 
+                    logger.info(data[()]) 
+                    data[()] = getattr(self, key).to_json()
+                else:
+                    fh.create_dataset('data/' + key, data=getattr(self, key).to_json(), dtype=h5py.special_dtype(vlen=str)) 
+                if key + '_ref' in fh['data']:
+                    data_ref = fh['data/' + key + '_ref']
+                    logger.info(data_ref[()]) 
+                    data_ref[()] = getattr(self, key + '_ref').to_json()
+                else:
+                    fh.create_dataset('data/' + key + '_ref', data=getattr(self, key + '_ref').to_json(), dtype=h5py.special_dtype(vlen=str))
+        
+        # following is using delete/create protocal
+        """ with h5py.File(self.path, 'a') as fh:
+            for key in self._chn_keys:
+                logger.info(key) 
+                # logger.info(fh['data/' + key]) 
+                if key in fh['data']:
                     del fh['data/' + key]
                 if key + '_ref' in fh['data']:
                     del fh['data/' + key + '_ref']
@@ -580,8 +600,8 @@ class DataSaver:
                 logger.info(getattr(self, key + '_ref').columns) 
                 logger.info(getattr(self, key + '_ref').head()) 
                 logger.info(getattr(self, key + '_ref').head().to_json()) 
-                data = getattr(self, key + '_ref').head().to_json()
-                fh.create_dataset('data/' + key + '_ref', data=data, dtype=h5py.special_dtype(vlen=str))  
+                data_ref = getattr(self, key + '_ref').to_json()
+                fh.create_dataset('data/' + key + '_ref', data=data_ref, dtype=h5py.special_dtype(vlen=str)) """ 
 
 
     def save_settings(self, settings={}):
@@ -593,12 +613,17 @@ class DataSaver:
 
         with h5py.File(self.path, 'a') as fh:
             if 'settings' in fh:
-                del fh['settings']
-            fh.create_dataset('settings', data=json.dumps(settings))
-            if 'config_default' in fh: # saved by version < 0.17.0
+                data_settings =  fh['settings']
+                data_settings[()] = json.dumps(settings)
+            else:
+                fh.create_dataset('settings', data=json.dumps(settings))
+            # delete/create protocal
+            # if 'settings' in fh:
+            #     del fh['settings']
+            # fh.create_dataset('settings', data=json.dumps(settings))
+            if 'settings_default' in fh: # saved by version < 0.17.0
                 # it is not necessary, since version >= 0.17.0 saves a copy of information in settings.
-                del fh['config_default']
-            # fh.create_dataset('config_default', data=json.dumps(config_default))
+                del fh['settings_default']
 
 
     def save_data_settings(self, settings={}):
@@ -625,10 +650,18 @@ class DataSaver:
                         fh.create_dataset('prop/' + chn_name + '/' + mech_key, data=mech_df.to_json(), dtype=h5py.special_dtype(vlen=str))
                     else: 
                         if mech_key in fh['prop/' + chn_name].keys():
-                            del fh['prop/' + chn_name + '/' + mech_key]
+                            data_prop = fh['prop/' + chn_name + '/' + mech_key]
+                            data_prop[()] = mech_df.to_json()
+                        else:
+                            # create data_set for mech_df
+                            fh.create_dataset('prop/' + chn_name + '/' + mech_key, data=mech_df.to_json(), dtype=h5py.special_dtype(vlen=str))
 
-                        # create data_set for mech_df
-                        fh.create_dataset('prop/' + chn_name + '/' + mech_key, data=mech_df.to_json(), dtype=h5py.special_dtype(vlen=str))
+                        # delete/create protocal
+                        # if mech_key in fh['prop/' + chn_name].keys():
+                        #     del fh['prop/' + chn_name + '/' + mech_key]
+                        # else:
+                        # # create data_set for mech_df
+                        # fh.create_dataset('prop/' + chn_name + '/' + mech_key, data=mech_df.to_json(), dtype=h5py.special_dtype(vlen=str))
 
 
     def save_exp_ref(self):
@@ -642,8 +675,15 @@ class DataSaver:
 
             logger.info(self.exp_ref) 
             if 'exp_ref' in fh:
-                del fh['exp_ref']
-            fh.create_dataset('exp_ref',data=json.dumps(exp_ref))
+                data_exp_ref =  fh['exp_ref']
+                data_exp_ref[()] = json.dumps(exp_ref)
+            else:
+                fh.create_dataset('exp_ref',data=json.dumps(exp_ref))
+
+            # delete/create protocal
+            # if 'exp_ref' in fh:
+            #     del fh['exp_ref']
+            # fh.create_dataset('exp_ref',data=json.dumps(exp_ref))
 
 
     def _save_ver(self):
@@ -923,7 +963,7 @@ class DataSaver:
                     t_ref = {key: self.exp_ref[key] for key in self.exp_ref.keys() if 't0' in key}
                     pd.DataFrame.from_dict(t_ref, orient='index').to_excel(writer, sheet_name='time_reference', header=False)
                     # sample description
-                    sample_description = {'sample Description': self.settings['plainTextEdit_settings_sampledescription'].split('\n')} # split convert string to list of strings
+                    sample_description = {'sample Description': self.settings.get('plainTextEdit_settings_sampledescription', '').split('\n')} # split convert string to list of strings
                     pd.DataFrame.from_dict(sample_description, orient='columns').to_excel(writer, sheet_name='sample_description', header=False, index=False)
 
                     # property
