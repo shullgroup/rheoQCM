@@ -881,47 +881,51 @@ class QCM:
                     pass
                 else: # scipy
                     logger.info('x0: {}, lb: {}, ub: {}'.format(x0, lb, ub))
+                    logger.info('delfstars: {}, {}, {}'.format(delfstar[n1], delfstar[n2], delfstar[n3]))
                    
                     # recalculate solution to give the uncertainty, if solution is viable
-                    soln = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
-
-                    grho_refh = soln['x'][0]
-                    phi = soln['x'][1]
-                    if self.isbulk(rd_exp, bulklimit): # bulk
-                        drho = bulk_drho
-
-                    # update calc layer prop
-                    film = self.set_calc_layer_val(film, grho_refh, phi, drho)
-                    # logger.info('film after 2nd sol %s', film) 
-                    
-                    # dlam_refh = self.calc_dlam(self.refh, film)
-                    # comment above line to use the dlam_refh from soln
-
-                    # put the input uncertainties into a n element vector
-                    if self.isbulk(rd_exp, bulklimit): # bulk
-                        delfstar_err = np.zeros(2)
-                        delfstar_err[0] = np.real(self.fstar_err_calc(delfstar[n3]))
-                        delfstar_err[1] = np.imag(self.fstar_err_calc(delfstar[n3]))
-                    else: # thin film
-                        delfstar_err = np.zeros(3)
-                        delfstar_err[0] = np.real(self.fstar_err_calc(delfstar[n1]))
-                        delfstar_err[1] = np.real(self.fstar_err_calc(delfstar[n2]))
-                        delfstar_err[2] = np.imag(self.fstar_err_calc(delfstar[n3]))
-
-                    jac = soln['jac']
-                    # logger.info('jac %s', jac) 
                     try:
-                        deriv = np.linalg.inv(jac)
-                        # logger.info('jac_inv %s', jac_inv) 
+                        soln = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
+
+                        grho_refh = soln['x'][0]
+                        phi = soln['x'][1]
+                        if self.isbulk(rd_exp, bulklimit): # bulk
+                            drho = bulk_drho
+
+                        # update calc layer prop
+                        film = self.set_calc_layer_val(film, grho_refh, phi, drho)
+                        # logger.info('film after 2nd sol %s', film) 
+                        
+                        # dlam_refh = self.calc_dlam(self.refh, film)
+                        # comment above line to use the dlam_refh from soln
+
+                        # put the input uncertainties into a n element vector
+                        if self.isbulk(rd_exp, bulklimit): # bulk
+                            delfstar_err = np.zeros(2)
+                            delfstar_err[0] = np.real(self.fstar_err_calc(delfstar[n3]))
+                            delfstar_err[1] = np.imag(self.fstar_err_calc(delfstar[n3]))
+                        else: # thin film
+                            delfstar_err = np.zeros(3)
+                            delfstar_err[0] = np.real(self.fstar_err_calc(delfstar[n1]))
+                            delfstar_err[1] = np.real(self.fstar_err_calc(delfstar[n2]))
+                            delfstar_err[2] = np.imag(self.fstar_err_calc(delfstar[n3]))
+
+                        jac = soln['jac']
+                        # logger.info('jac %s', jac) 
+                        try:
+                            deriv = np.linalg.inv(jac)
+                            # logger.info('jac_inv %s', jac_inv) 
+                        except:
+                            logger.warning('set deriv to 0') 
+                            deriv = np.zeros(jac.shape)
+                        
+                        for i, nm in enumerate(err_names):
+                            err[nm] = 0 # initialize error
+                            for ii in np.arange(jac.shape[0]):
+                                err[nm] = err[nm] + (deriv[i, ii] * delfstar_err[ii])**2
+                            err[nm] = np.sqrt(err[nm]) 
                     except:
-                        logger.warning('set deriv to 0') 
-                        deriv = np.zeros(jac.shape)
-                    
-                    for i, nm in enumerate(err_names):
-                        err[nm] = 0 # initialize error
-                        for ii in np.arange(jac.shape[0]):
-                            err[nm] = err[nm] + (deriv[i, ii] * delfstar_err[ii])**2
-                        err[nm] = np.sqrt(err[nm]) 
+                        logger.exception('error occurred while solving the thin film.')
             else:
                 logger.info('film guess out of range') 
 
@@ -937,6 +941,7 @@ class QCM:
             #         err[k] = np.nan
 
         else:
+            logger.info('rd_exp and/or rh_exp have nan') 
             grho_refh, phi, drho, dlam_refh = np.nan, np.nan, np.nan, np.nan
 
         # logger.info('drho %s', drho) 
@@ -1103,10 +1108,10 @@ class QCM:
     def set_calc_layer_val(self, film, grho, phi, drho):
         ''' 
         film ={
-            0:{'calc': True/False,
-                'drho': float, # in um g/cm^3
+            0:{ 'calc': True/False,
                 'grho': float, # in Pa g/cm^3
-                'drho': float, # in deg
+                'phi':  float, # in deg
+                'drho': float, # in um g/cm^3
                },
             1:
             2:
@@ -1119,7 +1124,7 @@ class QCM:
             film = self.build_single_layer_film() # make a single layer film
 
         calcnum = self.get_calc_layer_num(film)
-        film[calcnum].update(drho=drho, grho=grho, phi=phi, n=self.refh)
+        film[calcnum].update(grho=grho, phi=phi, drho=drho, n=self.refh)
         return film
 
 

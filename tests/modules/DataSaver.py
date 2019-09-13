@@ -262,7 +262,7 @@ class DataSaver:
                     df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list() if np.isnan(x).all() else x) # add list of nan to all null
                 logger.info(df_mech) 
         else: # not exist, make a new dataframe
-            logger.info('mech_key doesn''t exist') 
+            logger.info('mech_key does not exist') 
             df_mech = pd.DataFrame(columns=data_keys+mech_keys_single+mech_keys_multiple)
 
             # set values
