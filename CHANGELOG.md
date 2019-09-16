@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.18.3] - 2019-09-16
+
+### Added
+  
+### Changed
+
+### Fixed
+
+- QCM module solve property guess check bug (drho check).
+
+### Removed
+
 ## [0.18.2] - 2019-09-11
 
 ### Added
