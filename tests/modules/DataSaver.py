@@ -448,7 +448,7 @@ class DataSaver:
             return {}
 
 
-    def update_refit_data(self, chn_name, queue_id, harm_list, fs=[np.nan], gs=[np.nan]):
+    def update_refit_data(self, chn_name, queue_id, harm_list, t=None, temp=None, fs=[np.nan], gs=[np.nan]):
         '''
         update refitted data of queue_id 
         chn_name: str. 'samp' of 'ref'
@@ -457,9 +457,16 @@ class DataSaver:
         gs: list of delta gamma with the same lenght to harm_list
         '''
 
-        # get 
-        fs_all = self.get_queue(chn_name, queue_id, col='fs').iloc[0]
-        gs_all = self.get_queue(chn_name, queue_id, col='gs').iloc[0]
+        logger.info('queue_list \n%s', self.get_queue_id(chn_name).values)
+        if queue_id in self.get_queue_id(chn_name).values: # is going to overwrite data
+            logger.info('queue_id (%s) in list', queue_id)
+            # get 
+            fs_all = self.get_queue(chn_name, queue_id, col='fs').iloc[0]
+            gs_all = self.get_queue(chn_name, queue_id, col='gs').iloc[0]
+        else: # is going to append data
+            logger.info('queue_id (%s) not in list', queue_id)
+            fs_all = self.nan_harm_list() # list for each harmonic
+            gs_all = self.nan_harm_list() # list for each harmonic
         logger.info('fs_all %s', fs_all) 
         logger.info('type fs_all %s', type(fs_all)) 
 
@@ -474,13 +481,85 @@ class DataSaver:
         self.update_queue_col(chn_name, queue_id, 'fs', fs_all)
         self.update_queue_col(chn_name, queue_id, 'gs', gs_all)
 
+        if t is not None:
+            self.update_queue_col(chn_name, queue_id, 't', t)
+        if temp is not None:
+            self.update_queue_col(chn_name, queue_id, 'temp', temp)
+
         self.saveflg = False
 
 
-    def dynamic_save(self, chn_names, harm_list, t=np.nan, temp=np.nan, f=None, G=None, B=None, fs=[np.nan], gs=[np.nan], marks=[0]):
+    def dynamic_save(self, chn_names, harm_list, t='', temp=np.nan, f=None, G=None, B=None, fs=[np.nan], gs=[np.nan], marks=[0]):
         '''
         save raw data of ONE QUEUE to self.raw and save to h5 file
         NOTE: only update on test a time
+        chn_names: list of chn_name ['samp', 'ref']
+        harm_list: list of str ['1', '3', '5', '7', '9']
+        t: dict of str
+        temp: dict of float
+        f, G, B: dict of ndarray f[chn_name][harm]
+        fs: dicts of delta freq fs[chn_name]
+        gs: dicts of delta gamma gs[chn_name]
+        marks: [0]. by default all will be marked as 0
+        '''
+
+        # add an empty row to data
+        queue_id = self._append_new_queue(chn_names, queue_id=None)
+        
+        # save data
+        self._save_queue_data(chn_names, harm_list, queue_id=queue_id, t=t, temp=temp, fs=fs, gs=gs, marks=marks)
+
+        # save raw data to file by chn_names
+        self._save_raw(chn_names, harm_list, t=t, temp=temp, f=f, G=G, B=B)
+
+        self.saveflg = False
+
+
+    def _append_new_queue(self, chn_names, queue_id=None):
+        '''
+        append a new row to self.chn_name for following add new data
+        NOTE: only update one test a time
+        chn_names: list of chn_name ['samp', 'ref']
+        harm_list: list of str ['1', '3', '5', '7', '9']
+        t: dict of str
+        temp: float
+        f, G, B: dict of ndarray f[chn_name][harm]
+        fs: dicts of delta freq fs[chn_name]
+        gs: dicts of delta gamma gs[chn_name]
+        marks: [0, 0, ...]. by default all will be marked as 0
+
+        return: queue_id
+        '''
+
+        # add current queue id to queue_list as max(queue_list) + 1
+        if not self.queue_list:
+            queue_id = 0
+        else:
+            logger.info(self.queue_list) 
+            if queue_id is None: # add a new id
+                queue_id = max(self.queue_list) + 1
+            else: # add a given id (for recreating data)
+                pass
+        self.queue_list.append(queue_id)
+
+        for chn_name in chn_names:
+            data_new = pd.DataFrame.from_dict({
+                'queue_id': [queue_id],  
+                't': [''], # str
+                'temp': [np.nan], # float
+                'marks': [self.nan_harm_list()], # list default [nan, nan, ...]
+                'fs': [self.nan_harm_list()],
+                'gs': [self.nan_harm_list()],
+            })
+            # append empty data to chn_name
+            setattr(self, chn_name, getattr(self, chn_name).append(data_new, ignore_index=True))
+        
+        return queue_id
+
+
+    def _save_queue_data(self, chn_names, harm_list, queue_id=None, t=np.nan, temp=np.nan, fs=[np.nan], gs=[np.nan], marks=[0]):
+        '''
+        NOTE: only update one test a time
         chn_names: list of chn_name ['samp', 'ref']
         harm_list: list of str ['1', '3', '5', '7', '9']
         t: dict of str
@@ -491,43 +570,44 @@ class DataSaver:
         marks: [0]. by default all will be marked as 0
         '''
 
-        # add current queue id to queue_list as max(queue_list) + 1
-        if not self.queue_list:
-            self.queue_list.append(0)
-        else:
-            logger.info(self.queue_list) 
-            self.queue_list.append(max(self.queue_list) + 1)
-
-        for i in range(1, self.settings['max_harmonic']+2, 2):
-            if str(i) not in harm_list: # tested harmonic
-                marks.insert(int((i-1)/2), np.nan)
+        # for i in range(1, self.settings['max_harmonic']+2, 2):
+        #     if str(i) not in harm_list: # tested harmonic
+        #         marks.insert(int((i-1)/2), np.nan)
 
         # append to the form by chn_name
         for chn_name in chn_names:
+            fs_all = self.get_queue(chn_name, queue_id, col='fs').iloc[0]
+            gs_all = self.get_queue(chn_name, queue_id, col='gs').iloc[0]
+            marks_all = self.get_queue(chn_name, queue_id, col='marks').iloc[0]
             # prepare data: change list to the size of harm_list by inserting nan to the empty harm
-            for i in range(1, self.settings['max_harmonic']+2, 2):
-                if str(i) not in harm_list: # tested harmonic
-                    fs[chn_name].insert(int((i-1)/2), np.nan)
-                    gs[chn_name].insert(int((i-1)/2), np.nan)
+
+            for i, harm in enumerate(harm_list):
+                harm = int(harm)
+                fs_all[int((harm-1)/2)] = fs[chn_name][i]
+                gs_all[int((harm-1)/2)] = gs[chn_name][i]
+                marks_all[int((harm-1)/2)] = marks[i]
+
+            # for i in range(1, self.settings['max_harmonic']+2, 2):
+            #     if str(i) not in harm_list: # tested harmonic
+            #         fs[chn_name].insert(int((i-1)/2), np.nan)
+            #         gs[chn_name].insert(int((i-1)/2), np.nan)
 
             # up self.samp/ref first
             # create a df to append
-            data_new = pd.DataFrame.from_dict({
-                'queue_id': [max(self.queue_list)],  
-                't': [t[chn_name]],
-                'temp': [temp[chn_name]],
-                'marks': [marks], # list default [0, 0, 0, 0, 0]
-                'fs': [fs[chn_name]],
-                'gs': [gs[chn_name]],
-            })
+            data_new = pd.DataFrame(
+                data={
+                    'queue_id': [queue_id],  
+                    't': [t[chn_name]],
+                    'temp': [temp[chn_name]],
+                    'marks': [marks_all], # list default [0, 0, 0, 0, 0]
+                    'fs': [fs_all],
+                    'gs': [gs_all],
+                },
+                index=[getattr(self, chn_name).iloc[[-1]].index.values.astype(int)[0]]
+            )
             # logger.info(data_new) 
-            setattr(self, chn_name, getattr(self, chn_name).append(data_new, ignore_index=True))
+            getattr(self, chn_name).update(data_new)
             logger.info(getattr(self, chn_name).tail()) 
-
-        # save raw data to file by chn_names
-        self._save_raw(chn_names, harm_list, t=t, temp=temp, f=f, G=G, B=B)
-
-        self.saveflg = False
 
 
     def _save_raw(self, chn_names, harm_list, t=np.nan, temp=np.nan, f=None, G=None, B=None):
@@ -694,6 +774,20 @@ class DataSaver:
             fh.attrs['ver'] = self.ver
 
 
+    def get_chn_queue_list_from_raw(self, chn_name):
+        with h5py.File(self.path, 'r') as fh:
+            chn_queue_list = list(fh['raw/'+ chn_name].keys())
+            chn_queue_list = list(map(int, chn_queue_list)) # convert from str to int
+            logger.info(chn_queue_list)
+        return chn_queue_list
+
+
+    def get_queue_id_harms_from_raw(self, chn_name, queue_id):
+        with h5py.File(self.path, 'r') as fh:
+            harms = list(fh['raw/'+ chn_name + '/' + str(queue_id)].keys())
+        return [str(harm) for harm in harms]
+
+
     def get_npts(self):
         '''
         get number of total points
@@ -774,13 +868,16 @@ class DataSaver:
         '''
         update col data of a queue_id
         '''
-        logger.info(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col]) 
-        logger.info('col %s', col) 
-        logger.info('val %s', val) 
-        logger.info(pd.Series([val])) 
-        # getattr(self, chn_name).at[getattr(self, chn_name).queue_id == queue_id, [col]] = pd.Series([val])
-        logger.info(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col]) 
-        getattr(self, chn_name)[getattr(self, chn_name).queue_id == queue_id][col] = [val]
+        if queue_id in self.get_queue_id(chn_name).values: # overwrite
+            logger.info(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col]) 
+            logger.info('col %s', col) 
+            logger.info('val %s', val) 
+            # logger.info(pd.Series([val])) 
+            # getattr(self, chn_name).at[getattr(self, chn_name).queue_id == queue_id, [col]] = pd.Series([val])
+            logger.info(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col]) 
+            getattr(self, chn_name)[getattr(self, chn_name).queue_id == queue_id][col] = [val]
+        else: # new, append
+            getattr(self, chn_name).merge(pd.DataFrame.from_dict({col: [val], 'queue_id': [queue_id]}), how='outer')
 
         self.saveflg = False
 
@@ -933,7 +1030,7 @@ class DataSaver:
             self.reshape_data_df('samp', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp, keep_mark=False),
             # delf
             self.reshape_data_df('samp', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp, keep_mark=True), # keep only on marks
-            on=['queue_id', 't', 'temp']
+            on=on_cols
         )
 
         df_samp_ref = self.reshape_data_df('samp_ref', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp)
@@ -942,7 +1039,7 @@ class DataSaver:
             df_ref = pd.merge(
                 self.reshape_data_df('ref', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp, keep_mark=False),
                 self.reshape_data_df('ref', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp, keep_mark=True), # keep only one marks
-                on=['queue_id', 't', 'temp']
+                on=on_cols
             )
         if self.ref_ref.shape[0] > 0:
             df_ref_ref = self.reshape_data_df('ref_ref', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp)
@@ -1260,6 +1357,33 @@ class DataSaver:
             t = t -  self.get_t_ref() # delta t to reference (t0)
             t = t.dt.total_seconds() # convert to second
             return t
+
+
+    def get_t_str_from_raw(self, chn_name, queue_id):
+        '''
+        get t from raw as str
+        '''
+        with h5py.File(self.path, 'r') as fh:
+            # creat group for test
+            g_queue = fh['raw/' + chn_name + '/' + str(queue_id)]
+            t_str = g_queue.attrs['t']
+            logger.info('t_str %s', t_str)
+            return t_str
+        
+
+    def get_temp_C_from_raw(self, chn_name, queue_id):
+        '''
+        get t from raw as str
+        '''
+        with h5py.File(self.path, 'r') as fh:
+            # creat group for test
+            g_queue = fh['raw/' + chn_name + '/' + str(queue_id)]
+            # add t, temp to attrs
+            # store t as string
+            if 'temp' in g_queue.attrs: # there is temp data
+                return g_queue.attrs['temp']
+            else: # no temp data
+                return np.nan
 
 
     def get_queue_id_marked_rows(self, chn_name, dropnanmarkrow=False):
@@ -2227,14 +2351,6 @@ class DataSaver:
                 }
             return factors[unit](temp)
 
-    # def abs_to_del(self, abs_list, ref_list):
-    #     '''
-    #     calculate relative value elemental wisee in two lists by (abs_list - ref_list)
-    #     this function is used for calculate delf and delg for a single queue
-    #     '''
-
-    #     return [abs_val - ref_val for abs_val, ref_val in zip(abs_list, ref_list)]
-
 
     def df_qcm(self, chn_name):
         '''
@@ -2418,8 +2534,6 @@ class DataSaver:
         return df
 
 
-
-
     def get_mech_key(self, nhcalc):
         '''
         return a str which represents the key in self.<chn_name>_mech[key]
@@ -2437,6 +2551,7 @@ class DataSaver:
         '''
         return 0.5 * int(harm) * f1 * D
 
+
     def convert_gamma_to_D(self, gamma, f1, harm):
         '''
         this function convert given gamma to D (QCM-D)
@@ -2444,6 +2559,7 @@ class DataSaver:
         harm: str. 
         '''
         return 2 * gamma / (int(harm) * f1)
+
 
     def import_qcm_with_other_format(self, data_format, path, config_default, settings=None, f1=None, t0=None, init_file=True):
         '''

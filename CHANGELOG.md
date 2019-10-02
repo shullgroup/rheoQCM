@@ -1,9 +1,11 @@
 # Changelog
 
-## [0.18.3] - 2019-09-16
+## [0.18.3] - 2019-10-02
 
 ### Added
-  
+
+- Add function for regenerate data from raw.
+
 ### Changed
 
 ### Fixed

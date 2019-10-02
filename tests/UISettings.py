@@ -373,8 +373,14 @@ config_default = {
 
     'vna_wait_time_extra': 0.05, # extra time adds to wait_time
 
+    'channel_opts': OrderedDict([
+    # key: str; val: for display in combobox
+        ('samp', 'S'),
+        ('ref', 'R'),
+    ]),
+
     'ref_channel_opts': OrderedDict([
-    # key: str(number); val: for display in combobox
+    # key: str; val: for display in combobox
         # ('none', 'none'),
         ('samp', 'S chn.'),
         ('ref', 'R chn.'),

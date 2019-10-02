@@ -210,7 +210,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>0</number>
+             <number>2</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -2114,7 +2114,7 @@ border: none;
                <number>0</number>
               </property>
               <item>
-               <widget class="QToolButton" name="toolButton_settings_data_recreate_from_raw">
+               <widget class="QToolButton" name="toolButton_settings_data_regenerate_from_raw">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -2128,7 +2128,7 @@ border: none;
                  </size>
                 </property>
                 <property name="text">
-                 <string>Refit from raw data</string>
+                 <string>Regenerate from raw data</string>
                 </property>
                 <property name="popupMode">
                  <enum>QToolButton::InstantPopup</enum>
@@ -2299,7 +2299,7 @@ border: none;
               <item>
                <widget class="QGroupBox" name="groupBox">
                 <property name="title">
-                 <string>Mark Index</string>
+                 <string>Marks</string>
                 </property>
                 <property name="flat">
                  <bool>true</bool>
@@ -2373,16 +2373,12 @@ border: none;
                      </widget>
                     </item>
                     <item>
-                     <widget class="QPushButton" name="pushButton_settings_data_marknptss">
-                      <property name="text">
-                       <string>Mark S</string>
-                      </property>
-                     </widget>
+                     <widget class="QComboBox" name="comboBox_settings_data_marknptschn"/>
                     </item>
                     <item>
-                     <widget class="QPushButton" name="pushButton_settings_data_marknptsr">
+                     <widget class="QPushButton" name="pushButton_settings_data_marknpts">
                       <property name="text">
-                       <string>Mark R</string>
+                       <string>Mark</string>
                       </property>
                      </widget>
                     </item>
@@ -6279,12 +6275,12 @@ border: 1px solid blue;
     <string>Delete Selected</string>
    </property>
   </action>
-  <action name="actionFit_allsamp">
+  <action name="actionRegenerate_allsamp">
    <property name="text">
-    <string>Refit S chn. all</string>
+    <string>Regenerate S chn. all</string>
    </property>
    <property name="toolTip">
-    <string>Refit all data in S chn.</string>
+    <string>Regenerate all data in S chn.</string>
    </property>
   </action>
   <action name="actionFit_markedsamp">
@@ -6367,12 +6363,12 @@ border: 1px solid blue;
     <string>Import QCM-D data</string>
    </property>
   </action>
-  <action name="actionFit_allref">
+  <action name="actionRegenerate_allref">
    <property name="text">
-    <string>Refit R chn. all</string>
+    <string>Regenerate R chn. all</string>
    </property>
    <property name="toolTip">
-    <string>Refit all data in R chn.</string>
+    <string>Regenerate all data in R chn.</string>
    </property>
   </action>
   <action name="actionFit_markedref">
