@@ -1076,10 +1076,11 @@ class AccessMyVNA():
         # logger.info(nRes_ptr) 
         # logger.info(nRes_ptr.contents) 
         ndRes = nResult[:] 
-        del nResult
+        rt = ret
+        del nResult, ret
 
-        logger.info('%s %s', ret, ndRes) 
-        return ret, ndRes
+        logger.info('%s %s', rt, ndRes) 
+        return rt, ndRes
 
 
     # @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
@@ -1383,9 +1384,9 @@ class AccessMyVNA():
         ret, nData = self.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
         logger.info('getADCChannel %s', nData)
 
-        if nData[0] == 1.:
+        if int(nData[0]) == 1:
             reflectchn = 1
-        elif nData[0] == 2.:
+        elif int(nData[0]) == 2:
             reflectchn =  2
         else: 
             reflectchn = None
@@ -1551,6 +1552,34 @@ class AccessMyVNA():
 
 # exit(0)
 if __name__ == '__main__':
+    import logging
+    logging.basicConfig(level=logging.ERROR)
+    with AccessMyVNA() as vna:
+        if vna.Init() == 0:
+            print('open')
+        else:
+            print('false')
+        pass
+    print(vna)
+
+    with vna:
+        vna.setADCChannel(reflectchn=2)
+        ret, delays = vna.GetIntegerArray(nWhat=5, nIndex=0, nArraySize=4)
+        print(delays)
+        ret, chn = vna.getADCChannel()
+        print('chn is ', chn)
+
+        ls = [
+            (0, 0, 9),
+            (3, 0, 4),
+            (4, 0, 3),
+            (5, 0, 5),
+        ]
+        for l in ls:
+            ret, darr = vna.GetDoubleArray(nWhat=l[0], nIndex=l[1], nArraySize=l[2])
+            print(l[0], ret, darr)
+
+    exit(0)
     # ret = _MyVNAInit()
     # ret = _MyVNAShowWindow(0)
     # ret = _MyVNAClose()

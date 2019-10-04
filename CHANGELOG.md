@@ -4,11 +4,13 @@
 
 ### Added
 
-- Add function for regenerate data from raw.
+- Add function for regenerate data from raw. This is usefull for the cases when the data structure messed up but you still keep the raw data in raw.
 
 ### Changed
 
 ### Fixed
+
+- Fix C++ source code bug of GetDoubleArray and make the functiion works to check available channels by checking the settings from myVNA.
 
 - QCM module solve property guess check bug (drho check).
 

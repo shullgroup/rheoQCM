@@ -584,7 +584,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.treeWidget_settings_settings_hardware)
         self.toolBox.addItem(self.page_settings_settings_hardwares, "")
         self.page_settings_settings_plots = QtWidgets.QWidget()
-        self.page_settings_settings_plots.setGeometry(QtCore.QRect(0, 0, 98, 71))
+        self.page_settings_settings_plots.setGeometry(QtCore.QRect(0, 0, 286, 165))
         self.page_settings_settings_plots.setObjectName("page_settings_settings_plots")
         self.verticalLayout_24 = QtWidgets.QVBoxLayout(self.page_settings_settings_plots)
         self.verticalLayout_24.setContentsMargins(0, 0, 0, 0)
@@ -2546,6 +2546,8 @@ class Ui_MainWindow(object):
         self.actionRows_Index.setObjectName("actionRows_Index")
         self.actionSolve_new = QtWidgets.QAction(MainWindow)
         self.actionSolve_new.setObjectName("actionSolve_new")
+        self.actionOpen_openQCM = QtWidgets.QAction(MainWindow)
+        self.actionOpen_openQCM.setObjectName("actionOpen_openQCM")
         self.menuFile.addAction(self.actionNew_Exp)
         self.menuFile.addAction(self.actionLoad_Exp)
         self.menuFile.addAction(self.actionLoad_Settings)
@@ -2588,8 +2590,8 @@ class Ui_MainWindow(object):
         self.label_5.setBuddy(self.lineEdit_spectra_fit_span)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget_settings.setCurrentIndex(2)
-        self.tabWidget_settings_settings_samprefchn.setCurrentIndex(2)
+        self.tabWidget_settings.setCurrentIndex(1)
+        self.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
         self.tabWidget_settings_settings_harm.setCurrentIndex(0)
         self.toolBox.setCurrentIndex(0)
         self.toolBox.layout().setSpacing(6)
@@ -2956,5 +2958,7 @@ class Ui_MainWindow(object):
         self.actionRows_Index.setToolTip(_translate("MainWindow", "Plot variables vs. indices"))
         self.actionSolve_new.setText(_translate("MainWindow", "Solve_new"))
         self.actionSolve_new.setToolTip(_translate("MainWindow", "Solve new collected data in current channel."))
+        self.actionOpen_openQCM.setText(_translate("MainWindow", "Open openQCM"))
+        self.actionOpen_openQCM.setToolTip(_translate("MainWindow", "Open openQCM program"))
 
 import UI_source_rc

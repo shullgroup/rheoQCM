@@ -148,6 +148,9 @@ config_default = {
 
         'pushButton_settings_harm_cntr',
 
+        'lineEdit_settings_data_sampidx',
+        'lineEdit_settings_data_refidx',
+
         'pushButton_spectra_fit_autocntr',
 
         'pushButton_settings_data_tostart',

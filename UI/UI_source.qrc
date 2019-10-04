@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icon">
+    <file>rc/openQCM.svg</file>
     <file>rc/import_qcmd.svg</file>
     <file>rc/export_settings.svg</file>
     <file>rc/import_qcmz.svg</file>
