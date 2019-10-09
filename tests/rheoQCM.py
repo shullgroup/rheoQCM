@@ -4688,7 +4688,6 @@ class QCMApp(QMainWindow):
         '''
         for code testing
         '''
-        print("i am an error", err)
         logger.info('stackedWidget_settings_mechanics_modeswitch: %s', self.ui.stackedWidget_settings_mechanics_modeswitch.currentIndex()) 
         if self.ui.stackedWidget_settings_mechanics_modeswitch.currentIndex() == 0: # model mode
             # convert model to mechchndata
