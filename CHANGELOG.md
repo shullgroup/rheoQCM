@@ -1,18 +1,21 @@
 # Changelog
 
-## [0.18.3] - 2019-10-02
+## [0.19.0] - 2019-10-21
 
 ### Added
 
 - Add function for regenerate data from raw. This is usefull for the cases when the data structure messed up but you still keep the raw data in raw.
+- Add functions to display Sauerbrey mass.
 
 ### Changed
+
+- Change the reference data structure.
 
 ### Fixed
 
 - Fix C++ source code bug of GetDoubleArray and make the functiion works to check available channels by checking the settings from myVNA.
-
 - QCM module solve property guess check bug (drho check).
+- Fix span < 1 Hz stopped myVNA bug by adding minimum limit to peak_tracker.
 
 ### Removed
 

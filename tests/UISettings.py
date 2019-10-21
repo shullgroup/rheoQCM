@@ -151,6 +151,8 @@ config_default = {
         'lineEdit_settings_data_sampidx',
         'lineEdit_settings_data_refidx',
 
+        'comboBox_settings_settings_analyzer',
+
         'pushButton_spectra_fit_autocntr',
 
         'pushButton_settings_data_tostart',
@@ -267,7 +269,8 @@ config_default = {
         ('mdfn', '-' + u'\u0394' + 'f/n'),
         ('dg',   u'\u0394\u0393'),
         ('dgn',  u'\u0394\u0393' + '/n'),
-        ('dD',   u'\u0394' + 'D '),
+        ('dD',   u'\u0394' + 'D'),
+        ('dsm', u'\u0394' + 'm' + u'\u209B'), # Sauerbrey mass
         ('f',    'f'),
         ('g',     u'\u0393'),
         ('D',    'D'),
@@ -285,6 +288,7 @@ config_default = {
         'dg':   r'$\Delta\Gamma$ (Hz)',
         'dgn':  r'$\Delta\Gamma$/n (Hz)',
         'dD':   r'$\Delta$D $\times 10^{-6}$',
+        'dsm':  r'$\Delta$m$_{Sauerbrey}$ (g/m$^2$)',
         'f':    r'f (Hz)',
         'g':    r'$\Gamma$ (Hz)',
         'D':    r'D $\times 10^{-6}$',
@@ -300,6 +304,7 @@ config_default = {
         'delD_calcs':        r'$\Delta$D $\times 10^{-6}$',
         'delD_exps':         r'$\Delta$D$_{exp}$ $\times 10^{-6}$',
         'delg_exps':         r'$\Delta\Gamma_{exp}$ (Hz)',
+        'sauerbreyms':       r'$\Delta$m$_{Sauerbrey}$ (g/m$^2$)',
         'drho':              r'd$\rho$ ($\mu$m$\cdot$g/cm$^3$)',
         'grhos':             r'$|G_{n}^*|\rho$ (Pa$\cdot$g/cm$^3$)',
         'phi':               r'$\phi$ ($\degree$)',
@@ -326,6 +331,8 @@ config_default = {
         'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
         'delD_exps':         u'\u0394' + 'D ' + u'\u00D7' + '10' + '\u207B\u2076', # D ×10⁻⁶
         'delD_calcs':        u'\u0394' + 'D ' + u'\u00D7' + '10' + '\u207B\u2076' + 'calc', # Dcalc ×10⁻⁶
+        'sauerbreyms':       'Sauerbrey ' + u'\u0394' + 'm (g/m' + u'\u00B2' + ')', # Sauerbrey mass 
+        
         'drho':              'd' + u'\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # dρ (μm∙g/m³)
         'grhos':             '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
         'phi':               u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
@@ -412,6 +419,13 @@ config_default = {
         'var': 'Variable T',
         # '': '',
     }),
+
+    # crystal cuts options
+    'analyzer_opts':{
+        'none': '--',
+        'myvna': 'myVNA',
+        'openqcm': 'openQCM',
+    },
 
     # crystal cuts options
     'crystal_cut_opts':{
@@ -514,6 +528,8 @@ config_default = {
     },
 
     'mechanics_modeswitch': 0, 
+
+    'activechn_num': 1,
 
 
     # 'qcm_layer_unknown_source_opts': {
@@ -707,7 +723,7 @@ config_default = {
         'disable_existing_loggers': False,
         'formatters': {
             'simple': {
-                'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                'format': '%(asctime)s - %(name)s - %(levelname)s - %(lineno)s - %(message)s',
             },
         },    
         'handlers': {
@@ -833,9 +849,17 @@ settings_default = {
 
     ### default hardware settings ###
     # 'tabWidget_settings_settings_samprefchn': 1,
-    # default VNA settings
+
+    # checkBox_activechn_samp
+    'checkBox_activechn_samp': True,
+    'checkBox_activechn_ref': False,
+
+    # default analyzer settings
     'comboBox_samp_channel': '1',
     'comboBox_ref_channel': 'none',
+
+    # default hardware selection
+    'treeWidget_settings_settings_hardware': 'none',
 
     # default crystal settings
     'comboBox_base_frequency': 5,

@@ -1,4 +1,4 @@
-__version_info__ = ('0', '18', '2') # major, minor, micro
+__version_info__ = ('0', '19', '0') # major, minor, micro
 
 __projectname__ =  'rheoQCM'
 __authors__ =      ['Qifeng Wang', 'Megan Yang', 'Kenneth R. Shull']
@@ -8,5 +8,5 @@ __source__ =       'https://github.com/zhczq/QCM_py'
 __report__ =       'hfttps://github.com/zhczq/QCM_py/issues'
 __license__ =      'GLP-3.0'
 __deprecated__ =   ''
-__date__ =         '11 Sep. 2019'
+__date__ =         '17 Oct. 2019'
 __version__ =      '.'.join(__version_info__)

@@ -8,6 +8,9 @@ import sys
 import subprocess
 import traceback
 
+import threading
+import multiprocessing 
+
 import logging
 import logging.config
 # Get the logger specified in the file
@@ -40,44 +43,46 @@ from UISettings import settings_default
 from UISettings import harm_tree as harm_tree_default
 
 
-config_default_json = os.path.join(os.getcwd(), config_default['default_config_file_name'])
-if os.path.exists(config_default_json):
-    try:
-        with open(config_default_json, 'r') as f:
-            settings_msater = json.load(f) # read user default settings
-            for key, val in settings_msater.items():
-                # overwrite keys to config_default
-                if key in config_default:
-                    config_default[key] = val
-    except:
-        pass
+print(os.getcwd())
+
+
+def update_config(json_path, config):
+
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r') as f:
+                user_config = json.load(f) # read user default settings
+                for key, val in user_config.items():
+                    # overwrite keys to config_default
+                    if key in config:
+                        config[key] = val
+            complete = True
+        except:
+            complete = False
+    else:
+        complete = False
+
+    return config, complete
+
+
+user_config_file_path = os.path.join(os.getcwd(), config_default['default_config_file_name'])
+config_default, complete = update_config(user_config_file_path, config_default)
+if complete:
+    print('use user config')
 else:
-    print('use default config_default')
-del config_default_json
-if 'f' in locals():
-    del f
+    print('use default config')
+del user_config_file_path
 
 # check default settings file
-print(os.getcwd())
-usersettings_file = os.path.join(os.getcwd(), config_default['default_settings_file_name'])
-if os.path.exists(usersettings_file):
-    try:
-        with open(usersettings_file, 'r') as f:
-            settings_user = json.load(f) # read user default settings
-            for key, val in settings_default.items():
-                # add missed keys to settings_user
-                if key not in settings_user:
-                    settings_user[key] = val
-            # rename settings_user to settings_defualt
-            settings_default = settings_user
-        print('use user settings')
-    except:
-        print('Error occured while loading {}\nuse default settings'.format(config_default['default_settings_file_name']))
+user_settings_file_path = os.path.join(os.getcwd(), config_default['default_settings_file_name'])
+settings_default, complete = update_config(user_settings_file_path, settings_default)
+
+if complete:
+    print('use user settings')
 else:
     print('use default settings')
-del usersettings_file
-if 'f' in locals():
-    del f
+del user_settings_file_path
+
 
 # copy some data related sets from settigs_init to settings_default if not exist
 if 'max_harmonic' not in settings_default:
@@ -142,8 +147,6 @@ def setup_logging():
         print('Setting logger failed! Use default logging level!')
         logging.basicConfig(level=config_default['logger_setting_config']['default_level'])
         print(e)
-
-
 
 class VNATracker:
     def __init__(self):
@@ -533,6 +536,25 @@ class QCMApp(QMainWindow):
 
         #region settings_settings
 
+        self.ui.checkBox_activechn_samp.clicked.connect(self.check_checked_activechn)
+        self.ui.checkBox_activechn_samp. stateChanged.connect(self.update_widget)
+        self.ui.checkBox_activechn_samp. stateChanged.connect(self.update_vnachannel)
+
+        self.ui.checkBox_activechn_ref.clicked.connect(self.check_checked_activechn)
+        self.ui.checkBox_activechn_ref. stateChanged.connect(self.update_widget)
+        self.ui.checkBox_activechn_ref. stateChanged.connect(self.update_vnachannel)
+
+        # add checkbox to tabWidget_settings_settings_samprefchn
+        self.ui.tabWidget_settings_settings_samprefchn.tabBar().setTabButton(
+            self.ui.tabWidget_settings_settings_samprefchn.indexOf(self.ui.tab_settings_settings_harmchnsamp),
+            QTabBar.LeftSide,
+            self.ui.checkBox_activechn_samp,
+        )
+        self.ui.tabWidget_settings_settings_samprefchn.tabBar().setTabButton(
+            self.ui.tabWidget_settings_settings_samprefchn.indexOf(self.ui.tab_settings_settings_harmchnref),
+            QTabBar.LeftSide,
+            self.ui.checkBox_activechn_ref,
+        )
 
         # set signal
         self.ui.tabWidget_settings_settings_samprefchn.currentChanged.connect(self.update_widget)
@@ -710,6 +732,19 @@ class QCMApp(QMainWindow):
             'Cut',
             self.ui.treeWidget_settings_settings_hardware
         )
+
+        # insert comboBox_settings_settings_analyzer
+        self.create_combobox(
+            'comboBox_settings_settings_analyzer',
+            config_default['analyzer_opts'],
+            100,
+            'Analyzer',
+            self.ui.treeWidget_settings_settings_hardware
+        )
+
+        self.ui.comboBox_settings_settings_analyzer.currentIndexChanged.connect(self.update_widget)
+        # TODO connect module importing function here
+        self.ui.comboBox_settings_settings_analyzer.currentIndexChanged.connect(self.update_widget)
 
         # add comBox_tempmodule to treeWidget_settings_settings_hardware
         try:
@@ -1525,7 +1560,7 @@ class QCMApp(QMainWindow):
             self.set_manual_refit_mode(val=False)
 
             # check recording chns
-            if (self.settings['comboBox_samp_channel'] == 'none') and (self.settings['comboBox_ref_channel'] == 'none'):
+            if not self.settings['checkBox_activechn_samp'] and not self.settings['checkBox_activechn_ref']:
                 self.ui.pushButton_runstop.setChecked(False)
                 return
 
@@ -3411,6 +3446,15 @@ class QCMApp(QMainWindow):
             data = self.data_saver.convert_gamma_to_D(data, f1, harm)
             # convert unit
             data = data * 1e6
+        elif 'dsm' == typestr: # get Sauerbrey mass
+            # get delg first
+            data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'fs', deltaval=True, norm=False, mark=mark)
+            f1 = self.data_saver.get_f1(chn_name)
+            Zq = self.qcm.Zq
+            # calculate Sauerbrey mass
+            data = self.data_saver.sauerbreym(harm, data, f1, Zq)
+            # convert unit
+            data = data * 1000
         elif 'f' == typestr: # get f
             data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'fs', deltaval=False, norm=False, mark=mark)
         elif 'g' == typestr: # get g
@@ -4569,7 +4613,6 @@ class QCMApp(QMainWindow):
             # create a dump df which is a copy of mech_df.loc[[ind], :]
             # mech_queue = pd.DataFrame.from_dict(mech_df.loc[[ind], :].to_dict())
             mech_queue['queue_id'] = mech_queue['queue_id'].astype('int')
-            # exit(0)
 
             # obtain the solution for the properties
             if self.qcm.all_nhcaclc_harm_not_na(nh, qcm_queue):
@@ -4931,6 +4974,7 @@ class QCMApp(QMainWindow):
                         # logger.info(mech_cols) 
                     else:
                         logger.info('did not find %s %s', key, val)
+                        df_colname = '' # not in df
                     break
                 else:
                     # logger.info(vh.encode('utf-8')) 
@@ -5967,8 +6011,8 @@ class QCMApp(QMainWindow):
         '''
         set the visibility of sample and reference related widget
         '''
-        samp_value = self.settings['comboBox_samp_channel'] != 'none'
-        ref_value = self.settings['comboBox_ref_channel'] != 'none'
+        samp_value = (self.settings['comboBox_samp_channel'] != 'none') and self.settings['checkBox_activechn_samp']
+        ref_value = (self.settings['comboBox_ref_channel'] != 'none')and self.settings['checkBox_activechn_ref']
         
         logger.info(samp_value) 
         logger.info(ref_value) 
@@ -5976,30 +6020,38 @@ class QCMApp(QMainWindow):
         self.setvisible_refwidgets(value=ref_value)
         # set tabWidget_settings_settings_samprefchn
         if samp_value and ref_value: # both samp and ref channels are selected
-            self.ui.tabWidget_settings_settings_samprefchn.setVisible(True)
-            self.ui.tabWidget_settings_settings_samprefchn.setEnabled(True)
+            # self.ui.tabWidget_settings_settings_samprefchn.setVisible(True)
+            # self.ui.tabWidget_settings_settings_samprefchn.setEnabled(True)
+            self.ui.checkBox_activechn_samp.setChecked(True)
+            self.ui.checkBox_activechn_ref.setChecked(True)
+            pass
         elif not samp_value and not ref_value: # neither of samp or ref channel is selected
-            self.ui.tabWidget_settings_settings_samprefchn.setVisible(False)
+            # self.ui.tabWidget_settings_settings_samprefchn.setVisible(False)
+            self.ui.checkBox_activechn_samp.setChecked(False)
+            self.ui.checkBox_activechn_ref.setChecked(False)
+            pass
         else: # one of samp and ref channels is selected
-            self.ui.tabWidget_settings_settings_samprefchn.setVisible(True)
-            self.ui.tabWidget_settings_settings_samprefchn.setEnabled(False)
+            # self.ui.tabWidget_settings_settings_samprefchn.setVisible(True)
+            # self.ui.tabWidget_settings_settings_samprefchn.setEnabled(False)
+
+            # set one as current and check it, uncheck the other
             if samp_value:
                 self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
+                # self.ui.checkBox_activechn_samp.setChecked(True)
+                self.ui.checkBox_activechn_ref.setChecked(False)
             else:
                 self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(1)
+                self.ui.checkBox_activechn_samp.setChecked(False)
+                # self.ui.checkBox_activechn_ref.setChecked(True)
 
 
     def statusbar_signal_chn_update(self):
         '''
         set the pushButton_status_signal_ch
         '''
-        samp_value = self.settings['comboBox_samp_channel']
-        ref_value = self.settings['comboBox_ref_channel']
-        
-        # convert value to False/True
-        samp_value = True if samp_value != 'none' else False
-        ref_value = True if ref_value != 'none' else False
-    
+        samp_value = (self.settings['comboBox_samp_channel'] != 'none') and self.settings['checkBox_activechn_samp']
+        ref_value = (self.settings['comboBox_ref_channel'] != 'none')and self.settings['checkBox_activechn_ref']
+
         logger.info(samp_value) 
         logger.info(ref_value) 
 
@@ -6043,18 +6095,30 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'lineEdit_startf' + harm + '_r').setVisible(value)
             getattr(self.ui, 'lineEdit_endf' + harm + '_r').setVisible(value)
 
+    def check_checked_activechn(self):
 
-    def update_vnachannel(self, index):
+        if config_default['activechn_num'] == 1:
+            sender_name = self.sender().objectName()
+            logger.info(sender_name) 
+
+            # this part is for checking the channels
+            if sender_name.startswith('checkBox_') and self.settings[sender_name]: # checkBox_ is checked
+                if sender_name == 'checkBox_activechn_samp':
+                    self.ui.checkBox_activechn_ref.setChecked(False)
+                elif sender_name == 'checkBox_activechn_ref':
+                    self.ui.checkBox_activechn_samp.setChecked(False)
+
+
+    def update_vnachannel(self):
         '''
         update vna channels (sample and reference)
         if ref == sample: sender = 'none'
         '''
         sender_name = self.sender().objectName()
         logger.info(sender_name) 
+
         samp_channel = self.settings['comboBox_samp_channel']
         ref_channel = self.settings['comboBox_ref_channel']
-
-
 
         # this park sets the other channel to none if conflict found
         # if ref_channel == samp_channel:
@@ -6066,6 +6130,7 @@ class QCMApp(QMainWindow):
         #         self.load_comboBox(self.ui.comboBox_samp_channel)
         #     else:
         #         pass
+
 
         # set visibility of samp & ref related widgets 
         self.setvisible_samprefwidgets()
@@ -6357,6 +6422,12 @@ class QCMApp(QMainWindow):
         ])
 
         self.load_normal_widgets([
+            'checkBox_activechn_samp', 
+            'checkBox_activechn_ref', 
+        ])
+
+        self.load_normal_widgets([
+            'comboBox_settings_settings_analyzer', # load the analyzer selection
             'comboBox_base_frequency', # load this first to create self.settings['freq_range'] & self.settings['freq_span']
             'comboBox_range', 
         ])
@@ -6587,9 +6658,9 @@ class QCMApp(QMainWindow):
         logger.info(chn_name_list) 
 
         # only one channel can be 'none'
-        if self.settings['comboBox_samp_channel'] != 'none': # sample channel is not selected
+        if self.settings['checkBox_activechn_samp']: # sample channel is not selected
             chn_name_list.append('samp')
-        if self.settings['comboBox_ref_channel'] != 'none': # reference channel is not selected
+        if self.settings['checkBox_activechn_ref']: # reference channel is not selected
             chn_name_list.append('ref')
 
         harm_list = [harm for harm in self.all_harm_list(as_str=True) if self.settings.get('checkBox_harm' + harm, None)] # get all checked harmonic into a list

@@ -148,6 +148,11 @@ config_default = {
 
         'pushButton_settings_harm_cntr',
 
+        'lineEdit_settings_data_sampidx',
+        'lineEdit_settings_data_refidx',
+
+        'comboBox_settings_settings_analyzer',
+
         'pushButton_spectra_fit_autocntr',
 
         'pushButton_settings_data_tostart',
@@ -373,8 +378,14 @@ config_default = {
 
     'vna_wait_time_extra': 0.05, # extra time adds to wait_time
 
+    'channel_opts': OrderedDict([
+    # key: str; val: for display in combobox
+        ('samp', 'S'),
+        ('ref', 'R'),
+    ]),
+
     'ref_channel_opts': OrderedDict([
-    # key: str(number); val: for display in combobox
+    # key: str; val: for display in combobox
         # ('none', 'none'),
         ('samp', 'S chn.'),
         ('ref', 'R chn.'),
@@ -403,6 +414,13 @@ config_default = {
         'var': 'Variable T',
         # '': '',
     }),
+
+    # crystal cuts options
+    'analyzer_opts':{
+        'none': '--',
+        'myvna': 'myVNA',
+        'openqcm': 'openQCM',
+    },
 
     # crystal cuts options
     'crystal_cut_opts':{
@@ -505,6 +523,8 @@ config_default = {
     },
 
     'mechanics_modeswitch': 0, 
+
+    'activechn_num': 1,
 
 
     # 'qcm_layer_unknown_source_opts': {
@@ -698,7 +718,7 @@ config_default = {
         'disable_existing_loggers': False,
         'formatters': {
             'simple': {
-                'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                'format': '%(asctime)s - %(name)s - %(levelname)s - %(lineno)s - %(message)s',
             },
         },    
         'handlers': {
@@ -707,6 +727,15 @@ config_default = {
                 'level': 'ERROR',
                 'formatter': 'simple',
                 'stream': 'ext://sys.stdout',
+            },    
+            'info_file_handler': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'level': 'INFO',
+                'formatter': 'simple',
+                'filename': 'info.log',
+                'maxBytes': 1048576,
+                'backupCount': 1,
+                'encoding': 'utf8',
             },    
             'error_file_handler': {
                 'class': 'logging.handlers.RotatingFileHandler',
@@ -720,14 +749,14 @@ config_default = {
         },    
         'loggers': {
             'console_logger': {
-                'level': 'ERROR',
+                'level': 'WARNING',
                 'handlers': ['console'],
                 'propagate': False,
             }
         },    
         'root': {
             'level': 'INFO',
-            'handlers': ['console', 'error_file_handler'],
+            'handlers': ['console', 'info_file_handler', 'error_file_handler'],
         },
     },
 }
@@ -815,9 +844,17 @@ settings_default = {
 
     ### default hardware settings ###
     # 'tabWidget_settings_settings_samprefchn': 1,
-    # default VNA settings
+
+    # checkBox_activechn_samp
+    'checkBox_activechn_samp': True,
+    'checkBox_activechn_ref': False,
+
+    # default analyzer settings
     'comboBox_samp_channel': '1',
     'comboBox_ref_channel': 'none',
+
+    # default hardware selection
+    'treeWidget_settings_settings_hardware': 'none',
 
     # default crystal settings
     'comboBox_base_frequency': 5,

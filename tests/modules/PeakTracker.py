@@ -565,7 +565,7 @@ class PeakTracker:
             wid_ratio = 0.5 * current_span / half_wid
             logger.info('wid_ratio %s', wid_ratio) 
             if wid_ratio < wid_ratio_range[0]: # too fat
-                return max(
+                new_span = max(
                     min(
                         wid_ratio_range[0] * half_wid * 2, 
                         current_span * (1 + change_thresh[1]),
@@ -579,7 +579,7 @@ class PeakTracker:
                     current_span * (1 - change_thresh[1]),
                     current_span * (1 - change_thresh[0]) # 
                 )
-                return min(
+                new_span = min(
                     max(
                         wid_ratio_range[1] * half_wid * 2,
                         current_span * (1 - change_thresh[1]),
@@ -587,7 +587,9 @@ class PeakTracker:
                     current_span * (1 - change_thresh[0]) # 
                 )
             else:
-                return current_span
+                new_span = current_span
+            
+            return max(new_span, config_default['peak_min_width_Hz']) # add min limit of peak to new_span
 
         def set_new_xlim(new_cen, new_span):
             return [new_cen - 0.5 * new_span, new_cen + 0.5 * new_span]
@@ -633,7 +635,7 @@ class PeakTracker:
                 # new start and end frequencies in Hz
                 new_xlim=np.array([cen-0.5*current_span,cen+0.5*current_span]) '''
         elif track_condition == 'fixcenter':
-            new_span = set_new_span(current_span, half_wid)
+            new_span = set_new_span(current_span, half_wid), config_default['peak_min_width_Hz']
             new_xlim = set_new_xlim(current_center, new_span)
 
             ''' # peak_xlim = np.array([cen-half_wid*3, cen+half_wid*3])

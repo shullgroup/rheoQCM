@@ -691,6 +691,7 @@ class QCM:
         delg_calcs = mech_queue.delg_calcs.iloc[0].copy()
         delD_exps = mech_queue.delD_exps.iloc[0].copy()
         delD_calcs = mech_queue.delD_calcs.iloc[0].copy()
+        sauerbreyms = mech_queue.sauerbreyms.iloc[0].copy()
         rd_exps = mech_queue.rd_exps.iloc[0].copy()
         rd_calcs = mech_queue.rd_calcs.iloc[0].copy()
         dlams = mech_queue.dlams.iloc[0].copy()
@@ -716,6 +717,7 @@ class QCM:
 
             delD_exps[nh2i(n)] = self.convert_gamma_to_D(np.imag(delfstar[n]), n)
             delD_calcs[nh2i(n)] = self.convert_gamma_to_D(np.imag(delfstar_calc[n]), n)
+            sauerbreyms[nh2i(n)] = self.sauerbreym(n, -np.real(delfstar[n])) # 
             
             rd_calcs[nh2i(n)] = self.rd_from_delfstar(n, delfstar_calc)
 
@@ -774,6 +776,7 @@ class QCM:
         mech_queue['delg_calcs'] = [delg_calcs]
         mech_queue['delD_exps'] = [delD_exps]
         mech_queue['delD_calcs'] = [delD_calcs]
+        mech_queue['sauerbreyms'] = [sauerbreyms]
         mech_queue['normdelf_exps'] =[normdelf_exps]
         mech_queue['normdelf_calcs'] =[normdelf_calcs]
         mech_queue['normdelg_exps'] =[normdelg_exps]
@@ -1043,7 +1046,7 @@ class QCM:
         cols = mech_df.columns
         for col in cols:
             # logger.info(col) 
-            if any([st in col for st in ['drho', 'lamrho', 'delrho']]):
+            if any([st in col for st in ['drho', 'lamrho', 'delrho', 'sauerbreyms']]): # delta m
                 # logger.info('x1000') 
                 df[col] = df[col].apply(lambda x: list(np.array(x) * 1000) if isinstance(x, list) else x * 1000) # from m kg/m3 to um g/cm3
             elif any([st in col for st in ['grho', 'etarho']]):

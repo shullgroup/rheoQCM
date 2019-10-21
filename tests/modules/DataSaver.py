@@ -212,6 +212,7 @@ class DataSaver:
             'delg_calcs', # n
             'delD_exps',
             'delD_calcs',
+            'sauerbreyms', #sauerbrey mass
             'normdelf_exps', # h dependent
             'normdelf_calcs', # h dependent
             'normdelg_exps', # n
@@ -241,8 +242,24 @@ class DataSaver:
             data_queue_id = getattr(self, chn_name)['queue_id']
             # logger.info(mech_queue_id) 
             # logger.info(data_queue_id) 
+            
+            # add missed columns
+            exisit_cols = df_mech.columns
+            for col in mech_keys_single:
+                if col not in exisit_cols: # previous version w/ new column in the current list
+                    logger.info('col %s not in df_mech', col)
+                    df_mech[col] = np.nan
+                    df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list()) # add list of nan to all null
+            for col in mech_keys_multiple:
+                if col not in exisit_cols: # previous version w/ new column in the current list
+                    logger.info('col %s not in df_mech', col)
+                    df_mech[col] = np.nan
+                    df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list()) # add 
+            logger.info(df_mech) 
+
             # check if queue_id is the same as self.chn_name
             if mech_queue_id.equals(data_queue_id):
+
                 return df_mech
             else:
                 # delete the extra queue_id
@@ -1646,69 +1663,71 @@ class DataSaver:
         mode = self.exp_ref.get('mode')
 
         if mode['cryst'] == 'single': # single crystal
-            if mode['temp'] == 'const': # single crystal and constant temperature
-                if all(np.isnan(np.array(self.exp_ref[chn_name][self._ref_keys[col]]))): # no reference or no constant reference exist
-                    logger.warning('ref still not set')
-                    return col_s.apply(lambda x: list(np.array(x, dtype=np.float) * np.nan)) # return all nan
-                else: # use constant ref in self.<chn_name>_ref
-                    logger.info('constant reference') 
-                    # get ref
-                    ref = self.exp_ref[chn_name][self._ref_keys[col]] # return a ndarray
-                    # return
-                    # logger.info(ref) 
-                    # logger.info(col_s[0]) 
+            logger.info('single') 
+
+            ref_s = self.interp_film_ref(chn_name, col=col) # get reference for col (fs or gs)
+
+            # logger.info('ref_s\n%s', ref_s) 
+            
+            # convert series value to ndarray
+            col_arr = np.array(col_s.values.tolist())
+            ref_arr = np.array(ref_s.values.tolist())
+
+            # subtract ref from col elemental wise
+            col_arr = col_arr - ref_arr
+
+            # save it back to col_s
+            col_s.values[:] = col_arr.tolist()
+            
+            if norm: # normalize the data by harmonics
+                col_s = self._norm_by_harm(col_s)
+            return col_s
+
+            # if mode['temp'] == 'const': # single crystal and constant temperature
+
+            #     if all(np.isnan(np.array(self.exp_ref[chn_name][self._ref_keys[col]]))): # no reference or no constant reference exist
+            #         logger.warning('ref still not set')
+            #         return col_s.apply(lambda x: list(np.array(x, dtype=np.float) * np.nan)) # return all nan
+            #     else: # use constant ref in self.<chn_name>_ref
+            #         logger.info('constant reference') 
+            #         # get ref
+            #         ref = self.exp_ref[chn_name][self._ref_keys[col]] # return a ndarray
+            #         # return
+            #         # logger.info(ref) 
+            #         # logger.info(col_s[0]) 
                     
-                    col_s = col_s.apply(lambda x: list(np.array(x, dtype=np.float) - np.array(ref, dtype=np.float)))
-                    if norm:
-                        return self._norm_by_harm(col_s)
-                    else: 
-                        return col_s
-            elif mode['temp'] == 'var': # single crystal and constant temperature
-                logger.info('single, temp') 
+            #         col_s = col_s.apply(lambda x: list(np.array(x, dtype=np.float) - np.array(ref, dtype=np.float)))
+            #         if norm:
+            #             return self._norm_by_harm(col_s)
+            #         else: 
+            #             return col_s
+            # elif mode['temp'] == 'var': # single crystal and constant temperature
+            #     logger.info('single, temp') 
 
-                ref_s = self.interp_film_ref(chn_name, col=col) # get reference for col (fs or gs)
+            #     ref_s = self.interp_film_ref(chn_name, col=col) # get reference for col (fs or gs)
 
-                logger.info('ref_s\n%s', ref_s) 
+            #     logger.info('ref_s\n%s', ref_s) 
                 
-                # convert series value to ndarray
-                col_arr = np.array(col_s.values.tolist())
-                ref_arr = np.array(ref_s.values.tolist())
+            #     # convert series value to ndarray
+            #     col_arr = np.array(col_s.values.tolist())
+            #     ref_arr = np.array(ref_s.values.tolist())
 
-                # subtract ref from col elemental wise
-                col_arr = col_arr - ref_arr
+            #     # subtract ref from col elemental wise
+            #     col_arr = col_arr - ref_arr
 
-                # save it back to col_s
-                col_s.values[:] = col_arr.tolist()
+            #     # save it back to col_s
+            #     col_s.values[:] = col_arr.tolist()
                 
-                if norm: # normalize the data by harmonics
-                    col_s = self._norm_by_harm(col_s)
-                return col_s
-            else:
-                pass
+            #     if norm: # normalize the data by harmonics
+            #         col_s = self._norm_by_harm(col_s)
+            #     return col_s
+            # else:
+            #     pass
 
         elif mode['cryst'] == 'dual': #TODO
             if mode['temp'] == 'const': # dual crystal and constant temperature
                 pass
             elif mode['temp'] == 'var': # dual crystal and constant temperature
-                return 
-                #TODO temperarilly save the code below
-                logger.info('dynamic reference') 
-                ref_s = getattr(self, self.exp_ref[chn_name + '_ref'][0]).copy()
-
-                # convert series value to ndarray
-                col_arr = np.array(col_s.values.tolist())
-                ref_arr = np.array(ref_s.values.tolist())
-
-                # subtract ref from col elemental wise
-                col_arr = col_arr - ref_arr
-
-                # save it back to col_s
-                col_s.values[:] = col_arr.tolist()
-                
-                if norm: # normalize the data by harmonics
-                    col_s = self._norm_by_harm(col_s)
-                return col_s
-            else:
                 pass
 
 
@@ -1758,6 +1777,7 @@ class DataSaver:
 
         df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
         setattr(self, chn_name + '_ref', df)
+        # logger.info(getattr(self, chn_name+'_ref'))
 
 
     def set_ref_set(self, chn_name, source, idx_list=[], df=None):
@@ -1794,21 +1814,24 @@ class DataSaver:
             # copy data to <chn_name>_ref
             # both chn can have ref
             # use average of reference
-            if mode['temp'] == 'const': # single crystal and constant temperature
-                pass
-            elif mode['temp'] == 'var' or (mode['temp'] == 'const' and any([isinstance(l, list) for l in idx_list])): # single crystal and variable temperature or multi references
-                # use fitting of reference  
+            # if mode['temp'] == 'const'and all([isinstance(l, int) for l in idx_list]): # single crystal and constant temperature
+            #     pass
+            # elif mode['temp'] == 'var' or (mode['temp'] == 'const' and any([isinstance(l, list) for l in idx_list])): # single crystal and variable temperature or multi references
+            #     # use fitting of reference  
+            #     if mode['temp'] == 'var':
+            #         logger.info('var temp')
+            #     elif (mode['temp'] == 'const' and any([isinstance(l, list) for l in idx_list])):
+            #         logger.info('const temp with m')
 
                 # clear self.<chn_name>_ref
                 if getattr(self, chn_name + '_ref').shape[0] > 0: 
                     setattr(self, chn_name + '_ref', self._make_df())
 
-                # clear all self.exp_ref[chn_name]
+                # clear all self.exp_ref[chn_name] 
                 if mode['temp'] == 'var':
                     chns = self._chn_keys
-                elif (mode['temp'] == 'const' and any([isinstance(l, list) for l in idx_list])):
-                    chns = chn_name
-
+                elif mode['temp'] == 'const':
+                    chns = [chn_name]
                 for chn in chns: 
                     self.exp_ref[chn] = {
                         'f0': self.nan_harm_list(), # list for each harmonic
@@ -1820,7 +1843,7 @@ class DataSaver:
                 df = getattr(self, source)
                 logger.info('source %s', source) 
                 logger.info('idx_list_opened %s', idx_list_opened) 
-                logger.info('df.loc[idx_list_opened] %s', df.loc[idx_list_opened, :]) 
+                # logger.info('df.loc[idx_list_opened, :] %s', df.loc[idx_list_opened, :]) 
                 logger.info(df) 
                 self.copy_to_ref(chn_name, df.loc[idx_list_opened, :]) # copy to reference data set
             elif source == 'ext': # data from external file
@@ -1840,7 +1863,7 @@ class DataSaver:
                 pass
  
         # calculate reference
-        self.calc_fg_ref(chn_name, mark=True)
+        self.calc_fg_ref(chn_name, mark=False)
         
 
     def calc_fg_ref(self, chn_name, mark=True):
@@ -1874,23 +1897,29 @@ class DataSaver:
                     func_f_list = [] # func for all freq
                     func_g_list = [] # func for all gamma
 
-                    ref_fs_df = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'fs', mark=mark, dropnanmarkrow=False, deltaval=False)
-                    ref_gs_df = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'gs', mark=mark, dropnanmarkrow=False, deltaval=False)
-                    logger.info('ref_fs_df.loc[ind_list] %s', ref_fs_df.loc[ind_list])
-                    logger.info('ref_gs_df.loc[ind_list] %s', ref_gs_df.loc[ind_list])
-                    func_f_list = ref_fs_df.loc[ind_list].mean().values.tolist()
-                    func_g_list = ref_gs_df.loc[ind_list].mean().values.tolist()
-                
+                    # get data
+                    ref_fs_df = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'fs', mark=False, dropnanmarkrow=False, deltaval=False)
+                    ref_gs_df = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'gs', mark=False, dropnanmarkrow=False, deltaval=False)
+                    logger.info('chn_ref_source %s', chn_ref_source)
+                    # logger.info('ref_fs_df %s', ref_fs_df)
+                    # logger.info('ref_fs_df.index %s', ref_fs_df.index)
+                    # logger.info('ref_fs_df.loc[ind_list] %s', ref_fs_df.loc[ind_list])
+                    # logger.info('ref_gs_df.loc[ind_list] %s', ref_gs_df.loc[ind_list])
+                    func_f_list = ref_fs_df.loc[ind_list].mean().values.tolist() # list of float for now
+                    func_g_list = ref_gs_df.loc[ind_list].mean().values.tolist() # list of float for now
+                    logger.info('func_f_list %s', func_f_list)
+                    logger.info('func_g_list %s', func_g_list)
                     # for version <= 0.18
                     # Save to self.exp_ref[chn_name] 
                     if all([isinstance(l, int) for l in self.exp_ref[chn_name+'_ref'][1]]): # all int. 
-                        self.exp_ref[chn_name]['fs'] = func_f_list
-                        self.exp_ref[chn_name]['gs'] = func_g_list
+                        self.exp_ref[chn_name]['f0'] = func_f_list
+                        self.exp_ref[chn_name]['g0'] = func_g_list
 
                     # convert func_f/g_list to list of functions
-                    func_f_list = [lambda x: np.full_like(x, f) for f in func_f_list]
-                    func_g_list = [lambda x: np.full_like(x, g) for g in func_g_list]
-                    
+                    func_f_list = [lambda x, f=f: np.full_like(x, f, dtype=float) for f in func_f_list]
+                    func_g_list = [lambda x, g=g: np.full_like(x, g, dtype=float) for g in func_g_list]
+                    # print([x([0, 2]) for x in func_f_list])
+                    # print([x([0, 2]) for x in func_g_list])
                     # make function for each ind_list
                     func_list.append(self.make_interpfun(func_f_list, func_g_list))
 
@@ -1908,9 +1937,6 @@ class DataSaver:
                 df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
                 # copy to samp_ref
                 setattr(self, chn_name + '_ref', df)
-
-
-                self.refflg[chn_name] = True
 
 
                 ''' for single reference
@@ -2004,11 +2030,10 @@ class DataSaver:
                 df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
                 # copy to samp_ref
                 setattr(self, chn_name + '_ref', df)
-                
-                self.refflg[chn_name] = True
-                    
             else:
                 pass
+                self.refflg[chn_name] = False
+
         elif mode['cryst'] == 'dual': #TODO
             if mode['temp'] == 'const': # dual crystal and constant temperature
                 pass
@@ -2016,7 +2041,9 @@ class DataSaver:
                 pass
             else:
                 pass
-                
+
+        self.refflg[chn_name] = False
+
 
     def make_interpfun(self, func_f_list, func_g_list):
         '''
@@ -2089,7 +2116,7 @@ class DataSaver:
                     # len(ind_list) can be longer than len(chn_func) 
                     # use modulus 
                     f_list, g_list = chn_func[seg % len(chn_func)](ind_list) # dummy values with the same size of data
-                    logger.info('f_list %s', f_list)
+                    # logger.info('f_list %s', f_list)
                     # transpose 
                     fs_list = np.transpose(np.array(f_list)).tolist()
                     logger.info('len(fs_list) %s', len(fs_list)) 
@@ -2097,12 +2124,12 @@ class DataSaver:
                     gs_list = np.transpose(np.array(g_list)).tolist()
 
                     # save to df
-                    logger.info('cols.fs[ind_list] %s', cols.fs[ind_list])
-                    logger.info('fs_list %s', fs_list)
+                    # logger.info('cols.fs[ind_list] %s', cols.fs[ind_list])
+                    # logger.info('fs_list %s', fs_list)
                     cols.fs[ind_list] = fs_list
                     cols.gs[ind_list] = gs_list
 
-                logger.info('cols[ind_list]\n%s', cols.iloc[ind_list]) 
+                # logger.info('cols[ind_list]\n%s', cols.iloc[ind_list]) 
                 logger.info(cols[col].head())
 
             elif mode['temp'] == 'var': # single crystal and variable temperature
@@ -2667,6 +2694,13 @@ class DataSaver:
         harm: str. 
         '''
         return 2 * gamma / (int(harm) * f1)
+
+
+    def sauerbreym(self, harm, delf, f1, Zq):
+        ''' mass from Sauerbrey eq'''
+        if not isinstance(harm, int):
+            harm = int(harm)
+        return -delf * Zq / (2 * harm * f1**2)
 
 
     def import_qcm_with_other_format(self, data_format, path, config_default, settings=None, f1=None, t0=None, init_file=True):

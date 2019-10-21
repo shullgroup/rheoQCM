@@ -32,7 +32,7 @@ parms['imagetype'] = 'png'  # default is 'svg'
 
 ######### run samples below ##########
 #%% 2:1 20190201 samp
-qcm.analyze(sample['D400_5_N2_CO2__samp'], parms)
+# qcm.analyze(sample['D400_5_N2_CO2__samp'], parms)
 
 #%% 2:1 20190201 ref
 # qcm.analyze(sample['D400_5_N2_CO2__ref'], parms)
@@ -105,7 +105,7 @@ qcm.analyze(sample['D400_5_N2_CO2__samp'], parms)
 # qcm.analyze(sample['DGEBA-Jeffamine2000_RT_2'], parms)
 
 #%% 2:1 20180727 good
-# qcm.analyze(sample['DGEBA-Jeffamine230_RT_5'], parms)
+qcm.analyze(sample['DGEBA-Jeffamine230_RT_5'], parms)
 
 #%% 2:1 thick
 # qcm.analyze(sample['DGEBA-Jeffamine230_RT_4'], parms)

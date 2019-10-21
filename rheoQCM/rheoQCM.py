@@ -234,7 +234,7 @@ class QCMApp(QMainWindow):
 
         self.settings_harm = '1' # active harmonic in Settings Tab
         self.settings_chn = {'name': 'samp', 'chn': '1'} # active channel 'samp' or 'ref' in Settings Tab
-        self.active = {} # active factors e.g.: harm, chnn_name, plt_str, ind,
+        self.active = {} # active factors e.g.: harm, chnn_name, plt_str, l_str, ind,
         self.mech_chn = 'samp'
         self.chn_set_store = {} # used for storing the channal setup self.settings.freq_span and self.settings.harmdata during manual refit
         self.prop_plot_list = [] # a list to store handles of prop plots
@@ -533,6 +533,25 @@ class QCMApp(QMainWindow):
 
         #region settings_settings
 
+        self.ui.checkBox_activechn_samp.clicked.connect(self.check_checked_activechn)
+        self.ui.checkBox_activechn_samp. stateChanged.connect(self.update_widget)
+        self.ui.checkBox_activechn_samp. stateChanged.connect(self.update_vnachannel)
+
+        self.ui.checkBox_activechn_ref.clicked.connect(self.check_checked_activechn)
+        self.ui.checkBox_activechn_ref. stateChanged.connect(self.update_widget)
+        self.ui.checkBox_activechn_ref. stateChanged.connect(self.update_vnachannel)
+
+        # add checkbox to tabWidget_settings_settings_samprefchn
+        self.ui.tabWidget_settings_settings_samprefchn.tabBar().setTabButton(
+            self.ui.tabWidget_settings_settings_samprefchn.indexOf(self.ui.tab_settings_settings_harmchnsamp),
+            QTabBar.LeftSide,
+            self.ui.checkBox_activechn_samp,
+        )
+        self.ui.tabWidget_settings_settings_samprefchn.tabBar().setTabButton(
+            self.ui.tabWidget_settings_settings_samprefchn.indexOf(self.ui.tab_settings_settings_harmchnref),
+            QTabBar.LeftSide,
+            self.ui.checkBox_activechn_ref,
+        )
 
         # set signal
         self.ui.tabWidget_settings_settings_samprefchn.currentChanged.connect(self.update_widget)
@@ -710,6 +729,19 @@ class QCMApp(QMainWindow):
             'Cut',
             self.ui.treeWidget_settings_settings_hardware
         )
+
+        # insert comboBox_settings_settings_analyzer
+        self.create_combobox(
+            'comboBox_settings_settings_analyzer',
+            config_default['analyzer_opts'],
+            100,
+            'Analyzer',
+            self.ui.treeWidget_settings_settings_hardware
+        )
+
+        self.ui.comboBox_settings_settings_analyzer.currentIndexChanged.connect(self.update_widget)
+        # TODO connect module importing function here
+        self.ui.comboBox_settings_settings_analyzer.currentIndexChanged.connect(self.update_widget)
 
         # add comBox_tempmodule to treeWidget_settings_settings_hardware
         try:
@@ -1057,14 +1089,16 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_data_ref_tempmode.currentIndexChanged.connect(self.on_ref_mode_changed)
 
 
-
        # set treeWidget_settings_data_refs expanded
         self.ui.treeWidget_settings_data_refs.expandToDepth(0)
 
-        # pushButton_settings_data_marknptss
-        self.ui.pushButton_settings_data_marknptss.clicked.connect(lambda: self.marknpts('samp'))
-        # pushButton_settings_data_marknptsr
-        self.ui.pushButton_settings_data_marknptsr.clicked.connect(lambda: self.marknpts('ref'))
+        # spinBox_settings_data_marknpts
+        # self.ui.spinBox_settings_data_marknpts.valueChanged.connect(self.update_widget)
+        # pushButton_settings_data_marknpts
+        self.ui.pushButton_settings_data_marknpts.clicked.connect(self.marknpts)
+        # comboBox_settings_data_marknptschn
+        self.build_comboBox(self.ui.comboBox_settings_data_marknptschn, 'channel_opts')
+        # self.ui.comboBox_settings_data_marknptschn.currentIndexChanged.connect(self.update_widget)
 
         #endregion
 
@@ -1389,21 +1423,21 @@ class QCMApp(QMainWindow):
 
         # add menu to toolbutton
 
-        # toolButton_settings_data_recreate_from_raw
+        # toolButton_settings_data_regenerate_from_raw
         # create menu: menu_settings_data_refit
-        self.ui.menu_settings_data_refit = QMenu(self.ui.toolButton_settings_data_recreate_from_raw)
-        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_allsamp)
-        self.ui.actionFit_allsamp.triggered.connect(lambda: self.recreate_from_raw(chn_name='samp', mode='all'))
+        self.ui.menu_settings_data_refit = QMenu(self.ui.toolButton_settings_data_regenerate_from_raw)
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionRegenerate_allsamp)
+        self.ui.actionRegenerate_allsamp.triggered.connect(lambda: self.regenerate_from_raw(chn_name='samp', mode='all'))
         # self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedsamp)
-        # self.ui.actionFit_markedsamp.triggered.connect(lambda: self.recreate_from_raw(chn_name='samp', mode='marked'))
-        self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_allref)
-        self.ui.actionFit_allref.triggered.connect(lambda: self.recreate_from_raw(chn_name='ref', mode='all'))
+        # self.ui.actionFit_markedsamp.triggered.connect(lambda: self.regenerate_from_raw(chn_name='samp', mode='marked'))
+        self.ui.menu_settings_data_refit.addAction(self.ui.actionRegenerate_allref)
+        self.ui.actionRegenerate_allref.triggered.connect(lambda: self.regenerate_from_raw(chn_name='ref', mode='all'))
         # self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_markedref)
-        # self.ui.actionFit_markedref.triggered.connect(lambda: self.recreate_from_raw(chn_name='ref', mode='marked'))
+        # self.ui.actionFit_markedref.triggered.connect(lambda: self.regenerate_from_raw(chn_name='ref', mode='marked'))
         # self.ui.menu_settings_data_refit.addAction(self.ui.actionFit_selected)
         # self.ui.actionFit_all.triggered.connect(self.)
         # add menu to toolbutton
-        self.ui.toolButton_settings_data_recreate_from_raw.setMenu(self.ui.menu_settings_data_refit)
+        self.ui.toolButton_settings_data_regenerate_from_raw.setMenu(self.ui.menu_settings_data_refit)
 
         # toolButton_settings_mechanics_solve
         # create menu: menu_settings_mechanics_solve
@@ -1523,7 +1557,7 @@ class QCMApp(QMainWindow):
             self.set_manual_refit_mode(val=False)
 
             # check recording chns
-            if (self.settings['comboBox_samp_channel'] == 'none') and (self.settings['comboBox_ref_channel'] == 'none'):
+            if not self.settings['checkBox_activechn_samp'] and not self.settings['checkBox_activechn_ref']:
                 self.ui.pushButton_runstop.setChecked(False)
                 return
 
@@ -2944,30 +2978,52 @@ class QCMApp(QMainWindow):
             self.data_saver.raw_exporter(fileName, self.active['chn_name'], queue_id, self.active['harm'])
 
 
-    def recreate_from_raw(self, chn_name='samp', mode='all'):
+    def regenerate_from_raw(self, chn_name='samp', mode='all'):
         '''
-        This function is to recreate data_saver.[chn_name] (df) all or marked data from raw of given chn_name
+        This function is to regenerate data_saver.[chn_name] (df) all or marked data from raw of given chn_name
         '''
+        msg = 'This process will delete current data in the selected channel and regenerate it from raw data.\n It may take long time whih is depends on the number of points.'
+
         logger.info(chn_name) 
         logger.info(mode) 
 
+        if not self.data_saver.path: # no data
+            logger.warning('No file opened.')
+            return
+
+        process = self.process_messagebox(text='Your selection was paused!', message=[msg], opts=True, forcepop=True)
+
+        if not process:
+            return
+
+        # get all available queue_id in chn_name
+        chn_queue_list = sorted(self.data_saver.get_chn_queue_list_from_raw(chn_name))
+
+        if not chn_queue_list: # no data
+            logger.warning('There is no data in selected channel.')
+            return
+
         # reset chn & chn ref
+        setattr(self.data_saver, chn_name, self.data_saver._make_df())
 
-        # get max_harmonic
+        # remove above queue_id from data_saver.queue_list
+        self.data_saver.queue_list = sorted(list(set(self.data_saver.queue_list) - set(chn_queue_list)))
 
-        # recreate df data_saver.[chn_name]
-        
+        # auto refit data by iterate all id in chn_queue_list
+        for queue_id in chn_queue_list:
+            # add queue_id to list
+            self.data_saver.queue_list.append(queue_id)
+            # get harms
+            harms = self.data_saver.get_queue_id_harms_from_raw(chn_name, queue_id) # list of strings
+            # add empty data 
+            self.data_saver._append_new_queue([chn_name], queue_id=queue_id)
+            # get index of queue_id in data
+            ind = self.data_saver.get_queue_id(chn_name).index[-1] # the empty just appended should be the last one
+            sel_idx_dict = {harm:[ind] for harm in harms}
 
-        # use all harms. the harmonics without data will be [] in sel_idx_dict
-        harms = self.all_harm_list(as_str=True)
-        logger.info(harms) 
-        # initiate sel_idx_dict. Since will will use all data points overwrite, it can be any shape dict
-        sel_idx_dict = {}
-        sel_idx_dict = UIModules.sel_ind_dict(harms, sel_idx_dict, mode, marks)
-        logger.info('sel_idx_dict from main: \n%s', sel_idx_dict) 
+            self.data_refit(chn_name, sel_idx_dict, regenerate=True)
 
-        # auto refit data
-        self.data_refit(chn_name, sel_idx_dict)
+        logger.warning('Data receating is done.')
 
 
     def get_active_queueid_from_l_harm_ind(self):
@@ -3880,7 +3936,7 @@ class QCMApp(QMainWindow):
             pass
 
 
-    def marknpts(self, chn_name):
+    def marknpts(self):
         '''
         mark n points by the settings
         There are two ways:
@@ -3891,6 +3947,8 @@ class QCMApp(QMainWindow):
             logger.warning('No data available!')
             return
 
+        item_marknptschn = self.ui.comboBox_settings_data_marknptschn
+        chn_name = item_marknptschn.itemData(item_marknptschn.currentIndex())
         # get settings (the widgets don't saved in self.settings)
         npt = self.ui.spinBox_settings_data_marknpts.value()
         marklinear = self.ui.radioButton_settings_data_marklinear.isChecked()
@@ -4662,7 +4720,6 @@ class QCMApp(QMainWindow):
         '''
         for code testing
         '''
-        print("i am an error", err)
         logger.info('stackedWidget_settings_mechanics_modeswitch: %s', self.ui.stackedWidget_settings_mechanics_modeswitch.currentIndex()) 
         if self.ui.stackedWidget_settings_mechanics_modeswitch.currentIndex() == 0: # model mode
             # convert model to mechchndata
@@ -5942,8 +5999,8 @@ class QCMApp(QMainWindow):
         '''
         set the visibility of sample and reference related widget
         '''
-        samp_value = self.settings['comboBox_samp_channel'] != 'none'
-        ref_value = self.settings['comboBox_ref_channel'] != 'none'
+        samp_value = (self.settings['comboBox_samp_channel'] != 'none') and self.settings['checkBox_activechn_samp']
+        ref_value = (self.settings['comboBox_ref_channel'] != 'none')and self.settings['checkBox_activechn_ref']
         
         logger.info(samp_value) 
         logger.info(ref_value) 
@@ -5951,30 +6008,38 @@ class QCMApp(QMainWindow):
         self.setvisible_refwidgets(value=ref_value)
         # set tabWidget_settings_settings_samprefchn
         if samp_value and ref_value: # both samp and ref channels are selected
-            self.ui.tabWidget_settings_settings_samprefchn.setVisible(True)
-            self.ui.tabWidget_settings_settings_samprefchn.setEnabled(True)
+            # self.ui.tabWidget_settings_settings_samprefchn.setVisible(True)
+            # self.ui.tabWidget_settings_settings_samprefchn.setEnabled(True)
+            self.ui.checkBox_activechn_samp.setChecked(True)
+            self.ui.checkBox_activechn_ref.setChecked(True)
+            pass
         elif not samp_value and not ref_value: # neither of samp or ref channel is selected
-            self.ui.tabWidget_settings_settings_samprefchn.setVisible(False)
+            # self.ui.tabWidget_settings_settings_samprefchn.setVisible(False)
+            self.ui.checkBox_activechn_samp.setChecked(False)
+            self.ui.checkBox_activechn_ref.setChecked(False)
+            pass
         else: # one of samp and ref channels is selected
-            self.ui.tabWidget_settings_settings_samprefchn.setVisible(True)
-            self.ui.tabWidget_settings_settings_samprefchn.setEnabled(False)
+            # self.ui.tabWidget_settings_settings_samprefchn.setVisible(True)
+            # self.ui.tabWidget_settings_settings_samprefchn.setEnabled(False)
+
+            # set one as current and check it, uncheck the other
             if samp_value:
                 self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(0)
+                # self.ui.checkBox_activechn_samp.setChecked(True)
+                self.ui.checkBox_activechn_ref.setChecked(False)
             else:
                 self.ui.tabWidget_settings_settings_samprefchn.setCurrentIndex(1)
+                self.ui.checkBox_activechn_samp.setChecked(False)
+                # self.ui.checkBox_activechn_ref.setChecked(True)
 
 
     def statusbar_signal_chn_update(self):
         '''
         set the pushButton_status_signal_ch
         '''
-        samp_value = self.settings['comboBox_samp_channel']
-        ref_value = self.settings['comboBox_ref_channel']
-        
-        # convert value to False/True
-        samp_value = True if samp_value != 'none' else False
-        ref_value = True if ref_value != 'none' else False
-    
+        samp_value = (self.settings['comboBox_samp_channel'] != 'none') and self.settings['checkBox_activechn_samp']
+        ref_value = (self.settings['comboBox_ref_channel'] != 'none')and self.settings['checkBox_activechn_ref']
+
         logger.info(samp_value) 
         logger.info(ref_value) 
 
@@ -6018,18 +6083,30 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'lineEdit_startf' + harm + '_r').setVisible(value)
             getattr(self.ui, 'lineEdit_endf' + harm + '_r').setVisible(value)
 
+    def check_checked_activechn(self):
 
-    def update_vnachannel(self, index):
+        if config_default['activechn_num'] == 1:
+            sender_name = self.sender().objectName()
+            logger.info(sender_name) 
+
+            # this part is for checking the channels
+            if sender_name.startswith('checkBox_') and self.settings[sender_name]: # checkBox_ is checked
+                if sender_name == 'checkBox_activechn_samp':
+                    self.ui.checkBox_activechn_ref.setChecked(False)
+                elif sender_name == 'checkBox_activechn_ref':
+                    self.ui.checkBox_activechn_samp.setChecked(False)
+
+
+    def update_vnachannel(self):
         '''
         update vna channels (sample and reference)
         if ref == sample: sender = 'none'
         '''
         sender_name = self.sender().objectName()
         logger.info(sender_name) 
+
         samp_channel = self.settings['comboBox_samp_channel']
         ref_channel = self.settings['comboBox_ref_channel']
-
-
 
         # this park sets the other channel to none if conflict found
         # if ref_channel == samp_channel:
@@ -6041,6 +6118,7 @@ class QCMApp(QMainWindow):
         #         self.load_comboBox(self.ui.comboBox_samp_channel)
         #     else:
         #         pass
+
 
         # set visibility of samp & ref related widgets 
         self.setvisible_samprefwidgets()
@@ -6332,6 +6410,12 @@ class QCMApp(QMainWindow):
         ])
 
         self.load_normal_widgets([
+            'checkBox_activechn_samp', 
+            'checkBox_activechn_ref', 
+        ])
+
+        self.load_normal_widgets([
+            'comboBox_settings_settings_analyzer', # load the analyzer selection
             'comboBox_base_frequency', # load this first to create self.settings['freq_range'] & self.settings['freq_span']
             'comboBox_range', 
         ])
@@ -6562,9 +6646,9 @@ class QCMApp(QMainWindow):
         logger.info(chn_name_list) 
 
         # only one channel can be 'none'
-        if self.settings['comboBox_samp_channel'] != 'none': # sample channel is not selected
+        if self.settings['checkBox_activechn_samp']: # sample channel is not selected
             chn_name_list.append('samp')
-        if self.settings['comboBox_ref_channel'] != 'none': # reference channel is not selected
+        if self.settings['checkBox_activechn_ref']: # reference channel is not selected
             chn_name_list.append('ref')
 
         harm_list = [harm for harm in self.all_harm_list(as_str=True) if self.settings.get('checkBox_harm' + harm, None)] # get all checked harmonic into a list
@@ -6769,7 +6853,7 @@ class QCMApp(QMainWindow):
         self.set_status_pts()
 
 
-    def data_refit(self, chn_name, sel_idx_dict):
+    def data_refit(self, chn_name, sel_idx_dict, regenerate=False):
         '''
         data refit routine
         sel_idx_dict = {
@@ -6885,9 +6969,18 @@ class QCMApp(QMainWindow):
                     getattr(self.ui, 'mpl_sp' + harm).update_sp_text_chi(fit_result['v_fit']['chisqr'])
 
             self.reading = False
+            
+            if regenerate:
+                # get t 
+                t = self.data_saver.get_t_str_from_raw(chn_name, queue_id)
+                # get temp
+                temp = self.data_saver.get_temp_C_from_raw(chn_name, queue_id)
+                marks = [0 for _ in harm_list] # 'samp' and 'ref' chn have the same harmonics
 
-            # save scan data to file fitting data in data_saver
-            self.data_saver.update_refit_data(chn_name, queue_id, harm_list, fs=fs, gs=gs)
+                self.data_saver._save_queue_data([chn_name], harm_list, queue_id=queue_id, t={chn_name: t}, temp={chn_name: temp}, fs={chn_name: fs}, gs={chn_name: gs}, marks=marks)
+            else:
+                # save scan data to file fitting data in data_saver
+                self.data_saver.update_refit_data(chn_name, queue_id, harm_list, fs=fs, gs=gs)
 
             # plot data
             self.update_mpl_plt12()
