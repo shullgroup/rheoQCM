@@ -8,5 +8,5 @@ __source__ =       'https://github.com/zhczq/QCM_py'
 __report__ =       'hfttps://github.com/zhczq/QCM_py/issues'
 __license__ =      'GLP-3.0'
 __deprecated__ =   ''
-__date__ =         '17 Oct. 2019'
+__date__ =         '21 Oct. 2019'
 __version__ =      '.'.join(__version_info__)
