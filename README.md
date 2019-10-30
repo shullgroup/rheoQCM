@@ -1,4 +1,6 @@
-[![DOI](https://zenodo.org/badge/138771761.svg)](https://zenodo.org/badge/latestdoi/138771761)
+<!--- [![DOI](https://zenodo.org/badge/138771761.svg)](https://zenodo.org/badge/latestdoi/138771761) --->
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2486038.svg)](https://doi.org/10.5281/zenodo.2486038)
 
 # QCM Data Collection and Analysis Software
 
