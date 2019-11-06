@@ -40,9 +40,9 @@ eps0 = 8.8e-12
 C0byA = epsq * eps0 / dq 
 
 prop_default = {
-    'electrode': {'grho': 3.0e17, 'phi': 0, 'drho': 2.8e-6, 'n': 3},  # n here is relative harmonic.
-    'air':       {'grho': 0, 'phi': 0, 'drho': 0, 'n': 1}, #???
-    'water':     {'grho': 1e8, 'phi': np.pi / 2, 'drho': bulk_drho, 'n': 1}, #?? water ar R.T.
+    'electrode': {'calc': False, 'grho': 3.0e17, 'phi': 0, 'drho': 2.8e-6, 'n': 3},  # n here is relative harmonic.
+    'air':       {'calc': False, 'grho': 0, 'phi': 0, 'drho': 0, 'n': 1}, #???
+    'water':     {'calc': False, 'grho': 1e8, 'phi': np.pi / 2, 'drho': bulk_drho, 'n': 3}, #?? water ar R.T.
 }
 
 # fit_method = 'lmfit'
@@ -121,7 +121,7 @@ class QCM:
 
     def grho(self, n, grho_refh, phi): # old func
         ''' grho of n_th harmonic'''
-        return grho_refh * (n/self.refh)**(phi)
+        return grho_refh * (n/self.refh)**(phi / (np.pi/2))
 
 
     def grhostar(self, n, grho_refh, phi):
@@ -210,7 +210,7 @@ class QCM:
         grho_refh = material['grho']
         phi = material['phi']
         refh = material['n']
-        return grho_refh * (n / refh) ** (phi)
+        return grho_refh * (n / refh)**(phi / (np.pi / 2))
 
 
     def calc_D(self, n, material, delfstar):
@@ -1100,9 +1100,13 @@ class QCM:
         }
         This function return n (int) of the layer with 'calc' is True
         '''
+        calc_n = None
         for n, layer in film.items():
-            if layer['calc']:
-                return n
+            if 'calc' in layer and layer['calc']:
+                calc_n = n
+                break
+        
+        return calc_n
 
 
     def get_calc_material(self, film):
@@ -1126,7 +1130,10 @@ class QCM:
         '''
         n = self.get_calc_layer_num(film)
 
-        return film[n]
+        if n is None:
+            return None
+        else:
+            return film[n]
 
 
     def get_calc_layer(self, film):
@@ -1143,9 +1150,10 @@ class QCM:
         }
         This function return the film contain only the layer with 'calc' is True
         '''
-        n = self.get_calc_layer_num(film)
         new_film = {}
-        new_film[n] = film[n]
+        n = self.get_calc_layer_num(film)
+        if n is not None:
+            new_film[n] = film[n]
 
         return new_film
 
@@ -1186,6 +1194,8 @@ class QCM:
         '''
         new_film = {}
         for n, layer in film.items():
+            if 'calc' not in layer:
+                layer['calc'] = False
             if not layer['calc']:
                 new_film[n] = layer
         return new_film
@@ -1209,7 +1219,12 @@ class QCM:
         new_film = film.copy()
         if 0 in new_film.keys():
             new_film[0] = prop_default['electrode']
-            new_film[0]['calc'] = False # this layer should not be the unkown layer generally
+            # new_film[0]['calc'] = False # this layer should not be the unkown layer generally
+
+        for n, layer in new_film.items(): # add 'calc': False to dict if does not exist in layer
+            if 'calc' not in layer:
+                new_film[n]['calc'] = False
+
         return new_film
 
 
