@@ -7,7 +7,7 @@ from lmfit.models import ConstantModel
 from scipy.signal import find_peaks, find_peaks_cwt, peak_widths, peak_prominences
 from random import randrange
 
-from UISettings import config_default
+import UISettings
 from modules import UIModules
 
 # for debugging
@@ -15,6 +15,10 @@ import traceback
 
 import logging
 logger = logging.getLogger(__name__)
+
+
+config_default = UISettings.get_config() # load default configuration
+
 
 # peak_min_distance_Hz = 1e3 # in Hz
 # peak_min_width_Hz = 10 # in Hz full width
@@ -599,6 +603,8 @@ class PeakTracker:
         harm = self.active_harm
         track_condition = self.harminput[chn_name][harm]['condition']
         track_method = self.harminput[chn_name][harm]['method']
+        logger.info('track_condition: %s', track_condition)
+        logger.info('track_method: %s', track_method)
         # determine the structure field that should be used to extract out the initial-guessing method
         freq = self.harminput[chn_name][harm]['f']
         if track_method == 'bmax':
@@ -624,6 +630,8 @@ class PeakTracker:
         logger.info('current_span %s', current_span)
         logger.info('current_xlim %s', current_xlim)
         logger.info('f1f2 %s %s', freq[0], freq[-1])
+        # initiate new_cen
+        new_cen = current_center
         # initiate new_xlim == previous span
         new_xlim = self.harminput[chn_name][harm]['current_span']
 
@@ -676,12 +684,15 @@ class PeakTracker:
             logger.info('fixcntspn') 
             # bothe span and cent are fixed
             # no changes
-            return
+            pass
         elif track_condition == 'usrdef': #run custom tracking algorithm
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
             ### CUSTOM, USER-DEFINED
-            return
+            pass
+
+        logger.info('new_cen: %s', new_cen)
+        logger.info('new_xlim: %s', new_xlim)
 
         # set new start/end freq in Hz
         self.update_output(chn_name, harm, span=new_xlim)

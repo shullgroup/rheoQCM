@@ -8,6 +8,9 @@ import sys
 import subprocess
 import traceback
 
+import threading
+import multiprocessing 
+
 import logging
 import logging.config
 # Get the logger specified in the file
@@ -35,49 +38,15 @@ from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, 
 
 # packages
 from MainWindow import Ui_MainWindow # UI from QT5
-from UISettings import config_default # UI basic settings
-from UISettings import settings_default
+import UISettings # UI basic settings module
 from UISettings import harm_tree as harm_tree_default
 
 
-config_default_json = os.path.join(os.getcwd(), config_default['default_config_file_name'])
-if os.path.exists(config_default_json):
-    try:
-        with open(config_default_json, 'r') as f:
-            settings_msater = json.load(f) # read user default settings
-            for key, val in settings_msater.items():
-                # overwrite keys to config_default
-                if key in config_default:
-                    config_default[key] = val
-    except:
-        pass
-else:
-    print('use default config_default')
-del config_default_json
-if 'f' in locals():
-    del f
-
-# check default settings file
 print(os.getcwd())
-usersettings_file = os.path.join(os.getcwd(), config_default['default_settings_file_name'])
-if os.path.exists(usersettings_file):
-    try:
-        with open(usersettings_file, 'r') as f:
-            settings_user = json.load(f) # read user default settings
-            for key, val in settings_default.items():
-                # add missed keys to settings_user
-                if key not in settings_user:
-                    settings_user[key] = val
-            # rename settings_user to settings_defualt
-            settings_default = settings_user
-        print('use user settings')
-    except:
-        print('Error occured while loading {}\nuse default settings'.format(config_default['default_settings_file_name']))
-else:
-    print('use default settings')
-del usersettings_file
-if 'f' in locals():
-    del f
+
+
+config_default = UISettings.get_config()
+settings_default = UISettings.get_settings()
 
 # copy some data related sets from settigs_init to settings_default if not exist
 if 'max_harmonic' not in settings_default:
@@ -136,14 +105,11 @@ def setup_logging():
                 logger_config = json.load(f)
         else: # default setting
                 logger_config = config_default['logger_config']
-        
         logging.config.dictConfig(logger_config)
     except Exception as e:
         print('Setting logger failed! Use default logging level!')
         logging.basicConfig(level=config_default['logger_setting_config']['default_level'])
         print(e)
-
-
 
 class VNATracker:
     def __init__(self):
@@ -3438,11 +3404,20 @@ class QCMApp(QMainWindow):
         elif 'dD' == typestr: # get delta D
             # get delg first
             data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'gs', deltaval=True, norm=False, mark=mark)
-            f1 = self.data_saver.get_f1(chn_name)
+            f1 = self.data_saver.get_harm_marked_f1(chn_name, harm, mark=mark)
             # convert delg to delD
             data = self.data_saver.convert_gamma_to_D(data, f1, harm)
             # convert unit
             data = data * 1e6
+        elif 'dsm' == typestr: # get Sauerbrey mass
+            # get delg first
+            delf = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'fs', deltaval=True, norm=False, mark=mark)
+            f1 = self.data_saver.get_harm_marked_f1(chn_name, harm, mark=mark)
+            Zq = self.qcm.Zq
+            # calculate Sauerbrey mass
+            data = self.data_saver.sauerbreym(harm, delf, f1, Zq)
+            # convert unit
+            data = data * 1000
         elif 'f' == typestr: # get f
             data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'fs', deltaval=False, norm=False, mark=mark)
         elif 'g' == typestr: # get g
@@ -4601,7 +4576,6 @@ class QCMApp(QMainWindow):
             # create a dump df which is a copy of mech_df.loc[[ind], :]
             # mech_queue = pd.DataFrame.from_dict(mech_df.loc[[ind], :].to_dict())
             mech_queue['queue_id'] = mech_queue['queue_id'].astype('int')
-            # exit(0)
 
             # obtain the solution for the properties
             if self.qcm.all_nhcaclc_harm_not_na(nh, qcm_queue):
@@ -4963,6 +4937,7 @@ class QCMApp(QMainWindow):
                         # logger.info(mech_cols) 
                     else:
                         logger.info('did not find %s %s', key, val)
+                        df_colname = '' # not in df
                     break
                 else:
                     # logger.info(vh.encode('utf-8')) 
@@ -6891,7 +6866,7 @@ class QCMApp(QMainWindow):
 
             # data reading and plot
             harm_list = sel_harm_dict[idx]
-            for harm in harm_list:
+            for harm in harm_list: # TODO add poll here
                 # get data
                 f, G, B = self.data_saver.get_raw(chn_name, queue_id, harm)
                 logger.info((len(f), len(G), len(B))) 

@@ -38,51 +38,15 @@ from PyQt5.QtGui import QIcon, QPixmap, QMouseEvent, QValidator, QIntValidator, 
 
 # packages
 from MainWindow import Ui_MainWindow # UI from QT5
-from UISettings import config_default # UI basic settings
-from UISettings import settings_default
+import UISettings # UI basic settings module
 from UISettings import harm_tree as harm_tree_default
 
 
 print(os.getcwd())
 
 
-def update_config(json_path, config):
-
-    if os.path.exists(json_path):
-        try:
-            with open(json_path, 'r') as f:
-                user_config = json.load(f) # read user default settings
-                for key, val in user_config.items():
-                    # overwrite keys to config_default
-                    if key in config:
-                        config[key] = val
-            complete = True
-        except:
-            complete = False
-    else:
-        complete = False
-
-    return config, complete
-
-
-user_config_file_path = os.path.join(os.getcwd(), config_default['default_config_file_name'])
-config_default, complete = update_config(user_config_file_path, config_default)
-if complete:
-    print('use user config')
-else:
-    print('use default config')
-del user_config_file_path
-
-# check default settings file
-user_settings_file_path = os.path.join(os.getcwd(), config_default['default_settings_file_name'])
-settings_default, complete = update_config(user_settings_file_path, settings_default)
-
-if complete:
-    print('use user settings')
-else:
-    print('use default settings')
-del user_settings_file_path
-
+config_default = UISettings.get_config()
+settings_default = UISettings.get_settings()
 
 # copy some data related sets from settigs_init to settings_default if not exist
 if 'max_harmonic' not in settings_default:
@@ -141,7 +105,6 @@ def setup_logging():
                 logger_config = json.load(f)
         else: # default setting
                 logger_config = config_default['logger_config']
-        
         logging.config.dictConfig(logger_config)
     except Exception as e:
         print('Setting logger failed! Use default logging level!')
@@ -3441,18 +3404,18 @@ class QCMApp(QMainWindow):
         elif 'dD' == typestr: # get delta D
             # get delg first
             data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'gs', deltaval=True, norm=False, mark=mark)
-            f1 = self.data_saver.get_f1(chn_name)
+            f1 = self.data_saver.get_harm_marked_f1(chn_name, harm, mark=mark)
             # convert delg to delD
             data = self.data_saver.convert_gamma_to_D(data, f1, harm)
             # convert unit
             data = data * 1e6
         elif 'dsm' == typestr: # get Sauerbrey mass
             # get delg first
-            data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'fs', deltaval=True, norm=False, mark=mark)
-            f1 = self.data_saver.get_f1(chn_name)
+            delf = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'fs', deltaval=True, norm=False, mark=mark)
+            f1 = self.data_saver.get_harm_marked_f1(chn_name, harm, mark=mark)
             Zq = self.qcm.Zq
             # calculate Sauerbrey mass
-            data = self.data_saver.sauerbreym(harm, data, f1, Zq)
+            data = self.data_saver.sauerbreym(harm, delf, f1, Zq)
             # convert unit
             data = data * 1000
         elif 'f' == typestr: # get f
@@ -6903,7 +6866,7 @@ class QCMApp(QMainWindow):
 
             # data reading and plot
             harm_list = sel_harm_dict[idx]
-            for harm in harm_list:
+            for harm in harm_list: # TODO add poll here
                 # get data
                 f, G, B = self.data_saver.get_raw(chn_name, queue_id, harm)
                 logger.info((len(f), len(G), len(B))) 

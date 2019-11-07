@@ -8,6 +8,8 @@ Change the following factors will change the apperiance of the GUI
 # Use OrderedDict for those dicts need to be shown in order
 from collections import OrderedDict
 import numpy as np
+import os
+import json
 import logging
 
 config_default = {
@@ -269,7 +271,8 @@ config_default = {
         ('mdfn', '-' + u'\u0394' + 'f/n'),
         ('dg',   u'\u0394\u0393'),
         ('dgn',  u'\u0394\u0393' + '/n'),
-        ('dD',   u'\u0394' + 'D '),
+        ('dD',   u'\u0394' + 'D'),
+        ('dsm', u'\u0394' + 'm' + u'\u209B'), # Sauerbrey mass
         ('f',    'f'),
         ('g',     u'\u0393'),
         ('D',    'D'),
@@ -287,6 +290,7 @@ config_default = {
         'dg':   r'$\Delta\Gamma$ (Hz)',
         'dgn':  r'$\Delta\Gamma$/n (Hz)',
         'dD':   r'$\Delta$D $\times 10^{-6}$',
+        'dsm':  r'$\Delta$m$_{Sauerbrey}$ (g/m$^2$)',
         'f':    r'f (Hz)',
         'g':    r'$\Gamma$ (Hz)',
         'D':    r'D $\times 10^{-6}$',
@@ -302,6 +306,7 @@ config_default = {
         'delD_calcs':        r'$\Delta$D $\times 10^{-6}$',
         'delD_exps':         r'$\Delta$D$_{exp}$ $\times 10^{-6}$',
         'delg_exps':         r'$\Delta\Gamma_{exp}$ (Hz)',
+        'sauerbreyms':       r'$\Delta$m$_{Sauerbrey}$ (g/m$^2$)',
         'drho':              r'd$\rho$ ($\mu$m$\cdot$g/cm$^3$)',
         'grhos':             r'$|G_{n}^*|\rho$ (Pa$\cdot$g/cm$^3$)',
         'phi':               r'$\phi$ ($\degree$)',
@@ -328,6 +333,8 @@ config_default = {
         'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
         'delD_exps':         u'\u0394' + 'D ' + u'\u00D7' + '10' + '\u207B\u2076', # D ×10⁻⁶
         'delD_calcs':        u'\u0394' + 'D ' + u'\u00D7' + '10' + '\u207B\u2076' + 'calc', # Dcalc ×10⁻⁶
+        'sauerbreyms':       'Sauerbrey ' + u'\u0394' + 'm (g/m' + u'\u00B2' + ')', # Sauerbrey mass 
+        
         'drho':              'd' + u'\u03C1' + ' (' + u'\u03BC' + 'm' + u'\u2219' 'g/cm'+ u'\u00B3' + ')', # dρ (μm∙g/m³)
         'grhos':             '|G*|' + u'\u03C1' + ' (Pa' + u'\u2219' + 'g/cm' + u'\u00B3' + ')', # |G*|ρ (Pa∙g/cm³)
         'phi':               u'\u03A6' + ' (' + u'\u00B0' + ')', # Φ (°)
@@ -495,7 +502,7 @@ config_default = {
 
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {
-        'onelayer': 'in air',
+        'onelayer': 'no medium',
         'twolayers': 'in medium',
         # 'bulk': 'Bulk material',
     },
@@ -728,15 +735,15 @@ config_default = {
                 'formatter': 'simple',
                 'stream': 'ext://sys.stdout',
             },    
-            'info_file_handler': {
-                'class': 'logging.handlers.RotatingFileHandler',
-                'level': 'INFO',
-                'formatter': 'simple',
-                'filename': 'info.log',
-                'maxBytes': 1048576,
-                'backupCount': 1,
-                'encoding': 'utf8',
-            },    
+            # 'info_file_handler': {
+            #     'class': 'logging.handlers.RotatingFileHandler',
+            #     'level': 'INFO',
+            #     'formatter': 'simple',
+            #     'filename': 'info.log',
+            #     'maxBytes': 1048576,
+            #     'backupCount': 1,
+            #     'encoding': 'utf8',
+            # },    
             'error_file_handler': {
                 'class': 'logging.handlers.RotatingFileHandler',
                 'level': 'ERROR',
@@ -756,7 +763,8 @@ config_default = {
         },    
         'root': {
             'level': 'INFO',
-            'handlers': ['console', 'info_file_handler', 'error_file_handler'],
+            # 'handlers': ['console', 'info_file_handler', 'error_file_handler'],
+            'handlers': ['console', 'error_file_handler'],
         },
     },
 }
@@ -979,3 +987,58 @@ for harm in range(1, config_default['max_harmonic']+2, 2):
 
 ###########################################
 
+def get_config():
+    config = config_default.copy() # make a copy
+    file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_default['default_config_file_name'])
+    # print(file_path)
+
+    config, complete = update_dict(file_path, config)
+    if complete:
+        print('use user config')
+        return config
+    else: 
+        print('use default config')
+        return config_default
+
+
+def get_settings():
+    settings = settings_default.copy() # make a copy
+    file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_default['default_settings_file_name'])
+    # print(file_path)
+
+    settings, complete = update_dict(file_path, settings)
+    if complete:
+        print('use user settings')
+        return settings
+    else: 
+        print('use default settings')
+        return settings_default
+
+
+def update_dict(file_path, default_dict):
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r') as f:
+                user_dict = json.load(f) # read user default settings
+                for key, val in user_dict.items():
+                    # overwrite keys to config_default
+                    if key in default_dict:
+                        default_dict[key] = val
+            complete = True
+        except:
+            complete = False
+    else:
+        complete = False
+
+    return default_dict, complete
+
+
+
+if __name__ == '__main__':
+    print('to get config')
+    cfg = get_config()
+    print(cfg['vna_cal_file_path'])
+
+    print('to get settings')
+    stt = get_settings()
+    print(stt['checkBox_harm1'])

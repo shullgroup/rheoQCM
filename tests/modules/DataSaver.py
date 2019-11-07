@@ -668,14 +668,14 @@ class DataSaver:
                 # logger.info(fh['data/' + key]) 
                 if key in fh['data']:
                     data = fh['data/' + key]
-                    logger.info(data) 
-                    logger.info(data[()]) 
+                    # logger.info(data) 
+                    # logger.info(data[()]) 
                     data[()] = getattr(self, key).to_json()
                 else:
                     fh.create_dataset('data/' + key, data=getattr(self, key).to_json(), dtype=h5py.special_dtype(vlen=str)) 
                 if key + '_ref' in fh['data']:
                     data_ref = fh['data/' + key + '_ref']
-                    logger.info(data_ref[()]) 
+                    # logger.info(data_ref[()]) 
                     data_ref[()] = getattr(self, key + '_ref').to_json()
                 else:
                     fh.create_dataset('data/' + key + '_ref', data=getattr(self, key + '_ref').to_json(), dtype=h5py.special_dtype(vlen=str))
@@ -1004,26 +1004,34 @@ class DataSaver:
         return getattr(self, chn_name + '_prop').keys()
 
 
-    def clr_mech_df_in_prop(self, chn_name=None, mech_keys=[]):
+    def clr_mech_df_in_prop(self, chn_name=None, mech_keys=None):
         '''
         clear mech_df in samp_prop and ref_prop by given mech_key
         if no mech_keys, clear all
         chn_name: 'samp', 'ref'
         mech_keys: list of mech_key
         '''
+        if mech_keys is None: 
+            mech_keys = []
+
         if chn_name is None: # remove all from all channels
             for chn in self._chn_keys:
                 getattr(self, chn + '_prop').clear()
                 logger.warning('All properties data removed.')
                 self.saveflg = False
         else:
-            for mech_key in mech_keys:
-                complete = getattr(self, chn_name + '_prop').pop(mech_keys, None)
-                if complete is None:
-                    logger.warning('{} does not exist'.format(mech_key))
-                else:
-                    logger.warning('{} removed from {}'.format(mech_key, chn_name))
-                    self.saveflg = False
+            if mech_keys: # given mech_keys to remove
+                for mech_key in mech_keys:
+                    complete = getattr(self, chn_name + '_prop').pop(mech_keys, None)
+                    if complete is None:
+                        logger.warning('{} does not exist'.format(mech_key))
+                    else:
+                        logger.warning('{} removed from {}'.format(mech_key, chn_name))
+                        self.saveflg = False
+            else: # clear chn_name
+                getattr(self, chn_name + '_prop').clear()
+                logger.warning('All properties data removed.')
+                self.saveflg = False                
             
 
     ####################################################
@@ -1507,10 +1515,12 @@ class DataSaver:
         return t0
 
 
-    def get_cols(self, chn_name, cols=[]):
+    def get_cols(self, chn_name, cols=None):
         '''
         return a copy of df with all rows and giving columns list
         '''
+        if cols is None:
+            cols = []
         return getattr(self, chn_name).loc[:, cols].copy()
 
 
@@ -1528,6 +1538,7 @@ class DataSaver:
     def get_list_column_to_columns_by_idx(self, chn_name, col, idx=[], deltaval=False, norm=False):
         '''        
         return rows with idx of df from self.get_list_column_to_columns
+        idx: list of int
         '''
         cols_df = self.get_list_column_to_columns(chn_name, col, mark=False, deltaval=deltaval, norm=norm)
         if idx:
@@ -1794,7 +1805,7 @@ class DataSaver:
         # check idx_list structure
         logger.info('idx_list %s', idx_list) 
         if any([isinstance(l, list) for l in idx_list]): # idx_list is list of lists
-            idx_list_opened =[]
+            idx_list_opened = []
             for l in idx_list:
                 idx_list_opened.extend(l)
         else:
@@ -2077,7 +2088,7 @@ class DataSaver:
 
         # samp_source = self.exp_ref['samp_ref'][0]
         chn_temp = self.get_temp_by_uint_marked_rows(chn_name, dropnanmarkrow=False, unit='C') # in C. If marked only, set dropnanmarkrow=True
-        logger.info(chn_temp) 
+        # logger.info(chn_temp) 
         
         # prepare series fro return
         cols = getattr(self, chn_name)[['fs', 'gs']].copy()
@@ -2230,7 +2241,22 @@ class DataSaver:
             # logger.info(self.exp_ref[chn_name]) 
             return ref_dict
 
+
+    def get_harm_marked_f1(self, chn_name,harm, mark=False):
+        '''
+        use marks of given harm
+        '''
+        f1 = self.get_f1(chn_name)
+        if mark:
+            harm_marks = self.get_harm_marks(chn_name, harm)
+        if mark and harm_marks.any(): # with marks
+            return f1[harm_marks == 1]
+        else: # no marks
+            return f1
+
     
+
+
     def get_f1(self, chn_name):
         '''
         return a series with the same rows as self.<chn_name> df

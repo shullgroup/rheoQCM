@@ -42,8 +42,10 @@ import pandas as pd
 import logging
 logger = logging.getLogger(__name__)
 
-from UISettings import config_default
+import UISettings 
 from modules import UIModules
+
+config_default = UISettings.get_config() # load default configuration
 
 # color map for plot
 color = ['tab:blue', 'tab:red', 'tab:orange', 'tab:gray']

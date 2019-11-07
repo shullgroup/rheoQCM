@@ -8,6 +8,8 @@ Change the following factors will change the apperiance of the GUI
 # Use OrderedDict for those dicts need to be shown in order
 from collections import OrderedDict
 import numpy as np
+import os
+import json
 import logging
 
 config_default = {
@@ -500,7 +502,7 @@ config_default = {
 
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {
-        'onelayer': 'in air',
+        'onelayer': 'no medium',
         'twolayers': 'in medium',
         # 'bulk': 'Bulk material',
     },
@@ -762,6 +764,7 @@ config_default = {
         'root': {
             'level': 'INFO',
             'handlers': ['console', 'info_file_handler', 'error_file_handler'],
+            # 'handlers': ['console', 'error_file_handler'],
         },
     },
 }
@@ -984,3 +987,58 @@ for harm in range(1, config_default['max_harmonic']+2, 2):
 
 ###########################################
 
+def get_config():
+    config = config_default.copy() # make a copy
+    file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_default['default_config_file_name'])
+    # print(file_path)
+
+    config, complete = update_dict(file_path, config)
+    if complete:
+        print('use user config')
+        return config
+    else: 
+        print('use default config')
+        return config_default
+
+
+def get_settings():
+    settings = settings_default.copy() # make a copy
+    file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_default['default_settings_file_name'])
+    # print(file_path)
+
+    settings, complete = update_dict(file_path, settings)
+    if complete:
+        print('use user settings')
+        return settings
+    else: 
+        print('use default settings')
+        return settings_default
+
+
+def update_dict(file_path, default_dict):
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r') as f:
+                user_dict = json.load(f) # read user default settings
+                for key, val in user_dict.items():
+                    # overwrite keys to config_default
+                    if key in default_dict:
+                        default_dict[key] = val
+            complete = True
+        except:
+            complete = False
+    else:
+        complete = False
+
+    return default_dict, complete
+
+
+
+if __name__ == '__main__':
+    print('to get config')
+    cfg = get_config()
+    print(cfg['vna_cal_file_path'])
+
+    print('to get settings')
+    stt = get_settings()
+    print(stt['checkBox_harm1'])

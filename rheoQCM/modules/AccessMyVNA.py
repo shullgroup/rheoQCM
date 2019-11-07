@@ -10,6 +10,7 @@ from ctypes.wintypes import HWND, LONG, BOOL, LPARAM, LPDWORD, DWORD, LPWSTR
 
 import numpy.ctypeslib as clib
 import sys, struct, time
+import threading
 
 import win32ui
 import win32process
@@ -19,31 +20,23 @@ import ctypes
 import logging
 logger = logging.getLogger(__name__)
 
+
+# load vna_wait_time_extra
 try:
-    from UISettings import config_default
+    import UISettings
+    config_default = UISettings.get_config()
+    settings_default = UISettings.get_settings()
 except:
     config_default = {}
+    settings_default = {}
 
-extra_time = None # initialize 
-if config_default:
-    usersettings_file = os.path.join(os.getcwd(), config_default['default_settings_file_name'])
-    if os.path.exists(usersettings_file):
-        try:
-            with open(usersettings_file, 'r') as f:
-                settings_user = json.load(f) # read user default settings
-                if 'vna_wait_time_extra' in settings_user:
-                    extra_time = settings_user['vna_wait_time_extra']
-            logger.info('use user settings')
-        except:
-            logger.warning('Error occured while loading {}\nuse default settings'.format(config_default['default_settings_file_name']))
-    else:
-        pass
-    del usersettings_file
-    if 'f' in locals():
-        del f
+# initialize extra_time by default
+extra_time = config_default.get('vna_wait_time_extra', 0.05) # in s. This extra time will be added to the calculated value
 
-if extra_time is None:
-    extra_time = config_default.get('vna_wait_time_extra', 0.05) # in s. This extra time will be added to the calculated value
+if 'vna_wait_time_extra' in settings_default:
+    extra_time = settings_default['vna_wait_time_extra']
+    logger.info('use user settings vna_wait_time_extra')
+# end load vna_wait_time_extra
 
 # try: # run from main
 #     from modules.retrying import retry
@@ -73,7 +66,8 @@ win_names = [
 # dll path
 # dll_path = r'./VNA/AccessMyVNA_v0.7/release/AccessMyVNAdll.dll'
 # dll_path = r'./VNA/AccessMyVNAv0.7_J/release/AccessMyVNAdll.dll'
-dll_path = r'./dll/AccessMyVNAdll.dll'
+
+dll_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'dll', 'AccessMyVNAdll.dll')
 
 vna = WinDLL(dll_path, use_last_error=False) # this only works with AccessMyVNA
 # vna = OleDLL(r'AccessMyVNAdll.dll', use_last_error=True) # this only works with AccessMyVNA
@@ -90,6 +84,7 @@ def _check_zero(result, func, args):
             raise WinError(err)
     return args
 
+
 def get_hWnd(win_name=win_names[0]):
     try:
         hWnd = win32ui.FindWindow(None, win_name).GetSafeHwnd()
@@ -101,6 +96,7 @@ def get_hWnd(win_name=win_names[0]):
 
     # hWnd = win32ui.GetMainFrame.GetSafeHwnd
 
+
 def get_pid(hWnd):
     if not hWnd:
         logger.info('PID did not find!') 
@@ -109,6 +105,7 @@ def get_pid(hWnd):
         pid = win32process.GetWindowThreadProcessId(hWnd)[1]
 
     return pid
+
 
 def close_win():
     # close myVNA initiated by AccessMyVNA
@@ -119,6 +116,7 @@ def close_win():
         logger.info('pid %s', pid) 
         if pid:
             os.kill(pid, signal.SIGTERM)
+
 
 # make function prototypes 
 def wfunc(name, dll, result, *args):
@@ -174,6 +172,11 @@ def get_wait_time(nPoints=200, averages=0, step_delay=0, start_delay=0, mbuffer=
 
     return total_time
 
+
+def bg_wait_till(t_wait):
+    while time.time() < t_wait:
+        # logger.info('wait...') 
+        time.sleep(0.01)
 #endregion
 
 #region assign functions
@@ -1084,11 +1087,15 @@ class AccessMyVNA():
 
 
     # @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
-    def SetDoubleArray(self, nWhat=0, nIndex=0, nArraySize=9, nData=[]):
+    def SetDoubleArray(self, nWhat=0, nIndex=0, nArraySize=9, nData=None):
         '''
         Set frequency nWhat = GET_SCAN_FREQ_DATA 0
         '''
         logger.info('MyVNASetDoubleArray') 
+        if nData is None: # nData has to be 
+            logger.info('no nData')
+            return 0, None
+
         if len(nData) == nArraySize: # check nData size
             if not isinstance(nData, np.ndarray): # check nData type
                 nData = np.array(nData)
@@ -1135,11 +1142,15 @@ class AccessMyVNA():
 
 
     # @retry(wait_fixed=wait_fixed, stop_max_attempt_number=stop_max_attempt_number, stop_max_delay=stop_max_delay, logger=True)
-    def SetIntegerArray(self, nWhat=5, nIndex=0, nArraySize=4, nData=[]):
+    def SetIntegerArray(self, nWhat=5, nIndex=0, nArraySize=4, nData=None):
         '''
         Set frequency nWhat = GET_SCAN_FREQ_DATA 0
         '''
         logger.info('MyVNASetIntegerArray') 
+        if nData is None: # no nData given
+            logger.info('no nData')
+            return 0, None
+            
         if len(nData) == nArraySize: # check nData size
             if not isinstance(nData, np.ndarray): # check nData type
                 nData = np.array(nData)
@@ -1314,12 +1325,16 @@ class AccessMyVNA():
         self.setDisplayFreq()
         self.Autoscale()
         logger.info('self._nsteps%s', self._nsteps) 
-        # wait for some time
-        t_wait = time.time() + self._get_wait_time()
 
-        while time.time() < t_wait:
-            # logger.info('wait...') 
-            time.sleep(0.1)
+        t_wait = time.time() + self._get_wait_time()
+        # wait for some time
+        bg_wait_till(t_wait) # sleep
+
+        # # used thread
+        # thread = threading.Thread(target=bg_wait_till, args=(t_wait,))
+        # thread.start()
+        # thread.join()
+
         logger.info('self._nsteps%s', self._nsteps) 
         # ret, nSteps = self.GetScanSteps()
         ret, f, G = self.GetScanData(nStart=0, nEnd=int(self._nsteps-1), nWhata=-1, nWhatb=15)
@@ -1384,9 +1399,9 @@ class AccessMyVNA():
         ret, nData = self.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
         logger.info('getADCChannel %s', nData)
 
-        if int(nData[0]) == 1:
+        if int(nData[1]) == 1:
             reflectchn = 1
-        elif int(nData[0]) == 2:
+        elif int(nData[1]) == 2:
             reflectchn =  2
         else: 
             reflectchn = None
@@ -1552,8 +1567,9 @@ class AccessMyVNA():
 
 # exit(0)
 if __name__ == '__main__':
+    import time
     import logging
-    logging.basicConfig(level=logging.ERROR)
+    logging.basicConfig(level=logging.INFO)
     with AccessMyVNA() as vna:
         if vna.Init() == 0:
             print('open')
@@ -1561,23 +1577,38 @@ if __name__ == '__main__':
             print('false')
         pass
     print(vna)
-
+    print(vna._chn)
+    exit(0)
     with vna:
-        vna.setADCChannel(reflectchn=2)
-        ret, delays = vna.GetIntegerArray(nWhat=5, nIndex=0, nArraySize=4)
-        print(delays)
-        ret, chn = vna.getADCChannel()
-        print('chn is ', chn)
+        print('start')
+        # vna.SingleScan()
+        t0 = time.time()
+        i =0
+        while True:
+            t=time.time()
+            if t - t0 > 1:
+                break
+            ret, f, G = vna.GetScanData(nStart=0, nEnd=int(vna._nsteps-1), nWhata=-1, nWhatb=15)
+            # print(i, t - t0, f[-1], G[-1])
+            time.sleep(0.01)
+        t1 = time.time()
+        # print(t1 - t0)
+        
+        # vna.setADCChannel(reflectchn=2)
+        # ret, delays = vna.GetIntegerArray(nWhat=5, nIndex=0, nArraySize=4)
+        # print(delays)
+        # ret, chn = vna.getADCChannel()
+        # print('chn is ', chn)
 
-        ls = [
-            (0, 0, 9),
-            (3, 0, 4),
-            (4, 0, 3),
-            (5, 0, 5),
-        ]
-        for l in ls:
-            ret, darr = vna.GetDoubleArray(nWhat=l[0], nIndex=l[1], nArraySize=l[2])
-            print(l[0], ret, darr)
+        # ls = [
+        #     (0, 0, 9),
+        #     (3, 0, 4),
+        #     (4, 0, 3),
+        #     (5, 0, 5),
+        # ]
+        # for l in ls:
+        #     ret, darr = vna.GetDoubleArray(nWhat=l[0], nIndex=l[1], nArraySize=l[2])
+        #     print(l[0], ret, darr)
 
     exit(0)
     # ret = _MyVNAInit()

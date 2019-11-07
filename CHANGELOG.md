@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.19.0] - 2019-10-21
+## [0.19.0] - 2019-11-05
 
 ### Added
 
@@ -10,12 +10,14 @@
 ### Changed
 
 - Change the reference data structure.
+- Change the config/settings loading method and make it works for all modules
 
 ### Fixed
 
 - Fix C++ source code bug of GetDoubleArray and make the functiion works to check available channels by checking the settings from myVNA.
 - QCM module solve property guess check bug (drho check).
 - Fix span < 1 Hz stopped myVNA bug by adding minimum limit to peak_tracker.
+- Correct grho function in QCM module.
 
 ### Removed
 
