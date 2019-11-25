@@ -369,6 +369,14 @@ class QCM:
             return np.nan
 
 
+    def calc_delfstar_from_single_material(self, n, material, calctype):
+        '''
+        convert material to a single layer and return delfstar
+        '''
+        layers = self.build_single_layer_film(material)
+        return self.calc_delfstar( n, layers, calctype)
+
+
     def calc_Zmot(self, n, layers, delfstar):
         om = 2 * np.pi * (n * self.f1 + delfstar)
         Zqc = self.Zq * (1 + 1j * 2 * g0 / (n * self.f1))
@@ -461,6 +469,15 @@ class QCM:
     # calculated complex frequency shift for bulk layer
     def delfstarcalc_bulk(self, n, grho_refh, phi):
         return ((self.f1*np.sqrt(self.grho(n, grho_refh, phi)) / (np.pi*self.Zq)) * (-np.sin(phi/2)+ 1j * np.cos(phi/2)))
+
+
+    def delfstarcalc_bulk_from_film(self, n, film):
+        # TODO add fun to find the bulk layer
+        material = self.get_calc_material(film) 
+        grho_refh = self.grho_from_material(self.refh, material)
+        phi = material['phi']
+        return ((self.f1*np.sqrt(self.grho(n, grho_refh, phi)) / (np.pi*self.Zq)) * (-np.sin(phi/2)+ 1j * np.cos(phi/2)))
+
 
 
     def bulk_guess(self, delfstar):
@@ -709,7 +726,9 @@ class QCM:
         # logger.info(type(delf_calcs)) 
         for n in nhplot:
             if self.isbulk(rd_exp, bulklimit):
-                delfstar_calc[n] = self.delfstarcalc_bulk(n, grho_refh, phi)            
+                # NOTE delfstar_calc() gives the same results.
+                # However, delfstar_calc() does not work with 90deg. due to
+                delfstar_calc[n] = self.delfstarcalc_bulk_from_film(n, film)
             else:
                 delfstar_calc[n] = self.calc_delfstar(n, film, calctype)
             delf_calcs[nh2i(n)] = np.real(delfstar_calc[n])
@@ -963,15 +982,13 @@ class QCM:
 
     def solve_general_prop_to_delfstar(self, n, film, isbulk=False, calctype='SLA'):
         '''
+        NOT USING
         use bulk function and thin layer function separately.
         Actually, the calc_delfstar does both
         '''
 
         if isbulk: # bulk
-
-            material = self.get_calc_material(film)
-            grho_refh = self.grho_from_material(n, material)
-            delfstar = self.delfstarcalc_bulk(n, grho_refh, phi)
+            delfstar = self.delfstarcalc_bulk_from_film(n, film)
         else:
             delfstar = self.calc_delfstar(n, film, calctype)
         return delfstar
@@ -1181,11 +1198,20 @@ class QCM:
         return film
 
 
-    def build_single_layer_film(self):
+    def build_single_layer_film(self, material=None):
         '''
         build a single layer film for calc
+        material: dict of properties {'grho': ***, 'phi': ***, 'drho': ***, 'n': #}
         '''
-        return self.replace_layer_0_prop_with_known({0:{'calc': False}, 1:{'calc': True}})
+        if material is None:
+            return self.replace_layer_0_prop_with_known({0:{'calc': False}, 1:{'calc': True}})
+        else:
+            # set material as calc layer
+            # material['calc'] = True # this change the input material value!! 
+            new_film = self.replace_layer_0_prop_with_known({0:{'calc': False}, 1:{**material}})
+            new_film[1]['calc'] = True
+            return new_film
+
 
 
     def get_ref_layers(self, film):

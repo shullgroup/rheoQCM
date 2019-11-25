@@ -1,4 +1,15 @@
 # Changelog
+## [0.19.0] - 2019-11-05
+
+### Added
+
+### Changed
+
+### Fixed
+
+- Fix crashing by loading file with empty channel.
+
+### Removed
 
 ## [0.19.0] - 2019-11-05
 

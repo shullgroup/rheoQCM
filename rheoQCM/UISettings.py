@@ -859,7 +859,7 @@ settings_default = {
 
     # default analyzer settings
     'comboBox_samp_channel': '1',
-    'comboBox_ref_channel': 'none',
+    'comboBox_ref_channel': '1',
 
     # default hardware selection
     'treeWidget_settings_settings_hardware': 'none',

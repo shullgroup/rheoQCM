@@ -1882,6 +1882,12 @@ class DataSaver:
         calculate reference of f (f0) and g (g0)  by the set in self.samp_ref, self.ref_ref and save them in self.exp_ref['f0'] and ['g0']
         '''
         mode = self.exp_ref.get('mode')
+        logger.info('chn_name:  %s', chn_name)
+
+        if getattr(self, chn_name).empty: # no data
+            logger.info('%s has no data', chn_name)
+            return
+
 
         if mode['cryst'] == 'single':
             if mode['temp'] == 'const': # single crystal and constant temperature

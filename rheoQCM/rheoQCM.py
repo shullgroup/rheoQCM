@@ -1709,14 +1709,27 @@ class QCMApp(QMainWindow):
 
         # chn_queue_list = list(self.data_saver.get_queue_id(ref_source).tolist()) # list of available index in the target chn
         ref_chn_idx = self.data_saver.get_idx(ref_source).values.tolist() # use list of index for comperison
+        logger.info('ref_chn_idx: %s type %s', ref_chn_idx, type(ref_chn_idx))
+
         # convert ref_idx from str to a list of int
+
         ref_idx = UIModules.index_from_str(ref_idx_str, ref_chn_idx, join_segs=False)
         logger.info('ref_idx: %s type %s', ref_idx, type(ref_idx))
 
+        # check if the ref chn is empty, then ref to chn itself
+        if len(ref_chn_idx) == 0: # no data in the setting ref chn
+            logger.info('refsource is empty.')
+            # set ref to chn itself
+            ref_source = chn_name
+            self.settings['comboBox_settings_data_' + chn_name + 'refsource'] = chn_name
+
         if (not ref_idx) and ((list(self.data_saver.get_queue_id('samp')) !=  list(self.data_saver.get_queue_id('ref')))): # samp and ref were not collected together
             ref_idx = [0]
-            getattr(self.ui, 'lineEdit_settings_data_'+ chn_name + 'refidx').setText('[0]')
+            # getattr(self.ui, 'lineEdit_settings_data_'+ chn_name + 'refidx').setText('[0]')
             self.settings['lineEdit_settings_data_'+ chn_name + 'refidx'] = '[0]'
+
+
+        self.update_refsource()
 
         # # save to data_saver
         # self.data_saver.exp_ref[chn_name + '_ref'][0] = ref_source
