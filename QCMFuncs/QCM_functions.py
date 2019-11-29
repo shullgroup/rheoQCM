@@ -541,11 +541,24 @@ def gstar_maxwell(wtau):  # Maxwell element
 
 
 def gstar_kww_single(wtau, beta):  # Transform of the KWW function
-    return wtau*(kwws(wtau, beta)+1j*kwwc(wtau, beta)) 
+    return wtau*(kwws(wtau, beta)+1j*kwwc(wtau, beta))
+
 gstar_kww = np.vectorize(gstar_kww_single)
 
 
-def springpot(w, sp_parms):
+def gstar_rouse(wtau, n_rouse):
+    # make sure n_rouse is an integer if it isn't already
+    n_rouse = int(n_rouse)
+
+    rouse=np.zeros((len(wtau), n_rouse), dtype=complex)
+    for p in 1+np.arange(n_rouse):
+        rouse[:, p-1] = ((wtau/p**2)**2/(1+wtau/p**2)**2 +
+                                  1j*(wtau/p**2)/(1+wtau/p**2)**2)
+    rouse = rouse.sum(axis=1)/n_rouse
+    return rouse
+
+
+def springpot(w, g0, tau, beta, sp_type, **kwargs):
     # this function supports a combination of different springpot elments
     # combined in series, and then in parallel.  For example, if type is
     # [1,2,3],  there are three branches
@@ -554,18 +567,13 @@ def springpot(w, sp_parms):
     # one is a series combination of 4, 5 and 6.
     
     # specify which elements are kww or Maxwell elements
-    kww = sp_parms.get('kww',[])
-    maxwell = sp_parms.get('maxwell',[])
-    
-    # beta doesn't exist for maxwell element
-    beta = sp_parms.get('beta',[0]) # 1 be default indicates mawell elment
-    # type is a build in function name. we can try to use other name
-    sp_type = sp_parms.get('type',[1]) # single element by default
-    
+    kww = kwargs.get('kww',[])
+    maxwell = kwargs.get('maxwell',[])
+
     # make values numpy arrays if they aren't already
-    tau = np.asarray(sp_parms['tau']).reshape(1, -1)[0,:]
+    tau = np.asarray(tau).reshape(1, -1)[0,:]
     beta = np.asarray(beta).reshape(1, -1)[0,:]
-    g0 = np.asarray(sp_parms['g0']).reshape(1, -1)[0,:]
+    g0 = np.asarray(g0).reshape(1, -1)[0,:]
     sp_type = np.asarray(sp_type).reshape(1, -1)[0,:]
     
     nw = len(w)  # number of frequencies
@@ -574,6 +582,7 @@ def springpot(w, sp_parms):
     sp_comp = np.empty((nw, n_sp), dtype=np.complex)  # element compliance
     br_g = np.empty((nw, n_br), dtype=np.complex)  # branch stiffness
 
+    # calculate the compliance for each element
     for i in np.arange(n_sp):
         if i in maxwell:  # Maxwell element
             sp_comp[:, i] = 1/(g0[i]*gstar_maxwell(w*tau[i]))            
@@ -582,24 +591,15 @@ def springpot(w, sp_parms):
         else:  # power law springpot element
             sp_comp[:, i] = 1/(g0[i]*(1j*w*tau[i]) ** beta[i])
 
-    sp_vec = np.append(0, type.cumsum())
+    # sp_vec keeps track of the beginning and end of each branch
+    sp_vec = np.append(0, sp_type.cumsum())
     for i in np.arange(n_br):
         sp_i = np.arange(sp_vec[i], sp_vec[i+1])
+        # branch compliance obtained by summing compliances within the branch
         br_g[:, i] = 1/sp_comp[:, sp_i].sum(1)
 
+    # now we sum the stiffnesses of each branch and return the result
     return br_g.sum(1)
-
-
-def springpot_f(sp_parms):
-    # this function returns a sensible array of frequencies to use to plot
-    # the springpot fit
-    fref = sp_parms['fref']
-    E = sp_parms['E']
-    phi = sp_parms['phi']
-    fmax = 1e3*fref
-    fmin = 1e-3*fref*(min(E)/max(E))**(1/(max(phi)/90))
-    faTfit = np.logspace(np.log10(fmin), np.log10(fmax), 100)
-    return faTfit
 
 
 def vogel(T, Tref, B, Tinf):
