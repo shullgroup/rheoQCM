@@ -508,7 +508,6 @@ def make_err_plot(df_in, **kwargs):
     for nstr in list(set(calc)):
         n=int(nstr)
         delfstar_0[n]=df_in[n][idx]
-        print('delfstar'+str(n)+'='+str(delfstar_0[n]))
     
     # now generate series of delfstar values based on the errors
     delfstar_del={}
@@ -568,6 +567,7 @@ def make_err_plot(df_in, **kwargs):
                   '; '+'err_frac='+str(err_frac))
     fig.suptitle(r''+title_string)
     fig.tight_layout()
+    return fig
 
 
 def make_prop_axes(**kwargs):
