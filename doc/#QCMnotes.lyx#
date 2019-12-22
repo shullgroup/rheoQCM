@@ -1,0 +1,4077 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\begin_preamble
+\usepackage{colortbl}
+%\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+\usepackage[nottoc]{tocbibind} % adds index to table of contents
+\usepackage{comment}
+\usepackage[margin=10pt,font=small,labelfont=bf]{caption}
+\usepackage[all]{hypcap}  % links to top of Figure s
+\usepackage{tocloft}
+\usepackage{textcomp}
+\def\nompreamble{\addcontentsline{toc}{section}{\nomname}\markboth{\nomname}{\nomname}}
+\usepackage{nomencl}
+\setlength{\nomitemsep}{-\parsep} % single space nomenclature
+\usepackage{listings}
+\usepackage{cite}
+
+\usepackage{enumitem}
+
+\setlist{nolistsep}
+\end_preamble
+\options sort&compress
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "palatino" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format pdf2
+\output_sync 1
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_title "QCM Notes"
+\pdf_author "Kenneth R. Shull"
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder true
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\pdf_quoted_options "citecolor=blue, linkcolor=blue, urlcolor=blue"
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine natbib
+\cite_engine_type numerical
+\biblio_style plainnat
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date true
+\justification true
+\use_refstyle 0
+\use_minted 0
+\notefontcolor #ff0000
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 2cm
+\topmargin 2cm
+\rightmargin 2cm
+\bottommargin 2cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip medskip
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Useful QCM Info
+\end_layout
+
+\begin_layout Author
+Kenneth R.
+ Shull and Qifeng Wang
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+This document accompanies the open source rheoQCM software written and maintaine
+d by Dr.
+ Qifeng Wang at Northwestern University.
+\end_layout
+
+\begin_layout Section
+Background Theory
+\end_layout
+
+\begin_layout Standard
+As the name implies, the quartz crystal microbalance (QCM) is most often
+ employed as a high sensitivity mass-balance.
+ The instrument relies on the piezoelectric nature of quartz to measure
+ changes in resonance frequency caused by the application of a material
+ to the quartz surface.
+ An adsorbed mass or deposited film results in a decrease in resonant frequency
+ of the quartz crystal by an amount, 
+\begin_inset Formula $\Delta f_{sn}$
+\end_inset
+
+, that is given by the well-known Sauerbrey expression
+\begin_inset CommandInset citation
+LatexCommand cite
+key "sauerbrey_verwendung_1959"
+literal "true"
+
+\end_inset
+
+:
+\begin_inset Formula 
+\begin{equation}
+\Delta f_{sn}=\frac{2nf_{1}^{2}}{Z_{q}}\Delta M_{A}=\frac{2nf_{1}^{2}}{Z_{q}}\rho_{f}d_{f}\label{eq:Sauerbrey}
+\end{equation}
+
+\end_inset
+
+Here, 
+\emph on
+n 
+\emph default
+is the order of the resonance harmonic, 
+\begin_inset Formula $f_{1}$
+\end_inset
+
+ is the fundamental resonance frequency of quartz (5 MHz), 
+\begin_inset Formula $Z_{q}$
+\end_inset
+
+ is its acoustic shear impedance 
+\begin_inset Formula $(8.84\times10^{6}$
+\end_inset
+
+ 
+\begin_inset Formula $\mathrm{kg/m^{2}s}$
+\end_inset
+
+ for AT cut quartz), 
+\begin_inset Formula $\Delta M_{A}$
+\end_inset
+
+ is the mass per unit area of the film, 
+\begin_inset Formula $\rho$
+\end_inset
+
+ is its density and 
+\begin_inset Formula $d$
+\end_inset
+
+ is its thickness.
+ Note that 
+\begin_inset Formula $\rho d$
+\end_inset
+
+ is the mass per unit area.
+ 
+\end_layout
+
+\begin_layout Standard
+Originally, the technique was designed for use in an air or vacuum environment,
+ but today the QCM is often used to characterize molecules, particles and
+ thin-films in liquid media.
+ Applications include studies of adsorption
+\begin_inset CommandInset citation
+LatexCommand cite
+key "marx_quartz_2003,cooper_survey_2007,becker_survey_2011,tiraferri_mechanism_2014,yi_release_2014,song_adsorption_2014,salama_adsorption_2014,rudrake_combined_2009,liu_quartz_2011"
+literal "true"
+
+\end_inset
+
+, self-assembly
+\begin_inset CommandInset citation
+LatexCommand cite
+key "marx_quartz_2003,cooper_survey_2007,becker_survey_2011"
+literal "true"
+
+\end_inset
+
+, cell-substrate interactions
+\begin_inset CommandInset citation
+LatexCommand cite
+key "wegener_quartz_2001"
+literal "true"
+
+\end_inset
+
+, and electrochemistry
+\begin_inset CommandInset citation
+LatexCommand cite
+key "buttry_measurement_1992,hillman_electrochemical_2003"
+literal "true"
+
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+The QCM consists of a single-crystal quartz disc sandwiched between two
+ electrodes.
+ Due to the piezoelectric nature of quartz, the material will oscillate
+ transversely if an alternating potential is applied across the electrodes,
+ propagating a shear wave through the disc.
+ If the frequency of oscillation is near to the acoustic resonance frequency
+ of quartz, a standing shear wave will generate across the disc, inducing
+ a peak in the system conductance.
+\begin_inset CommandInset citation
+LatexCommand cite
+key "johannsmann_viscoelastic_2008,denolf_high_2011"
+literal "true"
+
+\end_inset
+
+ For the AT-cut crystals used throughout this work, the fundamental resonant
+ frequency is near 5 MHz.
+ The conductance also peaks at odd harmonics (
+\emph on
+n
+\emph default
+) of the fundamental resonant frequency, with resonances at 15 MHz (
+\emph on
+n
+\emph default
+=3), 25 MHz (
+\emph on
+n
+\emph default
+=5), etc.
+ If the conductance is plotted in the frequency domain, Lorentzian curves
+ can be fit to the conductance peaks to provide two values: the resonance
+ frequency (
+\begin_inset Formula $f_{n}),$
+\end_inset
+
+ where the conductance is maximum at the 
+\begin_inset Formula $n^{th}$
+\end_inset
+
+ harmonic, and the half-bandwidth 
+\begin_inset Formula $(\Gamma_{n}),$
+\end_inset
+
+ the half-width at half-maximum of the conductance peak.
+ This half-bandwidth is equal to 
+\begin_inset Formula $2D/f_{n}$
+\end_inset
+
+, where 
+\begin_inset Formula $D$
+\end_inset
+
+ is the dissipation factor introduced by the Chalmers group and utilized
+ in the commonly employed time-domain QCM-D technique
+\begin_inset CommandInset citation
+LatexCommand cite
+key "voinova_viscoelastic_1999"
+literal "true"
+
+\end_inset
+
+.
+ We refer to 
+\begin_inset Formula $\Gamma_{n}$
+\end_inset
+
+ simply as the dissipation, recognizing that our definition of the dissipation
+ differs from the QCM-D definition by a factor of 
+\begin_inset Formula $2/f_{n}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+Derivation of the small load approximation:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\begin{equation}
+\frac{1}{\tan\left(k_{qn}^{*}d_{q}/2\right)-iZ_{Ln,back}^{*}/Z_{q}^{*}}+\frac{1}{\tan\left(k_{qn}^{*}d_{q}/2\right)-iZ_{Ln,front}^{*}/Z_{q}^{*}}=\sin\left(k_{qn}^{*}d_{q}\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Reference frequency (load impedances set to zero)
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\tan\left(k_{q0}^{*}d_{q}/2\right)}{2}=\frac{1}{\sin\left(k_{q0}^{*}d_{q}\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Now we use 
+\begin_inset Formula $\tan\left(x/2\right)=\sin x/\left(1+\cos x\right)$
+\end_inset
+
+ to give:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\sin\left(k_{q0}^{*}d_{q}\right)}{1+\cos\left(k_{q0}^{*}d_{q}\right)}=\frac{1}{\sin\left(k_{q0}^{*}d_{q}\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\sin^{2}\left(k_{q0}^{*}d_{q}\right)=1+\cos\left(k_{q0}^{*}d_{q}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+-1=\cos\left(k_{q0}^{*}d_{q}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+k_{q0}^{*}d_{q}=n\pi;\,\,n=1,3,5,
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+with 
+\begin_inset Formula $k_{q0}^{*}=2\pi/\lambda$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+d=n\lambda/2;\,\,n=1,3,5,
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+We can also use:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+k_{q0}^{*}d_{q}=\frac{2\pi\left(nf_{1}\right)\rho_{q}d_{q}}{Z_{q}^{*}}=n\pi
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+or
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\rho_{q}d_{q}}{Z_{q}^{*}}=\frac{1}{2f_{1}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+So this checks out okay.
+\end_layout
+
+\begin_layout Plain Layout
+We can write the expression for 
+\begin_inset Formula $k_{q}^{*}$
+\end_inset
+
+ this way:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+k_{q}^{*}d_{q}=k_{q0}^{*}d_{q}+\frac{2\pi\left(\Delta f_{n}^{*}\right)\rho_{q}d_{q}}{Z_{q}^{*}}=n\pi+\frac{2\pi\left(\Delta f_{n}^{*}\right)\rho_{q}d_{q}}{Z_{q}^{*}}=n\pi+\frac{\pi\Delta f_{n}^{*}}{f_{1}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+The master equation (ignoring the back surface impedance) is now:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\frac{1}{\tan\left(\frac{n\pi}{2}+\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)}+\frac{1}{\tan\left(\frac{n\pi}{2}+\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)-iZ_{Ln,front}^{*}/Z_{q}^{*}}=\sin\left(n\pi+\frac{\pi\Delta f_{n}^{*}}{f_{1}}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+we have 
+\begin_inset Formula $\tan\left(n\pi/2+x\right)=-\cot\left(x\right)$
+\end_inset
+
+, 
+\begin_inset Formula $\sin(n\pi+x)=-\sin\left(x\right)$
+\end_inset
+
+, which gives:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\frac{1}{\cot\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)}+\frac{1}{\cot\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)-iZ_{Ln,front}^{*}/Z_{q}^{*}}=\sin\left(\frac{\pi\Delta f_{n}^{*}}{f_{1}}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+As suggested by Petri and Johannsmann, we use 
+\begin_inset Formula $\sin\left(2x\right)=2\tan x/\left(1+\tan^{2}x\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Now use 
+\begin_inset Formula $\sin\left(2x\right)=2\sin x\cos x$
+\end_inset
+
+ to get:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\frac{\sin\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)}{\cos\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)}+\frac{\sin\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)}{\cos\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)-\sin\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)iZ_{Ln,front}^{*}/Z_{q}^{*}}=2\sin\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)\cos\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\frac{1}{\cos\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)}+\frac{1}{\cos\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)-\sin\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)iZ_{Ln,front}^{*}/Z_{q}^{*}}=2\cos\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+1+\frac{1}{1-\tan\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)iZ_{Ln,front}^{*}/Z_{q}^{*}}=2\cos^{2}\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+now set 
+\begin_inset Formula $X=\frac{\pi\Delta f_{n}^{*}}{2f_{1}}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+1+\frac{1}{1+\tan\left(X\right)\frac{iZ_{L}^{*}}{Z_{q}^{*}}}=2\cos^{2}\left(X\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+So far we haven't made any approximations, but now we will assume that the
+ frequency shift is small compared to 
+\begin_inset Formula $f_{1}$
+\end_inset
+
+ to get:
+\end_layout
+
+\begin_layout Plain Layout
+From this we get
+\end_layout
+
+\begin_layout Plain Layout
+Expand out to 
+\begin_inset Formula $X^{2}$
+\end_inset
+
+ for small 
+\begin_inset Formula $X$
+\end_inset
+
+: 
+\begin_inset Formula $\cos^{2}x\sim1-X^{2}$
+\end_inset
+
+; 
+\begin_inset Formula $\tan X\sim X$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+1+\frac{1}{1+X\frac{iZ_{L}^{*}}{Z_{q}^{*}}}=2-2X^{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Now use 
+\begin_inset Formula $\frac{1}{1+X}\sim1-X$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+2-X\frac{iZ_{L}^{*}}{Z_{q}^{*}}=2-2X^{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{iZ_{L}^{*}}{Z_{q}^{*}}=2X
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+X=\frac{iZ_{L}^{*}}{2Z_{q}^{*}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+or,
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{f_{1}}=\frac{iZ_{L}^{*}}{\pi Z_{q}^{*}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So this all checks out.
+\end_layout
+
+\begin_layout Standard
+If a load is applied to the QCM surface, 
+\begin_inset Formula $f_{n}$
+\end_inset
+
+ and 
+\begin_inset Formula $\Gamma_{n}$
+\end_inset
+
+ shift relative to the bare crystal and together make up a complex frequency
+ shift
+\begin_inset CommandInset citation
+LatexCommand cite
+key "johannsmann_viscoelastic_2008,denolf_high_2011"
+literal "true"
+
+\end_inset
+
+: 
+\begin_inset Formula 
+\begin{equation}
+\Delta f_{n}^{*}=\Delta f_{n}+i\Delta\Gamma_{n}\label{eq:delta f*}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that in our notation, starred quantities are complex, and quantities
+ subscripted with an 
+\begin_inset Formula $n$
+\end_inset
+
+ depend on the harmonic at which they are measured.
+ When the frequency shift is small in comparison to the resonance frequency
+ of quartz, which is true in nearly all applications of the QCM, 
+\begin_inset Formula $\Delta f_{n}^{*}$
+\end_inset
+
+ is related to the shift in complex load impedance 
+\begin_inset Formula $(\Delta Z_{nL}^{*})$
+\end_inset
+
+ through the small load approximation
+\begin_inset CommandInset citation
+LatexCommand cite
+key "johannsmann_viscoelastic_2008"
+literal "true"
+
+\end_inset
+
+: 
+\begin_inset Formula 
+\begin{equation}
+\Delta f_{n}^{*}=\frac{if_{1}\Delta Z_{nL}^{*}}{\pi Z_{q}}\label{eq:SLA}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Sauerbrey Limit
+\end_layout
+
+\begin_layout Standard
+The Sauerbrey equation (Eq.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Sauerbrey"
+
+\end_inset
+
+) is obtained from Eq.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:SLA"
+
+\end_inset
+
+, using the following inertial load impedance, 
+\begin_inset Formula $\Delta Z_{ns}^{*}$
+\end_inset
+
+, for 
+\begin_inset Formula $\Delta Z_{nL}^{*}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\Delta Z_{sn}^{*}=2\pi inf_{1}\rho_{f}d_{f},\label{eq:Sauerbrey load impendance}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Bulk Limit
+\end_layout
+
+\begin_layout Standard
+For thicker films, the complex resonant frequency deviates from the Sauerbrey
+ relationship and depends on the rheological properties of the material
+ in contact with the crystal surface.
+ For films that are sufficiently thick (well beyond the decay length of
+ the acoustic shear wave), the load impedance is equal to the acoustic impedance
+ of a bulk material: 
+\begin_inset Formula 
+\begin{equation}
+Z_{n,bulk}^{*}=(\rho G_{n}^{*})^{1/2}\label{eq:Zn}
+\end{equation}
+
+\end_inset
+
+Here 
+\begin_inset Formula $G_{n}^{*}$
+\end_inset
+
+ is the complex shear modulus at 
+\begin_inset Formula $f_{n}$
+\end_inset
+
+, expressed here in terms of its magnitude and phase angle:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+G_{n}^{*}=|G_{n}^{*}|\mathrm{exp}(i\phi_{n})\label{eq:G*}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+For a variety of reasons it is more convenient to express the complex shear
+ modulus in terms of its magnitude and phase.
+ The storage and loss moduli, 
+\begin_inset Formula $G_{n}^{\prime}$
+\end_inset
+
+ and 
+\begin_inset Formula $G_{n}^{\prime\prime}$
+\end_inset
+
+ respectively, can easily be obtained form the magnitude and phase:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\begin{array}{c}
+G_{n}^{\prime}=|G_{n}^{*}|\cos(\phi_{n})\\
+G_{n}^{\prime\prime}=|G_{n}^{*}|\sin(\phi_{n})
+\end{array}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Use of 
+\begin_inset Formula $Z_{n,bulk}^{*}$
+\end_inset
+
+ for the load impedance gives the following for 
+\begin_inset Formula $\Delta f_{n}$
+\end_inset
+
+ and 
+\begin_inset Formula $\Delta\Gamma_{n}$
+\end_inset
+
+ in the bulk limit:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\Delta f_{n}=\frac{f_{1}}{\pi Z_{q}}\left(\rho\left|G_{n}^{*}\right|\right)^{1/2}\sin\left(\phi_{n}/2\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\Delta\Gamma_{n}=\frac{f_{1}}{\pi Z_{q}}\left(\rho\left|G_{n}^{*}\right|\right)^{1/2}\cos\left(\phi_{n}/2\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\Delta\Gamma_{n}^{2}=\left(\frac{f_{1}}{\pi Z_{q}}\right)^{2}\left(\rho\left|G_{n}^{*}\right|\right)\cos^{2}\left(\phi_{n}/2\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\Delta f_{n}^{2}=\left(\frac{f_{1}}{\pi Z_{q}}\right)^{2}\left(\rho\left|G_{n}^{*}\right|\right)\sin^{2}\left(\phi_{n}/2\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\left|\Delta f_{n}^{*}\right|^{2}=\left(\frac{f_{1}}{\pi Z_{q}}\right)^{2}\left(\rho\left|G_{n}^{*}\right|\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+These equations can be inverted to give the following for 
+\begin_inset Formula $\rho\left|G_{n}^{*}\right|$
+\end_inset
+
+ and 
+\begin_inset Formula $\phi$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\rho\left|G_{n}^{*}\right|=\left(\frac{\pi Z_{q}\left|\Delta f_{n}^{*}\right|}{f_{1}}\right)^{2}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\phi=2\arctan\left(\frac{\Delta f_{n}}{\Delta\Gamma_{n}}\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The decay length is given by the following expression:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\delta_{n}=\frac{\rho}{\mathrm{Im}\left(k^{*}\right)}=\frac{\left(\rho\left|G_{n}^{*}\right|\right)^{1/2}}{2\pi f_{n}\sin\left(\phi_{n}/2\right)}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+As a general rule of thumb, the bulk limit applies when the film thickness
+ is larger than 
+\begin_inset Formula $\approx2\delta_{n}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Generalized Single Layer
+\end_layout
+
+\begin_layout Standard
+The complex wave vector, 
+\begin_inset Formula $k_{n}^{*}$
+\end_inset
+
+, for shear wave propagation in the material can be obtained directly from
+ 
+\begin_inset Formula $Z_{n}^{*}$
+\end_inset
+
+
+\begin_inset CommandInset citation
+LatexCommand cite
+key "simonetti_nature_2004"
+literal "true"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+k_{n}^{*}=\frac{2\pi f_{n}\rho}{Z_{n}^{*}}\label{eq:kstar}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The wavelength of the propagating shear wave is then obtained from the real
+ part of 
+\begin_inset Formula $k^{*}$
+\end_inset
+
+ 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "simonetti_nature_2004"
+literal "true"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\lambda_{n}=\frac{2\pi}{\mathrm{Re}\left(k_{n}^{*}\right)};\,\,\,\lambda_{n}\rho=\frac{\left(\rho\left|G_{n}^{*}\right|\right)^{1/2}}{f_{n}\cos\left(\phi_{n}/2\right)}\label{eq:lambdan}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Finally, we define a quantity, 
+\begin_inset Formula $D_{n}^{*}$
+\end_inset
+
+, which plays an important role in the expressions given below: 
+\begin_inset Formula 
+\begin{equation}
+D_{n}^{*}=k_{n}^{*}d=\frac{2\pi d}{\lambda_{n}}\left(1-i\tan\left(\phi_{n}/2\right)\right)=\frac{2\pi f_{n}d\rho}{Z_{n}^{*}}\label{eq:Dn star}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The impedance of a layer (which we refer to hear as layer 1) of mass thickness
+ 
+\begin_inset Formula $d\rho$
+\end_inset
+
+ is given by the following expression:
+\end_layout
+
+\begin_layout Standard
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\begin{equation}
+Z_{n,film}^{*}=iZ_{n,bulk}^{*}\tan(D_{n}^{*})\label{eq:film zstar-1}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that we define 
+\begin_inset Formula $\Delta f_{sn}$
+\end_inset
+
+ as a positive number (see Eq.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Sauerbrey"
+
+\end_inset
+
+), so in the case where the Sauerbrey limit applies (
+\begin_inset Formula $d/\lambda_{n}\ll1)$
+\end_inset
+
+, and when there is sufficient acoustic contrast between the film and the
+ surrounding liquid (
+\begin_inset Formula $\left|Z_{nf}^{*}\right|\gg\left|Z_{n\ell}^{*}\right|$
+\end_inset
+
+), we have 
+\begin_inset Formula $\Delta f_{n}^{*}=-\Delta f_{sn}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+Some expressions for quartz:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+k_{q}=\frac{2\pi f_{n}\rho_{q}}{Z_{q}};\,\,\,2\pi f_{n}^{*}=Z_{q}^{*}k_{q}^{*}/\rho_{q}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Extension to Multiple Layers
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename /home/ken/Mydocs/Python/QCM_py/doc/figures/2layer.svg
+	lyxscale 20
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Two-layer geometry involving a 'film' that is sandwiched between the electrode
+ surface and a 'membrane'.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Two-layer-geometry"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+In a variety of situations we are interested in two layer geometries, where
+ the film we are interested in is sandwiched between the electrode surface
+ of the QCM and a second layer, which we refer to the membrane layer.
+ In our notation the acoustic shear impedance of the membrane layer at the
+ nth harmonic is
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+ 
+\begin_inset Formula $Z_{nm}^{*}$
+\end_inset
+
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+, 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $k_{nm}^{*}$
+\end_inset
+
+ is the corresponding wave vector and 
+\begin_inset Formula $d_{m}$
+\end_inset
+
+ is the membrane thickness.
+ The overall impedance of this two-layer system is (Eq.
+ 18 from Johannsmann's 1999 paper) 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "johannsmann_viscoelastic_1999"
+literal "true"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+Z_{n12}^{*}=iZ_{n1}^{*}\frac{Z_{n1}^{*}\tan(D_{n1}^{*})+Z_{n2}^{*}\tan(D_{n2}^{*})}{Z_{n1}^{*}-Z_{n2}^{*}\tan(D_{n1}^{*})\tan(D_{n2}^{*})}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Note: what happens when 
+\begin_inset Formula $D_{1n}=0:$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+Z_{n12}^{*}=i\frac{Z_{n2}^{*}\tan(D_{n2}^{*})}{}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+checks out.
+\end_layout
+
+\begin_layout Plain Layout
+We can write this in a more useful way by writing the membrane impedance,
+ in the following way (following our previous notation) 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "brass_contact_2006,brass_membrane-enhanced_2008"
+literal "true"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\begin{equation}
+Z_{nm,0}^{*}=iZ_{nm}^{*}\tan(k_{nm}^{*}d_{m})\label{eq:film zstar}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+The difference between the 2-layer impedance and the impedance of the membrane
+ layer itself is defined as:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\Delta Z_{nfm}^{*}\equiv Z_{nf}^{*}\frac{iZ_{n1,bulk}^{*}\tan(D_{n1}^{*})+Z_{n2,film}^{*}}{Z_{n1,bulk}^{*}+iZ_{n2,film}^{*}\tan(D_{n1}^{*})}-Z_{n2,film}^{*}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Bilayer
+\end_layout
+
+\begin_layout Standard
+We can apply Eq.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:SLA"
+
+\end_inset
+
+, with 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\Delta Z_{nL}^{*}=\Delta Z_{nfm}^{*}$
+\end_inset
+
+
+\family default
+\series default
+\shape default
+\size default
+\emph default
+\bar default
+\strikeout default
+\uuline default
+\uwave default
+\noun default
+\color inherit
+ to get an expression for the complex frequency shift.
+ After a bunch of algebra, we get to the following form of the master equation:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\frac{\Delta f_{n}^{*}}{f_{sn}}=-\frac{\tan(D_{n1}^{*})}{D_{n1}^{*}}\left[\frac{1-\left(r_{n12}^{*}\right)^{2}}{1+ir_{n12}^{*}\tan(D_{n1}^{*})}\right]\label{eq:2-layer master}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Where 
+\begin_inset Formula $r^{*}$
+\end_inset
+
+ is the ratio of the overall membrane impedance to the material impedance
+ for the film:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+r_{n12}^{*}=\frac{Z_{n2,film}^{*}}{Z_{n1,bulk}^{*}}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Written in this way it's a bit more obvious that there is no net response
+ for the trivial case when a thin film and thick membrane have identical
+ properties (
+\begin_inset Formula $r_{n12}^{*}=1$
+\end_inset
+
+), and that the single layer master equation is recovered for experiments
+ done in air (
+\begin_inset Formula $r_{n12}^{*}=0$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta Z_{nL}^{*}=Z_{nL}^{*}-Z_{n\ell}^{*}=\frac{i\left(\left(Z_{nf}^{*}\right)^{2}-\left(Z_{n\ell}^{*}\right)^{2}\right)}{Z_{nf}^{*}\cot\left(k_{nf}^{*}d\right)+iZ_{n\ell}^{*}}=\frac{i\left(\rho_{f}G_{nf}^{*}-\rho_{\ell}G_{n\ell}^{*}\right)}{Z_{nf}^{*}\cot\left(k_{nf}^{*}d\right)+iZ_{n\ell}^{*}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta Z_{nL}^{*}=\frac{iG_{nf}^{*}\left(1-\rho_{\ell}G_{n\ell}^{*}/\rho_{f}G_{nf}^{*}\right)}{Z_{nf}^{*}\cot\left(k_{nf}^{*}d\right)+iZ_{n\ell}^{*}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta Z_{nL}^{*}=Z_{nL}^{*}-Z_{n\ell}^{*}=\frac{i\left(\left(Z_{nf}^{*}\right)^{2}-\left(Z_{n\ell}^{*}\right)^{2}\right)}{Z_{nf}^{*}\cot\left(k_{nf}^{*}d\right)+iZ_{n\ell}^{*}}=\frac{i/Z_{nf}^{*}\left(1-\left(Z_{n\ell}^{*}/Z_{nf}^{*}\right)^{2}\right)}{\cot\left(k_{nf}^{*}d\right)+i\left(Z_{n\ell}^{*}/Z_{nf}^{*}\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta f_{n}^{*}=\frac{if_{1}\Delta Z_{nL}^{*}}{\pi Z_{q}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta f_{n}^{*}=\frac{-f_{1}Z_{nf}^{*}\left(1-\left(Z_{n\ell}^{*}/Z_{nf}^{*}\right)^{2}\right)}{\pi Z_{q}\cot\left(k_{nf}^{*}d\right)+i\left(Z_{n\ell}^{*}/Z_{nf}^{*}\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{\Delta f_{sn}}=\frac{Z_{q}}{2nf_{1}^{2}\rho d}\frac{-f_{1}Z_{nf}^{*}\left(1-\left(Z_{n\ell}^{*}/Z_{nf}^{*}\right)^{2}\right)}{\pi Z_{q}\cot\left(k_{nf}^{*}d\right)+i\left(Z_{n\ell}^{*}/Z_{nf}^{*}\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{\Delta f_{sn}}=-\frac{\tan\left(D_{nf}^{*}\right)\left(1-\left(Z_{n\ell}^{*}/Z_{nf}^{*}\right)^{2}\right)}{D_{nf}^{*}+i\tan\left(D_{nf}^{*}\right)\left(Z_{n\ell}^{*}/Z_{nf}^{*}\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+D_{nf}^{*}=k_{nf}^{*}d=\frac{2\pi f_{n}d\rho}{Z_{n}^{*}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{\Delta f_{sn}}=-\frac{\tan\left(D_{nf}^{*}\right)\left(1-\left(Z_{n\ell}^{*}/Z_{nf}^{*}\right)^{2}\right)}{D_{nf}^{*}+i\tan\left(D_{nf}^{*}\right)\left(Z_{n\ell}^{*}/Z_{nf}^{*}\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+with 
+\begin_inset Formula $r_{nl}^{*}=\frac{\rho_{\ell}G_{n\ell}^{*}}{\rho_{f}G_{nf}^{*}}$
+\end_inset
+
+ we have:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{\Delta f_{sn}}=-\frac{\tan\left(D_{nf}^{*}\right)\left(1-r_{n\ell}^{*}\right)}{D_{nf}^{*}+i\tan\left(D_{nf}^{*}\right)\left(r_{n\ell}^{*}\right)^{1/2}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In a liquid medium, the 'membrane' actually corresponds to a bulk, infinitely
+ thick liquid.
+ The impedance ratio is now a ratio of pure material properties:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+r_{n12}^{*}=\left(\frac{\rho_{2}G_{n2}^{*}}{\rho_{1}G_{n1}^{*}}\right)^{1/2}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+In the past, we have expressed Eq.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:2-layer master"
+
+\end_inset
+
+ in the following way:
+\begin_inset Formula 
+\begin{equation}
+\frac{\Delta f_{n}^{*}}{\Delta f_{sn}}=-\frac{D_{nf}^{*-2}+R_{n\ell}^{*2}}{\cot\left(D_{nf}^{*}\right)/D_{nf}^{*}+R_{n\ell}^{*}}\label{eq:Delfstar}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Here 
+\begin_inset Formula $R_{n\ell}^{*}$
+\end_inset
+
+ defines the ratio of the complex frequency shift for the liquid to the
+ Sauerbrey frequency shift for the film:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+R_{n\ell}^{*}=\frac{\Delta f_{n\ell}+i\Delta\Gamma_{n\ell}}{\Delta f_{sn}}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Subsection
+Derivation of the two-layer master equation:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+Z_{nm,0}^{*}=iZ_{nm}^{*}\tan(k_{nm}^{*}d)
+\]
+
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta Z_{Mn}^{*}=Z_{nf}^{*}\frac{iZ_{nf}^{*}\tan(k_{nf}^{*}d)+Z_{nm,0}^{*}}{Z_{nf}^{*}+iZ_{nm,0}^{*}\tan(k_{nf}^{*}d)}-Z_{nm,0}^{*}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+We define 
+\begin_inset Formula $r^{*}=Z_{nm,0}^{*}/Z_{nf}^{*}$
+\end_inset
+
+ to obtain:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta Z_{Mn}^{*}=Z_{nf}^{*}\frac{iZ_{nf}^{*}\tan(D_{nf}^{*})+r^{*}Z_{nf}^{*}}{Z_{nf}^{*}+ir^{*}Z_{nf}^{*}\tan(D_{nf}^{*})}-r^{*}Z_{nf}^{*}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta Z_{Mn}^{*}=Z_{nf}^{*}\left[\frac{iZ_{nf}^{*}\tan(D_{nf}^{*})+r^{*}Z_{nf}^{*}}{Z_{nf}^{*}+ir^{*}Z_{nf}^{*}\tan(D_{nf}^{*})}-r^{*}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta Z_{Mn}^{*}=Z_{nf}^{*}\left[\frac{iZ_{nf}^{*}\tan(D_{nf}^{*})+r^{*}Z_{nf}^{*}-r^{*}Z_{nf}^{*}-i\left(r^{*}\right)^{2}Z_{nf}^{*}\tan(D_{nf}^{*})}{Z_{nf}^{*}+ir^{*}Z_{nf}^{*}\tan(D_{nf}^{*})}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta Z_{Mn}^{*}=Z_{nf}^{*}\left[\frac{i\tan(D_{nf}^{*})-i\left(r^{*}\right)^{2}\tan(D_{nf}^{*})}{1+ir^{*}\tan(D_{nf}^{*})}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta Z_{Mn}^{*}=Z_{nf}^{*}\tan(D_{nf}^{*})\left[\frac{i-i\left(r^{*}\right)^{2}}{1+ir^{*}\tan(D_{nf}^{*})}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Use 
+\begin_inset Formula 
+\[
+Z_{nf}^{*}=\frac{2\pi f_{n}d\rho}{D_{nf}^{*}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta Z_{Mn}^{*}=\frac{2\pi f_{n}d\rho\tan(D_{nf}^{*})}{D_{nf}^{*}}\left[\frac{i-i\left(r^{*}\right)^{2}}{1+ir^{*}\tan(D_{nf}^{*})}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta f_{n}^{*}=\frac{if_{1}\Delta Z_{Mn}^{*}}{\pi Z_{q}}=\frac{if_{1}}{\pi Z_{q}}\frac{2\pi f_{n}d\rho\tan(D_{nf}^{*})}{D_{nf}^{*}}\left[\frac{i-i\left(r^{*}\right)^{2}}{1+ir^{*}\tan(D_{nf}^{*})}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta f_{n}^{*}=\frac{2nf_{1}^{2}d\rho\tan(D_{nf}^{*})}{Z_{q}D_{nf}^{*}}\left[\frac{\left(r^{*}\right)^{2}-1}{1+ir^{*}\tan(D_{nf}^{*})}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Now use 
+\begin_inset Formula 
+\[
+f_{sn}=\frac{2nf_{1}^{2}}{Z_{q}}\Delta M_{A}=\frac{2nf_{1}^{2}}{Z_{q}}\rho d
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{f_{sn}}=-\frac{\tan(D_{nf}^{*})}{D_{nf}^{*}}\left[\frac{1-\left(r^{*}\right)^{2}}{1+ir^{*}\tan(D_{nf}^{*})}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Check Number 1: 
+\end_layout
+
+\begin_layout Plain Layout
+If the film and the membrane have the same properties, we should just get
+ an answer corresponding to a change in thickness of the layer.
+ In this case 
+\begin_inset Formula $r^{*}=i\tan\left(d_{m}k_{nf}^{*}\right)$
+\end_inset
+
+, and we have:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{f_{sn}}=\frac{\tan(d_{f}k_{nf}^{*})}{d_{f}k_{nf}^{*}}\left[\frac{-\left(\tan\left(d_{m}k_{nf}^{*}\right)\right)^{2}-1}{1-\tan\left(d_{m}k_{nf}^{*}\right)\tan(d_{f}k_{nf}^{*})}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{f_{sn}}=-\frac{\tan(d_{f}k_{nf}^{*})}{d_{f}k_{nf}^{*}}\left[\frac{1+\left(\tan\left(d_{m}k_{nf}^{*}\right)\right)^{2}}{1-\tan\left(d_{m}k_{nf}^{*}\right)\tan(d_{f}k_{nf}^{*})}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+We expect this to be equal to the following expression:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{f_{sn}}=-\frac{\tan\left(\left(d_{f}+d_{m}\right)k_{nf}^{*}\right)-\tan(d_{f}k_{nf}^{*})}{d_{f}k_{nf}^{*}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+The following script confirms that these two expressions are equivalent:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset listings
+inline false
+status open
+
+\begin_layout Plain Layout
+
+syms f m
+\end_layout
+
+\begin_layout Plain Layout
+
+delf=-(tan(f)/f)*(1+(tan(m))^2)/(1-tan(f)*tan(m));
+\end_layout
+
+\begin_layout Plain Layout
+
+predict=-(1/f)*(tan(m+f)-tan(m));
+\end_layout
+
+\begin_layout Plain Layout
+
+rat=delf/predict;
+\end_layout
+
+\begin_layout Plain Layout
+
+simplify(rat)
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+What is the limit here for large values of 
+\begin_inset Formula $r^{*}$
+\end_inset
+
+? 
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{f_{sn}}=-\frac{\tan(D_{nf}^{*})}{D_{nf}^{*}}\left[\frac{1-\left(r^{*}\right)^{2}}{1+ir^{*}\tan(D_{nf}^{*})}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Thin Film Form:
+\end_layout
+
+\begin_layout Plain Layout
+for thin films we can neglect the tangent term in the denominator and replace
+ the leading tangent function with its argument to get:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{f_{sn}}=\left(\left(r^{*}\right)^{2}-1\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{f_{sn}}=\left(\frac{Z_{nm,0}}{Z_{nf}^{*}}\right)^{2}-1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{f_{sn}}=\frac{\left(Z_{nm,0}\right)^{2}}{\rho_{f}G_{f}^{*}}-1
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Further simplifications: 
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+f_{sn}=\frac{2nf_{1}^{2}}{Z_{q}}\rho d
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+-\Delta f^{*}=\frac{if_{1}\Delta Z^{*}}{\pi Z_{q}}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\frac{if_{1}\Delta Z^{*}}{\pi Z_{q}}=-\frac{2nf_{1}^{2}}{Z_{q}}\rho d
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta Z_{sn}^{*}=\frac{2\pi nf_{1}}{i}\rho d=2\pi inf_{1}\rho d
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta f_{n}^{*}=f_{sn}\frac{\left(Z_{nm,0}\right)^{2}}{\rho G^{*}}-f_{sn}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta f_{n}^{*}=\frac{2nf_{1}^{2}}{Z_{q}}\rho_{f}d_{f}\frac{\left(2\pi inf_{1}\rho d\right)^{2}}{\rho_{f}G_{f}^{*}}-\frac{2nf_{1}^{2}}{Z_{q}}\rho d
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta f_{n}^{*}=-\frac{8\pi^{2}n^{3}f_{1}^{4}}{Z_{q}}d_{f}\frac{M_{Am}^{2}}{G_{f}^{*}}-\frac{2nf_{1}^{2}}{Z_{q}}\rho_{f}d_{f}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{d_{f}}=-\frac{8\pi^{2}n^{3}f_{1}^{4}}{Z_{q}}{\color{red}\frac{M_{Am}^{2}}{G_{f}^{*}}}-\frac{2nf_{1}^{2}\rho_{f}}{Z_{q}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Subsubsection
+Extension to 3 layers
+\end_layout
+
+\begin_layout Plain Layout
+In some cases we are interested in an extension to 3 layers.
+ The generalization here is:
+\end_layout
+
+\begin_layout Plain Layout
+Eq.
+ 10.6.1 from Diethelm's book is:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\frac{\Delta f^{*}}{f_{1}}=\frac{-1}{\pi Z_{q}}\frac{Z_{1n}^{*}Z_{2n}^{*}\left(Z_{1n}^{*}\tan\left(D_{1n}^{*}\right)+Z_{2}^{*}\tan\left(D_{2n}^{*}\right)\right)+iZ_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)\tan\left(D_{2n}^{*}\right)-Z_{2n}^{*}\right)}{Z_{2n}^{*}\left(Z_{1n}^{*}-Z{}_{2n}^{*}\tan\left(D_{1n}^{*}\right)\tan\left(D_{2n}^{*}\right)\right)+iZ_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)+Z_{2n}^{*}\tan\left(D_{1n}^{*}\right)\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+If we now we use the following version of the small load approximation to
+ turn this into an expression for the load impedance:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\Delta Z_{nL}^{*}=\frac{\pi Z_{q}\Delta f_{n}^{*}}{if_{1}}=-\frac{\pi iZ_{q}\Delta f_{n}^{*}}{f_{1}}\label{eq:SLA-1}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+which gives: 
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\Delta Z_{nL}^{*}=-\pi iZ_{q}\left[\frac{-1}{\pi Z_{q}}\frac{Z_{1n}^{*}Z_{2n}^{*}\left(Z_{1n}^{*}\tan\left(D_{1n}^{*}\right)+Z_{2}^{*}\tan\left(D_{2n}^{*}\right)\right)+iZ_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)\tan\left(D_{2n}^{*}\right)-Z_{2n}^{*}\right)}{Z_{2n}^{*}\left(Z_{1n}^{*}-Z{}_{2n}^{*}\tan\left(D_{1n}^{*}\right)\tan\left(D_{2n}^{*}\right)\right)+iZ_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)+Z_{2n}^{*}\tan\left(D_{1n}^{*}\right)\right)}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\Delta Z_{nL}^{*}=\left[\frac{iZ_{1n}^{*}Z_{2n}^{*}\left(Z_{1n}^{*}\tan\left(D_{1n}^{*}\right)+Z_{2}^{*}\tan\left(D_{2n}^{*}\right)\right)-Z_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)\tan\left(D_{2n}^{*}\right)-Z_{2n}^{*}\right)}{Z_{2n}^{*}\left(Z_{1n}^{*}-Z{}_{2n}^{*}\tan\left(D_{1n}^{*}\right)\tan\left(D_{2n}^{*}\right)\right)+iZ_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)+Z_{2n}^{*}\tan\left(D_{1n}^{*}\right)\right)}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Now we need to figure out how to adapt this to the case where third layer
+ has a finite thickness.
+ One of the terms involving 
+\begin_inset Formula $Z_{3n}^{*}$
+\end_inset
+
+ must get multiplied by 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\tan\left(D_{2n}^{*}\right)$
+\end_inset
+
+.
+ To figure out which one, we can set 
+\begin_inset Formula $D_{2n}^{*}$
+\end_inset
+
+ to zero and make sure we recover the correct two layer equation.
+ Doing this gives:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\Delta Z_{nL}^{*}=\left[\frac{iZ_{1n}^{*}Z_{2n}^{*}\left(Z_{1n}^{*}\tan\left(D_{1n}^{*}\right)\right)+Z_{3n}^{*}}{iZ_{3n}^{*}\left(Z_{1n}^{*}\tan\left(D_{2n}^{*}\right)+Z_{2n}^{*}\tan\left(D_{1n}^{*}\right)\right)}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Something seems wrong with this.
+ Our python code gives the following:
+\end_layout
+
+\begin_layout Plain Layout
+I*Z0*(Z0*Z1*sin(D0)*cos(D1)*cos(D2) - Z0*Z2*sin(D0)*sin(D1)*sin(D2) + Z1**2*sin(
+D1)*cos(D0)*cos(D2) + Z1*Z2*sin(D2)*cos(D0)*cos(D1))/(Z0*Z1*cos(D0)*cos(D1)*cos(
+D2) - Z0*Z2*sin(D1)*sin(D2)*cos(D0) - Z1**2*sin(D0)*sin(D1)*cos(D2) - Z1*Z2*sin(
+D0)*sin(D2)*cos(D1))
+\end_layout
+
+\begin_layout Plain Layout
+dividing through by the product of the cosine terms gives:
+\end_layout
+
+\begin_layout Plain Layout
+I*Z0*(Z0*Z1*tan(D0) - Z0*Z2*tan(D0)*tan(D1)*tan(D2) + Z1**2*tan(D1) + Z1*Z2*tan(
+D2))/(Z0*Z1*- Z0*Z2*tan(D1)*tan(D2)-Z1**2*tan(D0)*tan(D1) - Z1*Z2*tan(D0)*tan(D2
+))
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+iZ_{0}\frac{Z0Z1tan(D0)-Z0Z2tan(D0)tan(D1)tan(D2)+Z1**2*tan(D1)+Z1*Z2*tan(D2)}{Z0Z1-Z0Z2tan(D1)tan(D2)-Z1**2tan(D0)tan(D1)-Z1Z2tan(D0)tan(D2)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+incrementi
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+i\frac{\left(Z_{1n}^{*}\right)^{2}Z_{2n}^{*}\tan(D_{1n}^{*})-Z_{1n}^{*}Z_{3n}^{*}\tan(D_{1n}^{*})\tan(D_{2n}^{*})\tan(D_{3n}^{*})+\left(Z_{2n}^{*}\right)^{2}\tan(D_{2n}^{*})+Z_{2n}^{*}Z_{3n}^{*}\tan(D_{3n}^{*})}{Z_{1n}^{*}Z_{2n}^{*}-Z_{1n}^{*}Z_{3n}^{*}\tan(D_{2n}^{*})\tan(D_{3n}^{*})-\left(Z_{2n}^{*}\right)^{2}\tan(D_{1n}^{*})\tan(D_{2n}^{*})-Z_{2n}^{*}Z_{3n}^{*}\tan(D_{1n}^{*})\tan(D_{3n}^{*})}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Let's check this out.
+ What happens if 
+\begin_inset Formula $D_{2n}^{*}=0:$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+i\frac{\left(Z_{1n}^{*}\right)^{2}Z_{2n}^{*}\tan(D_{1n}^{*})+Z_{2n}^{*}Z_{3n}^{*}\tan(D_{3n}^{*})}{Z_{1n}^{*}Z_{2n}^{*}--Z_{2n}^{*}Z_{3n}^{*}\tan(D_{1n}^{*})\tan(D_{3n}^{*})}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+i\frac{\left(Z_{1n}^{*}\right)^{2}\tan(D_{1n}^{*})+Z_{3n}^{*}\tan(D_{3n}^{*})}{Z_{1n}^{*}-Z_{3n}^{*}\tan(D_{1n}^{*})\tan(D_{3n}^{*})}
+\]
+
+\end_inset
+
+looks okay.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Section
+Thin Films
+\end_layout
+
+\begin_layout Subsection
+Single Layer
+\end_layout
+
+\begin_layout Plain Layout
+For small 
+\begin_inset Formula $d/\lambda_{n}$
+\end_inset
+
+ we expand the tangent function using 
+\begin_inset Formula $\tan\left(x\right)\approx x+x^{3}/3$
+\end_inset
+
+ to obtain the following for the dissipation ratio:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\lambda_{n}=\frac{1}{f_{n}}\left(\frac{\left|G_{n}^{*}\right|}{\rho}\right)^{1/2}\frac{1}{\cos\left(\phi_{n}/2\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{1}{\lambda_{n}}=f_{n}\left(\frac{\rho}{\left|G_{n}^{*}\right|}\right)^{1/2}\cos\left(\phi_{n}/2\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{d}{\lambda_{n}}=d\rho f_{n}\left(\frac{1}{\left|G_{n}^{*}\right|\rho}\right)^{1/2}\cos\left(\phi_{n}/2\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\left(\frac{d}{\lambda_{n}}\right)^{2}=\left(d\rho\right)^{2}f_{n}^{2}\left(\frac{1}{\left|G_{n}^{*}\right|\rho}\right)\cos^{2}\left(\phi_{n}/2\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\left(\frac{d}{\lambda_{n}}\right)^{2}\tan\left(\phi_{n}/2\right)=\left(d\rho\right)^{2}f_{n}^{2}\left(\frac{1}{\left|G_{n}^{*}\right|\rho}\right)\cos\left(\phi_{n}/2\right)\sin\left(\phi_{n}/2\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\left(\frac{d}{\lambda_{n}}\right)^{2}\tan\left(\phi_{n}/2\right)=\frac{1}{2}\left(d\rho\right)^{2}f_{n}^{2}\left(\frac{1}{\left|G_{n}^{*}\right|\rho}\right)\sin\left(\phi_{n}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\frac{-\Delta\Gamma_{n}}{\Delta f_{ns}}\approx\frac{8\pi^{2}}{3}\left(\frac{d}{\lambda_{n}}\right)^{2}\tan\left(\frac{\phi_{n}}{2}\right)=\frac{4\pi^{2}f_{n}^{2}M_{A}^{2}}{3}\frac{\sin\left(\phi_{n}\right)}{\left|G_{n}^{*}\right|\rho}.\label{eq:imag part of TE thin film limit}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+The correction to the Sauerbrey form of 
+\begin_inset Formula $\Delta f_{n}$
+\end_inset
+
+ is very small in this regime, so we can replace 
+\begin_inset Formula $\Delta f_{n}$
+\end_inset
+
+ with 
+\begin_inset Formula $-\Delta f_{sn}$
+\end_inset
+
+, and use Eq.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Sauerbrey"
+
+\end_inset
+
+ to obtain the following expression for 
+\begin_inset Formula $\Delta\Gamma_{nt}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\Delta\Gamma_{nt}=\frac{8\pi^{2}n^{3}f_{1}^{4}M_{A}^{3}}{3Z_{q}}\frac{\sin\left(\phi_{n}\right)}{\left|G_{n}^{*}\right|\rho}=\frac{8\pi^{2}n^{3}f_{1}^{4}M_{A}^{3}J_{n}^{\prime\prime}}{3Z_{q}\rho}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Here 
+\begin_inset Formula $J_{n}^{\prime\prime}$
+\end_inset
+
+ is the imaginary component of the complex shear compliance, 
+\begin_inset Formula $J_{n}^{*}$
+\end_inset
+
+, with 
+\begin_inset Formula $J_{n}^{*}=1/G_{n}^{*}$
+\end_inset
+
+.
+ We can combine equations 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:2-layer master"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:imag part of TE thin film limit"
+
+\end_inset
+
+ to get the following expression for the actual value of 
+\begin_inset Formula $\Delta\Gamma_{n}$
+\end_inset
+
+, normalized by the form thin film limit:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\frac{\Delta\Gamma}{\Delta\Gamma_{t}}=-\mathrm{imag}\left(\frac{3}{8\pi^{2}\tan\left(\phi_{n}/2\right)\left(d/\lambda_{n}\right)^{2}}\frac{\tan\left(D_{nf}^{*}\right)\left(1-\left(r_{nfm}^{*}\right)^{2}\right)}{D_{nf}^{*}+i\tan\left(D_{nf}^{*}\right)r_{nfm}^{*}}\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+This is what this looks like for different values of the phase angle, and
+ for 
+\begin_inset Formula $r_{nfm}^{*}=0.$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Subsection
+Two Layers
+\end_layout
+
+\begin_layout Subsubsection
+Obtaining 
+\begin_inset Formula $J^{\prime\prime}$
+\end_inset
+
+ from the dissipation
+\end_layout
+
+\begin_layout Plain Layout
+for thin films we can neglect the tangent term in the denominator and replace
+ the leading tangent function with its argument to get:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\frac{\Delta f_{n}^{*}}{f_{snf}}\approx\left(\left(r^{*}\right)^{2}-1\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\frac{\Delta f_{n}^{*}}{f_{sn}}\approx\left(\frac{Z_{nm,0}}{Z_{nf}^{*}}\right)^{2}-1=\frac{\left(Z_{nm,0}\right)^{2}}{\rho_{f}G_{f}^{*}}-1
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Perfectly Rigid Membrane
+\end_layout
+
+\begin_layout Plain Layout
+We can use the Sauerbrey form for 
+\begin_inset Formula $Z_{nm,0}$
+\end_inset
+
+ (Eq.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:Sauerbrey load impendance"
+
+\end_inset
+
+) to get a useful estimate of the response.
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\frac{\Delta f_{n}^{*}+f_{snf}}{f_{snf}}\approx-\left(2\pi nf_{1}\rho_{m}d_{m}\right)^{2}\frac{J_{nf}^{*}}{\rho_{f}}\label{eq:delfstar thin layer with membrane}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Note that the reference point for 
+\begin_inset Formula $\Delta f_{n}^{*}$
+\end_inset
+
+ is the frequency with just the membrane, which we don't always know as
+ accurately as we would like.
+ When looking at the behavior of very thin films, we will often just 
+\begin_inset Formula $\Delta\Gamma$
+\end_inset
+
+ to get 
+\begin_inset Formula $J_{nf}^{\prime\prime}$
+\end_inset
+
+ (we lose the negative sign because 
+\begin_inset Formula $J^{*}=J^{\prime}-iJ^{\prime\prime}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\Delta\Gamma\approx\frac{8\pi^{2}n^{3}f_{1}^{4}}{Z_{q}}\left(\rho_{f}d_{f}\right)\left(\rho_{m}d_{m}\right)^{2}\frac{J_{nf}^{\prime\prime}}{\rho_{f}}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\frac{\Delta\Gamma}{d_{f}}\approx\frac{8\pi^{2}n^{3}f_{1}^{4}}{Z_{q}}\left(\rho_{m}d_{m}\right)^{2}J_{nf}^{\prime\prime}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Rearranging for 
+\begin_inset Formula $J_{nf}^{\prime\prime},$
+\end_inset
+
+ we have:membrane impedance is 
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+J_{nf}^{\prime\prime}=\frac{\rho_{f}\Delta\Gamma_{n}}{f_{snf}\left(2\pi nf_{1}\rho_{m}d_{m}\right)^{2}}\label{eq:delfstar thin layer with membrane-1}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Obtaining 
+\begin_inset Formula $J^{*}$
+\end_inset
+
+ or 
+\begin_inset Formula $G^{*}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+If we do a temperature scan from low temperatures (where the film is glassy
+ and the Sauerbrey expression works for everything), then subtract the low
+ temperature value of 
+\begin_inset Formula $f_{n}^{*}$
+\end_inset
+
+ from the one at higher temperatures to obtain a quantity we call 
+\begin_inset Formula $\Delta f_{nT}^{*}$
+\end_inset
+
+, which from Eq.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:delfstar thin layer with membrane"
+
+\end_inset
+
+ can be written in the following way:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\frac{\Delta f_{nT}^{*}}{f_{snf}}\approx-\left(2\pi nf_{1}\rho_{m}d_{m}\right)^{2}\frac{J_{nf}^{*}}{\rho_{f}}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+The expression for 
+\begin_inset Formula $G_{nf}^{*}=1/J_{nf}^{*}$
+\end_inset
+
+ is:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+G_{nf}^{*}\approx-\frac{f_{snf}}{\rho_{f}\Delta f_{nT}^{*}}\left(2\pi nf_{1}\rho_{m}d_{m}\right)^{2}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Lu-Lewis Equation
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename fig3.svg
+	width 70text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Result from the Lu-Lewis model for the parameters listed in Eqs.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:electrode props"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:film props"
+
+\end_inset
+
+ varying the values of 
+\begin_inset Formula $\phi$
+\end_inset
+
+ for the film as indicated.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:vary phi"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Thicker films
+\end_layout
+
+\begin_layout Standard
+Things look quite a bit different if we use thicker films.
+ Suppose we use a 5 
+\begin_inset Formula $\mu$
+\end_inset
+
+m glassy polymer film, representative of some of our experiments.
+ Here's the set of film properties:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{gather}
+\left(d\rho\right)_{film}=5\,\mathrm{g/m^{2}}\nonumber \\
+\left(\left|G_{3}^{*}\right|\rho\right)_{film}=10^{9}\,\mathrm{Pa\cdot g/cm^{3}}\label{eq:thick glassy film}\\
+\phi_{film}=1.5^{\circ}\nonumber 
+\end{gather}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here's what the comparison of the LL and SLA models looks like in this case:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename fig4.svg
+	width 70text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Comparison of the LL and SLA models for the electrode properties given in
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:electrode props"
+
+\end_inset
+
+ and the film properties given in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:thick glassy film"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:SLA comparison thick glass"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If we replot this as a function of linear 
+\begin_inset Formula $n$
+\end_inset
+
+ and just worry about the first few harmonics, it looks like the plot below.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename fig5.svg
+	width 70text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Comparison of the LL and SLA models for the electrode properties given in
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:electrode props"
+
+\end_inset
+
+ and the film properties given in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:thick glassy film"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:SLA comparison thick glass-1"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Solution Method and Error Analysis
+\end_layout
+
+\begin_layout Standard
+The numerical solution obtains three quantities (typically 
+\begin_inset Formula $d\rho$
+\end_inset
+
+, 
+\begin_inset Formula $\left|G_{3}\rho\right|$
+\end_inset
+
+ and 
+\begin_inset Formula $\phi$
+\end_inset
+
+) that give predicted three measured quantities in agreement with experimental
+ values.
+ These three measured quantities are two frequency shifts and one dissipation
+ shift.
+ In a 
+\begin_inset Formula $n_{1}:n_{2},n_{3}$
+\end_inset
+
+ calculation, these quantities are 
+\begin_inset Formula $\Delta f_{n1}$
+\end_inset
+
+, 
+\begin_inset Formula $\Delta f_{n_{2}}$
+\end_inset
+
+ and 
+\begin_inset Formula $\Delta\Gamma_{n_{3}}$
+\end_inset
+
+.
+ MATLAB and Python both return the Jacobian, 
+\begin_inset Formula $J$
+\end_inset
+
+, at the solution point, which is given by the following expression:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+J=\left[\begin{array}{ccc}
+\frac{\partial\Delta f_{n_{1}}}{\partial\left(d\rho\right)} & \frac{\partial\Delta f_{n_{1}}}{\partial\left(\left|G_{3}\right|\rho\right)} & \frac{\partial\Delta f_{n_{1}}}{\partial\phi}\\
+\frac{\partial\Delta f_{n_{2}}}{\partial\left(d\rho\right)} & \frac{\partial\Delta f_{n_{2}}}{\partial\left(\left|G_{3}\right|\rho\right)} & \frac{\partial\Delta f_{n_{2}}}{\partial\phi}\\
+\frac{\partial\Delta\Gamma_{n_{3}}}{\partial\left(d\rho\right)} & \frac{\partial\Delta\Gamma_{n_{3}}}{\partial\left(\left|G_{3}\right|\rho\right)} & \frac{\partial\Delta\Gamma_{n_{3}}}{\partial\phi}
+\end{array}\right]
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Once we have the matrix, we invert it to get 
+\begin_inset Formula $J^{-1}$
+\end_inset
+
+, the Jacobian of the inverse function, which is what we need:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+J^{inv}\equiv J^{-1}=\left[\begin{array}{ccc}
+\frac{\partial\left(d\rho\right)}{\partial\Delta f_{n_{1}}} & \frac{\partial\left(d\rho\right)}{\partial\Delta f_{n_{2}}} & \frac{\partial\left(d\rho\right)}{\partial\Delta\Gamma_{n_{3}}}\\
+\frac{\partial\left(\left|G_{3}\right|\rho\right)}{\partial\Delta f_{n_{1}}} & \frac{\partial\left(\left|G_{3}\right|\rho\right)}{\partial\Delta f_{n_{2}}} & \frac{\partial\left(\left|G_{3}\right|\rho\right)}{\partial\Delta\Gamma_{n_{3}}}\\
+\frac{\partial\phi}{\partial\Delta f_{n_{1}}} & \frac{\partial\phi}{\partial\Delta f_{n_{2}}} & \frac{\partial\phi}{\partial\Delta\Gamma_{n_{3}}}
+\end{array}\right]
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The uncertainties in the experimental quantities are 
+\begin_inset Formula $\Delta f_{n1}^{err},$
+\end_inset
+
+ 
+\begin_inset Formula $\Delta f_{n_{2}}^{err}$
+\end_inset
+
+ and 
+\begin_inset Formula $\Delta\Gamma_{n3}^{err}$
+\end_inset
+
+.
+ We represent these as three component error vector:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+err=\left\{ \begin{array}{c}
+\Delta f_{n1}^{err}\\
+\Delta f_{n2}^{err}\\
+\Delta\Gamma_{n3}^{err}
+\end{array}\right\} 
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In our linearized analysis we just multiply the uncertainties by the appropriate
+ partial derivatives, and sum the three different uncertainties in quadrature
+ to get the associated experimental uncertainty in our extracted property:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\begin{array}{c}
+\left(d\rho\right)^{err}=\left(\left(J_{11}^{inv}err(1)\right)^{2}+\left(J_{12}^{inv}err(2)\right)^{2}+\left(J_{13}^{inv}err(3)\right)^{2}\right)^{0.5}\\
+\left(\left|G_{3}\right|\rho\right)^{err}=\left(\left(J_{21}^{inv}err(1)\right)^{2}+\left(J_{22}^{inv}err(2)\right)^{2}+\left(J_{23}^{inv}err(3)\right)^{2}\right)^{0.5}\\
+\phi^{err}=\left(\left(J_{31}^{inv}err(1)\right)^{2}+\left(J_{32}^{inv}err(2)\right)^{2}+\left(J_{33}^{inv}err(3)\right)^{2}\right)^{0.5}
+\end{array}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This same analysis can be applied to more complicated models as well.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Section
+Some Other Expressions
+\end_layout
+
+\begin_layout Plain Layout
+We can simplify the area analysis considerably by writing a single function
+ with three equations and three unknowns.
+ For an x:y,z calculation the variables are 
+\begin_inset Formula $d\rho$
+\end_inset
+
+, 
+\begin_inset Formula $G\rho_{3}$
+\end_inset
+
+ and 
+\begin_inset Formula $\phi$
+\end_inset
+
+.
+ The equations just equate the measured and predicted values of 
+\begin_inset Formula $\Delta f_{x},$
+\end_inset
+
+ 
+\begin_inset Formula $\Delta f_{y}$
+\end_inset
+
+ and 
+\begin_inset Formula $\Delta\Gamma_{z}$
+\end_inset
+
+.
+ Right now many of our expressions are in terms of 
+\begin_inset Formula $d/\lambda$
+\end_inset
+
+, so it's convenient to write this in terms of the variables that we ultimately
+ care about:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+d/\lambda_{n}=d\rho f_{n}\left(\frac{1}{\rho\left|G_{n}^{*}\right|}\right)^{1/2}\cos\left(\phi_{n}/2\right)\label{eq:d over lambda vs Gstar}
+\end{equation}
+
+\end_inset
+
+The inverse relationship is:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\rho\left|G_{n}^{*}\right|=\left(\frac{d\rho nf_{1}\cos\left(\phi_{n}/2\right)}{\left(d/\lambda_{n}\right)}\right)^{2}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+This leads to the following expression for 
+\begin_inset Formula $D_{n}^{*}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+D_{n}^{*}=k_{n}^{*}d=\frac{2\pi d\rho f_{n}}{\left(\rho\left|G_{n}^{*}\right|\right)^{1/2}}\left(\cos\left(\phi_{n}/2\right)-i\sin\left(\phi_{n}/2\right)\right)=\frac{2\pi f_{n}d\rho}{Z_{n}^{*}}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+We'll use the constant phase approximation, so 
+\begin_inset Formula $\phi$
+\end_inset
+
+ is assumed to be independent of 
+\begin_inset Formula $n$
+\end_inset
+
+.
+ We'll use 
+\begin_inset Formula $G_{3}^{*}$
+\end_inset
+
+ as our reference, using the following expression for 
+\begin_inset Formula $\left|G_{n}^{*}\right|$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\left|G_{n}^{*}\right|=\left|G_{3}^{*}\right|\left(n/3\right)^{\phi/90}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\frac{d}{\lambda_{n}}=\frac{d}{\lambda_{3}}\left(\frac{n}{3}\right)^{1-\phi/180}\label{eq:power law d/lambds}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+We can also get a relationship between 
+\begin_inset Formula $\phi$
+\end_inset
+
+ and 
+\begin_inset Formula $d\lambda$
+\end_inset
+
+ at a fixed value of 
+\begin_inset Formula $J_{n}^{\prime\prime}$
+\end_inset
+
+, which helps us put the thin film limit in the context of the contour plots
+ for 
+\begin_inset Formula $r_{h}$
+\end_inset
+
+ and 
+\begin_inset Formula $r_{d}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+d/\lambda_{n}=d\rho nf_{1}\left(\frac{\left|J_{n}^{*}\right|\sin\phi_{n}}{\rho}\right)^{1/2}\frac{\cos\left(\phi_{n}/2\right)}{\left(\sin\phi_{n}\right)^{1/2}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+The following expression for the load impedance of a film is also useful,
+ which combines Eqs.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:kstar"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:film zstar"
+
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\begin{equation}
+Z_{n,0}^{*}=iZ_{n}^{*}\tan\left(\frac{2\pi nf_{1}\rho d}{Z_{n}^{*}}\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+We can also relate the resonance frequency to the crystal thickness, starting
+ with the shear wave velocity in quartz.
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+c_{q}=\left(\frac{G_{q}}{\rho_{q}}\right)^{1/2}=\frac{1}{\rho_{q}}\left(G_{q}\rho_{q}\right)^{1/2}=\frac{Z_{q}}{\rho_{q}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+This velocity is then related to the fundamental resonant frequency and
+ the thickness through the following expression:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+d_{q}=\frac{c_{q}}{2f_{1}}=\frac{Z_{q}}{2\rho_{q}f_{1}};\,\,\,\,d_{q}\rho_{q}=\frac{Z_{q}}{2f_{1}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Bulk expressions
+\end_layout
+
+\begin_layout Plain Layout
+In the bulk limit, we can get 
+\begin_inset Formula $\left|G_{n}^{*}\right|\rho$
+\end_inset
+
+ and 
+\begin_inset Formula $\phi_{n}$
+\end_inset
+
+ directly from 
+\begin_inset Formula $\Delta f_{n}^{*}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\left|G_{n}^{*}\right|\rho=\left(\frac{\pi Z_{q}\left|\Delta f_{n}^{*}\right|}{f_{1}}\right)^{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\phi_{n}=-2\arctan\left(\frac{\Delta f_{n}^{*}}{\Delta\Gamma_{n}^{*}}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+The decay length is
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\delta_{n}\rho=\frac{\rho}{\mathrm{Im}\left(k^{*}\right)}=\frac{\left(\rho\left|G_{n}^{*}\right|\right)^{1/2}}{2\pi f_{n}\sin\left(\phi_{n}/2\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\delta_{n}\rho=-\frac{\left(\rho\left|G_{n}^{*}\right|\right)^{1/2}}{2\pi f_{n}\sin\left(\arctan\left(\frac{\Delta f_{n}}{\Delta\Gamma_{n}}\right)\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+But 
+\begin_inset Formula $\sin\left(\arctan\left(x\right)\right)=x/\sqrt{1+x^{2}}$
+\end_inset
+
+, so we have:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\delta_{n}\rho=\frac{\frac{\pi Z_{q}\left|\Delta f_{n}^{*}\right|}{f_{1}}\left(1+\left(\frac{\Delta f_{n}}{\Delta\Gamma_{n}}\right)^{2}\right)^{1/2}}{2\pi f_{n}\frac{\Delta f_{n}}{\Delta\Gamma_{n}}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\delta_{n}\rho=\frac{Z_{q}}{2f_{1}f_{n}}\frac{\left(\Delta f_{n}^{2}+\Delta\Gamma_{n}^{2}\right)^{1/2}\left(1+\left(\frac{\Delta f_{n}}{\Delta\Gamma_{n}}\right)^{2}\right)^{1/2}}{\frac{\Delta f_{n}}{\Delta\Gamma_{n}}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\delta_{n}\rho=\frac{Z_{q}}{2nf_{1}^{2}\Delta f_{n}}\left|\Delta f_{n}^{*}\right|^{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Subsection
+Voigt Model
+\end_layout
+
+\begin_layout Plain Layout
+In the power law model commonly employed in our group, 
+\begin_inset Formula $\phi$
+\end_inset
+
+ is assumed to be independent of 
+\begin_inset Formula $n$
+\end_inset
+
+ and the 
+\begin_inset Formula $n$
+\end_inset
+
+-dependence of 
+\begin_inset Formula $d/\lambda_{n}$
+\end_inset
+
+ is given by Eq.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:power law d/lambds"
+
+\end_inset
+
+.
+ In the commonly used Voigt model, 
+\begin_inset Formula $G^{\prime}$
+\end_inset
+
+ is assumed to be independent of 
+\begin_inset Formula $n$
+\end_inset
+
+ and 
+\begin_inset Formula $G^{\prime\prime}$
+\end_inset
+
+ is assumed to increase linearly with 
+\begin_inset Formula $n$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+G_{n}^{\prime}=G_{3}^{\prime}=\left|G_{3}^{*}\right|\cos\phi_{3}\label{eq:G prime vs n}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+G_{n}^{\prime\prime}=\frac{n}{3}G_{3}^{\prime\prime}=\frac{n}{3}\left|G_{3}^{*}\right|\sin\phi_{3}\label{eq:G double prime vs n}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+This model is not rheologically self-consistent, as pointed out by Reviakine
+ 
+\emph on
+et al.
+
+\emph default
+ 
+\begin_inset CommandInset citation
+LatexCommand citep
+key "reviakine_hearing_2011"
+literal "true"
+
+\end_inset
+
+ However, we can use it as a point of comparison to see how much the assumed
+ frequency dependence affects the properties that are extracted from our
+ analysis.
+ Equations 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:G prime vs n"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:G double prime vs n"
+
+\end_inset
+
+ can be combined to give the following expressions for 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\left|G_{n}^{*}\right|$
+\end_inset
+
+ and 
+\begin_inset Formula $\phi_{n}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\phi_{n}=\arctan\left(\frac{n}{3}\tan\phi_{3}\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\left|G_{n}^{*}\right|=\left|G_{3}^{*}\right|\left(\cos^{2}\left(\phi_{3}\right)+\frac{n^{2}}{9}\sin^{2}\left(\phi_{3}\right)\right)^{1/2}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+These expressions can then be used in conjunction with Eq.
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:d over lambda vs Gstar"
+
+\end_inset
+
+ to get an expression relating 
+\begin_inset Formula $d/\lambda_{n}$
+\end_inset
+
+ to 
+\begin_inset Formula $d/\lambda_{3}$
+\end_inset
+
+ and 
+\begin_inset Formula $\phi_{3}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\frac{d}{\lambda_{n}}=\frac{d}{\lambda_{3}}\frac{n}{3}\left(\cos^{2}\left(\phi_{3}\right)+\frac{n^{2}}{9}\sin^{2}\left(\phi_{3}\right)\right)^{-1/4}\frac{\cos\left(\frac{1}{2}\arctan\left(\frac{n}{3}\tan\phi_{3}\right)\right)}{\cos\left(\phi_{3}/2\right)}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+d/\lambda_{n}=d\rho f_{n}\left(\frac{1}{\rho\left|G_{n}^{*}\right|}\right)^{1/2}\cos\left(\phi_{n}/2\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+d/\lambda_{n}\propto n\left(\frac{1}{\left|G_{n}^{*}\right|}\right)^{1/2}\cos\left(\phi_{n}/2\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{d/\lambda_{n}}{d/\lambda_{3}}=\frac{n}{3}\left(\frac{\left|G_{3}^{*}\right|}{\left|G_{n}^{*}\right|}\right)^{1/2}\frac{\cos\left(\phi_{n}/2\right)}{\cos\left(\phi_{3}/2\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{d/\lambda_{n}}{d/\lambda_{3}}=\frac{n}{3}\left(\cos^{2}\left(\phi_{3}\right)+\frac{n^{2}}{9}\sin^{2}\left(\phi_{3}\right)\right)^{-1/4}\frac{\cos\left(\frac{1}{2}\arctan\left(\frac{n}{3}\tan\phi_{3}\right)\right)}{\cos\left(\phi_{3}/2\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{d}{\lambda_{n}}=\frac{d}{\lambda_{3}}\frac{n}{3}\left(\cos^{2}\left(\phi_{3}\right)+\frac{n^{2}}{9}\sin^{2}\left(\phi_{3}\right)\right)^{-1/4}\frac{\cos\left(\frac{1}{2}\arctan\left(\frac{n}{3}\tan\phi_{3}\right)\right)}{\cos\left(\phi_{3}/2\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+d/\lambda_{n}==d\rho nf_{1}\left(\frac{1}{\rho\left|G_{n}^{*}\right|}\right)^{1/2}\cos\left(\phi_{n}/2\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+d/\lambda_{n}==d\rho nf_{1}\left(\frac{1}{\rho\left|G_{3}^{*}\right|\left(n/3\right)^{\phi/90}}\right)^{1/2}\cos\left(\phi_{n}/2\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+d/\lambda_{n}=\frac{3}{3}d\rho nf_{1}\left(n/3\right)^{-\phi/180}\left(\frac{1}{\rho\left|G_{3}^{*}\right|}\right)^{1/2}\cos\left(\phi_{n}/2\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+d/\lambda_{3}==3d\rho f_{1}\left(\frac{1}{\rho\left|G_{3}^{*}\right|}\right)^{1/2}\cos\left(\phi_{n}/2\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+d/\lambda_{n}=\left(d/\lambda_{3}\right)\frac{1}{3}n\left(n/3\right)^{-\phi/180}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+d/\lambda_{n}=\left(d/\lambda_{3}\right)\left(n/3\right)^{1-\phi/180}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Section
+Error determination for 
+\begin_inset Formula $J_{3}^{\prime\prime}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+For thin films, we are most sensitive to 
+\begin_inset Formula $J_{3}^{\prime\prime}=\sin\phi/\left|G_{3}^{*}\right|$
+\end_inset
+
+.
+ Equivalently, we have:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+J_{3}^{\prime\prime}/\rho=\sin\phi/\left|G_{3}^{*}\right|\rho
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+or
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\begin{equation}
+\left|G_{3}^{*}\right|\rho=\sin\phi/\left(J_{3}^{\prime\prime}/\rho\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+From the chain rule, we have
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\begin{equation}
+\frac{\partial\Delta f_{n_{1}}}{\partial\left(J^{\prime\prime}/\rho\right)}=\frac{\partial\Delta f_{n_{1}}}{\partial\left(\left|G_{3}^{*}\right|\rho\right)}\frac{\partial\left(\left|G_{3}^{*}\right|\rho\right)}{\partial\left(J^{\prime\prime}/\rho\right)}=-\frac{\partial\Delta f_{n_{1}}}{\partial\left(\left|G_{3}^{*}\right|\rho\right)}\frac{\sin\phi}{\left(J_{3}^{\prime\prime}/\rho\right)^{2}}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+So to get the Jacobian for for the case where 
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\uuline off
+\uwave off
+\noun off
+\color none
+
+\begin_inset Formula $\left|G_{3}^{*}\right|\rho$
+\end_inset
+
+ is replaced by 
+\begin_inset Formula $J^{\prime\prime}/\rho$
+\end_inset
+
+ we just multiply the middle row in the Jacobian by 
+\begin_inset Formula $-\sin\phi/\left(J_{3}^{\prime\prime}/\rho\right)^{2}$
+\end_inset
+
+.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+btprint "btPrintCited"
+bibfiles "QCM"
+options "MSEcore"
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
