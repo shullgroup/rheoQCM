@@ -210,11 +210,11 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>1</number>
+             <number>3</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -1152,7 +1152,7 @@ background-color: red;
             </widget>
             <widget class="QWidget" name="tab_settings_settings">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -1212,7 +1212,7 @@ background-color: red;
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <property name="documentMode">
                     <bool>false</bool>
@@ -1626,8 +1626,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>83</width>
-                   <height>71</height>
+                   <width>286</width>
+                   <height>160</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -3946,6 +3946,12 @@ border-image: url(:/button/rc/plus_p.svg);
                 </property>
                 <item>
                  <widget class="QPushButton" name="pushButton_settings_mechanics_simulator">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="text">
                    <string>Shift Simulator</string>
                   </property>

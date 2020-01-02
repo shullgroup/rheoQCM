@@ -1080,6 +1080,34 @@ class QCM:
         return df
 
 
+    def convert_mech_unit_data(self, data, varname):
+        '''
+        convert unit of grho, phi, drho from IS to those convient to use
+        data: int, array, list
+        varname: str
+
+        '''
+        if isinstance(data, list):
+            data = np.array(data)
+
+        # logger.info(col) 
+        if varname in ['drho', 'lamrho', 'delrho', 'sauerbreyms']: # delta m
+            # logger.info('x1000') 
+            data = data * 1000 # from m kg/m3 to um g/cm3
+        elif varname in ['grho', 'etarho']:
+            # logger.info('x1/1000') 
+            data = data / 1000 # from Pa kg/m3 to Pa g/cm3 (~ Pa)
+        elif 'phi' in varname:
+            # logger.info('rad2deg') 
+            data = np.rad2deg(data) # from rad to deg
+        elif 'D' in varname: # dissipation
+            data = data * 1e6 # D to ppm
+        else:
+            # logger.info('NA') 
+            pass
+        return data
+
+
     def single_harm_data(self, var, qcm_df):
         '''
         get variables calculate from single harmonic

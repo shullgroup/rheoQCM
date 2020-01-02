@@ -784,7 +784,12 @@ config_default = {
 #####################################################
 
 settings_default = {
-#### default settings control ####
+    #### default settings control ####
+
+    # copies of same keys in config_default
+    'max_harmonic': config_default['max_harmonic'],
+    'time_str_format': config_default['time_str_format'],
+    'vna_path': config_default['vna_path'],
 
     # add na_path on your computer if it is not in the 
     # default path listed in config_default['vna_path']

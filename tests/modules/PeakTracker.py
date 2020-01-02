@@ -682,7 +682,7 @@ class PeakTracker:
                 new_xlim = [(current_xlim[0] - thresh2), (current_xlim[1] + thresh2)] # Hz '''
         elif track_condition == 'fixcntspn':
             logger.info('fixcntspn') 
-            # bothe span and cent are fixed
+            # both span and cent are fixed
             # no changes
             pass
         elif track_condition == 'usrdef': #run custom tracking algorithm
