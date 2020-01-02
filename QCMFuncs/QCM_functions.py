@@ -23,6 +23,9 @@ f1 = 5e6  # fundamental resonant frequency
 openplots = 4
 drho_q = Zq/(2*f1)
 e26 = 9.65e-2
+g0 = 50 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
+err_frac = 3e-2 # error in f or gamma as a fraction of gamma
+
 electrode_default = {'drho':2.8e-3, 'grho3':3.0e14, 'phi':0}
 
 # find indices of an array where the values are closet to the ones specified
@@ -33,7 +36,8 @@ def find_nearest_idx(values, array):
     idx = np.zeros(values.size, dtype=int)
     for i in np.arange(values.size):
         idxval = np.searchsorted(array, values[i], side="left")
-        if idxval > 0 and (idxval == len(array) or np.abs(values[i] - array[idxval-1]) < 
+        if idxval > 0 and (idxval == len(array) or 
+                           np.abs(values[i] - array[idxval-1]) < 
                         np.abs(values[i] - array[idxval])):
             idx[i] = idxval-1
         else:
@@ -62,19 +66,20 @@ def add_D_axis(ax):
 
 def fstar_err_calc(n, delfstar, layers):
     # calculate the error in delfstar
-    g_err_min = 1 # error floor for gamma
-    f_err_min = 1 # error floor for fd
-    err_frac = 1e-2 # error in f or gamma as a fraction of gamma
+    # g here is the dissipation
+    # g0 is dissipation of bare crystal
+    # g0, err_frac set at the top of this file
+    # err_frac is error in f, g as a franction of g
+
+    g=g0 + np.imag(delfstar)
+    
     if 'overlayer' in layers:
-        fstar = delfstar + calc_delfstar(n, {'film':layers['overlayer']}, 
+        delg = calc_delfstar(n, {'film':layers['overlayer']}, 
                                              'SLA')
-    else:
-        fstar = delfstar
+        g=g+delg
             
     # start by specifying the error input parameters
-    fstar_err = np. zeros(1, dtype=np.complex128)
-    fstar_err = (f_err_min + err_frac*fstar.imag + 1j*
-                 (g_err_min + err_frac*fstar.imag))
+    fstar_err = err_frac*abs(g)*(1+1j)
     return fstar_err
 
 
@@ -118,11 +123,22 @@ def calc_D(n, material, delfstar,calctype):
     else:
         return 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n, 
                        material,calctype)
+    
+def calc_grho3(grhostar, n):
+    # calculate value of grho3 from given value of Grho at another harmonic,
+    # assuming power law behavior
+    # gstar is the complex modulus at harmonic n
+    phi=np.angle(grhostar, deg=True)
+    grhon=abs(grhostar)
+    grho3=grhon*(3/n)**(phi/90)
+    # we return values of grho3 and phi which return the correct value of grhostar
+    # at the nth harmonic
+    return grho3, phi
 
 
 def zstar_bulk(n, material, calctype):
     grho3 = material['grho3']
-    if calctype != 'QCMD':
+    if calctype != 'Voigt':
         grho = grho3*(n/3)**(material['phi']/90) 
         grhostar = grho*np.exp(1j*np.pi*material['phi']/180)
     else:
@@ -233,19 +249,19 @@ def calc_delfstar(n, layers, calctype):
 
 def calc_Zmot(n, layers, delfstar, calctype):
     om = 2 * np.pi *(n*f1 + delfstar)
-    g0 = 10 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
     Zqc = Zq * (1 + 1j*2*g0/(n*f1))
-    dq = 330e-6  # only needed for piezoelectric stiffening calc.
-    epsq = 4.54; eps0 = 8.8e-12; C0byA = epsq * eps0 / dq; ZC0byA = C0byA / (1j*om)
-    ZPE = -(e26/dq)**2*ZC0byA  # ZPE accounts for oiezoelectric stiffening anc
-    # can always be neglected as far as I can tell
 
     Dq = om*drho_q/Zq
     secterm = -1j*Zqc/np.sin(Dq)
     ZL = calc_ZL(n, layers, delfstar,calctype)
     # eq. 4.5.9 in book
     thirdterm = ((1j*Zqc*np.tan(Dq/2))**-1 + (1j*Zqc*np.tan(Dq/2) + ZL)**-1)**-1
-    Zmot = secterm + thirdterm  +ZPE
+    Zmot = secterm + thirdterm  
+    # uncomment next 4 lines to account for piezoelectric stiffening
+    # dq = 330e-6  # only needed for piezoelectric stiffening calc.
+    # epsq = 4.54; eps0 = 8.8e-12; C0byA = epsq * eps0 / dq; ZC0byA = C0byA / (1j*om)
+    # ZPE = -(e26/dq)**2*ZC0byA  
+    # Zmot=Zmot+ZPE 
     return Zmot
 
 
@@ -395,14 +411,14 @@ def solve_for_props(delfstar, **kwargs):
         if filmtype != 'bulk':
             def ftosolve(x):
                 layers['film'] = {'grho3':x[0], 'phi':x[1], 'drho':x[2]}
-                return ([df[i][n1].real-calc_delfstar(n1, layers, calctype).real,
-                         df[i][n2].real-calc_delfstar(n2, layers, calctype).real,
-                         df[i][n3].imag-calc_delfstar(n3, layers, calctype).imag])
+                return ([calc_delfstar(n1, layers, calctype).real-df[i][n1].real,
+                         calc_delfstar(n2, layers, calctype).real-df[i][n2].real,
+                         calc_delfstar(n3, layers, calctype).imag-df[i][n3].imag])
         else:
             def ftosolve(x):
                 layers['film'] = {'drho':np.inf, 'grho3':x[0], 'phi':x[1]}
-                return ([df[i][n1].real-calc_delfstar(n1, layers, calctype).real,
-                         df[i][n1].imag-calc_delfstar(n1, layers, calctype).imag])
+                return ([calc_delfstar(n1, layers, calctype).real-df[i][n1].real,
+                         calc_delfstar(n1, layers, calctype).imag-df[i][n1].imag])
 
         # initialize the output uncertainties
         err = {}
@@ -430,11 +446,11 @@ def solve_for_props(delfstar, **kwargs):
 
         # determine error from Jacobian
         err = {}
-        for k in np.arange(len(x0)):
-            for m in np.arange(len(x0)):
-                err[k]=0
-                err[k] = err[k]+(deriv[k, m]*delfstar_err[m])**2
-            err[k] = np.sqrt(err[k])
+        for p in np.arange(len(x0)):  # p = property
+            err[p]=0
+            for k in np.arange(len(x0)):
+                err[p] = err[p]+(deriv[p, k]*delfstar_err[k])**2
+            err[p] = np.sqrt(err[p])
 
         if filmtype == 'bulk':
             err[2]=np.nan
@@ -465,11 +481,93 @@ def solve_for_props(delfstar, **kwargs):
             x0 = np.array([grho3, phi])
         else:
             x0 = np.array([grho3, phi, drho])
-
+    data['calc']=calc
+    data['calctype']=calctype
     # add these calculated values to existing dataframe
     new_info = pd.DataFrame(data)
     new_df = pd.concat([delfstar, new_info], axis=1)
     return new_df
+
+
+def make_err_plot(df_in, **kwargs):
+    fig, ax = make_prop_axes(figsize=(12,3))
+    idx = kwargs.get('idx', 0) # specify specific point to use
+    npts= kwargs.get('npts', 10)
+    err_range=kwargs.get('err_range', 1) # >1 to extend beyond calculated err
+    err_range=max(1, err_range) 
+    calctype=df_in['calctype'][idx]
+    calc=df_in['calc'][idx]
+    deriv=df_in['deriv'][idx]
+    delfstar_err = df_in['delfstar_err'][idx]
+    guess = {'grho3':df_in['grho3'][idx],
+             'phi':df_in['phi'][idx],
+             'drho':df_in['drho'][idx]}
+
+    delfstar_0={}
+    
+    for nstr in list(set(calc)):
+        n=int(nstr)
+        delfstar_0[n]=df_in[n][idx]
+    
+    # now generate series of delfstar values based on the errors
+    delfstar_del={}
+    
+    # set some parameters for the plots
+    mult=np.array([1,1,1j], dtype=complex) # frequency or dissipation shift
+    forg={0:'f', 1:'f', 2:'$\Gamma$'}
+    prop_type = {0:'grho3', 1:'phi', 2:'drho'}
+    scale_factor = {0:0.001, 1:1, 2:1000}
+    marker = {0:'+', 1:'s', 2:'o'}
+    
+    # intialize values of delfstar
+    for k in [0,1,2]:
+        delfstar_del[k]={}
+        for n in [3,5]:
+            delfstar_del[k][n]=np.ones(npts)*delfstar_0[n]
+            
+    # adjust values of delfstar and calculate properties
+    for k in [0,1,2]:
+        ax[k].set_xlabel(r'$(X-X_0)/X^{err}$')
+        n = int(calc[k])
+        err = err_range*delfstar_err[k]
+        delta=np.linspace(-err, err, npts)
+        delfstar_del[k][n]=delfstar_del[k][n]+delta*mult[k]
+        delfstar_df=pd.DataFrame.from_dict(delfstar_del[k])
+        props = solve_for_props(delfstar_df, calc=calc,
+                                          calctype=calctype, guess=guess)
+        # make the property plots
+        for p in [0,1,2]:
+            ax[p].plot(delta/delfstar_err[k], props[prop_type[p]]*scale_factor[p], 
+                       marker=marker[k], linestyle='none',
+                       label=r'X='+forg[k]+'$_'+str(n)+'$')
+            
+     
+    # reset color cycles so dervitave plots match the color scheme
+    for p in [0, 1, 2]:
+        ax[p].set_prop_cycle(None)
+        for k in [0, 1, 2]:
+            err = delfstar_err[k]
+            xdata = np.array([-err_range, 0, err_range])
+            ydata = (np.ones(3)*df_in[prop_type[p]][idx]*scale_factor[p]+
+                     err*xdata*scale_factor[p]*deriv[p][k])
+            ax[p].plot(xdata, ydata, '-')
+        
+        # now add the originally calculated error
+            err0=df_in[prop_type[p]+'_err']
+            ax[p].errorbar(0, df_in[prop_type[p]][idx]*scale_factor[p],
+                           yerr=err0*scale_factor[p], color='k')
+            
+    ax[0].legend(loc='center', bbox_to_anchor=(-0.5, 0, 0, 1))
+    sub_string={}
+    for k in [0, 1, 2]:
+        n=calc[k]
+        sub_string[k]=(forg[k]+'$_'+n+'^{err}=$'+
+                         f'{delfstar_err[k]:.0f}'+' Hz')
+    title_string=(sub_string[0]+'; '+sub_string[1]+'; '+sub_string[2]+
+                  '; '+'err_frac='+str(err_frac))
+    fig.suptitle(r''+title_string)
+    fig.tight_layout()
+    return fig
 
 
 def make_prop_axes(**kwargs):
@@ -478,10 +576,12 @@ def make_prop_axes(**kwargs):
     num = kwargs.get('num','property fig')
 
     if filmtype != 'bulk':
-        fig, ax = plt.subplots(1,3, figsize=(9, 3), num=num)
+        figsize=kwargs.get('figsize',(9,3))
+        fig, ax = plt.subplots(1,3, figsize=figsize, num=num)
         ax[2].set_ylabel(r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)')
     else:
-        fig, ax = plt.subplots(1,2, figsize=(6, 3), num=num)
+        figsize=kwargs.get('figsize',(6,3))
+        fig, ax = plt.subplots(1,2, figsize=figsize, num=num)
 
     ax[0].set_ylabel(r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)')
     ax[0].ticklabel_format(axis='y', style='sci', scilimits=(0,0))
