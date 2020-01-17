@@ -497,7 +497,7 @@ def make_err_plot(df_in, **kwargs):
     err_range=max(1, err_range) 
     calctype=df_in['calctype'][idx]
     calc=df_in['calc'][idx]
-    deriv=df_in['deriv'][idx]
+    deriv=df_in['deriv'][idx]    
     delfstar_err = df_in['delfstar_err'][idx]
     guess = {'grho3':df_in['grho3'][idx],
              'phi':df_in['phi'][idx],
