@@ -28,7 +28,7 @@ err_frac = 3e-2 # error in f or gamma as a fraction of gamma
 
 electrode_default = {'drho':2.8e-3, 'grho3':3.0e14, 'phi':0}
 
-# find indices of an array where the values are closet to the ones specified
+
 def find_nearest_idx(values, array):
     # find index of a point with value closest to the one specified
     # make values a numpy array if it isn't already
@@ -312,11 +312,12 @@ def rd_from_delfstar(n, delfstar):
 
     
 def bulk_props(delfstar):
+    # delfstar is value at harmonic where we are calculating grho, phi
     # get the bulk solution for grho and phi
-    grho3 = (np.pi*Zq*abs(delfstar[3])/f1) ** 2
-    phi = -np.degrees(2*np.arctan(delfstar[3].real /
-                      delfstar[3].imag))
-    return [grho3, min(phi, 90)]
+    grho = (np.pi*Zq*abs(delfstar)/f1) ** 2
+    phi = -np.degrees(2*np.arctan(delfstar.real /
+                      delfstar.imag))
+    return grho, min(phi, 90)
 
 
 def thinfilm_guess(delfstar, calc):
@@ -350,7 +351,7 @@ def thinfilm_guess(delfstar, calc):
 def solve_for_props(delfstar, **kwargs):
     # solve the QCM equations to determine the properties
 
-    df = delfstar.T  # transpose the input dataframe
+    df_in = delfstar.T  # transpose the input dataframe
     if 'overlayer' in kwargs.keys():
         layers={'overlayer':kwargs['overlayer']}
     else:
@@ -362,7 +363,7 @@ def solve_for_props(delfstar, **kwargs):
 
     calc = kwargs.get('calc') # specify the values used in the n1:n2,n3 calculation
     n1 = int(calc[0]); n2 = int(calc[1]); n3 = int(calc[2])
-
+    
     # set upper and lower bounds
     lb = kwargs.get('lb', [1e5, 0, 0])
     ub = kwargs.get('ub', [1e13, 90, 3e-2])
@@ -376,55 +377,57 @@ def solve_for_props(delfstar, **kwargs):
         drho, grho3, phi = guess['drho'], guess['grho3'], guess['phi']
     elif filmtype=='bulk':
         n3=n1 # bulk solution uses delta f and delta gamma from same harmonic
-        grho3, phi = bulk_props(df[0])
+        grho3, phi = bulk_props(df_in[0][3])
         drho = np.inf
-        lb = lb[0:2]
-        ub = ub[0:2]
     else:
-        drho, grho3, phi = thinfilm_guess(df[0], calc)
+        drho, grho3, phi = thinfilm_guess(df_in[0], calc)
 
     # set up the initial guess
     if filmtype == 'bulk':
         x0 = np.array([grho3, phi])
+        lb = lb[0:2]
+        ub = ub[0:2]
     else:
         x0 = np.array([grho3, phi, drho])
 
-    # add extra rows to the dataframe for all the calculated values
-    newrows = []
+    # create keys for output dictionary and dataframe
+    out_rows = []
     for n in nplot:
-        newrows = newrows + ['df_calc'+str(n)]
+        out_rows = out_rows + ['df_expt'+str(n), 'df_calc'+str(n)]
         
-    newrows = newrows+['drho', 'drho_err', 'grho3', 'grho3_err', 'phi', 'phi_err',
-                       'dlam3',  'delfstar_err', 'deriv']
+    out_rows = out_rows+['drho', 'drho_err', 'grho3', 'grho3_err', 'phi', 'phi_err',
+                       'dlam3', 'index', 't', 'temp']
 
     data = {}
-    for element in newrows:
-        data[element] = {}
-        for i in np.arange(df.shape[1]):
-            data[element][i] = {}
-
-    newrows = pd.DataFrame(columns=df.columns, index=newrows)
-    df=df.append(newrows)
-
+    for element in out_rows:
+        data[element] = np.array([])
+    
+    for n in nplot:
+        data['df_expt'+str(n)]=np.array([])
+        data['df_calc'+str(n)]=np.array([])
+    
     # obtain the solution, using either the SLA or LL methods
-    for i in df.columns:
+    for i in df_in.columns:
+        if np.isnan([df_in[i][n1], df_in[i][n2], df_in[i][n3]]).any():
+            continue
         if filmtype != 'bulk':
             def ftosolve(x):
                 layers['film'] = {'grho3':x[0], 'phi':x[1], 'drho':x[2]}
-                return ([calc_delfstar(n1, layers, calctype).real-df[i][n1].real,
-                         calc_delfstar(n2, layers, calctype).real-df[i][n2].real,
-                         calc_delfstar(n3, layers, calctype).imag-df[i][n3].imag])
+                return ([calc_delfstar(n1, layers, calctype).real-df_in[i][n1].real,
+                         calc_delfstar(n2, layers, calctype).real-df_in[i][n2].real,
+                         calc_delfstar(n3, layers, calctype).imag-df_in[i][n3].imag])
         else:
             def ftosolve(x):
                 layers['film'] = {'drho':np.inf, 'grho3':x[0], 'phi':x[1]}
-                return ([calc_delfstar(n1, layers, calctype).real-df[i][n1].real,
-                         calc_delfstar(n1, layers, calctype).imag-df[i][n1].imag])
+                return ([calc_delfstar(n1, layers, calctype).real-df_in[i][n1].real,
+                         calc_delfstar(n1, layers, calctype).imag-df_in[i][n1].imag])
 
         # initialize the output uncertainties
         err = {}
         soln = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
         grho3 = soln['x'][0]
         phi = soln['x'][1]
+        print(soln['x'])
 
         if filmtype != 'bulk':
             drho = soln['x'][2]
@@ -440,9 +443,9 @@ def solve_for_props(delfstar, **kwargs):
 
         # put the input uncertainties into a 3 element vector
         delfstar_err = np.zeros(3)
-        delfstar_err[0] = fstar_err_calc(n1, df[i][n1], layers).real
-        delfstar_err[1] = fstar_err_calc(n2, df[i][n2], layers).real
-        delfstar_err[2] = fstar_err_calc(n3, df[i][n3], layers).imag
+        delfstar_err[0] = fstar_err_calc(n1, df_in[i][n1], layers).real
+        delfstar_err[1] = fstar_err_calc(n2, df_in[i][n2], layers).real
+        delfstar_err[2] = fstar_err_calc(n3, df_in[i][n3], layers).imag
 
         # determine error from Jacobian
         err = {}
@@ -458,35 +461,32 @@ def solve_for_props(delfstar, **kwargs):
         # now back calculate delfstar from the solution
         delfstar_calc = {}
 
+        # add experimental and calculated values to the dictionary
         for n in nplot:
             delfstar_calc[n] = calc_delfstar(n, layers, calctype)
+            data['df_calc'+str(n)]=(np.append(data['df_calc'+str(n)], 
+                                             round(delfstar_calc[n],1)))
+            data['df_expt'+str(n)]=(np.append(data['df_expt'+str(n)], 
+                                             delfstar[n][i]))
 
-        for n in nplot:
-            data['df_calc'+str(n)][i]=round(delfstar_calc[n],1)
+        var_name = ['grho3', 'phi', 'drho', 'grho3_err', 'phi_err', 'drho_err',
+                    'dlam3', 't', 'index', 'temp']
+        var = [grho3, phi, drho, err[0], err[1], err[2],
+               dlam3, delfstar['t'][i], delfstar['index'][i], 
+               delfstar['temp'][i]]
 
-        data['grho3'][i] = grho3
-        data['phi'][i] = phi
-        data['drho'][i] = drho
-
-        data['grho3_err'][i] = err[0]
-        data['phi_err'][i] = err[1]
-        data['drho_err'][i] = err[2]
-
-        data['dlam3'][i] = dlam3
-        data['delfstar_err'][i] = delfstar_err
-        data['deriv'][i] = deriv
+        for k in np.arange(len(var_name)):
+            data[var_name[k]] = np.append(data[var_name[k]], var[k])     
 
         # set up the initial guess
         if filmtype == 'bulk':
             x0 = np.array([grho3, phi])
         else:
             x0 = np.array([grho3, phi, drho])
-    data['calc']=calc
-    data['calctype']=calctype
+
     # add these calculated values to existing dataframe
-    new_info = pd.DataFrame(data)
-    new_df = pd.concat([delfstar, new_info], axis=1)
-    return new_df
+    df_out = pd.DataFrame(data)
+    return df_out
 
 
 def make_err_plot(df_in, **kwargs):
@@ -590,6 +590,88 @@ def make_prop_axes(**kwargs):
 
     # set xlabel to 'index' by default
     for i in np.arange(len(ax)):
+        ax[i].set_xlabel('index')
+    fig.tight_layout()
+    return fig, ax
+
+
+def prop_plots(df, ax, **kwargs):
+    xunit=kwargs.get('xunit', 'index')
+    legend=kwargs.get('legend','none')
+    plotdrho=kwargs.get('plotdrho', True)
+     
+    if xunit =='s':
+        xdata = df['t']
+        xlabel ='$t$ (s)'
+    elif xunit == 'min':
+        xdata = df['t']/60
+        xlabel ='$t$ (min.)'
+    elif xunit == 'hr':
+        xdata = df['t']/3600
+        xlabel ='$t$ (hrs)'
+    elif xunit == 'day':
+        xdata = df['t']/(24*3600)
+        xlabel ='$t$ (days)'
+    else:
+        xdata =xdata = df['index']
+        xlabel ='index'
+        
+    ax[0].plot(xdata, df['grho3']/1000,'+', label=legend)
+    ax[1].plot(xdata, df['phi'],'+', label=legend)
+    
+    if len(ax)==3 and plotdrho:
+        ax[2].plot(xdata, df['drho']*1000, '+', label=legend)
+    
+    for k in np.arange(len(ax)):
+        ax[k].set_xlabel(xlabel)
+        ax[k].set_yscale('linear')
+        if legend!='none':
+            ax[k].legend()
+
+
+
+def check_plots(df, ax, nplot, **kwargs):
+    xunit=kwargs.get('xunit', 'index')
+     
+    if xunit =='s':
+        xdata = df['t']
+        xlabel ='$t$ (s)'
+    elif xunit == 'min':
+        xdata = df['t']/60
+        xlabel ='$t$ (min.)'
+    elif xunit == 'hr':
+        xdata = df['t']/3600
+        xlabel ='$t$ (hrs)'
+    elif xunit == 'day':
+        xdata = df['t']/(24*3600)
+        xlabel ='$t$ (days)'
+    else:
+        xdata =xdata = df['index']
+        xlabel ='index'
+            
+    # compare measured and calculated delfstar
+    for n in nplot:
+        p=ax[0].plot(xdata, -np.real(df['df_expt'+str(n)]),'+')
+        ax[1].plot(xdata, np.imag(df['df_expt'+str(n)]),'+')
+        col=p[0].get_color()
+        ax[0].plot(xdata, -np.real(df['df_calc'+str(n)]),'-', color=col)
+        ax[1].plot(xdata, np.imag(df['df_calc'+str(n)]),'-', color=col)
+    
+    for k in [0,1]:
+        ax[k].set_xlabel(xlabel)
+        ax[k].set_yscale('log')
+
+
+def make_check_axes(**kwargs):
+    # set up axes to compare measured and calculated delfstar values
+    figsize=kwargs.get('figsize',(6,3))
+    fig, ax = plt.subplots(1,2, figsize=figsize)
+
+    ax[0].set_ylabel(r'-$\Delta f$ (Hz))')
+    ax[1].set_ylabel(r'$\Delta \Gamma$ (Hz)')
+
+    # set xlabel to 'index' by default
+    for i in [0, 1]:
         ax[i].set_xlabel('index')
     fig.tight_layout()
     return fig, ax
