@@ -332,6 +332,457 @@ literal "true"
 \end_layout
 
 \begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
+Derivation of the small load approximation:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\begin{equation}
+\frac{1}{\tan\left(k_{qn}^{*}d_{q}/2\right)-iZ_{Ln,back}^{*}/Z_{q}^{*}}+\frac{1}{\tan\left(k_{qn}^{*}d_{q}/2\right)-iZ_{Ln,front}^{*}/Z_{q}^{*}}=\sin\left(k_{qn}^{*}d_{q}\right)
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Reference frequency (load impedances set to zero)
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\tan\left(k_{q0}^{*}d_{q}/2\right)}{2}=\frac{1}{\sin\left(k_{q0}^{*}d_{q}\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Now we use 
+\begin_inset Formula $\tan\left(x/2\right)=\sin x/\left(1+\cos x\right)$
+\end_inset
+
+ to give:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\sin\left(k_{q0}^{*}d_{q}\right)}{1+\cos\left(k_{q0}^{*}d_{q}\right)}=\frac{1}{\sin\left(k_{q0}^{*}d_{q}\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\sin^{2}\left(k_{q0}^{*}d_{q}\right)=1+\cos\left(k_{q0}^{*}d_{q}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+-1=\cos\left(k_{q0}^{*}d_{q}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+k_{q0}^{*}d_{q}=n\pi;\,\,n=1,3,5,
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+with 
+\begin_inset Formula $k_{q0}^{*}=2\pi/\lambda$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+d=n\lambda/2;\,\,n=1,3,5,
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+We can also use:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+k_{q0}^{*}d_{q}=\frac{2\pi\left(nf_{1}\right)\rho_{q}d_{q}}{Z_{q}^{*}}=n\pi
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+or
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\rho_{q}d_{q}}{Z_{q}^{*}}=\frac{1}{2f_{1}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+So this checks out okay.
+\end_layout
+
+\begin_layout Plain Layout
+We can write the expression for 
+\begin_inset Formula $k_{q}^{*}$
+\end_inset
+
+ this way:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+k_{q}^{*}d_{q}=k_{q0}^{*}d_{q}+\frac{2\pi\left(\Delta f_{n}^{*}\right)\rho_{q}d_{q}}{Z_{q}^{*}}=n\pi+\frac{2\pi\left(\Delta f_{n}^{*}\right)\rho_{q}d_{q}}{Z_{q}^{*}}=n\pi+\frac{\pi\Delta f_{n}^{*}}{f_{1}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+The master equation (ignoring the back surface impedance) is now:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\frac{1}{\tan\left(\frac{n\pi}{2}+\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)}+\frac{1}{\tan\left(\frac{n\pi}{2}+\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)-iZ_{Ln,front}^{*}/Z_{q}^{*}}=\sin\left(n\pi+\frac{\pi\Delta f_{n}^{*}}{f_{1}}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+we have 
+\begin_inset Formula $\tan\left(n\pi/2+x\right)=-\cot\left(x\right)$
+\end_inset
+
+, 
+\begin_inset Formula $\sin(n\pi+x)=-\sin\left(x\right)$
+\end_inset
+
+, which gives:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\frac{1}{\cot\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)}+\frac{1}{\cot\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)-iZ_{Ln,front}^{*}/Z_{q}^{*}}=\sin\left(\frac{\pi\Delta f_{n}^{*}}{f_{1}}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+As suggested by Petri and Johannsmann, we use 
+\begin_inset Formula $\sin\left(2x\right)=2\tan x/\left(1+\tan^{2}x\right)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Now use 
+\begin_inset Formula $\sin\left(2x\right)=2\sin x\cos x$
+\end_inset
+
+ to get:
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\frac{\sin\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)}{\cos\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)}+\frac{\sin\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)}{\cos\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)-\sin\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)iZ_{Ln,front}^{*}/Z_{q}^{*}}=2\sin\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)\cos\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+\frac{1}{\cos\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)}+\frac{1}{\cos\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)-\sin\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)iZ_{Ln,front}^{*}/Z_{q}^{*}}=2\cos\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\family roman
+\series medium
+\shape up
+\size normal
+\emph off
+\bar no
+\strikeout off
+\xout off
+\uuline off
+\uwave off
+\noun off
+\color none
+\begin_inset Formula 
+\[
+1+\frac{1}{1-\tan\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)iZ_{Ln,front}^{*}/Z_{q}^{*}}=2\cos^{2}\left(\frac{\pi\Delta f_{n}^{*}}{2f_{1}}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+now set 
+\begin_inset Formula $X=\frac{\pi\Delta f_{n}^{*}}{2f_{1}}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+1+\frac{1}{1+\tan\left(X\right)\frac{iZ_{L}^{*}}{Z_{q}^{*}}}=2\cos^{2}\left(X\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+So far we haven't made any approximations, but now we will assume that the
+ frequency shift is small compared to 
+\begin_inset Formula $f_{1}$
+\end_inset
+
+ to get:
+\end_layout
+
+\begin_layout Plain Layout
+From this we get
+\end_layout
+
+\begin_layout Plain Layout
+Expand out to 
+\begin_inset Formula $X^{2}$
+\end_inset
+
+ for small 
+\begin_inset Formula $X$
+\end_inset
+
+: 
+\begin_inset Formula $\cos^{2}x\sim1-X^{2}$
+\end_inset
+
+; 
+\begin_inset Formula $\tan X\sim X$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+1+\frac{1}{1+X\frac{iZ_{L}^{*}}{Z_{q}^{*}}}=2-2X^{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+Now use 
+\begin_inset Formula $\frac{1}{1+X}\sim1-X$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+2-X\frac{iZ_{L}^{*}}{Z_{q}^{*}}=2-2X^{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{iZ_{L}^{*}}{Z_{q}^{*}}=2X
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+X=\frac{iZ_{L}^{*}}{2Z_{q}^{*}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+or,
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Formula 
+\[
+\frac{\Delta f_{n}^{*}}{f_{1}}=\frac{iZ_{L}^{*}}{\pi Z_{q}^{*}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So this all checks out.
+\end_layout
+
+\begin_layout Standard
 If a load is applied to the QCM surface, 
 \begin_inset Formula $f_{n}$
 \end_inset
@@ -809,57 +1260,6 @@ k_{q}=\frac{2\pi f_{n}\rho_{q}}{Z_{q}};\,\,\,2\pi f_{n}^{*}=Z_{q}^{*}k_{q}^{*}/\
 
 \end_layout
 
-\begin_layout Subsection
-Extension to Multiple Layers
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Graphics
-	filename /home/ken/Mydocs/Python/QCM_py/doc/figures/2layer.svg
-	lyxscale 20
-	width 50text%
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption Standard
-
-\begin_layout Plain Layout
-Two-layer geometry involving a 'film' that is sandwiched between the electrode
- surface and a 'membrane'.
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:Two-layer-geometry"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
 \begin_layout Standard
 \begin_inset Note Note
 status collapsed
@@ -1023,6 +1423,49 @@ The difference between the 2-layer impedance and the impedance of the membrane
 
 \begin_layout Subsection
 Bilayer
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename 0_home_ken_Mydocs_Python_QCM_py_doc_figures_2layer.svg
+	lyxscale 20
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Two-layer geometry involving a 'film' that is sandwiched between the electrode
+ surface and a 'membrane'.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Two-layer-geometry"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -2743,7 +3186,7 @@ This same analysis can be applied to more complicated models as well.
 
 \begin_layout Standard
 \begin_inset Note Note
-status open
+status collapsed
 
 \begin_layout Section
 Some Other Expressions

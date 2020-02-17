@@ -466,23 +466,44 @@ def solve_for_props(delfstar, **kwargs):
             delfstar_calc[n] = calc_delfstar(n, layers, calctype)
             data['df_calc'+str(n)]=(np.append(data['df_calc'+str(n)], 
                                              round(delfstar_calc[n],1)))
-            data['df_expt'+str(n)]=(np.append(data['df_expt'+str(n)], 
+            try:
+                data['df_expt'+str(n)]=(np.append(data['df_expt'+str(n)], 
                                              delfstar[n][i]))
+            except:
+                data['df_expt'+str(n)]=np.append(data['df_expt'+str(n)], 'nan')
+                
+        # get index, t, temp, set to 'nan' if it doesn't exist
+        if 'index' in df_in[i].keys():
+            index = np.real(df_in[i]['index'])
+        else:
+            index = np.nan
+        if 't' in df_in[i].keys():
+            t = np.real(df_in[i]['t'])
+        else:
+            t = np.nan
+        if 'temp' in df_in[i].keys():
+            temp = np.real(df_in[i]['temp'])
+        else:
+            temp = np.nan
 
         var_name = ['grho3', 'phi', 'drho', 'grho3_err', 'phi_err', 'drho_err',
-                    'dlam3', 't', 'index', 'temp']
+                    'dlam3', 'index', 't', 'temp']
         var = [grho3, phi, drho, err[0], err[1], err[2],
-               dlam3, delfstar['t'][i], delfstar['index'][i], 
-               delfstar['temp'][i]]
+               dlam3, index, t, temp]
 
         for k in np.arange(len(var_name)):
-            data[var_name[k]] = np.append(data[var_name[k]], var[k])     
-
+            if var[k] in locals():
+                data[var_name[k]] = np.append(data[var_name[k]], var[k])
+            else:
+                data[var_name[k]] = np.append(data[var_name[k]], var[k])
+                
         # set up the initial guess
         if filmtype == 'bulk':
             x0 = np.array([grho3, phi])
         else:
             x0 = np.array([grho3, phi, drho])
+            
+        
 
     # add these calculated values to existing dataframe
     df_out = pd.DataFrame(data)
@@ -574,6 +595,8 @@ def make_prop_axes(**kwargs):
     # set up the standard property plot
     filmtype = kwargs.get('filmtype','thin')
     num = kwargs.get('num','property fig')
+    xlabel = kwargs.get('xlabel', 'index')
+    titles = kwargs.get('titles', {0:'(a)', 1:'(b)', 2:'(c)'})
 
     if filmtype != 'bulk':
         figsize=kwargs.get('figsize',(9,3))
@@ -588,15 +611,17 @@ def make_prop_axes(**kwargs):
 
     ax[1].set_ylabel(r'$\phi$ (deg.)')
 
-    # set xlabel to 'index' by default
+    # set xlabel 
     for i in np.arange(len(ax)):
-        ax[i].set_xlabel('index')
+        ax[i].set_xlabel(xlabel)
+        ax[i].set_title(titles[i])
     fig.tight_layout()
     return fig, ax
 
 
 def prop_plots(df, ax, **kwargs):
     xunit=kwargs.get('xunit', 'index')
+    fmt=kwargs.get('fmt','+')
     legend=kwargs.get('legend','none')
     plotdrho=kwargs.get('plotdrho', True)
      
@@ -606,7 +631,7 @@ def prop_plots(df, ax, **kwargs):
     elif xunit == 'min':
         xdata = df['t']/60
         xlabel ='$t$ (min.)'
-    elif xunit == 'hr':
+    elif xunit == 'hrs':
         xdata = df['t']/3600
         xlabel ='$t$ (hrs)'
     elif xunit == 'day':
@@ -616,11 +641,11 @@ def prop_plots(df, ax, **kwargs):
         xdata =xdata = df['index']
         xlabel ='index'
         
-    ax[0].plot(xdata, df['grho3']/1000,'+', label=legend)
-    ax[1].plot(xdata, df['phi'],'+', label=legend)
+    ax[0].plot(xdata, df['grho3']/1000, fmt, label=legend)
+    ax[1].plot(xdata, df['phi'], fmt, label=legend)
     
     if len(ax)==3 and plotdrho:
-        ax[2].plot(xdata, df['drho']*1000, '+', label=legend)
+        ax[2].plot(xdata, df['drho']*1000, fmt, label=legend)
     
     for k in np.arange(len(ax)):
         ax[k].set_xlabel(xlabel)
@@ -688,20 +713,21 @@ def make_delf_axes(**kwargs):
     return fig, ax
 
 
-def make_vgp_axes():
-    fig, ax = plt.subplots(1,1, figsize=(3, 3))
+def make_vgp_axes(**kwargs):
+    figsize=kwargs.get('figsize', (3,3))
+    fig, ax = plt.subplots(1,1, figsize=figsize)
     ax.set_xlabel((r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)'))
     ax.set_ylabel(r'$\phi$ (deg.)')
     fig.tight_layout()
     return fig, ax
 
 
-def delfstar_from_xlsx(directory, file, **kwargs):  # delfstar datafrome from excel file
+def delfstar_from_xlsx(infile, **kwargs):  # delfstar datafrome from excel file
     # exclude all rows where the sindicated harmonics are not marked
     restrict_to_marked = kwargs.get('restrict_to_marked',[3])
     nvals = kwargs.get('nvals',[1,3,5])
 
-    df = pd.read_excel(directory+file, sheet_name=None, header=0)['S_channel']
+    df = pd.read_excel(infile, sheet_name=None, header=0)['S_channel']
 
     df['keep_row']=1  # keep all rows we are told to check for specific marks
     for n in restrict_to_marked:

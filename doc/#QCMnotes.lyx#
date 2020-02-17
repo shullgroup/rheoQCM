@@ -333,7 +333,7 @@ literal "true"
 
 \begin_layout Standard
 \begin_inset Note Note
-status open
+status collapsed
 
 \begin_layout Plain Layout
 Derivation of the small load approximation:
@@ -1260,57 +1260,6 @@ k_{q}=\frac{2\pi f_{n}\rho_{q}}{Z_{q}};\,\,\,2\pi f_{n}^{*}=Z_{q}^{*}k_{q}^{*}/\
 
 \end_layout
 
-\begin_layout Subsection
-Extension to Multiple Layers
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\align center
-\begin_inset Graphics
-	filename /home/ken/Mydocs/Python/QCM_py/doc/figures/2layer.svg
-	lyxscale 20
-	width 50text%
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption Standard
-
-\begin_layout Plain Layout
-Two-layer geometry involving a 'film' that is sandwiched between the electrode
- surface and a 'membrane'.
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:Two-layer-geometry"
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
 \begin_layout Standard
 \begin_inset Note Note
 status collapsed
@@ -1474,6 +1423,49 @@ The difference between the 2-layer impedance and the impedance of the membrane
 
 \begin_layout Subsection
 Bilayer
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename 0_home_ken_Mydocs_Python_QCM_py_doc_figures_2layer.svg
+	lyxscale 20
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+Two-layer geometry involving a 'film' that is sandwiched between the electrode
+ surface and a 'membrane'.
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Two-layer-geometry"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -3194,7 +3186,7 @@ This same analysis can be applied to more complicated models as well.
 
 \begin_layout Standard
 \begin_inset Note Note
-status open
+status collapsed
 
 \begin_layout Section
 Some Other Expressions

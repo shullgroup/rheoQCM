@@ -280,7 +280,8 @@ def DMAplot(sample, parms, Tref):
 
     # add the VFT fit for the shift factors
     T_for_fit = np.linspace(T[Tind['plot']].min(), T[Tind['plot']].max(), 100)
-            
+    B = parms.get('B', 700)    
+    Tinf = parms.get('Tinf')    
     if parms.get('add_vft_fit', False):
         VFT_fit = np.exp(qcm.vogel(T_for_fit, Tref, B, Tinf))
         aTfit, = dma_ax3.plot(T_for_fit, VFT_fit, 'b-', label='fit')
@@ -641,6 +642,7 @@ def addVGPplot(sample, samplefits, vgpfig, fignum):
     qcm_phi = sample['qcmdata']['qcm_phi']
     qcmdata, = vgp_ax.plot(qcm_E, qcm_phi, 'ro', markersize=qcmsize)
     vgp_ax.set_title(sample['title'])
+    fit = samplefits.get('samplefits', 'nan')
     vgp_ax.legend([dmadata1[Tind[0]], qcmdata, fit], ['DMA', 'QCM', 'fit'])
 
     vgpfig.savefig('../figures/vgpfig.svg')
