@@ -62,7 +62,7 @@ def make_bmod(n):
     input:
     n:    number of peaks
     '''
-    bmod = ConstantModel(prefix='g_')
+    bmod = ConstantModel(prefix='b_')
     for i in np.arange(n):
         bmod_i = Model(fun_B, prefix='p'+str(i)+'_', name='b'+str(i))
         bmod += bmod_i
