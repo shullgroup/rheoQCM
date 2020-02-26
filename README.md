@@ -32,11 +32,12 @@ conda install -c conda-forge hdf5storage
 ## Using the Stand-alone Program (exe)
 
 A single executable file (exe file) which is precompiled from source code under 32-bit Python is located in the `stand_alone/` folder. It can be run without any additional installation on a Windows system, without the need to install a Python distribution. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (<span style="color:red">NOTE: You can customize the program by exporting you default settings as  `user_settings.json`  file (See below about the way it works.)</span>)  
-The single executable file (exe file) which is precompiled from source code under 32-bit Python is localized in `stand_alone/` folder. It can run without installation. No Python distribution is needed to run it. It is convienent for data collection in case you have 64-bit Python installed on your Windows, previously. (NOTE: You can customize the program with `settings_default.json`  file comes with the executable file. See below about the way how it works.)  
 
 The single executable file version might not be updated as frequently as the source code.
 
-### Installation (Python code)
+## Using Python code
+
+### Installation  
 
 To install everything you need from this repository, run the following command from a command window in the directory where you want everthing to be installed:
 
@@ -48,7 +49,7 @@ If you just need the updated analysis script, everything you need is in QCMFuncs
 
 All the modules needed for the data collection program are in the `rheoQCM/` folder. Go to that folder and run rheoQCM.py will open the program.  
 
-## Running the UI from Terminal
+### Running the UI from Terminal
 
 Go to the `rheoQCM/` folder and run `rheoQCM.py` will start the UI and it will check the environment by itself.  
 
@@ -91,8 +92,6 @@ There is a `rheoQCM.bat` file in  `rheoQCM/` for running the program with Python
 
 * Please set MyVNA to `Basic Mode` from the left pannel of MyVNA software by selecting VNA Hardware>Configure CSD / Harmonic Mode and checking Basic Mode in Select Mode. This will make sure the time counting in the Python program fits the hardware scanning time. You will not loose any precision as far as we know.  
 
-* The data analysis in the UI only works with `one layer` mode. Other modes, including films immersed in a liquid medium, will be added in the near future.
-
 ## To Do List (work in Progress)
 
 * Documentation.
@@ -110,6 +109,10 @@ There is a `rheoQCM.bat` file in  `rheoQCM/` for running the program with Python
 If you are a MATLAB user, our previously developed MATLAB version software can be found here: <https://github.com/Shull-Research-Group/QCM_Data_Acquisition_Program>. It was developed Josh Yeh. This Python project is based on this previous MATLAB version developed by Josh.  
 
 A MATLAB version of our data analysis software, written by Kazi Sadman can be found here: <https://github.com/sadmankazi/QCM-D-Analysis-GUI>.
+
+## Citation information
+
+Please check how to cite the repository from here: <https://zenodo.org/record/2486039#.XlVoBjJKjcs>
 
 ## Acknowledgments
 

@@ -1626,8 +1626,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>286</width>
-                   <height>160</height>
+                   <width>98</width>
+                   <height>71</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -3744,7 +3744,7 @@ border-image: url(:/button/rc/plus_p.svg);
                       <enum>QAbstractScrollArea::AdjustToContents</enum>
                      </property>
                      <attribute name="verticalHeaderDefaultSectionSize">
-                      <number>20</number>
+                      <number>21</number>
                      </attribute>
                      <row>
                       <property name="text">
@@ -3801,6 +3801,12 @@ border-image: url(:/button/rc/plus_p.svg);
                 <property name="flat">
                  <bool>true</bool>
                 </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
                 <layout class="QVBoxLayout" name="verticalLayout_17">
                  <property name="leftMargin">
                   <number>0</number>
@@ -3835,7 +3841,7 @@ border-image: url(:/button/rc/plus_p.svg);
                    <item row="0" column="1">
                     <widget class="QComboBox" name="comboBox_settings_mechanics_contourtype">
                      <property name="enabled">
-                      <bool>true</bool>
+                      <bool>false</bool>
                      </property>
                      <property name="toolTip">
                       <string>Select contour type.</string>
@@ -3852,7 +3858,7 @@ border-image: url(:/button/rc/plus_p.svg);
                    <item row="1" column="0">
                     <widget class="QComboBox" name="comboBox_settings_mechanics_contourdata">
                      <property name="enabled">
-                      <bool>true</bool>
+                      <bool>false</bool>
                      </property>
                      <property name="toolTip">
                       <string>Select how to plot data in contour.</string>
@@ -3862,7 +3868,7 @@ border-image: url(:/button/rc/plus_p.svg);
                    <item row="0" column="2">
                     <widget class="QPushButton" name="pushButton_settings_mechanics_contoursettings">
                      <property name="enabled">
-                      <bool>true</bool>
+                      <bool>false</bool>
                      </property>
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -3895,7 +3901,7 @@ border-image: url(:/button/rc/plus_p.svg);
                  <item>
                   <widget class="QTableWidget" name="tableWidget_settings_mechanics_contoursettings">
                    <property name="enabled">
-                    <bool>true</bool>
+                    <bool>false</bool>
                    </property>
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -3916,7 +3922,7 @@ border-image: url(:/button/rc/plus_p.svg);
                     <number>40</number>
                    </attribute>
                    <attribute name="verticalHeaderDefaultSectionSize">
-                    <number>20</number>
+                    <number>21</number>
                    </attribute>
                   </widget>
                  </item>
@@ -4054,7 +4060,7 @@ border-image: url(:/button/rc/plus_p.svg);
                       <bool>false</bool>
                      </attribute>
                      <attribute name="verticalHeaderDefaultSectionSize">
-                      <number>20</number>
+                      <number>21</number>
                      </attribute>
                      <row>
                       <property name="text">
@@ -4107,7 +4113,7 @@ border-image: url(:/button/rc/plus_p.svg);
                       <number>48</number>
                      </attribute>
                      <attribute name="verticalHeaderDefaultSectionSize">
-                      <number>20</number>
+                      <number>21</number>
                      </attribute>
                      <row>
                       <property name="text">

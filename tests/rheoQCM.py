@@ -2143,6 +2143,9 @@ class QCMApp(QMainWindow):
         # clear spectra_fit items
         self.clr_spectra_fit()
 
+        # clear data table on mechanics tab
+        self.ui.tableWidget_spectra_mechanics_table.clearContents()
+
         # set widgets enabled by using the disabled list
         self.enable_widgets(
             'pushButton_runstop_disable_list',
@@ -5036,6 +5039,7 @@ class QCMApp(QMainWindow):
     def mechanics_plot_r_idx(self):
         self.mechanics_plot('idx')
 
+
     def mechanics_plot_r1_r2(self):
         self.mechanics_plot('r1r2')
 
@@ -5823,6 +5827,7 @@ class QCMApp(QMainWindow):
         # update statusbar
         self.statusbar_f0bw_update()
 
+
     def update_range(self, range_index):
         self.settings['comboBox_range'] = self.ui.comboBox_range.itemData(range_index) # in MHz
         logger.info(self.settings['comboBox_range']) 
@@ -5835,11 +5840,13 @@ class QCMApp(QMainWindow):
         # update statusbar
         self.statusbar_f0bw_update()
 
+
     def statusbar_f0bw_update(self):
         fbase = self.settings['comboBox_base_frequency']
         BW = self.settings['comboBox_range']
         self.ui.label_status_f0RNG.setText('{}\u00B1{} MHz'.format(fbase, BW))
         self.ui.label_status_f0RNG.setToolTip('base frequency = {} MHz; range = {} MHz'.format(fbase, BW))
+
 
     def update_freq_range(self):
         '''
@@ -5852,6 +5859,7 @@ class QCMApp(QMainWindow):
             freq_range[str(i)] = [i*fbase-BW, i*fbase+BW]
         self.settings['freq_range'] = freq_range
         logger.info('freq_range', self.settings['freq_range']) 
+
 
     def get_freq_span(self, harm=None, chn_name=None):
         '''
@@ -6085,6 +6093,7 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'lineEdit_startf' + harm + '_r').setVisible(value)
             getattr(self.ui, 'lineEdit_endf' + harm + '_r').setVisible(value)
 
+
     def check_checked_activechn(self):
 
         if config_default['activechn_num'] == 1:
@@ -6238,7 +6247,6 @@ class QCMApp(QMainWindow):
                 comboBox.setCurrentIndex(set_ind)
 
 
-
     def build_comboBox(self, combobox, opts):
         '''
         build comboBox by addItem from opts in config_default[opts]
@@ -6306,6 +6314,9 @@ class QCMApp(QMainWindow):
                 obj.setPlainText(self.settings[name])
             elif name.startswith('comboBox_'):
                 self.load_comboBox(obj)
+            elif name.startswith('groupBox_'):
+                # TODO something here load def value
+                pass
 
 
     def load_settings(self):
@@ -6544,6 +6555,7 @@ class QCMApp(QMainWindow):
             'comboBox_settings_mechanics_contourdata',
             'comboBox_settings_mechanics_contourtype',
             'comboBox_settings_mechanics_contourcmap',
+            'groupBox_settings_mechanics_contour',
         ])
 
         # spinBox_mech_expertmode_layernum
@@ -6564,7 +6576,6 @@ class QCMApp(QMainWindow):
         self.make_contours()
 
         ## end of load_settings
-
 
 
     def update_refsource(self):

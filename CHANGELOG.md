@@ -6,8 +6,6 @@
 
 ### Changed
 
-- NOTE: Save raw data (Gp & Bp) in S instead of mS
-
 ### Fixed
 
 - Fix not reading user settings file bug.

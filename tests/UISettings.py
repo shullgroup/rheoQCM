@@ -945,6 +945,8 @@ settings_default = {
     'spinBox_settings_mechanics_nhcalc_n2': 5,
     'spinBox_settings_mechanics_nhcalc_n3': 3,
 
+    'groupBox_settings_mechanics_contour': False,
+
     'spinBox_mech_expertmode_layernum': 2, # number of layers for expert mode mechanic 
 
     'comboBox_settings_mechanics_calctype': 'LL', # 'LL' or 'SLA'
