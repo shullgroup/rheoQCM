@@ -1445,11 +1445,14 @@ class Ui_MainWindow(object):
         self.verticalLayout_39.addWidget(self.tableWidget_settings_mechanics_errortab)
         self.verticalLayout_37.addLayout(self.verticalLayout_39)
         self.verticalLayout_31.addWidget(self.groupBox_nhplot)
+        # countour options on mechanics tab
+        # groupbox settings that encompass the options
         self.groupBox_settings_mechanics_contour = QtWidgets.QGroupBox(self.tab_settings_mechanics)
         self.groupBox_settings_mechanics_contour.setFlat(True)
         self.groupBox_settings_mechanics_contour.setCheckable(True)
         self.groupBox_settings_mechanics_contour.setChecked(False)
         self.groupBox_settings_mechanics_contour.setObjectName("groupBox_settings_mechanics_contour")
+        # set the layouts
         self.verticalLayout_17 = QtWidgets.QVBoxLayout(self.groupBox_settings_mechanics_contour)
         self.verticalLayout_17.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_17.setObjectName("verticalLayout_17")
@@ -1457,25 +1460,29 @@ class Ui_MainWindow(object):
         self.gridLayout_7.setHorizontalSpacing(4)
         self.gridLayout_7.setVerticalSpacing(0)
         self.gridLayout_7.setObjectName("gridLayout_7")
+        # add pusButtons and combo boxes 
+        # add push button to update data
         self.pushButton_settings_mechanics_contourplot = QtWidgets.QPushButton(self.groupBox_settings_mechanics_contour)
         self.pushButton_settings_mechanics_contourplot.setObjectName("pushButton_settings_mechanics_contourplot")
         self.gridLayout_7.addWidget(self.pushButton_settings_mechanics_contourplot, 1, 1, 1, 1)
+        # add contourtype comboBox
         self.comboBox_settings_mechanics_contourtype = QtWidgets.QComboBox(self.groupBox_settings_mechanics_contour)
-        self.comboBox_settings_mechanics_contourtype.setEnabled(False)
         self.comboBox_settings_mechanics_contourtype.setObjectName("comboBox_settings_mechanics_contourtype")
         self.gridLayout_7.addWidget(self.comboBox_settings_mechanics_contourtype, 0, 1, 1, 1)
+        # add contourcmap comboBox
         self.comboBox_settings_mechanics_contourcmap = QtWidgets.QComboBox(self.groupBox_settings_mechanics_contour)
         self.comboBox_settings_mechanics_contourcmap.setObjectName("comboBox_settings_mechanics_contourcmap")
         self.gridLayout_7.addWidget(self.comboBox_settings_mechanics_contourcmap, 0, 0, 1, 1)
+        # add countourdata comboBox 
         self.comboBox_settings_mechanics_contourdata = QtWidgets.QComboBox(self.groupBox_settings_mechanics_contour)
-        self.comboBox_settings_mechanics_contourdata.setEnabled(False)
         self.comboBox_settings_mechanics_contourdata.setObjectName("comboBox_settings_mechanics_contourdata")
         self.gridLayout_7.addWidget(self.comboBox_settings_mechanics_contourdata, 1, 0, 1, 1)
+        # add countoursettings comboBox
         self.pushButton_settings_mechanics_contoursettings = QtWidgets.QPushButton(self.groupBox_settings_mechanics_contour)
-        self.pushButton_settings_mechanics_contoursettings.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
+        # add pushbutton for table
         sizePolicy.setHeightForWidth(self.pushButton_settings_mechanics_contoursettings.sizePolicy().hasHeightForWidth())
         self.pushButton_settings_mechanics_contoursettings.setSizePolicy(sizePolicy)
         self.pushButton_settings_mechanics_contoursettings.setMaximumSize(QtCore.QSize(24, 16777215))
@@ -1484,8 +1491,8 @@ class Ui_MainWindow(object):
         self.pushButton_settings_mechanics_contoursettings.setObjectName("pushButton_settings_mechanics_contoursettings")
         self.gridLayout_7.addWidget(self.pushButton_settings_mechanics_contoursettings, 0, 2, 1, 1)
         self.verticalLayout_17.addLayout(self.gridLayout_7)
+        # add a table that pops out when the pushButton_settings_mechanics_contoursettings is clicked
         self.tableWidget_settings_mechanics_contoursettings = QtWidgets.QTableWidget(self.groupBox_settings_mechanics_contour)
-        self.tableWidget_settings_mechanics_contoursettings.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1493,6 +1500,7 @@ class Ui_MainWindow(object):
         self.tableWidget_settings_mechanics_contoursettings.setSizePolicy(sizePolicy)
         self.tableWidget_settings_mechanics_contoursettings.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.tableWidget_settings_mechanics_contoursettings.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        # edit triggers for editing the values in the box
         self.tableWidget_settings_mechanics_contoursettings.setEditTriggers(QtWidgets.QAbstractItemView.AnyKeyPressed|QtWidgets.QAbstractItemView.DoubleClicked|QtWidgets.QAbstractItemView.EditKeyPressed)
         self.tableWidget_settings_mechanics_contoursettings.setObjectName("tableWidget_settings_mechanics_contoursettings")
         self.tableWidget_settings_mechanics_contoursettings.setColumnCount(0)
@@ -1506,6 +1514,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_28 = QtWidgets.QVBoxLayout()
         self.verticalLayout_28.setSpacing(0)
         self.verticalLayout_28.setObjectName("verticalLayout_28")
+        # add pushbutton for shift simulator
         self.pushButton_settings_mechanics_simulator = QtWidgets.QPushButton(self.tab_settings_mechanics)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -2630,6 +2639,9 @@ class Ui_MainWindow(object):
         self.stackedWidget_spectra.setCurrentIndex(2)
         self.stackedWidget_data.setCurrentIndex(0)
         self.pushButton_settings_mechanics_simulator.toggled['bool'].connect(self.groupBox_settings_mechanics_simulator.setVisible)
+        # push the button to show the contour value table
+        self.groupBox_settings_mechanics_contour.toggled['bool'].connect(self.frame_spectra_mechanics_contour1.setVisible)
+        self.groupBox_settings_mechanics_contour.toggled['bool'].connect(self.frame_spectra_mechanics_contour2.setVisible)
         self.pushButton_settings_mechanics_contoursettings.toggled['bool'].connect(self.tableWidget_settings_mechanics_contoursettings.setVisible)
         self.stackedWidget_spectra.currentChanged['int'].connect(self.stackedWidget_spetratop.setCurrentIndex)
         self.pushButton_settings_mechanics_errorsettings.toggled['bool'].connect(self.tableWidget_settings_mechanics_errortab.setVisible)

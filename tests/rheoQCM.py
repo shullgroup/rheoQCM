@@ -1136,7 +1136,7 @@ class QCMApp(QMainWindow):
         self.build_comboBox(self.ui.comboBox_settings_mechanics_model_overlayer_chn, 'ref_channel_opts')
         # comboBox_settings_mechanics_model_samplayer_chn
         self.build_comboBox(self.ui.comboBox_settings_mechanics_model_samplayer_chn, 'ref_channel_opts')
-
+        
         # comboBox_settings_mechanics_contourdata
         self.build_comboBox(self.ui.comboBox_settings_mechanics_contourdata, 'contour_data_opts')
         self.ui.comboBox_settings_mechanics_contourdata.currentIndexChanged.connect(self.update_widget)
@@ -1152,13 +1152,15 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_mechanics_contourcmap.currentIndexChanged.connect(self.make_contours)
 
         # tableWidget_settings_mechanics_contoursettings
+        # adds the headings to the contour table based on the
+        # selected tabs
         self.add_table_headers(
             'tableWidget_settings_mechanics_contoursettings',
             config_default['mech_contour_lim_tab_vheaders'],
             config_default['mech_contour_lim_tab_hheaders'],
         )
         self.ui.tableWidget_settings_mechanics_contoursettings.itemChanged.connect(self.on_changed_mech_contour_lim_tab)
-
+        # if the button is clicked add the data to the countour
         self.ui.pushButton_settings_mechanics_contourplot.clicked.connect(self.add_data_to_contour)
 
         #endregion
@@ -1354,6 +1356,7 @@ class QCMApp(QMainWindow):
             axtype='contour'
             )
         self.ui.frame_spectra_mechanics_contour1.setLayout(self.set_frame_layout(self.ui.mpl_contour1))
+        self.ui.frame_spectra_mechanics_contour1.hide()
 
         # add figure mpl_contour2 into frame_spectra_mechanics_contour2
         self.ui.mpl_contour2 = MatplotlibWidget(
@@ -1361,6 +1364,7 @@ class QCMApp(QMainWindow):
             axtype='contour',
             )
         self.ui.frame_spectra_mechanics_contour2.setLayout(self.set_frame_layout(self.ui.mpl_contour2))
+        self.ui.frame_spectra_mechanics_contour2.hide()
 
         self.ui.pushButton_spectra_mechanics_clear.clicked.connect(self.del_prop_plot)
         #endregion
@@ -6300,6 +6304,7 @@ class QCMApp(QMainWindow):
         load those widgets don't require special setup
         find the type by widget's name
         '''
+        # Maybe TODO write this into a apply function to make it faster
         for name in name_list:
             obj = getattr(self.ui, name)
             if name.startswith('lineEdit_'):
@@ -6313,10 +6318,12 @@ class QCMApp(QMainWindow):
             elif name.startswith('plainTextEdit_'):
                 obj.setPlainText(self.settings[name])
             elif name.startswith('comboBox_'):
+                # load_comboBox is a user defined function that loads the 
+                # settings of a 
                 self.load_comboBox(obj)
-            elif name.startswith('groupBox_'):
-                # TODO something here load def value
-                pass
+            elif name.startswith('groupBox_'): # look at the contour check box
+                # get the value from the settings folder, else set it to false
+                obj.setChecked(self.settings[name]) # Should grab the False value from the dictionary
 
 
     def load_settings(self):
@@ -6552,10 +6559,11 @@ class QCMApp(QMainWindow):
             'comboBox_settings_mechanics_calctype',
             'doubleSpinBox_settings_mechanics_bulklimit',
             # contour
+            'groupBox_settings_mechanics_contour',
             'comboBox_settings_mechanics_contourdata',
             'comboBox_settings_mechanics_contourtype',
             'comboBox_settings_mechanics_contourcmap',
-            'groupBox_settings_mechanics_contour',
+            
         ])
 
         # spinBox_mech_expertmode_layernum
