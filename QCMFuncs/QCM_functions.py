@@ -360,6 +360,7 @@ def solve_for_props(delfstar, **kwargs):
     nplot = kwargs.get('nplot', [1, 3, 5])
     calctype = kwargs.get('calctype', 'SLA')
     filmtype = kwargs.get('filmtype', 'thin')
+    newtonian = kwargs.get('newtonian', False)
 
     calc = kwargs.get('calc') # specify the values used in the n1:n2,n3 calculation
     n1 = int(calc[0]); n2 = int(calc[1]); n3 = int(calc[2])
@@ -376,7 +377,7 @@ def solve_for_props(delfstar, **kwargs):
         guess=kwargs['guess']
         drho, grho3, phi = guess['drho'], guess['grho3'], guess['phi']
     elif filmtype=='bulk':
-        n3=n1 # bulk solution uses delta f and delta gamma from same harmonic
+        n1=n3 # bulk solution uses delta f and delta gamma from same harmonic
         grho3, phi = bulk_props(df_in[0][3])
         drho = np.inf
     else:
@@ -419,8 +420,12 @@ def solve_for_props(delfstar, **kwargs):
         else:
             def ftosolve(x):
                 layers['film'] = {'drho':np.inf, 'grho3':x[0], 'phi':x[1]}
-                return ([calc_delfstar(n1, layers, calctype).real-df_in[i][n1].real,
-                         calc_delfstar(n1, layers, calctype).imag-df_in[i][n1].imag])
+                if not newtonian:
+                    return ([calc_delfstar(n1, layers, calctype).real-df_in[i][n1].real,
+                             calc_delfstar(n1, layers, calctype).imag-df_in[i][n1].imag])
+                else:  # set frequency shift equal to dissipation shift in this case
+                    return ([calc_delfstar(n1, layers, calctype).real+df_in[i][n1].imag,
+                             calc_delfstar(n1, layers, calctype).imag-df_in[i][n1].imag])
 
         # initialize the output uncertainties
         err = {}
@@ -724,7 +729,7 @@ def make_vgp_axes(**kwargs):
 
 def delfstar_from_xlsx(infile, **kwargs):  # delfstar datafrome from excel file
     # exclude all rows where the sindicated harmonics are not marked
-    restrict_to_marked = kwargs.get('restrict_to_marked',[3])
+    restrict_to_marked = kwargs.get('restrict_to_marked',[])
     nvals = kwargs.get('nvals',[1,3,5])
 
     df = pd.read_excel(infile, sheet_name=None, header=0)['S_channel']
