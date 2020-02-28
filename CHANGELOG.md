@@ -1,5 +1,19 @@
 # Changelog
-## [0.19.0] - 2019-11-05
+
+## [0.19.2] - 2020-01-21
+
+### Added
+
+### Changed
+
+### Fixed
+
+- Fix not reading user settings file bug.
+- Fix file name did not clear in main class after UI reset.
+
+### Removed
+
+## [0.19.1] - 2019-11-05
 
 ### Added
 

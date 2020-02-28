@@ -835,8 +835,8 @@ class MatplotlibWidget(QWidget):
         for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['p' + str(i)] = self.ax[0].errorbar(
                 [], [], 
-                yerr=np.nan,
                 xerr=np.nan,
+                yerr=np.nan,
                 marker='o', 
                 markerfacecolor='none', 
                 linestyle='none',
@@ -936,8 +936,8 @@ class MatplotlibWidget(QWidget):
         for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['p' + str(i)] = self.ax[0].errorbar(
                 [], [], 
-                yerr=np.nan,
                 xerr=np.nan,
+                yerr=np.nan,
                 marker='o', 
                 markerfacecolor='none', 
                 linestyle='none',

@@ -11,6 +11,9 @@ import numpy as np
 import os
 import json
 import logging
+import logging.config
+# Get the logger specified in the file
+logger = logging.getLogger(__name__)
 
 config_default = {
 
@@ -43,7 +46,13 @@ config_default = {
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
 
     # if marked data shown when showing all data
-    'show_marked_when_all': True,
+    'show_marked_when_all': False,
+
+    # keys to ingnore when loading settings
+    'settings_ignored_keys': [
+        'plainTextEdit_settings_sampledescription',
+
+    ],
 
     'analysis_mode_disable_list':[
         'pushButton_runstop',
@@ -518,6 +527,7 @@ config_default = {
     'calctype_opts':{
         'SLA': 'Small-load approximation',
         'LL': 'Lu-Lewis',
+        'Voigt': 'Voigt (QCM-D)', # for QCM-D model
     },
 
     'qcm_layer_source_opts': {
@@ -812,9 +822,9 @@ settings_default = {
     # NOTE: keep this key commented
     # 'dateTimeEdit_reftime': '2000-01-01 00:00:00.000',
     
-    'spinBox_recordinterval': 15,
+    'spinBox_recordinterval': 60,
     'spinBox_refreshresolution': 1,
-    'spinBox_scaninterval': 15,
+    'spinBox_scaninterval': 60,
 
     # default fitting and display options
     'checkBox_dynamicfit': True,
@@ -935,6 +945,8 @@ settings_default = {
     'spinBox_settings_mechanics_nhcalc_n2': 5,
     'spinBox_settings_mechanics_nhcalc_n3': 3,
 
+    'groupBox_settings_mechanics_contour': False,
+
     'spinBox_mech_expertmode_layernum': 2, # number of layers for expert mode mechanic 
 
     'comboBox_settings_mechanics_calctype': 'LL', # 'LL' or 'SLA'
@@ -994,7 +1006,9 @@ for harm in range(1, config_default['max_harmonic']+2, 2):
 
 def get_config():
     config = config_default.copy() # make a copy
-    file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_default['default_config_file_name'])
+    # file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_default['default_config_file_name'])
+    file_path = config_default['default_config_file_name']
+    logger.info('user config file_path %s', file_path)
     # print(file_path)
 
     config, complete = update_dict(file_path, config)
@@ -1008,7 +1022,9 @@ def get_config():
 
 def get_settings():
     settings = settings_default.copy() # make a copy
-    file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_default['default_settings_file_name'])
+    # file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_default['default_settings_file_name'])
+    file_path = config_default['default_settings_file_name']
+    logger.info('user settings file_path %s', file_path)
     # print(file_path)
 
     settings, complete = update_dict(file_path, settings)
@@ -1040,10 +1056,14 @@ def update_dict(file_path, default_dict):
 
 
 if __name__ == '__main__':
-    print('to get config')
-    cfg = get_config()
-    print(cfg['vna_cal_file_path'])
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    config_default = get_config()
+    settings_default = get_settings()
+    # print('to get config')
+    # cfg = get_config()
+    # print(cfg['vna_cal_file_path'])
 
-    print('to get settings')
-    stt = get_settings()
-    print(stt['checkBox_harm1'])
+    # print('to get settings')
+    # stt = get_settings()
+    # print(stt['checkBox_harm1'])

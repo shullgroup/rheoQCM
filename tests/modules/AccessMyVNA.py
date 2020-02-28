@@ -1343,7 +1343,7 @@ class AccessMyVNA():
         ret, f, B = self.GetScanData(nStart=0, nEnd=int(self._nsteps-1), nWhata=-1, nWhatb=16)
         # self.Close()
         logger.info('self._nsteps%s', self._nsteps) 
-        return ret, f, G * 1e3, B * 1e3 # f in Hz; G & B in mS
+        return ret, f, G * 1000, B * 1000  # f in Hz; G & B in mS
 
 
     def setDisplayFreq(self):

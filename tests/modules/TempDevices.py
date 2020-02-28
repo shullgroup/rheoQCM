@@ -24,7 +24,7 @@ def list_devices():
                 device.name, device.product_category, device.product_type))
             devices.append(device)
     except:
-        dcvices = []
+        devices = []
     return devices
 
 

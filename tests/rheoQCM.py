@@ -63,6 +63,7 @@ from modules import QCM as QCM
 from modules.MatplotlibWidget import MatplotlibWidget
 
 import _version
+print('Version: {}'.format(_version.__version__))
 
 
 if UIModules.system_check() == 'win32': # windows
@@ -1989,6 +1990,7 @@ class QCMApp(QMainWindow):
                 print('File with wrong fromat!')
                 return
             else:
+                # remove some k
                 for key, val in settings.items():
                     self.settings[key] = val
 
@@ -2141,6 +2143,9 @@ class QCMApp(QMainWindow):
         # clear spectra_fit items
         self.clr_spectra_fit()
 
+        # clear data table on mechanics tab
+        self.ui.tableWidget_spectra_mechanics_table.clearContents()
+
         # set widgets enabled by using the disabled list
         self.enable_widgets(
             'pushButton_runstop_disable_list',
@@ -2191,6 +2196,7 @@ class QCMApp(QMainWindow):
         logger.info(self.data_saver.path) 
         # re-initiate file
         self.data_saver.init_file(self.data_saver.path, settings=self.settings, t0=self.settings['dateTimeEdit_reftime'])
+
         # enable widgets
         self.enable_widgets(
             'pushButton_runstop_disable_list',
@@ -2200,8 +2206,9 @@ class QCMApp(QMainWindow):
         # clear spectra_fit items
         self.clr_spectra_fit()
 
-        # clear plainTextEdit
-        self.ui.plainTextEdit_settings_sampledescription.clear()
+        # in most condition, you do not want to clear the sample description
+        # # clear plainTextEdit
+        # self.ui.plainTextEdit_settings_sampledescription.clear()
 
 
     def on_triggered_del_menu(self, chn_name, plt_harms, sel_idx_dict, mode, marks):
@@ -2331,6 +2338,7 @@ class QCMApp(QMainWindow):
         set self.data_saver.path and lineEdit_datafilestr
         '''
         self.data_saver.path = fileName
+        self.tempPath = '' # init class file path information
         self.ui.lineEdit_datafilestr.setText(fileName)
 
 
@@ -2907,11 +2915,12 @@ class QCMApp(QMainWindow):
                 [self.active['harm']],
                 fs=[fit_result['v_fit']['cen_rec']['value']], # fs
                 gs=[fit_result['v_fit']['wid_rec']['value']], # gs = half_width
+                ps=[fit_result['v_fit']['amp_rec']['value']], # gs = half_width
             )
             # update mpl_plt12
             self.update_mpl_plt12()
 
-        #TODO add results to textBrowser_spectra_fit_result
+        # add results to textBrowser_spectra_fit_result
         self.ui.plainTextEdit_spectra_fit_result.setPlainText(self.peak_tracker.fit_result_report())
 
 
@@ -3395,7 +3404,7 @@ class QCMApp(QMainWindow):
     def get_harm_data_by_typestr(self, typestr, chn_name, harm, mark=False, unit_t=None, unit_temp=None):
         '''
         get data of a single harmonics from data_saver by given type (str) and harm (str)
-        str: 'df' ('delf_exps'), 'dfn', 'mdf', 'mdfn', 'dg' ('delg_exps'), 'dgn', 'f', 'g', 'temp', 't'
+        str: 'df' ('delf_exps'), 'dfn', 'mdf', 'mdfn', 'dg' ('delg_exps'), 'dgn', 'f', 'g', 'p', 'temp', 't'
         return: harm data
         '''
 
@@ -3435,6 +3444,10 @@ class QCMApp(QMainWindow):
             data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'fs', deltaval=False, norm=False, mark=mark)
         elif 'g' == typestr: # get g
             data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'gs', deltaval=False, norm=False, mark=mark)
+        elif 'p' == typestr: # get p
+            data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'ps', deltaval=False, norm=False, mark=mark)
+        elif 'gp' == typestr: # get gp
+            data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'ps', deltaval=False, norm=False, mark=mark) * self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'gs', deltaval=False, norm=False, mark=mark)
         elif 'D' == typestr: # get delta D
             # get delg first
             data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'gs', deltaval=False, norm=False, mark=mark)
@@ -3481,6 +3494,10 @@ class QCMApp(QMainWindow):
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'fs', mark=mark, dropnanmarkrow=False, deltaval=False, norm=False)
         elif 'g' == typestr: # get g
             data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanmarkrow=False, deltaval=False, norm=False)
+        elif 'p' == typestr: # get p
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'ps', mark=mark, dropnanmarkrow=False, deltaval=False, norm=False)
+        elif 'gp' == typestr: # get p
+            data = self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'ps', mark=mark, dropnanmarkrow=False, deltaval=False, norm=False) * self.data_saver.get_list_column_to_columns_marked_rows(chn_name, 'gs', mark=mark, dropnanmarkrow=False, deltaval=False, norm=False)
         elif 't' == typestr: # get t
             data = self.data_saver.get_t_marked_rows(chn_name, dropnanmarkrow=False, unit=unit_t)
         elif 'temp' == typestr: # get temp
@@ -4562,7 +4579,7 @@ class QCMApp(QMainWindow):
                         else: # upper layers
                             qcm_queue = qcm_df_layer.loc[[ind], :].copy() # as a dataframe
                             # get prop
-                            drho, grho_refh, phi, dlam_refh, err = self.qcm.solve_single_queue_to_prop(nh, qcm_queue, calctype, bulklimit=bulklimit)
+                            drho, grho_refh, phi, dlam_refh, err = self.qcm.solve_single_queue_to_prop(nh, qcm_queue, calctype=calctype, bulklimit=bulklimit)
 
                             prop_dict[ind][n].update(drho=drho, grho=grho_refh, phi=phi, n=refh)
                 else: 
@@ -5021,6 +5038,7 @@ class QCMApp(QMainWindow):
 
     def mechanics_plot_r_idx(self):
         self.mechanics_plot('idx')
+
 
     def mechanics_plot_r1_r2(self):
         self.mechanics_plot('r1r2')
@@ -5809,6 +5827,7 @@ class QCMApp(QMainWindow):
         # update statusbar
         self.statusbar_f0bw_update()
 
+
     def update_range(self, range_index):
         self.settings['comboBox_range'] = self.ui.comboBox_range.itemData(range_index) # in MHz
         logger.info(self.settings['comboBox_range']) 
@@ -5821,11 +5840,13 @@ class QCMApp(QMainWindow):
         # update statusbar
         self.statusbar_f0bw_update()
 
+
     def statusbar_f0bw_update(self):
         fbase = self.settings['comboBox_base_frequency']
         BW = self.settings['comboBox_range']
         self.ui.label_status_f0RNG.setText('{}\u00B1{} MHz'.format(fbase, BW))
         self.ui.label_status_f0RNG.setToolTip('base frequency = {} MHz; range = {} MHz'.format(fbase, BW))
+
 
     def update_freq_range(self):
         '''
@@ -5838,6 +5859,7 @@ class QCMApp(QMainWindow):
             freq_range[str(i)] = [i*fbase-BW, i*fbase+BW]
         self.settings['freq_range'] = freq_range
         logger.info('freq_range', self.settings['freq_range']) 
+
 
     def get_freq_span(self, harm=None, chn_name=None):
         '''
@@ -6071,6 +6093,7 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'lineEdit_startf' + harm + '_r').setVisible(value)
             getattr(self.ui, 'lineEdit_endf' + harm + '_r').setVisible(value)
 
+
     def check_checked_activechn(self):
 
         if config_default['activechn_num'] == 1:
@@ -6224,7 +6247,6 @@ class QCMApp(QMainWindow):
                 comboBox.setCurrentIndex(set_ind)
 
 
-
     def build_comboBox(self, combobox, opts):
         '''
         build comboBox by addItem from opts in config_default[opts]
@@ -6292,6 +6314,9 @@ class QCMApp(QMainWindow):
                 obj.setPlainText(self.settings[name])
             elif name.startswith('comboBox_'):
                 self.load_comboBox(obj)
+            elif name.startswith('groupBox_'):
+                # TODO something here load def value
+                pass
 
 
     def load_settings(self):
@@ -6530,6 +6555,7 @@ class QCMApp(QMainWindow):
             'comboBox_settings_mechanics_contourdata',
             'comboBox_settings_mechanics_contourtype',
             'comboBox_settings_mechanics_contourcmap',
+            'groupBox_settings_mechanics_contour',
         ])
 
         # spinBox_mech_expertmode_layernum
@@ -6550,7 +6576,6 @@ class QCMApp(QMainWindow):
         self.make_contours()
 
         ## end of load_settings
-
 
 
     def update_refsource(self):
@@ -6649,6 +6674,7 @@ class QCMApp(QMainWindow):
         f, G, B = {}, {}, {}
         fs = {} # peak centers
         gs = {} # dissipations hwhm
+        ps = {} # 
         curr_time = {}
         curr_temp = {}
         marks = [0 for _ in harm_list] # 'samp' and 'ref' chn test the same harmonics
@@ -6657,6 +6683,7 @@ class QCMApp(QMainWindow):
             f[chn_name], G[chn_name], B[chn_name] = {}, {}, {}
             fs[chn_name] = []
             gs[chn_name] = []
+            ps[chn_name] = []
             curr_temp[chn_name] = None
 
             self.reading = True
@@ -6757,6 +6784,7 @@ class QCMApp(QMainWindow):
                     # save data to fs and gs
                     fs[chn_name].append(fit_result['v_fit']['cen_rec']['value']) # fs
                     gs[chn_name].append(fit_result['v_fit']['wid_rec']['value'] ) # gs = half_width
+                    ps[chn_name].append(fit_result['v_fit']['amp_rec']['value'] ) # 
                     logger.info(cen_rec_freq) 
                     logger.info(cen_rec_G) 
 
@@ -6776,6 +6804,7 @@ class QCMApp(QMainWindow):
                     # save data to fs and gs
                     fs[chn_name].append(np.nan) # fs
                     gs[chn_name].append(np.nan) # gs = half_width
+                    ps[chn_name].append(np.nan) # gs = half_width
                     # clear lines
                     getattr(self.ui, 'mpl_sp' + harm).clr_lines(l_list=['lGfit', 'lBfit', 'lPfit', 'lsp', 'srec'])
 
@@ -6814,7 +6843,7 @@ class QCMApp(QMainWindow):
         if self.spectra_refresh_modulus() == 0: # check if to save by intervals
             self.writing = True
             # save raw
-            self.data_saver.dynamic_save(chn_name_list, harm_list, t=curr_time, temp=curr_temp, f=f, G=G, B=B, fs=fs, gs=gs, marks=marks)
+            self.data_saver.dynamic_save(chn_name_list, harm_list, t=curr_time, temp=curr_temp, f=f, G=G, B=B, fs=fs, gs=gs, ps=ps, marks=marks)
 
             # save data (THIS MIGHT MAKE THE PROCESS SLOW)
             self.data_saver.save_data()
@@ -6874,6 +6903,7 @@ class QCMApp(QMainWindow):
             # scan harmonics (1, 3, 5...)
             fs = []
             gs = []
+            ps = []
 
             self.reading = True
 
@@ -6896,6 +6926,7 @@ class QCMApp(QMainWindow):
                 # save data to fs and gs
                 fs.append(fit_result['v_fit']['cen_rec']['value']) # fs
                 gs.append(fit_result['v_fit']['wid_rec']['value'] ) # gs = half_width
+                ps.append(fit_result['v_fit']['amp_rec']['value'] ) #
 
                 # update lsp
                 factor_span = self.peak_tracker.get_output(key='factor_span', chn_name=chn_name, harm=harm)
@@ -6965,10 +6996,10 @@ class QCMApp(QMainWindow):
                 temp = self.data_saver.get_temp_C_from_raw(chn_name, queue_id)
                 marks = [0 for _ in harm_list] # 'samp' and 'ref' chn have the same harmonics
 
-                self.data_saver._save_queue_data([chn_name], harm_list, queue_id=queue_id, t={chn_name: t}, temp={chn_name: temp}, fs={chn_name: fs}, gs={chn_name: gs}, marks=marks)
+                self.data_saver._save_queue_data([chn_name], harm_list, queue_id=queue_id, t={chn_name: t}, temp={chn_name: temp}, fs={chn_name: fs}, gs={chn_name: gs}, ps={chn_name: ps}, marks=marks)
             else:
                 # save scan data to file fitting data in data_saver
-                self.data_saver.update_refit_data(chn_name, queue_id, harm_list, fs=fs, gs=gs)
+                self.data_saver.update_refit_data(chn_name, queue_id, harm_list, fs=fs, gs=gs, ps=ps)
 
             # plot data
             self.update_mpl_plt12()

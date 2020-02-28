@@ -1,4 +1,4 @@
-
+packaging
 pyqt5
 matplotlib
 numpy

@@ -8,6 +8,7 @@ NOTE: Differnt to other modules, the harmonics used in this module are all INT.
 '''
 
 
+import importlib
 import numpy as np
 import pandas as pd
 from scipy import optimize
@@ -15,6 +16,16 @@ from lmfit import Minimizer, minimize, Parameters, fit_report, printfuncs
 
 import logging
 logger = logging.getLogger(__name__)
+
+kww_spec = importlib.util.find_spec('kww')
+found_kww = kww_spec is not None
+if found_kww:
+    from kww import kwwc, kwws
+    # kwwc returns: integral from 0 to +infinity dt cos(omega*t) exp(-t^beta)
+    # kwws returns: integral from 0 to +infinity dt sin(omega*t) exp(-t^beta)
+else:
+    logger.info('kww module is not found!')
+
 
 # variable limitions
 dlam_refh_range = (0, 10) # (0, 5)
@@ -71,12 +82,21 @@ class QCM:
         self.Zq = Zq[cut]  # kg m−2 s−1. shear acoustic impedance of AT cut quartz
         #TODO add zq by cuts
         self.f1 = None # 5e6 Hz fundamental resonant frequency
+        self.g1 = None # dissipation of 1st harmonic
+        self.f0s = None # f0 of all harmonics in DICT with int(harm) as key
+        self.g0s = None # g0 of all harmonics in DICT with int(harm) as key
         self.g_err_min = 1 # error floor for gamma
         self.f_err_min = 1 # error floor for f
-        self.err_frac = 1e-2 # error in f or gamma as a fraction of gamma
+        self.err_frac = 3e-2 # error in f or gamma as a fraction of gamma
 
         self.refh = None # reference harmonic for calculation
+
+        self.calctype = 'SLA' # 'SLA', 'LL', 'Voigt' NOTE: not case sensitive
+        # 'Voigt': Qsense version: constant G', G" linear in omega
         # default values
+
+        self.piezoelectric_stiffening = False # set True if including piezoelectric stiffening
+
         # self.nhcalc = '355' # harmonics used for calculating
         # self.nhplot = [1, 3, 5] # harmonics used for plotting (show calculated data)
         
@@ -97,7 +117,7 @@ class QCM:
 
         # NOTE: since all delfstar is supposed to reference to bare crystal. We do not correct it for now !!
         # if len(film) > 1: # with multiple layers
-        #     fstar = self.calc_delfstar(n, film, calctype)
+        #     fstar = self.calc_delfstar(n, film, self.calctype)
         # else: # single layer
         #     fstar = delfstar
 
@@ -122,10 +142,17 @@ class QCM:
     def grho(self, n, grho_refh, phi): # old func
         ''' grho of n_th harmonic'''
         return grho_refh * (n/self.refh)**(phi / (np.pi/2))
+        
 
-
-    def grhostar(self, n, grho_refh, phi):
+    def grhostar_from_refh(self, n, grho_refh, phi):
         return self.grho(n, grho_refh, phi) * np.exp(1j*phi)
+        # return self.grhostar(self.grho(n, grho_refh, phi), phi) 
+        # two returns are the same
+
+
+    def grhostar(self, grho, phi):
+        '''return complex value of grhostar from grho (modulus) and phi '''
+        return grho * np.exp(1j * phi)
 
 
     def grho_from_dlam(self, n, drho, dlam_refh, phi):
@@ -174,8 +201,8 @@ class QCM:
 
     def rstar(self, n, grho_refh, phi, drho, overlayer={'drho': 0, 'gho_refh': 0, 'phi': 0}):
         # overlayer is dictionary with drho, grho_refh and phi
-        grhostar_1 = self.grhostar(n, grho_refh, phi)
-        grhostar_2 = self.grhostar(n, overlayer.get('grho_refh', 0), overlayer.get('phi', 0))
+        grhostar_1 = self.grhostar_from_refh(n, grho_refh, phi)
+        grhostar_2 = self.grhostar_from_refh(n, overlayer.get('grho_refh', 0), overlayer.get('phi', 0))
         zstar_1 = self.zstarbulk(grhostar_1)
         zstar_2 = self.zstarfilm(n, overlayer.get('drho', 0), grhostar_2)   
         return zstar_2 / zstar_1
@@ -197,7 +224,7 @@ class QCM:
 
 
     def thin_film_gamma(self, n, drho, jdprime_rho):
-        return 8*np.pi ** 2*n ** 3*self.f1 ** 4*drho ** 3*jdprime_rho / (3*self.Zq)
+        return 8 * np.pi**2 * n**3 * self.f1**4 * drho**3 * jdprime_rho / (3 * self.Zq)
         # same master expression, replacing grho3 with jdprime_rho3
 
 
@@ -211,6 +238,28 @@ class QCM:
         phi = material['phi']
         refh = material['n']
         return grho_refh * (n / refh)**(phi / (np.pi / 2))
+
+
+    def calc_grho_ncalc(self, grhostar, n, ncalc):
+        '''
+        from fun calc_grho3 in QCM_functions
+
+        calculate value of grho3 from given value of Grho at another harmonic,
+        assuming power law behavior
+        gstar: the complex modulus at harmonic n
+        ncalc: the harm of grho to calc
+        RETURN:  grho_calc, phi
+        '''
+        phi = np.angle(grhostar) # in radian
+        grho_n = abs(grhostar)
+        grho_calc = grho_n * (ncalc / n)**(phi / (np.pi/2))
+        # we return values of grho_calc and phi which return the correct value of grhostar at the nth harmonic
+        return grho_calc, phi
+
+
+    def calc_grho_refh(self, grhostar, n):
+        '''calculate grho_refh from grhostar of nth harmonic'''
+        return self.calc_grho_ncalc(grhostar, n, self.refh)
 
 
     def calc_D(self, n, material, delfstar):
@@ -231,11 +280,19 @@ class QCM:
 
     def zstar_bulk(self, n, material):
         # logger.info('material %s', material) 
-        grho = self.grho_from_material(n, material)  #check for error here
-        phi = material['phi']
-        grhostar = grho * np.exp(1j * phi)
-        return grhostar**0.5
+        if self.calctype.upper() != 'VOIGT': 
+            grho = self.grho_from_material(n, material)  #check for error here
+            phi = material['phi']
+            grhostar = self.grhostar(grho, phi) 
+        else: # Qsense version: constant G', G" linear in omega
+            r = material['n']
+            grho_r = material['ghro']
+            greal = grho_r * np.cos(material['phi'])
+            gimag= (n/r) * np.sin(material['phi'])
+            grhostar = (gimag**2 + greal**2)**0.5 * (np.exp(1j*
+                    material['phi']))
 
+        return grhostar**0.5
 
     def calc_delfstar_sla(self, ZL):
         return self.f1 * 1j / (np.pi * self.Zq) * ZL
@@ -308,7 +365,7 @@ class QCM:
         return Z[1] * (1 - rstar) / (1 + rstar)
 
 
-    def calc_delfstar(self, n, layers, calctype):
+    def calc_delfstar(self, n, layers):
         '''
         ref to air (0) or knowlayers (1)
         '''
@@ -317,7 +374,7 @@ class QCM:
             return np.nan
 
         # there is data
-        if calctype.upper() == 'SLA':
+        if self.calctype.upper() == 'SLA':
             # use the small load approximation in all cases where calctype
             # is not explicitly set to 'LL'
 
@@ -330,7 +387,7 @@ class QCM:
             else:
                 return self.calc_delfstar_sla(ZL)
 
-        elif calctype.upper() == 'LL':
+        elif self.calctype.upper() == 'LL':
             # this is the most general calculation
             # use defaut electrode if it's not specified
             if 0 not in layers: 
@@ -369,20 +426,18 @@ class QCM:
             return np.nan
 
 
-    def calc_delfstar_from_single_material(self, n, material, calctype):
+    def calc_delfstar_from_single_material(self, n, material):
         '''
         convert material to a single layer and return delfstar
         '''
         layers = self.build_single_layer_film(material)
-        return self.calc_delfstar( n, layers, calctype)
+        return self.calc_delfstar( n, layers)
 
 
     def calc_Zmot(self, n, layers, delfstar):
         om = 2 * np.pi * (n * self.f1 + delfstar)
         Zqc = self.Zq * (1 + 1j * 2 * g0 / (n * self.f1))
-        ZC0byA = C0byA / (1j*om)
-        # can always be neglected as far as we can tell
-        ZPE = -(e26 / dq)**2 * ZC0byA  # ZPE accounts for piezoelectric stiffening anc
+
 
         self.drho_q = self.Zq / (2 * self.f1)
         Dq = om * self.drho_q / self.Zq
@@ -390,7 +445,13 @@ class QCM:
         ZL = self.calc_ZL(n, layers, delfstar)
         # eq. 4.5.9 in book
         thirdterm = ((1j * Zqc * np.tan(Dq/2))**-1 + (1j * Zqc * np.tan(Dq / 2) + ZL)**-1)**-1
-        Zmot = secterm + thirdterm  + ZPE
+        Zmot = secterm + thirdterm
+
+        if self.piezoelectric_stiffening:
+            ZC0byA = C0byA / (1j*om)
+            # can always be neglected as far as we can tell
+            ZPE = -(e26 / dq)**2 * ZC0byA  # ZPE accounts for piezoelectric stiffening anc
+            Zmot += ZPE
 
         # logger.info('Zmot shape %s', Zmot.shape) 
         # logger.info('Zmot %s', Zmot) 
@@ -620,7 +681,7 @@ class QCM:
     ########################################################
 
 
-    def solve_single_queue_to_prop(self, nh, qcm_queue, calctype='SLA', film={}, bulklimit=0.5):
+    def solve_single_queue_to_prop(self, nh, qcm_queue, calctype=None, film={}, bulklimit=0.5):
         '''
         solve the property of a single test.
         nh: list of int
@@ -629,6 +690,9 @@ class QCM:
         film: dict of the film layers information
         return grho_refh, phi, drho, dlam_ref, err
         '''
+        if calctype is not None:
+            self.calctype = calctype
+
         # get fstar
         fstars = qcm_queue.fstars.iloc[0] # list
         # get delfstar
@@ -642,12 +706,28 @@ class QCM:
 
         # set f1
         f0s = qcm_queue.f0s.iloc[0]
-        if np.isnan(f0s).all():
+        f0s = {int(i*2+1): f0 for i, f0 in enumerate(f0s)}
+        g0s = qcm_queue.g0s.iloc[0]
+        g0s = {int(i*2+1): g0 for i, g0 in enumerate(g0s)}
+
+        self.f0s = f0s
+        self.g0s = g0s
+
+        if np.isnan(list(f0s.values())).all():
             self.f1 = np.nan
         else:
-            first_notnan = np.argwhere(~np.isnan(f0s))[0][0] # find out index of the first freq is not nan
+            for k in sorted(f0s.keys()):
+                if ~np.isnan(f0s[k]): # the first non na harmonic
+                    self.f1 = f0s[k] / k
+                    self.g1 = g0s[k] / k
+                    logger.info('self.f1 %s', self.f1)
+                    break
+
+            # use np find in dict values. may have issue with lower ver Python since dict is not ordered        
+            # first_notnan = np.argwhere(~np.isnan(list(f0s.values())))[0][0] # find out index of the first freq is not nan
             # use this value calculate f1 = fn/n (in case f1 is not recorded)
-            self.f1 = f0s[first_notnan] / (first_notnan * 2 + 1)
+            # self.f1 = f0s[first_notnan] / (first_notnan * 2 + 1)
+
         # logger.info('f1 %s, self.f1) 
 
         # fstar_err ={}
@@ -660,12 +740,12 @@ class QCM:
         #! check the last layer. it should be air or water or so with inf thickness
         #! if rd > 0.5 and nl < layers, set out layers to {0, 0, 0}
 
-        grho_refh, phi, drho, dlam_refh, err = self.solve_general_delfstar_to_prop(nh, delfstar, calctype, film, prop_guess={}, bulklimit=bulklimit)
+        grho_refh, phi, drho, dlam_refh, err = self.solve_general_delfstar_to_prop(nh, delfstar, film, prop_guess={}, bulklimit=bulklimit)
 
         return grho_refh, phi, drho, dlam_refh, err
 
 
-    def solve_single_queue(self, nh, qcm_queue, mech_queue, calctype='SLA', film={}, bulklimit=0.5):
+    def solve_single_queue(self, nh, qcm_queue, mech_queue, calctype=None, film={}, bulklimit=0.5):
         '''
         solve the property of a single test.
         nh: list of int
@@ -677,12 +757,15 @@ class QCM:
 
         NOTE: n used in this function is int
         '''
+        if calctype is not None:
+            self.calctype = calctype
+
         # logger.info('calctype %s', calctype) 
         #TODO this may be replaced
         film = self.replace_layer_0_prop_with_known(film)
 
         # logger.info('film before calc %s', film) 
-        grho_refh, phi, drho, dlam_refh, err = self.solve_single_queue_to_prop(nh, qcm_queue, calctype=calctype, film=film, bulklimit=bulklimit)
+        grho_refh, phi, drho, dlam_refh, err = self.solve_single_queue_to_prop(nh, qcm_queue, film=film, bulklimit=bulklimit)
 
         # update calc layer prop
         film = self.set_calc_layer_val(film, grho_refh, phi, drho)
@@ -730,7 +813,7 @@ class QCM:
                 # However, delfstar_calc() does not work with 90deg. due to
                 delfstar_calc[n] = self.delfstarcalc_bulk_from_film(n, film)
             else:
-                delfstar_calc[n] = self.calc_delfstar(n, film, calctype)
+                delfstar_calc[n] = self.calc_delfstar(n, film)
             delf_calcs[nh2i(n)] = np.real(delfstar_calc[n])
             delg_calcs[nh2i(n)] = np.imag(delfstar_calc[n])
 
@@ -812,7 +895,7 @@ class QCM:
         ########## TODO 
 
 
-    def solve_general_delfstar_to_prop(self, nh, delfstar, calctype, film, prop_guess={}, bulklimit=0.5):
+    def solve_general_delfstar_to_prop(self, nh, delfstar, film, calctype=None, prop_guess={}, bulklimit=0.5):
         '''
         solve the property of a single test.
         nh: list of int
@@ -821,6 +904,8 @@ class QCM:
         bulklimt: 0.5 by default. rd > bulklimt use bulk calculation
         return grho_refh, phi, drho, dlam_refh, err
         '''
+        if calctype is not None:
+            self.calctype = calctype
         # input variables - this is helpfulf for the error analysis
         # define sensibly names partial derivatives for further use
         err = {}
@@ -871,10 +956,10 @@ class QCM:
                     layers = self.set_calc_layer_val(film, x[0], x[1], bulk_drho) # set inf to grho, phi, drho to x[0], x[1], respectively
 
                     # n3 == self.refh !!
-                    calc_delfstar = self.calc_delfstar(self.refh, layers, calctype)
+                    calc_delfstar = self.calc_delfstar(self.refh, layers)
                     return ([
-                        np.real(delfstar[self.refh]) - np.real(calc_delfstar),
-                        np.imag(delfstar[self.refh]) - np.imag(calc_delfstar)
+                        np.real(calc_delfstar) - np.real(delfstar[self.refh]),
+                        np.imag(calc_delfstar) - np.imag(delfstar[self.refh])
                     ])
             else: # thin layer
                 logger.info('use thin film guess') 
@@ -892,9 +977,9 @@ class QCM:
                 def ftosolve(x):
                     layers = self.set_calc_layer_val(film, x[0], x[1], x[2]) # set grho, phi, drho to x[0], x[1], x[2], respectively
                     return ([
-                        np.real(delfstar[n1]) - np.real(self.calc_delfstar(n1, layers, calctype)),
-                        np.real(delfstar[n2]) - np.real(self.calc_delfstar(n2, layers, calctype)),
-                        np.imag(delfstar[n3]) - np.imag(self.calc_delfstar(n3, layers, calctype))
+                        np.real(self.calc_delfstar(n1, layers)) - np.real(delfstar[n1]),
+                        np.real(self.calc_delfstar(n2, layers)) - np.real(delfstar[n2]),
+                        np.imag(self.calc_delfstar(n3, layers)) - np.imag(delfstar[n3])
                     ])
 
                
@@ -978,20 +1063,6 @@ class QCM:
         # logger.info('delrho %s', delrho) 
 
         return grho_refh, phi, drho, dlam_refh, err
-
-
-    def solve_general_prop_to_delfstar(self, n, film, isbulk=False, calctype='SLA'):
-        '''
-        NOT USING
-        use bulk function and thin layer function separately.
-        Actually, the calc_delfstar does both
-        '''
-
-        if isbulk: # bulk
-            delfstar = self.delfstarcalc_bulk_from_film(n, film)
-        else:
-            delfstar = self.calc_delfstar(n, film, calctype)
-        return delfstar
 
 
     def all_nhcaclc_harm_not_na(self, nh, qcm_queue):
@@ -1281,6 +1352,85 @@ class QCM:
 
         return new_film
 
+    
+    ##################### springport functions ########################
+    def gstar_maxwell(self, wtau):  
+        ''' Maxwell element '''
+        return 1j * wtau / (1 + 1j * wtau)
+
+
+    # def gstar_kww_single(self, wtau, beta):  
+    #     ''' Transform of the KWW function '''
+    #     return wtau * (kwws(wtau, beta) + 1j * kwwc(wtau, beta))
+    # gstar_kww = np.vectorize(gstar_kww_single)
+    
+    
+    # use decortor, should be the same as above commented
+    @np.vectorize
+    def gstar_kww(self, wtau, beta):  
+        ''' Transform of the KWW function '''
+        return wtau * (kwws(wtau, beta) + 1j * kwwc(wtau, beta))
+
+
+    def gstar_rouse(self, wtau, n_rouse):
+        # make sure n_rouse is an integer if it isn't already
+        n_rouse = int(n_rouse)
+
+        rouse=np.zeros((len(wtau), n_rouse), dtype=complex)
+        for p in 1+np.arange(n_rouse):
+            rouse[:, p-1] = (wtau / p**2)**2/(1 + wtau / p**2)**2 + 1j*(wtau / p**2) / (1 + wtau / p**2)**2
+        rouse = rouse.sum(axis=1) / n_rouse
+        return rouse
+
+
+    def springpot(self, w, g0, tau, beta, sp_type, **kwargs):
+        # this function supports a combination of different springpot elments
+        # combined in series, and then in parallel.  For example, if type is
+        # [1,2,3],  there are three branches
+        # in parallel with one another:  the first one is element 1, the
+        # second one is a series comination of elements 2 and 3, and the third
+        # one is a series combination of 4, 5 and 6.
+        
+        # specify which elements are kww or Maxwell elements
+        kww = kwargs.get('kww',[])
+        maxwell = kwargs.get('maxwell',[])
+
+        # make values numpy arrays if they aren't already
+        tau = np.asarray(tau).reshape(1, -1)[0,:]
+        beta = np.asarray(beta).reshape(1, -1)[0,:]
+        g0 = np.asarray(g0).reshape(1, -1)[0,:]
+        sp_type = np.asarray(sp_type).reshape(1, -1)[0,:]
+        
+        nw = len(w)  # number of frequencies
+        n_br = len(sp_type)  # number of series branches
+        n_sp = sp_type.sum()  # number of springpot elements
+        sp_comp = np.empty((nw, n_sp), dtype=np.complex)  # element compliance
+        br_g = np.empty((nw, n_br), dtype=np.complex)  # branch stiffness
+
+        # calculate the compliance for each element
+        for i in np.arange(n_sp):
+            if i in maxwell:  # Maxwell element
+                sp_comp[:, i] = 1 / (g0[i] * self.gstar_maxwell(w * tau[i]))            
+            elif i in kww:  #  kww (stretched exponential) elment
+                sp_comp[:, i] = 1 / (g0[i] * self.gstar_kww(w * tau[i], beta[i]))
+            else:  # power law springpot element
+                sp_comp[:, i] = 1 / (g0[i] * (1j * w * tau[i]) **beta[i])
+
+        # sp_vec keeps track of the beginning and end of each branch
+        sp_vec = np.append(0, sp_type.cumsum())
+        for i in np.arange(n_br):
+            sp_i = np.arange(sp_vec[i], sp_vec[i+1])
+            # branch compliance obtained by summing compliances within the branch
+            br_g[:, i] = 1 / sp_comp[:, sp_i].sum(1)
+
+        # now we sum the stiffnesses of each branch and return the result
+        return br_g.sum(1)
+
+
+    def vogel(self, T, Tref, B, Tinf):
+        logaT = -B / (Tref - Tinf) + B / (T - Tinf)
+        return logaT
+
 
 if __name__ == '__main__':
     qcm = QCM()
@@ -1348,7 +1498,7 @@ if __name__ == '__main__':
             2: {'calc': False, 'drho': 0.5347e-3, 'grho': 86088e3, 'phi': np.pi/2, 'n': 3}}
 
 
-    grho_refh, phi, drho, dlam_refh, err = qcm.solve_general_delfstar_to_prop(nh, delfstar, 'LL', film, bulklimit=.5)
+    grho_refh, phi, drho, dlam_refh, err = qcm.solve_general_delfstar_to_prop(nh, delfstar, film, calctype='LL', bulklimit=.5)
 
     print('drho', drho)
     print('grho_refh', grho_refh)

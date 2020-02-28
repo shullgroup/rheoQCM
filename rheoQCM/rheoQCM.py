@@ -2141,6 +2141,9 @@ class QCMApp(QMainWindow):
         # clear spectra_fit items
         self.clr_spectra_fit()
 
+        # clear data table on mechanics tab
+        self.ui.tableWidget_spectra_mechanics_table.clearContents()
+
         # set widgets enabled by using the disabled list
         self.enable_widgets(
             'pushButton_runstop_disable_list',
@@ -2237,7 +2240,7 @@ class QCMApp(QMainWindow):
         # clear all mpl objects
         self.clear_all_mpl()
         # clear plainTextEdit
-        self.ui.plainTextEdit_spectra_fit_result.clear()
+        self.ui.plainTextEdit_spectra_fit_result.clear()        
 
 
     def clear_all_mpl(self):
