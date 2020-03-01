@@ -23,14 +23,26 @@ f1 = 5e6  # fundamental resonant frequency
 openplots = 4
 drho_q = Zq/(2*f1)
 e26 = 9.65e-2
-g0 = 50 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
-err_frac = 3e-2 # error in f or gamma as a fraction of gamma
+g0_default = 50 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
+err_frac_default = 3e-2 # error in f or gamma as a fraction of gamma
 
 electrode_default = {'drho':2.8e-3, 'grho3':3.0e14, 'phi':0}
 
 
 def find_nearest_idx(values, array):
-    # find index of a point with value closest to the one specified
+    """
+    Find index of a point with value closest to the one specified.
+    args:
+        values (list or numpy array):
+            Values that we want to be close to.
+        array (numpy array): 
+            Input array to choose values from.
+        
+    returns:
+        idx (numpy array):
+            Array of indices in 'array' that give values closest
+            to 'values'.
+    """
     # make values a numpy array if it isn't already
     values = np.asarray(values).reshape(1, -1)[0,:]
     idx = np.zeros(values.size, dtype=int)
@@ -45,17 +57,38 @@ def find_nearest_idx(values, array):
     return idx
 
 
-def find_idx_in_range(t, t_range):
-    if t_range[0] == t_range[1]:
-        idx = np.arange(t.shape[0]).astype(int)
+def find_idx_in_range(x, range):
+    """
+    Find indices of array with values within a specified range.
+    args:
+        x (numpy array):
+            Input array containing the values of interest.
+        range (2 element list or numpy array): 
+            Minimum and maximum values of the specified range.
+        
+    returns:
+        idx (numpy array):
+            Numpy array of indices of x that are within range.
+    """
+    if range[0] == range[1]:
+        idx = np.arange(x.shape[0]).astype(int)
     else:
-        idx = np.where((t >= t_range[0]) &
-                       (t <= t_range[1]))[0]
+        idx = np.where((x >= range[0]) &
+                       (x <= range[1]))[0]
     return idx
 
 
 def add_D_axis(ax):
-    # add right hand axis with dissipation
+    """
+    Add right hand axis with dissipation.
+    args:
+        ax (axis handle):
+            Axis that we are going to work with.
+        
+    returns:
+        axD (axis handle):
+            Aix with dissipation added.
+    """
     axD = ax.twinx()
     axD.set_ylabel(r'$\Delta D_n$ (ppm)')
     axlim = ax.get_ylim()
@@ -64,12 +97,32 @@ def add_D_axis(ax):
     return axD
 
 
-def fstar_err_calc(n, delfstar, layers):
-    # calculate the error in delfstar
-    # g here is the dissipation
-    # g0 is dissipation of bare crystal
-    # g0, err_frac set at the top of this file
-    # err_frac is error in f, g as a franction of g
+def fstar_err_calc(n, delfstar, layers, **kwargs):
+    """
+    Calculate the error in delfstar.
+    args:
+        n (int):
+            Harmonic to consider.
+        delfstar (numpy array): 
+            Array of complex frequency shifts at n.
+        layers (dictionary):
+            Property stack for different layers considered in the calculation.
+            
+    kwargs:
+        g0 (real):
+            Dissipation at n for dissipation.  Default value set at top
+            of QCM_functions.py (typically 50).
+        err_frac:
+            Uncertainty in delf, delg as a fraction of gamma.  Default set
+            at top of QCM_functions.py (typically 0.03).
+        
+    returns:
+        fstar_err (numpy array of complex values):
+            Array errors in delf (real part) and delg (imag part).
+    """
+
+    g0 = kwargs.get('g0', g0_default)
+    err_frac = kwargs.get('err_frac', err_frac_default)
 
     g=g0 + np.imag(delfstar)
     
@@ -85,37 +138,161 @@ def fstar_err_calc(n, delfstar, layers):
 
 def sauerbreyf(n, drho):
     return 2*n*f1 ** 2*drho/Zq
+    """
+    Find indices of array with values within a specified range.
+    args:
+        x (numpy array):
+            Input array containing the values of interest.
+        range (2 element list or numpy array): 
+            Minimum and maximum values of the specified range.
+        
+    returns:
+        idx (numpy array):
+            Numpy array of indices of x that are within range.
+    """
 
 
 def sauerbreym(n, delf):
+    """
+    Calculate Sauerbrey thickness from frequency shift.
+    args:
+        n (int):
+            Harmonic of interest.
+        delf (real): 
+            Frequency shift in Hz.
+        
+    returns:
+        Sauerbrey mass in kg/m^2.
+    """
     return delf*Zq/(2*n*f1 ** 2)
 
 
+
 def grho(n, material):
+    """
+    Use power law formulation to get G*\rho at different harmonics, 
+    with properties at n=3 as an input.
+    args:
+        n (int):
+            Harmonic of interest.
+        material (dictionary:
+            Dictionary of material properties, which must contain 
+            grho3 and phi.
+        
+    returns:
+        G*\rho at harmonic of interest.
+    """
     grho3 = material['grho3']
     phi = material['phi']
     return grho3*(n/3) ** (phi/90)
 
 
+def calc_grho3(n, grhostar):
+    """
+    Use power law formulation to get |G*|\rho at n=3.
+    args:
+        n (int):
+            Harmonic of interest.
+        grhostar (complex):
+            G*\rho at harmonic of interest.
+        
+    returns:
+        grho3:
+            |G*|\rho (SI units) at n=3.
+        phi:
+            phase angle (degrees) - assumed independent of n.
+    """
+    phi=np.angle(grhostar, deg=True)
+    grhon=abs(grhostar)
+    grho3=grhon*(3/n)**(phi/90)
+    return grho3, phi
+
+
 def grho_from_dlam(n, drho, dlam, phi):
+    """
+    Obtain |G*|\rho from d/lambda.
+    args:
+        n (int):
+            Harmonic of interest.
+        drho (real):
+            Mass thickness in kg/m^2.
+        dlam (real):
+            d/lambda at harmonic of interest
+        phi (real):
+            phase angle
+        
+    returns:
+        G*\rho at harmonic of interest.
+    """
     return (drho*n*f1*np.cos(np.deg2rad(phi/2))/dlam) ** 2
 
 
 def grho_bulk(n, delfstar):
+    """
+    Obtain |G*|\rho from for bulk material (infinite thicknes).
+    args:
+        n (int):
+            Harmonic of interest.
+        delfstar (complex number or numpy array of complex numbers):
+            Complex frequency shift in Hz.
+        
+    returns:
+        |G*|\rho at harmonic of interest.
+    """
     return (np.pi*Zq*abs(delfstar[n])/f1) ** 2
 
 
 def phi_bulk(n, delfstar):
+    """
+    Obtain phase angle for bulk material (infinite thicknes).
+    args:
+        n (int):
+            Harmonic of interest.
+        delfstar (complex number or numpy array of complex numbers):
+            Complex frequency shift in Hz.
+        
+    returns:
+        phase angle at harmonic of interest.
+    """
     return -np.degrees(2*np.arctan(np.real(delfstar[n]) /
                        np.imag(delfstar[n])))
 
     
 def deltarho_bulk(n, delfstar):
+    """
+    Calculate decay length multiplied by density for bulk material.
+    args:
+        n (int):
+            Harmonic of interest.
+        delfstar (complex number or numpy array of complex numbers):
+            Complex frequency shift in Hz.
+        
+    returns:
+        Decay length multiplied by density (SI units).
+    """
     #decay length multiplied by density
     return -Zq*abs(delfstar[n])**2/(2*n*f1**2*delfstar[n].real)
 
 
 def calc_D(n, material, delfstar,calctype):
+    """
+    Calculate D (dk*, thickness times complex wave number).
+    args:
+        n (int):
+            Harmonic of interest.
+        material (dictionary):
+            Dictionary of material properties, which must contain 
+            grho3 and phi.
+        delfstar (complex):
+            Complex frequency shift at harmonic of interest (Hz).
+        calctype (string): 
+            - 'SLA' (default): small load approximation with power law model
+            - 'LL': Lu Lewis equation, using default or provided electrode props
+            - 'Voigt': small load approximation
+       
+    returns:
+        D (complex) at harmonic of interest.
+    """
     drho = material['drho']
     # set switch to handle ase where drho = 0
     if drho == 0:
@@ -123,20 +300,25 @@ def calc_D(n, material, delfstar,calctype):
     else:
         return 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n, 
                        material,calctype)
-    
-def calc_grho3(grhostar, n):
-    # calculate value of grho3 from given value of Grho at another harmonic,
-    # assuming power law behavior
-    # gstar is the complex modulus at harmonic n
-    phi=np.angle(grhostar, deg=True)
-    grhon=abs(grhostar)
-    grho3=grhon*(3/n)**(phi/90)
-    # we return values of grho3 and phi which return the correct value of grhostar
-    # at the nth harmonic
-    return grho3, phi
 
 
 def zstar_bulk(n, material, calctype):
+    """
+    Calculate complex acoustic impedance for bulk material.
+    args:
+        n (int):
+            Harmonic of interest.
+        material (dictionary):
+            Dictionary of material properties, which must contain 
+            grho3 and phi.
+        calctype (string): 
+            - 'SLA' (default): small load approximation with power law model
+            - 'LL': Lu Lewis equation, using default or provided electrode props
+            - 'Voigt': small load approximation
+       
+    returns:
+        square root of gstar*\rho.
+    """
     grho3 = material['grho3']
     if calctype != 'Voigt':
         grho = grho3*(n/3)**(material['phi']/90) 
@@ -151,18 +333,51 @@ def zstar_bulk(n, material, calctype):
 
 
 def calc_delfstar_sla(ZL):
+    """
+    Calculate complex frequency shift from load impedance using small
+    load approximation.
+    args:
+        ZL (complex):
+            complex load impedance (SI units).
+       
+    returns:
+        Complex frequency shift, delfstar (Hz).
+    """
     return f1*1j/(np.pi*Zq)*ZL
 
 
 def calc_ZL(n, layers, delfstar, calctype):
-    # layers is a dictionary of dictionaries
-    # each dictionary is named according to the layer number
-    # layer 1 is closest to the quartz
-
+    """
+    Calculate complex load impendance for stack of layers.
+    args:
+        n (int):
+            Harmonic of interest.
+            
+        layers (dictionary):
+            Dictionary of material dictionaries specifying the properites of
+            each layer. These dictionaries are labeled from 1 to N, with 1
+            being the layer in contact with the QCM.  Each dictionary must 
+            include values for 'grho3, 'phi' and 'drho'.
+            
+        delfstar (complex):
+            Complex frequency shift at harmonic of interest (needed for Lu-
+            Lewis calculation).
+            
+        calctype (string): 
+            - 'SLA' (default): small load approximation with power law model
+            - 'LL': Lu Lewis equation, using default or provided electrode props
+            - 'Voigt': small load approximation
+       
+    returns:
+        ZL (complex):
+            Complex load impedance (stress over velocity) in SI units
+    """
+ 
     N = len(layers)
     Z = {}; D = {}; L = {}; S = {}
 
-    # we use the matrix formalism to avoid typos.
+    # we use the matrix formalism to avoid typos and simplify the extension
+    # to large N.
     for i in np.arange(1, N):
         Z[i] = zstar_bulk(n, layers[i],calctype)
         D[i] = calc_D(n, layers[i], delfstar, calctype)
@@ -192,6 +407,27 @@ def calc_ZL(n, layers, delfstar, calctype):
 
 
 def calc_delfstar(n, layers, calctype):
+    """
+    Calculate complex frequency shift for stack of layers.
+    args:
+        n (int):
+            Harmonic of interest.
+            
+        layers (dictionary):
+            Dictionary of material dictionaries specifying the properites of
+            each layer. These dictionaries are labeled from 1 to N, with 1
+            being the layer in contact with the QCM.  Each dictionary must 
+            include values for 'grho3, 'phi' and 'drho'.
+                        
+        calctype (string): 
+            - 'SLA' (default): small load approximation with power law model
+            - 'LL': Lu Lewis equation, using default or provided electrode props
+            - 'Voigt': small load approximation
+       
+    returns:
+        delfstar (complex):
+            Complex frequency shift (Hz).
+    """
     if not layers: # layers is empty {}
         return np.nan
 
@@ -247,14 +483,39 @@ def calc_delfstar(n, layers, calctype):
         return dfc-dfc_ref
 
 
-def calc_Zmot(n, layers, delfstar, calctype):
+def calc_Zmot(n, layers, delfstar, calctype, **kwargs):
+    """
+    Calculate motional impedance (used for .
+    args:
+        n (int):
+            Harmonic of interest.
+            
+        layers (dictionary):
+            Dictionary of material dictionaries specifying the properites of
+            each layer. These dictionaries are labeled from 1 to N, with 1
+            being the layer in contact with the QCM.  Each dictionary must 
+            include values for 'grho3, 'phi' and 'drho'.
+                        
+        calctype (string): 
+            Generally passed from calling function.  Should always be 'LL'.
+
+    kwargs:
+        g0 (real):
+            Dissipation at n for dissipation.  Default value set at top
+            of QCM_functions.py (typically 50).
+       
+    returns:
+        delfstar (complex):
+            Complex frequency shift (Hz).
+    """
+    g0 = kwargs.get('g0', g0_default)
     om = 2 * np.pi *(n*f1 + delfstar)
     Zqc = Zq * (1 + 1j*2*g0/(n*f1))
 
     Dq = om*drho_q/Zq
     secterm = -1j*Zqc/np.sin(Dq)
     ZL = calc_ZL(n, layers, delfstar,calctype)
-    # eq. 4.5.9 in book
+    # eq. 4.5.9 in Diethelm book
     thirdterm = ((1j*Zqc*np.tan(Dq/2))**-1 + (1j*Zqc*np.tan(Dq/2) + ZL)**-1)**-1
     Zmot = secterm + thirdterm  
     # uncomment next 4 lines to account for piezoelectric stiffening
@@ -265,36 +526,139 @@ def calc_Zmot(n, layers, delfstar, calctype):
     return Zmot
 
 
-def calc_dlam(n, film, calctype):
-    return calc_D(n, film, 0, calctype).real/(2*np.pi)
+def calc_dlam(n, film):
+    """
+    Calculate d/lambda at specified harmonic.
+    args:
+        n (int):
+            Harmonic of interest.
+            
+        film (dictionary):
+            Dictionary of film properties, including values for
+            'grho3, 'phi' and 'drho'.
+       
+    returns:
+        delfstar (real):
+            d/lambda at specified harmonic.
+    """
+    return calc_D(n, film, 0, 'SLA').real/(2*np.pi)
 
 
 def calc_lamrho(n, grho3, phi):
+    """
+    Calculate lambda*\rho at specified harmonic.
+    args:
+        n (int):
+            Harmonic of interest.
+            
+        grho3 (real):
+            |G*|\rho  at n=3 (SI units).
+            
+        phi (real):
+            Phase angle (degrees).
+       
+    returns:
+        shear wavelength times density in SI units
+    """
     # calculate lambda*rho
     grho=grho3*(n/3) ** (phi/90)
     return np.sqrt(grho)/(n*f1*np.cos(np.deg2rad(phi/2)))
 
 
 def calc_deltarho(n, grho3, phi):
+    """
+    Calculate delta*\rho at specified harmonic.
+    args:
+        n (int):
+            Harmonic of interest.
+            
+        grho3 (real):
+            |G*|\rho  at n=3 (SI units).
+            
+        phi (real):
+            Phase angle (degrees).
+       
+    returns:
+        decay length times density in SI units
+    """
     # calculate delta*rho (decay length times density)
     return calc_lamrho(n, grho3, phi)/(2*np.pi*np.tan(np.radians(phi/2)))
 
 
 def dlam(n, dlam3, phi):
+    """
+    Calculate d/lambda at specified harmonic.
+    args:
+        n (int):
+            Harmonic of interest.
+            
+        dlam3 (real):
+            d/lambda at n=3.
+            
+        phi (real):
+            Phase angle (degrees).
+       
+    returns:
+        d/lambda at specified harmonic
+    """
     return dlam3*(int(n)/3) ** (1-phi/180)
 
 
+
 def normdelfstar(n, dlam3, phi):
+    """
+    Calculate complex frequency shift normzlized by Sauerbrey shift.
+    args:
+        n (int):
+            Harmonic of interest.
+            
+        dlam3 (real):
+            d/lambda at n=3.
+            
+        phi (real):
+            Phase angle (degrees).
+       
+    returns:
+        delfstar normalized by Sauerbrey value
+    """
     return -np.tan(2*np.pi*dlam(n, dlam3, phi)*(1-1j*np.tan(np.deg2rad(phi/2)))) / \
         (2*np.pi*dlam(n, dlam3, phi)*(1-1j*np.tan(np.deg2rad(phi/2))))
 
 
 def rhcalc(calc, dlam3, phi):
+    """
+    Calculate harmonic ratio from material properties.
+    args:
+        calc (3 character string):
+            Calculation string ('353' for example).
+            
+        dlam3 (real):
+            d/lambda at n=3.
+            
+        phi (real):
+            Phase angle (degrees).
+       
+    returns:
+        Harmonic ratio.
+    """
     return normdelfstar(calc[0], dlam3, phi).real / \
         normdelfstar(calc[1], dlam3, phi).real
 
 
 def rh_from_delfstar(calc, delfstar):
+    """
+    Determine harmonic ratio from experimental delfstar.
+    args:
+        calc (3 character string):
+            Calculation string ('353' for example).
+            
+        delfstar (complex):
+            ditionary of complex frequency shifts, included all harmonics
+            within calc.
+       
+    returns:
+        Harmonic ratio.
+    """
     # calc here is the calc string (i.e., '353')
     n1 = int(calc[0])
     n2 = int(calc[1])
@@ -302,18 +666,59 @@ def rh_from_delfstar(calc, delfstar):
 
 
 def rdcalc(calc, dlam3, phi):
+    """
+    Calculate dissipation ratio from material properties.
+    args:
+        calc (3 character string):
+            Calculation string ('353' for example).
+            
+        dlam3 (real):
+            d/lambda at n=3.
+            
+        phi (real):
+            Phase angle (degrees).
+       
+    returns:
+        Harmonic ratio.
+    """
     return -(normdelfstar(calc[2], dlam3, phi).imag / \
         normdelfstar(calc[2], dlam3, phi).real)
 
 
 def rd_from_delfstar(n, delfstar):
-    # dissipation ratio calculated for the relevant harmonic
+    """
+    Determine dissipation ratio from experimental delfstar.
+    args:
+        calc (3 character string):
+            Calculation string ('353' for example).
+            
+        delfstar (complex):
+            ditionary of complex frequency shifts, included all harmonics
+            within calc.
+       
+    returns:
+        Dissipation ratio.
+    """
     return -delfstar[n].imag/delfstar[n].real
 
     
 def bulk_props(delfstar):
-    # delfstar is value at harmonic where we are calculating grho, phi
-    # get the bulk solution for grho and phi
+    """
+    Determine properties of bulk material from complex frequency shift.
+    args:
+        calc (3 character string):
+            Calculation string ('353' for example).
+            
+        delfstar (complex):
+            Complex frequency shift (at any harmonic).
+       
+    returns:
+        grho: 
+            Magnitude of complex shear modulus, multipled by density, at
+            harmonic where delfstar was measured.
+        phi:
+            Phase angle in degrees, at harmonic where delfstar was measured.
+    """
     grho = (np.pi*Zq*abs(delfstar)/f1) ** 2
     phi = -np.degrees(2*np.arctan(delfstar.real /
                       delfstar.imag))
@@ -321,6 +726,25 @@ def bulk_props(delfstar):
 
 
 def thinfilm_guess(delfstar, calc):
+    """
+    Determine properties of bulk material from complex frequency shift.
+    args:
+                    
+        delfstar (complex):
+            Complex frequency shift (at any harmonic).
+            
+        calc (3 character string):
+            Calculation string ('353' for example).
+    
+    returns:
+        drho:
+            Mass per unit area in kg/m^2.
+        grho3:
+            Magnitude of complex shear modulus at n=3, multipled by density
+            (SI units).
+        phi:
+            Phase angle in degrees.
+    """
     # really a placeholder function until we develop a more creative strategy
     # for estimating the starting point
     n1 = int(calc[0])
@@ -348,8 +772,44 @@ def thinfilm_guess(delfstar, calc):
     return drho, grho3, phi
 
 
-def solve_for_props(delfstar, **kwargs):
-    # solve the QCM equations to determine the properties
+def solve_for_props(delfstar, calc, **kwargs):
+    """
+    Solve the QCM equations to determine the properties.
+    
+    args:
+        delfstar (dataframe):
+            input dataframe containing complex frequency shifts, 
+            generally generated by delfstar_from_xlsx
+            
+        calc (string):
+            3 character string specifying calculation type (e.g., '353'); 
+            only third character is used for filmtype='bulk'
+    
+    kwargs:
+        nplot (list):
+            list of frequencies for which complex frequency shifts are
+            calculated; default is [1,3,5].    
+            
+        calctype (string): 
+            - 'SLA' (default): small load approximation with power law model
+            - 'LL': Lu Lewis equation, using default or provided electrode props
+            - 'Voigt': small load approximation
+            
+        filmtype (string):
+            - 'thin' (default): standard calculation returning drho, grho3, phi
+            - 'bulk': calculation for bulk material, returning grho3, phi
+            
+        newtonian (Boolean): (only used for 'bulk' filmtype)
+            - False (default): standard bulk calculation
+            - True: phase angle assumed to be 90 degrees and viscosity obtained
+              from dissipation
+                
+    returns:
+        df_out (dataframe):  
+            dataframe with properties added, deleting rows with any NaN values \
+            that didn't allow calculation to be performed
+            
+    """
 
     df_in = delfstar.T  # transpose the input dataframe
     if 'overlayer' in kwargs.keys():
@@ -362,7 +822,6 @@ def solve_for_props(delfstar, **kwargs):
     filmtype = kwargs.get('filmtype', 'thin')
     newtonian = kwargs.get('newtonian', False)
 
-    calc = kwargs.get('calc') # specify the values used in the n1:n2,n3 calculation
     n1 = int(calc[0]); n2 = int(calc[1]); n3 = int(calc[2])
     
     # set upper and lower bounds
@@ -438,7 +897,7 @@ def solve_for_props(delfstar, **kwargs):
             drho = soln['x'][2]
 
         layers['film'] = {'drho':drho, 'grho3':grho3, 'phi':phi}
-        dlam3 = calc_dlam(3, layers['film'], calctype)
+        dlam3 = calc_dlam(3, layers['film'])
         jac = soln['jac']
 
         try:
@@ -508,17 +967,39 @@ def solve_for_props(delfstar, **kwargs):
         else:
             x0 = np.array([grho3, phi, drho])
             
-        
-
     # add these calculated values to existing dataframe
     df_out = pd.DataFrame(data)
     return df_out
 
 
 def make_err_plot(df_in, **kwargs):
+    """
+    Determine errors in properties based on uncertainies in a delfstar.
+    args:
+        df_in (dataframe):
+            Input data.
+            
+    kwargs:
+        idx (int):
+            index of point in df_in to use (default is 0)
+        npts (int):
+            number of points to include in error plots (default is 10)
+        err_frac (real):
+            error in delfstar as a fraction of gamma.
+        err_range (real):
+            multiplicative factor that expands err range beyond err_frac.
+            
+            
+    returns:
+        fig: 
+            Figure containing various error plots.
+        ax:
+            axes of the figure.
+    """
     fig, ax = make_prop_axes(figsize=(12,3))
     idx = kwargs.get('idx', 0) # specify specific point to use
     npts= kwargs.get('npts', 10)
+    err_frac = kwargs.get('err_frac', err_frac_default)
     err_range=kwargs.get('err_range', 1) # >1 to extend beyond calculated err
     err_range=max(1, err_range) 
     calctype=df_in['calctype'][idx]
@@ -593,11 +1074,31 @@ def make_err_plot(df_in, **kwargs):
                   '; '+'err_frac='+str(err_frac))
     fig.suptitle(r''+title_string)
     fig.tight_layout()
-    return fig
+    return fig, ax
 
 
 def make_prop_axes(**kwargs):
-    # set up the standard property plot
+    """
+    Make a blank property figure.
+
+    kwargs:
+        filmtype (string):
+            - 'thin': standard thin film solution, with three axes
+            - 'bulk': bulk solution with two axes
+        xlabel (string):
+            label for x axes (default is 'index')     .
+        titles (dictionary):
+            titles for axes (keys are 0, 1, 2)
+        num (string):
+            window title (default is 'property fig')
+            
+    returns:
+        fig: 
+            Figure containing property plots.
+        ax:
+            axes of the figure.
+    """
+
     filmtype = kwargs.get('filmtype','thin')
     num = kwargs.get('num','property fig')
     xlabel = kwargs.get('xlabel', 'index')
@@ -625,6 +1126,29 @@ def make_prop_axes(**kwargs):
 
 
 def prop_plots(df, ax, **kwargs):
+    """
+    Add property data to an existing figure.
+    
+    args:
+        df (dataframe):
+            dataframe containing data to be plotted
+        ax (axes handle):
+            axes to use for plotting
+
+    kwargs:
+        xunit (string):
+            Units for x data.  Default is 'index', function currently handles
+            's', 'min', 'hrs', 'day'
+        fmt (string):
+            Format sting: Default is '+'   .
+        legend (string):
+            Legend for plots.  Default is 'none'
+        plotdrho (Boolean):
+            Switch to plot mass data or not. Default is True
+            
+    returns:
+        Nothing is returned.  The function just updates an existing axis.
+    """
     xunit=kwargs.get('xunit', 'index')
     fmt=kwargs.get('fmt','+')
     legend=kwargs.get('legend','none')
@@ -643,7 +1167,7 @@ def prop_plots(df, ax, **kwargs):
         xdata = df['t']/(24*3600)
         xlabel ='$t$ (days)'
     else:
-        xdata =xdata = df['index']
+        xdata = df['index']
         xlabel ='index'
         
     ax[0].plot(xdata, df['grho3']/1000, fmt, label=legend)
@@ -657,10 +1181,28 @@ def prop_plots(df, ax, **kwargs):
         ax[k].set_yscale('linear')
         if legend!='none':
             ax[k].legend()
-
-
+            
 
 def check_plots(df, ax, nplot, **kwargs):
+    """
+    Add measured and recalculated complex frequency shifts to existing axes.
+    
+    args:
+        df (dataframe):
+            dataframe containing data to be plotted
+        ax (axes handle):
+            axes to use for plotting
+        nplot (list of integers):
+            harmonics to include on the plot
+
+    kwargs:
+        xunit (string):
+            Units for x data.  Default is 'index', function currently handles
+            's', 'min', 'hrs', 'day'
+            
+    returns:
+        Nothing returned. The function just updates an existing axis set.
+    """
     xunit=kwargs.get('xunit', 'index')
      
     if xunit =='s':
@@ -693,9 +1235,26 @@ def check_plots(df, ax, nplot, **kwargs):
 
 
 def make_check_axes(**kwargs):
+    """
+    Make blank figure for plotting comparison of actual and recalculated 
+    version os delfstar.
+
+    kwargs:
+        num (string):
+            Window title default is 'delfstar check'.
+        figsize (2 elment tuple of numbers):
+            Figure size (default is (6,3))
+            
+    returns:
+        fig: 
+            Figure containing delfstar plots.
+        ax:
+            Axes of the figure.
+    """
     # set up axes to compare measured and calculated delfstar values
+    num = kwargs.get('num','delfstar check')
     figsize=kwargs.get('figsize',(6,3))
-    fig, ax = plt.subplots(1,2, figsize=figsize)
+    fig, ax = plt.subplots(1,2, figsize=figsize, num=num)
 
     ax[0].set_ylabel(r'-$\Delta f$ (Hz))')
     ax[1].set_ylabel(r'$\Delta \Gamma$ (Hz)')
@@ -708,6 +1267,21 @@ def make_check_axes(**kwargs):
 
 
 def make_delf_axes(**kwargs):
+    """
+    Make blank figure for plotting delfstar values.
+
+    kwargs:
+        num (string):
+            Window title.
+        figsize (2 elment tuple of numbers):
+            Figure size (default is (6,3))
+            
+    returns:
+        fig: 
+            Figure containing delfstar plots.
+        ax:
+            Axes of the figure.
+    """
     num = kwargs.get('num','delf fig')
     fig, ax = plt.subplots(1,2, figsize=(6,3), num=num)
     for i in [0, 1]:
@@ -719,16 +1293,51 @@ def make_delf_axes(**kwargs):
 
 
 def make_vgp_axes(**kwargs):
+    """
+    Make blank figure for van Gurp-Palmen plot.
+
+    kwargs:
+        num (string):
+            Window title.
+        figsize (2 elment tuple of numbers):
+            Figure size (default is (3,3))
+            
+    returns:
+        fig: 
+            Figure containing delfstar plots.
+        ax:
+            Axes of the figure.
+    """
     figsize=kwargs.get('figsize', (3,3))
-    fig, ax = plt.subplots(1,1, figsize=figsize)
+    num = kwargs.get('num','delf fig')
+    fig, ax = plt.subplots(1,1, figsize=figsize, num=num)
     ax.set_xlabel((r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)'))
     ax.set_ylabel(r'$\phi$ (deg.)')
     fig.tight_layout()
     return fig, ax
 
 
-def delfstar_from_xlsx(infile, **kwargs):  # delfstar datafrome from excel file
-    # exclude all rows where the sindicated harmonics are not marked
+def delfstar_from_xlsx(infile, **kwargs):  
+    """
+    Create data frame from.xlsx file output by RheoQCM.
+    
+    args:
+        infile (string):
+            full name of input data .xlsx file
+            
+    kwargs:
+        restrict_to_marked (list):
+            List of frequencies that must be marked in order to be included.
+            Default is [], so that we include everything.
+            
+        nvals (list): 
+            List of frequencies to read.  Default is [1,3,5]
+                           
+    returns:
+        df:  
+            Input data converted to dataframe           
+    """
+    
     restrict_to_marked = kwargs.get('restrict_to_marked',[])
     nvals = kwargs.get('nvals',[1,3,5])
 
@@ -749,17 +1358,55 @@ def delfstar_from_xlsx(infile, **kwargs):  # delfstar datafrome from excel file
     df = df.reset_index()
     return df
 
-def gstar_maxwell(wtau):  # Maxwell element
+def gstar_maxwell(wtau):  
+    """
+    Normzlized g* for single Maxwell element.
+    
+    args:
+        wtau (real):
+            angular frequency times relaxation time
+            
+                        
+    returns:
+        gstar:  
+            complex shear modulus normalized by unrelaxed value         
+    """
     return 1j*wtau/(1+1j*wtau)
 
 
 def gstar_kww_single(wtau, beta):  # Transform of the KWW function
+    """
+    Normzlized g* for single kww element.
+    
+    args:
+        wtau (real):
+            angular frequency times relaxation time
+        beta (real):
+            kww exponent
+            
+    returns:
+        gstar:  
+            complex shear modulus normalized by unrelaxed value         
+    """
     return wtau*(kwws(wtau, beta)+1j*kwwc(wtau, beta))
 
 gstar_kww = np.vectorize(gstar_kww_single)
 
 
 def gstar_rouse(wtau, n_rouse):
+    """
+    Normzlized g* for Rouse model.
+    
+    args:
+        wtau (real):
+            Angular frequency times relaxation time.
+        n_rouse (integer):
+            Number  of Rouse modes to consier.
+            
+    returns:
+        gstar:  
+            complex shear modulus normalized by unrelaxed value         
+    """
     # make sure n_rouse is an integer if it isn't already
     n_rouse = int(n_rouse)
 
@@ -772,13 +1419,36 @@ def gstar_rouse(wtau, n_rouse):
 
 
 def springpot(w, g0, tau, beta, sp_type, **kwargs):
-    # this function supports a combination of different springpot elments
-    # combined in series, and then in parallel.  For example, if type is
-    # [1,2,3],  there are three branches
-    # in parallel with one another:  the first one is element 1, the
-    # second one is a series comination of eleents 2 and 3, and the third
-    # one is a series combination of 4, 5 and 6.
+    """
     
+    
+    args:
+        w (numpy array of real values):
+            Angular frequencies.
+        g0 (list of real values):
+            unrelaxed moduli
+        tau (list of real values):
+            relaxation times
+        beta (list of real values):
+            exponents
+        sp_type (list if integers):
+            Specifies the detailed combination of different springpot elments
+            combined in series, and then in parallel.  For example, if type is
+            [1,2,3],  there are three branches in parallel with one another:
+            the first one is element 1, the second one is a series comination of 
+            elements 2 and 3, and the third one is a series combination of 4, 5 and 6.
+            
+    kwargs:
+        kww (list of integers):
+            Elements that are kww elements. Default is [].
+        maxwell (list of integers):
+            Elements that are Maxwell elements. Default is [].
+ 
+    returns:
+        gstar (numpy array):  
+            complex shear modulus normalized by unrelaxed value         
+    """
+
     # specify which elements are kww or Maxwell elements
     kww = kwargs.get('kww',[])
     maxwell = kwargs.get('maxwell',[])
@@ -816,5 +1486,22 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
 
 
 def vogel(T, Tref, B, Tinf):
-    logaT = -B/(Tref-Tinf) + B/(T-Tinf)
-    return logaT
+    """
+    Vogel Fulcher Tamman Equation.
+    
+    args:
+        T (real):
+            Temperature (deg. C).
+        Tref:
+            Reference Temp (deg. C) where shift factor = 1.
+        B:
+            B (units of Kelvin)
+        Tinf
+            Vogel temperature (deg. C)
+            
+    returns:
+        lnaT:
+            Natural log of the shift factor.
+    """
+    return -B/(Tref-Tinf) + B/(T-Tinf)
+
