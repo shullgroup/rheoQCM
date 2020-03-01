@@ -1626,7 +1626,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
+                   <width>83</width>
                    <height>71</height>
                   </rect>
                  </property>
@@ -3805,7 +3805,7 @@ border-image: url(:/button/rc/plus_p.svg);
                  <bool>true</bool>
                 </property>
                 <property name="checked">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_17">
                  <property name="leftMargin">
@@ -3841,10 +3841,13 @@ border-image: url(:/button/rc/plus_p.svg);
                    <item row="0" column="1">
                     <widget class="QComboBox" name="comboBox_settings_mechanics_contourtype">
                      <property name="enabled">
-                      <bool>false</bool>
+                      <bool>true</bool>
                      </property>
                      <property name="toolTip">
                       <string>Select contour type.</string>
+                     </property>
+                     <property name="editable">
+                      <bool>false</bool>
                      </property>
                     </widget>
                    </item>
@@ -3853,22 +3856,28 @@ border-image: url(:/button/rc/plus_p.svg);
                      <property name="toolTip">
                       <string>Select color map for contours.</string>
                      </property>
+                     <property name="editable">
+                      <bool>false</bool>
+                     </property>
                     </widget>
                    </item>
                    <item row="1" column="0">
                     <widget class="QComboBox" name="comboBox_settings_mechanics_contourdata">
                      <property name="enabled">
-                      <bool>false</bool>
+                      <bool>true</bool>
                      </property>
                      <property name="toolTip">
                       <string>Select how to plot data in contour.</string>
+                     </property>
+                     <property name="editable">
+                      <bool>false</bool>
                      </property>
                     </widget>
                    </item>
                    <item row="0" column="2">
                     <widget class="QPushButton" name="pushButton_settings_mechanics_contoursettings">
                      <property name="enabled">
-                      <bool>false</bool>
+                      <bool>true</bool>
                      </property>
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -5117,12 +5126,18 @@ border: 1px solid blue;
              <number>0</number>
             </property>
             <item>
-             <widget class="QSplitter" name="splitter_3">
+             <widget class="QSplitter" name="splitter_spectra_mechanics">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>2</verstretch>
+               </sizepolicy>
+              </property>
               <property name="orientation">
                <enum>Qt::Vertical</enum>
               </property>
               <widget class="QWidget" name="layoutWidget">
-               <layout class="QVBoxLayout" name="verticalLayout_26">
+               <layout class="QVBoxLayout" name="verticalLayout_mech_table">
                 <property name="spacing">
                  <number>0</number>
                 </property>
@@ -5209,9 +5224,9 @@ border: 1px solid blue;
                 <item>
                  <widget class="QTableWidget" name="tableWidget_spectra_mechanics_table">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                     <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
+                    <verstretch>1</verstretch>
                    </sizepolicy>
                   </property>
                   <property name="sizeAdjustPolicy">
@@ -5264,7 +5279,7 @@ border: 1px solid blue;
                </layout>
               </widget>
               <widget class="QWidget" name="layoutWidget">
-               <layout class="QVBoxLayout" name="verticalLayout_25">
+               <layout class="QVBoxLayout" name="verticalLayout_mech_contout">
                 <property name="spacing">
                  <number>0</number>
                 </property>
@@ -6606,6 +6621,22 @@ border: 1px solid blue;
     <hint type="destinationlabel">
      <x>188</x>
      <y>633</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>groupBox_settings_mechanics_contour</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>frame_spectra_mechanics_contour1</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>148</x>
+     <y>658</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>476</x>
+     <y>723</y>
     </hint>
    </hints>
   </connection>

@@ -1137,6 +1137,9 @@ class QCMApp(QMainWindow):
         # comboBox_settings_mechanics_model_samplayer_chn
         self.build_comboBox(self.ui.comboBox_settings_mechanics_model_samplayer_chn, 'ref_channel_opts')
 
+        # groupBox_settings_mechanics_contour
+        self.ui.groupBox_settings_mechanics_contour.toggled['bool'].connect(self.mech_splitter_vis) # TODO change the name
+
         # comboBox_settings_mechanics_contourdata
         self.build_comboBox(self.ui.comboBox_settings_mechanics_contourdata, 'contour_data_opts')
         self.ui.comboBox_settings_mechanics_contourdata.currentIndexChanged.connect(self.update_widget)
@@ -2331,6 +2334,18 @@ class QCMApp(QMainWindow):
                 # the following check if is hidden by the version may not be necessary in some case. e.g. hide ref_time widgets need them to be disabled
                 # if name not in config_default['version_hide_list'] or name_list == 'version_hide_list':
                 #     getattr(self.ui, name).setEnabled(False)
+
+
+    def mech_splitter_vis(self):
+        '''
+        '''
+        # get the value of sender val True/False
+        # self.sender()
+
+        # set visibility with hide_widget hide_widgets & show_widgets
+
+        # set handle of splitter_spectra_mechanics idx = 0 to hide and idx = 1 (index of layout_mech_table) to show
+        pass
 
 
     def set_filename(self, fileName=''):
