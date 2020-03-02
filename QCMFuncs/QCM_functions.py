@@ -168,22 +168,55 @@ def sauerbreym(n, delf):
 
 
 
-def grho(n, material):
+def etarho(n, props):
+    """
+    Use power law formulation to get |eta*|rho at specified harmonic, 
+    with properties at n=3 as an input.
+    
+    args:
+        n (int):
+            Harmonic of interest.
+        props (dictionary):
+            Dictionary of material properties, which must contain 
+            grho3 and phi. This can also be a dictionary of dictionaries, 
+            in which case a numpy array of viscosity values is returned.
+        
+    returns:
+        |eta*|rho at harmonic of interest in SI units.
+    """
+    
+    # first handle the case where we have a single dictionary of properties
+    if 'grho3' in props.keys():
+        grho_mag = grho(n, props)
+        etarho_mag = grho_mag/(2*np.pi*f1*n)
+    
+    # otherwise we handle the case where we are calculating for a dictionary
+    # of property values, generally named for the indices in a dataframe
+    else:   
+        etarho_mag = np.array([])
+        for key in props.keys():
+            grho_mag = grho(n, props[key])
+            etarho_val = grho_mag/(2*np.pi*f1*n)
+            etarho_mag = np.append(etarho_mag, etarho_val)
+    return etarho_mag
+
+
+def grho(n, props):
     """
     Use power law formulation to get G*\rho at different harmonics, 
     with properties at n=3 as an input.
     args:
         n (int):
             Harmonic of interest.
-        material (dictionary:
+        props (dictionary:
             Dictionary of material properties, which must contain 
             grho3 and phi.
         
     returns:
         G*\rho at harmonic of interest.
     """
-    grho3 = material['grho3']
-    phi = material['phi']
+    grho3 = props['grho3']
+    phi = props['phi']
     return grho3*(n/3) ** (phi/90)
 
 
@@ -274,13 +307,13 @@ def deltarho_bulk(n, delfstar):
     return -Zq*abs(delfstar[n])**2/(2*n*f1**2*delfstar[n].real)
 
 
-def calc_D(n, material, delfstar,calctype):
+def calc_D(n, props, delfstar,calctype):
     """
     Calculate D (dk*, thickness times complex wave number).
     args:
         n (int):
             Harmonic of interest.
-        material (dictionary):
+        props (dictionary):
             Dictionary of material properties, which must contain 
             grho3 and phi.
         delfstar (complex):
@@ -293,22 +326,22 @@ def calc_D(n, material, delfstar,calctype):
     returns:
         D (complex) at harmonic of interest.
     """
-    drho = material['drho']
+    drho = props['drho']
     # set switch to handle ase where drho = 0
     if drho == 0:
         return 0
     else:
         return 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n, 
-                       material,calctype)
+                       props,calctype)
 
 
-def zstar_bulk(n, material, calctype):
+def zstar_bulk(n, props, calctype):
     """
     Calculate complex acoustic impedance for bulk material.
     args:
         n (int):
             Harmonic of interest.
-        material (dictionary):
+        props (dictionary):
             Dictionary of material properties, which must contain 
             grho3 and phi.
         calctype (string): 
@@ -319,16 +352,16 @@ def zstar_bulk(n, material, calctype):
     returns:
         square root of gstar*\rho.
     """
-    grho3 = material['grho3']
+    grho3 = props['grho3']
     if calctype != 'Voigt':
-        grho = grho3*(n/3)**(material['phi']/90) 
-        grhostar = grho*np.exp(1j*np.pi*material['phi']/180)
+        grho = grho3*(n/3)**(props['phi']/90) 
+        grhostar = grho*np.exp(1j*np.pi*props['phi']/180)
     else:
         # Qsense version: constant G', G" linear in omega
-        greal=grho3*np.cos(np.radians(material['phi']))
-        gimag=(n/3)*np.sin(np.radians(material['phi']))
+        greal=grho3*np.cos(np.radians(props['phi']))
+        gimag=(n/3)*np.sin(np.radians(props['phi']))
         grhostar=(gimag**2+greal**2)**(0.5)*(np.exp(1j*
-                 np.radians(material['phi'])))        
+                 np.radians(props['phi'])))        
     return grhostar ** 0.5
 
 
@@ -859,6 +892,7 @@ def solve_for_props(delfstar, calc, **kwargs):
                        'dlam3', 'index', 't', 'temp']
 
     data = {}
+    props = {} # properties for each layer
     for element in out_rows:
         data[element] = np.array([])
     
@@ -956,11 +990,9 @@ def solve_for_props(delfstar, calc, **kwargs):
                dlam3, index, t, temp]
 
         for k in np.arange(len(var_name)):
-            if var[k] in locals():
-                data[var_name[k]] = np.append(data[var_name[k]], var[k])
-            else:
-                data[var_name[k]] = np.append(data[var_name[k]], var[k])
-                
+            data[var_name[k]] = np.append(data[var_name[k]], var[k])
+
+        props[i] = layers['film']
         # set up the initial guess
         if filmtype == 'bulk':
             x0 = np.array([grho3, phi])
@@ -969,6 +1001,7 @@ def solve_for_props(delfstar, calc, **kwargs):
             
     # add these calculated values to existing dataframe
     df_out = pd.DataFrame(data)
+    df_out['props'] = df_out['index'].map(props)
     return df_out
 
 
