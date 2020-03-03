@@ -1215,6 +1215,33 @@ def prop_plots(df, ax, **kwargs):
         if legend!='none':
             ax[k].legend()
             
+def vgp_plots(df, ax, **kwargs):
+    """
+    Add property data to existing van Gurp-Palmen axes.
+    
+    args:
+        df (dataframe):
+            dataframe containing data to be plotted
+        ax (axes handle):
+            axes to use for plotting
+
+    kwargs:
+        fmt (string):
+            Format sting: Default is '+'   .
+        legend (string):
+            Legend for plots.  Default is 'none'
+            
+    returns:
+        Nothing is returned.  The function just updates an existing axis.
+    """
+    fmt=kwargs.get('fmt','+')
+    legend=kwargs.get('legend','none')
+     
+    ax.semilogx(df['grho3']/1000, df['phi'], fmt, label=legend)
+  
+    if legend!='none':
+        ax.legend()
+            
 
 def check_plots(df, ax, nplot, **kwargs):
     """
@@ -1365,6 +1392,9 @@ def delfstar_from_xlsx(infile, **kwargs):
             
         nvals (list): 
             List of frequencies to read.  Default is [1,3,5]
+        
+        data_channel (string):
+            'S' (default) or 'R'
                            
     returns:
         df:  
@@ -1373,8 +1403,11 @@ def delfstar_from_xlsx(infile, **kwargs):
     
     restrict_to_marked = kwargs.get('restrict_to_marked',[])
     nvals = kwargs.get('nvals',[1,3,5])
+    data_channel = kwargs.get('data_channel', 'S')
+    data_name = data_channel+'_channel'
+    ref_channel = kwargs.get('ref_channel', 'self')
 
-    df = pd.read_excel(infile, sheet_name=None, header=0)['S_channel']
+    df = pd.read_excel(infile, sheet_name=None, header=0)[data_name]
 
     df['keep_row']=1  # keep all rows we are told to check for specific marks
     for n in restrict_to_marked:
@@ -1382,6 +1415,8 @@ def delfstar_from_xlsx(infile, **kwargs):
 
     # delete rows we don't want to keep
     df = df[df.keep_row==1] # Delete all rows that are not appropriately marked
+    
+    
 
     # add each of the values of delfstar
     for n in nvals:
