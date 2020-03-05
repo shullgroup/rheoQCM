@@ -8,6 +8,8 @@ Created on Thu Jan  4 09:19:59 2018
 
 import numpy as np
 import scipy.optimize as optimize
+import scipy.interpolate as interpolate
+from scipy.interpolate import InterpolatedUnivariateSpline
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -1171,7 +1173,7 @@ def prop_plots(df, ax, **kwargs):
     kwargs:
         xunit (string):
             Units for x data.  Default is 'index', function currently handles
-            's', 'min', 'hrs', 'day'
+            's', 'min', 'hr', 'day', 'temp'
         fmt (string):
             Format sting: Default is '+'   .
         legend (string):
@@ -1193,12 +1195,16 @@ def prop_plots(df, ax, **kwargs):
     elif xunit == 'min':
         xdata = df['t']/60
         xlabel ='$t$ (min.)'
-    elif xunit == 'hrs':
+    elif xunit == 'hr':
         xdata = df['t']/3600
-        xlabel ='$t$ (hrs)'
+        xlabel ='$t$ (hr)'
     elif xunit == 'day':
         xdata = df['t']/(24*3600)
         xlabel ='$t$ (days)'
+    elif xunit == 'temp':
+        xdata = df['temp']
+        xlabel = r'$T$ ($^\circ$C)'
+    
     else:
         xdata = df['index']
         xlabel ='index'
@@ -1394,7 +1400,17 @@ def delfstar_from_xlsx(infile, **kwargs):
             List of frequencies to read.  Default is [1,3,5]
         
         data_channel (string):
-            'S' (default) or 'R'
+            Channel for data:  'S' (default) or 'R'
+            
+        ref_channel (string):
+            Channel for reference (bare crystal) frequency and dissipation,
+            'self' (default) means we ignore it and read delf and delg
+            directly from the data channel. Otherwise we specify one of 
+            the following:
+                - 'S_channel'
+                - 'S_reference'
+                - 'R-channel'
+                - 'R-reference'                '
                            
     returns:
         df:  
@@ -1409,22 +1425,67 @@ def delfstar_from_xlsx(infile, **kwargs):
 
     df = pd.read_excel(infile, sheet_name=None, header=0)[data_name]
 
-    df['keep_row']=1  # keep all rows we are told to check for specific marks
+    df['keep_row']=1  # keep all rows unless we are told to check for specific marks
     for n in restrict_to_marked:
         df['keep_row'] = df['keep_row']*df['mark'+str(n)]
 
     # delete rows we don't want to keep
     df = df[df.keep_row==1] # Delete all rows that are not appropriately marked
     
-    
-
     # add each of the values of delfstar
-    for n in nvals:
-        df[n] = df['delf'+str(n)] + 1j*df['delg'+str(n)].round(1)
+    if ref_channel == 'self':
+        # this is the standard read protocol, with delf and delg already in 
+        # the .xlsx file
+        for n in nvals:
+            df[n] = df['delf'+str(n)] + 1j*df['delg'+str(n)].round(1)
+    else:
+        # here we need to get the reference frequencies from the temperature
+        # depenendent data in the reference channel
+        n_num = len(nvals)
+        fig, ax = plt.subplots(2, n_num, figsize=(3*n_num,6))
+        df_ref = pd.read_excel(infile, sheet_name=None, header=0)[ref_channel]
+        # reorder rerence data according to temperature
+        df_ref=df_ref.sort_values('temp')
+        # drop any duplicate temperature values
+        df_ref = df_ref.drop_duplicates(subset='temp', keep='first')
+        temp = df_ref['temp']
+        vars=['f', 'g']
 
-    df = df.filter(items=['t']+['temp']+nvals)
-    df = df.reset_index()
-    return df
+        for k in np.arange(len(nvals)):
+            for p in [0,1]:
+                ax[p, k].set_title(vars[p]+str(nvals[k]))
+                # get the reference values and plot them
+                ref_vals=df_ref[vars[p]+str(nvals[k])]
+                ax[p, k].plot(temp, ref_vals, '.')
+                
+                # make the fitting function and plot it, along with the
+                # values corresponding to temperatures from the data
+                # set with the film
+                fit=InterpolatedUnivariateSpline(temp, ref_vals, k=1, ext=3)
+                ax[p, k].plot(temp, fit(temp), '-')
+                ax[p, k].plot(df['temp'], fit(df['temp']), '+')
+                
+                #write the film and reference values to the data frame
+                df[vars[p]+str(nvals[k])+'_dat']=df[vars[p]+str(nvals[k])]
+                df[vars[p]+str(nvals[k])+'_ref']=fit(df['temp'])
+
+            # now write values delfstar to the dataframe
+            df[nvals[k]]=(df['f'+str(nvals[k])+'_dat']-
+                          df['f'+str(nvals[k])+'_ref']+
+                      1j*(df['g'+str(nvals[k])+'_dat']-
+                          df['g'+str(nvals[k])+'_ref'])).round(1)
+        fig.tight_layout()
+
+    # now sort out which columns we want to keep in the dataframe
+    keep_column=['t', 'temp']
+    for n in nvals:
+        keep_column.append(n)
+        keep_column.append('f'+str(n)+'_dat')
+        keep_column.append('f'+str(n)+'_ref')
+        keep_column.append('g'+str(n)+'_dat')
+        keep_column.append('g'+str(n)+'_ref')
+
+    return df[keep_column].copy()
 
 def gstar_maxwell(wtau):  
     """
