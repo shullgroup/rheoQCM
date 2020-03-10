@@ -1707,21 +1707,21 @@ def make_contours(df, **kwargs):
             min and max of phase angle (default is [0, 90])
         dlim (list of two real numbers):
             min and max of d/lambda (default is [0, 0.5])    
-        idx (int):
-            index of dataframe to use as reference for calculations
+        nplot (list of integers):
+            list of harmonics to plot (default is [1,3,5])
     '''
 
     numxy = kwargs.get('numxy', 100)
     numz = kwargs.get('numz', 200)
     philim = kwargs.get('philim', [0, 90])
     dlim = kwargs.get('dlim', [0.001, 0.5])
-    idx = kwargs.get('idx', 0)
+    nplot = kwargs.get('nplot', [1,3,5])
     
     # get the calculation parameters
-    calc = df['calc'][idx]
+    calc = df['calc'][df.index[0]]
     
     # make the axes
-    fig, ax = plt.subplots(1,2, figsize=(10,4), sharex=True, sharey=True)
+    fig, ax = plt.subplots(2,2, figsize=(10,8), sharex=False, sharey=False)
                        
     # make meshgrid for contour
     phi = np.linspace(philim[0], philim[1], numxy) 
@@ -1733,7 +1733,7 @@ def make_contours(df, **kwargs):
     
     def Zfunction(x,y):
         #function used for calculating the z values
-        drho = df['drho'][idx]
+        drho = df['drho'][df.index[0]]
         grho3 = grho_from_dlam(3, drho, x, y)
         fnorm = normdelf_bulk(3, x, y)
         gnorm = normdelg_bulk(3, x, y)
@@ -1741,28 +1741,28 @@ def make_contours(df, **kwargs):
 
     Z, drho, grho3, fnorm, gnorm = Zfunction(DLAM, PHI)
 
-    levels1 = np.linspace(-3*sauerbreyf(1, df['drho'][idx]),
-                          3*sauerbreyf(1, df['drho'][idx]), numz)
+    levels1 = np.linspace(-3*sauerbreyf(1, df['drho'][df.index[0]]),
+                          3*sauerbreyf(1, df['drho'][df.index[0]]), numz)
     levels2 = np.linspace(0, 5000, numz)
     
-    contour1 = ax[0].contourf(DLAM, PHI, np.real(Z), levels=levels1, 
+    contour1 = ax[0,0].contourf(DLAM, PHI, np.real(Z), levels=levels1, 
                               cmap='rainbow')
-    contour2 =  ax[1].contourf(DLAM, PHI, np.imag(Z), levels=levels2,
+    contour2 =  ax[0,1].contourf(DLAM, PHI, np.imag(Z), levels=levels2,
                               cmap='rainbow')
     
-    fig.colorbar(contour1, ax=ax[0])
-    fig.colorbar(contour2, ax=ax[1])
+    fig.colorbar(contour1, ax=ax[0,0])
+    fig.colorbar(contour2, ax=ax[0,1])
 
     # set label of ax[1]
-    ax[0].set_xlabel(r'$d/\lambda$')
-    ax[0].set_ylabel(r'$\Phi$ ($\degree$)')
-    ax[0].set_title(r'$\Delta f$ (Hz) - '+calc)
+    ax[0,0].set_xlabel(r'$d/\lambda$')
+    ax[0,0].set_ylabel(r'$\Phi$ ($\degree$)')
+    ax[0,0].set_title(r'$\Delta f$ (Hz) - '+calc)
+    ax[1,0].set_ylabel(r'$\Delta f$ (Hz)')
 
-    ax[1].set_xlabel(r'$d/\lambda$')
-    ax[1].set_ylabel(r'$\Phi$ ($\degree$)')
-    ax[1].set_title(r'$\Delta\Gamma$ (Hz) - '+calc)
-    
-    fig.tight_layout()
+    ax[0,1].set_xlabel(r'$d/\lambda$')
+    ax[0,1].set_ylabel(r'$\Phi$ ($\degree$)')
+    ax[0,1].set_title(r'$\Delta\Gamma$ (Hz) - '+calc)
+    ax[1,1].set_ylabel(r'$\Delta\Gamma$ (Hz)')
     
     # set formatting for parameters that appear at the bottom of the plot
     # when mouse is moved
@@ -1772,10 +1772,14 @@ def make_contours(df, **kwargs):
                 'drho={drho:.2f}, grho3={grho3:.2e}, '\
                 'fnorm={fnorm:.4f}, gnorm={gnorm:.4f}'.format(x=x, y=y, z=z, 
                  drho=1000*drho, grho3=grho3/1000, fnorm=fnorm, gnorm=gnorm)
+                
+
     
     # now add the experimental data
-    for nstr in list(set(df['calc'][idx])):
-        n=int(nstr)
+    # variable to keep track of differentplots
+    idxmin=df.index[0]
+    for n in nplot:
+        nstr=str(n)
         dvals = np.array([])
         phivals =  np.array([])
         for idx, row in df.iterrows():
@@ -1783,13 +1787,34 @@ def make_contours(df, **kwargs):
                     'phi':row['phi']}
             dvals = np.append(dvals, calc_dlam(n, film))
             phivals =  np.append(phivals, row['phi'])
-        ax[0].plot(dvals, phivals, '.-', label='n='+nstr)
-        ax[1].plot(dvals, phivals, '.-', label='n='+nstr)
+        p=ax[0,0].plot(dvals, phivals, '-', label='n='+nstr)
+        ax[0,0].plot(dvals[0], phivals[idxmin], 'o',
+                     color = p[0].get_color())
+        p=ax[0,1].plot(dvals, phivals, '-', label='n='+nstr)
+        ax[0,1].plot(dvals[0], phivals[idxmin], 'o',
+                     color = p[0].get_color())
+        p=ax[1,0].plot(np.real(df['df_expt'+nstr])/n, '+', 
+                     label = 'n='+nstr)
+        ax[1,0].plot(np.real(df['df_calc'+nstr])/n, '-', color = 
+                     p[0].get_color())
+        ax[1,0].plot(np.real(df['df_calc'+nstr][idxmin])/n, 'o', color = 
+                     p[0].get_color())
+        p=ax[1,1].plot(np.imag(df['df_expt'+nstr])/n, '+',
+                       label = 'n='+nstr)
+        ax[1,1].plot(np.imag(df['df_calc'+nstr])/n, '-', color =
+                     p[0].get_color())
+        ax[1,1].plot(np.imag(df['df_calc'+nstr][idxmin])/n, 'o', color =
+                     p[0].get_color())
         
+
+                
     for k in [0,1]:  
-        ax[k].legend()
-        ax[k].format_coord = fmt
-        
+        ax[0,k].legend()
+        ax[1,k].legend()
+        ax[0,k].format_coord = fmt
+        ax[1,k].set_xlabel('index')
+
+    fig.tight_layout()        
     return fig, ax
 
 
