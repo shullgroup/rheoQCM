@@ -656,8 +656,53 @@ def normdelfstar(n, dlam3, phi):
     returns:
         delfstar normalized by Sauerbrey value
     """
+
     return -np.tan(2*np.pi*dlam(n, dlam3, phi)*(1-1j*np.tan(np.deg2rad(phi/2)))) / \
-        (2*np.pi*dlam(n, dlam3, phi)*(1-1j*np.tan(np.deg2rad(phi/2))))
+            (2*np.pi*dlam(n, dlam3, phi)*(1-1j*np.tan(np.deg2rad(phi/2))))
+
+
+def normdelf_bulk(n, dlam3, phi):
+    """
+    Frequency shift normalized by value for bulk material.
+    args:
+        n (int):
+            Harmonic of interest.
+            
+        dlam3 (real):
+            d/lambda at n=3.
+            
+        phi (real):
+            Phase angle (degrees).
+       
+    returns:
+        delf normalized bulk value
+    """
+
+    return np.real(2*np.tan(2*np.pi*dlam(n, dlam3, phi)*
+                          (1-1j*np.tan(np.deg2rad(phi/2)))) / \
+            (np.sin(np.deg2rad(phi))*(1-1j*np.tan(np.deg2rad(phi/2)))))
+            
+
+def normdelg_bulk(n, dlam3, phi):
+    """
+    Dissipation shift normalized by value for bulk material.
+    args:
+        n (int):
+            Harmonic of interest.
+            
+        dlam3 (real):
+            d/lambda at n=3.
+            
+        phi (real):
+            Phase angle (degrees).
+       
+    returns:
+        delg normalized bulk value
+    """
+
+    return -np.imag(np.tan(2*np.pi*dlam(n, dlam3, phi)*
+                           (1-1j*np.tan(np.deg2rad(phi/2)))) / \
+            ((np.cos(np.deg2rad(phi/2)))**2*(1-1j*np.tan(np.deg2rad(phi/2)))))
 
 
 def rhcalc(calc, dlam3, phi):
@@ -1004,6 +1049,7 @@ def solve_for_props(delfstar, calc, **kwargs):
     # add these calculated values to existing dataframe
     df_out = pd.DataFrame(data)
     df_out['props'] = df_out['index'].map(props)
+    df_out['calc'] = calc
     return df_out
 
 
@@ -1432,6 +1478,11 @@ def delfstar_from_xlsx(infile, **kwargs):
     # delete rows we don't want to keep
     df = df[df.keep_row==1] # Delete all rows that are not appropriately marked
     
+    # now sort out which columns we want to keep in the dataframe
+    keep_column=['t', 'temp']
+    for n in nvals:
+        keep_column.append(n)
+    
     # add each of the values of delfstar
     if ref_channel == 'self':
         # this is the standard read protocol, with delf and delg already in 
@@ -1474,16 +1525,14 @@ def delfstar_from_xlsx(infile, **kwargs):
                           df['f'+str(nvals[k])+'_ref']+
                       1j*(df['g'+str(nvals[k])+'_dat']-
                           df['g'+str(nvals[k])+'_ref'])).round(1)
+        # add absolute frequency and reference values to dataframe
+        for n in nvals:
+            keep_column.append('f'+str(n)+'_dat')
+            keep_column.append('f'+str(n)+'_ref')
+            keep_column.append('g'+str(n)+'_dat')
+            keep_column.append('g'+str(n)+'_ref')
+    
         fig.tight_layout()
-
-    # now sort out which columns we want to keep in the dataframe
-    keep_column=['t', 'temp']
-    for n in nvals:
-        keep_column.append(n)
-        keep_column.append('f'+str(n)+'_dat')
-        keep_column.append('f'+str(n)+'_ref')
-        keep_column.append('g'+str(n)+'_dat')
-        keep_column.append('g'+str(n)+'_ref')
 
     return df[keep_column].copy()
 
@@ -1633,4 +1682,116 @@ def vogel(T, Tref, B, Tinf):
             Natural log of the shift factor.
     """
     return -B/(Tref-Tinf) + B/(T-Tinf)
+
+def make_contours(df, **kwargs):
+    from pylab import meshgrid
+    '''
+    create contour plot of normf_g or rh_rd
+    
+    args:
+        df (dataframe):
+            input dataframe to consider
+        c_type (string):
+            'fixed_drho':  
+                d/lambda varied using fixed value of drho from props
+            'fixed_mechanics':  
+                d/lambda varied using
+
+                
+    kwargs:
+        numxy (int):  
+            number of grid points in x and y (default is 100)
+        numz (int):  
+            number of z levels (default is 100)
+        philim (list of two real numbers):
+            min and max of phase angle (default is [0, 90])
+        dlim (list of two real numbers):
+            min and max of d/lambda (default is [0, 0.5])    
+        idx (int):
+            index of dataframe to use as reference for calculations
+    '''
+
+    numxy = kwargs.get('numxy', 100)
+    numz = kwargs.get('numz', 200)
+    philim = kwargs.get('philim', [0, 90])
+    dlim = kwargs.get('dlim', [0.001, 0.5])
+    idx = kwargs.get('idx', 0)
+    
+    # get the calculation parameters
+    calc = df['calc'][idx]
+    
+    # make the axes
+    fig, ax = plt.subplots(1,2, figsize=(10,4), sharex=True, sharey=True)
+                       
+    # make meshgrid for contour
+    phi = np.linspace(philim[0], philim[1], numxy) 
+    dlam = np.linspace(dlim[0], dlim[1], numxy)
+    DLAM, PHI = meshgrid(dlam, phi)
+
+    # need to use n=3 in this calculation, since
+    # normdelfstar assumes third harmonic in its definition
+    
+    def Zfunction(x,y):
+        #function used for calculating the z values
+        drho = df['drho'][idx]
+        grho3 = grho_from_dlam(3, drho, x, y)
+        fnorm = normdelf_bulk(3, x, y)
+        gnorm = normdelg_bulk(3, x, y)
+        return sauerbreyf(1, drho)*normdelfstar(3, x, y), drho, grho3, fnorm, gnorm
+
+    Z, drho, grho3, fnorm, gnorm = Zfunction(DLAM, PHI)
+
+    levels1 = np.linspace(-3*sauerbreyf(1, df['drho'][idx]),
+                          3*sauerbreyf(1, df['drho'][idx]), numz)
+    levels2 = np.linspace(0, 5000, numz)
+    
+    contour1 = ax[0].contourf(DLAM, PHI, np.real(Z), levels=levels1, 
+                              cmap='rainbow')
+    contour2 =  ax[1].contourf(DLAM, PHI, np.imag(Z), levels=levels2,
+                              cmap='rainbow')
+    
+    fig.colorbar(contour1, ax=ax[0])
+    fig.colorbar(contour2, ax=ax[1])
+
+    # set label of ax[1]
+    ax[0].set_xlabel(r'$d/\lambda$')
+    ax[0].set_ylabel(r'$\Phi$ ($\degree$)')
+    ax[0].set_title(r'$\Delta f$ (Hz) - '+calc)
+
+    ax[1].set_xlabel(r'$d/\lambda$')
+    ax[1].set_ylabel(r'$\Phi$ ($\degree$)')
+    ax[1].set_title(r'$\Delta\Gamma$ (Hz) - '+calc)
+    
+    fig.tight_layout()
+    
+    # set formatting for parameters that appear at the bottom of the plot
+    # when mouse is moved
+    def fmt(x, y):
+        z, drho, grho3, fnorm, gnorm=Zfunction(x,y)
+        return  'd/lambda={x:.3f},  phi={y:.1f}, delfstar/n={z:.0f}, '\
+                'drho={drho:.2f}, grho3={grho3:.2e}, '\
+                'fnorm={fnorm:.4f}, gnorm={gnorm:.4f}'.format(x=x, y=y, z=z, 
+                 drho=1000*drho, grho3=grho3/1000, fnorm=fnorm, gnorm=gnorm)
+    
+    # now add the experimental data
+    for nstr in list(set(df['calc'][idx])):
+        n=int(nstr)
+        dvals = np.array([])
+        phivals =  np.array([])
+        for idx, row in df.iterrows():
+            film = {'drho':row['drho'], 'grho3':row['grho3'],
+                    'phi':row['phi']}
+            dvals = np.append(dvals, calc_dlam(n, film))
+            phivals =  np.append(phivals, row['phi'])
+        ax[0].plot(dvals, phivals, '.-', label='n='+nstr)
+        ax[1].plot(dvals, phivals, '.-', label='n='+nstr)
+        
+    for k in [0,1]:  
+        ax[k].legend()
+        ax[k].format_coord = fmt
+        
+    return fig, ax
+
+
+
 
