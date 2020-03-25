@@ -866,18 +866,14 @@ def solve_for_props(delfstar, calc, **kwargs):
             only third character is used for filmtype='bulk'
     
     kwargs:
-        nplot (list):
-            list of frequencies for which complex frequency shifts are
-            calculated; default is [1,3,5].    
-            
         calctype (string): 
             - 'SLA' (default): small load approximation with power law model
             - 'LL': Lu Lewis equation, using default or provided electrode props
             - 'Voigt': small load approximation
             
-        filmtype (string):
-            - 'thin' (default): standard calculation returning drho, grho3, phi
-            - 'bulk': calculation for bulk material, returning grho3, phi
+        drho (real):
+            - 0 (default): standard calculation returning drho, grho3, phi
+            - anything else:  mass per unit area (SI units) - returning grho3, phi
             
         newtonian (Boolean): (only used for 'bulk' filmtype)
             - False (default): standard bulk calculation
@@ -897,33 +893,46 @@ def solve_for_props(delfstar, calc, **kwargs):
     else:
         layers={}
 
-    nplot = kwargs.get('nplot', [1, 3, 5])
+    nplot = []
+    for n in [1,3,5,7,9]:
+        if n in df_in.columns:
+            nplot = nplot + [n]
     calctype = kwargs.get('calctype', 'SLA')
-    filmtype = kwargs.get('filmtype', 'thin')
+    drho = kwargs.get('drho', 0)
     newtonian = kwargs.get('newtonian', False)
 
-    n1 = int(calc[0]); n2 = int(calc[1]); n3 = int(calc[2])
     
     # set upper and lower bounds
     lb = kwargs.get('lb', [1e5, 0, 0])
     ub = kwargs.get('ub', [1e13, 90, 3e-2])
     lb = np.array(lb)  # lower bounds drho, grho3, phi
     ub = np.array(ub)  # upper bounds drho, grho3, phi
+    
+    if drho!=0:
+        fixed_drho=True
+        n1 = int(calc[0]); n2 = int(calc[0]); n3 = int(calc[0])
 
-
-    # we use the first data point to get an initial guess
-    if 'guess' in kwargs.keys():
-        guess=kwargs['guess']
-        drho, grho3, phi = guess['drho'], guess['grho3'], guess['phi']
-    elif filmtype=='bulk':
-        n1=n3 # bulk solution uses delta f and delta gamma from same harmonic
-        grho3, phi = bulk_props(df_in[0][3])
-        drho = np.inf
+        if 'guess' in kwargs.keys():
+            guess=kwargs['guess']
+            grho3, phi = guess['grho3'], guess['phi']
+        else:
+            grho3=1e11
+            phi=45
     else:
-        drho, grho3, phi = thinfilm_guess(df_in[0], calc)
+        fixed_drho=False
+        n1 = int(calc[0]); n2 = int(calc[1]); n3 = int(calc[2])
+
+        if 'guess' in kwargs.keys():
+            guess=kwargs['guess']
+            drho, grho3, phi = guess['drho'], guess['grho3'], guess['phi']
+        else:
+            drho, grho3, phi = thinfilm_guess(df_in[0], calc)
+
+        
+        n1=n3 # bulk solution uses delta f and delta gamma from same harmonic
 
     # set up the initial guess
-    if filmtype == 'bulk':
+    if fixed_drho:
         x0 = np.array([grho3, phi])
         lb = lb[0:2]
         ub = ub[0:2]
@@ -936,7 +945,7 @@ def solve_for_props(delfstar, calc, **kwargs):
         out_rows = out_rows + ['df_expt'+str(n), 'df_calc'+str(n)]
         
     out_rows = out_rows+['drho', 'drho_err', 'grho3', 'grho3_err', 'phi', 'phi_err',
-                       'dlam3', 'index', 't', 'temp']
+                       'dlam3', 't', 'temp']
 
     data = {}
     props = {} # properties for each layer
@@ -951,7 +960,7 @@ def solve_for_props(delfstar, calc, **kwargs):
     for i in df_in.columns:
         if np.isnan([df_in[i][n1], df_in[i][n2], df_in[i][n3]]).any():
             continue
-        if filmtype != 'bulk':
+        if not fixed_drho:
             def ftosolve(x):
                 layers['film'] = {'grho3':x[0], 'phi':x[1], 'drho':x[2]}
                 return ([calc_delfstar(n1, layers, calctype).real-df_in[i][n1].real,
@@ -959,7 +968,7 @@ def solve_for_props(delfstar, calc, **kwargs):
                          calc_delfstar(n3, layers, calctype).imag-df_in[i][n3].imag])
         else:
             def ftosolve(x):
-                layers['film'] = {'drho':np.inf, 'grho3':x[0], 'phi':x[1]}
+                layers['film'] = {'drho':drho, 'grho3':x[0], 'phi':x[1]}
                 if not newtonian:
                     return ([calc_delfstar(n1, layers, calctype).real-df_in[i][n1].real,
                              calc_delfstar(n1, layers, calctype).imag-df_in[i][n1].imag])
@@ -974,7 +983,7 @@ def solve_for_props(delfstar, calc, **kwargs):
         phi = soln['x'][1]
         print(soln['x'])
 
-        if filmtype != 'bulk':
+        if not fixed_drho:
             drho = soln['x'][2]
 
         layers['film'] = {'drho':drho, 'grho3':grho3, 'phi':phi}
@@ -1000,7 +1009,7 @@ def solve_for_props(delfstar, calc, **kwargs):
                 err[p] = err[p]+(deriv[p, k]*delfstar_err[k])**2
             err[p] = np.sqrt(err[p])
 
-        if filmtype == 'bulk':
+        if fixed_drho:
             err[2]=np.nan
 
         # now back calculate delfstar from the solution
@@ -1017,11 +1026,7 @@ def solve_for_props(delfstar, calc, **kwargs):
             except:
                 data['df_expt'+str(n)]=np.append(data['df_expt'+str(n)], 'nan')
                 
-        # get index, t, temp, set to 'nan' if it doesn't exist
-        if 'index' in df_in[i].keys():
-            index = np.real(df_in[i]['index'])
-        else:
-            index = np.nan
+        # get t, temp, set to 'nan' if they doesn't exist
         if 't' in df_in[i].keys():
             t = np.real(df_in[i]['t'])
         else:
@@ -1032,23 +1037,23 @@ def solve_for_props(delfstar, calc, **kwargs):
             temp = np.nan
 
         var_name = ['grho3', 'phi', 'drho', 'grho3_err', 'phi_err', 'drho_err',
-                    'dlam3', 'index', 't', 'temp']
+                    'dlam3', 't', 'temp']
         var = [grho3, phi, drho, err[0], err[1], err[2],
-               dlam3, index, t, temp]
+               dlam3, t, temp]
 
         for k in np.arange(len(var_name)):
             data[var_name[k]] = np.append(data[var_name[k]], var[k])
 
         props[i] = layers['film']
         # set up the initial guess
-        if filmtype == 'bulk':
+        if fixed_drho:
             x0 = np.array([grho3, phi])
         else:
             x0 = np.array([grho3, phi, drho])
             
     # add these calculated values to existing dataframe
     df_out = pd.DataFrame(data)
-    df_out['props'] = df_out['index'].map(props)
+    df_out['props'] = props
     df_out['calc'] = calc
     return df_out
 
@@ -1421,7 +1426,7 @@ def make_vgp_axes(**kwargs):
             Axes of the figure.
     """
     figsize=kwargs.get('figsize', (3,3))
-    num = kwargs.get('num','delf fig')
+    num = kwargs.get('num','VGP plot')
     fig, ax = plt.subplots(1,1, figsize=figsize, num=num)
     ax.set_xlabel((r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)'))
     ax.set_ylabel(r'$\phi$ (deg.)')
@@ -1429,7 +1434,7 @@ def make_vgp_axes(**kwargs):
     return fig, ax
 
 
-def delfstar_from_xlsx(infile, **kwargs):  
+def read_xlsx(infile, **kwargs):  
     """
     Create data frame from.xlsx file output by RheoQCM.
     
@@ -1441,9 +1446,6 @@ def delfstar_from_xlsx(infile, **kwargs):
         restrict_to_marked (list):
             List of frequencies that must be marked in order to be included.
             Default is [], so that we include everything.
-            
-        nvals (list): 
-            List of frequencies to read.  Default is [1,3,5]
         
         data_channel (string):
             Channel for data:  'S' (default) or 'R'
@@ -1464,12 +1466,17 @@ def delfstar_from_xlsx(infile, **kwargs):
     """
     
     restrict_to_marked = kwargs.get('restrict_to_marked',[])
-    nvals = kwargs.get('nvals',[1,3,5])
     data_channel = kwargs.get('data_channel', 'S')
     data_name = data_channel+'_channel'
     ref_channel = kwargs.get('ref_channel', 'self')
 
     df = pd.read_excel(infile, sheet_name=None, header=0)[data_name]
+    
+    # sort out which harmonics are included
+    nvals = []
+    for n in [1,3,5,7,9]:
+        if 'f'+str(n) in df.columns:
+            nvals=nvals+[n]
 
     df['keep_row']=1  # keep all rows unless we are told to check for specific marks
     for n in restrict_to_marked:
@@ -1683,22 +1690,18 @@ def vogel(T, Tref, B, Tinf):
     """
     return -B/(Tref-Tinf) + B/(T-Tinf)
 
-def make_contours(df, **kwargs):
+def check_solution(df, **kwargs):
     from pylab import meshgrid
     '''
-    create contour plot of normf_g or rh_rd
+    Create contour plot of normf_g or rh_rd and verify that solution is correct.
     
     args:
         df (dataframe):
             input dataframe to consider
-        c_type (string):
-            'fixed_drho':  
-                d/lambda varied using fixed value of drho from props
-            'fixed_mechanics':  
-                d/lambda varied using
-
                 
     kwargs:
+        num (string):
+            Window title.
         numxy (int):  
             number of grid points in x and y (default is 100)
         numz (int):  
@@ -1711,6 +1714,7 @@ def make_contours(df, **kwargs):
             list of harmonics to plot (default is [1,3,5])
     '''
 
+    num = kwargs.get('num', 'Solution Check')
     numxy = kwargs.get('numxy', 100)
     numz = kwargs.get('numz', 200)
     philim = kwargs.get('philim', [0, 90])
@@ -1721,7 +1725,8 @@ def make_contours(df, **kwargs):
     calc = df['calc'][df.index[0]]
     
     # make the axes
-    fig, ax = plt.subplots(2,2, figsize=(10,8), sharex=False, sharey=False)
+    fig, ax = plt.subplots(2,2, figsize=(10,8), sharex=False, sharey=False,
+                           num=num)
                        
     # make meshgrid for contour
     phi = np.linspace(philim[0], philim[1], numxy) 
@@ -1771,9 +1776,7 @@ def make_contours(df, **kwargs):
         return  'd/lambda={x:.3f},  phi={y:.1f}, delfstar/n={z:.0f}, '\
                 'drho={drho:.2f}, grho3={grho3:.2e}, '\
                 'fnorm={fnorm:.4f}, gnorm={gnorm:.4f}'.format(x=x, y=y, z=z, 
-                 drho=1000*drho, grho3=grho3/1000, fnorm=fnorm, gnorm=gnorm)
-                
-
+                 drho=1000*drho, grho3=grho3/1000, fnorm=fnorm, gnorm=gnorm)                
     
     # now add the experimental data
     # variable to keep track of differentplots
