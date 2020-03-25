@@ -20,6 +20,7 @@ try:
 except ImportError:
   pass
 
+# setvvalues for standard constants
 Zq = 8.84e6  # shear acoustic impedance of at cut quartz
 f1 = 5e6  # fundamental resonant frequency
 openplots = 4
