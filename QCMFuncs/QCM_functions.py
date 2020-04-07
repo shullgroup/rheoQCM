@@ -1721,10 +1721,9 @@ def check_solution(df, **kwargs):
     philim = kwargs.get('philim', [0, 90])
     dlim = kwargs.get('dlim', [0.001, 0.5])
     nplot = kwargs.get('nplot', [1,3,5])
+    calc = df['calc'][0]
     
-    # get the calculation parameters
-    calc = df['calc'][df.index[0]]
-    
+  
     # make the axes
     fig, ax = plt.subplots(2,2, figsize=(10,8), sharex=False, sharey=False,
                            num=num)
