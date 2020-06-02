@@ -919,6 +919,7 @@ def solve_for_props(delfstar, calc, **kwargs):
         else:
             grho3=1e11
             phi=45
+            n1=n3 # fixed thickness uses delta f and delta gamma from same harmonic
     else:
         fixed_drho=False
         n1 = int(calc[0]); n2 = int(calc[1]); n3 = int(calc[2])
@@ -930,7 +931,7 @@ def solve_for_props(delfstar, calc, **kwargs):
             drho, grho3, phi = thinfilm_guess(df_in[0], calc)
 
         
-        n1=n3 # bulk solution uses delta f and delta gamma from same harmonic
+
 
     # set up the initial guess
     if fixed_drho:
