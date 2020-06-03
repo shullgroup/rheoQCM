@@ -299,7 +299,7 @@ config_default = {
         'dg':   r'$\Delta\Gamma \; (\mathrm{Hz})$',
         'dgn':  r'$\Delta\Gamma/n \; (\mathrm{Hz})$',
         'dD':   r'$\Delta D \times 10^{-6}$',
-        'dsm':  r'$\Delta m_{Sauerbrey} \; (\mathrm{g/m$^2}$)',
+        'dsm':  r'$\Delta m_{Sauerbrey} \; (\mathrm{g/m^2}$)',
         'f':    r'$f \; (\mathrm{Hz})$',
         'g':    r'$\Gamma \; (\mathrm{Hz})$',
         'D':    r'$D \; \times 10^{-6}$',
