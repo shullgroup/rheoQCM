@@ -392,7 +392,7 @@ class PeakTracker:
             self.harminput[chn_name][harm]['f'] = f
             self.harminput[chn_name][harm]['G'] = G
             self.harminput[chn_name][harm]['B'] = B
-            logger.info('f[chn][harm] %s', len(f)) 
+            logger.info('f[chn][harm] %s', 'None' if f is None else len(f)) 
 
         if not harmdata: # harmdata is empty (for initialize)
             harm_dict = {}

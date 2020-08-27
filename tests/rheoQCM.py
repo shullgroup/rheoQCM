@@ -2102,7 +2102,7 @@ class QCMApp(QMainWindow):
                 if not opts:
                     buttons = QMessageBox.Ok
                 else:
-                    message.append('Do you want to process?')
+                    message.append('Do you want to continue anyway?')
                     buttons = QMessageBox.Yes | QMessageBox.Cancel
 
             msg = QMessageBox()
@@ -2930,7 +2930,7 @@ class QCMApp(QMainWindow):
                 [self.active['harm']],
                 fs=[fit_result['v_fit']['cen_rec']['value']], # fs
                 gs=[fit_result['v_fit']['wid_rec']['value']], # gs = half_width
-                ps=[fit_result['v_fit']['amp_rec']['value']], # gs = half_width
+                ps=[fit_result['v_fit']['amp_rec']['value']], 
             )
             # update mpl_plt12
             self.update_mpl_plt12()
@@ -6927,7 +6927,10 @@ class QCMApp(QMainWindow):
             for harm in harm_list: # TODO add poll here
                 # get data
                 f, G, B = self.data_saver.get_raw(chn_name, queue_id, harm)
-                logger.info((len(f), len(G), len(B))) 
+                if f is None:
+                    logger.info('got None') 
+                else:
+                    logger.info((len(f), len(G), len(B))) 
 
                 # put f, G, B to peak_tracker for later fitting and/or tracking
                 self.peak_tracker.update_input(chn_name, harm, harmdata=self.settings['harmdata'], freq_span=[], fGB=[f, G, B]) # freq_span set to [], since we don't need to track the peak

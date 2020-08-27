@@ -59,6 +59,7 @@ prop_default = {
 # fit_method = 'lmfit'
 fit_method = 'scipy'
 
+
 def nh2i(nh):
     '''
     convert harmonic (str) to index (int) 
@@ -66,11 +67,13 @@ def nh2i(nh):
     '''
     return int((nh - 1) / 2)
     
+
 def nhcalc2nh(nhcalc):
     '''
     convert nhcalc (str) to list of harmonics (int) in nhcalc
     '''
     return [int(s) for s in nhcalc] 
+
 
 
 
@@ -436,7 +439,7 @@ class QCM:
 
     def calc_Zmot(self, n, layers, delfstar):
         om = 2 * np.pi * (n * self.f1 + delfstar)
-        Zqc = self.Zq * (1 + 1j * 2 * g0 / (n * self.f1))
+        Zqc = self.Zq * (1 + 1j * 2 * self.g1 / (n * self.f1)) # NOTE: changed g0 to self.g1
 
 
         self.drho_q = self.Zq / (2 * self.f1)
