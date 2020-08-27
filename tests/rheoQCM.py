@@ -3680,7 +3680,7 @@ class QCMApp(QMainWindow):
 
     def time_str_unit_replace(self, time_str):
         '''
-        replace 'unit' in time_str and
+        replace '<unit>' in time_str and
         return time_str with uint set in UI
         '''
         timeunit = self.get_axis_settings('comboBox_timeunit')
@@ -3693,12 +3693,12 @@ class QCMApp(QMainWindow):
             timeunit = r'h'
         elif timeunit == 'd':
             timeunit = r'day'
-        return time_str.replace('unit', timeunit)
+        return time_str.replace('<unit>', timeunit)
 
 
     def temp_str_unit_replace(self, temp_str):
         '''
-        replace 'unit' in temp_str and
+        replace '<unit>' in temp_str and
         return temp_str with uint set in UI
         '''
         tempunit = self.get_axis_settings('comboBox_tempunit')
@@ -3710,7 +3710,7 @@ class QCMApp(QMainWindow):
             tempunit = r'$\degree$F'
         logger.info(tempunit) 
 
-        return temp_str.replace('unit', tempunit)
+        return temp_str.replace('<unit>', tempunit)
 
 
     def clr_mpl_harm(self):
@@ -5233,7 +5233,7 @@ class QCMApp(QMainWindow):
 
     def get_label_replace_refh_unit(self, var, refh):
         '''
-        get label from config_default and replace '_refh' and 'unit' in it
+        get label from config_default and replace '_refh' and '<unit>' in it
         '''
         label = config_default['data_plt_axis_label'][var]
         if '_refh' in var: # variable referenced to refh

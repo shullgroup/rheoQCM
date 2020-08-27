@@ -208,7 +208,9 @@ class DataSaver:
         # column names with multiple value for prop df
         mech_keys_multiple = [
             'delf_exps',
+            'delfn_exps',
             'delf_calcs', # n
+            'delfn_calcs', # n
             'delg_exps',
             'delg_calcs', # n
             'delD_exps',
