@@ -312,6 +312,7 @@ config_default = {
         'delf_calcs':        r'$\Delta f \; (\mathrm{Hz})$',
         'delfn_calcs':       r'$\Delta f/n \; (\mathrm{Hz})$',
         'delf_exps':         r'$\Delta f_{exp} \; (\mathrm{Hz})$',
+        'delfn_exps':         r'$\Delta f_{exp}/n \; (\mathrm{Hz})$',
         'delg_calcs':        r'$\Delta\Gamma \; (\mathrm{Hz})$',
         'delD_calcs':        r'$\Delta D \times 10^{-6}$',
         'delD_exps':         r'$\Delta D_{exp} \times 10^{-6}$',

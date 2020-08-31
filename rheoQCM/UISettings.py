@@ -11,6 +11,9 @@ import numpy as np
 import os
 import json
 import logging
+import logging.config
+# Get the logger specified in the file
+logger = logging.getLogger(__name__)
 
 config_default = {
 
@@ -43,7 +46,13 @@ config_default = {
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
 
     # if marked data shown when showing all data
-    'show_marked_when_all': True,
+    'show_marked_when_all': False,
+
+    # keys to ingnore when loading settings
+    'settings_ignored_keys': [
+        'plainTextEdit_settings_sampledescription',
+
+    ],
 
     'analysis_mode_disable_list':[
         'pushButton_runstop',
@@ -283,52 +292,56 @@ config_default = {
     ]),
 
     'data_plt_axis_label': {
-        'df':   r'$\Delta$f (Hz)',
-        'dfn':  r'$\Delta$f/n (Hz)', 
-        'mdf':  r'-$\Delta$f (Hz)', 
-        'mdfn': r'-$\Delta$f/n (Hz)', 
-        'dg':   r'$\Delta\Gamma$ (Hz)',
-        'dgn':  r'$\Delta\Gamma$/n (Hz)',
-        'dD':   r'$\Delta$D $\times 10^{-6}$',
-        'dsm':  r'$\Delta$m$_{Sauerbrey}$ (g/m$^2$)',
-        'f':    r'f (Hz)',
-        'g':    r'$\Gamma$ (Hz)',
-        'D':    r'D $\times 10^{-6}$',
-        'temp': r'Temp. (unit)', # unit is going to be replaced by temperature unit
-        't':    r'Time (unit)', # unit is going to be replaced by time unit
+        'df':   r'$\Delta f \; (\mathrm{Hz})$',
+        'dfn':  r'$\Delta f/n \; (\mathrm{Hz})$', 
+        'mdf':  r'-$\Delta f \; (\mathrm{Hz})$', 
+        'mdfn': r'-$\Delta f/n \; (\mathrm{Hz})$', 
+        'dg':   r'$\Delta\Gamma \; (\mathrm{Hz})$',
+        'dgn':  r'$\Delta\Gamma/n \; (\mathrm{Hz})$',
+        'dD':   r'$\Delta D \times 10^{-6}$',
+        'dsm':  r'$\Delta m_{Sauerbrey} \; (\mathrm{g/m^2}$)',
+        'f':    r'$f \; (\mathrm{Hz})$',
+        'g':    r'$\Gamma \; (\mathrm{Hz})$',
+        'D':    r'$D \; \times 10^{-6}$',
+        'temp': r'Temp. (<unit>)', # unit is going to be replaced by temperature unit
+        't':    r'Time (<unit>)', # unit is going to be replaced by time unit
         'id':  r'Test ID', # queue_id
         'idx':  r'Index', # dataframe index
 
         # for property
-        'delf_calcs':        r'$\Delta$f (Hz)',
-        'delf_exps':         r'$\Delta$f$_{exp}$ (Hz)',
-        'delg_calcs':        r'$\Delta\Gamma$ (Hz)',
-        'delD_calcs':        r'$\Delta$D $\times 10^{-6}$',
-        'delD_exps':         r'$\Delta$D$_{exp}$ $\times 10^{-6}$',
-        'delg_exps':         r'$\Delta\Gamma_{exp}$ (Hz)',
-        'sauerbreyms':       r'$\Delta$m$_{Sauerbrey}$ (g/m$^2$)',
-        'drho':              r'd$\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-        'grhos':             r'$|G_{n}^*|\rho$ (Pa$\cdot$g/cm$^3$)',
-        'phi':               r'$\phi$ ($\degree$)',
-        'etarhos':           r'$|\eta_{n}^*|\rho$ (Pa$\cdot$s$\cdot$g/cm$^3$)',
-        'dlams':             r'd/$\lambda_{n}$',
-        'lamrhos':           r'$\lambda\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-        'delrhos':           r'$\delta\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-        'normdelf_exps':     r'$\Delta$f$_{n}$/$\Delta$f$_{sn}_{exp}$',
-        'normdelf_calcs':    r'$\Delta$f$_{n}$/$\Delta$f$_{sn}$',
-        'normdelg_exps':     r'$(\Delta\Gamma_{n}$/$\Delta$f$_{sn})_{exp}$',
-        'normdelg_calcs':    r'$\Delta\Gamma_{n}$/$\Delta$f$_{sn}$',
-        'rh_exp':            r'r$_{h,exp}$',
-        'rh_calc':           r'r$_h$',
-        'rd_exps':           r'r$_{d,exp}$',
-        'rd_calcs':          r'r$_d$',
+        'delf_calcs':        r'$\Delta f \; (\mathrm{Hz})$',
+        'delfn_calcs':       r'$\Delta f/n \; (\mathrm{Hz})$',
+        'delf_exps':         r'$\Delta f_{exp} \; (\mathrm{Hz})$',
+        'delfn_exps':         r'$\Delta f_{exp}/n \; (\mathrm{Hz})$',
+        'delg_calcs':        r'$\Delta\Gamma \; (\mathrm{Hz})$',
+        'delD_calcs':        r'$\Delta D \times 10^{-6}$',
+        'delD_exps':         r'$\Delta D_{exp} \times 10^{-6}$',
+        'delg_exps':         r'$\Delta\Gamma_{exp} \; (\mathrm{Hz})$',
+        'sauerbreyms':       r'$\Delta m_{Sauerbrey} \; (\mathrm{g/m^2})$',
+        'drho':              r'$d\rho \; (\mathrm{\mu m \cdot g/cm^3})$',
+        'grhos':             r'$|G_{n}^*|\rho \; (\mathrm{Pa \cdot g/cm^3})$',
+        'phi':               r'$\phi \; (\mathrm{\degree})$',
+        'etarhos':           r'$|\eta_{n}^*|\rho \; (\mathrm{Pa \cdot s \cdot g/cm^3})$',
+        'dlams':             r'$d/\lambda_{n}$',
+        'lamrhos':           r'$\lambda\rho \; (\mathrm{\mu m \cdot g/cm^3})$',
+        'delrhos':           r'$\delta\rho \; (\mathrm{\mu m \cdot g/cm^3})$',
+        'normdelf_exps':     r'$(\Delta f_{n}/\Delta f_{sn})_{exp}$',
+        'normdelf_calcs':    r'$\Delta f_{n}/\Delta f_{sn}$',
+        'normdelg_exps':     r'$(\Delta\Gamma_{n}/\Delta f_{sn})_{exp}$',
+        'normdelg_calcs':    r'$\Delta\Gamma_{n}/\Delta f_{sn}$',
+        'rh_exp':            r'$r_{h,exp}$',
+        'rh_calc':           r'$r_h$',
+        'rd_exps':           r'$r_{d,exp}$',
+        'rd_calcs':          r'$r_d$',
     },
 
     # rowheader for tableWidget_spectra_mechanics_table
     # DON't change the value of this key
     'mech_table_rowheaders':{
         'delf_exps':         u'\u0394' + 'f (Hz)', # Δf (Hz)
+        'delfn_exps':         u'\u0394' + 'f/n (Hz)', # Δf (Hz)
         'delf_calcs':        u'\u0394' + 'fcalc (Hz)', # Δfcalc (Hz)
+        'delfn_calcs':       u'\u0394' + 'fcalc/n (Hz)', # Δfₙcalc (Hz)
         'delg_exps':         u'\u0394\u0393' + ' (Hz)', # ΔΓ (Hz)
         'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
         'delD_exps':         u'\u0394' + 'D ' + u'\u00D7' + '10' + '\u207B\u2076', # D ×10⁻⁶
@@ -518,6 +531,7 @@ config_default = {
     'calctype_opts':{
         'SLA': 'Small-load approximation',
         'LL': 'Lu-Lewis',
+        'Voigt': 'Voigt (QCM-D)', # for QCM-D model
     },
 
     'qcm_layer_source_opts': {
@@ -735,15 +749,15 @@ config_default = {
                 'formatter': 'simple',
                 'stream': 'ext://sys.stdout',
             },    
-            # 'info_file_handler': {
-            #     'class': 'logging.handlers.RotatingFileHandler',
-            #     'level': 'INFO',
-            #     'formatter': 'simple',
-            #     'filename': 'info.log',
-            #     'maxBytes': 1048576,
-            #     'backupCount': 1,
-            #     'encoding': 'utf8',
-            # },    
+            'info_file_handler': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'level': 'INFO',
+                'formatter': 'simple',
+                'filename': 'info.log',
+                'maxBytes': 1048576,
+                'backupCount': 1,
+                'encoding': 'utf8',
+            },    
             'error_file_handler': {
                 'class': 'logging.handlers.RotatingFileHandler',
                 'level': 'ERROR',
@@ -784,7 +798,12 @@ config_default = {
 #####################################################
 
 settings_default = {
-#### default settings control ####
+    #### default settings control ####
+
+    # copies of same keys in config_default
+    'max_harmonic': config_default['max_harmonic'],
+    'time_str_format': config_default['time_str_format'],
+    'vna_path': config_default['vna_path'],
 
     # add na_path on your computer if it is not in the 
     # default path listed in config_default['vna_path']
@@ -807,9 +826,9 @@ settings_default = {
     # NOTE: keep this key commented
     # 'dateTimeEdit_reftime': '2000-01-01 00:00:00.000',
     
-    'spinBox_recordinterval': 15,
+    'spinBox_recordinterval': 60,
     'spinBox_refreshresolution': 1,
-    'spinBox_scaninterval': 15,
+    'spinBox_scaninterval': 60,
 
     # default fitting and display options
     'checkBox_dynamicfit': True,
@@ -930,6 +949,8 @@ settings_default = {
     'spinBox_settings_mechanics_nhcalc_n2': 5,
     'spinBox_settings_mechanics_nhcalc_n3': 3,
 
+    'groupBox_settings_mechanics_contour': False,
+
     'spinBox_mech_expertmode_layernum': 2, # number of layers for expert mode mechanic 
 
     'comboBox_settings_mechanics_calctype': 'LL', # 'LL' or 'SLA'
@@ -989,7 +1010,9 @@ for harm in range(1, config_default['max_harmonic']+2, 2):
 
 def get_config():
     config = config_default.copy() # make a copy
-    file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_default['default_config_file_name'])
+    # file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_default['default_config_file_name'])
+    file_path = config_default['default_config_file_name']
+    logger.info('user config file_path %s', file_path)
     # print(file_path)
 
     config, complete = update_dict(file_path, config)
@@ -1003,7 +1026,9 @@ def get_config():
 
 def get_settings():
     settings = settings_default.copy() # make a copy
-    file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_default['default_settings_file_name'])
+    # file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), config_default['default_settings_file_name'])
+    file_path = config_default['default_settings_file_name']
+    logger.info('user settings file_path %s', file_path)
     # print(file_path)
 
     settings, complete = update_dict(file_path, settings)
@@ -1035,10 +1060,14 @@ def update_dict(file_path, default_dict):
 
 
 if __name__ == '__main__':
-    print('to get config')
-    cfg = get_config()
-    print(cfg['vna_cal_file_path'])
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    config_default = get_config()
+    settings_default = get_settings()
+    # print('to get config')
+    # cfg = get_config()
+    # print(cfg['vna_cal_file_path'])
 
-    print('to get settings')
-    stt = get_settings()
-    print(stt['checkBox_harm1'])
+    # print('to get settings')
+    # stt = get_settings()
+    # print(stt['checkBox_harm1'])
