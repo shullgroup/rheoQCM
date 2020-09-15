@@ -8,7 +8,6 @@ Created on Thu Jan  4 09:19:59 2018
 
 import numpy as np
 import scipy.optimize as optimize
-import scipy.interpolate as interpolate
 from scipy.interpolate import InterpolatedUnivariateSpline
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -40,7 +39,7 @@ def find_nearest_idx(values, array):
             Values that we want to be close to.
         array (numpy array): 
             Input array to choose values from.
-        
+
     returns:
         idx (numpy array):
             Array of indices in 'array' that give values closest
@@ -1618,7 +1617,7 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
             relaxation times
         beta (list of real values):
             exponents
-        sp_type (list if integers):
+        sp_type (list of integers):
             Specifies the detailed combination of different springpot elments
             combined in series, and then in parallel.  For example, if type is
             [1,2,3],  there are three branches in parallel with one another:
