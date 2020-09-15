@@ -62,7 +62,7 @@ def make_bmod(n):
     input:
     n:    number of peaks
     '''
-    bmod = ConstantModel(prefix='g_')
+    bmod = ConstantModel(prefix='b_')
     for i in np.arange(n):
         bmod_i = Model(fun_B, prefix='p'+str(i)+'_', name='b'+str(i))
         bmod += bmod_i
@@ -392,7 +392,7 @@ class PeakTracker:
             self.harminput[chn_name][harm]['f'] = f
             self.harminput[chn_name][harm]['G'] = G
             self.harminput[chn_name][harm]['B'] = B
-            logger.info('f[chn][harm] %s', len(f)) 
+            logger.info('f[chn][harm] %s', 'None' if f is None else len(f)) 
 
         if not harmdata: # harmdata is empty (for initialize)
             harm_dict = {}
@@ -682,7 +682,7 @@ class PeakTracker:
                 new_xlim = [(current_xlim[0] - thresh2), (current_xlim[1] + thresh2)] # Hz '''
         elif track_condition == 'fixcntspn':
             logger.info('fixcntspn') 
-            # bothe span and cent are fixed
+            # both span and cent are fixed
             # no changes
             pass
         elif track_condition == 'usrdef': #run custom tracking algorithm

@@ -208,7 +208,9 @@ class DataSaver:
         # column names with multiple value for prop df
         mech_keys_multiple = [
             'delf_exps',
+            'delfn_exps',
             'delf_calcs', # n
+            'delfn_calcs', # n
             'delg_exps',
             'delg_calcs', # n
             'delD_exps',
@@ -495,7 +497,7 @@ class DataSaver:
         # update values
         self.update_queue_col(chn_name, queue_id, 'fs', fs_all)
         self.update_queue_col(chn_name, queue_id, 'gs', gs_all)
-        self.update_queue_col(chn_name, queue_id, 'ps', gs_all)
+        self.update_queue_col(chn_name, queue_id, 'ps', ps_all)
 
         if t is not None:
             self.update_queue_col(chn_name, queue_id, 't', t)
@@ -892,10 +894,15 @@ class DataSaver:
             logger.info(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col]) 
             logger.info('col %s', col) 
             logger.info('val %s', val) 
-            # logger.info(pd.Series([val])) 
-            # getattr(self, chn_name).at[getattr(self, chn_name).queue_id == queue_id, [col]] = pd.Series([val])
-            logger.info(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col]) 
-            getattr(self, chn_name)[getattr(self, chn_name).queue_id == queue_id][col] = [val]
+
+            ind = getattr(self, chn_name)[getattr(self, chn_name).queue_id == queue_id].index[0] # integer
+            logger.info(ind)
+            getattr(self, chn_name).at[ind, col] = val
+
+            # # following .loc works the same as .at
+            # ind = getattr(self, chn_name)[getattr(self, chn_name).queue_id == queue_id].index # index array
+            # logger.info(ind)
+            # getattr(self, chn_name).loc[ind, col] = getattr(self, chn_name).loc[ind, col].map(lambda x: val)
         else: # new, append
             getattr(self, chn_name).merge(pd.DataFrame.from_dict({col: [val], 'queue_id': [queue_id]}), how='outer')
 

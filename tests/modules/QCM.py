@@ -59,18 +59,23 @@ prop_default = {
 # fit_method = 'lmfit'
 fit_method = 'scipy'
 
+
 def nh2i(nh):
     '''
     convert harmonic (str) to index (int) 
     since only odd harmonics are stored in list
     '''
+    if isinstance(nh, str):
+        nh = int(nh)
     return int((nh - 1) / 2)
     
+
 def nhcalc2nh(nhcalc):
     '''
     convert nhcalc (str) to list of harmonics (int) in nhcalc
     '''
     return [int(s) for s in nhcalc] 
+
 
 
 
@@ -436,7 +441,7 @@ class QCM:
 
     def calc_Zmot(self, n, layers, delfstar):
         om = 2 * np.pi * (n * self.f1 + delfstar)
-        Zqc = self.Zq * (1 + 1j * 2 * g0 / (n * self.f1))
+        Zqc = self.Zq * (1 + 1j * 2 * self.g1 / (n * self.f1)) # NOTE: changed g0 to self.g1
 
 
         self.drho_q = self.Zq / (2 * self.f1)
@@ -787,7 +792,10 @@ class QCM:
         delfsn = {i*2+1: self.sauerbreyf(i*2+1, drho) for i, mark in enumerate(marks)} # fsn from sauerbrey eq
         normdelfstar_calcs = {}
 
+        delf_exps = mech_queue.delf_exps.iloc[0].copy()
+        delfn_exps = mech_queue.delfn_exps.iloc[0].copy()
         delf_calcs = mech_queue.delf_calcs.iloc[0].copy()
+        delfn_calcs = mech_queue.delfn_calcs.iloc[0].copy()
         delg_calcs = mech_queue.delg_calcs.iloc[0].copy()
         delD_exps = mech_queue.delD_exps.iloc[0].copy()
         delD_calcs = mech_queue.delD_calcs.iloc[0].copy()
@@ -807,6 +815,11 @@ class QCM:
         normdelg_calcs = mech_queue.normdelg_calcs.iloc[0].copy()
         # logger.info('delf_calcs %s', delf_calcs) 
         # logger.info(type(delf_calcs)) 
+
+
+        delf_exps = qcm_queue.delfs.iloc[0]
+        # logger.info('delfs %s', qcm_queue.delfs) 
+        # logger.info('delf_exps %s', delf_exps) 
         for n in nhplot:
             if self.isbulk(rd_exp, bulklimit):
                 # NOTE delfstar_calc() gives the same results.
@@ -814,7 +827,10 @@ class QCM:
                 delfstar_calc[n] = self.delfstarcalc_bulk_from_film(n, film)
             else:
                 delfstar_calc[n] = self.calc_delfstar(n, film)
+
+            delfn_exps[nh2i(n)] = delf_exps[nh2i(n)] / n
             delf_calcs[nh2i(n)] = np.real(delfstar_calc[n])
+            delfn_calcs[nh2i(n)] = np.real(delfstar_calc[n]) / n
             delg_calcs[nh2i(n)] = np.imag(delfstar_calc[n])
 
             delD_exps[nh2i(n)] = self.convert_gamma_to_D(np.imag(delfstar[n]), n)
@@ -872,8 +888,10 @@ class QCM:
         mech_queue['lamrhos'] = [lamrhos] # in kg/m2
         mech_queue['delrhos'] = [delrhos] # in kg/m2
         
-        mech_queue['delf_exps'] = qcm_queue['delfs']
+        mech_queue['delf_exps'] = [delf_exps]
+        mech_queue['delfn_exps'] = [delfn_exps]
         mech_queue['delf_calcs'] = [delf_calcs]
+        mech_queue['delfn_calcs'] = [delfn_calcs]
         mech_queue['delg_exps'] = qcm_queue['delgs']
         mech_queue['delg_calcs'] = [delg_calcs]
         mech_queue['delD_exps'] = [delD_exps]

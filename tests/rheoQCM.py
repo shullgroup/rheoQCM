@@ -2102,7 +2102,7 @@ class QCMApp(QMainWindow):
                 if not opts:
                     buttons = QMessageBox.Ok
                 else:
-                    message.append('Do you want to process?')
+                    message.append('Do you want to continue anyway?')
                     buttons = QMessageBox.Yes | QMessageBox.Cancel
 
             msg = QMessageBox()
@@ -2930,7 +2930,7 @@ class QCMApp(QMainWindow):
                 [self.active['harm']],
                 fs=[fit_result['v_fit']['cen_rec']['value']], # fs
                 gs=[fit_result['v_fit']['wid_rec']['value']], # gs = half_width
-                ps=[fit_result['v_fit']['amp_rec']['value']], # gs = half_width
+                ps=[fit_result['v_fit']['amp_rec']['value']], 
             )
             # update mpl_plt12
             self.update_mpl_plt12()
@@ -3680,7 +3680,7 @@ class QCMApp(QMainWindow):
 
     def time_str_unit_replace(self, time_str):
         '''
-        replace 'unit' in time_str and
+        replace '<unit>' in time_str and
         return time_str with uint set in UI
         '''
         timeunit = self.get_axis_settings('comboBox_timeunit')
@@ -3693,12 +3693,12 @@ class QCMApp(QMainWindow):
             timeunit = r'h'
         elif timeunit == 'd':
             timeunit = r'day'
-        return time_str.replace('unit', timeunit)
+        return time_str.replace('<unit>', timeunit)
 
 
     def temp_str_unit_replace(self, temp_str):
         '''
-        replace 'unit' in temp_str and
+        replace '<unit>' in temp_str and
         return temp_str with uint set in UI
         '''
         tempunit = self.get_axis_settings('comboBox_tempunit')
@@ -3710,7 +3710,7 @@ class QCMApp(QMainWindow):
             tempunit = r'$\degree$F'
         logger.info(tempunit) 
 
-        return temp_str.replace('unit', tempunit)
+        return temp_str.replace('<unit>', tempunit)
 
 
     def clr_mpl_harm(self):
@@ -5233,7 +5233,7 @@ class QCMApp(QMainWindow):
 
     def get_label_replace_refh_unit(self, var, refh):
         '''
-        get label from config_default and replace '_refh' and 'unit' in it
+        get label from config_default and replace '_refh' and '<unit>' in it
         '''
         label = config_default['data_plt_axis_label'][var]
         if '_refh' in var: # variable referenced to refh
@@ -6927,7 +6927,10 @@ class QCMApp(QMainWindow):
             for harm in harm_list: # TODO add poll here
                 # get data
                 f, G, B = self.data_saver.get_raw(chn_name, queue_id, harm)
-                logger.info((len(f), len(G), len(B))) 
+                if f is None:
+                    logger.info('got None') 
+                else:
+                    logger.info((len(f), len(G), len(B))) 
 
                 # put f, G, B to peak_tracker for later fitting and/or tracking
                 self.peak_tracker.update_input(chn_name, harm, harmdata=self.settings['harmdata'], freq_span=[], fGB=[f, G, B]) # freq_span set to [], since we don't need to track the peak

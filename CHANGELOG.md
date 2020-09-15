@@ -1,8 +1,10 @@
 # Changelog
 
-## [0.19.2] - 2020-01-21
+## [0.19.2] - 2020-08-31
 
 ### Added
+
+- Add `Delta F_{exp}/n`, `Delta F_{cal}/n` in property table. <span style="color:red">NOTE</span>: You may need to recalculate the data from previous version to show data in these two columns.
 
 ### Changed
 
@@ -10,6 +12,7 @@
 
 - Fix not reading user settings file bug.
 - Fix file name did not clear in main class after UI reset.
+- Fix nan replacing bug for reading data.
 
 ### Removed
 

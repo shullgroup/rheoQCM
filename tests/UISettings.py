@@ -303,14 +303,16 @@ config_default = {
         'f':    r'$f \; (\mathrm{Hz})$',
         'g':    r'$\Gamma \; (\mathrm{Hz})$',
         'D':    r'$D \; \times 10^{-6}$',
-        'temp': r'Temp. (unit)', # unit is going to be replaced by temperature unit
-        't':    r'Time (unit)', # unit is going to be replaced by time unit
+        'temp': r'Temp. (<unit>)', # unit is going to be replaced by temperature unit
+        't':    r'Time (<unit>)', # unit is going to be replaced by time unit
         'id':  r'Test ID', # queue_id
         'idx':  r'Index', # dataframe index
 
         # for property
         'delf_calcs':        r'$\Delta f \; (\mathrm{Hz})$',
+        'delfn_calcs':       r'$\Delta f/n \; (\mathrm{Hz})$',
         'delf_exps':         r'$\Delta f_{exp} \; (\mathrm{Hz})$',
+        'delfn_exps':         r'$\Delta f_{exp}/n \; (\mathrm{Hz})$',
         'delg_calcs':        r'$\Delta\Gamma \; (\mathrm{Hz})$',
         'delD_calcs':        r'$\Delta D \times 10^{-6}$',
         'delD_exps':         r'$\Delta D_{exp} \times 10^{-6}$',
@@ -337,7 +339,9 @@ config_default = {
     # DON't change the value of this key
     'mech_table_rowheaders':{
         'delf_exps':         u'\u0394' + 'f (Hz)', # Δf (Hz)
+        'delfn_exps':         u'\u0394' + 'f/n (Hz)', # Δf (Hz)
         'delf_calcs':        u'\u0394' + 'fcalc (Hz)', # Δfcalc (Hz)
+        'delfn_calcs':       u'\u0394' + 'fcalc/n (Hz)', # Δfₙcalc (Hz)
         'delg_exps':         u'\u0394\u0393' + ' (Hz)', # ΔΓ (Hz)
         'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
         'delD_exps':         u'\u0394' + 'D ' + u'\u00D7' + '10' + '\u207B\u2076', # D ×10⁻⁶

@@ -106,6 +106,7 @@ class DataSaver:
             'marks', # list default [0, 0, 0, 0, 0]
             'fs',
             'gs',
+            'ps',
         ])
 
 
@@ -207,7 +208,9 @@ class DataSaver:
         # column names with multiple value for prop df
         mech_keys_multiple = [
             'delf_exps',
+            'delfn_exps',
             'delf_calcs', # n
+            'delfn_calcs', # n
             'delg_exps',
             'delg_calcs', # n
             'delD_exps',
@@ -244,17 +247,9 @@ class DataSaver:
             # logger.info(data_queue_id) 
             
             # add missed columns
-            exisit_cols = df_mech.columns
-            for col in mech_keys_single:
-                if col not in exisit_cols: # previous version w/ new column in the current list
-                    logger.info('col %s not in df_mech', col)
-                    df_mech[col] = np.nan
-                    df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list()) # add list of nan to all null
-            for col in mech_keys_multiple:
-                if col not in exisit_cols: # previous version w/ new column in the current list
-                    logger.info('col %s not in df_mech', col)
-                    df_mech[col] = np.nan
-                    df_mech[col] = df_mech[col].apply(lambda x: self.nan_harm_list()) # add 
+            # previous version w/ new column in the current list
+            df_mech = self.add_missed_cols_to_df(df_mech, mech_keys_single)
+            df_mech = self.add_missed_cols_to_df(df_mech, mech_keys_multiple)
             logger.info(df_mech) 
 
             # check if queue_id is the same as self.chn_name
@@ -384,6 +379,8 @@ class DataSaver:
             for chn_name in self._chn_keys:
                 # df for data from samp/ref chn
                 setattr(self, chn_name, pd.read_json(fh['data/' + chn_name][()]).sort_values(by=['queue_id'])) 
+
+                setattr(self, chn_name, self.add_missed_cols_to_df(getattr(self, chn_name), ['ps']))
                 
                 # df for data form samp_ref/ref_ref chn
                 if chn_name + '_ref' in fh['data'].keys():
@@ -465,7 +462,7 @@ class DataSaver:
             return {}
 
 
-    def update_refit_data(self, chn_name, queue_id, harm_list, t=None, temp=None, fs=[np.nan], gs=[np.nan]):
+    def update_refit_data(self, chn_name, queue_id, harm_list, t=None, temp=None, fs=[np.nan], gs=[np.nan], ps=[np.nan]):
         '''
         update refitted data of queue_id 
         chn_name: str. 'samp' of 'ref'
@@ -480,10 +477,12 @@ class DataSaver:
             # get 
             fs_all = self.get_queue(chn_name, queue_id, col='fs').iloc[0]
             gs_all = self.get_queue(chn_name, queue_id, col='gs').iloc[0]
+            ps_all = self.get_queue(chn_name, queue_id, col='ps').iloc[0]
         else: # is going to append data
             logger.info('queue_id (%s) not in list', queue_id)
             fs_all = self.nan_harm_list() # list for each harmonic
             gs_all = self.nan_harm_list() # list for each harmonic
+            ps_all = self.nan_harm_list() # list for each harmonic
         logger.info('fs_all %s', fs_all) 
         logger.info('type fs_all %s', type(fs_all)) 
 
@@ -493,10 +492,12 @@ class DataSaver:
             harm = int(harm)
             fs_all[int((harm-1)/2)] = fs[i]
             gs_all[int((harm-1)/2)] = gs[i]
+            ps_all[int((harm-1)/2)] = ps[i]
 
         # update values
         self.update_queue_col(chn_name, queue_id, 'fs', fs_all)
         self.update_queue_col(chn_name, queue_id, 'gs', gs_all)
+        self.update_queue_col(chn_name, queue_id, 'ps', ps_all)
 
         if t is not None:
             self.update_queue_col(chn_name, queue_id, 't', t)
@@ -506,7 +507,7 @@ class DataSaver:
         self.saveflg = False
 
 
-    def dynamic_save(self, chn_names, harm_list, t='', temp=np.nan, f=None, G=None, B=None, fs=[np.nan], gs=[np.nan], marks=[0]):
+    def dynamic_save(self, chn_names, harm_list, t='', temp=np.nan, f=None, G=None, B=None, fs=[np.nan], gs=[np.nan], ps=[np.nan], marks=[0]):
         '''
         save raw data of ONE QUEUE to self.raw and save to h5 file
         NOTE: only update on test a time
@@ -524,7 +525,7 @@ class DataSaver:
         queue_id = self._append_new_queue(chn_names, queue_id=None)
         
         # save data
-        self._save_queue_data(chn_names, harm_list, queue_id=queue_id, t=t, temp=temp, fs=fs, gs=gs, marks=marks)
+        self._save_queue_data(chn_names, harm_list, queue_id=queue_id, t=t, temp=temp, fs=fs, gs=gs, ps=ps, marks=marks)
 
         # save raw data to file by chn_names
         self._save_raw(chn_names, harm_list, t=t, temp=temp, f=f, G=G, B=B)
@@ -567,6 +568,7 @@ class DataSaver:
                 'marks': [self.nan_harm_list()], # list default [nan, nan, ...]
                 'fs': [self.nan_harm_list()],
                 'gs': [self.nan_harm_list()],
+                'ps': [self.nan_harm_list()],
             })
             # append empty data to chn_name
             setattr(self, chn_name, getattr(self, chn_name).append(data_new, ignore_index=True))
@@ -574,7 +576,7 @@ class DataSaver:
         return queue_id
 
 
-    def _save_queue_data(self, chn_names, harm_list, queue_id=None, t=np.nan, temp=np.nan, fs=[np.nan], gs=[np.nan], marks=[0]):
+    def _save_queue_data(self, chn_names, harm_list, queue_id=None, t=np.nan, temp=np.nan, fs=[np.nan], gs=[np.nan], ps=[np.nan], marks=[0]):
         '''
         NOTE: only update one test a time
         chn_names: list of chn_name ['samp', 'ref']
@@ -595,6 +597,7 @@ class DataSaver:
         for chn_name in chn_names:
             fs_all = self.get_queue(chn_name, queue_id, col='fs').iloc[0]
             gs_all = self.get_queue(chn_name, queue_id, col='gs').iloc[0]
+            ps_all = self.get_queue(chn_name, queue_id, col='ps').iloc[0]
             marks_all = self.get_queue(chn_name, queue_id, col='marks').iloc[0]
             # prepare data: change list to the size of harm_list by inserting nan to the empty harm
 
@@ -602,6 +605,7 @@ class DataSaver:
                 harm = int(harm)
                 fs_all[int((harm-1)/2)] = fs[chn_name][i]
                 gs_all[int((harm-1)/2)] = gs[chn_name][i]
+                ps_all[int((harm-1)/2)] = ps[chn_name][i]
                 marks_all[int((harm-1)/2)] = marks[i]
 
             # for i in range(1, self.settings['max_harmonic']+2, 2):
@@ -619,6 +623,7 @@ class DataSaver:
                     'marks': [marks_all], # list default [0, 0, 0, 0, 0]
                     'fs': [fs_all],
                     'gs': [gs_all],
+                    'ps': [ps_all],
                 },
                 index=[getattr(self, chn_name).iloc[[-1]].index.values.astype(int)[0]]
             )
@@ -889,10 +894,15 @@ class DataSaver:
             logger.info(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col]) 
             logger.info('col %s', col) 
             logger.info('val %s', val) 
-            # logger.info(pd.Series([val])) 
-            # getattr(self, chn_name).at[getattr(self, chn_name).queue_id == queue_id, [col]] = pd.Series([val])
-            logger.info(getattr(self, chn_name).loc[getattr(self, chn_name).queue_id == queue_id, col]) 
-            getattr(self, chn_name)[getattr(self, chn_name).queue_id == queue_id][col] = [val]
+
+            ind = getattr(self, chn_name)[getattr(self, chn_name).queue_id == queue_id].index[0] # integer
+            logger.info(ind)
+            getattr(self, chn_name).at[ind, col] = val
+
+            # # following .loc works the same as .at
+            # ind = getattr(self, chn_name)[getattr(self, chn_name).queue_id == queue_id].index # index array
+            # logger.info(ind)
+            # getattr(self, chn_name).loc[ind, col] = getattr(self, chn_name).loc[ind, col].map(lambda x: val)
         else: # new, append
             getattr(self, chn_name).merge(pd.DataFrame.from_dict({col: [val], 'queue_id': [queue_id]}), how='outer')
 
@@ -947,7 +957,8 @@ class DataSaver:
                 # logger.info(col_endswith_s) 
                 
                 for col in col_endswith_s:
-                    df[col] = df[col].apply(lambda row: [np.nan if x is None else x for x in row])
+                    df[col] = df[col].apply(lambda row: self.nan_harm_list() if row is None else [np.nan if x is None else x for x in row])
+                    # df[col] = df[col].apply(lambda row: [np.nan if x is None else x for x in row])
                     df[col] = df[col].apply(lambda row: [row[i]  for i in range(int((self.settings['max_harmonic']+1)/2))])
 
                 # rest index df
@@ -964,7 +975,8 @@ class DataSaver:
                     logger.info(cols) 
                     
                     for col in cols:
-                        df[col] = df[col].apply(lambda row: [np.nan if x is None else x for x in row])
+                        # logger.info('%s \n %s', col, df[col])
+                        df[col] = df[col].apply(lambda row: self.nan_harm_list() if row is None else [np.nan if x is None else x for x in row])
                         df[col] = df[col].apply(lambda row: [row[i]  for i in range(int((self.settings['max_harmonic']+1)/2))])
 
                     # logger.info(df['delf_exps'].values) 
@@ -1147,6 +1159,10 @@ class DataSaver:
         '''
         cols = ['fs', 'gs']
         df = getattr(self, chn_name).copy()
+
+        if 'ps' in df.columns:
+            logger.info(df.columns)
+            df = df.drop(columns='ps')
 
         # convert t column to datetime object
         df['t'] = self.get_t_by_unit(chn_name, unit=unit_t)
@@ -1784,7 +1800,7 @@ class DataSaver:
                 df = getattr(self, self.exp_ref[chn_name + '_ref'][0]).copy()
         elif df is None: # chn_name is not samp/ref and df is not given
             logger.info('out file reference and df is None') 
-            raise ValueError('df should not be None when {} is reference source.'.fromat(self.exp_ref[chn_name + '_ref'][0]))            
+            raise ValueError(r'df should not be None when {} is reference source.'.fromat(self.exp_ref[chn_name + '_ref'][0]))            
 
         df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
         setattr(self, chn_name + '_ref', df)
@@ -2097,11 +2113,12 @@ class DataSaver:
         # logger.info(chn_temp) 
         
         # prepare series fro return
-        cols = getattr(self, chn_name)[['fs', 'gs']].copy()
+        cols = getattr(self, chn_name)[['fs', 'gs', 'ps']].copy()
 
         # set all fs, gs to [np.nan, np.nan, ...]
         cols['fs'] = cols['fs'].apply(lambda x: self.nan_harm_list())
         cols['gs'] = cols['gs'].apply(lambda x: self.nan_harm_list())
+        cols['ps'] = cols['ps'].apply(lambda x: self.nan_harm_list())
 
         mode = self.exp_ref.get('mode')
         if mode['cryst'] == 'single':
@@ -2400,6 +2417,20 @@ class DataSaver:
         return df_new
 
 
+    def add_missed_cols_to_df(self, df, col_list):
+        '''
+        check if the col in col_list in df
+        if not, add a col by nan_harm_list()
+        RETURN: df with new columns
+        '''
+        for col in col_list:
+            if col not in df.columns: 
+                logger.info('col %s not in dataframe', col)
+                df[col] = np.nan
+                df[col] = df[col].apply(lambda x: self.nan_harm_list()) # add list of nan to all null
+        return df
+
+
     ###### selector functions ######
     def selector_mark_all(self, chn_name, mark_val):
         '''
@@ -2533,6 +2564,7 @@ class DataSaver:
         # get freqs and gamms in form of [n1, n3, n5, ...]
         fs = self.get_cols(chn_name, cols=['fs']).squeeze(axis=1) # convert to series
         gs = self.get_cols(chn_name, cols=['gs']).squeeze(axis=1) # convert to series
+        ps = self.get_cols(chn_name, cols=['ps']).squeeze(axis=1) # convert to series
         # another way is to get the series directly as follow
         # fs = getattr(self, chn_name)['fs'].copy()
         # gs = getattr(self, chn_name)['gs'].copy()
@@ -2564,6 +2596,7 @@ class DataSaver:
         df['f0stars'] = f0star_arr.tolist()
         df['fs'] = fs
         df['gs'] = gs
+        df['ps'] = ps
         df['delfs'] = delfs
         df['delgs'] = delgs
         df['f0s'] = f0s
@@ -2716,6 +2749,7 @@ class DataSaver:
         D: dissipation from QCM-D
         harm: str. 
         '''
+        # NOTE actual value of gamma should be gamma = f * D / 2 (not harm * f1)
         return 0.5 * int(harm) * f1 * D
 
 
@@ -2902,6 +2936,7 @@ class DataSaver:
                 # convert delta data to absolute data and keep the column names
                 for harm in harm_list:
                     # convert delf to f
+                    # NOTE assuming fn0 = harm * f1 introduces errors to real values
                     df[delfs_str.format(harm)] = df[delfs_str.format(harm)] + f1 * harm
                     # dissipation
                     if self.mode == 'qcmd': # 
