@@ -927,7 +927,8 @@ def solve_for_props(delfstar, calc, **kwargs):
             guess=kwargs['guess']
             drho, grho3, phi = guess['drho'], guess['grho3'], guess['phi']
         else:
-            drho, grho3, phi = thinfilm_guess(df_in[0], calc)
+            start_key = np.min(df_in.keys())
+            drho, grho3, phi = thinfilm_guess(df_in[start_key], calc)
 
         
 
