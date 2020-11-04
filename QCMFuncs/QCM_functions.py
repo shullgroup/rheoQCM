@@ -130,7 +130,7 @@ def fstar_err_calc(n, delfstar, layers, **kwargs):
     
     if 'overlayer' in layers:
         delg = calc_delfstar(n, {'film':layers['overlayer']}, 
-                                             'SLA')
+                                             calctype='SLA')
         g=g+delg
             
     # start by specifying the error input parameters
@@ -441,7 +441,7 @@ def calc_ZL(n, layers, delfstar, calctype):
     return Z[1]*(1-rstar)/(1+rstar)
 
 
-def calc_delfstar(n, layers, calctype):
+def calc_delfstar(n, layers, **kwargs):
     """
     Calculate complex frequency shift for stack of layers.
     args:
@@ -453,7 +453,8 @@ def calc_delfstar(n, layers, calctype):
             each layer. These dictionaries are labeled from 1 to N, with 1
             being the layer in contact with the QCM.  Each dictionary must 
             include values for 'grho3, 'phi' and 'drho'.
-                        
+            
+    kwargs:                     
         calctype (string): 
             - 'SLA' (default): small load approximation with power law model
             - 'LL': Lu Lewis equation, using default or provided electrode props
@@ -463,6 +464,8 @@ def calc_delfstar(n, layers, calctype):
         delfstar (complex):
             Complex frequency shift (Hz).
     """
+    
+    calctype = kwargs.get('calctype', 'SLA')
     if not layers: # layers is empty {}
         return np.nan
 
@@ -879,6 +882,9 @@ def solve_for_props(delfstar, calc, **kwargs):
             - False (default): standard bulk calculation
             - True: phase angle assumed to be 90 degrees and viscosity obtained
               from dissipation
+              
+        err_frac (real):  Error in delf and delg as a fraction of delg
+            - Default is zero
                 
     returns:
         df_out (dataframe):  
@@ -886,7 +892,8 @@ def solve_for_props(delfstar, calc, **kwargs):
             that didn't allow calculation to be performed
             
     """
-
+    
+    err_frac=kwargs.get('err_frac', 0)
     df_in = delfstar.T  # transpose the input dataframe
     if 'overlayer' in kwargs.keys():
         layers={'overlayer':kwargs['overlayer']}
@@ -895,7 +902,7 @@ def solve_for_props(delfstar, calc, **kwargs):
 
     nplot = []
     for n in [1,3,5,7,9]:
-        if n in df_in.columns:
+        if n in df_in.index:
             nplot = nplot + [n]
     calctype = kwargs.get('calctype', 'SLA')
     drho = kwargs.get('drho', 0)
@@ -930,8 +937,6 @@ def solve_for_props(delfstar, calc, **kwargs):
             start_key = np.min(df_in.keys())
             drho, grho3, phi = thinfilm_guess(df_in[start_key], calc)
 
-        
-
 
     # set up the initial guess
     if fixed_drho:
@@ -965,18 +970,25 @@ def solve_for_props(delfstar, calc, **kwargs):
         if not fixed_drho:
             def ftosolve(x):
                 layers['film'] = {'grho3':x[0], 'phi':x[1], 'drho':x[2]}
-                return ([calc_delfstar(n1, layers, calctype).real-df_in[i][n1].real,
-                         calc_delfstar(n2, layers, calctype).real-df_in[i][n2].real,
-                         calc_delfstar(n3, layers, calctype).imag-df_in[i][n3].imag])
+                return ([calc_delfstar(n1, layers, calctype=calctype).real-
+                         df_in[i][n1].real,
+                         calc_delfstar(n2, layers, calctype=calctype).real-
+                         df_in[i][n2].real,
+                         calc_delfstar(n3, layers, calctype=calctype).imag-
+                         df_in[i][n3].imag])
         else:
             def ftosolve(x):
                 layers['film'] = {'drho':drho, 'grho3':x[0], 'phi':x[1]}
                 if not newtonian:
-                    return ([calc_delfstar(n1, layers, calctype).real-df_in[i][n1].real,
-                             calc_delfstar(n1, layers, calctype).imag-df_in[i][n1].imag])
+                    return ([calc_delfstar(n1, layers, calctype=calctype).real-
+                             df_in[i][n1].real,
+                             calc_delfstar(n1, layers, calctype=calctype).imag-
+                             df_in[i][n1].imag])
                 else:  # set frequency shift equal to dissipation shift in this case
-                    return ([calc_delfstar(n1, layers, calctype).real+df_in[i][n1].imag,
-                             calc_delfstar(n1, layers, calctype).imag-df_in[i][n1].imag])
+                    return ([calc_delfstar(n1, layers, calctype=calctype).real+
+                             df_in[i][n1].imag,
+                             calc_delfstar(n1, layers, calctype=calctype).imag-
+                             df_in[i][n1].imag])
 
         # initialize the output uncertainties
         err = {}
@@ -999,9 +1011,12 @@ def solve_for_props(delfstar, calc, **kwargs):
 
         # put the input uncertainties into a 3 element vector
         delfstar_err = np.zeros(3)
-        delfstar_err[0] = fstar_err_calc(n1, df_in[i][n1], layers).real
-        delfstar_err[1] = fstar_err_calc(n2, df_in[i][n2], layers).real
-        delfstar_err[2] = fstar_err_calc(n3, df_in[i][n3], layers).imag
+        delfstar_err[0] = fstar_err_calc(n1, df_in[i][n1], layers,
+                                         err_frac=err_frac).real
+        delfstar_err[1] = fstar_err_calc(n2, df_in[i][n2], layers,
+                                         err_frac=err_frac).real
+        delfstar_err[2] = fstar_err_calc(n3, df_in[i][n3], layers,
+                                         err_frac=err_frac).imag
 
         # determine error from Jacobian
         err = {}
@@ -1019,7 +1034,7 @@ def solve_for_props(delfstar, calc, **kwargs):
 
         # add experimental and calculated values to the dictionary
         for n in nplot:
-            delfstar_calc[n] = calc_delfstar(n, layers, calctype)
+            delfstar_calc[n] = calc_delfstar(n, layers, calctype=calctype)
             data['df_calc'+str(n)]=(np.append(data['df_calc'+str(n)], 
                                              round(delfstar_calc[n],1)))
             try:
@@ -1233,6 +1248,8 @@ def prop_plots(df, ax, **kwargs):
             Legend for plots.  Default is 'none'
         plotdrho (Boolean):
             Switch to plot mass data or not. Default is True
+        err_plot
+            True if you want to include errorbars (default is false)
             
     returns:
         Nothing is returned.  The function just updates an existing axis.
@@ -1261,18 +1278,21 @@ def prop_plots(df, ax, **kwargs):
     else:
         xdata = df['index']
         xlabel ='index'
-        
-    ax[0].plot(xdata, df['grho3']/1000, fmt, label=legend)
-    ax[1].plot(xdata, df['phi'], fmt, label=legend)
+
+    ax[0].errorbar(xdata, df['grho3']/1000, fmt=fmt, yerr=df['grho3_err']/1000,
+                                                    label=legend)
+    ax[1].errorbar(xdata, df['phi'], fmt=fmt, yerr=df['phi_err'], label=legend)
     
     if len(ax)==3 and plotdrho:
-        ax[2].plot(xdata, df['drho']*1000, fmt, label=legend)
+        ax[2].errorbar(xdata, df['drho']*1000, fmt=fmt, yerr=df['drho_err']*1000,
+                      label=legend)
     
     for k in np.arange(len(ax)):
         ax[k].set_xlabel(xlabel)
         ax[k].set_yscale('linear')
         if legend!='none':
             ax[k].legend()
+ 
             
 def vgp_plots(df, ax, **kwargs):
     """
@@ -1722,7 +1742,8 @@ def check_solution(df, **kwargs):
     philim = kwargs.get('philim', [0, 90])
     dlim = kwargs.get('dlim', [0.001, 0.5])
     nplot = kwargs.get('nplot', [1,3,5])
-    calc = df['calc'][0]
+    idxmin=df.index[0]
+    calc = df['calc'][idxmin]
     
   
     # make the axes
@@ -1739,7 +1760,7 @@ def check_solution(df, **kwargs):
     
     def Zfunction(x,y):
         #function used for calculating the z values
-        drho = df['drho'][df.index[0]]
+        drho = df['drho'][df.index[idxmin]]
         grho3 = grho_from_dlam(3, drho, x, y)
         fnorm = normdelf_bulk(3, x, y)
         gnorm = normdelg_bulk(3, x, y)
@@ -1747,8 +1768,8 @@ def check_solution(df, **kwargs):
 
     Z, drho, grho3, fnorm, gnorm = Zfunction(DLAM, PHI)
 
-    levels1 = np.linspace(-3*sauerbreyf(1, df['drho'][df.index[0]]),
-                          3*sauerbreyf(1, df['drho'][df.index[0]]), numz)
+    levels1 = np.linspace(-3*sauerbreyf(1, df['drho'][df.index[idxmin]]),
+                          3*sauerbreyf(1, df['drho'][df.index[idxmin]]), numz)
     levels2 = np.linspace(0, 5000, numz)
     
     contour1 = ax[0,0].contourf(DLAM, PHI, np.real(Z), levels=levels1, 
@@ -1786,31 +1807,42 @@ def check_solution(df, **kwargs):
         nstr=str(n)
         dvals = np.array([])
         phivals =  np.array([])
+        
+        # extract the calculated propoerties from the dataframe
         for idx, row in df.iterrows():
             film = {'drho':row['drho'], 'grho3':row['grho3'],
                     'phi':row['phi']}
             dvals = np.append(dvals, calc_dlam(n, film))
             phivals =  np.append(phivals, row['phi'])
-        p=ax[0,0].plot(dvals, phivals, '-', label='n='+nstr)
-        ax[0,0].plot(dvals[0], phivals[idxmin], 'o',
-                     color = p[0].get_color())
-        p=ax[0,1].plot(dvals, phivals, '-', label='n='+nstr)
-        ax[0,1].plot(dvals[0], phivals[idxmin], 'o',
-                     color = p[0].get_color())
-        p=ax[1,0].plot(np.real(df['df_expt'+nstr])/n, '+', 
-                     label = 'n='+nstr)
-        ax[1,0].plot(np.real(df['df_calc'+nstr])/n, '-', color = 
-                     p[0].get_color())
-        ax[1,0].plot(np.real(df['df_calc'+nstr][idxmin])/n, 'o', color = 
-                     p[0].get_color())
-        p=ax[1,1].plot(np.imag(df['df_expt'+nstr])/n, '+',
-                       label = 'n='+nstr)
-        ax[1,1].plot(np.imag(df['df_calc'+nstr])/n, '-', color =
-                     p[0].get_color())
-        ax[1,1].plot(np.imag(df['df_calc'+nstr][idxmin])/n, 'o', color =
-                     p[0].get_color())
         
-
+        # plot calculated values on contour plot
+        p=ax[0,0].plot(dvals, phivals, '-', label='n='+nstr)
+        ax[0,1].plot(dvals, phivals, '-', label='n='+nstr)
+        
+        # get the color for all the plots with this value of n
+        col = p[0].get_color()
+        
+        # now plot first values as solid symbols so we can more easily 
+        # correlate with the plots of the frequency and dissipation shift
+        ax[0,0].plot(dvals[0], phivals[0], 'o', color = col)
+        ax[0,1].plot(dvals[0], phivals[0], 'o', color = col)
+    
+        # now compare experimental and calculated frequency fits     
+        ax[1,0].plot(np.real(df['df_expt'+nstr])/n, '+', 
+                     label = 'n='+nstr)
+        ax[1,0].plot(np.real(df['df_calc'+nstr])/n, '-', color = col)
+        
+        # add the symbol for the first point
+        ax[1,0].plot(np.real(df['df_calc'+nstr][idxmin])/n, 'o', color = col)
+        
+        # now compare experimental and calculated dissipation
+        ax[1,1].plot(np.imag(df['df_expt'+nstr])/n, '+',
+                       label = 'n='+nstr)
+        ax[1,1].plot(np.imag(df['df_calc'+nstr])/n, '-', color = col)
+        
+        # add symbol for first point
+        ax[1,1].plot(np.imag(df['df_calc'+nstr][idxmin])/n, 'o', color = col)
+        
                 
     for k in [0,1]:  
         ax[0,k].legend()
