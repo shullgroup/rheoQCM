@@ -507,7 +507,7 @@ class DataSaver:
         self.saveflg = False
 
 
-    def dynamic_save(self, chn_names, harm_list, t='', temp=np.nan, f=None, G=None, B=None, fs=[np.nan], gs=[np.nan], ps=[np.nan], marks=[0]):
+    def dynamic_save(self, chn_names, harm_list, t='', temp=np.nan, f=None, G=None, B=None, fs=None, gs=None, ps=None, marks=[0]):
         '''
         save raw data of ONE QUEUE to self.raw and save to h5 file
         NOTE: only update on test a time
@@ -576,7 +576,7 @@ class DataSaver:
         return queue_id
 
 
-    def _save_queue_data(self, chn_names, harm_list, queue_id=None, t=np.nan, temp=np.nan, fs=[np.nan], gs=[np.nan], ps=[np.nan], marks=[0]):
+    def _save_queue_data(self, chn_names, harm_list, queue_id=None, t=np.nan, temp=np.nan, fs=None, gs=None, ps=None, marks=[0]):
         '''
         NOTE: only update one test a time
         chn_names: list of chn_name ['samp', 'ref']
@@ -601,11 +601,21 @@ class DataSaver:
             marks_all = self.get_queue(chn_name, queue_id, col='marks').iloc[0]
             # prepare data: change list to the size of harm_list by inserting nan to the empty harm
 
+            logger.info('ps_all %s', ps_all)
+
             for i, harm in enumerate(harm_list):
                 harm = int(harm)
-                fs_all[int((harm-1)/2)] = fs[chn_name][i]
-                gs_all[int((harm-1)/2)] = gs[chn_name][i]
-                ps_all[int((harm-1)/2)] = ps[chn_name][i]
+                # logger.info(i) 
+                # logger.info(harm) 
+                # logger.info(int((harm-1)/2)) 
+                # logger.info(fs[chn_name][i])
+                logger.info(ps)
+                if fs is not None:
+                    fs_all[int((harm-1)/2)] = fs[chn_name][i]
+                if gs is not None:
+                    gs_all[int((harm-1)/2)] = gs[chn_name][i]
+                if ps is not None:
+                    ps_all[int((harm-1)/2)] = ps[chn_name][i]
                 marks_all[int((harm-1)/2)] = marks[i]
 
             # for i in range(1, self.settings['max_harmonic']+2, 2):
@@ -2798,6 +2808,7 @@ class DataSaver:
         if init_file and settings:
             self.init_file(name + '.h5', settings=settings, t0=t0_str)
             f1 = self.settings['comboBox_base_frequency'] * 1e6 # in Hz
+            logger.info('path: %s', self.path)
         elif f1:
             f1 = f1 * 1e6 # in Hz
             self.path = name + '.h5'  # convert xlsx file to h5
@@ -2961,6 +2972,7 @@ class DataSaver:
         # f/g to one column fs/gs
         df['fs'] = df.filter(regex=r'^f\d+$').values.tolist()
         df['gs'] = df.filter(regex=r'^g\d+$').values.tolist()
+
         # queue_list 
         df['queue_id'] = list(df.index.astype(int))
         # marks

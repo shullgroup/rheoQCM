@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.19.3] - 2020-11-06
+
+### Added
+
+### Changed
+
+### Fixed
+
+- Fix importing external QCM data (QCM-D) error.
+
+### Removed
+
 ## [0.19.2] - 2020-08-31
 
 ### Added

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\UI\QCM_GUI.ui'
+# Form implementation generated from reading ui file 'UI/QCM_GUI.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.3
+# Created by: PyQt5 UI code generator 5.9.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(986, 986)
+        MainWindow.resize(986, 1097)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -546,7 +546,7 @@ class Ui_MainWindow(object):
         self.toolBox = QtWidgets.QToolBox(self.tab_settings_settings)
         self.toolBox.setObjectName("toolBox")
         self.page_settings_settings_hardwares = QtWidgets.QWidget()
-        self.page_settings_settings_hardwares.setGeometry(QtCore.QRect(0, 0, 286, 160))
+        self.page_settings_settings_hardwares.setGeometry(QtCore.QRect(0, 0, 98, 70))
         self.page_settings_settings_hardwares.setObjectName("page_settings_settings_hardwares")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.page_settings_settings_hardwares)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -585,7 +585,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.treeWidget_settings_settings_hardware)
         self.toolBox.addItem(self.page_settings_settings_hardwares, "")
         self.page_settings_settings_plots = QtWidgets.QWidget()
-        self.page_settings_settings_plots.setGeometry(QtCore.QRect(0, 0, 83, 71))
+        self.page_settings_settings_plots.setGeometry(QtCore.QRect(0, 0, 98, 70))
         self.page_settings_settings_plots.setObjectName("page_settings_settings_plots")
         self.verticalLayout_24 = QtWidgets.QVBoxLayout(self.page_settings_settings_plots)
         self.verticalLayout_24.setContentsMargins(0, 0, 0, 0)
@@ -1500,7 +1500,7 @@ class Ui_MainWindow(object):
         self.tableWidget_settings_mechanics_contoursettings.setObjectName("tableWidget_settings_mechanics_contoursettings")
         self.tableWidget_settings_mechanics_contoursettings.setColumnCount(0)
         self.tableWidget_settings_mechanics_contoursettings.setRowCount(0)
-        self.tableWidget_settings_mechanics_contoursettings.horizontalHeader().setDefaultSectionSize(40)
+        self.tableWidget_settings_mechanics_contoursettings.horizontalHeader().setDefaultSectionSize(57)
         self.tableWidget_settings_mechanics_contoursettings.verticalHeader().setDefaultSectionSize(21)
         self.verticalLayout_17.addWidget(self.tableWidget_settings_mechanics_contoursettings)
         self.verticalLayout_31.addWidget(self.groupBox_settings_mechanics_contour)
@@ -1610,7 +1610,7 @@ class Ui_MainWindow(object):
         self.tableWidgetsettings_mechanics_simulatorout.setHorizontalHeaderItem(4, item)
         item = QtWidgets.QTableWidgetItem()
         self.tableWidgetsettings_mechanics_simulatorout.setItem(0, 0, item)
-        self.tableWidgetsettings_mechanics_simulatorout.horizontalHeader().setDefaultSectionSize(48)
+        self.tableWidgetsettings_mechanics_simulatorout.horizontalHeader().setDefaultSectionSize(57)
         self.tableWidgetsettings_mechanics_simulatorout.verticalHeader().setDefaultSectionSize(21)
         self.verticalLayout_23.addWidget(self.tableWidgetsettings_mechanics_simulatorout)
         self.verticalLayout_28.addWidget(self.groupBox_settings_mechanics_simulator)
@@ -2441,7 +2441,7 @@ class Ui_MainWindow(object):
         self.gridLayout_6.addWidget(self.splitter, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 986, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 986, 22))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -2781,14 +2781,14 @@ class Ui_MainWindow(object):
         self.textEdit_settings_data_sampmarks.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">To be added!</p></body></html>"))
+"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt;\">To be added!</span></p></body></html>"))
         self.tabWidget_settings_data_markindex.setTabText(self.tabWidget_settings_data_markindex.indexOf(self.tab_sampmarks), _translate("MainWindow", "&S Marks"))
         self.textEdit_settings_data_refmarks.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">To be added!</p></body></html>"))
+"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt;\">To be added!</span></p></body></html>"))
         self.tabWidget_settings_data_markindex.setTabText(self.tabWidget_settings_data_markindex.indexOf(self.tab_refmarks), _translate("MainWindow", "&R Marks"))
         self.pushButton_settings_data_marksadd.setText(_translate("MainWindow", "1"))
         self.pushButton_settings_data_marksdel.setText(_translate("MainWindow", "0"))
@@ -2994,7 +2994,7 @@ class Ui_MainWindow(object):
         self.actionfilm_construction_mode_switch.setShortcut(_translate("MainWindow", "Ctrl+Alt+M"))
         self.actionRows_Index.setText(_translate("MainWindow", "Rows - Index"))
         self.actionRows_Index.setToolTip(_translate("MainWindow", "Plot variables vs. indices"))
-        self.actionSolve_new.setText(_translate("MainWindow", "Solve_new"))
+        self.actionSolve_new.setText(_translate("MainWindow", "Solve new"))
         self.actionSolve_new.setToolTip(_translate("MainWindow", "Solve new collected data in current channel."))
         self.actionOpen_openQCM.setText(_translate("MainWindow", "Open openQCM"))
         self.actionOpen_openQCM.setToolTip(_translate("MainWindow", "Open openQCM program"))
