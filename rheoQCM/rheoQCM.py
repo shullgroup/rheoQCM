@@ -1808,6 +1808,18 @@ class QCMApp(QMainWindow):
         if fileName:
             self.data_saver.import_qcm_with_other_format('qcmd', fileName, config_default, settings=self.settings)
 
+            self.data_saver.saveflg = True
+
+            self.on_triggered_actionReset(settings=self.data_saver.settings)
+
+            self.disable_widgets(
+                'pushButton_appendfile_disable_list',
+            )
+
+            logger.info('path: %s', self.data_saver.path)
+            # change the displayed file directory in lineEdit_datafilestr and save it to data_saver
+            self.set_filename(os.path.splitext(fileName)[0]+'.h5')
+            
 
     def on_triggered_actionImport_QCM_Z(self):
         '''

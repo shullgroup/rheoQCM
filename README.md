@@ -57,6 +57,7 @@ Go to the `rheoQCM/` folder and run `rheoQCM.py` will start the UI and it will c
 
 * Export the QCM-D data as .xlsx file. column names: t(s), delf1, delg1, delf3, delg3, ... The time column name could also be time(s).
 * Start the UI and from the menu bar and select `File>Import QCM-D data`.  This will import the QCM-D data and save a .h5 file with the same name in * the same folder. This will save all the calculated property data for future use.  
+* Select the corresponding fundamental frequency at `Settings>Hardwares>Crystal>Base Frequency` before import the data.
 * Now the UI can display your data and do the analysis the same as the data generated with the UI.
 * Don't forget to save the data when you finish the calculation.
 * Click export to export a .xlsx file with all the data in it.
