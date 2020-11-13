@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>986</width>
-    <height>986</height>
+    <height>1097</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1337,10 +1337,10 @@ background-color: red;
                    <attribute name="headerVisible">
                     <bool>false</bool>
                    </attribute>
-                   <attribute name="headerDefaultSectionSize">
+                   <attribute name="headerMinimumSectionSize">
                     <number>110</number>
                    </attribute>
-                   <attribute name="headerMinimumSectionSize">
+                   <attribute name="headerDefaultSectionSize">
                     <number>110</number>
                    </attribute>
                    <column>
@@ -1483,8 +1483,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>286</width>
-                   <height>160</height>
+                   <width>98</width>
+                   <height>70</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1538,10 +1538,10 @@ background-color: red;
                     <attribute name="headerCascadingSectionResizes">
                      <bool>true</bool>
                     </attribute>
-                    <attribute name="headerDefaultSectionSize">
+                    <attribute name="headerMinimumSectionSize">
                      <number>125</number>
                     </attribute>
-                    <attribute name="headerMinimumSectionSize">
+                    <attribute name="headerDefaultSectionSize">
                      <number>125</number>
                     </attribute>
                     <column>
@@ -1626,8 +1626,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>83</width>
-                   <height>71</height>
+                   <width>98</width>
+                   <height>70</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1675,11 +1675,11 @@ background-color: red;
                     <attribute name="headerVisible">
                      <bool>false</bool>
                     </attribute>
-                    <attribute name="headerDefaultSectionSize">
-                     <number>140</number>
-                    </attribute>
                     <attribute name="headerMinimumSectionSize">
                      <number>37</number>
+                    </attribute>
+                    <attribute name="headerDefaultSectionSize">
+                     <number>140</number>
                     </attribute>
                     <column>
                      <property name="text">
@@ -2234,10 +2234,10 @@ border: none;
                    <attribute name="headerCascadingSectionResizes">
                     <bool>true</bool>
                    </attribute>
-                   <attribute name="headerDefaultSectionSize">
+                   <attribute name="headerMinimumSectionSize">
                     <number>70</number>
                    </attribute>
-                   <attribute name="headerMinimumSectionSize">
+                   <attribute name="headerDefaultSectionSize">
                     <number>70</number>
                    </attribute>
                    <column>
@@ -2449,8 +2449,8 @@ border: none;
                           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;To be added!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt;&quot;&gt;To be added!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                         </widget>
                        </item>
@@ -2482,8 +2482,8 @@ p, li { white-space: pre-wrap; }
                           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;To be added!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt;&quot;&gt;To be added!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                         </widget>
                        </item>
@@ -3928,7 +3928,7 @@ border-image: url(:/button/rc/plus_p.svg);
                     <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
                    </property>
                    <attribute name="horizontalHeaderDefaultSectionSize">
-                    <number>40</number>
+                    <number>57</number>
                    </attribute>
                    <attribute name="verticalHeaderDefaultSectionSize">
                     <number>21</number>
@@ -4119,7 +4119,7 @@ border-image: url(:/button/rc/plus_p.svg);
                       <bool>true</bool>
                      </property>
                      <attribute name="horizontalHeaderDefaultSectionSize">
-                      <number>48</number>
+                      <number>57</number>
                      </attribute>
                      <attribute name="verticalHeaderDefaultSectionSize">
                       <number>21</number>
@@ -5262,10 +5262,10 @@ border: 1px solid blue;
                   <attribute name="verticalHeaderVisible">
                    <bool>true</bool>
                   </attribute>
-                  <attribute name="verticalHeaderDefaultSectionSize">
+                  <attribute name="verticalHeaderMinimumSectionSize">
                    <number>23</number>
                   </attribute>
-                  <attribute name="verticalHeaderMinimumSectionSize">
+                  <attribute name="verticalHeaderDefaultSectionSize">
                    <number>23</number>
                   </attribute>
                   <attribute name="verticalHeaderShowSortIndicator" stdset="0">
@@ -6070,7 +6070,7 @@ border: 1px solid blue;
      <x>0</x>
      <y>0</y>
      <width>986</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -6486,7 +6486,7 @@ border: 1px solid blue;
   </action>
   <action name="actionSolve_new">
    <property name="text">
-    <string>Solve_new</string>
+    <string>Solve new</string>
    </property>
    <property name="toolTip">
     <string>Solve new collected data in current channel.</string>
