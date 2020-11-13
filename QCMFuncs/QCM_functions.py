@@ -10,6 +10,8 @@ import numpy as np
 import scipy.optimize as optimize
 from scipy.interpolate import InterpolatedUnivariateSpline
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+
 import pandas as pd
 
 try:
@@ -1359,14 +1361,14 @@ def check_plots(df, ax, nplot, **kwargs):
     else:
         xdata =xdata = df['index']
         xlabel ='index'
-            
+    
+    col = {1:'C0', 3:'C1', 5:'C2', 7:'C3', 9:'C4'}
     # compare measured and calculated delfstar
     for n in nplot:
-        p=ax[0].plot(xdata, -np.real(df['df_expt'+str(n)]),'+')
-        ax[1].plot(xdata, np.imag(df['df_expt'+str(n)]),'+')
-        col=p[0].get_color()
-        ax[0].plot(xdata, -np.real(df['df_calc'+str(n)]),'-', color=col)
-        ax[1].plot(xdata, np.imag(df['df_calc'+str(n)]),'-', color=col)
+        ax[0].plot(xdata, -np.real(df['df_expt'+str(n)]),'+', color=col[n])
+        ax[1].plot(xdata, np.imag(df['df_expt'+str(n)]),'+', color=col[n])
+        ax[0].plot(xdata, -np.real(df['df_calc'+str(n)]),'-', color=col[n])
+        ax[1].plot(xdata, np.imag(df['df_calc'+str(n)]),'-', color=col[n])
     
     for k in [0,1]:
         ax[k].set_xlabel(xlabel)
@@ -1447,7 +1449,7 @@ def make_vgp_axes(**kwargs):
         ax:
             Axes of the figure.
     """
-    figsize=kwargs.get('figsize', (3,3))
+    figsize=kwargs.get('figsize', (4,3))
     num = kwargs.get('num','VGP plot')
     fig, ax = plt.subplots(1,1, figsize=figsize, num=num)
     ax.set_xlabel((r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)'))
@@ -1729,11 +1731,19 @@ def check_solution(df, **kwargs):
         numz (int):  
             number of z levels (default is 100)
         philim (list of two real numbers):
-            min and max of phase angle (default is [0, 90])
+            min and max of phase angle (default is [0, 90], 'auto' scales to expt data)
         dlim (list of two real numbers):
-            min and max of d/lambda (default is [0, 0.5])    
+            min and max of d/lambda (default is [0, 0.5], 'auto' scales to expt data)    
         nplot (list of integers):
             list of harmonics to plot (default is [1,3,5])
+        ratios (Boolean):
+            plot rh and rd if True, delf, delg otherwise (default is False)
+        autoscale (Boolean):
+            auto scale z values to min and max of calculated values if True 
+            default is False
+        label ('string'): dataframe key to use to label individual points in
+            solution check (default is 'temp')
+          
     '''
 
     num = kwargs.get('num', 'Solution Check')
@@ -1742,13 +1752,15 @@ def check_solution(df, **kwargs):
     philim = kwargs.get('philim', [0, 90])
     dlim = kwargs.get('dlim', [0.001, 0.5])
     nplot = kwargs.get('nplot', [1,3,5])
+    ratios = kwargs.get('ratios', False)
+    autoscale = kwargs.get('autoscale', False)
+    label = kwargs.get('label', 'temp')
     idxmin=df.index[0]
     calc = df['calc'][idxmin]
     
-  
     # make the axes
     fig, ax = plt.subplots(2,2, figsize=(10,8), sharex=False, sharey=False,
-                           num=num)
+                           num=calc, constrained_layout=True)
                        
     # make meshgrid for contour
     phi = np.linspace(philim[0], philim[1], numxy) 
@@ -1760,97 +1772,216 @@ def check_solution(df, **kwargs):
     
     def Zfunction(x,y):
         #function used for calculating the z values
-        drho = df['drho'][df.index[idxmin]]
+        # this Z is the value plotted in the contour plot and NOT the impedance
+        drho = df['drho'][idxmin]
         grho3 = grho_from_dlam(3, drho, x, y)
         fnorm = normdelf_bulk(3, x, y)
         gnorm = normdelg_bulk(3, x, y)
-        return sauerbreyf(1, drho)*normdelfstar(3, x, y), drho, grho3, fnorm, gnorm
+        if ratios:
+            n1=int(calc[0])
+            n2=int(calc[1])
+            n3=int(calc[2])
+            Z1 = np.real(normdelfstar(n2, x, y))/np.real(normdelfstar(n1, x, y))
+            Z2 = -np.imag(normdelfstar(n3, x, y))/np.real(normdelfstar(n3, x, y))
+        else:
+            delfstar = sauerbreyf(1, drho)*normdelfstar(3, x, y)
+            Z1 = np.real(delfstar)
+            Z2 = np.imag(delfstar)
+        return Z1, Z2, drho, grho3, fnorm, gnorm
 
-    Z, drho, grho3, fnorm, gnorm = Zfunction(DLAM, PHI)
-
-    levels1 = np.linspace(-3*sauerbreyf(1, df['drho'][df.index[idxmin]]),
-                          3*sauerbreyf(1, df['drho'][df.index[idxmin]]), numz)
-    levels2 = np.linspace(0, 5000, numz)
+    Z1, Z2, drho, grho3, fnorm, gnorm = Zfunction(DLAM, PHI)
     
-    contour1 = ax[0,0].contourf(DLAM, PHI, np.real(Z), levels=levels1, 
+    # specify the range of the Z values
+    if autoscale:
+        min1 = Z1.min()
+        max1 = Z1.max()
+        min2 = Z2.min()
+        max2 = Z2.max()
+    else:
+        if ratios:
+            min1 = -1
+            max1 = 1.2
+            min2 = 0
+            max2 = 2
+        else:
+            min1 = -3*sauerbreyf(1, df['drho'][df.index[idxmin]])
+            max1 = 3*sauerbreyf(1, df['drho'][df.index[idxmin]])
+            min2 = 0
+            max2 = 5000
+        
+    levels1 = np.linspace(min1, max1, numz)
+    levels2 = np.linspace(min2, max2, numz)
+    
+    contour1 = ax[0,0].contourf(DLAM, PHI, Z1, levels=levels1, 
                               cmap='rainbow')
-    contour2 =  ax[0,1].contourf(DLAM, PHI, np.imag(Z), levels=levels2,
+    contour2 =  ax[0,1].contourf(DLAM, PHI, Z2, levels=levels2,
                               cmap='rainbow')
     
     fig.colorbar(contour1, ax=ax[0,0])
     fig.colorbar(contour2, ax=ax[0,1])
 
     # set label of ax[1]
-    ax[0,0].set_xlabel(r'$d/\lambda$')
+    ax[0,0].set_xlabel(r'$d/\lambda_3$')
     ax[0,0].set_ylabel(r'$\Phi$ ($\degree$)')
-    ax[0,0].set_title(r'$\Delta f$ (Hz) - '+calc)
-    ax[1,0].set_ylabel(r'$\Delta f$ (Hz)')
+    ax[1,0].set_ylabel(r'$\Delta f/n$ (Hz)')
 
-    ax[0,1].set_xlabel(r'$d/\lambda$')
+    ax[0,1].set_xlabel(r'$d/\lambda_3$')
     ax[0,1].set_ylabel(r'$\Phi$ ($\degree$)')
-    ax[0,1].set_title(r'$\Delta\Gamma$ (Hz) - '+calc)
-    ax[1,1].set_ylabel(r'$\Delta\Gamma$ (Hz)')
+    ax[1,1].set_ylabel(r'$\Delta\Gamma/n$ (Hz)')
+    
+    # add titles
+    if ratios:
+        ax[0,0].set_title(r'$r_h$ - '+calc)
+        ax[0,1].set_title(r'$r_d$ - '+calc)
+    else:         
+        ax[0,0].set_title(r'$\Delta f /n$ (Hz) - '+calc)
+        ax[0,1].set_title(r'$\Delta\Gamma /n$ (Hz) - '+calc)
     
     # set formatting for parameters that appear at the bottom of the plot
     # when mouse is moved
     def fmt(x, y):
-        z, drho, grho3, fnorm, gnorm=Zfunction(x,y)
-        return  'd/lambda={x:.3f},  phi={y:.1f}, delfstar/n={z:.0f}, '\
-                'drho={drho:.2f}, grho3={grho3:.2e}, '\
-                'fnorm={fnorm:.4f}, gnorm={gnorm:.4f}'.format(x=x, y=y, z=z, 
-                 drho=1000*drho, grho3=grho3/1000, fnorm=fnorm, gnorm=gnorm)                
-    
+        if ratios:
+            z1, z2, drho, grho3, fnorm, gnorm=Zfunction(x,y)
+            return  'd/lambda={x:.3f},  phi={y:.1f}, rh={z1:.5f}, rd={z2:.5f}, '\
+                    'drho={drho:.2f}, grho3={grho3:.2e}, '\
+                    'fnorm={fnorm:.4f}, gnorm={gnorm:.4f}'.format(x=x, y=y, 
+                     z1=z1, z2=z2,
+                     drho=1000*drho, grho3=grho3/1000, fnorm=fnorm, gnorm=gnorm)    
+                      
+        else:
+            z1, z2, drho, grho3, fnorm, gnorm=Zfunction(x,y)
+            return  'd/lambda={x:.3f},  phi={y:.1f}, delfstar/n={z:.0f}, '\
+                    'drho={drho:.2f}, grho3={grho3:.2e}, '\
+                    'fnorm={fnorm:.4f}, gnorm={gnorm:.4f}'.format(x=x, y=y, 
+                     z=z1+1j*z2, 
+                     drho=1000*drho, grho3=grho3/1000, fnorm=fnorm, gnorm=gnorm)    
+                         
     # now add the experimental data
     # variable to keep track of differentplots
-    idxmin=df.index[0]
+    dvals= {}
+    phisol=np.array([])
+    df_expt={}
+    df_calc={}
+    legend_label=np.array([])
+    col={1:'C0', 3:'C1',5:'C2'}
+    for idx, row in df.iterrows():
+        phisol =  np.append(phisol, row['phi'])
+
     for n in nplot:
         nstr=str(n)
-        dvals = np.array([])
-        phivals =  np.array([])
+        dvals[n] = np.array([])
+        df_expt[n] = np.array([])
+        df_calc[n] = np.array([])
         
         # extract the calculated propoerties from the dataframe
         for idx, row in df.iterrows():
             film = {'drho':row['drho'], 'grho3':row['grho3'],
                     'phi':row['phi']}
-            dvals = np.append(dvals, calc_dlam(n, film))
-            phivals =  np.append(phivals, row['phi'])
-        
-        # plot calculated values on contour plot
-        p=ax[0,0].plot(dvals, phivals, '-', label='n='+nstr)
-        ax[0,1].plot(dvals, phivals, '-', label='n='+nstr)
-        
-        # get the color for all the plots with this value of n
-        col = p[0].get_color()
-        
-        # now plot first values as solid symbols so we can more easily 
-        # correlate with the plots of the frequency and dissipation shift
-        ax[0,0].plot(dvals[0], phivals[0], 'o', color = col)
-        ax[0,1].plot(dvals[0], phivals[0], 'o', color = col)
-    
-        # now compare experimental and calculated frequency fits     
-        ax[1,0].plot(np.real(df['df_expt'+nstr])/n, '+', 
+            dvals[n] = np.append(dvals[n], calc_dlam(n, film))
+            df_expt[n] = np.append(df_expt[n], row['df_expt'+nstr])
+            df_calc[n] = np.append(df_calc[n], row['df_calc'+nstr])        
+            if label in df.keys():
+                lab = label+'='+str(row[label])
+            else:
+                lab = 'idx='+str(idx)
+            legend_label = np.append(legend_label, lab)
+            
+            
+    for n in nplot: 
+        nstr=str(n)
+        # compare experimental and calculated frequency fits     
+        ax[1,0].plot(dvals[3], np.real(df_expt[n])/n, '+', color = col[n],
                      label = 'n='+nstr)
-        ax[1,0].plot(np.real(df['df_calc'+nstr])/n, '-', color = col)
-        
-        # add the symbol for the first point
-        ax[1,0].plot(np.real(df['df_calc'+nstr][idxmin])/n, 'o', color = col)
-        
-        # now compare experimental and calculated dissipation
-        ax[1,1].plot(np.imag(df['df_expt'+nstr])/n, '+',
-                       label = 'n='+nstr)
-        ax[1,1].plot(np.imag(df['df_calc'+nstr])/n, '-', color = col)
-        
-        # add symbol for first point
-        ax[1,1].plot(np.imag(df['df_calc'+nstr][idxmin])/n, 'o', color = col)
-        
+        ax[1,0].plot(dvals[3], np.real(df_calc[n])/n, '-', color = col[n])
                 
+        # now compare experimental and calculated dissipation
+        ax[1,1].plot(dvals[3], np.imag(df_expt[n])/n, '+', color = col[n],
+                     label = 'n='+nstr)
+        ax[1,1].plot(dvals[3], np.imag(df_calc[n])/n, '-',
+                     color = col[n])
+        
+    # add values to contour plots for n=3
+    ax[0,0].plot(dvals[3], phisol, '-', color=col[3])
+    ax[0,1].plot(dvals[3], phisol, '-', color=col[3])  
+    
+    # now plot first values as solid symbols 
+    ax[0,0].plot(dvals[3][0], phisol[0], 'o', color = col[3])
+    ax[0,1].plot(dvals[3][0], phisol[0], 'o', color = col[3])
+
     for k in [0,1]:  
-        ax[0,k].legend()
         ax[1,k].legend()
         ax[0,k].format_coord = fmt
-        ax[1,k].set_xlabel('index')
+        ax[1,k].set_xlabel(r'$d/\lambda _3$')
+        
+    # reset axis limits
+    ax[0,0].set_xlim(dlim)
+    ax[0,1].set_xlim(dlim)
+    ax[0,0].set_ylim(philim)
+    ax[0,1].set_ylim(philim)
+    
+    # create a PdfPages object - one solution check per page
+    pdf = PdfPages('solution_'+calc+'.pdf')
+    
+    pdf.savefig(fig)
 
-    fig.tight_layout()        
+    for idx in np.arange(len(phisol)):
+        curves = {}
+
+        # indicate where the solution is being taken
+        print('writing solution '+str(idx)+' of '+str(len(phisol)-1))
+        for k in [0,1]:
+            curves[0+k]=ax[0,k].plot(dvals[3][idx], phisol[idx], 'kx', markersize=14,
+                                     label = legend_label[idx])
+            
+        for n in nplot:         
+            curves[2+(n-1)/2]=ax[1,0].plot(dvals[3][idx], 
+                        np.real(df_expt[n][idx])/n, 'kx',
+                         markersize=14, color=col[n])
+            curves[5+(n-1)/2]=ax[1,1].plot(dvals[3][idx], np.imag(df_expt[n][idx])/n, 'kx',
+                         markersize=14, color=col[n])
+    
+    # now plot the lines for the solution
+        dlam3 = dvals[3][idx]
+        rh = rhcalc(calc, dlam3, phisol[idx])
+        rd = rdcalc(calc, dlam3, phisol[idx])
+           
+        def solutions(phi, guess):
+            def ftosolve0(d):
+                return rhcalc(calc, d, phi)-rh
+        
+            def ftosolve1(d):
+                return rdcalc(calc, d, phi)-rd
+            
+            soln0 = optimize.least_squares(ftosolve0, guess[0], bounds=dlim)
+            soln1 = optimize.least_squares(ftosolve1, guess[1], bounds=dlim)
+            return {'phi':phi, 'd_rh':soln0['x'][0], 'd_rd':soln1['x'][0]}
+    
+        npts = 25
+        dcalc=pd.DataFrame(columns=['phi','d_rh', 'd_rd'])
+  
+        # starting guess is the actual solution, and then we work outward
+        # from there
+        for phiend in philim:
+            guess = [dlam3, dlam3]
+            phivals = np.linspace(phisol[idx], phiend, npts)
+            for phival in phivals:
+                soln = solutions(phival, guess)
+                dcalc=dcalc.append(soln,ignore_index=True)
+                guess = [soln['d_rh'], soln['d_rd']]
+
+        dcalc = dcalc.sort_values(by=['phi'])
+        for k in [0,1]:
+            curves[8+k]=ax[0,k].plot(dcalc['d_rh'], dcalc['phi'], 'k-')
+            curves[10+k]=ax[0,k].plot(dcalc['d_rd'], dcalc['phi'], 'k--')
+            
+        curves[12]=ax[0,0].legend()
+            
+        pdf.savefig(fig)
+        
+        for k in np.arange(12):
+            curves[k][0].remove()
+                
+    pdf.close()
     return fig, ax
 
 
