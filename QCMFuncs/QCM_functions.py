@@ -1278,7 +1278,7 @@ def prop_plots(df, ax, **kwargs):
         xlabel = r'$T$ ($^\circ$C)'
     
     else:
-        xdata = df['index']
+        xdata = df.index
         xlabel ='index'
 
     ax[0].errorbar(xdata, df['grho3']/1000, fmt=fmt, yerr=df['grho3_err']/1000,
@@ -1743,6 +1743,8 @@ def check_solution(df, **kwargs):
             default is False
         label ('string'): dataframe key to use to label individual points in
             solution check (default is 'temp')
+        plot_solutions (Boolean): True if we want to plot the solution checks
+            for each point (default = False)
           
     '''
 
@@ -1755,6 +1757,7 @@ def check_solution(df, **kwargs):
     ratios = kwargs.get('ratios', False)
     autoscale = kwargs.get('autoscale', False)
     label = kwargs.get('label', 'temp')
+    plot_solutions = kwargs.get('plot_solutions', False)
     idxmin=df.index[0]
     calc = df['calc'][idxmin]
     
@@ -1901,13 +1904,9 @@ def check_solution(df, **kwargs):
                      color = col[n])
         
     # add values to contour plots for n=3
-    ax[0,0].plot(dvals[3], phisol, '-', color=col[3])
-    ax[0,1].plot(dvals[3], phisol, '-', color=col[3])  
+    ax[0,0].plot(dvals[3], phisol, 'k-')
+    ax[0,1].plot(dvals[3], phisol, 'k-')  
     
-    # now plot first values as solid symbols 
-    ax[0,0].plot(dvals[3][0], phisol[0], 'o', color = col[3])
-    ax[0,1].plot(dvals[3][0], phisol[0], 'o', color = col[3])
-
     for k in [0,1]:  
         ax[1,k].legend()
         ax[0,k].format_coord = fmt
@@ -1921,65 +1920,65 @@ def check_solution(df, **kwargs):
     
     # create a PdfPages object - one solution check per page
     pdf = PdfPages('solution_'+calc+'.pdf')
-    
     pdf.savefig(fig)
 
-    for idx in np.arange(len(phisol)):
-        curves = {}
-
-        # indicate where the solution is being taken
-        print('writing solution '+str(idx)+' of '+str(len(phisol)-1))
-        for k in [0,1]:
-            curves[0+k]=ax[0,k].plot(dvals[3][idx], phisol[idx], 'kx', markersize=14,
-                                     label = legend_label[idx])
-            
-        for n in nplot:         
-            curves[2+(n-1)/2]=ax[1,0].plot(dvals[3][idx], 
-                        np.real(df_expt[n][idx])/n, 'kx',
-                         markersize=14, color=col[n])
-            curves[5+(n-1)/2]=ax[1,1].plot(dvals[3][idx], np.imag(df_expt[n][idx])/n, 'kx',
-                         markersize=14, color=col[n])
+    if plot_solutions:
+        for idx in np.arange(len(phisol)):
+            curves = {}
     
-    # now plot the lines for the solution
-        dlam3 = dvals[3][idx]
-        rh = rhcalc(calc, dlam3, phisol[idx])
-        rd = rdcalc(calc, dlam3, phisol[idx])
-           
-        def solutions(phi, guess):
-            def ftosolve0(d):
-                return rhcalc(calc, d, phi)-rh
+            # indicate where the solution is being taken
+            print('writing solution '+str(idx)+' of '+str(len(phisol)-1))
+            for k in [0,1]:
+                curves[0+k]=ax[0,k].plot(dvals[3][idx], phisol[idx], 'kx', markersize=14,
+                                         label = legend_label[idx])
+                
+            for n in nplot:         
+                curves[2+(n-1)/2]=ax[1,0].plot(dvals[3][idx], 
+                            np.real(df_expt[n][idx])/n, 'kx',
+                             markersize=14, color=col[n])
+                curves[5+(n-1)/2]=ax[1,1].plot(dvals[3][idx], np.imag(df_expt[n][idx])/n, 'kx',
+                             markersize=14, color=col[n])
         
-            def ftosolve1(d):
-                return rdcalc(calc, d, phi)-rd
+        # now plot the lines for the solution
+            dlam3 = dvals[3][idx]
+            rh = rhcalc(calc, dlam3, phisol[idx])
+            rd = rdcalc(calc, dlam3, phisol[idx])
+               
+            def solutions(phi, guess):
+                def ftosolve0(d):
+                    return rhcalc(calc, d, phi)-rh
             
-            soln0 = optimize.least_squares(ftosolve0, guess[0], bounds=dlim)
-            soln1 = optimize.least_squares(ftosolve1, guess[1], bounds=dlim)
-            return {'phi':phi, 'd_rh':soln0['x'][0], 'd_rd':soln1['x'][0]}
+                def ftosolve1(d):
+                    return rdcalc(calc, d, phi)-rd
+                
+                soln0 = optimize.least_squares(ftosolve0, guess[0], bounds=dlim)
+                soln1 = optimize.least_squares(ftosolve1, guess[1], bounds=dlim)
+                return {'phi':phi, 'd_rh':soln0['x'][0], 'd_rd':soln1['x'][0]}
+        
+            npts = 25
+            dcalc=pd.DataFrame(columns=['phi','d_rh', 'd_rd'])
+      
+            # starting guess is the actual solution, and then we work outward
+            # from there
+            for phiend in philim:
+                guess = [dlam3, dlam3]
+                phivals = np.linspace(phisol[idx], phiend, npts)
+                for phival in phivals:
+                    soln = solutions(phival, guess)
+                    dcalc=dcalc.append(soln,ignore_index=True)
+                    guess = [soln['d_rh'], soln['d_rd']]
     
-        npts = 25
-        dcalc=pd.DataFrame(columns=['phi','d_rh', 'd_rd'])
-  
-        # starting guess is the actual solution, and then we work outward
-        # from there
-        for phiend in philim:
-            guess = [dlam3, dlam3]
-            phivals = np.linspace(phisol[idx], phiend, npts)
-            for phival in phivals:
-                soln = solutions(phival, guess)
-                dcalc=dcalc.append(soln,ignore_index=True)
-                guess = [soln['d_rh'], soln['d_rd']]
-
-        dcalc = dcalc.sort_values(by=['phi'])
-        for k in [0,1]:
-            curves[8+k]=ax[0,k].plot(dcalc['d_rh'], dcalc['phi'], 'k-')
-            curves[10+k]=ax[0,k].plot(dcalc['d_rd'], dcalc['phi'], 'k--')
+            dcalc = dcalc.sort_values(by=['phi'])
+            for k in [0,1]:
+                curves[8+k]=ax[0,k].plot(dcalc['d_rh'], dcalc['phi'], 'k-')
+                curves[10+k]=ax[0,k].plot(dcalc['d_rd'], dcalc['phi'], 'k--')
+                
+            curves[12]=ax[0,0].legend()
+                
+            pdf.savefig(fig)
             
-        curves[12]=ax[0,0].legend()
-            
-        pdf.savefig(fig)
-        
-        for k in np.arange(12):
-            curves[k][0].remove()
+            for k in np.arange(12):
+                curves[k][0].remove()
                 
     pdf.close()
     return fig, ax
