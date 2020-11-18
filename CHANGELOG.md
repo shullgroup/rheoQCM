@@ -4,6 +4,8 @@
 
 ### Added
 
+- Add auto expand mechanic table when countour unchecked.
+
 ### Changed
 
 ### Fixed

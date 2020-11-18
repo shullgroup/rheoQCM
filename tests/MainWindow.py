@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'UI/QCM_GUI.ui'
+# Form implementation generated from reading ui file '.\UI\QCM_GUI.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -546,7 +546,7 @@ class Ui_MainWindow(object):
         self.toolBox = QtWidgets.QToolBox(self.tab_settings_settings)
         self.toolBox.setObjectName("toolBox")
         self.page_settings_settings_hardwares = QtWidgets.QWidget()
-        self.page_settings_settings_hardwares.setGeometry(QtCore.QRect(0, 0, 98, 70))
+        self.page_settings_settings_hardwares.setGeometry(QtCore.QRect(0, 0, 286, 216))
         self.page_settings_settings_hardwares.setObjectName("page_settings_settings_hardwares")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.page_settings_settings_hardwares)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -585,7 +585,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.treeWidget_settings_settings_hardware)
         self.toolBox.addItem(self.page_settings_settings_hardwares, "")
         self.page_settings_settings_plots = QtWidgets.QWidget()
-        self.page_settings_settings_plots.setGeometry(QtCore.QRect(0, 0, 98, 70))
+        self.page_settings_settings_plots.setGeometry(QtCore.QRect(0, 0, 83, 71))
         self.page_settings_settings_plots.setObjectName("page_settings_settings_plots")
         self.verticalLayout_24 = QtWidgets.QVBoxLayout(self.page_settings_settings_plots)
         self.verticalLayout_24.setContentsMargins(0, 0, 0, 0)
@@ -1488,7 +1488,7 @@ class Ui_MainWindow(object):
         self.gridLayout_7.addWidget(self.pushButton_settings_mechanics_contoursettings, 0, 2, 1, 1)
         self.verticalLayout_17.addLayout(self.gridLayout_7)
         self.tableWidget_settings_mechanics_contoursettings = QtWidgets.QTableWidget(self.groupBox_settings_mechanics_contour)
-        self.tableWidget_settings_mechanics_contoursettings.setEnabled(False)
+        self.tableWidget_settings_mechanics_contoursettings.setEnabled(True)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -2101,13 +2101,15 @@ class Ui_MainWindow(object):
         self.tableWidget_spectra_mechanics_table.verticalHeader().setSortIndicatorShown(False)
         self.tableWidget_spectra_mechanics_table.verticalHeader().setStretchLastSection(False)
         self.verticalLayout_mech_table.addWidget(self.tableWidget_spectra_mechanics_table)
-        self.layoutWidget3 = QtWidgets.QWidget(self.splitter_spectra_mechanics)
-        self.layoutWidget3.setObjectName("layoutWidget3")
-        self.verticalLayout_mech_contout = QtWidgets.QVBoxLayout(self.layoutWidget3)
-        self.verticalLayout_mech_contout.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_mech_contout.setSpacing(0)
-        self.verticalLayout_mech_contout.setObjectName("verticalLayout_mech_contout")
-        self.frame_spectra_mechanics_contour1 = QtWidgets.QFrame(self.layoutWidget3)
+        self.frame_mech_contout = QtWidgets.QFrame(self.splitter_spectra_mechanics)
+        self.frame_mech_contout.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_mech_contout.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_mech_contout.setObjectName("frame_mech_contout")
+        self.verticalLayout_25 = QtWidgets.QVBoxLayout(self.frame_mech_contout)
+        self.verticalLayout_25.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_25.setSpacing(0)
+        self.verticalLayout_25.setObjectName("verticalLayout_25")
+        self.frame_spectra_mechanics_contour1 = QtWidgets.QFrame(self.frame_mech_contout)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -2117,8 +2119,8 @@ class Ui_MainWindow(object):
         self.frame_spectra_mechanics_contour1.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame_spectra_mechanics_contour1.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.frame_spectra_mechanics_contour1.setObjectName("frame_spectra_mechanics_contour1")
-        self.verticalLayout_mech_contout.addWidget(self.frame_spectra_mechanics_contour1)
-        self.frame_spectra_mechanics_contour2 = QtWidgets.QFrame(self.layoutWidget3)
+        self.verticalLayout_25.addWidget(self.frame_spectra_mechanics_contour1)
+        self.frame_spectra_mechanics_contour2 = QtWidgets.QFrame(self.frame_mech_contout)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -2128,7 +2130,7 @@ class Ui_MainWindow(object):
         self.frame_spectra_mechanics_contour2.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame_spectra_mechanics_contour2.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.frame_spectra_mechanics_contour2.setObjectName("frame_spectra_mechanics_contour2")
-        self.verticalLayout_mech_contout.addWidget(self.frame_spectra_mechanics_contour2)
+        self.verticalLayout_25.addWidget(self.frame_spectra_mechanics_contour2)
         self.verticalLayout_35.addWidget(self.splitter_spectra_mechanics)
         self.stackedWidget_spectra.addWidget(self.page_spectra_mechanics)
         self.verticalLayout_3.addWidget(self.stackedWidget_spectra)
@@ -2441,7 +2443,7 @@ class Ui_MainWindow(object):
         self.gridLayout_6.addWidget(self.splitter, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 986, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 986, 21))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -2644,7 +2646,7 @@ class Ui_MainWindow(object):
         self.checkBox_settings_temp_sensor.toggled['bool'].connect(self.checkBox_control_rectemp.setChecked)
         self.checkBox_control_rectemp.toggled['bool'].connect(self.checkBox_settings_temp_sensor.setChecked)
         self.dateTimeEdit_reftime.dateTimeChanged['QDateTime'].connect(self.dateTimeEdit_settings_data_t0shifted.setDateTime)
-        self.groupBox_settings_mechanics_contour.clicked['bool'].connect(self.frame_spectra_mechanics_contour1.setVisible)
+        self.groupBox_settings_mechanics_contour.toggled['bool'].connect(self.frame_mech_contout.setVisible)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         MainWindow.setTabOrder(self.pushButton_runstop, self.pushButton_newfile)
         MainWindow.setTabOrder(self.pushButton_newfile, self.pushButton_appendfile)
@@ -2781,14 +2783,14 @@ class Ui_MainWindow(object):
         self.textEdit_settings_data_sampmarks.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt;\">To be added!</span></p></body></html>"))
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">To be added!</p></body></html>"))
         self.tabWidget_settings_data_markindex.setTabText(self.tabWidget_settings_data_markindex.indexOf(self.tab_sampmarks), _translate("MainWindow", "&S Marks"))
         self.textEdit_settings_data_refmarks.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt;\">To be added!</span></p></body></html>"))
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">To be added!</p></body></html>"))
         self.tabWidget_settings_data_markindex.setTabText(self.tabWidget_settings_data_markindex.indexOf(self.tab_refmarks), _translate("MainWindow", "&R Marks"))
         self.pushButton_settings_data_marksadd.setText(_translate("MainWindow", "1"))
         self.pushButton_settings_data_marksdel.setText(_translate("MainWindow", "0"))
