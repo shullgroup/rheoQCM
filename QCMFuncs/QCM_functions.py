@@ -1610,7 +1610,7 @@ def gstar_rouse(wtau, n_rouse):
         wtau (real):
             Angular frequency times relaxation time.
         n_rouse (integer):
-            Number  of Rouse modes to consier.
+            Number  of Rouse modes to consider.
             
     returns:
         gstar:  
@@ -1652,6 +1652,8 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
             Elements that are kww elements. Default is [].
         maxwell (list of integers):
             Elements that are Maxwell elements. Default is [].
+        rouse (list of integers):
+            Elments that are Rouse elments
  
     returns:
         gstar (numpy array):  
@@ -1661,6 +1663,7 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
     # specify which elements are kww or Maxwell elements
     kww = kwargs.get('kww',[])
     maxwell = kwargs.get('maxwell',[])
+    rouse = kwargs.get('rouse', [])
 
     # make values numpy arrays if they aren't already
     tau = np.asarray(tau).reshape(1, -1)[0,:]
@@ -1680,18 +1683,25 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
             sp_comp[:, i] = 1/(g0[i]*gstar_maxwell(w*tau[i]))            
         elif i in kww:  #  kww (stretched exponential) elment
             sp_comp[:, i] = 1/(g0[i]*gstar_kww(w*tau[i], beta[i]))
+        elif i in rouse:  # Rouse element, beta is number of rouse modes
+            sp_comp[:, i] = 1/(g0[i]*gstar_rouse(w*tau[i], beta[i]))
         else:  # power law springpot element
             sp_comp[:, i] = 1/(g0[i]*(1j*w*tau[i]) ** beta[i])
 
     # sp_vec keeps track of the beginning and end of each branch
     sp_vec = np.append(0, sp_type.cumsum())
+    
+    #  g_br keeps track of the contribution from each branch
+    g_br = {}
     for i in np.arange(n_br):
         sp_i = np.arange(sp_vec[i], sp_vec[i+1])
         # branch compliance obtained by summing compliances within the branch
         br_g[:, i] = 1/sp_comp[:, sp_i].sum(1)
+        g_br[i]=br_g[:,i]
 
     # now we sum the stiffnesses of each branch and return the result
-    return br_g.sum(1)
+    g_tot = br_g.sum(1)
+    return g_br, g_tot
 
 
 def vogel(T, Tref, B, Tinf):
@@ -1724,7 +1734,7 @@ def check_solution(df, **kwargs):
             input dataframe to consider
                 
     kwargs:
-        num (string):
+        wintitle (string):
             Window title.
         numxy (int):  
             number of grid points in x and y (default is 100)
@@ -1748,7 +1758,6 @@ def check_solution(df, **kwargs):
           
     '''
 
-    num = kwargs.get('num', 'Solution Check')
     numxy = kwargs.get('numxy', 100)
     numz = kwargs.get('numz', 200)
     philim = kwargs.get('philim', [0, 90])
