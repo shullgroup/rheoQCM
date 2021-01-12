@@ -2929,7 +2929,7 @@ class QCMApp(QMainWindow):
         cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
         cen_rec_G = self.peak_tracker.get_output(key='gmod', chn_name=self.settings_chn['name'], harm=self.settings_harm).eval(
             self.peak_tracker.get_output(key='params', chn_name=self.settings_chn['name'], harm=self.settings_harm),
-            x=cen_rec_freq
+            f=cen_rec_freq
         )
 
         logger.info(cen_rec_freq) 
@@ -6810,7 +6810,7 @@ class QCMApp(QMainWindow):
                     cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
                     cen_rec_G = self.peak_tracker.get_output(key='gmod', chn_name=chn_name, harm=harm).eval(
                         self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
-                        x=cen_rec_freq
+                        f=cen_rec_freq
                     )
 
                     # save data to fs and gs
@@ -6980,7 +6980,7 @@ class QCMApp(QMainWindow):
                 cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
                 cen_rec_G = self.peak_tracker.get_output(key='gmod', chn_name=chn_name, harm=harm).eval(
                     self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
-                    x=cen_rec_freq
+                    f=cen_rec_freq
                 )
                 logger.info(cen_rec_freq) 
                 logger.info(cen_rec_G) 
@@ -7013,7 +7013,7 @@ class QCMApp(QMainWindow):
 
                     cen_rec_B = self.peak_tracker.get_output(key='bmod', chn_name=chn_name, harm=harm).eval(
                         self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
-                        x=cen_rec_freq
+                        f=cen_rec_freq
                     )
 
                     getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'lP', 'x': G, 'y': B},

@@ -1,10 +1,23 @@
 # Changelog
 
-## [0.19.3] - 2020-11-06
+## [0.19.4] - 2020-11-18
 
 ### Added
 
 - Add auto expand mechanic table when countour unchecked.
+
+### Changed
+
+- Clean PeakTracker code.
+- Change some items' size policy in UI.
+
+### Fixed
+
+- Fix chashing while exporting data with empty channel(s).
+
+## [0.19.3] - 2020-11-06
+
+### Added
 
 ### Changed
 
@@ -18,7 +31,7 @@
 
 ### Added
 
-- Add `Delta F_{exp}/n`, `Delta F_{cal}/n` in property table. <span style="color:red">NOTE</span>: You may need to recalculate the data from previous version to show data in these two columns.
+- Add `Delta F_{exp}/n`, `Delta F_{cal}/n` in property table. <span style="color:red">NOTE</span>: You may need to recalculate the data from previous version to show data in these two rows.
 
 ### Changed
 

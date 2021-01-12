@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>986</width>
-    <height>1097</height>
+    <height>1104</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -210,7 +210,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1071,10 +1071,16 @@ background-color: red;
               </item>
               <item>
                <widget class="QGroupBox" name="groupBox_3">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>100</height>
+                  <height>16777215</height>
                  </size>
                 </property>
                 <property name="title">
@@ -1107,6 +1113,9 @@ background-color: red;
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="sizeAdjustPolicy">
+                    <enum>QAbstractScrollArea::AdjustIgnored</enum>
+                   </property>
                    <property name="documentTitle">
                     <string/>
                    </property>
@@ -1121,26 +1130,9 @@ background-color: red;
                 </layout>
                </widget>
               </item>
-              <item>
-               <spacer name="verticalSpacer_4">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeType">
-                 <enum>QSizePolicy::Expanding</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>6</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
              </layout>
              <zorder>groupBox_settings_harmonics</zorder>
              <zorder>groupBox_settingstime</zorder>
-             <zorder>verticalSpacer_4</zorder>
              <zorder>groupBox_settings_fitting</zorder>
              <zorder>verticalSpacer_2</zorder>
              <zorder>verticalSpacer_3</zorder>
@@ -1337,10 +1329,10 @@ background-color: red;
                    <attribute name="headerVisible">
                     <bool>false</bool>
                    </attribute>
-                   <attribute name="headerDefaultSectionSize">
+                   <attribute name="headerMinimumSectionSize">
                     <number>110</number>
                    </attribute>
-                   <attribute name="headerMinimumSectionSize">
+                   <attribute name="headerDefaultSectionSize">
                     <number>110</number>
                    </attribute>
                    <column>
@@ -1483,8 +1475,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>286</width>
-                   <height>216</height>
+                   <width>247</width>
+                   <height>173</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1538,10 +1530,10 @@ background-color: red;
                     <attribute name="headerCascadingSectionResizes">
                      <bool>true</bool>
                     </attribute>
-                    <attribute name="headerDefaultSectionSize">
+                    <attribute name="headerMinimumSectionSize">
                      <number>125</number>
                     </attribute>
-                    <attribute name="headerMinimumSectionSize">
+                    <attribute name="headerDefaultSectionSize">
                      <number>125</number>
                     </attribute>
                     <column>
@@ -1626,8 +1618,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>83</width>
-                   <height>71</height>
+                   <width>98</width>
+                   <height>70</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1675,11 +1667,11 @@ background-color: red;
                     <attribute name="headerVisible">
                      <bool>false</bool>
                     </attribute>
-                    <attribute name="headerDefaultSectionSize">
-                     <number>140</number>
-                    </attribute>
                     <attribute name="headerMinimumSectionSize">
                      <number>37</number>
+                    </attribute>
+                    <attribute name="headerDefaultSectionSize">
+                     <number>140</number>
                     </attribute>
                     <column>
                      <property name="text">
@@ -2234,10 +2226,10 @@ border: none;
                    <attribute name="headerCascadingSectionResizes">
                     <bool>true</bool>
                    </attribute>
-                   <attribute name="headerDefaultSectionSize">
+                   <attribute name="headerMinimumSectionSize">
                     <number>70</number>
                    </attribute>
-                   <attribute name="headerMinimumSectionSize">
+                   <attribute name="headerDefaultSectionSize">
                     <number>70</number>
                    </attribute>
                    <column>
@@ -2449,8 +2441,8 @@ border: none;
                           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;To be added!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt;&quot;&gt;To be added!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                         </widget>
                        </item>
@@ -2482,8 +2474,8 @@ p, li { white-space: pre-wrap; }
                           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;To be added!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt;&quot;&gt;To be added!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                         </widget>
                        </item>
@@ -4243,7 +4235,7 @@ border-image: url(:/button/rc/plus_p.svg);
              </sizepolicy>
             </property>
             <property name="currentIndex">
-             <number>2</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="page_spectra_topshow">
              <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -5049,7 +5041,7 @@ border: 1px solid blue;
                <property name="maximumSize">
                 <size>
                  <width>16777215</width>
-                 <height>60</height>
+                 <height>80</height>
                 </size>
                </property>
                <property name="readOnly">
@@ -5262,10 +5254,10 @@ border: 1px solid blue;
                   <attribute name="verticalHeaderVisible">
                    <bool>true</bool>
                   </attribute>
-                  <attribute name="verticalHeaderDefaultSectionSize">
+                  <attribute name="verticalHeaderMinimumSectionSize">
                    <number>23</number>
                   </attribute>
-                  <attribute name="verticalHeaderMinimumSectionSize">
+                  <attribute name="verticalHeaderDefaultSectionSize">
                    <number>23</number>
                   </attribute>
                   <attribute name="verticalHeaderShowSortIndicator" stdset="0">
@@ -6088,7 +6080,7 @@ border: 1px solid blue;
      <x>0</x>
      <y>0</y>
      <width>986</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
