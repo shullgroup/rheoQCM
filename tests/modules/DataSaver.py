@@ -454,7 +454,7 @@ class DataSaver:
                     for key, val in settings_init.items():
                         settings[key] = val
                 
-                settings['max_harmonic'] = 9
+                settings['max_harmonic'] = 9 # NOTE: may need to load the value from config_default
                 ver = fh.attrs['ver']
             return settings
         except: # failed to load settings
