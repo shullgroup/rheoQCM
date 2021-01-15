@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>986</width>
-    <height>1097</height>
+    <height>1104</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -210,7 +210,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1071,10 +1071,16 @@ background-color: red;
               </item>
               <item>
                <widget class="QGroupBox" name="groupBox_3">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>100</height>
+                  <height>16777215</height>
                  </size>
                 </property>
                 <property name="title">
@@ -1107,6 +1113,9 @@ background-color: red;
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="sizeAdjustPolicy">
+                    <enum>QAbstractScrollArea::AdjustIgnored</enum>
+                   </property>
                    <property name="documentTitle">
                     <string/>
                    </property>
@@ -1121,26 +1130,9 @@ background-color: red;
                 </layout>
                </widget>
               </item>
-              <item>
-               <spacer name="verticalSpacer_4">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeType">
-                 <enum>QSizePolicy::Expanding</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>6</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
              </layout>
              <zorder>groupBox_settings_harmonics</zorder>
              <zorder>groupBox_settingstime</zorder>
-             <zorder>verticalSpacer_4</zorder>
              <zorder>groupBox_settings_fitting</zorder>
              <zorder>verticalSpacer_2</zorder>
              <zorder>verticalSpacer_3</zorder>
@@ -1483,8 +1475,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>70</height>
+                   <width>247</width>
+                   <height>173</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -3910,7 +3902,7 @@ border-image: url(:/button/rc/plus_p.svg);
                  <item>
                   <widget class="QTableWidget" name="tableWidget_settings_mechanics_contoursettings">
                    <property name="enabled">
-                    <bool>false</bool>
+                    <bool>true</bool>
                    </property>
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -4243,7 +4235,7 @@ border-image: url(:/button/rc/plus_p.svg);
              </sizepolicy>
             </property>
             <property name="currentIndex">
-             <number>2</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="page_spectra_topshow">
              <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -5049,7 +5041,7 @@ border: 1px solid blue;
                <property name="maximumSize">
                 <size>
                  <width>16777215</width>
-                 <height>60</height>
+                 <height>80</height>
                 </size>
                </property>
                <property name="readOnly">
@@ -5278,9 +5270,27 @@ border: 1px solid blue;
                 </item>
                </layout>
               </widget>
-              <widget class="QWidget" name="layoutWidget">
-               <layout class="QVBoxLayout" name="verticalLayout_mech_contout">
+              <widget class="QFrame" name="frame_mech_contout">
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Raised</enum>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_25">
                 <property name="spacing">
+                 <number>0</number>
+                </property>
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
                  <number>0</number>
                 </property>
                 <item>
@@ -6626,8 +6636,8 @@ border: 1px solid blue;
   </connection>
   <connection>
    <sender>groupBox_settings_mechanics_contour</sender>
-   <signal>clicked(bool)</signal>
-   <receiver>frame_spectra_mechanics_contour1</receiver>
+   <signal>toggled(bool)</signal>
+   <receiver>frame_mech_contout</receiver>
    <slot>setVisible(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -6636,7 +6646,7 @@ border: 1px solid blue;
     </hint>
     <hint type="destinationlabel">
      <x>476</x>
-     <y>723</y>
+     <y>914</y>
     </hint>
    </hints>
   </connection>

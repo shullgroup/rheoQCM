@@ -454,7 +454,7 @@ class DataSaver:
                     for key, val in settings_init.items():
                         settings[key] = val
                 
-                settings['max_harmonic'] = 9
+                settings['max_harmonic'] = 9 # NOTE: may need to load the value from config_default
                 ver = fh.attrs['ver']
             return settings
         except: # failed to load settings
@@ -1072,15 +1072,18 @@ class DataSaver:
 
         # get df of samp and ref channel
         on_cols = ['queue_id', 't', 'temp']
-        df_samp = pd.merge(
-            # f
-            self.reshape_data_df('samp', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp, keep_mark=False),
-            # delf
-            self.reshape_data_df('samp', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp, keep_mark=True), # keep only on marks
-            on=on_cols
-        )
 
-        df_samp_ref = self.reshape_data_df('samp_ref', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp)
+        if self.samp.shape[0] > 0: # samp has data
+            df_samp = pd.merge(
+                # f
+                self.reshape_data_df('samp', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp, keep_mark=False),
+                # delf
+                self.reshape_data_df('samp', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, deltaval=True, unit_t=unit_t, unit_temp=unit_temp, keep_mark=True), # keep only on marks
+                on=on_cols
+            )
+
+        if self.samp_ref.shape[0] > 0:
+            df_samp_ref = self.reshape_data_df('samp_ref', mark=mark, dropnanmarkrow=dropnanmarkrow, dropnancolumn=dropnancolumn, unit_t=unit_t, unit_temp=unit_temp)
 
         if self.ref.shape[0] > 0:
             df_ref = pd.merge(
@@ -1098,8 +1101,9 @@ class DataSaver:
         try:
             if ext.lower() == '.xlsx':
                 with pd.ExcelWriter(fileName) as writer:
-                    df_samp.to_excel(writer, sheet_name='S_channel')
-                    df_samp_ref.to_excel(writer, sheet_name='S_reference')
+                    if self.samp.shape[0] > 0:
+                        df_samp.to_excel(writer, sheet_name='S_channel')
+                        df_samp_ref.to_excel(writer, sheet_name='S_reference')
                     if self.ref.shape[0] > 0:
                         df_ref.to_excel(writer, sheet_name='R_channel')
                         df_ref_ref.to_excel(writer, sheet_name='R_reference')
@@ -1593,6 +1597,12 @@ class DataSaver:
         else:
             s = getattr(self, chn_name)[col].copy()
 
+        # check if chn_name is empty
+        if getattr(self, chn_name).shape[0] == 0:
+            logger.warning('%s is empty', chn_name)
+
+            # return an empty df with proper columns
+            return pd.DataFrame(columns=[col[:-1] + str(i) for i in range(1, self.settings['max_harmonic']+2, 2)])
 
         if mark == False:
             return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col[:-1] + str(x * 2 + 1))
@@ -2615,7 +2625,7 @@ class DataSaver:
         logger.info(f_arr.shape)
         logger.info(g_arr.shape)
         logger.info(fstar_arr.shape)
-        logger.info(df['fstars'].iloc[0])
+        # logger.info(df['fstars'].iloc[0])
 
         return df
 

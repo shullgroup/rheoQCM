@@ -248,6 +248,11 @@ class QCMApp(QMainWindow):
             'version_hide_list'
         )
 
+        # disable widges not necessary
+        self.disable_widgets(
+            'version_disable_list'
+        )
+
         # hide widgets not for analysis mode
         if self.vna is None:
             self.hide_widgets(
@@ -2348,13 +2353,13 @@ class QCMApp(QMainWindow):
                 #     getattr(self.ui, name).setEnabled(False)
 
 
-    def mech_splitter_vis(self):
+    def mech_splitter_vis(self, signal):
         '''
         '''
-        # get the value of sender val True/False
-        # self.sender()
+        # print(signal)
 
         # set visibility with hide_widget hide_widgets & show_widgets
+        # done in Qt Designer
 
         # set handle of splitter_spectra_mechanics idx = 0 to hide and idx = 1 (index of layout_mech_table) to show
         pass
@@ -2404,7 +2409,7 @@ class QCMApp(QMainWindow):
         disable the actions other than mouse dragging
         '''
         # logger.info(value) 
-        if value < 7: # mous dragging == 7
+        if value < 7: # mouse dragging == 7
             # reset slider to 1
             self.ui.horizontalSlider_spectra_fit_spanctrl.setValue(0)
 
@@ -2924,7 +2929,7 @@ class QCMApp(QMainWindow):
         cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
         cen_rec_G = self.peak_tracker.get_output(key='gmod', chn_name=self.settings_chn['name'], harm=self.settings_harm).eval(
             self.peak_tracker.get_output(key='params', chn_name=self.settings_chn['name'], harm=self.settings_harm),
-            x=cen_rec_freq
+            f=cen_rec_freq
         )
 
         logger.info(cen_rec_freq) 
@@ -6342,8 +6347,8 @@ class QCMApp(QMainWindow):
             elif name.startswith('comboBox_'):
                 self.load_comboBox(obj)
             elif name.startswith('groupBox_'):
-                # TODO something here load def value
-                pass
+                # NOTE here is only for checked
+                obj.setChecked(self.settings[name])
 
 
     def load_settings(self):
@@ -6805,7 +6810,7 @@ class QCMApp(QMainWindow):
                     cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
                     cen_rec_G = self.peak_tracker.get_output(key='gmod', chn_name=chn_name, harm=harm).eval(
                         self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
-                        x=cen_rec_freq
+                        f=cen_rec_freq
                     )
 
                     # save data to fs and gs
@@ -6868,6 +6873,10 @@ class QCMApp(QMainWindow):
 
         # Save scan data to file, fitting data in RAM to file
         if self.spectra_refresh_modulus() == 0: # check if to save by intervals
+            # if self.counter != 0:
+            #     self.counter = 0 # restart counter
+            # else:
+            #     self.counter += 1 # increase counter
             self.writing = True
             # save raw
             self.data_saver.dynamic_save(chn_name_list, harm_list, t=curr_time, temp=curr_temp, f=f, G=G, B=B, fs=fs, gs=gs, ps=ps, marks=marks)
@@ -6879,6 +6888,7 @@ class QCMApp(QMainWindow):
             self.update_mpl_plt12()
         else: # data will not be saved (temperarily saved in peak_tracker)
             #TODO we can still plot the data 
+            # self.counter += 1 # increase counter
             pass
 
         if not self.timer.isActive(): # if timer is stopped (test stopped while collecting data)
@@ -6886,7 +6896,8 @@ class QCMApp(QMainWindow):
             self.process_saving_when_stop()
             logger.info('data saved while collecting') 
 
-        # increase counter
+        ## This is for continuous counter
+        # increase counter 
         self.counter += 1
 
         self.idle = True
@@ -6969,7 +6980,7 @@ class QCMApp(QMainWindow):
                 cen_rec_freq = fit_result['v_fit']['cen_rec']['value']
                 cen_rec_G = self.peak_tracker.get_output(key='gmod', chn_name=chn_name, harm=harm).eval(
                     self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
-                    x=cen_rec_freq
+                    f=cen_rec_freq
                 )
                 logger.info(cen_rec_freq) 
                 logger.info(cen_rec_G) 
@@ -7002,7 +7013,7 @@ class QCMApp(QMainWindow):
 
                     cen_rec_B = self.peak_tracker.get_output(key='bmod', chn_name=chn_name, harm=harm).eval(
                         self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
-                        x=cen_rec_freq
+                        f=cen_rec_freq
                     )
 
                     getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'lP', 'x': G, 'y': B},

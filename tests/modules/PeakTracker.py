@@ -29,18 +29,24 @@ config_default = UISettings.get_config() # load default configuration
 # peak_finder_method = 'simple_func'
 peak_finder_method = 'py_func'
 
-def fun_G(x, amp, cen, wid, phi):
+def fun_const(f, c):
+    '''
+    lmfit ConstantModel independent_vars is x. We want to use f.
+    '''
+    return c
+
+def fun_G(f, amp, cen, wid, phi):
     ''' 
     function of relation between frequency (f) and conductance (G) 
     '''
-    return amp * (4 * wid**2 * x**2 * np.cos(phi) - 2 * wid * x * np.sin(phi) * (cen**2 - x**2)) / (4 * wid**2 * x**2 + (cen**2 -x**2)**2)
+    return amp * (4 * wid**2 * f**2 * np.cos(phi) - 2 * wid * f * np.sin(phi) * (cen**2 - f**2)) / (4 * wid**2 * f**2 + (cen**2 -f**2)**2)
 
 
-def fun_B(x, amp, cen, wid, phi):
+def fun_B(f, amp, cen, wid, phi):
     ''' 
     function of relation between frequency (f) and susceptance (B) 
     '''
-    return amp * (4 * wid**2 * x**2 * np.sin(phi) + 2 * wid * x * np.cos(phi) * (cen**2 - x**2)) / (4 * wid**2 * x**2 + (cen**2 -x**2)**2)
+    return amp * (4 * wid**2 * f**2 * np.sin(phi) + 2 * wid * f * np.cos(phi) * (cen**2 - f**2)) / (4 * wid**2 * f**2 + (cen**2 -f**2)**2)
 
 
 def make_gmod(n):
@@ -49,9 +55,9 @@ def make_gmod(n):
     input:
     n:    number of peaks
     '''
-    gmod = ConstantModel(prefix='g_')
+    gmod = Model(fun_const, prefix='g_', independent_vars=['f'])
     for i in np.arange(n):
-        gmod_i = Model(fun_G, prefix='p'+str(i)+'_', name='g'+str(i))
+        gmod_i = Model(fun_G, independent_vars='f', prefix='p'+str(i)+'_', name='g'+str(i))
         gmod += gmod_i
     return gmod
 
@@ -62,9 +68,9 @@ def make_bmod(n):
     input:
     n:    number of peaks
     '''
-    bmod = ConstantModel(prefix='b_')
+    bmod = Model(fun_const, prefix='b_', independent_vars=['f'])
     for i in np.arange(n):
-        bmod_i = Model(fun_B, prefix='p'+str(i)+'_', name='b'+str(i))
+        bmod_i = Model(fun_B, independent_vars='f', prefix='p'+str(i)+'_', name='b'+str(i))
         bmod += bmod_i
     return bmod
 
@@ -75,17 +81,17 @@ def make_gbmodel(n=1):
     input:
     n:    number of peaks
     '''
-    gmod = ConstantModel(prefix='g_')
-    bmod = ConstantModel(prefix='b_')
+    # gmod = ConstantModel(prefix='g_')
+    # bmod = ConstantModel(prefix='b_')
 
-    for i in np.arange(n):
-        # gmod and bmod sharing the same varible so use the same prefix
-        gmod_i = Model(fun_G, prefix='p'+str(i)+'_', name='g'+str(i))
-        bmod_i = Model(fun_B, prefix='p'+str(i)+'_', name='b'+str(i))
-        gmod += gmod_i
-        bmod += bmod_i
+    # for i in np.arange(n):
+    #     # gmod and bmod sharing the same varible so use the same prefix
+    #     gmod_i = Model(fun_G, prefix='p'+str(i)+'_', name='g'+str(i))
+    #     bmod_i = Model(fun_B, prefix='p'+str(i)+'_', name='b'+str(i))
+    #     gmod += gmod_i
+    #     bmod += bmod_i
     
-    return gmod, bmod
+    return make_gmod(n), make_bmod(n)
 
 
 def make_models(n=1):
@@ -99,13 +105,13 @@ def make_models(n=1):
     '''
     gmods = []
     bmods = []
-    gc = ConstantModel(prefix='g_')
-    bc = ConstantModel(prefix='b_')
+    gc = Model(fun_const, prefix='g_', independent_vars=['f'])
+    bc = Model(fun_const, prefix='b_', independent_vars=['f'])
 
     for i in np.arange(n):
         # gmod and bmod sharing the same varible so use the same prefix
-        gmod_i = Model(fun_G, prefix='p'+str(i)+'_', name='g'+str(i)) + gc
-        bmod_i = Model(fun_B, prefix='p'+str(i)+'_', name='b'+str(i)) + bc
+        gmod_i = Model(fun_G, independent_vars='f', prefix='p'+str(i)+'_', name='g'+str(i)) + gc
+        bmod_i = Model(fun_B, independent_vars='f', prefix='p'+str(i)+'_', name='b'+str(i)) + bc
         gmods.append(gmod_i)
         bmods.append(bmod_i)
     
@@ -114,6 +120,7 @@ def make_models(n=1):
 
 def make_model_n(n=1):
     '''
+    NOT USING
     Since minimizeResult class doesn't have eval_components method, we will make complex models with single peak for evaluation
     input:
         n:    the nth peak
@@ -121,36 +128,37 @@ def make_model_n(n=1):
         gmod = the nth model of G
         bmod = the nth model of B
     '''
-    gc = ConstantModel(prefix='g_')
-    bc = ConstantModel(prefix='b_')
+    gc = Model(fun_const, prefix='g_', independent_vars=['f'])
+    bc = Model(fun_const, prefix='b_', independent_vars=['f'])
 
     # gmod and bmod sharing the same varible so use the same prefix
-    gmod = Model(fun_G, prefix='p'+str(i)+'_', name='g'+str(i)) + gc
-    bmod = Model(fun_B, prefix='p'+str(i)+'_', name='b'+str(i)) + bc
+    gmod = Model(fun_G, independent_vars='f', prefix='p'+str(n)+'_', name='g'+str(n)) + gc
+    bmod = Model(fun_B, independent_vars='f', prefix='p'+str(n)+'_', name='b'+str(n)) + bc
     
     return gmod, bmod
 
 
 def make_models_pars(n=1):
     '''
+    NOT USING
     make complex model for multiple peaks
     input:
     n:    number of peaks
     '''
-    gmod = ConstantModel(prefix='g_', name='cg')
+    gmod = Model(independent_vars='f', prefix='g_', name='cg')
     gpars = gmod.make_params(c=0)
-    bmod = ConstantModel(prefix='b_', name='cb')
+    bmod = Model(independent_vars='f', prefix='b_', name='cb')
     bpars = bmod.make_params(c=0)
 
     for i in np.arange(1, n+1):
         # gmod and bmod sharing the same varible so use the same prefix
-        gmod_i = Model(fun_G, prefix='p'+str(i)+'_', name='g'+str(i))
+        gmod_i = Model(fun_G, independent_vars='f', prefix='p'+str(i)+'_', name='g'+str(i))
         gpars.update(gmod_i.make_params())
         gpars['p'+str(i)+'_amp'].set(0, min=0)
         gpars['p'+str(i)+'_cen'].set()
         gpars['p'+str(i)+'_wid'].set(1, min=1)
         gpars['p'+str(i)+'_phi'].set(0, min=-np.pi/2, max=np.pi/2)
-        bmod_i = Model(fun_B, prefix='p'+str(i)+'_', name='b'+str(i))
+        bmod_i = Model(fun_B, independent_vars='f', prefix='p'+str(i)+'_', name='b'+str(i))
         bpars.update(bmod_i.make_params())
         bpars['p'+str(i)+'_amp'].set(0, min=0)
         bpars['p'+str(i)+'_cen'].set()
@@ -174,8 +182,8 @@ def res_GB(params, f, G, B, **kwargs):
     # eps = (G - np.amin(G))
     # eps = pow((G - np.amin(G)*1.001), 1/2)
     
-    residual_G = G - gmod.eval(params, x=f)
-    residual_B = B - bmod.eval(params, x=f)
+    residual_G = G - gmod.eval(params, f=f)
+    residual_B = B - bmod.eval(params, f=f)
 
     if eps is None:
         return np.concatenate((residual_G, residual_B))
@@ -228,7 +236,7 @@ def findpeaks(array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf,
         return values
 
 
-def findpeaks_py(x, resonance, output=None, sortstr=None, threshold=None, prominence=None, distance=None, width=None):
+def findpeaks_py(f, resonance, output=None, sortstr=None, threshold=None, prominence=None, distance=None, width=None):
     '''
     A wrap up of scipy.signal.find_peaks.
     advantage of find_peaks function of scipy is
@@ -238,20 +246,20 @@ def findpeaks_py(x, resonance, output=None, sortstr=None, threshold=None, promin
     sortstr: 'ascend' or 'descend' ordering data by peak height
     '''
     # logger.info(resonance) 
-    if x is None or len(x) == 1: # for debuging
-        logger.warning('findpeaks_py input x is not well assigned!\nx = {}'.format(x))
+    if f is None or len(f) == 1: # for debuging
+        logger.warning('findpeaks_py input f is not well assigned!\nx = {}'.format(f))
         exit(0)
 
     logger.info(threshold) 
-    logger.info('f distance %s', distance / (x[1] - x[0])) 
+    logger.info('f distance %s', distance / (f[1] - f[0])) 
     logger.info(prominence) 
-    logger.info('f width %s', width / (x[1] - x[0])) 
+    logger.info('f width %s', width / (f[1] - f[0])) 
     peaks, props = find_peaks(
         resonance, 
         threshold=threshold, 
-        distance=max(1, distance / (x[1] - x[0])), # make it >= 1
+        distance=max(1, distance / (f[1] - f[0])), # make it >= 1
         prominence=prominence,
-        width=max(1, width / (x[1] - x[0])), # make it >= 1
+        width=max(1, width / (f[1] - f[0])), # make it >= 1
     )
 
     logger.info(peaks) 
@@ -280,7 +288,7 @@ def findpeaks_py(x, resonance, output=None, sortstr=None, threshold=None, promin
             indices[i] = indices[order[i]]
             heights = np.append(heights, props['width_heights'][order[i]])
             prominences = np.append(prominences, props['prominences'][order[i]])
-            widths = np.append(widths, props['widths'][order[i]] * (x[1] - x[0])) # in Hz
+            widths = np.append(widths, props['widths'][order[i]] * (f[1] - f[0])) # in Hz
     
     if output:
         if output.lower() == 'indices':
@@ -320,7 +328,7 @@ def guess_peak_factors(freq, resonance):
         logger.info(half_wid) 
         return amp, cen, half_wid, half_max
     elif peak_finder_method == 'py_func': 
-        #TODO if find_peaks(x) is necessary?
+        #TODO if find_peaks(f) is necessary?
         cen_index = np.argmax(resonance) # use max value as peak
         prominences = peak_prominences(resonance, np.array([cen_index])) # tuple of 3 arrays
         widths = peak_widths(resonance, np.array([cen_index]), prominence_data=prominences, rel_height=0.5)
@@ -351,7 +359,7 @@ class PeakTracker:
 
         self.active_harm = None
         self.active_chn = None
-        self.x = None # temp value (freq) for fitting and tracking
+        self.f = None # temp value (freq) for fitting and tracking
         self.resonance = None # temp value for fitting and tracking
         self.peak_guess = {}
         self.found_n = None
@@ -506,16 +514,16 @@ class PeakTracker:
         if method is None:
             method = self.harminput[chn_name][harm]['method']
 
-        # x and resonance
+        # f and resonance
         if method == 'bmax': # use max susceptance
-            self.x = self.harminput[chn_name][harm]['f']
+            self.f = self.harminput[chn_name][harm]['f']
             self.resonance = self.harminput[chn_name][harm]['B']
         elif method == 'derv': # use derivative
             self.resonance = np.sqrt(
                 np.diff(self.harminput[chn_name][harm]['G'])**2 + 
                 np.diff(self.harminput[chn_name][harm]['B'])**2
             ) # use modulus
-            self.x = self.harminput[chn_name][harm]['f'][:-1] + np.diff(self.harminput[chn_name][harm]['f']) # change f size and shift
+            self.f = self.harminput[chn_name][harm]['f'][:-1] + np.diff(self.harminput[chn_name][harm]['f']) # change f size and shift
         elif method == 'prev': # use previous value
             try:
                 pre_method = self.harmoutput[chn_name][harm]['method']
@@ -527,7 +535,7 @@ class PeakTracker:
             self.init_active_val(harm=harm, chn_name=chn_name, method=pre_method)
         else:
             self.resonance = self.harminput[chn_name][harm]['G']
-            self.x = self.harminput[chn_name][harm]['f']
+            self.f = self.harminput[chn_name][harm]['f']
 
         self.found_n = 0 # number of found peaks
         self.peak_guess = {} # guess values of found peaks
@@ -712,16 +720,16 @@ class PeakTracker:
         # # determine the structure field that should be used to extract out the initial-guessing method
         # if method == 'bmax': # use max susceptance
         #     resonance = B
-        #     x = f
+        #     f = f
         # elif method == 'derv': # use derivative
         #     resonance = np.sqrt(np.diff(G)**2 + np.diff(B)**2) # use modulus
-        #     x = f[:-1] + np.diff(f) # change f size and shift
+        #     f = f[:-1] + np.diff(f) # change f size and shift
         # elif method == 'prev': # use previous value
         #     # this conditin should not go to this function
         #     return
         # else:
         #     resonance = G
-        #     x = f
+        #     f = f
 
         phi = 0
         # peak_guess = {}
@@ -741,7 +749,7 @@ class PeakTracker:
             sortstr = 'descend' # ordering by peak height decreasing
 
         indices, heights, prominences, widths = findpeaks_py(
-            self.x,
+            self.f,
             self.resonance, 
             sortstr=sortstr, 
             threshold=self.harminput[chn_name][harm]['threshold'], 
@@ -787,7 +795,7 @@ class PeakTracker:
                 logger.info(i) 
                 self.peak_guess[i] = {
                     'amp': prominences[i],  # or use heights
-                    'cen': self.x[indices[i]], 
+                    'cen': self.f[indices[i]], 
                     'wid': widths[i] / 2, # use half width 
                     'phi': phi
                 }
@@ -796,8 +804,8 @@ class PeakTracker:
                 # use the min values of each variables
                 self.peak_guess[i] = {
                     'amp': np.amin(prominences),  # or use heights. 
-                    'cen': self.x[randrange(int(len(self.x) * 0.3), int(len(self.x) * 0.6), self.found_n)], 
-                    # devide x range to n parts and randomly choose one. Try to keep the peaks not too close
+                    'cen': self.f[randrange(int(len(self.f) * 0.3), int(len(self.f) * 0.6), self.found_n)], 
+                    # devide f range to n parts and randomly choose one. Try to keep the peaks not too close
                     'wid': np.amin(widths) / 2, 
                     'phi': phi
                 }
@@ -848,9 +856,9 @@ class PeakTracker:
                 #TODO refine the initial data !!!
                 self.peak_guess[i] = {
                     'amp': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['amp'] if self.harmoutput[chn_name][harm]['found_n'] > 0 else np.max(self.resonance) - np.min(self.resonance),  
-                    'cen': self.x[randrange(int(len(self.x) * 0.3), int(len(self.x) * 0.6), self.found_n)], 
-                    # devide x range to n parts and randomly choose one. Try to keep the peaks not too close
-                    'wid': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['wid'] if self.harmoutput[chn_name][harm]['found_n'] > 0 else (np.max(self.x) - np.min(self.x)) / 10, 
+                    'cen': self.f[randrange(int(len(self.f) * 0.3), int(len(self.f) * 0.6), self.found_n)], 
+                    # devide f range to n parts and randomly choose one. Try to keep the peaks not too close
+                    'wid': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['wid'] if self.harmoutput[chn_name][harm]['found_n'] > 0 else (np.max(self.f) - np.min(self.f)) / 10, 
                     'phi': self.peak_guess[self.harmoutput[chn_name][harm]['found_n']-1]['phi'] if self.harmoutput[chn_name][harm]['found_n'] > 0 else 0,
                 }
         # now update 'found_n in harmoutput
@@ -1053,8 +1061,10 @@ class PeakTracker:
                 kws={'gmod': gmod, 'bmod': bmod, 'eps': eps}, 
                 xtol=config_default['xtol'], ftol=config_default['ftol'],
                 nan_policy='omit', # ('raise' default, 'propagate', 'omit')
-                )
-            print(fit_report(result)) 
+            )
+            report = fit_report(result, show_correl=False)
+            logger.info(report)
+            print(report) 
             print('success: ', result.success)
             print('message: ', result.message)
             print('lmdif_message: ', result.lmdif_message)
@@ -1218,7 +1228,7 @@ class PeakTracker:
             if components is False: # total fitting
                 return self.get_output(key=mod_name, chn_name=chn_name, harm=harm).eval(
                     self.harmoutput[chn_name][harm]['result'].params, 
-                    x=self.harminput[chn_name][harm]['f']
+                    f=self.harminput[chn_name][harm]['f']
                     )
             else: # return divided peaks
                 # make gmod and bmod for all components
@@ -1229,7 +1239,7 @@ class PeakTracker:
                         g_fit.append(
                             gmod.eval(
                                 self.harmoutput[chn_name][harm]['result'].params, 
-                                x=self.harminput[chn_name][harm]['f'],
+                                f=self.harminput[chn_name][harm]['f'],
                             )
                         )
                     return g_fit
@@ -1239,7 +1249,7 @@ class PeakTracker:
                         b_fit.append(
                             bmod.eval(
                                 self.get_output(key='result', chn_name=chn_name, harm=harm).params, 
-                                x=self.get_input(key='f', chn_name=chn_name, harm=harm)
+                                f=self.get_input(key='f', chn_name=chn_name, harm=harm)
                             )
                         )
                     return b_fit
@@ -1385,37 +1395,37 @@ if __name__ == '__main__':
     # exit(0)
     gmod, bmod = make_gbmodel(n)
     gmods, bmods = make_models(n)
-    # gpars = gmod.guess(G, x=f) #guess() not implemented for CompositeModel
+    # gpars = gmod.guess(G, f=f) #guess() not implemented for CompositeModel
     plt.figure()
     plt.plot(f, G, 'bo')
-    plt.plot(f, gmod.eval(result.params, x=f), 'k--')
+    plt.plot(f, gmod.eval(result.params, f=f), 'k--')
     if n > 1:
         for i in range(n):
-            plt.plot(f, gmods[i].eval(result.params, x=f))
+            plt.plot(f, gmods[i].eval(result.params, f=f))
     plt.twinx()
     plt.plot(f, B, 'go')
-    plt.plot(f, bmod.eval(result.params, x=f), 'k--')
+    plt.plot(f, bmod.eval(result.params, f=f), 'k--')
     if n > 1:
         for i in range(n):
-            plt.plot(f, bmods[i].eval(result.params, x=f))
+            plt.plot(f, bmods[i].eval(result.params, f=f))
 
     plt.figure()
     plt.plot(G, B, 'bo')
-    plt.plot(gmod.eval(result.params, x=f), bmod.eval(result.params, x=f), 'k--')
+    plt.plot(gmod.eval(result.params, f=f), bmod.eval(result.params, f=f), 'k--')
     if n > 1:
         for i in range(n):
-            plt.plot(gmods[i].eval(result.params, x=f), bmods[i].eval(result.params, x=f))
+            plt.plot(gmods[i].eval(result.params, f=f), bmods[i].eval(result.params, f=f))
 
     plt.figure()
     Y = np.sqrt(np.diff(G)**2 + np.diff(B)**2)
-    Y_fit = np.sqrt(np.diff(gmod.eval(result.params, x=f))**2 + np.diff(bmod.eval(result.params, x=f))**2)
+    Y_fit = np.sqrt(np.diff(gmod.eval(result.params, f=f))**2 + np.diff(bmod.eval(result.params, f=f))**2)
     print(len(f[0:-1]), len(np.diff(f)))
     df = f[0:-1] + np.diff(f)
     plt.plot(df, Y, 'bo')
     plt.plot(df, Y_fit, 'k--')
     if n > 1:
         for i in range(n):
-            Y_fit = np.sqrt(np.diff(gmods[i].eval(result.params, x=f))**2 + np.diff(bmods[i].eval(params, x=f))**2)
+            Y_fit = np.sqrt(np.diff(gmods[i].eval(result.params, f=f))**2 + np.diff(bmods[i].eval(params, f=f))**2)
             plt.plot(df, Y)
 
     plt.show()
@@ -1427,14 +1437,14 @@ if __name__ == '__main__':
     plt.plot(f, G, 'bo')
     if plot_components:
         # generate components
-        comps = result.eval_components(x=f)
+        comps = result.eval_components(f=f)
         plt.plot(f, 10*comps['cg'], 'k--')
         plt.plot(f, 10*comps['cb'], 'r-')
     else:
         plt.plot(f, result.init_fit, 'k--')
         plt.plot(f, result.best_fit, 'r-')
 
-    result = bmod.fit(B, params=params, x=f)
+    result = bmod.fit(B, params=params, f=f)
     print(result.fit_report())
     plt.show()
     exit(1)
@@ -1444,7 +1454,7 @@ if __name__ == '__main__':
     plt.plot(f, B, 'bo')
     if plot_components:
         # generate components
-        comps = result.eval_components(x=f)
+        comps = result.eval_components(f=f)
         plt.plot(f, 10*comps['jump'], 'k--')
         plt.plot(f, 10*comps['gaussian'], 'r-')
     else:

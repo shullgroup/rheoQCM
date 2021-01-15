@@ -141,7 +141,7 @@ config_default = {
         'lineEdit_settings_mechanics_model_overlayer_idx'
     ],
 
-    # list for disabled widges for current version
+    # list for hide widges for current version
     'version_hide_list':[
         'pushButton_settings_la', 
         'pushButton_settings_ra', 
@@ -205,6 +205,11 @@ config_default = {
         'pushButton_status_reftype',
         # 'pushButton_status_signal_ch',
 
+    ],
+
+    # list for disable widges for current version
+    'version_disable_list': [
+        'tableWidget_settings_mechanics_contoursettings',
     ],
 
     # list of widges to delete in current version
