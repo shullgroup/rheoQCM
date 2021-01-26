@@ -14,6 +14,7 @@
 ### Fixed
 
 - Fix chashing while exporting data with empty channel(s).
+- Fix variable name errors in rheoQCM
 
 ## [0.19.3] - 2020-11-06
 

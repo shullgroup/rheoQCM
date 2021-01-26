@@ -2917,7 +2917,7 @@ class QCMApp(QMainWindow):
             cen_trk_freq = fit_result['v_fit']['cen_trk']['value']
             cen_trk_G = self.peak_tracker.get_output(key='gmod', chn_name=self.settings_chn['name'], harm=self.settings_harm).eval(
                 self.peak_tracker.get_output(key='params', chn_name=self.settings_chn['name'], harm=self.settings_harm),
-                x=cen_trk_freq
+                f=cen_trk_freq
             )
 
             logger.info(cen_trk_freq) 
@@ -6825,7 +6825,7 @@ class QCMApp(QMainWindow):
                     elif self.settings['radioButton_spectra_showpolar']: # polar plot
                         cen_rec_B = self.peak_tracker.get_output(key='bmod', chn_name=chn_name, harm=harm).eval(
                             self.peak_tracker.get_output(key='params', chn_name=chn_name, harm=harm),
-                            x=cen_rec_freq
+                            f=cen_rec_freq
                         )
 
                         getattr(self.ui, 'mpl_sp' + harm).update_data({'ln': 'srec', 'x': cen_rec_G, 'y': cen_rec_B})
