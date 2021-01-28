@@ -548,7 +548,7 @@ class MatplotlibWidget(QWidget):
                 [], [], 
                 marker='o', 
                 markerfacecolor='none', 
-                picker=5, # 5 points tolerance
+                pickradius=5, # 5 points tolerance
                 label='l'+str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
             ) # l
@@ -559,7 +559,7 @@ class MatplotlibWidget(QWidget):
                 marker='o', 
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
                 linestyle='none',
-                picker=5, # 5 points tolerance
+                pickradius=5, # 5 points tolerance
                 label='lm'+str(i),
                 alpha=0.75,
             ) # marked points of line
@@ -569,7 +569,7 @@ class MatplotlibWidget(QWidget):
                 marker='o', 
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
                 linestyle='none',
-                picker=None, # disable
+                # picker=None, # picker is off by default
                 label='lt'+str(i),
                 alpha=0.35,
             ) # temperary points of line
@@ -827,21 +827,21 @@ class MatplotlibWidget(QWidget):
                 [], [], 
                 # marker='o', 
                 markerfacecolor='none', 
-                picker=5, # 5 points tolerance
+                pickradius=5, # 5 points tolerance
                 label='l'+str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
             ) # l
 
         for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['p' + str(i)] = self.ax[0].errorbar(
-                [], [], 
+                np.nan, np.nan, # Note: for matplotlib >= 3.3, can't be [], which will make caplines () 
                 xerr=np.nan,
                 yerr=np.nan,
                 marker='o', 
                 markerfacecolor='none', 
                 linestyle='none',
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
-                # picker=5, # 5 points tolerance
+                # pickradius=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
                 capsize=config_default['mpl_capsize'],
@@ -849,13 +849,13 @@ class MatplotlibWidget(QWidget):
 
         for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['pm' + str(i)] = self.ax[0].errorbar(
-                [], [], 
+                np.nan, np.nan, # Note: for matplotlib >= 3.3, can't be [], which will make caplines () 
                 yerr=np.nan,
                 xerr=np.nan,
                 marker='o', 
                 linestyle='none',
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
-                # picker=5, # 5 points tolerance
+                # pickradius=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
                 capsize=config_default['mpl_capsize'],
@@ -918,7 +918,7 @@ class MatplotlibWidget(QWidget):
                 [], [], 
                 # marker='o', 
                 markerfacecolor='none', 
-                picker=5, # 5 points tolerance
+                pickradius=5, # 5 points tolerance
                 label='l'+str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
             ) # l
@@ -928,21 +928,21 @@ class MatplotlibWidget(QWidget):
         #         [], [], 
         #         # marker='o', 
         #         color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
-        #         picker=5, # 5 points tolerance
+        #         pickradius=5, # 5 points tolerance
         #         label='lm'+str(i),
         #         alpha=0.75,
         #     ) # maked points of line
 
         for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['p' + str(i)] = self.ax[0].errorbar(
-                [], [], 
+                np.nan, np.nan, # Note: for matplotlib >= 3.3, can't be [], which will make caplines () 
                 xerr=np.nan,
                 yerr=np.nan,
                 marker='o', 
                 markerfacecolor='none', 
                 linestyle='none',
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
-                # picker=5, # 5 points tolerance
+                # pickradius=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
                 capsize=config_default['mpl_capsize'],
@@ -950,13 +950,13 @@ class MatplotlibWidget(QWidget):
 
         for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['pm' + str(i)] = self.ax[0].errorbar(
-                [], [], 
+                np.nan, np.nan, # Note: for matplotlib >= 3.3, can't be [], which will make caplines () 
                 yerr=np.nan,
                 xerr=np.nan,
                 marker='o', 
                 linestyle='none',
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
-                # picker=5, # 5 points tolerance
+                # pickradius=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
                 capsize=config_default['mpl_capsize'],
@@ -1204,16 +1204,22 @@ class MatplotlibWidget(QWidget):
                     
                     
                     if isinstance(self.l[key], ErrorbarContainer): # errorbar plot
+                        logger.info('key: %s', key)
+                        logger.info('len(self.l[key]): %s', len(self.l[key]))
                         # clear errorbar
                         line, caplines, barlinecols = self.l[key]
-                        line.set_data([], [])
 
+                        logger.info(line) 
+                        logger.info(caplines) 
+                        logger.info('caplines len %s', len(caplines))
+                        logger.info(barlinecols) 
+                        logger.info('barlinecols len %s', len(barlinecols))
+
+                        line.set_data([], [])
                         error_positions = ([],[]), ([],[]), ([],[]), ([],[]) 
                         # Update the caplines 
                         for i, pos in enumerate(error_positions): 
-                            # logger.info('i %s', i) 
-                            # logger.info(caplines) 
-                            # logger.info('caplines_len %s', len(caplines)) 
+                            logger.info('i %s', i) 
                             caplines[i].set_data(pos) 
                         # Update the error bars 
                         barlinecols[0].set_segments(zip(zip([],[]), zip([],[]))) 

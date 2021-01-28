@@ -15,6 +15,7 @@
 
 - Fix chashing while exporting data with empty channel(s).
 - Fix variable name errors in rheoQCM
+- Fix comparability with Matplotlib >= 3.3: picker, errorbar.
 
 ## [0.19.3] - 2020-11-06
 
