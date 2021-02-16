@@ -171,7 +171,6 @@ def sauerbreym(n, delf):
     return delf*Zq/(2*n*f1 ** 2)
 
 
-
 def etarho(n, props):
     """
     Use power law formulation to get |eta*|rho at specified harmonic, 
@@ -642,7 +641,6 @@ def dlam(n, dlam3, phi):
         d/lambda at specified harmonic
     """
     return dlam3*(int(n)/3) ** (1-phi/180)
-
 
 
 def normdelfstar(n, dlam3, phi):
@@ -1458,7 +1456,7 @@ def make_vgp_axes(**kwargs):
     return fig, ax
 
 
-def read_xlsx(infile, **kwargs):  
+def read_xlsx(infile, **kwargs):
     """
     Create data frame from.xlsx file output by RheoQCM.
     
@@ -1566,6 +1564,22 @@ def read_xlsx(infile, **kwargs):
         fig.tight_layout()
 
     return df[keep_column].copy()
+
+
+def plot_bare_tempshift(bare_Tf, T, Tref):
+    fig, ax = plt.subplots(1, 1, figsize=(4,4), constrained_layout=True)
+    for n in [1, 3, 5]:
+        fitvals = calc_bare_tempshift(bare_Tf, T, Tref, n)
+        ax.plot(T, fitvals, label = 'n='+str(n))
+    ax.legend(loc='best')
+    ax.set_title('$T_{ref}=$'+str(Tref)+r'$^\circ$C')
+    ax.set_xlabel(r'$T\:^\circ$C')
+    ax.set_ylabel(r'$\Delta f_n$ (Hz)')
+
+
+def calc_bare_tempshift(bare_Tf, T, Tref, n):
+    return np.polyval(bare_Tf[n],T) - np.polyval(bare_Tf[n],Tref)
+
 
 def gstar_maxwell(wtau):  
     """
@@ -1705,6 +1719,7 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
 
 
 def vogel(T, Tref, B, Tinf):
+
     """
     Vogel Fulcher Tamman Equation.
     
