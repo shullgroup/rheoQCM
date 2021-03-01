@@ -1455,6 +1455,63 @@ def make_vgp_axes(**kwargs):
     fig.tight_layout()
     return fig, ax
 
+def get_bare_fstar(infile, **kwargs):
+    """
+    get the bare crystal ref. data at one specific temperature
+    
+    args:
+        infile (string):
+            full name of input .xlsx file
+            
+    kwargs:
+        restrict_to_marked (list):
+            List of frequencies that must be marked in order to be included.
+            Default is [], so that we include everything.  We rerturn just
+            the average value of all the rows read in
+        
+            
+        ref_source (string):
+            Channel for reference (bare crystal) frequency and dissipation,
+            typically one of the following:
+                - 'S_channel'
+                - 'S_reference'
+                - 'R-channel'
+                - 'R-reference'                '
+                           
+    returns:
+        df:  
+            Input data converted to dataframe   
+        
+    """
+    restrict_to_marked = kwargs.get('restrict_to_marked',[])
+    ref_source = kwargs.get('ref_source', 'S_reference')
+
+    df = pd.read_excel(infile, sheet_name = ref_source, header=0)
+    
+    # sort out which harmonics are included
+    nvals = []
+    for n in [1,3,5,7,9]:
+        if 'f'+str(n) in df.columns:
+            nvals=nvals+[n]
+
+    df['keep_row']=1  # keep all rows unless we are told to check for specific marks
+    for n in restrict_to_marked:
+        df['keep_row'] = df['keep_row']*df['mark'+str(n)]
+
+    # delete rows we don't want to keep
+    df = df[df.keep_row==1] # Delete all rows that are not appropriately marked
+    
+    # now sort out which columns we want to keep in the dataframe
+    keep_column=[]
+    for n in nvals:
+        keep_column.append('f'+str(n))
+        keep_column.append('g'+str(n))
+
+    df = df[keep_column] 
+            
+    return df.mean()
+
+
 
 def read_xlsx(infile, **kwargs):
     """
@@ -1462,7 +1519,7 @@ def read_xlsx(infile, **kwargs):
     
     args:
         infile (string):
-            full name of input data .xlsx file
+            full name of input  .xlsx file
             
     kwargs:
         restrict_to_marked (list):
@@ -1472,15 +1529,23 @@ def read_xlsx(infile, **kwargs):
         data_channel (string):
             Channel for data:  'S' (default) or 'R'
             
-        ref_channel (string):
-            Channel for reference (bare crystal) frequency and dissipation,
+        ref_source (string):
+            Source for reference (bare crystal) frequency and dissipation,
             'self' (default) means we ignore it and read delf and delg
             directly from the data channel. Otherwise we specify one of 
             the following:
-                - 'S_channel'
-                - 'S_reference'
-                - 'R-channel'
-                - 'R-reference'                '
+                - 'S_channel'  ('S-channel' sheet from xlsx file)
+                - 'S_reference'  ('S-reference' sheet from xlsx file)
+                - 'R-channel'  ('R-channel' sheet from xlsx file)
+                - 'R-reference'  ('R-channel' sheet from xlsx file)  
+                -  df_ref (series with df1, dg1, df3, dg3, ...;  in this
+                           case Tref and Tf_coeff must also be specified,
+                           if not equal to the defaults)
+        
+        Tref:
+            Temperature that df_ref corresponds to
+            
+        Tf_coeff: polynomial coefficients for bare crystal frequency shifts
                            
     returns:
         df:  
@@ -1490,7 +1555,12 @@ def read_xlsx(infile, **kwargs):
     restrict_to_marked = kwargs.get('restrict_to_marked',[])
     data_channel = kwargs.get('data_channel', 'S')
     data_name = data_channel+'_channel'
-    ref_channel = kwargs.get('ref_channel', 'self')
+    ref_source = kwargs.get('ref_source', 'self')
+    Tref = kwargs.get('Tref', 22)
+    Tf_coeff = kwargs.get('Tf_coeff', 
+                          {1:[0.00054625, 0.04338, 0.08075, 0],
+                           3:[0.0017, -0.135, 8.9375, 0],
+                           5:[0.002825, -0.22125, 15.375, 0]})
 
     df = pd.read_excel(infile, sheet_name=None, header=0)[data_name]
     
@@ -1513,17 +1583,27 @@ def read_xlsx(infile, **kwargs):
         keep_column.append(n)
     
     # add each of the values of delfstar
-    if ref_channel == 'self':
+    if isinstance(ref_source, pd.Series):
+        for n in nvals:
+            fref = (ref_source['f'+str(n)]+
+                    bare_tempshift(Tf_coeff, df['temp'], Tref, n))
+            gref = ref_source['g'+str(n)]
+            fstar_ref = fref + 1j*gref
+            fstar = df['f'+str(n)] + 1j*df['g'+str(n)]
+            df[n] = (fstar - fstar_ref)
+
+    elif ref_source == 'self':
         # this is the standard read protocol, with delf and delg already in 
         # the .xlsx file
         for n in nvals:
-            df[n] = df['delf'+str(n)] + 1j*df['delg'+str(n)].round(1)
+            df[n] = df['delf'+str(n)] + 1j*df['delg'+str(n)].round(1)            
+            
     else:
         # here we need to get the reference frequencies from the temperature
         # depenendent data in the reference channel
         n_num = len(nvals)
         fig, ax = plt.subplots(2, n_num, figsize=(3*n_num,6))
-        df_ref = pd.read_excel(infile, sheet_name=None, header=0)[ref_channel]
+        df_ref = pd.read_excel(infile, sheet_name=None, header=0)[ref_source]
         # reorder rerence data according to temperature
         df_ref=df_ref.sort_values('temp')
         # drop any duplicate temperature values
@@ -1566,10 +1646,10 @@ def read_xlsx(infile, **kwargs):
     return df[keep_column].copy()
 
 
-def plot_bare_tempshift(bare_Tf, T, Tref):
+def plot_bare_tempshift(Tf_coeff, T, Tref):
     fig, ax = plt.subplots(1, 1, figsize=(4,4), constrained_layout=True)
     for n in [1, 3, 5]:
-        fitvals = calc_bare_tempshift(bare_Tf, T, Tref, n)
+        fitvals = bare_tempshift(Tf_coeff, T, Tref, n)
         ax.plot(T, fitvals, label = 'n='+str(n))
     ax.legend(loc='best')
     ax.set_title('$T_{ref}=$'+str(Tref)+r'$^\circ$C')
@@ -1577,8 +1657,8 @@ def plot_bare_tempshift(bare_Tf, T, Tref):
     ax.set_ylabel(r'$\Delta f_n$ (Hz)')
 
 
-def calc_bare_tempshift(bare_Tf, T, Tref, n):
-    return np.polyval(bare_Tf[n],T) - np.polyval(bare_Tf[n],Tref)
+def bare_tempshift(Tf_coeff, T, Tref, n):
+    return np.polyval(Tf_coeff[n],T) - np.polyval(Tf_coeff[n],Tref)
 
 
 def gstar_maxwell(wtau):  
