@@ -244,6 +244,22 @@ def calc_grho3(n, grhostar):
     return grho3, phi
 
 
+def calc_jdp(grho):
+    """
+    Calculte the loss compliance, J", normalized by rho, with Gstar*rho
+    as the input.
+    args:
+        grho:
+            complex Gstar multiplied by density
+    
+    returns:
+        jdp:
+            imaginary part of complex Jstar (shear compliance), divided by 
+            density
+    """
+    return (1/abs(grho))*np.sin(np.angle(grho))
+
+
 def grho_from_dlam(n, drho, dlam, phi):
     """
     Obtain |G*|\rho from d/lambda.
@@ -1294,7 +1310,7 @@ def prop_plots(df, ax, **kwargs):
             ax[k].legend()
  
             
-def vgp_plots(df, ax, **kwargs):
+def vgp_plot(df, ax, **kwargs):
     """
     Add property data to existing van Gurp-Palmen axes.
     
@@ -1798,7 +1814,7 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
     return g_br, g_tot
 
 
-def vogel(T, Tref, B, Tinf):
+def vft(T, Tref, B, Tinf):
 
     """
     Vogel Fulcher Tamman Equation.
@@ -1995,7 +2011,7 @@ def check_solution(df, **kwargs):
             
             
     for n in nplot: 
-        nstr=str(n)
+        nstr=str(n)+' (expt)'
         # compare experimental and calculated frequency fits     
         ax[1,0].plot(dvals[3], np.real(df_expt[n])/n, '+', color = col[n],
                      label = 'n='+nstr)
