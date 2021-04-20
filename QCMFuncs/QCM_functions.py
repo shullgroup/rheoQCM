@@ -1618,7 +1618,8 @@ def read_xlsx(infile, **kwargs):
         # here we need to get the reference frequencies from the temperature
         # depenendent data in the reference channel
         n_num = len(nvals)
-        fig, ax = plt.subplots(2, n_num, figsize=(3*n_num,6))
+        fig, ax = plt.subplots(2, n_num, figsize=(3*n_num,6),
+                               constrained_layout=True)
         df_ref = pd.read_excel(infile, sheet_name=None, header=0)[ref_source]
         # reorder rerence data according to temperature
         df_ref=df_ref.sort_values('temp')
@@ -1633,23 +1634,27 @@ def read_xlsx(infile, **kwargs):
                 # get the reference values and plot them
                 ref_vals=df_ref[vars[p]+str(nvals[k])]
                 ax[p, k].plot(temp, ref_vals, '.')
+                ax[p, k].set_xlabel(r'$T$ ($^\circ$C)')
                 
                 # make the fitting function and plot it, along with the
                 # values corresponding to temperatures from the data
                 # set with the film
-                fit=InterpolatedUnivariateSpline(temp, ref_vals, k=1, ext=3)
-                ax[p, k].plot(temp, fit(temp), '-')
-                ax[p, k].plot(df['temp'], fit(df['temp']), '+')
+                #fit=InterpolatedUnivariateSpline(temp, ref_vals, k=1, ext=3)
+                fit = np.polyfit(temp, ref_vals, 3)
+                ax[p, k].plot(temp, np.polyval(fit, temp), '-')
+                #ax[p, k].plot(df['temp'], fit(df['temp']), '+')
                 
                 #write the film and reference values to the data frame
                 df[vars[p]+str(nvals[k])+'_dat']=df[vars[p]+str(nvals[k])]
-                df[vars[p]+str(nvals[k])+'_ref']=fit(df['temp'])
+                df[vars[p]+str(nvals[k])+'_ref']=np.polyval(fit, df['temp'])
 
             # now write values delfstar to the dataframe
             df[nvals[k]]=(df['f'+str(nvals[k])+'_dat']-
                           df['f'+str(nvals[k])+'_ref']+
                       1j*(df['g'+str(nvals[k])+'_dat']-
                           df['g'+str(nvals[k])+'_ref'])).round(1)
+        # label the plot
+        fig.suptitle('ref temp coeffs: '+str(fit))
         # add absolute frequency and reference values to dataframe
         for n in nvals:
             keep_column.append('f'+str(n)+'_dat')
