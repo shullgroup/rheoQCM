@@ -168,7 +168,7 @@ def sauerbreym(n, delf):
     returns:
         Sauerbrey mass in kg/m^2.
     """
-    return delf*Zq/(2*n*f1 ** 2)
+    return -delf*Zq/(2*n*f1 ** 2)
 
 
 def etarho(n, props):
@@ -865,7 +865,7 @@ def thinfilm_guess(delfstar, calc):
 
     dlam3 = soln['x'][0]
     phi = soln['x'][1]
-    drho = (sauerbreym(n1, delfstar[n1].real) /
+    drho = -(sauerbreym(n1, delfstar[n1].real) /
             normdelfstar(n1, dlam3, phi).real)
     grho3 = grho_from_dlam(3, drho, dlam3, phi)
     return drho, grho3, phi
@@ -1547,9 +1547,9 @@ def read_xlsx(infile, **kwargs):
             
         ref_source (string):
             Source for reference (bare crystal) frequency and dissipation,
-            'self' (default) means we ignore it and read delf and delg
-            directly from the data channel. Otherwise we specify one of 
-            the following:
+              'self' (default) means we ignore it and read delf and delg
+              directly from the data channel. Otherwise we specify one of 
+              the following:
                 - 'S_channel'  ('S-channel' sheet from xlsx file)
                 - 'S_reference'  ('S-reference' sheet from xlsx file)
                 - 'R-channel'  ('R-channel' sheet from xlsx file)
@@ -1557,6 +1557,10 @@ def read_xlsx(infile, **kwargs):
                 -  df_ref (series with df1, dg1, df3, dg3, ...;  in this
                            case Tref and Tf_coeff must also be specified,
                            if not equal to the defaults)
+        
+        ref_index (numpy array):
+            index values to include in reference determination 
+            default is 'all', which takes everything
         
         Tref:
             Temperature that df_ref corresponds to
@@ -1594,7 +1598,7 @@ def read_xlsx(infile, **kwargs):
     df = df[df.keep_row==1] # Delete all rows that are not appropriately marked
     
     # now sort out which columns we want to keep in the dataframe
-    keep_column=['t', 'temp']
+    keep_column=['t']
     for n in nvals:
         keep_column.append(n)
     
@@ -1615,54 +1619,71 @@ def read_xlsx(infile, **kwargs):
             df[n] = df['delf'+str(n)] + 1j*df['delg'+str(n)].round(1)            
             
     else:
-        # here we need to get the reference frequencies from the temperature
-        # depenendent data in the reference channel
+        # here we need to get the reference frequencies from the 
+        # data in the reference channel
+
         n_num = len(nvals)
-        fig, ax = plt.subplots(2, n_num, figsize=(3*n_num,6),
-                               constrained_layout=True)
-        df_ref = pd.read_excel(infile, sheet_name=None, header=0)[ref_source]
-        # reorder rerence data according to temperature
-        df_ref=df_ref.sort_values('temp')
-        # drop any duplicate temperature values
-        df_ref = df_ref.drop_duplicates(subset='temp', keep='first')
-        temp = df_ref['temp']
+        df_ref = pd.read_excel(infile, sheet_name=ref_source, header=0)
         vars=['f', 'g']
-
+        # if no temperature is listed we just average the values
+        if ('temp' not in df_ref.keys()) or (df.temp.isnull().values.all()):
+            for k in np.arange(len(nvals)):
+                for p in [0,1]:
+                    # get the reference values and plot them
+                    ref_val=df_ref[vars[p]+str(nvals[k])].mean()
+                    
+                    #write the film and reference values to the data frame
+                    df[vars[p]+str(nvals[k])+'_dat']=df[vars[p]+str(nvals[k])]
+                    df[vars[p]+str(nvals[k])+'_ref']=ref_val
+                    
+        # now we handle the case where we have a full range of 
+        # temperatures
+        else:
+            keep_column.append('temp')
+            fig, ax = plt.subplots(2, n_num, figsize=(3*n_num,6),
+                               constrained_layout=True)        
+            # reorder rerence data according to temperature
+            df_ref=df_ref.sort_values('temp')
+            
+            # drop any duplicate temperature values
+            df_ref = df_ref.drop_duplicates(subset='temp', keep='first')
+            temp = df_ref['temp']
+            for k in np.arange(len(nvals)):
+                for p in [0,1]:
+                    ax[p, k].set_title(vars[p]+str(nvals[k]))
+                    # get the reference values and plot them
+                    ref_vals=df_ref[vars[p]+str(nvals[k])]
+                    ax[p, k].plot(temp, ref_vals, '.')
+                    ax[p, k].set_xlabel(r'$T$ ($^\circ$C)')
+                    
+                    # make the fitting function and plot it, along with the
+                    # values corresponding to temperatures from the data
+                    # set with the film
+                    #fit=InterpolatedUnivariateSpline(temp, ref_vals, k=1, ext=3)
+                    fit = np.polyfit(temp, ref_vals, 3)
+                    ax[p, k].plot(temp, np.polyval(fit, temp), '-')
+                    #ax[p, k].plot(df['temp'], fit(df['temp']), '+')
+                    
+                    #write the film and reference values to the data frame
+                    df[vars[p]+str(nvals[k])+'_dat']=df[vars[p]+str(nvals[k])]
+                    df[vars[p]+str(nvals[k])+'_ref']=np.polyval(fit, df['temp'])
+ 
+            # label the plot
+            fig.suptitle('ref temp coeffs: '+str(fit))
+        
         for k in np.arange(len(nvals)):
-            for p in [0,1]:
-                ax[p, k].set_title(vars[p]+str(nvals[k]))
-                # get the reference values and plot them
-                ref_vals=df_ref[vars[p]+str(nvals[k])]
-                ax[p, k].plot(temp, ref_vals, '.')
-                ax[p, k].set_xlabel(r'$T$ ($^\circ$C)')
-                
-                # make the fitting function and plot it, along with the
-                # values corresponding to temperatures from the data
-                # set with the film
-                #fit=InterpolatedUnivariateSpline(temp, ref_vals, k=1, ext=3)
-                fit = np.polyfit(temp, ref_vals, 3)
-                ax[p, k].plot(temp, np.polyval(fit, temp), '-')
-                #ax[p, k].plot(df['temp'], fit(df['temp']), '+')
-                
-                #write the film and reference values to the data frame
-                df[vars[p]+str(nvals[k])+'_dat']=df[vars[p]+str(nvals[k])]
-                df[vars[p]+str(nvals[k])+'_ref']=np.polyval(fit, df['temp'])
-
             # now write values delfstar to the dataframe
             df[nvals[k]]=(df['f'+str(nvals[k])+'_dat']-
                           df['f'+str(nvals[k])+'_ref']+
                       1j*(df['g'+str(nvals[k])+'_dat']-
                           df['g'+str(nvals[k])+'_ref'])).round(1)
-        # label the plot
-        fig.suptitle('ref temp coeffs: '+str(fit))
+
         # add absolute frequency and reference values to dataframe
         for n in nvals:
             keep_column.append('f'+str(n)+'_dat')
             keep_column.append('f'+str(n)+'_ref')
             keep_column.append('g'+str(n)+'_dat')
             keep_column.append('g'+str(n)+'_ref')
-    
-        fig.tight_layout()
 
     return df[keep_column].copy()
 
