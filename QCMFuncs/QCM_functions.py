@@ -1520,9 +1520,9 @@ def read_xlsx(infile, **kwargs):
     """
     
     restrict_to_marked = kwargs.get('restrict_to_marked',[])
-    film_channel = kwargs.get('film_channel', 'S')
+    film_channel = kwargs.get('film_channel', 'S_channel')
     film_index = kwargs.get('film_index', 'all')
-    ref_channel = kwargs.get('ref_channel', 'self')
+    ref_channel = kwargs.get('ref_channel', 'R_channel')
     ref_index = kwargs.get('ref_index', 'all')
     
     Tref = kwargs.get('Tref', 22)
