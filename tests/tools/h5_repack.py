@@ -19,17 +19,29 @@ org_prefix = 'orgfile_' # the prefix to be added to rename the original file
 if sys.platform == 'win32':
     h5tool_file = 'h5repack.exe'
 elif sys.platform == 'linux':
-    h5tool_file = 'h5repack'
+    # check if h5repack is installed
+    p = subprocess.Popen(['which', 'h5repack'], stdout=subprocess.PIPE) # PIPE read the command line output
+    output = p.communicate()[0]
+    p_status = p.wait()
+    print('output :', output)
+    if output:
+        print('system h5repack location: ', output)
+        h5tool_file = 'h5repack'
+    else:
+        print('h5repack is not founed in your system.', 'Please install first.', sep='\n')
+        exit(1)
 else:
     print('system not support yet')
     exit(0)
 
-h5tool_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), h5tool_file)
-print(h5tool_path)
+
+h5tool_path =  h5tool_file # use system h5repack file
+
 
 def gen_cmd(inpath, outpath):
 
     return [h5tool_path, '-i', inpath, '-o', outpath]
+
 
 # command to process the repack
 def repack_command(inpath):
