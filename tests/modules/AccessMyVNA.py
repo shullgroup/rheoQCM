@@ -1326,14 +1326,15 @@ class AccessMyVNA():
         self.Autoscale()
         logger.info('self._nsteps%s', self._nsteps) 
 
-        t_wait = time.time() + self._get_wait_time()
-        # wait for some time
-        bg_wait_till(t_wait) # sleep
+        ## wait for VNA collecting data
+        # method 1: wait for some time
+        t_wait = time.time() + self._get_wait_time() 
+        # bg_wait_till(t_wait) # sleep
 
-        # # used thread
-        # thread = threading.Thread(target=bg_wait_till, args=(t_wait,))
-        # thread.start()
-        # thread.join()
+        # method 2: use thread
+        thread = threading.Thread(target=time.sleep, args=(self._get_wait_time(),))
+        thread.start()
+        thread.join()
 
         logger.info('self._nsteps%s', self._nsteps) 
         # ret, nSteps = self.GetScanSteps()

@@ -58,15 +58,20 @@ import csv
 import logging
 logger = logging.getLogger(__name__)
 
+import UISettings 
+config_default = UISettings.get_config() # load default configuration
+settings_default = UISettings.get_settings()
+
+
 
 class DataSaver:
-    def __init__(self, ver='', settings={}):
+    def __init__(self, ver='', settings=settings_default):
         '''
         initial values are for initialize the module outside of UI
         '''
 
         self._chn_keys = ['samp', 'ref'] # raw data groups
-        self._ref_keys = {'fs': 'f0', 'gs': 'g0'} # corresponding keys storing the reference
+        self._ref_keys = {'fs': 'f0', 'gs': 'g0', 'ps': 'p0'} # corresponding keys storing the reference
         self.ver  = ver # version information
         self.settings = settings
 
@@ -158,12 +163,14 @@ class DataSaver:
         func_list = [] # list of funcs 
         func_f_list = [] # func for all freq
         func_g_list = [] # func for all gamma
+        func_p_list = [] # func 
         nan_func = lambda temp: np.array([np.nan] * len(temp))
         for _ in range(1, self.settings['max_harmonic']+2, 2): # calculate each harm
             func_f_list.append(nan_func) # add a func return nan
             func_g_list.append(nan_func) # add a func return nan
+            func_p_list.append(nan_func) # add a func return nan
             # make function for each ind_list
-            func_list.append(self.make_interpfun(func_f_list, func_g_list))
+            func_list.append(self.make_interpfun(func_f_list, func_g_list, func_p_list))
         for chn_name in self._chn_keys:
             func_dict[chn_name] = func_list.copy()
         return func_dict
@@ -1171,21 +1178,20 @@ class DataSaver:
         reshape and tidy data df (samp and ref) for exporting
         keep_mark works when dropnanmarkrow == False
         '''
-        cols = ['fs', 'gs']
+        logger.info('dropnanmarkrow %s', dropnanmarkrow)
         df = getattr(self, chn_name).copy()
-
-        if 'ps' in df.columns:
-            logger.info(df.columns)
-            df = df.drop(columns='ps')
 
         # convert t column to datetime object
         df['t'] = self.get_t_by_unit(chn_name, unit=unit_t)
         df['temp'] = self.get_temp_by_unit(chn_name, unit=unit_temp)
         # logger.info(df.t) 
 
-        for col in cols:
-            df = df.assign(**self.get_list_column_to_columns(chn_name, col, mark=mark, deltaval=deltaval, norm=norm)) # split columns: fs and gs
-            df = df.drop(columns=col) # drop columns: fs and gs
+        logger.info('col endswith s: %s', df.columns[df.columns.str.endswith('s')])
+        for col in df.columns[df.columns.str.endswith('s')]:
+            logger.info('col: %s', col)
+            if (col in config_default['data_saver_export_cols']) and (col != 'marks'):
+                df = df.assign(**self.get_list_column_to_columns(chn_name, col, mark=mark, deltaval=deltaval, norm=norm)) # split columns: fs and gs
+                df = df.drop(columns=col) # drop columns: fs and gs
 
         logger.info(df.head()) 
 
@@ -1201,7 +1207,7 @@ class DataSaver:
             logger.info('reshape_data_df: dropnanmarkrow = True') 
             df = df[self.rows_with_marks(chn_name)][:]
             # logger.info(df) 
-            if 'marks' in df.columns:
+            if 'marks' in df.columns: # we do not need marks since only marked data exported here
                 df = df.drop(columns='marks') # drop marks column
         else:
             logger.warning('there is no marked data.\n no data will be deleted.') 
@@ -1705,7 +1711,9 @@ class DataSaver:
 
         # get a copy
         col_s = getattr(self, chn_name)[col].copy()
-        # logger.info(self.exp_ref[chn_name]) 
+        logger.info(self.exp_ref[chn_name]) 
+        logger.info(chn_name) 
+        logger.info(col) 
 
         mode = self.exp_ref.get('mode')
 
@@ -1714,7 +1722,8 @@ class DataSaver:
 
             ref_s = self.interp_film_ref(chn_name, col=col) # get reference for col (fs or gs)
 
-            # logger.info('ref_s\n%s', ref_s) 
+            # logger.info('col_s\n%s', col_s) 
+            logger.info('ref_s\n%s', ref_s.head()) 
             
             # convert series value to ndarray
             col_arr = np.array(col_s.values.tolist())
@@ -1794,7 +1803,7 @@ class DataSaver:
         # change value
         df = - df 
         # rename
-        df.rename(columns=lambda x: 'm'+ x, inplace=True) 
+        # df.rename(columns=lambda x: 'm'+ x, inplace=True) 
         return df
 
 
@@ -1883,6 +1892,7 @@ class DataSaver:
                     self.exp_ref[chn] = {
                         'f0': self.nan_harm_list(), # list for each harmonic
                         'g0': self.nan_harm_list(), # list for each harmonic
+                        'p0': self.nan_harm_list(), # list for each harmonic
                     }
 
             # copy df to ref
@@ -1949,32 +1959,37 @@ class DataSaver:
 
                     func_f_list = [] # func for all freq
                     func_g_list = [] # func for all gamma
+                    func_p_list = [] # func
 
                     # get data
                     ref_fs_df = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'fs', mark=False, dropnanmarkrow=False, deltaval=False)
                     ref_gs_df = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'gs', mark=False, dropnanmarkrow=False, deltaval=False)
                     logger.info('chn_ref_source %s', chn_ref_source)
+                    ref_ps_df = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'ps', mark=False, dropnanmarkrow=False, deltaval=False)
                     # logger.info('ref_fs_df %s', ref_fs_df)
                     # logger.info('ref_fs_df.index %s', ref_fs_df.index)
                     # logger.info('ref_fs_df.loc[ind_list] %s', ref_fs_df.loc[ind_list])
                     # logger.info('ref_gs_df.loc[ind_list] %s', ref_gs_df.loc[ind_list])
                     func_f_list = ref_fs_df.loc[ind_list].mean().values.tolist() # list of float for now
                     func_g_list = ref_gs_df.loc[ind_list].mean().values.tolist() # list of float for now
-                    logger.info('func_f_list %s', func_f_list)
-                    logger.info('func_g_list %s', func_g_list)
-                    # for version <= 0.18
+                    func_p_list = ref_ps_df.loc[ind_list].mean().values.tolist() # list of float for now
+                    # logger.info('func_f_list %s', func_f_list)
+                    # logger.info('func_g_list %s', func_g_list)
+                    # NOTE: for version <= 0.18
                     # Save to self.exp_ref[chn_name] 
                     if all([isinstance(l, int) for l in self.exp_ref[chn_name+'_ref'][1]]): # all int. 
                         self.exp_ref[chn_name]['f0'] = func_f_list
                         self.exp_ref[chn_name]['g0'] = func_g_list
+                        self.exp_ref[chn_name]['p0'] = func_p_list
 
                     # convert func_f/g_list to list of functions
                     func_f_list = [lambda x, f=f: np.full_like(x, f, dtype=float) for f in func_f_list]
                     func_g_list = [lambda x, g=g: np.full_like(x, g, dtype=float) for g in func_g_list]
+                    func_p_list = [lambda x, p=p: np.full_like(x, p, dtype=float) for p in func_p_list]
                     # print([x([0, 2]) for x in func_f_list])
                     # print([x([0, 2]) for x in func_g_list])
                     # make function for each ind_list
-                    func_list.append(self.make_interpfun(func_f_list, func_g_list))
+                    func_list.append(self.make_interpfun(func_f_list, func_g_list, func_p_list))
 
                 self.exp_ref['func'][chn_name] = func_list # save to class
 
@@ -1985,6 +2000,7 @@ class DataSaver:
 
                 df['fs'] = self.interp_film_ref(chn_name, col='fs')
                 df['gs'] = self.interp_film_ref(chn_name, col='gs')
+                df['ps'] = self.interp_film_ref(chn_name, col='ps')
 
                 # change mark 1 to 0
                 df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
@@ -2036,38 +2052,56 @@ class DataSaver:
                 # get harm data fs in columns
                 fs = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'fs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute freq in Hz. If marked, set mark=True
                 gs = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'gs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute gamma in Hz. If marked, set mark=True
+                ps = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'ps', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute 
 
                 func_list = [] # list of funcs 
                 logger.info('reference_idx %s', reference_idx) 
-                logger.info('exp_ref %s', self.exp_ref) 
+                # logger.info('exp_ref %s', self.exp_ref) 
                 for ind_list in reference_idx: # iterate each list
-                    logger.info('ind_list %s', ind_list)
+                    # logger.info('ind_list %s', ind_list)
                     if len(ind_list) == 1: # single point
                         # cause single point is not allowed for interp1d, doubling the length by repeating
                         ind_list = ind_list * 2
                     func_f_list = [] # func for all freq
                     func_g_list = [] # func for all gamma
-                    tempind = temp[ind_list]
+                    func_p_list = [] # func
+                    tempind = temp[ind_list] 
                     for harm in range(1, self.settings['max_harmonic']+2, 2): # calculate each harm
                         fharmind = fs['f'+str(harm)][ind_list] # f of harm
                         gharmind = gs['g'+str(harm)][ind_list] # g of harm
+                        pharmind = ps['p'+str(harm)][ind_list] # g of harm
 
                         # calc freq
                         if np.isnan(fharmind).all(): # no data in harm and ind_list
+                            func_f_list.append(lambda x: np.full_like(x, np.nan))
                             pass # already initiated
                         else: # there is data
-                            logger.info('tempind %s', tempind) 
-                            logger.info('fharmind %s', fharmind) 
-                            func_f_list.append(interp1d(tempind, fharmind, kind=self.exp_ref['mode']['fit'], fill_value=np.nan, bounds_error=False))
+                            # logger.info('tempind %s', tempind) 
+                            # logger.info('fharmind %s', fharmind) 
+                            nonna_idx = fharmind.notna()
+                            func_f_list.append(interp1d(tempind[nonna_idx], fharmind[nonna_idx], kind=self.exp_ref['mode']['fit'], fill_value=
+                            'extrapolate', bounds_error=False))
                         
                         # calc gamma
                         if np.isnan(gharmind).all(): # no data in harm and ind_list
+                            func_g_list.append(lambda x: np.full_like(x, np.nan)) # 
                             pass # already initiated
                         else: # there is data
-                            func_g_list.append(interp1d(tempind, gharmind, kind=self.exp_ref['mode']['fit'], fill_value=np.nan, bounds_error=False))
+                            nonna_idx = gharmind.notna()
+                            func_g_list.append(interp1d(tempind[nonna_idx], gharmind[nonna_idx], kind=self.exp_ref['mode']['fit'], fill_value=
+                            'extrapolate', bounds_error=False))
+
+                        # calc p
+                        if np.isnan(pharmind).all(): # no data in harm and ind_list
+                            func_p_list.append(lambda x: np.full_like(x, np.nan)) # 
+                            pass # already initiated
+                        else: # there is data
+                            nonna_idx = fharmind.notna()
+                            func_p_list.append(interp1d(tempind[nonna_idx], pharmind[nonna_idx], kind=self.exp_ref['mode']['fit'], fill_value=
+                            'extrapolate', bounds_error=False))
 
                     # make function for each ind_list
-                    func_list.append(self.make_interpfun(func_f_list, func_g_list))
+                    func_list.append(self.make_interpfun(func_f_list, func_g_list, func_p_list))
 
                 self.exp_ref['func'][chn_name] = func_list # save to class
 
@@ -2078,6 +2112,7 @@ class DataSaver:
 
                 df['fs'] = self.interp_film_ref(chn_name, col='fs')
                 df['gs'] = self.interp_film_ref(chn_name, col='gs')
+                df['ps'] = self.interp_film_ref(chn_name, col='ps')
 
                 # change mark 1 to 0
                 df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
@@ -2098,7 +2133,7 @@ class DataSaver:
         self.refflg[chn_name] = False
 
 
-    def make_interpfun(self, func_f_list, func_g_list):
+    def make_interpfun(self, func_f_list, func_g_list, func_p_list):
         '''
         return a fun
         [f1, f3, ...], [g1, g3, ...] = fun(temp)
@@ -2107,12 +2142,13 @@ class DataSaver:
         func_f_list: interpolate fun list of freq for all harmonics
         func_g_list: interpolate fun list of gamma for all harmonics
         '''
-        def func_fg(temp):
+        def func_fgp(temp):
             return [
                 [func_f(temp) for func_f in func_f_list],
                 [func_g(temp) for func_g in func_g_list],
+                [func_p(temp) for func_p in func_p_list],
             ]
-        return func_fg
+        return func_fgp
 
 
     def interp_film_ref(self, chn_name, col=None):
@@ -2169,7 +2205,7 @@ class DataSaver:
                     # get interpolated f, g of temp in ind_list (tempind) 
                     # len(ind_list) can be longer than len(chn_func) 
                     # use modulus 
-                    f_list, g_list = chn_func[seg % len(chn_func)](ind_list) # dummy values with the same size of data
+                    f_list, g_list, p_list = chn_func[seg % len(chn_func)](ind_list) # dummy values with the same size of data
                     # logger.info('f_list %s', f_list)
                     # transpose 
                     fs_list = np.transpose(np.array(f_list)).tolist()
@@ -2177,11 +2213,14 @@ class DataSaver:
 
                     gs_list = np.transpose(np.array(g_list)).tolist()
 
+                    ps_list = np.transpose(np.array(p_list)).tolist()
+
                     # save to df
                     # logger.info('cols.fs[ind_list] %s', cols.fs[ind_list])
                     # logger.info('fs_list %s', fs_list)
                     cols.fs[ind_list] = fs_list
                     cols.gs[ind_list] = gs_list
+                    cols.ps[ind_list] = ps_list
 
                 # logger.info('cols[ind_list]\n%s', cols.iloc[ind_list]) 
                 logger.info(cols[col].head())
@@ -2219,16 +2258,19 @@ class DataSaver:
                     # get interpolated f, g of temp in ind_list (tempind) 
                     # len(ind_list) can be longer than len(chn_func) 
                     # use modulus 
-                    f_list, g_list = chn_func[seg % len(chn_func)](tempind)
+                    f_list, g_list, p_list = chn_func[seg % len(chn_func)](tempind)
                     # transpose 
                     fs_list = np.transpose(np.array(f_list)).tolist()
                     logger.info('len(fs_list) %s', len(fs_list)) 
 
                     gs_list = np.transpose(np.array(g_list)).tolist()
 
+                    ps_list = np.transpose(np.array(p_list)).tolist()
+
                     # save to df
                     cols.fs[ind_list] = fs_list
                     cols.gs[ind_list] = gs_list
+                    cols.ps[ind_list] = ps_list
 
                 logger.info('cols[ind_list]\n%s', cols.iloc[ind_list]) 
                 logger.info(cols[col].head())
@@ -2280,6 +2322,7 @@ class DataSaver:
             ref_dict = self.exp_ref[chn_name].copy() # make a copy to make sure not change the original one
             ref_dict['f0'] =  [val for i, val in enumerate(ref_dict['f0']) if i in idx]
             ref_dict['g0'] =  [val for i, val in enumerate(ref_dict['g0']) if i in idx]
+            ref_dict['p0'] =  [val for i, val in enumerate(ref_dict['p0']) if i in idx]
             # logger.info(ref_dict) 
             # logger.info(self.exp_ref[chn_name]) 
             return ref_dict
@@ -2492,6 +2535,9 @@ class DataSaver:
             # set fs, gs to nan
             df_chn.fs[idx] = df_chn.fs[idx].apply(lambda x: [np.nan if str(i*2+1) in harm else val for i, val in enumerate(x)]) # set all to nan. May not necessary
             df_chn.gs[idx] = df_chn.gs[idx].apply(lambda x: [np.nan if str(i*2+1) in harm else val for i, val in enumerate(x)]) # set all to nan. May not necessary
+            # if 'ps' in df_chn.columns:
+            df_chn.ps[idx] = df_chn.ps[idx].apply(lambda x: [np.nan if str(i*2+1) in harm else val for i, val in enumerate(x)]) # set all to nan. May not necessary
+
         
         # delete rows marks are all nan
         df_chn = df_chn[~self.rows_all_nan_marks(chn_name)]
@@ -2592,19 +2638,25 @@ class DataSaver:
         # get delf and delg in form of [n1, n3, n5, ...]
         delfs = self.convert_col_to_delta_val(chn_name, 'fs', norm=False)
         delgs = self.convert_col_to_delta_val(chn_name, 'gs', norm=False)
+        delps = self.convert_col_to_delta_val(chn_name, 'ps', norm=False)
+
         # get reference value as array
         f0s = self.interp_film_ref(chn_name, col='fs')
         g0s = self.interp_film_ref(chn_name, col='gs')
+        p0s = self.interp_film_ref(chn_name, col='gs')
 
         # convert to array
         f_arr = np.array(fs.values.tolist())
         g_arr = np.array(gs.values.tolist())
+        p_arr = np.array(ps.values.tolist())
 
         delf_arr = np.array(delfs.values.tolist())
         delg_arr = np.array(delgs.values.tolist())
+        delp_arr = np.array(delps.values.tolist())
 
         f0_arr = np.array(f0s.values.tolist())
         g0_arr = np.array(g0s.values.tolist())
+        p0_arr = np.array(p0s.values.tolist())
 
         # get delfstar as array
         fstar_arr = f_arr + 1j * g_arr
@@ -2619,8 +2671,10 @@ class DataSaver:
         df['ps'] = ps
         df['delfs'] = delfs
         df['delgs'] = delgs
+        df['delps'] = delps
         df['f0s'] = f0s
         df['g0s'] = g0s
+        df['p0s'] = p0s
 
         logger.info(f_arr.shape)
         logger.info(g_arr.shape)
@@ -2661,8 +2715,27 @@ class DataSaver:
                 col_s = df_b[col].copy()
 
                 if mode['cryst'] == 'single':
-                    col_arr = np.array(col_s.values.tolist()) # convert series to array of array ??
-                    
+                    # col_arr = np.array(col_s.values.tolist()) # convert series to array of array ??
+
+                    # check index format
+                    if all([isinstance(l, list) for l in idx_b]): # all list
+                        pass
+                    elif all([isinstance(l, int) for l in idx_b]): # all int
+                        idx_b = [idx_b] # put into a list
+                    else:
+                        logger.warning('Check index format!')
+                        return
+
+                    if all([isinstance(l, list) for l in idx_a]): # all list
+                        pass
+                    elif all([isinstance(l, int) for l in idx_a]): # all int
+                        idx_a = [idx_a] # put into a list
+                    else:
+                        logger.warning('Check index format!')
+                        return
+
+                    n_arr_cols = len(col_s.iloc[0]) # number of harmonics
+
                     # col_l = col_s.values.tolist()
                     # for i in range(len(col_l)):
                     #     try:
@@ -2671,40 +2744,52 @@ class DataSaver:
                     #         logger.info(i, col_l[i])
 
                     if mode['temp'] == 'const': # single crystal and constant temperature
-                        col_mean = np.mean(col_arr, axis=0) # get mean of each column
-                        logger.info('col_arr %s', col_arr) 
-                        logger.info('col_mean %s', col_mean) 
-                        df[col] = df[col].apply(lambda x: list(col_mean)) # save back to all rows
+                        mean_list =[]
+                        for ind_list in idx_b: # calculate mean
+                            col_arr = np.array(col_s[ind_list].values.tolist())
+                            col_mean = np.mean(col_arr, axis=0) # get mean of each column
+                            logger.info('col_arr %s', col_arr) 
+                            logger.info('col_mean %s', col_mean) 
+                            mean_list.append(col_mean)
+
+                        for seg, ind_list in enumerate(idx_a): # iterate each list
+                            df[col][ind_list] = df[col][ind_list].apply(lambda x: list(mean_list[seg % len(mean_list)]))
+
                     elif mode['temp'] == 'var': # single crystal and variable temperature
                         ## calc interp fun
                         # check if all elements in self.exp_ref.ref_ref[1] is list
-                        if all([isinstance(l, list) for l in idx_b]): # all list
-                            pass
-                        elif all([isinstance(l, int) for l in idx_b]): # all int
-                            idx_b = [idx_b] # put into a list
-                        else:
-                            logger.warning('Check index format!')
-                            return
+
+                        # if all([isinstance(l, list) for l in idx_b]): # all list
+                        #     pass
+                        # elif all([isinstance(l, int) for l in idx_b]): # all int
+                        #     idx_b = [idx_b] # put into a list
+                        # else:
+                        #     logger.warning('Check index format!')
+                        #     return
+
 
                         logger.info('col_s %s', col_s.iloc[0]) 
                         logger.info('col_fs %s', df_b['fs'].iloc[0]) 
-                        # logger.info('col_arr %s', col_arr) 
-                        logger.info('col_arr.shape %s', col_arr.shape) 
-                        # iterate columns in col_arr
-                        n_arr_cols = col_arr.shape[1] if len(col_arr.shape) > 1 else 1
-                        logger.info('n_arr_cols %s', n_arr_cols) 
+                        # # iterate columns in col_arr
+                        # n_arr_cols = col_arr.shape[1] if len(col_arr.shape) > 1 else 1
+                        # logger.info('n_arr_cols %s', n_arr_cols) 
 
                         func_list = []
                         # calc the fun
                         for ind_list in idx_b:
+                            col_arr = np.array(col_s[ind_list].values.tolist())
+
+                            # logger.info('col_arr %s', col_arr) 
+                            logger.info('col_arr.shape %s', col_arr.shape) 
+
                             func_seg_list = []
-                            temp_b_ind = temp_b[ind_list]
+                            temp_b_ind = temp_b[ind_list].to_numpy() # use ndarray
 
                             for i in range(n_arr_cols): # each column in array
                                 if n_arr_cols > 1:
-                                    col_arr_i = col_arr[ind_list, i]
+                                    col_arr_i = col_arr[:, i]
                                 else: #single column
-                                    col_arr_i = col_arr[ind_list]
+                                    col_arr_i = col_arr[:]
                                 
                                 # logger.info(i) 
                                 # logger.info(type(col_s.values)) 
@@ -2717,20 +2802,22 @@ class DataSaver:
                                 # logger.info(col_arr_i) 
                                 # logger.info(type(col_arr_i[0])) 
                                 # logger.info(col_arr_i[0]) 
-                                if np.isnan(col_arr_i).all(): # no data in harm and ind_list
+                                if np.isnan(col_arr).all(): # no data in harm and ind_list
                                     func_seg_list.append(lambda temp: np.array([np.nan] * len(temp))) # add a func return nan
                                 else: # there is data
                                     logger.info('%s %s', temp_b_ind.shape, col_arr_i.shape)
-                                    func_seg_list.append(interp1d(temp_b_ind, col_arr_i, kind=self.exp_ref['mode']['fit'], fill_value=np.nan, bounds_error=False))
+                                    # we don't need nonna for this interplation
+                                    func_seg_list.append(interp1d(temp_b_ind, col_arr_i, kind=self.exp_ref['mode']['fit'], fill_value=
+                                    'extrapolate', bounds_error=False))
                             func_list.append(lambda temp: [func_seg(temp) for func_seg in func_seg_list])    
  
                         # check if all elements in self.exp_ref.samp_ref[1] is list
-                        if all([isinstance(l, list) for l in idx_a]): # all list
-                            pass
-                        elif all([isinstance(l, int) for l in idx_a]): # all int
-                            idx_a = [idx_a] # put into a list
-                        else:
-                            logger.warning('Check index format!')
+                        # if all([isinstance(l, list) for l in idx_a]): # all list
+                        #     pass
+                        # elif all([isinstance(l, int) for l in idx_a]): # all int
+                        #     idx_a = [idx_a] # put into a list
+                        # else:
+                        #     logger.warning('Check index format!')
                         
                         # get interpolated f and g by temp_a
                         for seg, ind_list in enumerate(idx_a): # iterate each list

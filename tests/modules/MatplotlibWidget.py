@@ -10,7 +10,7 @@ ax.change_geometry(2,2,i+1)
 '''
 
 # import matplotlib
-# matplotlib.use('QT5Agg')
+# # matplotlib.use('QT5Agg')
 # matplotlib.rcParams['toolbar'] = 'toolmanager'
 # matplotlib.rcParams['font.size'] = 10
 
@@ -548,6 +548,7 @@ class MatplotlibWidget(QWidget):
                 [], [], 
                 marker='o', 
                 markerfacecolor='none', 
+                picker=True,
                 pickradius=5, # 5 points tolerance
                 label='l'+str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
@@ -559,6 +560,7 @@ class MatplotlibWidget(QWidget):
                 marker='o', 
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
                 linestyle='none',
+                picker=True,
                 pickradius=5, # 5 points tolerance
                 label='lm'+str(i),
                 alpha=0.75,
@@ -640,7 +642,7 @@ class MatplotlibWidget(QWidget):
         # toolbar_children.insert(6, toolbar_children.pop(-1)) # this does not move the icon position
         toolbar_children[4].clicked.connect(self.data_show_all) # 4 is the home button
 
-        # below does not work
+        # NOTE below does not work
         # add selector switch button to toolbar
         # self.fig.canvas.manager.toolmanager.add_tool('Data Selector', SelectorSwitch, selector=self.rect_selector)
 
@@ -655,11 +657,19 @@ class MatplotlibWidget(QWidget):
             self.rect_selector.set_active(True)
             # connect pick event
             self.cid = self.canvas.mpl_connect('pick_event', self.data_onpick_callback)
-           
-            if self.toolbar._active == "PAN":
+
+            logger.info('%s', self.toolbar.mode)
+
+            if self.toolbar.mode == "pan/zoom":
                 self.toolbar.pan()
-            elif self.toolbar._active == "ZOOM":
+            elif self.toolbar.mode == "zoom rect":
                 self.toolbar.zoom()
+
+            # below works only for matplotlib < 3.3
+            # if self.toolbar.mode == "PAN": # matplotlib < 3.3
+            #     self.toolbar.pan()
+            # elif self.toolbar.mode == "ZOOM": # matplotlib < 3.3
+            #     self.toolbar.zoom()
         else:
 
             # deactive rectangle selector
@@ -827,6 +837,7 @@ class MatplotlibWidget(QWidget):
                 [], [], 
                 # marker='o', 
                 markerfacecolor='none', 
+                picker=True,
                 pickradius=5, # 5 points tolerance
                 label='l'+str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
@@ -841,6 +852,7 @@ class MatplotlibWidget(QWidget):
                 markerfacecolor='none', 
                 linestyle='none',
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
+                # picker=True,
                 # pickradius=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
@@ -855,6 +867,7 @@ class MatplotlibWidget(QWidget):
                 marker='o', 
                 linestyle='none',
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
+                # picker=True,
                 # pickradius=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
@@ -918,6 +931,7 @@ class MatplotlibWidget(QWidget):
                 [], [], 
                 # marker='o', 
                 markerfacecolor='none', 
+                picker=True,
                 pickradius=5, # 5 points tolerance
                 label='l'+str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
@@ -928,6 +942,7 @@ class MatplotlibWidget(QWidget):
         #         [], [], 
         #         # marker='o', 
         #         color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
+                # picker=True,
         #         pickradius=5, # 5 points tolerance
         #         label='lm'+str(i),
         #         alpha=0.75,
@@ -942,6 +957,7 @@ class MatplotlibWidget(QWidget):
                 markerfacecolor='none', 
                 linestyle='none',
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
+                # picker=True,
                 # pickradius=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
@@ -956,6 +972,7 @@ class MatplotlibWidget(QWidget):
                 marker='o', 
                 linestyle='none',
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
+                # picker=True,
                 # pickradius=5, # 5 points tolerance
                 label=str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used

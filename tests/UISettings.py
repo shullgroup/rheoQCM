@@ -611,7 +611,7 @@ config_default = {
 
 
     'prop_plot_minmum_row_height': 300, # height of property figure when plotted in line
-
+    'prop_plot_ncols': 2, # number of colums to show property figures # 2 is good. 1 is good to keep plot wide. 3 or more depends on you.
     # contour settings
     #comboBox_settings_mechanics_contourdata
     'contour_data_opts': OrderedDict([
@@ -691,16 +691,19 @@ config_default = {
 
     ######## params for PekTracker module #########
     # minium distance between the peakes to be found in Hz
-    'peak_min_distance_Hz': 1e3, 
+    'peak_min_distance_Hz': 8e3, 
     # minium fwhw fo peaks to be found in HZ
     'peak_min_width_Hz': 10, 
     # tolerance for peak fitting 
     'xtol': 1e-10, # -18
     'ftol': 1e-10, # -18
+    # method for minimizing residuals f
+    'minimize_method': 'leastsq', # 'least_squares' or 'leastsq'
 
     ######### params for DataSaver module #########
     'unsaved_path': r'.\unsaved_data', 
     'unsaved_filename': r'%Y%m%d%H%M%S',
+    'data_saver_export_cols': ['fs', 'gs'],
 
     ######### DataSaver module: import data format #####
     # a number is going to replace '{}'
