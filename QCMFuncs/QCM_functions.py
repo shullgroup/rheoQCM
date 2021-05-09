@@ -1471,63 +1471,6 @@ def make_vgp_axes(**kwargs):
     fig.tight_layout()
     return fig, ax
 
-def get_bare_fstar(infile, **kwargs):
-    """
-    get the bare crystal ref. data at one specific temperature
-    
-    args:
-        infile (string):
-            full name of input .xlsx file
-            
-    kwargs:
-        restrict_to_marked (list):
-            List of frequencies that must be marked in order to be included.
-            Default is [], so that we include everything.  We rerturn just
-            the average value of all the rows read in
-        
-            
-        ref_source (string):
-            Channel for reference (bare crystal) frequency and dissipation,
-            typically one of the following:
-                - 'S_channel'
-                - 'S_reference'
-                - 'R-channel'
-                - 'R-reference'                '
-                           
-    returns:
-        df:  
-            Input data converted to dataframe   
-        
-    """
-    restrict_to_marked = kwargs.get('restrict_to_marked',[])
-    ref_source = kwargs.get('ref_source', 'S_reference')
-
-    df = pd.read_excel(infile, sheet_name = ref_source, header=0)
-    
-    # sort out which harmonics are included
-    nvals = []
-    for n in [1,3,5,7,9]:
-        if 'f'+str(n) in df.columns:
-            nvals=nvals+[n]
-
-    df['keep_row']=1  # keep all rows unless we are told to check for specific marks
-    for n in restrict_to_marked:
-        df['keep_row'] = df['keep_row']*df['mark'+str(n)]
-
-    # delete rows we don't want to keep
-    df = df[df.keep_row==1] # Delete all rows that are not appropriately marked
-    
-    # now sort out which columns we want to keep in the dataframe
-    keep_column=[]
-    for n in nvals:
-        keep_column.append('f'+str(n))
-        keep_column.append('g'+str(n))
-
-    df = df[keep_column] 
-            
-    return df.mean()
-
-
 
 def read_xlsx(infile, **kwargs):
     """
@@ -1542,10 +1485,10 @@ def read_xlsx(infile, **kwargs):
             List of frequencies that must be marked in order to be included.
             Default is [], so that we include everything.
         
-        data_channel (string):
+        film_channel (string):
             Channel for data:  'S' (default) or 'R'
             
-        ref_source (string):
+        ref_channel (string):
             Source for reference (bare crystal) frequency and dissipation,
               'self' (default) means we ignore it and read delf and delg
               directly from the data channel. Otherwise we specify one of 
@@ -1561,6 +1504,10 @@ def read_xlsx(infile, **kwargs):
         ref_index (numpy array):
             index values to include in reference determination 
             default is 'all', which takes everything
+            
+        film_index (numpy array)
+            index values to include for film data
+            default is 'all' which takes everthing
         
         Tref:
             Temperature that df_ref corresponds to
@@ -1573,16 +1520,20 @@ def read_xlsx(infile, **kwargs):
     """
     
     restrict_to_marked = kwargs.get('restrict_to_marked',[])
-    data_channel = kwargs.get('data_channel', 'S')
-    data_name = data_channel+'_channel'
-    ref_source = kwargs.get('ref_source', 'self')
+    film_channel = kwargs.get('film_channel', 'S_channel')
+    film_index = kwargs.get('film_index', 'all')
+    ref_channel = kwargs.get('ref_channel', 'R_channel')
+    ref_index = kwargs.get('ref_index', 'all')
+    
     Tref = kwargs.get('Tref', 22)
     Tf_coeff = kwargs.get('Tf_coeff', 
                           {1:[0.00054625, 0.04338, 0.08075, 0],
                            3:[0.0017, -0.135, 8.9375, 0],
                            5:[0.002825, -0.22125, 15.375, 0]})
 
-    df = pd.read_excel(infile, sheet_name=None, header=0)[data_name]
+    df = pd.read_excel(infile, sheet_name=film_channel, header=0)
+    if type(film_index) != str:
+        df=df[df.index.isin(film_index)]
     
     # sort out which harmonics are included
     nvals = []
@@ -1603,16 +1554,16 @@ def read_xlsx(infile, **kwargs):
         keep_column.append(n)
     
     # add each of the values of delfstar
-    if isinstance(ref_source, pd.Series):
+    if isinstance(ref_channel, pd.Series):
         for n in nvals:
-            fref = (ref_source['f'+str(n)]+
+            fref = (ref_channel['f'+str(n)]+
                     bare_tempshift(Tf_coeff, df['temp'], Tref, n))
-            gref = ref_source['g'+str(n)]
+            gref = ref_channel['g'+str(n)]
             fstar_ref = fref + 1j*gref
             fstar = df['f'+str(n)] + 1j*df['g'+str(n)]
             df[n] = (fstar - fstar_ref)
 
-    elif ref_source == 'self':
+    elif ref_channel == 'self':
         # this is the standard read protocol, with delf and delg already in 
         # the .xlsx file
         for n in nvals:
@@ -1623,7 +1574,9 @@ def read_xlsx(infile, **kwargs):
         # data in the reference channel
 
         n_num = len(nvals)
-        df_ref = pd.read_excel(infile, sheet_name=ref_source, header=0)
+        df_ref = pd.read_excel(infile, sheet_name=ref_channel, header=0)
+        if type(ref_index) != str:
+            df_ref=df_ref[df_ref.index.isin(ref_index)]
         vars=['f', 'g']
         # if no temperature is listed we just average the values
         if ('temp' not in df_ref.keys()) or (df.temp.isnull().values.all()):
