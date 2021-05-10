@@ -183,7 +183,7 @@ class QCM:
 
     def calc_delrho(self, n, grho, phi):
         '''
-        decay length
+        decay length 
         '''
         return self.calc_lamrho(n, grho, phi) / (2 * np.pi * np.tan(phi / 2))
 

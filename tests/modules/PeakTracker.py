@@ -20,11 +20,6 @@ logger = logging.getLogger(__name__)
 config_default = UISettings.get_config() # load default configuration
 
 
-# peak_min_distance_Hz = 1e3 # in Hz
-# peak_min_width_Hz = 10 # in Hz full width
-# xtol = 1e-18 
-# ftol = 1e-18
-
 # peak finder method
 # peak_finder_method = 'simple_func'
 peak_finder_method = 'py_func'
@@ -34,6 +29,7 @@ def fun_const(f, c):
     lmfit ConstantModel independent_vars is x. We want to use f.
     '''
     return c
+
 
 def fun_G(f, amp, cen, wid, phi):
     ''' 
@@ -248,7 +244,7 @@ def findpeaks_py(f, resonance, output=None, sortstr=None, threshold=None, promin
     # logger.info(resonance) 
     if f is None or len(f) == 1: # for debuging
         logger.warning('findpeaks_py input f is not well assigned!\nx = {}'.format(f))
-        exit(0)
+        return np.nan, np.nan, np.nan, np.nan
 
     logger.info(threshold) 
     logger.info('f distance %s', distance / (f[1] - f[0])) 
@@ -915,6 +911,7 @@ class PeakTracker:
             self.update_output(found_n=1) # force it to at least 1 for fitting
 
         for i in np.arange(self.found_n):
+            logger.info('self.peak_guess: \n %s', self.peak_guess)
             if not self.peak_guess: 
                 amp = amp_rough
                 cen = cen_rough
@@ -937,6 +934,8 @@ class PeakTracker:
                 value=cen,              # init: average f
                 min=np.amin(f),         # lb: assume peak is in the range of f
                 max=np.amax(f),         # ub: assume peak is in the range of f
+                # min=cen-6*wid,         # lb: fix the peak +/- n*wid
+                # max=cen+6*wid,         # ub: fix the peak +/- n*wid
             )
             params.add(
                 'p'+str(i)+'_wid',                 # width (hwhm)
@@ -1056,7 +1055,8 @@ class PeakTracker:
             result = minimize(
                 res_GB, 
                 self.get_output(key='params'), 
-                method='leastsq', 
+                # method='leastsq', 
+                method=config_default['minimize_method'],
                 args=(f, G, B), 
                 kws={'gmod': gmod, 'bmod': bmod, 'eps': eps}, 
                 xtol=config_default['xtol'], ftol=config_default['ftol'],
@@ -1067,7 +1067,8 @@ class PeakTracker:
             print(report) 
             print('success: ', result.success)
             print('message: ', result.message)
-            print('lmdif_message: ', result.lmdif_message)
+            if config_default['minimize_method'] == 'leastsq':
+                print('lmdif_message: ', result.lmdif_message)
         except Exception as err:
             result = {}
             # traceback.print_tb(err.__traceback__)

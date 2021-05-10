@@ -3376,7 +3376,7 @@ class QCMApp(QMainWindow):
 
     def prepare_harm_data_for_mpl_prop_update(self, plt_chnname, plt_harms, line_group, xdata, ydata, xerr=None, yerr=None, show_marked_when_all=True):
         '''
-        devide xdata/ydata by harmonics and return a list of tuples for data_saver.update_data
+        devide xdata/ydata by harmonics and return a list of tuples for mpl.update_data
         '''
         data_list = []
 
@@ -5309,8 +5309,10 @@ class QCMApp(QMainWindow):
         n = len(self.prop_plot_list)
         mpl = self.prop_plot_list[-1]
 
-        self.ui.gridLayout_propplot.addWidget(mpl, (n-1)//2, (n-1)%2)
-        if not (n-1)%2: # n is odd
+        ncols = config_default['prop_plot_ncols']
+
+        self.ui.gridLayout_propplot.addWidget(mpl, (n-1)//ncols, (n-1)%ncols)
+        if (n-1)%ncols == 0: # start a new row # old code: not (n-1)%ncols
             self.ui.gridLayout_propplot.setRowMinimumHeight((n-1)//2, config_default['prop_plot_minmum_row_height'])
         # return
         # self.ui.scrollArea_data_mechanics_plots.setWidget(mpl)
@@ -5327,6 +5329,8 @@ class QCMApp(QMainWindow):
         for i in reversed(range(self.ui.gridLayout_propplot.count())):
             item = self.ui.gridLayout_propplot.itemAt(i)
             item.widget().deleteLater()
+        for r in range(self.ui.gridLayout_propplot.rowCount()):
+            self.ui.gridLayout_propplot.setRowMinimumHeight(r, 0)
         self.prop_plot_list = []
 
 

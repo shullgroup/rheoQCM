@@ -1,21 +1,25 @@
 # Changelog
 
-## [0.19.4] - 2020-11-18
+## [0.19.4] - 2021-05-05
 
 ### Added
 
 - Add auto expand mechanic table when countour unchecked.
+- Add "least_squares" choice for Gp/Bp peak fitting. Default is "leastsq". "leastsq" was the only choise in previous versions. "leastsq" should run faster than "least_squares"
+- Add "prop_plot_ncols" in setings to customize the number of columns of property plots.
 
 ### Changed
 
 - Clean PeakTracker code.
 - Change some items' size policy in UI.
+- Change time.sleep() to threading.Thread() in AccessMyVNA.py for better UI runs.
 
 ### Fixed
 
 - Fix chashing while exporting data with empty channel(s).
 - Fix variable name errors in rheoQCM
 - Fix comparability with Matplotlib >= 3.3: picker, errorbar.
+- Fix the property plot scrollArea does not reset after clearing plots.
 
 ## [0.19.3] - 2020-11-06
 
