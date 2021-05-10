@@ -1554,7 +1554,7 @@ def read_xlsx(infile, **kwargs):
         keep_column.append(n)
     
     # add each of the values of delfstar
-    if isinstance(ref_channel, pd.Series):
+    if ref_channel=='Tf_coeff':
         for n in nvals:
             fref = (ref_channel['f'+str(n)]+
                     bare_tempshift(Tf_coeff, df['temp'], Tref, n))
