@@ -476,6 +476,11 @@ def calc_delfstar(n, layers, **kwargs):
             - 'SLA' (default): small load approximation with power law model
             - 'LL': Lu Lewis equation, using default or provided electrode props
             - 'Voigt': small load approximation
+            
+        reftype (string)
+            - 'overlayer' (default):  if overlayer exists, then the reference  
+               is the bare crystal, even if the overlayer exists
+            - 'bare': ref is bare crystal, even if overlayer exists
        
     returns:
         delfstar (complex):
@@ -483,14 +488,18 @@ def calc_delfstar(n, layers, **kwargs):
     """
     
     calctype = kwargs.get('calctype', 'SLA')
-    if not layers: # layers is empty {}
+    reftype = kwargs.get('reftype', 'overlayer')
+    if not layers: # if layers is empty {}
         return np.nan
 
-    # there is data
+    # if layers is not empty:
     if 'overlayer' in layers:
         ZL = calc_ZL(n, {1:layers['film'], 2:layers['overlayer']},
                          0,calctype)
-        ZL_ref = calc_ZL(n, {1:layers['overlayer']}, 0, calctype)
+        if reftype=='overlayer':
+            ZL_ref = calc_ZL(n, {1:layers['overlayer']}, 0, calctype)
+        else:
+            ZL_ref=0
         del_ZL = ZL-ZL_ref
     else:
         del_ZL = calc_ZL(n, {1:layers['film']}, 0, calctype)
@@ -510,7 +519,8 @@ def calc_delfstar(n, layers, **kwargs):
         layers_ref = {1:layers['electrode']}
         if 'overlayer' in layers:
             layers_all[3]=layers['overlayer']
-            layers_ref[2] = layers['overlayer']
+            if reftype=='overlayer':
+                layers_ref[2] = layers['overlayer']
 
         ZL_all = calc_ZL(n, layers_all, 0, calctype)
         delfstar_sla_all = calc_delfstar_sla(ZL_all)
@@ -1497,9 +1507,10 @@ def read_xlsx(infile, **kwargs):
                 - 'S_reference'  ('S-reference' sheet from xlsx file)
                 - 'R-channel'  ('R-channel' sheet from xlsx file)
                 - 'R-reference'  ('R-channel' sheet from xlsx file)  
-                -  df_ref (series with df1, dg1, df3, dg3, ...;  in this
-                           case Tref and Tf_coeff must also be specified,
+                -  T_coef (series with df1, dg1, df3, dg3, ...;  in this
+                           case Tref and T_coef must also be specified,
                            if not equal to the defaults)
+
         
         ref_index (numpy array):
             index values to include in reference determination 
@@ -1526,10 +1537,14 @@ def read_xlsx(infile, **kwargs):
     ref_index = kwargs.get('ref_index', 'all')
     
     Tref = kwargs.get('Tref', 22)
-    Tf_coeff = kwargs.get('Tf_coeff', 
-                          {1:[0.00054625, 0.04338, 0.08075, 0],
-                           3:[0.0017, -0.135, 8.9375, 0],
-                           5:[0.002825, -0.22125, 15.375, 0]})
+    # specify default bare crystal temperature coefficients
+    T_coef = kwargs.get('T_coef', 
+                          {'f':{1:[0.00054625, 0.04338, 0.08075, 0],
+                                3:[0.0017, -0.135, 8.9375, 0],
+                                5:[0.002825, -0.22125, 15.375, 0]},
+                           'g':{1:[0,0,0,0],
+                                3:[0,0,0,0],
+                               5:[0,0,0,9]}})
 
     df = pd.read_excel(infile, sheet_name=film_channel, header=0)
     if type(film_index) != str:
@@ -1554,12 +1569,9 @@ def read_xlsx(infile, **kwargs):
         keep_column.append(n)
     
     # add each of the values of delfstar
-    if ref_channel=='Tf_coeff':
+    if ref_channel=='T_coef':
         for n in nvals:
-            fref = (ref_channel['f'+str(n)]+
-                    bare_tempshift(Tf_coeff, df['temp'], Tref, n))
-            gref = ref_channel['g'+str(n)]
-            fstar_ref = fref + 1j*gref
+            fstar_ref = bare_tempshift(T_coef, df['temp'], Tref, n)
             fstar = df['f'+str(n)] + 1j*df['g'+str(n)]
             df[n] = (fstar - fstar_ref)
 
@@ -1615,7 +1627,6 @@ def read_xlsx(infile, **kwargs):
                     #fit=InterpolatedUnivariateSpline(temp, ref_vals, k=1, ext=3)
                     fit = np.polyfit(temp, ref_vals, 3)
                     ax[p, k].plot(temp, np.polyval(fit, temp), '-')
-                    #ax[p, k].plot(df['temp'], fit(df['temp']), '+')
                     
                     #write the film and reference values to the data frame
                     df[vars[p]+str(nvals[k])+'_dat']=df[vars[p]+str(nvals[k])]
@@ -1653,7 +1664,9 @@ def plot_bare_tempshift(Tf_coeff, T, Tref):
 
 
 def bare_tempshift(Tf_coeff, T, Tref, n):
-    return np.polyval(Tf_coeff[n],T) - np.polyval(Tf_coeff[n],Tref)
+    f = np.polyval(Tf_coeff['f'][n],T) - np.polyval(Tf_coeff['f'][n],Tref)
+    g = np.polyval(Tf_coeff['g'][n],T) - np.polyval(Tf_coeff['g'][n],Tref)    
+    return f+1j*g
 
 
 def gstar_maxwell(wtau):  
