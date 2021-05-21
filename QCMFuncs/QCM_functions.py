@@ -911,7 +911,10 @@ def solve_for_props(delfstar, calc, **kwargs):
               
         err_frac (real):  Error in delf and delg as a fraction of delg
             - Default is zero
-                
+            
+        lb (list of 3 numbers):  Lower bound for Grho3, phi, drho - default [1e4, 0, 0]
+        ub (list of 3 numbers):  Upper bound for Grho3, phi, drho - default [1e13, 90, 3e-2]
+        
     returns:
         df_out (dataframe):  
             dataframe with properties added, deleting rows with any NaN values \
@@ -936,7 +939,7 @@ def solve_for_props(delfstar, calc, **kwargs):
 
     
     # set upper and lower bounds
-    lb = kwargs.get('lb', [1e5, 0, 0])
+    lb = kwargs.get('lb', [1e4, 0, 0])
     ub = kwargs.get('ub', [1e13, 90, 3e-2])
     lb = np.array(lb)  # lower bounds drho, grho3, phi
     ub = np.array(ub)  # upper bounds drho, grho3, phi
