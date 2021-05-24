@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.20.0] - 2021-05-23
+
+### Added
+
+- Add multiprocessing to property calculating to utilize multicores of cpu. Set the cores to use in `multiprocessing_cores`.
+
+### Changed
+
+### Fixed
+
+### Removed
+
+
 ## [0.19.4] - 2021-05-05
 
 ### Added
