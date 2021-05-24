@@ -476,6 +476,11 @@ def calc_delfstar(n, layers, **kwargs):
             - 'SLA' (default): small load approximation with power law model
             - 'LL': Lu Lewis equation, using default or provided electrode props
             - 'Voigt': small load approximation
+            
+        reftype (string)
+            - 'overlayer' (default):  if overlayer exists, then the reference  
+               is the bare crystal, even if the overlayer exists
+            - 'bare': ref is bare crystal, even if overlayer exists
        
     returns:
         delfstar (complex):
@@ -483,14 +488,18 @@ def calc_delfstar(n, layers, **kwargs):
     """
     
     calctype = kwargs.get('calctype', 'SLA')
-    if not layers: # layers is empty {}
+    reftype = kwargs.get('reftype', 'overlayer')
+    if not layers: # if layers is empty {}
         return np.nan
 
-    # there is data
+    # if layers is not empty:
     if 'overlayer' in layers:
         ZL = calc_ZL(n, {1:layers['film'], 2:layers['overlayer']},
                          0,calctype)
-        ZL_ref = calc_ZL(n, {1:layers['overlayer']}, 0, calctype)
+        if reftype=='overlayer':
+            ZL_ref = calc_ZL(n, {1:layers['overlayer']}, 0, calctype)
+        else:
+            ZL_ref=0
         del_ZL = ZL-ZL_ref
     else:
         del_ZL = calc_ZL(n, {1:layers['film']}, 0, calctype)
@@ -510,7 +519,8 @@ def calc_delfstar(n, layers, **kwargs):
         layers_ref = {1:layers['electrode']}
         if 'overlayer' in layers:
             layers_all[3]=layers['overlayer']
-            layers_ref[2] = layers['overlayer']
+            if reftype=='overlayer':
+                layers_ref[2] = layers['overlayer']
 
         ZL_all = calc_ZL(n, layers_all, 0, calctype)
         delfstar_sla_all = calc_delfstar_sla(ZL_all)
@@ -901,7 +911,10 @@ def solve_for_props(delfstar, calc, **kwargs):
               
         err_frac (real):  Error in delf and delg as a fraction of delg
             - Default is zero
-                
+            
+        lb (list of 3 numbers):  Lower bound for Grho3, phi, drho - default [1e4, 0, 0]
+        ub (list of 3 numbers):  Upper bound for Grho3, phi, drho - default [1e13, 90, 3e-2]
+        
     returns:
         df_out (dataframe):  
             dataframe with properties added, deleting rows with any NaN values \
@@ -926,7 +939,7 @@ def solve_for_props(delfstar, calc, **kwargs):
 
     
     # set upper and lower bounds
-    lb = kwargs.get('lb', [1e5, 0, 0])
+    lb = kwargs.get('lb', [1e4, 0, 0])
     ub = kwargs.get('ub', [1e13, 90, 3e-2])
     lb = np.array(lb)  # lower bounds drho, grho3, phi
     ub = np.array(ub)  # upper bounds drho, grho3, phi
@@ -1486,20 +1499,16 @@ def read_xlsx(infile, **kwargs):
             Default is [], so that we include everything.
         
         film_channel (string):
-            Channel for data:  'S' (default) or 'R'
+            sheet for data:  'S_channel' by default
             
-        ref_channel (string):
+        ref_channel (string)
             Source for reference (bare crystal) frequency and dissipation,
-              'self' (default) means we ignore it and read delf and delg
-              directly from the data channel. Otherwise we specify one of 
-              the following:
-                - 'S_channel'  ('S-channel' sheet from xlsx file)
-                - 'S_reference'  ('S-reference' sheet from xlsx file)
-                - 'R-channel'  ('R-channel' sheet from xlsx file)
-                - 'R-reference'  ('R-channel' sheet from xlsx file)  
-                -  df_ref (series with df1, dg1, df3, dg3, ...;  in this
-                           case Tref and Tf_coeff must also be specified,
-                           if not equal to the defaults)
+            - 'R_channel'  ('R_channel' sheet from xlsx file) (default)
+            - 'S_channel'  ('S_channel' sheet from xlsx file)
+            - 'S_reference'  ('S_reference' sheet from xlsx file)
+            - 'R_reference'  ('R_channel' sheet from xlsx file)
+            - 'self'  (read delf and delg read directly from the data channel.)
+
         
         ref_index (numpy array):
             index values to include in reference determination 
@@ -1508,11 +1517,21 @@ def read_xlsx(infile, **kwargs):
         film_index (numpy array)
             index values to include for film data
             default is 'all' which takes everthing
-        
-        Tref:
-            Temperature that df_ref corresponds to
             
-        Tf_coeff: polynomial coefficients for bare crystal frequency shifts
+        T_coef (string):
+            Source for reference temperature coefficients
+            - 'default' (standard temperature coeficients) 
+            - T_coef - T_coef dictionary passed from calling function
+        
+        Tref: (numeric or string)
+            Temperature at which reference frequency shift was determined
+            - 'self' (default) - temperature coefficients calculated
+                from temperatures in ref. sheet
+            - a specific temperature used as reference, with T_coef provided
+                
+            
+        T_coef_plots:  set to True to plot temp. dependent f and g for ref.
+            
                            
     returns:
         df:  
@@ -1524,12 +1543,17 @@ def read_xlsx(infile, **kwargs):
     film_index = kwargs.get('film_index', 'all')
     ref_channel = kwargs.get('ref_channel', 'R_channel')
     ref_index = kwargs.get('ref_index', 'all')
+    T_coef_plots = kwargs.get('T_coef_plots', True)
     
-    Tref = kwargs.get('Tref', 22)
-    Tf_coeff = kwargs.get('Tf_coeff', 
-                          {1:[0.00054625, 0.04338, 0.08075, 0],
-                           3:[0.0017, -0.135, 8.9375, 0],
-                           5:[0.002825, -0.22125, 15.375, 0]})
+    Tref = kwargs.get('Tref', 'self')
+    # specify default bare crystal temperature coefficients
+    T_coef = kwargs.get('T_coef', 
+                          {'f':{1:[0.00054625, 0.04338, 0.08075, 0],
+                                3:[0.0017, -0.135, 8.9375, 0],
+                                5:[0.002825, -0.22125, 15.375, 0]},
+                           'g':{1:[0,0,0,0],
+                                3:[0,0,0,0],
+                               5:[0,0,0,9]}})
 
     df = pd.read_excel(infile, sheet_name=film_channel, header=0)
     if type(film_index) != str:
@@ -1552,14 +1576,16 @@ def read_xlsx(infile, **kwargs):
     keep_column=['t']
     for n in nvals:
         keep_column.append(n)
+        
+    # keep the temperature column if it exists
+    if 'temp' in df.keys():
+        keep_column.append('temp')
     
     # add each of the values of delfstar
-    if isinstance(ref_channel, pd.Series):
+    if ref_channel=='T_coef':
         for n in nvals:
-            fref = (ref_channel['f'+str(n)]+
-                    bare_tempshift(Tf_coeff, df['temp'], Tref, n))
-            gref = ref_channel['g'+str(n)]
-            fstar_ref = fref + 1j*gref
+            ref_fg = bare_tempshift(df['temp'], T_coef, Tref, n)
+            fstar_ref = ref_fg['f']+1j*ref_fg['g']
             fstar = df['f'+str(n)] + 1j*df['g'+str(n)]
             df[n] = (fstar - fstar_ref)
 
@@ -1570,31 +1596,36 @@ def read_xlsx(infile, **kwargs):
             df[n] = df['delf'+str(n)] + 1j*df['delg'+str(n)].round(1)            
             
     else:
-        # here we need to get the reference frequencies from the 
-        # data in the reference channel
-
-        n_num = len(nvals)
+        # here we need to obtain T_coef from the info in the ref. channel
         df_ref = pd.read_excel(infile, sheet_name=ref_channel, header=0)
         if type(ref_index) != str:
             df_ref=df_ref[df_ref.index.isin(ref_index)]
-        vars=['f', 'g']
-        # if no temperature is listed we just average the values
-        if ('temp' not in df_ref.keys()) or (df.temp.isnull().values.all()):
+        var=['f', 'g']
+        
+        # if no temperature is listed or a specific reference temperature
+        # is given we just average the values
+        if (('temp' not in df_ref.keys()) or (df.temp.isnull().values.all()) or
+            Tref != 'self'):
             for k in np.arange(len(nvals)):
                 for p in [0,1]:
                     # get the reference values and plot them
-                    ref_val=df_ref[vars[p]+str(nvals[k])].mean()
+                    ref_val=df_ref[var[p]+str(nvals[k])].mean()
                     
                     #write the film and reference values to the data frame
-                    df[vars[p]+str(nvals[k])+'_dat']=df[vars[p]+str(nvals[k])]
-                    df[vars[p]+str(nvals[k])+'_ref']=ref_val
+                    df[var[p]+str(nvals[k])+'_dat']=df[var[p]+str(nvals[k])]
+                    df[var[p]+str(nvals[k])+'_ref']=ref_val
                     
-        # now we handle the case where we have a full range of 
-        # temperatures
+                    # adjust temperature coefficient to get correct value
+                    # at ref temp
+                    T_coef[var[p]][nvals[k]][3] = (T_coef[var[p]][nvals[k]][3] +
+                            ref_val - np.polyval(T_coef[var[p]][nvals[k]], Tref))
+                    
+            # set all the temperatures on df_ref to Tref
+            df_ref['temp']=Tref
+                    
         else:
-            keep_column.append('temp')
-            fig, ax = plt.subplots(2, n_num, figsize=(3*n_num,6),
-                               constrained_layout=True)        
+            # now we handle the case where we have a full range of 
+            # temperatures            
             # reorder rerence data according to temperature
             df_ref=df_ref.sort_values('temp')
             
@@ -1603,26 +1634,17 @@ def read_xlsx(infile, **kwargs):
             temp = df_ref['temp']
             for k in np.arange(len(nvals)):
                 for p in [0,1]:
-                    ax[p, k].set_title(vars[p]+str(nvals[k]))
+                  
                     # get the reference values and plot them
-                    ref_vals=df_ref[vars[p]+str(nvals[k])]
-                    ax[p, k].plot(temp, ref_vals, '.')
-                    ax[p, k].set_xlabel(r'$T$ ($^\circ$C)')
+                    ref_vals=df_ref[var[p]+str(nvals[k])]
                     
-                    # make the fitting function and plot it, along with the
-                    # values corresponding to temperatures from the data
-                    # set with the film
-                    #fit=InterpolatedUnivariateSpline(temp, ref_vals, k=1, ext=3)
-                    fit = np.polyfit(temp, ref_vals, 3)
-                    ax[p, k].plot(temp, np.polyval(fit, temp), '-')
-                    #ax[p, k].plot(df['temp'], fit(df['temp']), '+')
-                    
+                    # make the fitting function 
+                    T_coef[var[p]][nvals[k]] = np.polyfit(temp, ref_vals, 3)
+
                     #write the film and reference values to the data frame
-                    df[vars[p]+str(nvals[k])+'_dat']=df[vars[p]+str(nvals[k])]
-                    df[vars[p]+str(nvals[k])+'_ref']=np.polyval(fit, df['temp'])
- 
-            # label the plot
-            fig.suptitle('ref temp coeffs: '+str(fit))
+                    df[var[p]+str(nvals[k])+'_dat']=df[var[p]+str(nvals[k])]
+                    df[var[p]+str(nvals[k])+'_ref'] = (
+                         np.polyval(T_coef[var[p]][nvals[k]], df['temp']))
         
         for k in np.arange(len(nvals)):
             # now write values delfstar to the dataframe
@@ -1631,29 +1653,51 @@ def read_xlsx(infile, **kwargs):
                       1j*(df['g'+str(nvals[k])+'_dat']-
                           df['g'+str(nvals[k])+'_ref'])).round(1)
 
-        # add absolute frequency and reference values to dataframe
-        for n in nvals:
-            keep_column.append('f'+str(n)+'_dat')
-            keep_column.append('f'+str(n)+'_ref')
-            keep_column.append('g'+str(n)+'_dat')
-            keep_column.append('g'+str(n)+'_ref')
-
+            # add absolute frequency and reference values to dataframe
+            keep_column.append('f'+str(nvals[k])+'_dat')
+            keep_column.append('f'+str(nvals[k])+'_ref')
+            keep_column.append('g'+str(nvals[k])+'_dat')
+            keep_column.append('g'+str(nvals[k])+'_ref')
+            
+    if T_coef_plots and ref_channel != 'self':
+        Trange=[df['temp'].min(), df['temp'].max()]
+        plot_bare_tempshift(df_ref, T_coef, Tref, nvals, Trange)
     return df[keep_column].copy()
 
 
-def plot_bare_tempshift(Tf_coeff, T, Tref):
-    fig, ax = plt.subplots(1, 1, figsize=(4,4), constrained_layout=True)
-    for n in [1, 3, 5]:
-        fitvals = bare_tempshift(Tf_coeff, T, Tref, n)
-        ax.plot(T, fitvals, label = 'n='+str(n))
-    ax.legend(loc='best')
-    ax.set_title('$T_{ref}=$'+str(Tref)+r'$^\circ$C')
-    ax.set_xlabel(r'$T\:^\circ$C')
-    ax.set_ylabel(r'$\Delta f_n$ (Hz)')
+def plot_bare_tempshift(df_ref, T_coef, Tref, nvals, Trange):
+    var = ['f', 'g']
+    n_num = len(nvals)
+    fig, ax = plt.subplots(2, n_num, figsize=(3*n_num,6),
+                                   constrained_layout=True)
+    ylabel = {0:r'$\Delta f$ (Hz)', 1:r'$\Delta \Gamma$ (Hz)'}
+    # for now I'll use a default temp. range to plot
+    temp_fit = np.linspace(Trange[0], Trange[1], 100)
+    for p in [0,1]:
+        for k in np.arange(len(nvals)):           
+            # plot themeasured values, relative to value at ref. temp.
+            meas_vals = (df_ref[var[p]+str(nvals[k])] - 
+                         np.polyval(T_coef[var[p]][nvals[k]],df_ref['temp']))
+            ax[p,k].plot(df_ref['temp'], meas_vals, 'x')
+            
+            # now plot the fit values
+            ref_vals = bare_tempshift(temp_fit, T_coef, Tref, nvals[k])[var[p]]
+            ax[p,k].plot(temp_fit, ref_vals, '-')
+            
+            # set axis labels and plot titles
+            ax[p,k].set_xlabel(r'$T$ ($^\circ$C)')              
+            ax[p,k].set_ylabel(ylabel[p])
+            ax[p,k].set_title('n='+str(nvals[k]))
+            ymin = np.min([-1, meas_vals.min(), ref_vals.min()])
+            ymax = np.max([1, meas_vals.max(), ref_vals.max()])
+            ax[p,k].set_ylim([ymin, ymax])
 
 
-def bare_tempshift(Tf_coeff, T, Tref, n):
-    return np.polyval(Tf_coeff[n],T) - np.polyval(Tf_coeff[n],Tref)
+
+def bare_tempshift(T, T_coef, Tref, n):
+    f = np.polyval(T_coef['f'][n],T) - np.polyval(T_coef['f'][n],Tref)
+    g = np.polyval(T_coef['g'][n],T) - np.polyval(T_coef['g'][n],Tref)    
+    return {'f':f, 'g':g}
 
 
 def gstar_maxwell(wtau):  
