@@ -8,7 +8,6 @@ Created on Thu Jan  4 09:19:59 2018
 
 import numpy as np
 import scipy.optimize as optimize
-from scipy.interpolate import InterpolatedUnivariateSpline
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -29,6 +28,12 @@ drho_q = Zq/(2*f1)
 e26 = 9.65e-2
 g0_default = 50 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
 err_frac_default = 3e-2 # error in f or gamma as a fraction of gamma
+T_coef_default = {'f':{1:[0.00054625, 0.04338, 0.08075, 0],
+                       3:[0.0017, -0.135, 8.9375, 0],
+                       5:[0.002825, -0.22125, 15.375, 0]},
+                  'g':{1:[0,0,0,0],
+                       3:[0,0,0,0],
+                       5:[0,0,0,9]}}
 
 electrode_default = {'drho':2.8e-3, 'grho3':3.0e14, 'phi':0}
 
@@ -1510,27 +1515,26 @@ def read_xlsx(infile, **kwargs):
             - 'S_reference'  ('S_reference' sheet from xlsx file)
             - 'R_reference'  ('R_channel' sheet from xlsx file)
             - 'self'  (read delf and delg read directly from the data channel.)
-
+            - 'T_coef' - Taken directly from T_coef dictionary
         
         ref_index (numpy array):
             index values to include in reference determination 
-            default is 'all', which takes everything
+            - default is 'all', which takes everything
             
         film_index (numpy array)
             index values to include for film data
             default is 'all' which takes everthing
             
-        T_coef (string):
-            Source for reference temperature coefficients
-            - 'default' (standard temperature coeficients) 
-            - T_coef - T_coef dictionary passed from calling function
+        T_coef (dictionary):
+            Temperature coefficients for reference temp. shift
+            - default values used if not specified
         
         Tref: (numeric)
             Temperature at which reference frequency shift was determined
             - default is 22C
-                
-            
-        T_coef_plots:  set to True to plot temp. dependent f and g for ref.
+                        
+        T_coef_plots (Boolean):  set to True to plot temp. dependent f and g for ref.
+            - default is True
             
                            
     returns:
@@ -1547,13 +1551,8 @@ def read_xlsx(infile, **kwargs):
     
     Tref = kwargs.get('Tref', 22)
     # specify default bare crystal temperature coefficients
-    T_coef = kwargs.get('T_coef', 
-                          {'f':{1:[0.00054625, 0.04338, 0.08075, 0],
-                                3:[0.0017, -0.135, 8.9375, 0],
-                                5:[0.002825, -0.22125, 15.375, 0]},
-                           'g':{1:[0,0,0,0],
-                                3:[0,0,0,0],
-                               5:[0,0,0,9]}})
+    T_coef = kwargs.get('T_coef', T_coef_default)
+
 
     df = pd.read_excel(infile, sheet_name=film_channel, header=0)
     if type(film_index) != str:
@@ -1583,11 +1582,13 @@ def read_xlsx(infile, **kwargs):
     
     # add each of the values of delfstar
     if ref_channel=='T_coef':
+        T_coef_plots = False
         for n in nvals:
-            ref_fg = bare_tempshift(df['temp'], T_coef, Tref, n)
-            fstar_ref = ref_fg['f']+1j*ref_fg['g']
+            ref_f = np.polyval(T_coef['f'][n], df['temp'])
+            ref_g = np.polyval(T_coef['g'][n], df['temp'])
+            fstar_ref = ref_f+1j*ref_g
             fstar = df['f'+str(n)] + 1j*df['g'+str(n)]
-            df[n] = (fstar - fstar_ref)
+            df[n] = fstar - fstar_ref
 
     elif ref_channel == 'self':
         # this is the standard read protocol, with delf and delg already in 
