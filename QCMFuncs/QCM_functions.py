@@ -1222,7 +1222,7 @@ def make_prop_axes(**kwargs):
         filmtype (string):
             - 'thin': standard thin film solution, with three axes
             - 'bulk': bulk solution with two axes
-        xlabel (string):
+        xunit (string):
             label for x axes (default is 'index')     .
         titles (dictionary):
             titles for axes (keys are 0, 1, 2)
@@ -1238,7 +1238,9 @@ def make_prop_axes(**kwargs):
 
     filmtype = kwargs.get('filmtype','thin')
     num = kwargs.get('num','property fig')
-    xlabel = kwargs.get('xlabel', 'index')
+    xunit = kwargs.get('xunit', 'index')
+    if xunit == 'temp':
+        xunit = r'$T$ ($^\circ$C)'
     titles = kwargs.get('titles', {0:'(a)', 1:'(b)', 2:'(c)'})
 
     if filmtype != 'bulk':
@@ -1256,7 +1258,7 @@ def make_prop_axes(**kwargs):
 
     # set xlabel 
     for i in np.arange(len(ax)):
-        ax[i].set_xlabel(xlabel)
+        ax[i].set_xlabel(xunit)
         ax[i].set_title(titles[i])
     fig.tight_layout()
     return fig, ax
@@ -1762,8 +1764,6 @@ def gstar_rouse(wtau, n_rouse):
 
 def springpot(w, g0, tau, beta, sp_type, **kwargs):
     """
-    
-    
     args:
         w (numpy array of real values):
             Angular frequencies.
@@ -1789,8 +1789,11 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
             Elments that are Rouse elments
  
     returns:
+        g_br (dictionary of numpy arrays)
+            complex modulus for each parallel branch (summed to get gstar)
         gstar (numpy array):  
-            complex shear modulus normalized by unrelaxed value         
+            complex shear modulus normalized by unrelaxed value   
+
     """
 
     # specify which elements are kww or Maxwell elements
@@ -1859,7 +1862,7 @@ def vft(T, Tref, B, Tinf):
     return -B/(Tref-Tinf) + B/(T-Tinf)
 
 def check_solution(df, **kwargs):
-    from pylab import meshgrid
+
     '''
     Create contour plot of normf_g or rh_rd and verify that solution is correct.
     
@@ -1894,7 +1897,8 @@ def check_solution(df, **kwargs):
             's', 'min', 'hr', 'day', 'temp'
     
     '''
-
+    
+    from pylab import meshgrid
     numxy = kwargs.get('numxy', 100)
     numz = kwargs.get('numz', 200)
     philim = kwargs.get('philim', [0, 90])
