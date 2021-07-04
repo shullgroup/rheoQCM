@@ -1661,7 +1661,7 @@ def read_xlsx(infile, **kwargs):
             keep_column.append('g'+str(nvals[k])+'_dat')
             keep_column.append('g'+str(nvals[k])+'_ref')
             
-    if T_coef_plots and ref_channel != 'self':
+    if T_coef_plots and ref_channel != 'self' and len(df_ref.temp.unique())>1:
         Trange=[df['temp'].min(), df['temp'].max()]
         plot_bare_tempshift(df_ref, T_coef, Tref, nvals, Trange)
     return df[keep_column].copy()
@@ -1690,8 +1690,8 @@ def plot_bare_tempshift(df_ref, T_coef, Tref, nvals, Trange):
             ax[p,k].set_xlabel(r'$T$ ($^\circ$C)')              
             ax[p,k].set_ylabel(ylabel[p])
             ax[p,k].set_title('n='+str(nvals[k]))
-            ymin = np.min([-1, meas_vals.min(), ref_vals.min()])
-            ymax = np.max([1, meas_vals.max(), ref_vals.max()])
+            ymin = np.min([meas_vals.min(), ref_vals.min()])
+            ymax = np.max([meas_vals.max(), ref_vals.max()])
             ax[p,k].set_ylim([ymin, ymax])
 
 
@@ -1910,7 +1910,8 @@ def check_solution(df, **kwargs):
     plot_solutions = kwargs.get('plot_solutions', False)
     idxmin=df.index[0]
     calc = df['calc'][idxmin]
-    num = kwargs.get('num', calc)
+    num = kwargs.get('num', '')
+    num = calc + ' ' + num
     xunit = kwargs.get('xunit', 'dlam')
     
     # set up x labels for plots of actual and back-calculated shifts
