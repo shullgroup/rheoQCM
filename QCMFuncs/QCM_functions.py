@@ -711,11 +711,10 @@ def normdelf_bulk(n, dlam3, phi):
     returns:
         delf normalized bulk value
     """
-
     return np.real(2*np.tan(2*np.pi*dlam(n, dlam3, phi)*
                           (1-1j*np.tan(np.deg2rad(phi/2)))) / \
             (np.sin(np.deg2rad(phi))*(1-1j*np.tan(np.deg2rad(phi/2)))))
-            
+        
 
 def normdelg_bulk(n, dlam3, phi):
     """
