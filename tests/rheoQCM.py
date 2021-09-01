@@ -112,6 +112,7 @@ def setup_logging():
         logging.basicConfig(level=config_default['logger_setting_config']['default_level'])
         print(e)
 
+
 class VNATracker:
     def __init__(self):
         self.f =None       # current end frequency span in Hz (ndarray([float, float])
@@ -169,12 +170,40 @@ class VNATracker:
         self.setflg = {}
 
 
+def mp_solve_single_queue(ind, qcm_queue, mech_queue, prop_dict_ind, nh, calctype, bulklimit, qcm):
+    
+    mech_queue['queue_id'] = mech_queue['queue_id'].astype('int')
+
+    # obtain the solution for the properties
+    if qcm.all_nhcaclc_harm_not_na(nh, qcm_queue):
+        # solve a single queue
+        mech_queue = qcm.solve_single_queue(nh, qcm_queue, mech_queue, calctype=calctype, film=prop_dict_ind, bulklimit=bulklimit)
+
+        # save back to mech_df
+        mech_queue.index = [ind] # not necessary
+        # mech_df.update(mech_queue)
+        # mech_df['queue_id'] = mech_df['queue_id'].astype('int')
+
+        return mech_queue
+    else:
+        # since the df already initialized with nan values, nothing to do here
+        return None
+
+
+def mp_solve_single_queue_to_prop(ind, qcm_queue, nh, calctype, bulklimit, refh, solve_single_queue_to_prop):
+    
+    # get prop
+    drho, grho_refh, phi, dlam_refh, err = solve_single_queue_to_prop(nh, qcm_queue, calctype=calctype, bulklimit=bulklimit)
+
+    return (ind, dict(drho=drho, grho=grho_refh, phi=phi, n=refh))
+
+
 class QCMApp(QMainWindow):
     '''
     The settings of the app is stored in a dict by widget names
     '''
     def __init__(self):
-        super(QCMApp, self).__init__()
+        super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
@@ -574,9 +603,9 @@ class QCMApp(QMainWindow):
             160,
         )
 
-        # move checkBox_settings_settings_harmzerophase
+        # move frame_settings_settings_harmphase
         self.move_to_col(
-            self.ui.checkBox_settings_settings_harmzerophase,
+            self.ui.frame_settings_settings_harmphase,
             self.ui.treeWidget_settings_settings_harmtree,
             'Phase',
             160,
@@ -901,7 +930,8 @@ class QCMApp(QMainWindow):
         self.ui.radioButton_peaks_num_fixed.toggled['bool'].connect(self.update_harmwidget)
         self.ui.radioButton_peaks_policy_minf.toggled['bool'].connect(self.update_harmwidget)
         self.ui.radioButton_peaks_policy_maxamp.toggled['bool'].connect(self.update_harmwidget)
-        self.ui.checkBox_settings_settings_harmzerophase.toggled['bool'].connect(self.update_harmwidget)
+        self.ui.checkBox_settings_settings_harmlockphase.toggled['bool'].connect(self.update_harmwidget)
+        self.ui.doubleSpinBox_settings_settings_harmlockphase.valueChanged.connect(self.update_harmwidget)
 
         # set signals to update hardware settings_settings
         self.ui.comboBox_samp_channel.currentIndexChanged.connect(self.update_widget)
@@ -1479,6 +1509,27 @@ class QCMApp(QMainWindow):
 
 
     #region #########  functions ##############
+
+    
+    def get_mp_cores(self):
+        ''' return the number of cores to use for multiprocessing
+        '''
+        # core_count = multiprocessing.cpu_count()
+        core_count = len(os.sched_getaffinity(0)) # number of usable cpus
+        if core_count is None:
+            return 1
+        core_config = config_default['multiprocessing_cores']
+
+        if core_config == 0: # use all cores
+            core_to_use =  core_count
+        elif core_config > 0: # use setting cores
+            core_to_use =  min(core_config, core_count)
+        elif core_config < 0: # subtract the number
+            core_to_use =  max(1, core_count + core_config)
+        # print('use {} cores'.format(core_to_use))
+
+        return core_to_use
+
 
     def link_tab_page(self, tab_idx):
         self.UITab = tab_idx
@@ -2305,7 +2356,7 @@ class QCMApp(QMainWindow):
         for name_list in args:
             for name in config_default[name_list]:
                 logger.info(name) 
-                if name not in config_default['version_hide_list'] or name_list == 'version_hide_list':
+                if (name not in config_default['version_hide_list']) and (name_list != 'version_hide_list'):
                     # getattr(self.ui, name).show()
                     getattr(self.ui, name).setVisible(True)
 
@@ -2320,7 +2371,7 @@ class QCMApp(QMainWindow):
         for name_list in args:
             for name in config_default[name_list]:
                 logger.info(name) 
-                if name not in config_default['version_hide_list'] or name_list == 'version_hide_list':
+                if (name not in config_default['version_hide_list']) or (name_list == 'version_hide_list'):
                     # getattr(self.ui, name).hide()
                     getattr(self.ui, name).setVisible(False)
 
@@ -2827,12 +2878,15 @@ class QCMApp(QMainWindow):
         logger.info(sender) 
         if (sender == 'radioButton_spectra_showGp') or (sender == 'radioButton_spectra_showBp'):
             xlabel = r'$f$ (Hz)'
+            ylabel = r'$G_P$ (mS)'
             y2label = r'$B_P$ (mS)'
         elif sender == 'radioButton_spectra_showpolar':
-            xlabel = r'$B_P$ (mS)'
-            y2label = ''
+            xlabel = r'$G_P$ (mS)'
+            ylabel = r'$B_P$ (mS)'
+            y2label = r''
         else:
             xlabel = r'$f$ (Hz)'
+            ylabel = r'$G_P$ (mS)'
             y2label = r'$B_P$ (mS)'
 
         for harm in self.all_harm_list():
@@ -2843,6 +2897,7 @@ class QCMApp(QMainWindow):
             getattr(self.ui, 'mpl_sp' + harm).update_sp_text_chi()
             # set labels
             getattr(self.ui, 'mpl_sp' + harm).ax[0].set_xlabel(xlabel)
+            getattr(self.ui, 'mpl_sp' + harm).ax[0].set_ylabel(ylabel)
             getattr(self.ui, 'mpl_sp' + harm).ax[1].set_ylabel(y2label)
 
             getattr(self.ui, 'mpl_sp' + harm).canvas.draw()
@@ -4434,6 +4489,7 @@ class QCMApp(QMainWindow):
         chn_queue_ids: all available queue_ids for solving. it can be all or marked queue_ids
         chn_idx: all available indices for solving. it can be all or marked indices
         '''
+        t0 = time.time()
 
         if not self.data_saver.path:
             print('No data available!')
@@ -4538,7 +4594,7 @@ class QCMApp(QMainWindow):
             print('source not defined!')
             return
 
-        print('Calculating {} ...'.format(nhcalc))
+        print('Calculating {} with {} cores ...'.format(nhcalc, self.get_mp_cores()))
 
         # 4. iterate all layers to get props
         # prop_dict = {}
@@ -4604,16 +4660,43 @@ class QCMApp(QMainWindow):
                     # logger.info('qcm_df_layer', qcm_df_layer) 
 
                     nh = QCM.nhcalc2nh(nhcalc)
-                    for ind in idx_joined:
-                        if n == 0: # electrode layer
+
+                    if n == 0: # electrode layer
+                        for ind in idx_joined:
                             electrode = QCM.prop_default['electrode']
                             prop_dict[ind][n].update(**electrode)
-                        else: # upper layers
-                            qcm_queue = qcm_df_layer.loc[[ind], :].copy() # as a dataframe
-                            # get prop
-                            drho, grho_refh, phi, dlam_refh, err = self.qcm.solve_single_queue_to_prop(nh, qcm_queue, calctype=calctype, bulklimit=bulklimit)
+                    else: # upper layers
+                        if self.get_mp_cores() > 1:
+                            ## multiprocessing function
+                            logger.info('use %s cores for layer prop calc.', self.get_mp_cores())
+                            items = [
+                                (
+                                    ind,
+                                    qcm_df_layer.loc[[ind], :].copy(), # as a dataframe
+                                    nh,
+                                    calctype,
+                                    bulklimit, 
+                                    refh,
+                                    self.qcm.solve_single_queue_to_prop,
 
-                            prop_dict[ind][n].update(drho=drho, grho=grho_refh, phi=phi, n=refh)
+                                ) 
+                                for ind in idx_joined
+                            ]
+
+                            with multiprocessing.Pool(self.get_mp_cores()) as p:
+                                layern_prop_list = p.starmap(mp_solve_single_queue_to_prop, items)
+                            p.close()
+                            p.join()
+
+                            for ind, ind_dic in layern_prop_list:
+                                prop_dict[ind][n].update(**ind_dic)
+                        else: # use loop
+                            for ind in idx_joined:
+                                qcm_queue = qcm_df_layer.loc[[ind], :].copy() # as a dataframe
+                                # get prop
+                                drho, grho_refh, phi, dlam_refh, err = self.qcm.solve_single_queue_to_prop(nh, qcm_queue, calctype=calctype, bulklimit=bulklimit)
+
+                                prop_dict[ind][n].update(drho=drho, grho=grho_refh, phi=phi, n=refh)
                 else: 
                     print('source not defined!')
 
@@ -4627,46 +4710,88 @@ class QCMApp(QMainWindow):
         
         # if live update is not needed, use QCM.analyze to replace. the codes should be the same
         nh = QCM.nhcalc2nh(nhcalc)
-        for ind in idx_joined: # iterate all ids
+        # TODO: mp
+        if self.get_mp_cores() > 1:
+            # proce mp
+            logger.info('use %s core(s) for film prop calc.', self.get_mp_cores())
+            with multiprocessing.Pool(self.get_mp_cores()) as p:
+                # mp_cal_film(ind, qcm_queue, mech_queue, prop_dict_ind, nh, calctype, bulklimit,  all_nhcaclc_harm_not_na, solve_single_queue)
+                items = [
+                    (
+                        ind, 
+                        qcm_df.loc[[ind], :].copy(), 
+                        mech_df.loc[[ind], :].copy(), 
+                        prop_dict[ind],
+                        nh,
+                        calctype,
+                        bulklimit,
+                        self.qcm 
+                    ) 
+                    for ind in idx_joined
+                    ]
+                mech_queue_list = p.starmap(mp_solve_single_queue, items)
+                p.close()
+                p.join()
+
+            print('mp done. ({})'.format(time.time()-t0))
+
+        else: # use loop
+            logger.info('use loop (1 core) for film prop calc.')
+            mech_queue_list = []
+            for ind in idx_joined: # iterate all ids
+                # logger.info('ind', ind) 
             # logger.info('ind', ind) 
-            # qcm data of queue_id
-            qcm_queue = qcm_df.loc[[ind], :].copy() # as a dataframe
-            # mechanic data of queue_id
-            mech_queue = mech_df.loc[[ind], :].copy()  # as a dataframe 
-            # !! The copy here will not work, since mech_df contains object and the data change to mech_queue will be updated in mech_df 
+                # logger.info('ind', ind) 
+                # qcm data of queue_id
+                qcm_queue = qcm_df.loc[[ind], :].copy() # as a dataframe
+                # mechanic data of queue_id
+                mech_queue = mech_df.loc[[ind], :].copy()  # as a dataframe  
+                # !! The copy here will not work, since mech_df contains object and the data change to mech_queue will be updated in mech_df 
+                # create a dump df which is a copy of mech_df.loc[[ind], :]
+                # mech_queue = pd.DataFrame.from_dict(mech_df.loc[[ind], :].to_dict())
+                mech_queue['queue_id'] = mech_queue['queue_id'].astype('int')
 
-            # create a dump df which is a copy of mech_df.loc[[ind], :]
-            # mech_queue = pd.DataFrame.from_dict(mech_df.loc[[ind], :].to_dict())
-            mech_queue['queue_id'] = mech_queue['queue_id'].astype('int')
+                # obtain the solution for the properties
+                if self.qcm.all_nhcaclc_harm_not_na(nh, qcm_queue):
+                    # solve a single queue
+                    mech_queue = self.qcm.solve_single_queue(nh, qcm_queue, mech_queue, calctype=calctype, film=prop_dict[ind], bulklimit=bulklimit)
 
-            # obtain the solution for the properties
-            if self.qcm.all_nhcaclc_harm_not_na(nh, qcm_queue):
-                # solve a single queue
-                mech_queue = self.qcm.solve_single_queue(nh, qcm_queue, mech_queue, calctype=calctype, film=prop_dict[ind], bulklimit=bulklimit)
+                    # save back to mech_df
+                    mech_queue.index = [ind] # not necessary
+                    # mech_df.update(mech_queue)
+                    # mech_df['queue_id'] = mech_df['queue_id'].astype('int')
+                    # self.data_saver.update_mech_queue(chn_name, nhcalc, mech_queue) # update to mech_df in data_saver
+                    
+                    if self.settings['checkBox_settings_mech_liveupdate']: # live update
+                        # update tableWidget_spectra_mechanics_table
+                        self.ui.spinBox_spectra_mechanics_currid.setValue(ind)
 
-                # save back to mech_df
-                mech_queue.index = [ind] # not necessary
-                # mech_df.update(mech_queue)
-                # mech_df['queue_id'] = mech_df['queue_id'].astype('int')
-                self.data_saver.update_mech_queue(chn_name, nhcalc, mech_queue) # update to mech_df in data_saver
-                
-                if self.settings['checkBox_settings_mech_liveupdate']: # live update
-                    # update tableWidget_spectra_mechanics_table
-                    self.ui.spinBox_spectra_mechanics_currid.setValue(ind)
+                else:
+                    # since the df already initialized with nan values, nothing to do here
+                    pass
+                mech_queue_list.append(mech_queue)
 
-            else:
-                # since the df already initialized with nan values, nothing to do here
-                pass
+        # update all data together
+        mech_df_new = pd.concat(mech_queue_list)
+        logger.info(mech_df_new.head())
+        self.data_saver.update_mech_df(chn_name, nhcalc, mech_df_new)
+
+        # skip liveupdate for mp
+        # update table with the index of the last None value in mech_queue_list
+        last_non_none_ind = next(len(mech_queue_list) - i for i, q in enumerate(reversed(mech_queue_list), 1) if q is not None)
+
+        if self.ui.spinBox_spectra_mechanics_currid.value() == last_non_none_ind: # no id change, force to update table
+            self.update_spectra_mechanics_table(chn_name, qcm_df.loc[[last_non_none_ind], :], mech_queue_list[last_non_none_ind])
+        else:
+            self.ui.spinBox_spectra_mechanics_currid.setValue(idx_joined[-1])
 
         print('{} calculation finished.'.format(nhcalc))
 
         # # save back to data_saver
         # self.data_saver.update_mech_df_in_prop(chn_name, nhcalc, refh, mech_df)
 
-        if not self.settings['checkBox_settings_mech_liveupdate']: 
-            # update table
-            self.update_spectra_mechanics_table(chn_name, qcm_queue, mech_queue)
-
+        print('Time spent: {} s'.format(time.time()-t0))
+        
 
     def backup_mech_solve_chn(self, chn_name, queue_ids):
         '''
@@ -5425,7 +5550,7 @@ class QCMApp(QMainWindow):
         )
 
         # add data to contour
-        self.add_data_to_contour()
+        # self.add_data_to_contour() # NOTE: comment this and let the data updated only by clicking the button
 
 
     def add_data_to_contour(self):
@@ -5666,25 +5791,25 @@ class QCMApp(QMainWindow):
 
         if isinstance(self.sender(), QLineEdit):
                 try:
-                    self.set_harmdata(self.sender().objectName(), float(signal), harm=harm)
+                    self.save_harmdata(self.sender().objectName(), float(signal), harm=harm)
                 except:
-                    self.set_harmdata(self.sender().objectName(), 0, harm=harm)
+                    self.save_harmdata(self.sender().objectName(), 0, harm=harm)
         # if the sender of the signal isA QCheckBox object, update QCheckBox vals in dict
         elif isinstance(self.sender(), QCheckBox):
-            self.set_harmdata(self.sender().objectName(), signal, harm=harm)
+            self.save_harmdata(self.sender().objectName(), signal, harm=harm)
         # if the sender of the signal isA QRadioButton object, update QRadioButton vals in dict
         elif isinstance(self.sender(), QRadioButton):
-            self.set_harmdata(self.sender().objectName(), signal, harm=harm)
+            self.save_harmdata(self.sender().objectName(), signal, harm=harm)
         # if the sender of the signal isA QComboBox object, udpate QComboBox vals in dict
         elif isinstance(self.sender(), QComboBox):
             try: # if w/ userData, use userData
                 value = self.sender().itemData(signal)
             except: # if w/o userData, use the text
                 value = self.sender().itemText(signal)
-            self.set_harmdata(self.sender().objectName(), value, harm=harm)
+            self.save_harmdata(self.sender().objectName(), value, harm=harm)
         # if the sender of the signal isA QSpinBox object, udpate QComboBox vals in dict
         elif isinstance(self.sender(), (QSpinBox, QDoubleSpinBox)):
-            self.set_harmdata(self.sender().objectName(), signal, harm=harm)
+            self.save_harmdata(self.sender().objectName(), signal, harm=harm)
 
         # And we need to update harmdata and freq_span to peak_tracker
         self.peak_tracker.update_input(self.settings_chn['name'], harm, harmdata=self.settings['harmdata'], freq_span=self.settings['freq_span'], fGB=None)
@@ -5797,9 +5922,13 @@ class QCMApp(QMainWindow):
             self.get_harmdata('radioButton_peaks_policy_maxamp', harm=harm)
         )
 
-        # update checkBox_settings_settings_harmzerophase
-        self.ui.checkBox_settings_settings_harmzerophase.setChecked(
-            self.get_harmdata('checkBox_settings_settings_harmzerophase', harm=harm)
+        # update checkBox_settings_settings_harmlockphase
+        self.ui.checkBox_settings_settings_harmlockphase.setChecked(
+            self.get_harmdata('checkBox_settings_settings_harmlockphase', harm=harm)
+        )
+        # update doubleSpinBox_settings_settings_harmlockphase
+        self.ui.doubleSpinBox_settings_settings_harmlockphase.setValue(
+            self.get_harmdata('doubleSpinBox_settings_settings_harmlockphase', harm=harm)
         )
 
         # update lineEdit_peaks_threshold
@@ -5828,13 +5957,13 @@ class QCMApp(QMainWindow):
             return self.settings['harmdata'][chn_name][str(harm)][objname]
         except:
             self.settings['harmdata'][chn_name][str(harm)][objname] = harm_tree_default[objname]
-            print(objname, 'is not found!\nUse default data')
+            logger.warning('%s is not found!\nUse default data', objname)
             return self.settings['harmdata'][chn_name][str(harm)][objname]
 
 
-    def set_harmdata(self, objname, val, harm=None, chn_name=None):
+    def save_harmdata(self, objname, val, harm=None, chn_name=None):
         '''
-        set data with given objname in
+        save data with given objname in
         treeWidget_settings_settings_harmtree
         except lineEdit_harmstart & lineEdit_harmend
         '''
@@ -5848,7 +5977,7 @@ class QCMApp(QMainWindow):
         try:
             self.settings['harmdata'][chn_name][harm][objname] = val
         except:
-            logger.info('%s is not found!', objname)
+            logger.warning('%s is not found!', objname)
 
 
     def update_base_freq(self, base_freq_index):
@@ -5881,7 +6010,7 @@ class QCMApp(QMainWindow):
         fbase = self.settings['comboBox_base_frequency']
         BW = self.settings['comboBox_range']
         self.ui.label_status_f0RNG.setText('{}\u00B1{} MHz'.format(fbase, BW))
-        self.ui.label_status_f0RNG.setToolTip('base frequency = {} MHz; range = {} MHz'.format(fbase, BW))
+        self.ui.label_status_f0RNG.setToolTip('base frequency = {} MHz; range = \u00B1{} MHz'.format(fbase, BW))
 
 
     def update_freq_range(self):
@@ -6032,13 +6161,13 @@ class QCMApp(QMainWindow):
     def update_spanmethod(self, fitmethod_index):
         #NOTUSING
         value = self.ui.comboBox_tracking_method.itemData(fitmethod_index)
-        self.set_harmdata('comboBox_tracking_method', value, harm=self.settings_harm)
+        self.save_harmdata('comboBox_tracking_method', value, harm=self.settings_harm)
 
 
     def update_spantrack(self, trackmethod_index):
         #NOTUSING
         value = self.ui.comboBox_tracking_condition.itemData(trackmethod_index)
-        self.set_harmdata('comboBox_tracking_condition', value, harm=self.settings_harm)
+        self.save_harmdata('comboBox_tracking_condition', value, harm=self.settings_harm)
 
 
     def setvisible_samprefwidgets(self):

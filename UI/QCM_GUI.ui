@@ -1476,7 +1476,7 @@ background-color: red;
                    <x>0</x>
                    <y>0</y>
                    <width>247</width>
-                   <height>173</height>
+                   <height>171</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1618,7 +1618,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
+                   <width>86</width>
                    <height>70</height>
                   </rect>
                  </property>
@@ -1931,13 +1931,59 @@ background-color: red;
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_settings_settings_harmzerophase">
-                <property name="enabled">
-                 <bool>true</bool>
+               <widget class="QFrame" name="frame_settings_settings_harmphase">
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
                 </property>
-                <property name="text">
-                 <string>Fix to 0</string>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
                 </property>
+                <property name="lineWidth">
+                 <number>1</number>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_18">
+                 <property name="spacing">
+                  <number>0</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item>
+                  <widget class="QCheckBox" name="checkBox_settings_settings_harmlockphase">
+                   <property name="enabled">
+                    <bool>true</bool>
+                   </property>
+                   <property name="text">
+                    <string>Fix to 0</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QDoubleSpinBox" name="doubleSpinBox_settings_settings_harmlockphase">
+                   <property name="buttonSymbols">
+                    <enum>QAbstractSpinBox::NoButtons</enum>
+                   </property>
+                   <property name="minimum">
+                    <double>-90.000000000000000</double>
+                   </property>
+                   <property name="maximum">
+                    <double>90.000000000000000</double>
+                   </property>
+                   <property name="singleStep">
+                    <double>0.100000000000000</double>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
               <item>

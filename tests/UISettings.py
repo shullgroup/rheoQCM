@@ -147,6 +147,7 @@ config_default = {
         'pushButton_settings_ra', 
         'pushButton_data_la', 
         'pushButton_data_ra', 
+        'doubleSpinBox_settings_settings_harmlockphase',
         # hide reference time widgets to simplify the setup
         # reference time can always be changed by shifted_t0
         'dateTimeEdit_reftime',
@@ -517,6 +518,12 @@ config_default = {
     # minimum/maximum layer for mechanic property calculation
     'min_mech_layers': 0,
     'max_mech_layers': 2,
+
+    # multiprocessing cores for property calculating
+    # minus values: number of cores left free; 
+    # 0: maximum cores of the cpu; 
+    # positive values: number of cores to use. 1: use loop with single core
+    'multiprocessing_cores': -1, 
 
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {
@@ -1002,7 +1009,8 @@ harm_tree = {
     'radioButton_peaks_num_fixed': False,
     'radioButton_peaks_policy_minf': False,
     'radioButton_peaks_policy_maxamp': True,
-    'checkBox_settings_settings_harmzerophase': False,
+    'checkBox_settings_settings_harmlockphase': False,
+    'doubleSpinBox_settings_settings_harmlockphase': 0,
     'lineEdit_peaks_threshold': 0.00001,
     'lineEdit_peaks_prominence': 0.0001,
 }
@@ -1073,8 +1081,8 @@ if __name__ == '__main__':
     config_default = get_config()
     settings_default = get_settings()
     # print('to get config')
-    # cfg = get_config()
-    # print(cfg['vna_cal_file_path'])
+    cfg = get_config()
+    print(cfg['version_hide_list'])
 
     # print('to get settings')
     # stt = get_settings()

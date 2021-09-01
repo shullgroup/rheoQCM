@@ -929,7 +929,7 @@ class DataSaver:
     def update_mech_queue(self, chn_name, nhcalc, queue):
         '''
         this function update queue (df) the df of dmech_df
-        This function will check if the index of both dmech_df and queue with the same queue_id are the same. if not, the index of queue will be changed to it of dmech_df and use dataframe.update function to update
+        This function will check if the index of both mech_df and queue with the same queue_id are the same. if not, the index of queue will be changed to it of dmech_df and use dataframe.update function to update
         
         df_name: 'samp', 'ref', 'samp_ref', 'ref_ref', 'samp_prop', 'ref_prop'
         queue: one row of the df
@@ -958,6 +958,47 @@ class DataSaver:
             queue.index = [df_idx]
 
         getattr(self, chn_name + '_prop')[mech_key].update(queue)
+
+        self.saveflg = False
+
+
+    def update_mech_df(self, chn_name, nhcalc, df_new):
+        '''
+        this function update df_new (multiple queues or single queue) to mech_df
+        This function use simple update function of pd to update the data
+        
+        df_name: 'samp', 'ref', 'samp_ref', 'ref_ref', 'samp_prop', 'ref_prop'
+        df_new: multiple queues or single queue
+        '''
+
+        mech_key = self.get_mech_key(nhcalc)
+        if not mech_key in getattr(self, chn_name + '_prop'):
+            logger.warning('no df of {} in {}'.format(mech_key, chn_name))
+            return
+
+        # set index to int
+        df_new['queue_id'] = df_new.queue_id.astype('int')
+
+        new_queue_id = df_new.queue_id
+        new_queue_idx = df_new.index.astype(int)
+        logger.info(new_queue_id) 
+        logger.info(type(new_queue_id)) 
+        logger.info(new_queue_idx) 
+        logger.info(type(new_queue_idx)) 
+
+        df = getattr(self, chn_name + '_prop')[mech_key]
+
+        # df_idx = df[df.queue_id == new_queue_id].index.astype(int)
+        
+        # logger.info(df_idx)
+
+        # # TODO: add check if all new_queue_id in df
+
+        # if queue_idx != df_idx: # index doesn't match
+        #     queue.index = [df_idx]
+
+
+        getattr(self, chn_name + '_prop')[mech_key].update(df_new)
 
         self.saveflg = False
 

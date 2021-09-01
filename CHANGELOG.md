@@ -1,17 +1,22 @@
 # Changelog
 
-## [0.20.0] - 2021-05-23
+## [0.20.0] - 2021-09-01
 
 ### Added
 
 - Add multiprocessing to property calculating to utilize multicores of cpu. Set the cores to use in `multiprocessing_cores`.
 
+- Add `lmfit` fitting to `QCM` module. NOTE: the Error for lmfit method is different to `scipy` (default) which considers input errors from measurements.
+
 ### Changed
+
+- Improved peak fitting function.
 
 ### Fixed
 
-### Removed
+- Fix mpl_sp_[harm] plots x/y labels when plot polor plots.  
 
+### Removed
 
 ## [0.19.4] - 2021-05-05
 
@@ -29,7 +34,7 @@
 
 ### Fixed
 
-- Fix chashing while exporting data with empty channel(s).
+- Fix chrashing while exporting data with empty channel(s).
 - Fix variable name errors in rheoQCM
 - Fix comparability with Matplotlib >= 3.3: picker, errorbar.
 - Fix the property plot scrollArea does not reset after clearing plots.

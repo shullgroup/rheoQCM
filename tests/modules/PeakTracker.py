@@ -432,7 +432,12 @@ class PeakTracker:
         else: # initialize data
             self.harminput[chn_name][harm]['p_policy'] = None
 
-        self.harminput[chn_name][harm]['zerophase'] = harm_dict.get('checkBox_settings_settings_harmzerophase', False)
+        self.harminput[chn_name][harm]['lockphase'] = harm_dict.get('checkBox_settings_settings_harmlockphase', False)
+        if harm_dict.get('doubleSpinBox_settings_settings_harmlockphase', None) is not None:
+            self.harminput[chn_name][harm]['lockphaseangle'] = harm_dict.get('doubleSpinBox_settings_settings_harmlockphase', None) * np.pi / 180 # use radian
+        else:
+            self.harminput[chn_name][harm]['lockphaseangle'] = None
+        
         self.harminput[chn_name][harm]['threshold'] = harm_dict.get('lineEdit_peaks_threshold', None)
         self.harminput[chn_name][harm]['prominence'] = harm_dict.get('lineEdit_peaks_prominence', None)
 
@@ -944,14 +949,41 @@ class PeakTracker:
                 min= wid / 10,         # lb in Hz (limit the width >= 1/10 of the guess value!!)
                 max=(np.amax(f) - np.amin(f)) * 2, # ub in Hz: assume peak is in the range of f
             )
-            if self.harminput[chn_name][harm]['zerophase']: # fix phase to 0
-                params.add(
-                    'p'+str(i)+'_phi',       # phase shift
-                    value=0,                 # init value: peak height
-                    vary=False,              # fix phi=0
-                    min=-np.pi / 2,          # lb in rad
-                    max=np.pi / 2,           # ub in rad
-                )
+            if self.harminput[chn_name][harm]['lockphase']: # fix phase the same
+                if  (abs(self.harminput[chn_name][harm]['lockphaseangle']) < np.pi/2): # all peaks use the same value given value
+                    params.add(
+                        'p'+str(i)+'_phi',       # phase shift
+                        value=self.harminput[chn_name][harm]['lockphaseangle'], # init value: peak height
+                        vary=False,              # fix phi=0
+                        # min=-np.pi / 2,          # lb in rad
+                        # max=np.pi / 2,           # ub in rad
+                    )
+                elif self.found_n > 1: # multiple peaks and phase >= 90 deg
+                    # link all peaks angle for fitting
+                    if i == 0: # set 1st peak
+                        print('n:', i)
+                        params.add(
+                            'p'+str(i)+'_phi',       # phase shift
+                            vary=True,
+                            min=-np.pi / 2,          # lb in rad
+                            max=np.pi / 2,           # ub in rad
+                        )
+                    else: # link other peaks pahses to equal
+                        print('n:', i)
+                        params.add(
+                            'p'+str(i)+'_phi',       # phase shift
+                            expr='p0_phi',
+                            vary=True,
+                            min=-np.pi / 2,          # lb in rad
+                            max=np.pi / 2,           # ub in rad
+                        )
+                else: # single peak & phase>=90: leave peak vary
+                    params.add(
+                        'p'+str(i)+'_phi',       # phase shift
+                        value=phi,               # init value: peak height
+                        min=-np.pi / 2,          # lb in rad
+                        max=np.pi / 2,           # ub in rad
+                    )
             else: # leave phase vary
                 params.add(
                     'p'+str(i)+'_phi',       # phase shift
