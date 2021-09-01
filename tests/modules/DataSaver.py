@@ -969,12 +969,13 @@ class DataSaver:
         '''
         for chn_name in self._chn_keys:
             for ext in ['', '_ref']: # samp/ref and samp_ref/ref_ref
+                print(ext)
                 df = getattr(self, chn_name + ext)
                 col_endswith_s = [col for col in df.columns if col.endswith('s')]
                 # logger.info(col_endswith_s) 
                 
                 for col in col_endswith_s:
-                    df[col] = df[col].apply(lambda row: self.nan_harm_list() if row is None else [np.nan if x is None else x for x in row])
+                    df[col] = df[col].apply(lambda row: self.nan_harm_list() if (row is None) or (row != row) else [np.nan if x is None else x for x in row]) # use row != row to check if is float('nan')
                     # df[col] = df[col].apply(lambda row: [np.nan if x is None else x for x in row])
                     df[col] = df[col].apply(lambda row: [row[i]  for i in range(int((self.settings['max_harmonic']+1)/2))])
 
