@@ -1537,6 +1537,9 @@ def read_xlsx(infile, **kwargs):
         T_coef_plots (Boolean):  set to True to plot temp. dependent f and g for ref.
             - default is True
             
+        T_shift (dictionary): shifts added to reference values
+            - default is {1:0, 3:0, 5:0}
+            
                            
     returns:
         df:  
@@ -1553,6 +1556,10 @@ def read_xlsx(infile, **kwargs):
     Tref = kwargs.get('Tref', 22)
     # specify default bare crystal temperature coefficients
     T_coef = kwargs.get('T_coef', T_coef_default)
+    
+    # read shifts that account for changes from stress levels applied
+    # to different sample holders
+    T_shift = kwargs.get('T_shift', {1:0, 3:0, 5:0})
 
 
     df = pd.read_excel(infile, sheet_name=film_channel, header=0)
