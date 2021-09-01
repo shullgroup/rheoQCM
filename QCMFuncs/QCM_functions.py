@@ -8,7 +8,6 @@ Created on Thu Jan  4 09:19:59 2018
 
 import numpy as np
 import scipy.optimize as optimize
-from scipy.interpolate import InterpolatedUnivariateSpline
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -29,6 +28,12 @@ drho_q = Zq/(2*f1)
 e26 = 9.65e-2
 g0_default = 50 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
 err_frac_default = 3e-2 # error in f or gamma as a fraction of gamma
+T_coef_default = {'f':{1:[0.00054625, 0.04338, 0.08075, 0],
+                       3:[0.0017, -0.135, 8.9375, 0],
+                       5:[0.002825, -0.22125, 15.375, 0]},
+                  'g':{1:[0,0,0,0],
+                       3:[0,0,0,0],
+                       5:[0,0,0,9]}}
 
 electrode_default = {'drho':2.8e-3, 'grho3':3.0e14, 'phi':0}
 
@@ -706,11 +711,10 @@ def normdelf_bulk(n, dlam3, phi):
     returns:
         delf normalized bulk value
     """
-
     return np.real(2*np.tan(2*np.pi*dlam(n, dlam3, phi)*
                           (1-1j*np.tan(np.deg2rad(phi/2)))) / \
             (np.sin(np.deg2rad(phi))*(1-1j*np.tan(np.deg2rad(phi/2)))))
-            
+        
 
 def normdelg_bulk(n, dlam3, phi):
     """
@@ -1217,7 +1221,7 @@ def make_prop_axes(**kwargs):
         filmtype (string):
             - 'thin': standard thin film solution, with three axes
             - 'bulk': bulk solution with two axes
-        xlabel (string):
+        xunit (string):
             label for x axes (default is 'index')     .
         titles (dictionary):
             titles for axes (keys are 0, 1, 2)
@@ -1233,7 +1237,9 @@ def make_prop_axes(**kwargs):
 
     filmtype = kwargs.get('filmtype','thin')
     num = kwargs.get('num','property fig')
-    xlabel = kwargs.get('xlabel', 'index')
+    xunit = kwargs.get('xunit', 'index')
+    if xunit == 'temp':
+        xunit = r'$T$ ($^\circ$C)'
     titles = kwargs.get('titles', {0:'(a)', 1:'(b)', 2:'(c)'})
 
     if filmtype != 'bulk':
@@ -1251,7 +1257,7 @@ def make_prop_axes(**kwargs):
 
     # set xlabel 
     for i in np.arange(len(ax)):
-        ax[i].set_xlabel(xlabel)
+        ax[i].set_xlabel(xunit)
         ax[i].set_title(titles[i])
     fig.tight_layout()
     return fig, ax
@@ -1469,6 +1475,8 @@ def make_vgp_axes(**kwargs):
             Window title.
         figsize (2 elment tuple of numbers):
             Figure size (default is (3,3))
+        num (string):
+            window title (default is 'property fig')
             
     returns:
         fig: 
@@ -1508,29 +1516,29 @@ def read_xlsx(infile, **kwargs):
             - 'S_reference'  ('S_reference' sheet from xlsx file)
             - 'R_reference'  ('R_channel' sheet from xlsx file)
             - 'self'  (read delf and delg read directly from the data channel.)
-
+            - 'T_coef' - Taken directly from T_coef dictionary
         
         ref_index (numpy array):
             index values to include in reference determination 
-            default is 'all', which takes everything
+            - default is 'all', which takes everything
             
         film_index (numpy array)
             index values to include for film data
             default is 'all' which takes everthing
             
-        T_coef (string):
-            Source for reference temperature coefficients
-            - 'default' (standard temperature coeficients) 
-            - T_coef - T_coef dictionary passed from calling function
+        T_coef (dictionary):
+            Temperature coefficients for reference temp. shift
+            - default values used if not specified
         
-        Tref: (numeric or string)
+        Tref: (numeric)
             Temperature at which reference frequency shift was determined
-            - 'self' (default) - temperature coefficients calculated
-                from temperatures in ref. sheet
-            - a specific temperature used as reference, with T_coef provided
-                
+            - default is 22C
+                        
+        T_coef_plots (Boolean):  set to True to plot temp. dependent f and g for ref.
+            - default is True
             
-        T_coef_plots:  set to True to plot temp. dependent f and g for ref.
+        T_shift (dictionary): shifts added to reference values
+            - default is {1:0, 3:0, 5:0}
             
                            
     returns:
@@ -1545,15 +1553,14 @@ def read_xlsx(infile, **kwargs):
     ref_index = kwargs.get('ref_index', 'all')
     T_coef_plots = kwargs.get('T_coef_plots', True)
     
-    Tref = kwargs.get('Tref', 'self')
+    Tref = kwargs.get('Tref', 22)
     # specify default bare crystal temperature coefficients
-    T_coef = kwargs.get('T_coef', 
-                          {'f':{1:[0.00054625, 0.04338, 0.08075, 0],
-                                3:[0.0017, -0.135, 8.9375, 0],
-                                5:[0.002825, -0.22125, 15.375, 0]},
-                           'g':{1:[0,0,0,0],
-                                3:[0,0,0,0],
-                               5:[0,0,0,9]}})
+    T_coef = kwargs.get('T_coef', T_coef_default)
+    
+    # read shifts that account for changes from stress levels applied
+    # to different sample holders
+    T_shift = kwargs.get('T_shift', {1:0, 3:0, 5:0})
+
 
     df = pd.read_excel(infile, sheet_name=film_channel, header=0)
     if type(film_index) != str:
@@ -1583,11 +1590,13 @@ def read_xlsx(infile, **kwargs):
     
     # add each of the values of delfstar
     if ref_channel=='T_coef':
+        T_coef_plots = False
         for n in nvals:
-            ref_fg = bare_tempshift(df['temp'], T_coef, Tref, n)
-            fstar_ref = ref_fg['f']+1j*ref_fg['g']
+            ref_f = np.polyval(T_coef['f'][n], df['temp'])
+            ref_g = np.polyval(T_coef['g'][n], df['temp'])
+            fstar_ref = ref_f+1j*ref_g
             fstar = df['f'+str(n)] + 1j*df['g'+str(n)]
-            df[n] = (fstar - fstar_ref)
+            df[n] = fstar - fstar_ref
 
     elif ref_channel == 'self':
         # this is the standard read protocol, with delf and delg already in 
@@ -1604,8 +1613,7 @@ def read_xlsx(infile, **kwargs):
         
         # if no temperature is listed or a specific reference temperature
         # is given we just average the values
-        if (('temp' not in df_ref.keys()) or (df.temp.isnull().values.all()) or
-            Tref != 'self'):
+        if ('temp' not in df_ref.keys()) or (df_ref.temp.isnull().values.all()):
             for k in np.arange(len(nvals)):
                 for p in [0,1]:
                     # get the reference values and plot them
@@ -1659,7 +1667,7 @@ def read_xlsx(infile, **kwargs):
             keep_column.append('g'+str(nvals[k])+'_dat')
             keep_column.append('g'+str(nvals[k])+'_ref')
             
-    if T_coef_plots and ref_channel != 'self':
+    if T_coef_plots and ref_channel != 'self' and len(df_ref.temp.unique())>1:
         Trange=[df['temp'].min(), df['temp'].max()]
         plot_bare_tempshift(df_ref, T_coef, Tref, nvals, Trange)
     return df[keep_column].copy()
@@ -1677,7 +1685,7 @@ def plot_bare_tempshift(df_ref, T_coef, Tref, nvals, Trange):
         for k in np.arange(len(nvals)):           
             # plot themeasured values, relative to value at ref. temp.
             meas_vals = (df_ref[var[p]+str(nvals[k])] - 
-                         np.polyval(T_coef[var[p]][nvals[k]],df_ref['temp']))
+                         np.polyval(T_coef[var[p]][nvals[k]],Tref))
             ax[p,k].plot(df_ref['temp'], meas_vals, 'x')
             
             # now plot the fit values
@@ -1688,8 +1696,8 @@ def plot_bare_tempshift(df_ref, T_coef, Tref, nvals, Trange):
             ax[p,k].set_xlabel(r'$T$ ($^\circ$C)')              
             ax[p,k].set_ylabel(ylabel[p])
             ax[p,k].set_title('n='+str(nvals[k]))
-            ymin = np.min([-1, meas_vals.min(), ref_vals.min()])
-            ymax = np.max([1, meas_vals.max(), ref_vals.max()])
+            ymin = np.min([meas_vals.min(), ref_vals.min()])
+            ymax = np.max([meas_vals.max(), ref_vals.max()])
             ax[p,k].set_ylim([ymin, ymax])
 
 
@@ -1762,8 +1770,6 @@ def gstar_rouse(wtau, n_rouse):
 
 def springpot(w, g0, tau, beta, sp_type, **kwargs):
     """
-    
-    
     args:
         w (numpy array of real values):
             Angular frequencies.
@@ -1789,8 +1795,11 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
             Elments that are Rouse elments
  
     returns:
+        g_br (dictionary of numpy arrays)
+            complex modulus for each parallel branch (summed to get gstar)
         gstar (numpy array):  
-            complex shear modulus normalized by unrelaxed value         
+            complex shear modulus normalized by unrelaxed value   
+
     """
 
     # specify which elements are kww or Maxwell elements
@@ -1859,7 +1868,7 @@ def vft(T, Tref, B, Tinf):
     return -B/(Tref-Tinf) + B/(T-Tinf)
 
 def check_solution(df, **kwargs):
-    from pylab import meshgrid
+
     '''
     Create contour plot of normf_g or rh_rd and verify that solution is correct.
     
@@ -1868,7 +1877,7 @@ def check_solution(df, **kwargs):
             input dataframe to consider
                 
     kwargs:
-        wintitle (string):
+        num (string):
             Window title.
         numxy (int):  
             number of grid points in x and y (default is 100)
@@ -1889,9 +1898,13 @@ def check_solution(df, **kwargs):
             solution check (default is 'temp')
         plot_solutions (Boolean): True if we want to plot the solution checks
             for each point (default = False)
-          
+        xunit (string):
+            Units for x data.  Default is 'dlam', function currently also handles
+            's', 'min', 'hr', 'day', 'temp'
+    
     '''
-
+    
+    from pylab import meshgrid
     numxy = kwargs.get('numxy', 100)
     numz = kwargs.get('numz', 200)
     philim = kwargs.get('philim', [0, 90])
@@ -1903,10 +1916,28 @@ def check_solution(df, **kwargs):
     plot_solutions = kwargs.get('plot_solutions', False)
     idxmin=df.index[0]
     calc = df['calc'][idxmin]
+    num = kwargs.get('num', '')
+    num = calc + ' ' + num
+    xunit = kwargs.get('xunit', 'dlam')
+    
+    # set up x labels for plots of actual and back-calculated shifts
+    if xunit =='s':
+        xlabel ='$t$ (s)'
+    elif xunit == 'min':
+        xlabel ='$t$ (min.)'
+    elif xunit == 'hr':
+        xlabel ='$t$ (hr)'
+    elif xunit == 'day':
+        xlabel ='$t$ (days)'
+    elif xunit == 'temp':
+        xlabel = r'$T$ ($^\circ$C)'            
+    else:
+        xlabel = r'$d/\lambda_3$'
+
     
     # make the axes
-    fig, ax = plt.subplots(2,2, figsize=(10,8), sharex=False, sharey=False,
-                           num=calc, constrained_layout=True)
+    fig, ax = plt.subplots(2,2, figsize=(10,6), sharex=False, sharey=False,
+                           num=num, constrained_layout=True)
                        
     # make meshgrid for contour
     phi = np.linspace(philim[0], philim[1], numxy) 
@@ -2004,7 +2035,8 @@ def check_solution(df, **kwargs):
                          
     # now add the experimental data
     # variable to keep track of differentplots
-    dvals= {}
+    xdata = {}
+    dvals = {}
     phisol=np.array([])
     df_expt={}
     df_calc={}
@@ -2015,15 +2047,33 @@ def check_solution(df, **kwargs):
 
     for n in nplot:
         nstr=str(n)
+        xdata[n] = np.array([])
         dvals[n] = np.array([])
         df_expt[n] = np.array([])
         df_calc[n] = np.array([])
         
+        # calculate values of d/lambda
+
         # extract the calculated propoerties from the dataframe
         for idx, row in df.iterrows():
             film = {'drho':row['drho'], 'grho3':row['grho3'],
-                    'phi':row['phi']}
-            dvals[n] = np.append(dvals[n], calc_dlam(n, film))
+                'phi':row['phi']}
+            dval = calc_dlam(n, film)
+            dvals[n] = np.append(dvals[n], dval)
+            if xunit =='s':
+                xval = row['t']
+            elif xunit == 'min':
+                xval = row['t']/60
+            elif xunit == 'hr':
+                xval = row['t']/3600
+            elif xunit == 'day':
+                xval = row['t']/(24*3600)
+            elif xunit == 'temp':
+                xval = row['temp']         
+            else:
+                xval = dval
+
+            xdata[n] = np.append(xdata[n], xval)
             df_expt[n] = np.append(df_expt[n], row['df_expt'+nstr])
             df_calc[n] = np.append(df_calc[n], row['df_calc'+nstr])        
             if label in df.keys():
@@ -2036,14 +2086,14 @@ def check_solution(df, **kwargs):
     for n in nplot: 
         nstr=str(n)+' (expt)'
         # compare experimental and calculated frequency fits     
-        ax[1,0].plot(dvals[3], np.real(df_expt[n])/n, '+', color = col[n],
+        ax[1,0].plot(xdata[3], np.real(df_expt[n])/n, '+', color = col[n],
                      label = 'n='+nstr)
-        ax[1,0].plot(dvals[3], np.real(df_calc[n])/n, '-', color = col[n])
+        ax[1,0].plot(xdata[3], np.real(df_calc[n])/n, '-', color = col[n])
                 
         # now compare experimental and calculated dissipation
-        ax[1,1].plot(dvals[3], np.imag(df_expt[n])/n, '+', color = col[n],
+        ax[1,1].plot(xdata[3], np.imag(df_expt[n])/n, '+', color = col[n],
                      label = 'n='+nstr)
-        ax[1,1].plot(dvals[3], np.imag(df_calc[n])/n, '-',
+        ax[1,1].plot(xdata[3], np.imag(df_calc[n])/n, '-',
                      color = col[n])
         
     # add values to contour plots for n=3
@@ -2053,7 +2103,7 @@ def check_solution(df, **kwargs):
     for k in [0,1]:  
         ax[1,k].legend()
         ax[0,k].format_coord = fmt
-        ax[1,k].set_xlabel(r'$d/\lambda _3$')
+        ax[1,k].set_xlabel(xlabel)
         
     # reset axis limits
     ax[0,0].set_xlim(dlim)
