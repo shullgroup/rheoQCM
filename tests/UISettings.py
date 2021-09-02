@@ -523,7 +523,7 @@ config_default = {
     # minus values: number of cores left free; 
     # 0: maximum cores of the cpu; 
     # positive values: number of cores to use. 1: use loop with single core
-    'multiprocessing_cores': -1, 
+    'multiprocessing_cores': 1, 
 
     # options for comboBox_settings_mechanics_selectmodel
     'qcm_model_opts': {

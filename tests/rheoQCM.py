@@ -1514,8 +1514,8 @@ class QCMApp(QMainWindow):
     def get_mp_cores(self):
         ''' return the number of cores to use for multiprocessing
         '''
-        # core_count = multiprocessing.cpu_count()
-        core_count = len(os.sched_getaffinity(0)) # number of usable cpus
+        core_count = multiprocessing.cpu_count()
+        # core_count = len(os.sched_getaffinity(0)) # number of usable cpus
         if core_count is None:
             return 1
         core_config = config_default['multiprocessing_cores']
