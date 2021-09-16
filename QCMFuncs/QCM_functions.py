@@ -1596,13 +1596,13 @@ def read_xlsx(infile, **kwargs):
             ref_g = np.polyval(T_coef['g'][n], df['temp'])
             fstar_ref = ref_f+1j*ref_g
             fstar = df['f'+str(n)] + 1j*df['g'+str(n)]
-            df[n] = fstar - fstar_ref
+            df[n] = fstar - fstar_ref -T_shift[n] # -AS
 
     elif ref_channel == 'self':
         # this is the standard read protocol, with delf and delg already in 
         # the .xlsx file
         for n in nvals:
-            df[n] = df['delf'+str(n)] + 1j*df['delg'+str(n)].round(1)            
+            df[n] = df['delf'+str(n)] + 1j*df['delg'+str(n)].round(1) - T_shift[n]  #-AS          
             
     else:
         # here we need to obtain T_coef from the info in the ref. channel
@@ -1659,13 +1659,18 @@ def read_xlsx(infile, **kwargs):
             df[nvals[k]]=(df['f'+str(nvals[k])+'_dat']-
                           df['f'+str(nvals[k])+'_ref']+
                       1j*(df['g'+str(nvals[k])+'_dat']-
-                          df['g'+str(nvals[k])+'_ref'])).round(1)
+                          df['g'+str(nvals[k])+'_ref'])-T_shift[nvals[k]]).round(1)#-AS 
 
             # add absolute frequency and reference values to dataframe
             keep_column.append('f'+str(nvals[k])+'_dat')
             keep_column.append('f'+str(nvals[k])+'_ref')
             keep_column.append('g'+str(nvals[k])+'_dat')
             keep_column.append('g'+str(nvals[k])+'_ref')
+    
+    # add the constant applied shift to the reference values to the dataframe -AS       
+    for n in nvals:
+        df[str(n)+'_refshift']=T_shift[n]
+        keep_column.append(str(n)+'_refshift')
             
     if T_coef_plots and ref_channel != 'self' and len(df_ref.temp.unique())>1:
         Trange=[df['temp'].min(), df['temp'].max()]
