@@ -1277,6 +1277,8 @@ def prop_plots(df, ax, **kwargs):
         xunit (string):
             Units for x data.  Default is 'index', function currently handles
             's', 'min', 'hr', 'day', 'temp'
+        xoffset (real):
+            amount to subtract from x value for plotting (default is zero)
         fmt (string):
             Format sting: Default is '+'   .
         legend (string):
@@ -1293,25 +1295,26 @@ def prop_plots(df, ax, **kwargs):
     fmt=kwargs.get('fmt','+')
     legend=kwargs.get('legend','none')
     plotdrho=kwargs.get('plotdrho', True)
+    xoffset = kwargs.get('xoffset', 0)
      
     if xunit =='s':
-        xdata = df['t']
+        xdata = df['t']-xoffset
         xlabel ='$t$ (s)'
     elif xunit == 'min':
-        xdata = df['t']/60
+        xdata = df['t']/60-xoffset
         xlabel ='$t$ (min.)'
     elif xunit == 'hr':
-        xdata = df['t']/3600
+        xdata = df['t']/3600-xoffset
         xlabel ='$t$ (hr)'
     elif xunit == 'day':
-        xdata = df['t']/(24*3600)
+        xdata = df['t']/(24*3600)-xoffset
         xlabel ='$t$ (days)'
     elif xunit == 'temp':
-        xdata = df['temp']
+        xdata = df['temp']-xoffset
         xlabel = r'$T$ ($^\circ$C)'
     
     else:
-        xdata = df.index
+        xdata = df.index-xoffset
         xlabel ='index'
 
     ax[0].errorbar(xdata, df['grho3']/1000, fmt=fmt, yerr=df['grho3_err']/1000,
@@ -1518,11 +1521,11 @@ def read_xlsx(infile, **kwargs):
             - 'self'  (read delf and delg read directly from the data channel.)
             - 'T_coef' - Taken directly from T_coef dictionary
         
-        ref_index (numpy array):
+        ref_idx (numpy array):
             index values to include in reference determination 
             - default is 'all', which takes everything
             
-        film_index (numpy array)
+        film_idx (numpy array)
             index values to include for film data
             default is 'all' which takes everthing
             
@@ -1539,6 +1542,9 @@ def read_xlsx(infile, **kwargs):
             
         T_shift (dictionary): shifts added to reference values
             - default is {1:0, 3:0, 5:0}
+        
+        nvals (list): harmonics to include
+            - default is [1, 3, 5]
             
                            
     returns:
@@ -1548,10 +1554,11 @@ def read_xlsx(infile, **kwargs):
     
     restrict_to_marked = kwargs.get('restrict_to_marked',[])
     film_channel = kwargs.get('film_channel', 'S_channel')
-    film_index = kwargs.get('film_index', 'all')
+    film_idx = kwargs.get('film_idx', 'all')
     ref_channel = kwargs.get('ref_channel', 'R_channel')
-    ref_index = kwargs.get('ref_index', 'all')
+    ref_idx = kwargs.get('ref_idx', 'all')
     T_coef_plots = kwargs.get('T_coef_plots', True)
+    nvals = kwargs.get('nvals', [1, 3, 5])
     
     Tref = kwargs.get('Tref', 22)
     # specify default bare crystal temperature coefficients
@@ -1563,15 +1570,9 @@ def read_xlsx(infile, **kwargs):
 
 
     df = pd.read_excel(infile, sheet_name=film_channel, header=0)
-    if type(film_index) != str:
-        df=df[df.index.isin(film_index)]
+    if type(film_idx) != str:
+        df=df[df.index.isin(film_idx)]
     
-    # sort out which harmonics are included
-    nvals = []
-    for n in [1,3,5,7,9]:
-        if 'f'+str(n) in df.columns:
-            nvals=nvals+[n]
-
     df['keep_row']=1  # keep all rows unless we are told to check for specific marks
     for n in restrict_to_marked:
         df['keep_row'] = df['keep_row']*df['mark'+str(n)]
@@ -1607,8 +1608,8 @@ def read_xlsx(infile, **kwargs):
     else:
         # here we need to obtain T_coef from the info in the ref. channel
         df_ref = pd.read_excel(infile, sheet_name=ref_channel, header=0)
-        if type(ref_index) != str:
-            df_ref=df_ref[df_ref.index.isin(ref_index)]
+        if type(ref_idx) != str:
+            df_ref=df_ref[df_ref.index.isin(ref_idx)]
         var=['f', 'g']
         
         # if no temperature is listed or a specific reference temperature
