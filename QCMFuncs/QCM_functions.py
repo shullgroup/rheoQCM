@@ -26,6 +26,7 @@ f1 = 5e6  # fundamental resonant frequency
 openplots = 4
 drho_q = Zq/(2*f1)
 e26 = 9.65e-2
+
 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
 g0_default = 50
 err_frac_default = 3e-2  # error in f or gamma as a fraction of gamma
@@ -37,6 +38,7 @@ T_coef_default = {'f': {1: [0.00054625, 0.04338, 0.08075, 0],
                        5: [0, 0, 0, 9]}}
 
 electrode_default = {'drho': 2.8e-3, 'grho3': 3.0e14, 'phi': 0}
+water = {'drho':np.inf, 'grho3':1e8, 'phi':90}
 
 
 def find_nearest_idx(values, array):
