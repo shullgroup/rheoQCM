@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.20.0] - 2021-09-01
+## [0.20.0] - 2021-10-01
 
 ### Added
 
@@ -8,11 +8,16 @@
 
 - Add `lmfit` fitting to `QCM` module. NOTE: the Error for lmfit method is different to `scipy` (default) which considers input errors from measurements.
 
+- Add `Refresh table` button to manually update property table contents.
+
 ### Changed
 
-- Improved peak fitting function.
+- Improve peak fitting function.
+- Change functions in QCM module to make it easier to use out of the GUI.
 
 ### Fixed
+
+- Fix multiprocessing bug where the retruned variables were placed in wrong order. This bug made the calulated overlayer values (grho, phi, drho) in the wrong order (drho, grho, phi) and made the follwing calculation failed and the program would just use the results from SLA guesses.
 
 - Fix mpl_sp_[harm] plots x/y labels when plot polor plots.  
 

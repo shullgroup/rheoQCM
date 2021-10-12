@@ -45,7 +45,7 @@ config_default = {
     # time string format
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
 
-    # if marked data shown when showing all data
+    # if marked data will be shown when showing all data
     'show_marked_when_all': False,
 
     # keys to ingnore when loading settings
@@ -118,7 +118,7 @@ config_default = {
         'pushButton_settings_data_tonext',
         'pushButton_settings_data_toend',
     ],
-    # list for disable/hide widges for manual fit
+    # list for disable/hide harmtree widges for manual fit
     'manual_refit_enable_disable_harmtree_list':[
         'lineEdit_scan_harmstart',
         'lineEdit_scan_harmend',
@@ -185,6 +185,9 @@ config_default = {
         'pushButton_settings_data_marksclear',
         # 'verticalSpacer_19',
 
+        'checkBox_settings_mech_liveupdate',
+        'radioButton_settings_mech_refto_air',
+        'radioButton_settings_mech_refto_overylayer',
         # 'toolButton_settings_mechanics_solve',
         # 'groupBox_nhplot',
         # 'groupBox_settings_mechanics_nhcalc',
@@ -345,8 +348,8 @@ config_default = {
     # DON't change the value of this key
     'mech_table_rowheaders':{
         'delf_exps':         u'\u0394' + 'f (Hz)', # Δf (Hz)
-        'delfn_exps':         u'\u0394' + 'f/n (Hz)', # Δf (Hz)
         'delf_calcs':        u'\u0394' + 'fcalc (Hz)', # Δfcalc (Hz)
+        'delfn_exps':         u'\u0394' + 'f/n (Hz)', # Δf (Hz)
         'delfn_calcs':       u'\u0394' + 'fcalc/n (Hz)', # Δfₙcalc (Hz)
         'delg_exps':         u'\u0394\u0393' + ' (Hz)', # ΔΓ (Hz)
         'delg_calcs':        u'\u0394\u0393' + 'calc (Hz)', # ΔΓcalc (Hz)
@@ -435,10 +438,10 @@ config_default = {
         # '': '',
     }),
 
-    'ref_temp_opts': OrderedDict({
-        'const': 'Constant T',
-        'var': 'Variable T',
-        # '': '',
+    'ref_mode_opts': OrderedDict({
+        'const': 'Average',
+        'var': 'Various T',
+        'p2p': 'Point to Point',
     }),
 
     # crystal cuts options
@@ -549,6 +552,7 @@ config_default = {
     'qcm_layer_source_opts': {
         'ind': 'Index',
         'prop': 'Prop.',
+        'prop_guess': 'Guess',
         # 'fg': u'\u0394' + 'f&' + u'\u0394\u0393',
         # 'fg': 'f&' + u'\u0393',
         'name': 'Name',
@@ -970,6 +974,8 @@ settings_default = {
 
     'comboBox_settings_mechanics_calctype': 'LL', # 'LL' or 'SLA'
     'doubleSpinBox_settings_mechanics_bulklimit': 0.500, # bulk limit of rd
+    'radioButton_settings_mech_refto_air': 1, # film refrence to air
+    'radioButton_settings_mech_refto_overlayer': 0, # film reference to overlayer
     'checkBox_settings_mechanics_witherror': True, # errorbar
 
     'comboBox_settings_mechanics_selectmodel': 'onelayer',
