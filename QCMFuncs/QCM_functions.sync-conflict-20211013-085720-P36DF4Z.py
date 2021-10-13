@@ -26,7 +26,6 @@ f1 = 5e6  # fundamental resonant frequency
 openplots = 4
 drho_q = Zq/(2*f1)
 e26 = 9.65e-2
-
 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
 g0_default = 50
 err_frac_default = 3e-2  # error in f or gamma as a fraction of gamma
@@ -38,7 +37,6 @@ T_coef_default = {'f': {1: [0.00054625, 0.04338, 0.08075, 0],
                        5: [0, 0, 0, 9]}}
 
 electrode_default = {'drho': 2.8e-3, 'grho3': 3.0e14, 'phi': 0}
-water = {'drho':np.inf, 'grho3':1e8, 'phi':90}
 
 
 def find_nearest_idx(values, array):
@@ -403,25 +401,12 @@ def calc_delfstar_sla(ZL):
     returns:
         Complex frequency shift, delfstar (Hz).
     """
-    return f1*1j*ZL/(np.pi*Zq)
-
-def calc_ZL_sla(delfstar):
-    """
-    Calculate complex load impedance from complex freq. shift using small
-    load approximation (the inverse of calc_dlfstar_sla)
-    args:
-        delfstar (complex):
-            complex frequency shift relative to bare crystal.
-
-    returns:
-        Complex load impedance in SI units .
-    """
-    return -1j*np.pi*Zq/f1
+    return f1*1j/(np.pi*Zq)*ZL
 
 
 def calc_ZL(n, layers, delfstar, calctype):
     """
-    Calculate complex load impendance for stack of layers of known props.
+    Calculate complex load impendance for stack of layers.
     args:
         n (int):
             Harmonic of interest.
@@ -430,8 +415,7 @@ def calc_ZL(n, layers, delfstar, calctype):
             Dictionary of material dictionaries specifying the properites of
             each layer. These dictionaries are labeled from 1 to N, with 1
             being the layer in contact with the QCM.  Each dictionary must
-            include values for 'grho3, 'phi' and 'drho'. The dictionary for
-            layer N can include the film impedance, Zf
+            include values for 'grho3, 'phi' and 'drho'.
 
         delfstar (complex):
             Complex frequency shift at harmonic of interest (needed for Lu-
@@ -459,11 +443,8 @@ def calc_ZL(n, layers, delfstar, calctype):
                  [0, np.cos(D[i])-1j*np.sin(D[i])]])
 
     # get the terminal matrix from the properties of the last layer
-    if 'Zf' in layers[N].keys():
-        Zf_N = layers[N]['Zf'][n]
-    else:
-        D[N] = calc_D(n, layers[N], delfstar, calctype)
-        Zf_N = 1j*zstar_bulk(n, layers[N], calctype)*np.tan(D[N])
+    D[N] = calc_D(n, layers[N], delfstar, calctype)
+    Zf_N = 1j*zstar_bulk(n, layers[N], calctype)*np.tan(D[N])
 
     # if there is only one layer, we're already done
     if N == 1:
@@ -504,7 +485,7 @@ def calc_delfstar(n, layers, **kwargs):
 
         reftype (string)
             - 'overlayer' (default):  if overlayer exists, then the reference
-               is the overlayer on a bare crystal
+               is the bare crystal in contact with the overlayer
             - 'bare': ref is bare crystal, even if overlayer exists
 
     returns:
@@ -633,21 +614,6 @@ def calc_dlam(n, film):
     """
     return calc_D(n, film, 0, 'SLA').real/(2*np.pi)
 
-def calc_dlam_from_dlam3(n, dlam3, phi):
-    """
-    Calculate d/lamda at specified harmonic from its value at n/3
-    args:
-        n (int):
-            Harmonic of interest.
-        
-        dlam3 (real):
-            Value of d/lambda at n=3
-            
-        phi (real):
-            phase angle in degrees
-    """
-    return dlam3*(n/3)**(1-phi/180)
-    
 
 def calc_lamrho(n, grho3, phi):
     """
@@ -746,11 +712,9 @@ def normdelf_bulk(n, dlam3, phi):
     returns:
         delf normalized bulk value
     """
-
-    answer = np.real(2*np.tan(2*np.pi*dlam(n, dlam3, phi) *
+    return np.real(2*np.tan(2*np.pi*dlam(n, dlam3, phi) *
                           (1-1j*np.tan(np.deg2rad(phi/2)))) /
             (np.sin(np.deg2rad(phi))*(1-1j*np.tan(np.deg2rad(phi/2)))))
-    return answer
 
 
 def normdelg_bulk(n, dlam3, phi):
@@ -956,11 +920,6 @@ def solve_for_props(delfstar, calc, **kwargs):
         lb (list of 3 numbers):  Lower bound for Grho3, phi, drho - default [1e4, 0, 0]
         ub (list of 3 numbers):  Upper bound for Grho3, phi, drho - default [1e13, 90, 3e-2]
 
-        reftype (string)
-            - 'overlayer' (default):  if overlayer exists, then the reference
-               is the overlayer on a bare crystal
-            - 'bare': ref is bare crystal, even if overlayer exists
-
     returns:
         df_out (dataframe):
             dataframe with properties added, deleting rows with any NaN values \
@@ -980,7 +939,6 @@ def solve_for_props(delfstar, calc, **kwargs):
         if n in df_in.index:
             nplot = nplot + [n]
     calctype = kwargs.get('calctype', 'SLA')
-    reftype = kwargs.get('reftype', 'overlayer')
     drho = kwargs.get('drho', 0)
     newtonian = kwargs.get('newtonian', False)
 
@@ -1044,31 +1002,24 @@ def solve_for_props(delfstar, calc, **kwargs):
         if not fixed_drho:
             def ftosolve(x):
                 layers['film'] = {'grho3': x[0], 'phi': x[1], 'drho': x[2]}
-                return ([calc_delfstar(n1, layers, calctype=calctype,
-                                       reftype=reftype).real -
+                return ([calc_delfstar(n1, layers, calctype=calctype).real -
                          df_in[i][n1].real,
-                         calc_delfstar(n2, layers, calctype=calctype,
-                                       reftype = reftype).real -
+                         calc_delfstar(n2, layers, calctype=calctype).real -
                          df_in[i][n2].real,
-                         calc_delfstar(n3, layers, calctype=calctype,
-                                       reftype = reftype).imag -
+                         calc_delfstar(n3, layers, calctype=calctype).imag -
                          df_in[i][n3].imag])
         else:
             def ftosolve(x):
                 layers['film'] = {'drho': drho, 'grho3': x[0], 'phi': x[1]}
                 if not newtonian:
-                    return ([calc_delfstar(n1, layers, calctype=calctype,
-                                           reftype = reftype).real -
+                    return ([calc_delfstar(n1, layers, calctype=calctype).real -
                              df_in[i][n1].real,
-                             calc_delfstar(n1, layers, calctype=calctype,
-                                           reftype = reftype).imag -
+                             calc_delfstar(n1, layers, calctype=calctype).imag -
                              df_in[i][n1].imag])
                 else:  # set frequency shift equal to dissipation shift in this case
-                    return ([calc_delfstar(n1, layers, calctype=calctype,
-                                           reftype = reftype).real +
+                    return ([calc_delfstar(n1, layers, calctype=calctype).real +
                              df_in[i][n1].imag,
-                             calc_delfstar(n1, layers, calctype=calctype,
-                                           reftype = reftype).imag -
+                             calc_delfstar(n1, layers, calctype=calctype).imag -
                              df_in[i][n1].imag])
 
         # initialize the output uncertainties
@@ -1115,8 +1066,7 @@ def solve_for_props(delfstar, calc, **kwargs):
 
         # add experimental and calculated values to the dictionary
         for n in nplot:
-            delfstar_calc[n] = calc_delfstar(n, layers, calctype=calctype,
-                                             reftype = reftype)
+            delfstar_calc[n] = calc_delfstar(n, layers, calctype=calctype)
             data['df_calc'+str(n)] = (np.append(data['df_calc'+str(n)],
                                              round(delfstar_calc[n], 1)))
             try:
@@ -1924,8 +1874,8 @@ def check_solution(df, **kwargs):
             input dataframe to consider
 
     kwargs:
-        filename (string):
-            Filename for pdf.  Also used for window title
+        num (string):
+            Window title.
         numxy (int):
             number of grid points in x and y (default is 100)
         numz (int):
@@ -1948,50 +1898,43 @@ def check_solution(df, **kwargs):
         xunit (string):
             Units for x data.  Default is 'dlam', function currently also handles
             's', 'min', 'hr', 'day', 'temp'
-        xoffset (real):
-            Value subtracted from x data (default is zero)
 
     '''
 
     from pylab import meshgrid
     numxy=kwargs.get('numxy', 100)
     numz=kwargs.get('numz', 200)
-    philim=kwargs.get('philim', [0.001, 90])
+    philim=kwargs.get('philim', [0, 90])
     dlim=kwargs.get('dlim', [0.001, 0.5])
     nplot=kwargs.get('nplot', [1, 3, 5])
     ratios=kwargs.get('ratios', False)
     autoscale=kwargs.get('autoscale', False)
+    label=kwargs.get('label', 'temp')
     plot_solutions=kwargs.get('plot_solutions', False)
     idxmin=df.index[0]
     calc=df['calc'][idxmin]
-    filename=kwargs.get('filename', 'solution_check.pdf')
+    num=kwargs.get('num', '')
+    num=calc + ' ' + num
     xunit=kwargs.get('xunit', 'dlam')
-    xoffset = kwargs.get('xoffset', 0)
 
     # set up x labels for plots of actual and back-calculated shifts
     if xunit == 's':
         xlabel='$t$ (s)'
-        df['xvals']=df['t']-xoffset
     elif xunit == 'min':
         xlabel='$t$ (min.)'
-        df['xvals']=df['t']/60-xoffset
     elif xunit == 'hr':
         xlabel='$t$ (hr)'
-        df['xvals']=df['t']/3600-xoffset
     elif xunit == 'day':
         xlabel='$t$ (days)'
-        df['xvals']=df['t']/(24*3600)-xoffset
     elif xunit == 'temp':
         xlabel=r'$T$ ($^\circ$C)'
-        df['xvals']=df['temp']-xoffset
     else:
         xlabel=r'$d/\lambda_3$'
-        df['xvals'] = df['dlam3']
-        
-    
+
+
     # make the axes
     fig, ax=plt.subplots(2, 2, figsize=(10, 6), sharex=False, sharey=False,
-                           num=filename, constrained_layout=True)
+                           num=num, constrained_layout=True)
 
     # make meshgrid for contour
     phi=np.linspace(philim[0], philim[1], numxy)
@@ -2062,11 +2005,11 @@ def check_solution(df, **kwargs):
 
     # add titles
     if ratios:
-        ax[0, 0].set_title(calc + r': $r_h$')
-        ax[0, 1].set_title(calc + r': $r_d$')
+        ax[0, 0].set_title(r'$r_h$ - '+calc)
+        ax[0, 1].set_title(r'$r_d$ - '+calc)
     else:
-        ax[0, 0].set_title(calc + r': $\Delta f /n$ (Hz)')
-        ax[0, 1].set_title(calc + r': $\Delta\Gamma /n$ (Hz)')
+        ax[0, 0].set_title(r'$\Delta f /n$ (Hz) - '+calc)
+        ax[0, 1].set_title(r'$\Delta\Gamma /n$ (Hz) - '+calc)
 
     # set formatting for parameters that appear at the bottom of the plot
     # when mouse is moved
@@ -2089,24 +2032,70 @@ def check_solution(df, **kwargs):
 
     # now add the experimental data
     # variable to keep track of differentplots
-
+    xdata={}
+    dvals={}
+    phisol=np.array([])
+    df_expt={}
+    df_calc={}
+    legend_label=np.array([])
     col={1: 'C0', 3: 'C1', 5: 'C2'}
+    for idx, row in df.iterrows():
+        phisol=np.append(phisol, row['phi'])
+
+    for n in nplot:
+        nstr=str(n)
+        xdata[n]=np.array([])
+        dvals[n]=np.array([])
+        df_expt[n]=np.array([])
+        df_calc[n]=np.array([])
+
+        # calculate values of d/lambda
+
+        # extract the calculated propoerties from the dataframe
+        for idx, row in df.iterrows():
+            film={'drho': row['drho'], 'grho3': row['grho3'],
+                'phi': row['phi']}
+            dval=calc_dlam(n, film)
+            dvals[n]=np.append(dvals[n], dval)
+            if xunit == 's':
+                xval=row['t']
+            elif xunit == 'min':
+                xval=row['t']/60
+            elif xunit == 'hr':
+                xval=row['t']/3600
+            elif xunit == 'day':
+                xval=row['t']/(24*3600)
+            elif xunit == 'temp':
+                xval=row['temp']
+            else:
+                xval=dval
+
+            xdata[n]=np.append(xdata[n], xval)
+            df_expt[n]=np.append(df_expt[n], row['df_expt'+nstr])
+            df_calc[n]=np.append(df_calc[n], row['df_calc'+nstr])
+            if label in df.keys():
+                lab=label+'='+str(row[label])
+            else:
+                lab='idx='+str(idx)
+            legend_label=np.append(legend_label, lab)
+
 
     for n in nplot:
         nstr=str(n)+' (expt)'
         # compare experimental and calculated frequency fits
-        ax[1, 0].plot(df['xvals'], np.real(df['df_expt'+str(n)])/n, '+', color=col[n],
+        ax[1, 0].plot(xdata[3], np.real(df_expt[n])/n, '+', color=col[n],
                      label='n='+nstr)
-        ax[1, 0].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, '-', color=col[n])
+        ax[1, 0].plot(xdata[3], np.real(df_calc[n])/n, '-', color=col[n])
 
         # now compare experimental and calculated dissipation
-        ax[1, 1].plot(df['xvals'], np.imag(df['df_expt'+str(n)])/n, '+', color=col[n],
+        ax[1, 1].plot(xdata[3], np.imag(df_expt[n])/n, '+', color=col[n],
                      label='n='+nstr)
-        ax[1, 1].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, '-', color=col[n])
+        ax[1, 1].plot(xdata[3], np.imag(df_calc[n])/n, '-',
+                     color=col[n])
 
     # add values to contour plots for n=3
-    ax[0, 0].plot(df['dlam3'], df['phi'], 'k-')
-    ax[0, 1].plot(df['dlam3'], df['phi'], 'k-')
+    ax[0, 0].plot(dvals[3], phisol, 'k-')
+    ax[0, 1].plot(dvals[3], phisol, 'k-')
 
     for k in [0, 1]:
         ax[1, k].legend()
@@ -2120,40 +2109,41 @@ def check_solution(df, **kwargs):
     ax[0, 1].set_ylim(philim)
 
     # create a PdfPages object - one solution check per page
-    pdf=PdfPages(filename)
+    pdf=PdfPages('solution_'+calc+'.pdf')
+    pdf.savefig(fig)
+
     if plot_solutions:
-        for idx, row in df.iterrows():
+        for idx in np.arange(len(phisol)):
             curves={}
 
             # indicate where the solution is being taken
-            print('writing solution '+str(idx)+' of '+str(len(df)-1))
+            print('writing solution '+str(idx)+' of '+str(len(phisol)-1))
             for k in [0, 1]:
-                curves[0+k]=ax[0, k].plot(row['dlam3'], row['phi'], 'kx', 
-                                markersize=14, label = 'x='+str(row['xvals']))
+                curves[0+k]=ax[0, k].plot(dvals[3][idx], phisol[idx], 'kx', markersize=14,
+                                         label=legend_label[idx])
 
             for n in nplot:
-                curves[2+(n-1)/2]=ax[1, 0].plot(row['xvals'],
-                            np.real(row['df_expt'+str(n)])/n, 'x',
+                curves[2+(n-1)/2]=ax[1, 0].plot(dvals[3][idx],
+                            np.real(df_expt[n][idx])/n, 'kx',
                              markersize=14, color=col[n])
-                curves[5+(n-1)/2]=ax[1, 1].plot(row['xvals'], 
-                            np.imag(row['df_expt'+str(n)])/n, 'x',
+                curves[5+(n-1)/2]=ax[1, 1].plot(dvals[3][idx], np.imag(df_expt[n][idx])/n, 'kx',
                              markersize=14, color=col[n])
 
-            # now plot the lines for the solution
-            rh=rhcalc(calc, row['dlam3'], row['phi'])
-            rd=rdcalc(calc, row['dlam3'], row['phi'])
+        # now plot the lines for the solution
+            dlam3=dvals[3][idx]
+            rh=rhcalc(calc, dlam3, phisol[idx])
+            rd=rdcalc(calc, dlam3, phisol[idx])
 
             def solutions(phi, guess):
-                def ftosolve_rh(d):
+                def ftosolve0(d):
                     return rhcalc(calc, d, phi)-rh
 
-                def ftosolve_rd(d):
+                def ftosolve1(d):
                     return rdcalc(calc, d, phi)-rd
 
-                soln_rh=optimize.least_squares(ftosolve_rh, guess[0], bounds=dlim)
-                soln_rd=optimize.least_squares(ftosolve_rd, guess[1], bounds=dlim)
-                return {'phi': phi, 'd_rh': soln_rh['x'][0], 'd_rd': soln_rd['x'][0],
-                        'resid_rh':soln_rh['fun'][0], 'resid_rd':soln_rd['fun'][0]}
+                soln0=optimize.least_squares(ftosolve0, guess[0], bounds=dlim)
+                soln1=optimize.least_squares(ftosolve1, guess[1], bounds=dlim)
+                return {'phi': phi, 'd_rh': soln0['x'][0], 'd_rd': soln1['x'][0]}
 
             npts=25
             dcalc=pd.DataFrame(columns=['phi', 'd_rh', 'd_rd'])
@@ -2161,36 +2151,24 @@ def check_solution(df, **kwargs):
             # starting guess is the actual solution, and then we work outward
             # from there
             for phiend in philim:
-                guess=[row['dlam3'], row['dlam3']]
-                phivals=np.linspace(row['phi'], phiend, npts)
+                guess=[dlam3, dlam3]
+                phivals=np.linspace(phisol[idx], phiend, npts)
                 for phival in phivals:
                     soln=solutions(phival, guess)
-                    # break if there is not solution for this value of phi
-                    # for either rd or rh
-                    if soln['resid_rh'] > 1e-4 or soln['resid_rd']>1e-4:
-                        break
                     dcalc=dcalc.append(soln, ignore_index=True)
                     guess=[soln['d_rh'], soln['d_rd']]
 
             dcalc=dcalc.sort_values(by=['phi'])
             for k in [0, 1]:
-                curves[8+k]=ax[0, k].plot(dcalc['d_rh'], dcalc['phi'], 'w-')
-                curves[10+k]=ax[0, k].plot(dcalc['d_rd'], dcalc['phi'], 'w--')
-                
-            # add titles
-            if ratios:
-                ax[0, 0].set_title(calc + r': $r_h$='+f'{rh:.4f}')
-                ax[0, 1].set_title(calc + r': $r_d$='+f'{rd:.4f}')
-            else:
-                ax[0, 0].set_title(calc + r': $\Delta f /n$ (Hz)')
-                ax[0, 1].set_title(calc + r': $\Delta\Gamma /n$ (Hz)')
-        
-            pdf.savefig()
-            
+                curves[8+k]=ax[0, k].plot(dcalc['d_rh'], dcalc['phi'], 'k-')
+                curves[10+k]=ax[0, k].plot(dcalc['d_rd'], dcalc['phi'], 'k--')
+
+            curves[12]=ax[0, 0].legend()
+
+            pdf.savefig(fig)
+
             for k in np.arange(12):
                 curves[k][0].remove()
-    else:
-        pdf.savefig()
-                
+
     pdf.close()
     return fig, ax
