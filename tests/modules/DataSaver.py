@@ -47,7 +47,8 @@ dictionaries and dataframes are converted to json and are saved as text in the f
 import os
 import re
 import datetime
-import time # for test
+import time
+from numpy.core.numeric import full # for test
 import pandas as pd
 import numpy as np
 from scipy.interpolate import interp1d # , splrep, splev
@@ -1010,7 +1011,6 @@ class DataSaver:
         '''
         for chn_name in self._chn_keys:
             for ext in ['', '_ref']: # samp/ref and samp_ref/ref_ref
-                print(ext)
                 df = getattr(self, chn_name + ext)
                 col_endswith_s = [col for col in df.columns if col.endswith('s')]
                 # logger.info(col_endswith_s) 
@@ -1827,6 +1827,8 @@ class DataSaver:
                 pass
             elif mode['temp'] == 'var': # dual crystal and constant temperature
                 pass
+            elif mode['temp'] == 'p2p':
+                pass
 
 
     def _norm_by_harm(self, s):
@@ -1928,8 +1930,8 @@ class DataSaver:
                 # clear all self.exp_ref[chn_name] 
                 if mode['temp'] == 'var':
                     chns = self._chn_keys
-                elif mode['temp'] == 'const':
-                    chns = [chn_name]
+                elif mode['temp'] in ['const', 'p2p']:
+                    chns = [chn_name] 
                 for chn in chns: 
                     self.exp_ref[chn] = {
                         'f0': self.nan_harm_list(), # list for each harmonic
@@ -1957,6 +1959,8 @@ class DataSaver:
             if mode['temp'] == 'const': # dual crystal and constant temperature
                 pass
             elif mode['temp'] == 'var': # dual crystal and constant temperature
+                pass
+            elif mode['temp'] == 'p2p':
                 pass
             else:
                 pass
@@ -2048,7 +2052,6 @@ class DataSaver:
                 df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
                 # copy to samp_ref
                 setattr(self, chn_name + '_ref', df)
-
 
                 ''' for single reference
                 if getattr(self, chn_name + '_ref').shape[0] > 0: # there is reference data saved
@@ -2160,9 +2163,101 @@ class DataSaver:
                 df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
                 # copy to samp_ref
                 setattr(self, chn_name + '_ref', df)
+
+            elif mode['temp'] == 'p2p': # point to point
+                chn_ref_source = self.exp_ref[chn_name + '_ref'][0]
+
+                # check if all elements in self.exp_ref.<chn_name>_ref[1] is list
+                if all([isinstance(l, list) for l in self.exp_ref[chn_name+'_ref'][1]]): # all list
+                    reference_idx = self.exp_ref[chn_name+'_ref'][1]
+                elif all([isinstance(l, int) for l in self.exp_ref[chn_name+'_ref'][1]]): # all int
+                    reference_idx = [self.exp_ref[chn_name+'_ref'][1]] # put into a list
+                else:
+                    logger.warning('Check reference reference index!')
+                    self.refflg[chn_name] = False
+                    return
+
+
+                # get harm data fs in columns
+                fs = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'fs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute freq in Hz. If marked, set mark=True
+                gs = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'gs', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute gamma in Hz. If marked, set mark=True
+                ps = self.get_list_column_to_columns_marked_rows(chn_ref_source, 'ps', mark=False, dropnanmarkrow=False, deltaval=False, norm=False) # absolute 
+
+                # # NOTE: here we add a new column 'linear_index' to fs 
+                fs['linear_index'] = np.arange(fs.shape[0])
+
+
+                func_list = [] # list of funcs 
+                logger.info('reference_idx %s', reference_idx) 
+                # logger.info('exp_ref %s', self.exp_ref) 
+
+
+                for ind_list in reference_idx: # iterate each list
+
+                    # logger.info('ind_list %s', ind_list)
+                    if len(ind_list) == 1: # single point
+                        # cause single point is not allowed for interp1d, doubling the length by repeating
+                        ind_list = ind_list * 2
+                    func_f_list = [] # func for all freq
+                    func_g_list = [] # func for all gamma
+                    func_p_list = [] # func
+
+                    for harm in range(1, self.settings['max_harmonic']+2, 2): # calculate each harm
+                        fharmind = fs['f'+str(harm)][ind_list] # f of harm
+                        gharmind = gs['g'+str(harm)][ind_list] # g of harm
+                        pharmind = ps['p'+str(harm)][ind_list] # g of harm
+
+                        # calc freq
+                        if np.isnan(fharmind).all(): # no data in harm and ind_list
+                            func_f_list.append(lambda x: np.full_like(x, np.nan))
+                            pass # already initiated
+                        else: # there is data
+                            logger.info('linear_index %s', fs.linear_index) 
+                            logger.info('fharmind %s', fharmind) 
+                            nonna_idx = fharmind.notna()
+                            func_f_list.append(interp1d(fs.linear_index[ind_list][nonna_idx], fharmind[nonna_idx], kind=self.exp_ref['mode']['fit'], fill_value=
+                            'extrapolate', bounds_error=False))
+                        
+                        # calc gamma
+                        if np.isnan(gharmind).all(): # no data in harm and ind_list
+                            func_g_list.append(lambda x: np.full_like(x, np.nan)) # 
+                            pass # already initiated
+                        else: # there is data
+                            nonna_idx = gharmind.notna()
+                            func_g_list.append(interp1d(fs.linear_index[ind_list][nonna_idx], gharmind[nonna_idx], kind=self.exp_ref['mode']['fit'], fill_value=
+                            'extrapolate', bounds_error=False))
+
+                        # calc p
+                        if np.isnan(pharmind).all(): # no data in harm and ind_list
+                            func_p_list.append(lambda x: np.full_like(x, np.nan)) # 
+                            pass # already initiated
+                        else: # there is data
+                            nonna_idx = fharmind.notna()
+                            func_p_list.append(interp1d(fs.linear_index[ind_list][nonna_idx], pharmind[nonna_idx], kind=self.exp_ref['mode']['fit'], fill_value=
+                            'extrapolate', bounds_error=False))
+
+                    # make function for each ind_list
+                    func_list.append(self.make_interpfun(func_f_list, func_g_list, func_p_list))
+
+                self.exp_ref['func'][chn_name] = func_list # save to class
+
+                # calculate ref for each sample (samp) temp and save to self.samp_ref
+
+                # copy df from samp_ref_source
+                df = getattr(self, chn_name).copy()
+
+                df['fs'] = self.interp_film_ref(chn_name, col='fs')
+                df['gs'] = self.interp_film_ref(chn_name, col='gs')
+                df['ps'] = self.interp_film_ref(chn_name, col='ps')
+
+                # change mark 1 to 0
+                df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
+                # copy to samp_ref
+                setattr(self, chn_name + '_ref', df)
             else:
                 pass
                 self.refflg[chn_name] = False
+                return
 
         elif mode['cryst'] == 'dual': #TODO
             if mode['temp'] == 'const': # dual crystal and constant temperature
@@ -2172,7 +2267,7 @@ class DataSaver:
             else:
                 pass
 
-        self.refflg[chn_name] = False
+        self.refflg[chn_name] = True
 
 
     def make_interpfun(self, func_f_list, func_g_list, func_p_list):
@@ -2316,6 +2411,53 @@ class DataSaver:
 
                 logger.info('cols[ind_list]\n%s', cols.iloc[ind_list]) 
                 logger.info(cols[col].head())
+
+            elif mode['temp'] == 'p2p': # 
+                if col not in self._ref_keys: # col is not fs or gs
+                    return cols
+
+                # calculate ref for each film (samp) temp and save to self.samp_ref
+
+                # check if all elements in self.exp_ref.samp_ref[1] is list
+                chn_idx = self.get_chn_idx_in_exp_ref(chn_name)
+                if all([isinstance(l, list) for l in chn_idx]): # all list
+                    film_idx = chn_idx
+                elif all([isinstance(l, int) for l in chn_idx]): # all int
+                    film_idx = [chn_idx] # put into a list
+                else:
+                    logger.warning('Check sample reference index!')
+                    film_idx = []
+                
+                fullindex = cols.index.to_frame().assign(new_index=np.arange(cols.shape[0])).drop([0], axis=1)['new_index']
+                logger.info(fullindex)
+                # get interpolated f and g by chn_temp
+                for seg, ind_list in enumerate(film_idx): # iterate each list
+                    
+                    logger.info(self.exp_ref['func']) 
+                    chn_func = self.exp_ref['func'][chn_name]
+                    logger.info('len(ind_list) %s', len(ind_list)) 
+                    logger.info('len(fun) %s', len(chn_func)) 
+                    # get interpolated f, g of temp in ind_list (fullindex[ind_list]) 
+                    # len(ind_list) can be longer than len(chn_func) 
+                    # use modulus 
+                    f_list, g_list, p_list = chn_func[seg % len(chn_func)](fullindex[ind_list])
+                    # transpose 
+                    logger.info(fullindex[ind_list])
+                    fs_list = np.transpose(np.array(f_list)).tolist()
+                    logger.info('len(fs_list) %s', len(fs_list)) 
+                    logger.info(fs_list) 
+
+                    gs_list = np.transpose(np.array(g_list)).tolist()
+
+                    ps_list = np.transpose(np.array(p_list)).tolist()
+
+                    # save to df
+                    cols.fs[ind_list] = fs_list
+                    cols.gs[ind_list] = gs_list
+                    cols.ps[ind_list] = ps_list
+
+                logger.info('cols[ind_list]\n%s', cols.iloc[ind_list]) 
+                logger.info(cols[col].head())
         elif mode['cryst'] == 'dual': #TODO
             if mode['temp'] == 'const': # dual crystal and constant temperature
                 pass
@@ -2351,6 +2493,7 @@ class DataSaver:
 
     def get_fg_ref(self, chn_name, harms=[]):
         '''
+        NOT USING
         get reference of f or g from self.exp_ref
         chn_name: 'samp' or 'ref'
         return a dict 

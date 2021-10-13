@@ -8,5 +8,5 @@ __source__ =       'https://github.com/shullgroup/rheoQCM'
 __report__ =       'https://github.com/shullgroup/rheoQCM/issues'
 __license__ =      'GLP-3.0'
 __deprecated__ =   ''
-__date__ =         '02 June. 2021'
+__date__ =         '01 Oct. 2021'
 __version__ =      '.'.join(__version_info__)

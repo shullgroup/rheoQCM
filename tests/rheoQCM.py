@@ -7,6 +7,7 @@ import os
 import sys
 import subprocess
 import traceback
+import copy
 
 import threading
 import multiprocessing 
@@ -191,11 +192,14 @@ def mp_solve_single_queue(ind, qcm_queue, mech_queue, prop_dict_ind, nh, calctyp
 
 
 def mp_solve_single_queue_to_prop(ind, qcm_queue, nh, calctype, bulklimit, refh, solve_single_queue_to_prop):
+    '''
+    used to solve the known layers to prop
+    '''
     
     # get prop
-    drho, grho_refh, phi, dlam_refh, err = solve_single_queue_to_prop(nh, qcm_queue, calctype=calctype, bulklimit=bulklimit)
+    brief_props, props = solve_single_queue_to_prop(nh, qcm_queue, calctype=calctype, bulklimit=bulklimit, nh_interests=[refh], brief_report=True)
 
-    return (ind, dict(drho=drho, grho=grho_refh, phi=phi, n=refh))
+    return (ind, dict(grho=brief_props['grho_refh'], phi=brief_props['phi'], drho=brief_props['drho'], n=refh))
 
 
 class QCMApp(QMainWindow):
@@ -1086,7 +1090,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_data_ref_crystmode.currentIndexChanged.connect(self.on_ref_mode_changed)
 
         # comboBox_settings_data_ref_tempmode
-        self.build_comboBox(self.ui.comboBox_settings_data_ref_tempmode, 'ref_temp_opts')
+        self.build_comboBox(self.ui.comboBox_settings_data_ref_tempmode, 'ref_mode_opts')
         self.ui.comboBox_settings_data_ref_tempmode.currentIndexChanged.connect(self.update_widget)
         self.ui.comboBox_settings_data_ref_tempmode.currentIndexChanged.connect(self.on_ref_mode_changed)
 
@@ -1149,6 +1153,9 @@ class QCMApp(QMainWindow):
         self.ui.doubleSpinBox_settings_mechanics_bulklimit.setMaximum(config_default['mech_bulklimit']['max'])
         self.ui.doubleSpinBox_settings_mechanics_bulklimit.setSingleStep(config_default['mech_bulklimit']['step'])
         self.ui.doubleSpinBox_settings_mechanics_bulklimit.valueChanged.connect(self.update_widget)
+
+        self.ui.radioButton_settings_mech_refto_air.toggled.connect(self.update_widget)
+        self.ui.radioButton_settings_mech_refto_overlayer.toggled.connect(self.update_widget)
                 
         # hide tableWidget_settings_mechanics_errortab
         self.ui.tableWidget_settings_mechanics_errortab.hide()
@@ -1277,6 +1284,8 @@ class QCMApp(QMainWindow):
         #region spectra_mechanics
 
         self.ui.spinBox_spectra_mechanics_currid.valueChanged.connect(self.on_changed_spinBox_spectra_mechanics_currid)
+
+        self.ui.pushButton_spectra_mechanics_refreshtable.clicked.connect(self.update_spectra_mechanics_table)
 
         # tableWidget_spectra_mechanics_table
         # make dict for horizontal headers
@@ -4500,6 +4509,16 @@ class QCMApp(QMainWindow):
         self.qcm.refh = self.settings['spinBox_settings_mechanics_nhcalc_n3'] # use the dissipatione harmonic as reference
         refh = self.qcm.refh # reference harmonic
 
+        # set film reference
+        # logger.info('radioButton_settings_mech_refto_air: %s', self.settings['radioButton_settings_mech_refto_air'])
+        # logger.info('radioButton_settings_mech_refto_overlayer: %s', self.settings['radioButton_settings_mech_refto_overlayer'])
+        if self.settings['radioButton_settings_mech_refto_air'] == 1: 
+            self.qcm.refto = 0
+            logger.info('set qcm.refto to 0')
+        elif self.settings['radioButton_settings_mech_refto_overlayer'] == 1:
+            self.qcm.refto = 1
+            logger.info('set qcm.refto to 1')
+
         # logger.info('refh', refh) 
 
         # get nhcalc
@@ -4554,8 +4573,8 @@ class QCMApp(QMainWindow):
             chn_idx = list(chn_queue_ids.index) # all available indics
 
         # initialize idx for solving
-        idx = chn_idx        
-        idx_joined = idx
+        idx = chn_idx.copy()      
+        idx_joined = chn_idx.copy()
         queue_ids = chn_queue_ids
 
         # 2. get qcm data (columns=['queue_id', 't', 'temp', 'marks', 'fstars', 'fs', 'gs', 'delfstars', 'delfs', 'delgs', 'f0stars', 'f0s', 'g0s'])
@@ -4565,7 +4584,7 @@ class QCMApp(QMainWindow):
         qcm_df_calc = qcm_df.loc[idx] # df of calc layer
 
         # 3. layer calc's source and index
-        if dic['source'] == 'ind': # dic is still where the loop break
+        if dic['source'] == 'ind': # dic is the layer to calc (is where the above loop break)
             # use ind to get queue_id
             calc_idx_str = dic['val']
             calc_idx = UIModules.index_from_str(calc_idx_str, chn_idx, join_segs=False) # overwrite idx with given index
@@ -4580,9 +4599,12 @@ class QCMApp(QMainWindow):
                 pass
             # logger.info('idx', idx) 
             # logger.info('idx_joined', idx_joined) 
-        elif dic['source'] == 'prop':
+        elif dic['source'] == 'prop_guess':
             # set given prop 'prop_guess'
             film_dict[n]['prop_guess'] = (dic['val'])
+        elif dic['source'] == 'prop':
+            # set given prop 'prop'
+            film_dict[n]['prop'] = (dic['val'])
         # elif dic['source'] == 'fg':
         #     # use f/g to calc prop_guess
         #     #TODO
@@ -4602,8 +4624,9 @@ class QCMApp(QMainWindow):
         # to iterate the dict sorted w/o using orderedDict
         for n in sorted([int(n) for n in film_dict.keys()]):
             dic = film_dict[str(n)]
-            if dic['calc']: # layer to calc
-                if dic['source'] == 'prop':
+            if dic['calc']: # layer to calc: we only update prop used for guess or limit prop calculation
+                if dic['source'] in ['prop', 'prop_guess']:
+                    # TODO how to define prop and prop_guess.e.g.: if grho, phi, drho are all given, it is prop_guess. otherwise, is prop (limitation)
                     # set given prop 'prop_guess'
                     for ind in idx_joined:
                          prop_dict[ind][n].update(**eval(dic['val']))
@@ -4611,6 +4634,7 @@ class QCMApp(QMainWindow):
 
                 elif dic['source'] == 'name':
                     # get prop_guess from qcm
+                    # since all give, it should be considered as prop_guess
                     for ind in idx_joined:
                         prop_dict[ind][n].update(**self.qcm.get_prop_by_name(dic['val']))
                         #  prop_dict[ind][n]['calc'] = dic['calc']
@@ -4622,7 +4646,7 @@ class QCMApp(QMainWindow):
             else: # known layer
                 ## get prop for this layer
                 if dic['source'] == 'prop':
-                    # set given prop 'prop_guess'
+                    # set given prop, it should not be 'prop_guess'
                     for ind in idx_joined:
                         prop_dict[ind][n].update(**eval(dic['val']))
                         #  prop_dict[ind][n]['calc'] = dic['calc']
@@ -4678,7 +4702,6 @@ class QCMApp(QMainWindow):
                                     bulklimit, 
                                     refh,
                                     self.qcm.solve_single_queue_to_prop,
-
                                 ) 
                                 for ind in idx_joined
                             ]
@@ -4780,10 +4803,11 @@ class QCMApp(QMainWindow):
         # update table with the index of the last None value in mech_queue_list
         last_non_none_ind = next(len(mech_queue_list) - i for i, q in enumerate(reversed(mech_queue_list), 1) if q is not None)
 
-        if self.ui.spinBox_spectra_mechanics_currid.value() == last_non_none_ind: # no id change, force to update table
-            self.update_spectra_mechanics_table(chn_name, qcm_df.loc[[last_non_none_ind], :], mech_queue_list[last_non_none_ind])
-        else:
+        if self.ui.spinBox_spectra_mechanics_currid.value() != last_non_none_ind: # id is not current, set id to the last one. The table should be updated once the id changed.
             self.ui.spinBox_spectra_mechanics_currid.setValue(idx_joined[-1])
+        else:
+            # id did not change, force to update table
+            self.update_spectra_mechanics_table()
 
         print('{} calculation finished.'.format(nhcalc))
 
@@ -4795,6 +4819,7 @@ class QCMApp(QMainWindow):
 
     def backup_mech_solve_chn(self, chn_name, queue_ids):
         '''
+        NOT USING
         send the data to qcm module to solve in secquence by queue_ids and
         save the returned mechanic data to data_saver
         '''
@@ -4870,7 +4895,7 @@ class QCMApp(QMainWindow):
 
             if not self.settings['checkBox_settings_mech_liveupdate']: 
                 # update table
-                self.update_spectra_mechanics_table(chn_name, qcm_queue, mech_queue)
+                self.update_spectra_mechanics_table()
 
 
     def mech_clear(self):
@@ -4930,7 +4955,7 @@ class QCMApp(QMainWindow):
         set layer 0 value of mech_layers
         '''
         # get ref_tempmode
-        ref_tempmode = self.settings['comboBox_settings_data_ref_tempmode']
+        ref_refmode= self.settings['comboBox_settings_data_ref_tempmode']
         samprefsource = self.settings['comboBox_settings_data_samprefsource']
         samprefidx = self.settings['lineEdit_settings_data_samprefidx']
         refrefsource = self.settings['comboBox_settings_data_refrefsource']
@@ -4938,10 +4963,10 @@ class QCMApp(QMainWindow):
 
         # set mechchndata
         # const and var are the same for now
-        if ref_tempmode == 'const':
+        if ref_refmode== 'const':
             self.set_mechchndata('comboBox_mech_expertmode_indchn_0', samprefsource, mech_chn='samp')
             self.set_mechchndata('comboBox_mech_expertmode_indchn_0', refrefsource, mech_chn='ref')
-        elif ref_tempmode == 'var': # use the same reference
+        elif ref_refmode== 'var': # use the same reference
             self.set_mechchndata('comboBox_mech_expertmode_indchn_0', samprefsource, mech_chn='samp')
             self.set_mechchndata('comboBox_mech_expertmode_indchn_0', refrefsource, mech_chn='ref')
         else:
@@ -4958,52 +4983,8 @@ class QCMApp(QMainWindow):
         '''
         collect data and send to update_spectra_mechanics_table
         '''
-        chn_name = self.mech_chn
-
-        if not self.data_saver.path: # no data
-            return
-
-        qcm_df = self.data_saver.df_qcm(chn_name)
-        
-        # check index range
-        if ind not in qcm_df.index:
-            ind = qcm_df.index[-1] # set ind as the max
-            self.ui.spinBox_spectra_mechanics_currid.setValue(ind)
-            logger.info('exceeds the index. reset to %s', ind) 
-        else:
-            logger.info('ind in range.') 
-
-            nhcalc = self.gen_nhcalc_str()
-
-            logger.info('ind: %s', ind) 
-            logger.info('chn_name: %s', chn_name) 
-            # logger.info('refh', refh) 
-            logger.info('nhcalc: %s', nhcalc) 
-
-            # check if solution is in data_saver
-            mech_key = self.data_saver.get_mech_key(nhcalc)
-            if mech_key not in self.data_saver.get_prop_keys(chn_name): # no solution stored of given combination
-                print('Solution of {} does not exist.'.format(mech_key))
-                return
-
-            mech_df = self.data_saver.get_mech_df_in_prop(chn_name, nhcalc)
-
-            # logger.info('qcm_df: %s', qcm_df) 
-            # logger.info('mech_df: %s', mech_df) 
-
-            # get queue_id
-            # logger.info(qcm_df.queue_id) 
-            queue_id = qcm_df.queue_id.loc[ind]
-
-            # qcm data of queue_id
-            qcm_queue = qcm_df.loc[[ind], :].copy() # as a dataframe
-            # mechanic data of queue_id
-            mech_queue = mech_df.loc[[ind], :].copy()  # as a dataframe 
-            # logger.info('qcm_queue: %s', qcm_queue) 
-            # logger.info('mech_queue: %s', mech_queue) 
-            
             # updaate in mech table
-            self.update_spectra_mechanics_table(chn_name, qcm_queue, mech_queue)
+        self.update_spectra_mechanics_table()
 
 
     def make_film_dict_by_mechmodel_widgets(self):
@@ -5088,17 +5069,96 @@ class QCMApp(QMainWindow):
             self.hide_widgets('mech_model_show_hide_overlayer_list')
 
 
-    def update_spectra_mechanics_table(self, chn_name, qcm_queue, mech_queue):
+    def update_spectra_mechanics_table(self):
         '''
         this function update data in tableWidget_spectra_mechanics_table
         and relative information displaying
         '''
-        # convert grho, drho and phi unit in mech_queue
-        mech_queue = self.qcm.convert_mech_unit(mech_queue)
-
         # clear table
         table = self.ui.tableWidget_spectra_mechanics_table
         table.clearContents()
+        
+        if not self.data_saver.path: # no data
+            return
+
+        ## get variables
+        # index
+        ind = self.ui.spinBox_spectra_mechanics_currid.value()
+
+        # channel name
+        chn_name = self.mech_chn
+
+        # check if index is in the range of df_qcm
+        qcm_df = self.data_saver.df_qcm(chn_name)
+
+        if ind not in qcm_df.index:
+            ind = qcm_df.index[-1] # set ind no more than qcm_df.idx
+            self.ui.spinBox_spectra_mechanics_currid.setValue(ind)
+            return
+
+        # nhcalc
+        nhcalc = self.gen_nhcalc_str()
+
+        logger.info('ind: %s', ind) 
+        logger.info('chn_name: %s', chn_name) 
+        # logger.info('refh', refh) 
+        logger.info('nhcalc: %s', nhcalc) 
+
+        # check if solution is in data_saver
+        mech_key = self.data_saver.get_mech_key(nhcalc)
+        if mech_key not in self.data_saver.get_prop_keys(chn_name): # no solution stored of given combination
+            logger.warning('Solution of %s does not exist.', mech_key)
+            return
+
+        mech_df = self.data_saver.get_mech_df_in_prop(chn_name, nhcalc)
+
+        # logger.info('qcm_df: %s', qcm_df) 
+        # logger.info('mech_df: %s', mech_df) 
+
+        # check index range
+        if ind not in mech_df.index:
+            # ind = mech_df.index[-1] # set ind as the last in mech_df
+            logger.warning('%s has not been solved.', ind) 
+            return
+        else:
+            logger.info('ind in range.') 
+
+            nhcalc = self.gen_nhcalc_str()
+
+            logger.info('ind: %s', ind) 
+            logger.info('chn_name: %s', chn_name) 
+            # logger.info('refh', refh) 
+            logger.info('nhcalc: %s', nhcalc) 
+
+            # # check if solution is in data_saver
+            # mech_key = self.data_saver.get_mech_key(nhcalc)
+            # if mech_key not in self.data_saver.get_prop_keys(chn_name): # no solution stored of given combination
+            #     logger.warning('Solution of {} does not exist.'.format(mech_key))
+            #     return
+
+            # mech_df = self.data_saver.get_mech_df_in_prop(chn_name, nhcalc)
+
+            # logger.info('qcm_df: %s', qcm_df) 
+            # logger.info('mech_df: %s', mech_df) 
+
+            # get queue_id
+            # logger.info(qcm_df.queue_id) 
+            queue_id = qcm_df.queue_id.loc[ind]
+
+            # qcm data of queue_id
+            qcm_queue = qcm_df.loc[[ind], :].copy() # as a dataframe
+            # mechanic data of queue_id
+            mech_queue = mech_df.loc[[ind], :].copy()  # as a dataframe 
+            # logger.info('qcm_queue: %s', qcm_queue) 
+            # logger.info('mech_queue: %s', mech_queue) 
+            
+
+        if (qcm_queue is None) and (mech_queue is None):
+            logger.info('qcm_queue is None: %s; mech_queue is None:  %s', qcm_queue is None, mech_queue is None)
+            return
+
+        # convert grho, drho and phi unit in mech_queue
+        mech_queue = self.qcm.convert_mech_unit(mech_queue)
         # get n of rows and columns of the table
         tb_rows = table.rowCount()
         tb_cols = table.columnCount()
@@ -5134,7 +5194,7 @@ class QCMApp(QMainWindow):
                 row_data = df_queue[df_colname].iloc[0]
                 # logger.info('type(row_data): %s', type(row_data)) 
                 # logger.info(df_queue[df_colname]) # (it is a series)
-                for tb_col in range(tb_cols):
+                for tb_col in range(tb_cols): # update the row by columns
                     # logger.info('r,c: %s %s', tb_row, tb_col) 
                     # if df_colname.endswith('s'): # multiple values
                     #     data = df_queue[df_colname].iloc[0][tb_col]
@@ -6716,6 +6776,8 @@ class QCMApp(QMainWindow):
             'comboBox_settings_mechanics_selectmodel',
             'comboBox_settings_mechanics_calctype',
             'doubleSpinBox_settings_mechanics_bulklimit',
+            'radioButton_settings_mech_refto_air',
+            'radioButton_settings_mech_refto_overlayer',
             # contour
             'comboBox_settings_mechanics_contourdata',
             'comboBox_settings_mechanics_contourtype',
