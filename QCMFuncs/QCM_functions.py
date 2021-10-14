@@ -1920,7 +1920,6 @@ def vft(T, Tref, B, Tinf):
     return -B/(Tref-Tinf) + B/(T-Tinf)
 
 def check_solution(df, **kwargs):
-
     '''
     Create contour plot of normf_g or rh_rd and verify that solution is correct.
 
@@ -2129,11 +2128,13 @@ def check_solution(df, **kwargs):
     # create a PdfPages object - one solution check per page
     pdf=PdfPages(filename)
     if plot_solutions:
+        idxnum = 0 # keeps track of the fact that we don't always start from idx=0
         for idx, row in df.iterrows():
+            idxnum = idxnum + 1
             curves={}
 
             # indicate where the solution is being taken
-            print('writing solution '+str(idx)+' of '+str(len(df)-1))
+            print('writing solution '+str(idxnum)+' of '+str(len(df)))
             for k in [0, 1]:
                 curves[0+k]=ax[0, k].plot(row['dlam3'], row['phi'], 'kx', 
                                 markersize=14, label = 'x='+str(row['xvals']))
