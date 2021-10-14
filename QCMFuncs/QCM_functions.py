@@ -1270,7 +1270,7 @@ def make_prop_axes(**kwargs):
 
     kwargs:.
         titles (dictionary):
-            titles for axes (keys are 0, 1, 2)
+            titles for axes (defaults are (a), (b), (c), etc.)
         num (string):
             window title (default is 'property fig')
         plots (list of strings):
@@ -1288,7 +1288,8 @@ def make_prop_axes(**kwargs):
         fig:
             Handle for the figure
         ax:
-            Handle for the axes
+            Handle for the axes, returned as a 2d array of 
+            dimensions (1, len(plots))
         info:
             Dictionary with plot types for different axes
         xunit:
@@ -1296,13 +1297,13 @@ def make_prop_axes(**kwargs):
     """
 
     num = kwargs.get('num', 'property fig')
-    plots = kwargs.get('plots', ['grho3', 'phi', 'drho', 'vgp'])
+    plots = kwargs.get('plots', ['grho3', 'phi', 'drho'])
     titles = kwargs.get('titles', {0: '(a)', 1: '(b)', 2: '(c)', 3: '(d)'})
     xunit = kwargs.get('xunit', 'index')
     num_plots = len(plots)
 
     fig, ax = plt.subplots(1, num_plots, figsize=(3*num_plots, 3), num=num,
-                           constrained_layout=True)
+                           constrained_layout=True, squeeze=False)
 
     # set the x label
     if xunit == 's':
@@ -1326,20 +1327,20 @@ def make_prop_axes(**kwargs):
     
     for p in np.arange(num_plots):
         if plots[p] == 'grho3' or plots[p] == 'grho3_lin':
-            ax[p].set_ylabel(axlabels['grho3'])
-            ax[p].set_xlabel(xlabel)
+            ax[0,p].set_ylabel(axlabels['grho3'])
+            ax[0,p].set_xlabel(xlabel)
         elif plots[p] == 'phi':
-            ax[p].set_ylabel(axlabels['phi'])
-            ax[p].set_xlabel(xlabel)
+            ax[0,p].set_ylabel(axlabels['phi'])
+            ax[0,p].set_xlabel(xlabel)
         elif plots[p] == 'drho':
-            ax[p].set_ylabel(axlabels['drho'])
-            ax[p].set_xlabel(xlabel)
+            ax[0,p].set_ylabel(axlabels['drho'])
+            ax[0,p].set_xlabel(xlabel)
         elif plots[p] == 'vgp' or plots[p] == 'vgp_lin':
-            ax[p].set_ylabel(axlabels['phi'])
-            ax[p].set_xlabel(axlabels['grho3'])
-        ax[p].set_title(titles[p])
+            ax[0,p].set_ylabel(axlabels['phi'])
+            ax[0,p].set_xlabel(axlabels['grho3'])
+        if num_plots > 1:
+            ax[0,p].set_title(titles[p])
         
-
 #    ax[0].set_ylabel()
 #    ax[0].ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
 
@@ -1358,12 +1359,13 @@ def prop_plots(df, figinfo, **kwargs):
 
     kwargs:
 
-        xoffset (real):
-            amount to subtract from x value for plotting (default is zero)
+        xoffset (real or string):
+            amount to subtract from x value for plotting (default is 0)
+            'zero' means that the data are offset so that the minimum val is 0
         fmt (string):
             Format sting: Default is '+'   .
-        legend (string):
-            Legend for plots.  Default is 'none'
+        label (string):
+            label for plots.  Used to generate legend.  Default is ''
         plotdrho (Boolean):
             Switch to plot mass data or not. Default is True
         err_plot
@@ -1374,25 +1376,30 @@ def prop_plots(df, figinfo, **kwargs):
     """
 
     fmt=kwargs.get('fmt', '+')
-    legend=kwargs.get('legend', '')
+    label=kwargs.get('label', '')
     xoffset=kwargs.get('xoffset', 0)
     err_plot = kwargs.get('err_plot', False)
     xunit = figinfo['info']['xunit']
 
     if xunit == 's':
-        xvals=df['t']-xoffset
+        xvals=df['t']
     elif xunit == 'min':
-        xvals=df['t']/60-xoffset
+        xvals=df['t']/60
     elif xunit == 'hr':
-        xvals=df['t']/3600-xoffset
+        xvals=df['t']/3600
     elif xunit == 'day':
-        xvals=df['t']/(24*3600)-xoffset
+        xvals=df['t']/(24*3600)
     elif xunit == 'temp':
-        xvals=df['temp']-xoffset
+        xvals=df['temp']
 
     else:
-        xvals=df.index-xoffset
+        xvals=df.index
         
+    if xoffset == 'zero':
+        xoffset = min(xvals)
+    
+    xvals = xvals - xoffset
+                
     plots = figinfo['info']['plots']
     ax = figinfo['ax']
     num_plots = len(plots)
@@ -1403,8 +1410,6 @@ def prop_plots(df, figinfo, **kwargs):
             xdata = xvals
             ydata = df['grho3']/1000
             yerr = df['grho3_err']/1000
-            if plots[p] == 'grho3':
-                ax[p].set_yscale('log')
 
         elif plots[p] == 'phi':
             xdata = xvals
@@ -1421,11 +1426,11 @@ def prop_plots(df, figinfo, **kwargs):
             ydata = df['phi']
                 
         if err_plot:
-            ax[p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, label=legend)
+            ax[0, p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, label=label)
         else:
-            ax[p].plot(xdata, ydata, fmt, label=legend)
+            ax[0, p].plot(xdata, ydata, fmt, label=label)
         if plots[p] == 'vgp' or plots[p] == 'grho3':
-                ax[p].set_xscale('log')
+                ax[0, p].set_xscale('log')
 
 def check_plots(df, ax, nplot, **kwargs):
     """
@@ -1950,6 +1955,9 @@ def check_solution(df, **kwargs):
             's', 'min', 'hr', 'day', 'temp'
         xoffset (real):
             Value subtracted from x data (default is zero)
+            
+    Returns:
+        fig, ax for solutioncheck figure
 
     '''
 
@@ -1971,24 +1979,23 @@ def check_solution(df, **kwargs):
     # set up x labels for plots of actual and back-calculated shifts
     if xunit == 's':
         xlabel='$t$ (s)'
-        df['xvals']=df['t']-xoffset
+        df.loc[:,'xvals']=df.loc[:,'t']-xoffset
     elif xunit == 'min':
         xlabel='$t$ (min.)'
-        df['xvals']=df['t']/60-xoffset
+        df.loc[:,'xvals']=df.loc[:,'t']/60-xoffset
     elif xunit == 'hr':
         xlabel='$t$ (hr)'
-        df['xvals']=df['t']/3600-xoffset
+        df.loc[:,'xvals']=df.loc[:,'t']/3600-xoffset
     elif xunit == 'day':
         xlabel='$t$ (days)'
-        df['xvals']=df['t']/(24*3600)-xoffset
+        df.loc[:,'xvals']=df.loc[:, 't']/(24*3600)-xoffset
     elif xunit == 'temp':
         xlabel=r'$T$ ($^\circ$C)'
-        df['xvals']=df['temp']-xoffset
+        df.loc[:, 'xvals']=df.loc[:,'temp']-xoffset
     else:
         xlabel=r'$d/\lambda_3$'
-        df['xvals'] = df['dlam3']
+        df.loc[:,'xvals'] = df.loc[:,'dlam3']
         
-    
     # make the axes
     fig, ax=plt.subplots(2, 2, figsize=(10, 6), sharex=False, sharey=False,
                            num=filename, constrained_layout=True)
@@ -2035,8 +2042,8 @@ def check_solution(df, **kwargs):
             min2=0
             max2=2
         else:
-            min1=-3*sauerbreyf(1, df['drho'][df.index[idxmin]])
-            max1=3*sauerbreyf(1, df['drho'][df.index[idxmin]])
+            min1=-3*sauerbreyf(1, df['drho'][idxmin])
+            max1=3*sauerbreyf(1, df['drho'][idxmin])
             min2=0
             max2=5000
 
