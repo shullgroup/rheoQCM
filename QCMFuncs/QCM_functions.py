@@ -1429,117 +1429,12 @@ def prop_plots(df, figinfo, **kwargs):
             ax[0, p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, label=label)
         else:
             ax[0, p].plot(xdata, ydata, fmt, label=label)
-        if plots[p] == 'vgp' or plots[p] == 'grho3':
+            
+        if plots[p] == 'vgp':
                 ax[0, p].set_xscale('log')
-
-def check_plots(df, ax, nplot, **kwargs):
-    """
-    Add measured and recalculated complex frequency shifts to existing axes.
-
-    args:
-        df (dataframe):
-            dataframe containing data to be plotted
-        ax (axes handle):
-            axes to use for plotting
-        nplot (list of integers):
-            harmonics to include on the plot
-
-    kwargs:
-        xunit (string):
-            Units for x data.  Default is 'index', function currently handles
-            's', 'min', 'hrs', 'day'
-
-    returns:
-        Nothing returned. The function just updates an existing axis set.
-    """
-    xunit=kwargs.get('xunit', 'index')
-
-    if xunit == 's':
-        xdata=df['t']
-        xlabel='$t$ (s)'
-    elif xunit == 'min':
-        xdata=df['t']/60
-        xlabel='$t$ (min.)'
-    elif xunit == 'hr':
-        xdata=df['t']/3600
-        xlabel='$t$ (hrs)'
-    elif xunit == 'day':
-        xdata=df['t']/(24*3600)
-        xlabel='$t$ (days)'
-    else:
-        xdata=xdata=df['index']
-        xlabel='index'
-
-    col={1: 'C0', 3: 'C1', 5: 'C2', 7: 'C3', 9: 'C4'}
-    # compare measured and calculated delfstar
-    for n in nplot:
-        ax[0].plot(xdata, -np.real(df['df_expt'+str(n)]), '+', color=col[n])
-        ax[1].plot(xdata, np.imag(df['df_expt'+str(n)]), '+', color=col[n])
-        ax[0].plot(xdata, -np.real(df['df_calc'+str(n)]), '-', color=col[n])
-        ax[1].plot(xdata, np.imag(df['df_calc'+str(n)]), '-', color=col[n])
-
-    for k in [0, 1]:
-        ax[k].set_xlabel(xlabel)
-        ax[k].set_yscale('log')
-
-
-def make_check_axes(**kwargs):
-    """
-    Make blank figure for plotting comparison of actual and recalculated
-    version os delfstar.
-
-    kwargs:
-        num (string):
-            Window title default is 'delfstar check'.
-        figsize (2 elment tuple of numbers):
-            Figure size (default is (6,3))
-
-    returns:
-        fig:
-            Figure containing delfstar plots.
-        ax:
-            Axes of the figure.
-    """
-    # set up axes to compare measured and calculated delfstar values
-    num=kwargs.get('num', 'delfstar check')
-    figsize=kwargs.get('figsize', (6, 3))
-    fig, ax=plt.subplots(1, 2, figsize=figsize, num=num)
-
-    ax[0].set_ylabel(r'-$\Delta f$ (Hz))')
-    ax[1].set_ylabel(r'$\Delta \Gamma$ (Hz)')
-
-    # set xlabel to 'index' by default
-    for i in [0, 1]:
-        ax[i].set_xlabel('index')
-    fig.tight_layout()
-    return fig, ax
-
-
-def make_delf_axes(**kwargs):
-    """
-    Make blank figure for plotting delfstar values.
-
-    kwargs:
-        num (string):
-            Window title.
-        figsize (2 elment tuple of numbers):
-            Figure size (default is (6,3))
-
-    returns:
-        fig:
-            Figure containing delfstar plots.
-        ax:
-            Axes of the figure.
-    """
-    num=kwargs.get('num', 'delf fig')
-    fig, ax=plt.subplots(1, 2, figsize=(6, 3), num=num)
-    for i in [0, 1]:
-        ax[i].set_xlabel(r'index')
-    ax[0].set_ylabel(r'$\Delta f/n$ (kHz)')
-    ax[1].set_ylabel(r'$\Delta \Gamma /n$ (kHz)')
-    fig.tight_layout()
-    return fig, ax
-
+        if plots[p] == 'grho3':
+                ax[0, p].set_sycale('log')
+                
 
 def read_xlsx(infile, **kwargs):
     """
