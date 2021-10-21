@@ -1277,6 +1277,7 @@ def make_prop_axes(**kwargs):
             plots to include (default is ['grho3', 'phi', 'drho'])
             'vgp' can be added as van Gurp-Palmen plot
             'vgp_lin'  and 'grho3_lin' put the grho3 on a linear scale
+            'jdp' is loss compliance normalized by density
             
         xunit (string):
             Units for x data.  Default is 'index', function currently handles
@@ -1322,7 +1323,8 @@ def make_prop_axes(**kwargs):
     # make a dictionary of the potential axis labels
     axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
                'phi': r'$\phi$ (deg.)',
-               'drho': r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)'
+               'drho': r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)',
+               'jdp': r'$J^{\prime \prime}/\rho$ (Pa$^{-1}\cdot$cm$^3$/g)'
                }
     
     for p in np.arange(num_plots):
@@ -1338,11 +1340,11 @@ def make_prop_axes(**kwargs):
         elif plots[p] == 'vgp' or plots[p] == 'vgp_lin':
             ax[0,p].set_ylabel(axlabels['phi'])
             ax[0,p].set_xlabel(axlabels['grho3'])
+        elif plots[p] == 'jdp':
+            ax[0,p].set_ylabel(axlabels['jdp'])
+            ax[0,p].set_xlabel(xlabel)
         if num_plots > 1:
             ax[0,p].set_title(titles[p])
-        
-#    ax[0].set_ylabel()
-#    ax[0].ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
 
     info = {'plots':plots, 'xunit':xunit}
     return {'fig':fig, 'ax':ax, 'info':info}
@@ -1424,6 +1426,10 @@ def prop_plots(df, figinfo, **kwargs):
         elif plots[p] == 'vgp' or plots[p] == 'vgp_lin':
             xdata = df['grho3']/1000
             ydata = df['phi']
+            
+        elif plots[p] == 'jdp':
+            xdata  = xvals
+            ydata = (1000/df['grho3'])*np.sin(df['phi']*np.pi/180) 
                 
         if err_plot:
             ax[0, p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, label=label)
@@ -1433,7 +1439,7 @@ def prop_plots(df, figinfo, **kwargs):
         if plots[p] == 'vgp':
                 ax[0, p].set_xscale('log')
         if plots[p] == 'grho3':
-                ax[0, p].set_sycale('log')
+                ax[0, p].set_yscale('log')
                 
 
 def read_xlsx(infile, **kwargs):
