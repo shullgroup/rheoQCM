@@ -7,6 +7,8 @@ Created on Thu Jan  4 09:19:59 2018
 """
 
 import numpy as np
+import sys
+import os
 import scipy.optimize as optimize
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -1182,7 +1184,8 @@ def make_err_plot(df_in, **kwargs):
         ax:
             axes of the figure.
     """
-    fig, ax = make_prop_axes(figsize=(12, 3))
+    fig = make_prop_axes(figsize=(12, 3))
+    ax = fig['ax']
     idx = kwargs.get('idx', 0)  # specify specific point to use
     npts = kwargs.get('npts', 10)
     err_frac = kwargs.get('err_frac', err_frac_default)
@@ -1222,7 +1225,7 @@ def make_err_plot(df_in, **kwargs):
 
     # adjust values of delfstar and calculate properties
     for k in [0, 1, 2]:
-        ax[k].set_xlabel(r'$(X-X_0)/X^{err}$')
+        ax[0,k].set_xlabel(r'$(X-X_0)/X^{err}$')
         n = int(calc[k])
         err = err_range*delfstar_err[k]
         delta = np.linspace(-err, err, npts)
@@ -1232,26 +1235,26 @@ def make_err_plot(df_in, **kwargs):
                                           calctype=calctype, guess=guess)
         # make the property plots
         for p in [0, 1, 2]:
-            ax[p].plot(delta/delfstar_err[k], props[prop_type[p]]*scale_factor[p],
+            ax[0,p].plot(delta/delfstar_err[k], props[prop_type[p]]*scale_factor[p],
                        marker=marker[k], linestyle='none',
                        label=r'X='+forg[k]+'$_'+str(n)+'$')
 
     # reset color cycles so dervitave plots match the color scheme
     for p in [0, 1, 2]:
-        ax[p].set_prop_cycle(None)
+        ax[0,p].set_prop_cycle(None)
         for k in [0, 1, 2]:
             err = delfstar_err[k]
             xdata = np.array([-err_range, 0, err_range])
             ydata = (np.ones(3)*df_in[prop_type[p]][idx]*scale_factor[p] +
                      err*xdata*scale_factor[p]*deriv[p][k])
-            ax[p].plot(xdata, ydata, '-')
+            ax[0,p].plot(xdata, ydata, '-')
 
         # now add the originally calculated error
             err0 = df_in[prop_type[p]+'_err']
-            ax[p].errorbar(0, df_in[prop_type[p]][idx]*scale_factor[p],
+            ax[0,p].errorbar(0, df_in[prop_type[p]][idx]*scale_factor[p],
                            yerr=err0*scale_factor[p], color='k')
 
-    ax[0].legend(loc='center', bbox_to_anchor=(-0.5, 0, 0, 1))
+    ax[0,0].legend(loc='center', bbox_to_anchor=(-0.5, 0, 0, 1))
     sub_string = {}
     for k in [0, 1, 2]:
         n = calc[k]
@@ -1278,6 +1281,7 @@ def make_prop_axes(**kwargs):
             'vgp' can be added as van Gurp-Palmen plot
             'vgp_lin'  and 'grho3_lin' put the grho3 on a linear scale
             'jdp' is loss compliance normalized by density
+            'temp' is temperature in degrees C
             
         xunit (string):
             Units for x data.  Default is 'index', function currently handles
@@ -1324,7 +1328,8 @@ def make_prop_axes(**kwargs):
     axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
                'phi': r'$\phi$ (deg.)',
                'drho': r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-               'jdp': r'$J^{\prime \prime}/\rho$ (Pa$^{-1}\cdot$cm$^3$/g)'
+               'jdp': r'$J^{\prime \prime}/\rho$ (Pa$^{-1}\cdot$cm$^3$/g)',
+               'temp':r'$T$ ($^\circ$C)'
                }
     
     for p in np.arange(num_plots):
@@ -1342,6 +1347,9 @@ def make_prop_axes(**kwargs):
             ax[0,p].set_xlabel(axlabels['grho3'])
         elif plots[p] == 'jdp':
             ax[0,p].set_ylabel(axlabels['jdp'])
+            ax[0,p].set_xlabel(xlabel)
+        elif plots[p] == 'temp':
+            ax[0,p].set_ylabel(axlabels['temp'])
             ax[0,p].set_xlabel(xlabel)
         if num_plots > 1:
             ax[0,p].set_title(titles[p])
@@ -1430,6 +1438,13 @@ def prop_plots(df, figinfo, **kwargs):
         elif plots[p] == 'jdp':
             xdata  = xvals
             ydata = (1000/df['grho3'])*np.sin(df['phi']*np.pi/180) 
+            
+        elif plots[p] == 'temp':
+            xdata  = xvals
+            ydata = df['temp']    
+            
+        else:
+            print('not a recognized plot type ('+plots[p]+')')
                 
         if err_plot:
             ax[0, p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, label=label)
@@ -1596,7 +1611,16 @@ def read_xlsx(infile, **kwargs):
 
                     # make the fitting function
                     T_coef[var[p]][nvals[k]]=np.polyfit(temp, ref_vals, 3)
-
+                    
+                    # plot the data if fit was not obtained
+                    if np.isnan(T_coef[var[p]][nvals[k]]).any():
+                        fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
+                        ax.plot(temp, ref_vals)
+                        ax.set_xlabel(r'$T$ $^\circ$C')
+                        ax.set_ylabel(var[p]+str(nvals[k]))
+                        print('Temp. coefficients could not be obtained - see plot')
+                        sys.exit()
+                                                                        
                     # write the film and reference values to the data frame
                     df[var[p]+str(nvals[k])+'_dat']=df[var[p]+str(nvals[k])]
                     df[var[p]+str(nvals[k])+'_ref']=(
@@ -1621,37 +1645,47 @@ def read_xlsx(infile, **kwargs):
         keep_column.append(str(n)+'_refshift')
 
     if T_coef_plots and ref_channel != 'self' and len(df_ref.temp.unique()) > 1:
-        Trange=[df['temp'].min(), df['temp'].max()]
-        plot_bare_tempshift(df_ref, T_coef, Tref, nvals, Trange)
+        T_range=[df['temp'].min(), df['temp'].max()]
+        T_ref_range = [df_ref['temp'].min(), df_ref['temp'].max()]
+        # create a filename for saving the reference temperature data
+        filename = os.path.splitext(infile)[0]+'_Tref.pdf'
+        plot_bare_tempshift(df_ref, T_coef, Tref, nvals, T_range, filename)
+        if T_range[0] < T_ref_range[0] or T_range[1] > T_ref_range[1]:
+            print ('experimental data outside of reference range')
+            sys.exit()
+
     return df[keep_column].copy()
 
 
-def plot_bare_tempshift(df_ref, T_coef, Tref, nvals, Trange):
+def plot_bare_tempshift(df_ref, T_coef, Tref, nvals, T_range, filename):
     var=['f', 'g']
     n_num=len(nvals)
     fig, ax=plt.subplots(2, n_num, figsize=(3*n_num, 6),
                                    constrained_layout=True)
     ylabel={0: r'$\Delta f$ (Hz)', 1: r'$\Delta \Gamma$ (Hz)'}
     # for now I'll use a default temp. range to plot
-    temp_fit=np.linspace(Trange[0], Trange[1], 100)
+    temp_fit=np.linspace(T_range[0], T_range[1], 100)
     for p in [0, 1]:
         for k in np.arange(len(nvals)):
             # plot themeasured values, relative to value at ref. temp.
             meas_vals=(df_ref[var[p]+str(nvals[k])] -
                          np.polyval(T_coef[var[p]][nvals[k]], Tref))
-            ax[p, k].plot(df_ref['temp'], meas_vals, 'x')
+            ax[p, k].plot(df_ref['temp'], meas_vals, 'x', label = 'meas')
 
             # now plot the fit values
             ref_vals=bare_tempshift(temp_fit, T_coef, Tref, nvals[k])[var[p]]
-            ax[p, k].plot(temp_fit, ref_vals, '-')
+            ax[p, k].plot(temp_fit, ref_vals, 'o', label='fit')
 
             # set axis labels and plot titles
             ax[p, k].set_xlabel(r'$T$ ($^\circ$C)')
             ax[p, k].set_ylabel(ylabel[p])
             ax[p, k].set_title('n='+str(nvals[k]))
+            ax[p, k].legend()
             ymin=np.min([meas_vals.min(), ref_vals.min()])
             ymax=np.max([meas_vals.max(), ref_vals.max()])
             ax[p, k].set_ylim([ymin, ymax])
+    fig.suptitle(filename)
+    fig.savefig(filename)
 
 
 
