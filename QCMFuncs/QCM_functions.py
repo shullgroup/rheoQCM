@@ -1286,6 +1286,8 @@ def make_prop_axes(**kwargs):
         xunit (string):
             Units for x data.  Default is 'index', function currently handles
             's', 'min', 'hr', 'day', 'temp'
+        figsize (tuple of 2 real numbers):
+            size of figure.  Defualt is (3*num of plots, 3)
 
 
     returns:
@@ -1306,8 +1308,9 @@ def make_prop_axes(**kwargs):
     titles = kwargs.get('titles', {0: '(a)', 1: '(b)', 2: '(c)', 3: '(d)'})
     xunit = kwargs.get('xunit', 'index')
     num_plots = len(plots)
+    figsize = kwargs.get('figsize', (3*num_plots, 3))
 
-    fig, ax = plt.subplots(1, num_plots, figsize=(3*num_plots, 3), num=num,
+    fig, ax = plt.subplots(1, num_plots, figsize=figsize, num=num,
                            constrained_layout=True, squeeze=False)
 
     # set the x label
@@ -1884,6 +1887,8 @@ def check_solution(df, **kwargs):
             solution check (default is 'temp')
         plot_solutions (Boolean): True if we want to plot the solution checks
             for each point (default = False)
+        plot_interval (integer): interval between successive solution plots
+            (default is 1)
         xunit (string):
             Units for x data.  Default is 'dlam', function currently also handles
             's', 'min', 'hr', 'day', 'temp'
@@ -1900,10 +1905,13 @@ def check_solution(df, **kwargs):
     numz=kwargs.get('numz', 200)
     philim=kwargs.get('philim', [0.001, 90])
     dlim=kwargs.get('dlim', [0.001, 0.5])
+    # having d of 0 causes some problems.  Change lower limit to be at least 0.001
+    dlim[0] = max(dlim[0], 0.001)
     nplot=kwargs.get('nplot', [1, 3, 5])
     ratios=kwargs.get('ratios', False)
     autoscale=kwargs.get('autoscale', False)
     plot_solutions=kwargs.get('plot_solutions', False)
+    plot_interval = kwargs.get('plot_interval', 1)
     idxmin=df.index[0]
     calc=df['calc'][idxmin]
     filename=kwargs.get('filename', 'solution_check.pdf')
@@ -2062,23 +2070,27 @@ def check_solution(df, **kwargs):
 
     # create a PdfPages object - one solution check per page
     pdf=PdfPages(filename)
+    
+    # we only take every nth row, where n = plot_interval
+    df_plot = df.iloc[::plot_interval, :]
     if plot_solutions:
         idxnum = 0 # keeps track of the fact that we don't always start from idx=0
-        for idx, row in df.iterrows():
+        for idx, row in df_plot.iterrows():
             idxnum = idxnum + 1
             curves={}
 
             # indicate where the solution is being taken
-            print('writing solution '+str(idxnum)+' of '+str(len(df)))
+            print('writing solution '+str(idxnum)+' of '+str(len(df_plot)))
             for k in [0, 1]:
                 curves[0+k]=ax[0, k].plot(row['dlam3'], row['phi'], 'kx', 
                                 markersize=14, label = 'x='+str(row['xvals']))
 
-            for n in nplot:
-                curves[2+(n-1)/2]=ax[1, 0].plot(row['xvals'],
+            for p in np.arange(len(nplot)):
+                n = nplot[p]
+                curves[2+2*p]=ax[1, 0].plot(row['xvals'],
                             np.real(row['df_expt'+str(n)])/n, 'x',
                              markersize=14, color=col[n])
-                curves[5+(n-1)/2]=ax[1, 1].plot(row['xvals'], 
+                curves[3+2*p]=ax[1, 1].plot(row['xvals'], 
                             np.imag(row['df_expt'+str(n)])/n, 'x',
                              markersize=14, color=col[n])
 
@@ -2117,8 +2129,8 @@ def check_solution(df, **kwargs):
 
             dcalc=dcalc.sort_values(by=['phi'])
             for k in [0, 1]:
-                curves[8+k]=ax[0, k].plot(dcalc['d_rh'], dcalc['phi'], 'w-')
-                curves[10+k]=ax[0, k].plot(dcalc['d_rd'], dcalc['phi'], 'w--')
+                curves[2+2*len(nplot)+k]=ax[0, k].plot(dcalc['d_rh'], dcalc['phi'], 'w-')
+                curves[4+2*len(nplot)+k]=ax[0, k].plot(dcalc['d_rd'], dcalc['phi'], 'w--')
                 
             # add titles
             if ratios:
@@ -2130,7 +2142,7 @@ def check_solution(df, **kwargs):
         
             pdf.savefig()
             
-            for k in np.arange(12):
+            for k in np.arange(6+2*len(nplot)):
                 curves[k][0].remove()
     else:
         pdf.savefig()
