@@ -1282,10 +1282,16 @@ def make_prop_axes(**kwargs):
             'vgp_lin'  and 'grho3_lin' put the grho3 on a linear scale
             'jdp' is loss compliance normalized by density
             'temp' is temperature in degrees C
+            't' is time in seconds
             
         xunit (string):
             Units for x data.  Default is 'index', function currently handles
-            's', 'min', 'hr', 'day', 'temp'
+            's', 'min', 'hr', 'day', 'temp', or user specified value corresponding
+            to a dataframe column
+            
+        xlabel (string):
+            label for x axis.  Only used if user-specified for xunit is used
+            
         figsize (tuple of 2 real numbers):
             size of figure.  Defualt is (3*num of plots, 3)
 
@@ -1324,8 +1330,10 @@ def make_prop_axes(**kwargs):
         xlabel = '$t$ (days)'
     elif xunit == 'temp':
         xlabel = r'$T$ ($^\circ$C)'
-    else:
+    elif xunit == 'index':
         xlabel = 'index'
+    else:
+        xlabel = kwargs.get('xlabel', 'xlabel')
 
     # make a dictionary of the potential axis labels
     axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
@@ -1353,6 +1361,9 @@ def make_prop_axes(**kwargs):
             ax[0,p].set_xlabel(xlabel)
         elif plots[p] == 'temp':
             ax[0,p].set_ylabel(axlabels['temp'])
+            ax[0,p].set_xlabel(xlabel)
+        elif plots[p] == 't':
+            ax[0,p].set_ylabel('t (s)')
             ax[0,p].set_xlabel(xlabel)
         if num_plots > 1:
             ax[0,p].set_title(titles[p])
@@ -1404,9 +1415,10 @@ def prop_plots(df, figinfo, **kwargs):
         xvals=df['t']/(24*3600)
     elif xunit == 'temp':
         xvals=df['temp']
-
-    else:
+    elif xunit == 'index':
         xvals=df.index
+    else:
+        xvals=df[xunit]
         
     if xoffset == 'zero':
         xoffset = min(xvals)
@@ -1446,8 +1458,13 @@ def prop_plots(df, figinfo, **kwargs):
             xdata  = xvals
             ydata = df['temp']    
             
+        elif plots[p] == 't':
+            xdata  = xvals
+            ydata = df['t']  
+        
         else:
             print('not a recognized plot type ('+plots[p]+')')
+            sys.exit()
                 
         if err_plot:
             ax[0, p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, label=label)
