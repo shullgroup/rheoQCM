@@ -111,45 +111,6 @@ def add_D_axis(ax):
     return axD
 
 
-def fstar_err_calc(n, delfstar, layers, **kwargs):
-    """
-    Calculate the error in delfstar.
-    args:
-        n (int):
-            Harmonic to consider.
-        delfstar (numpy array):
-            Array of complex frequency shifts at n.
-        layers (dictionary):
-            Property stack for different layers considered in the calculation.
-
-    kwargs:
-        g0 (real):
-            Dissipation at n for dissipation.  Default value set at top
-            of QCM_functions.py (typically 50).
-        err_frac:
-            Uncertainty in delf, delg as a fraction of gamma.  Default set
-            at top of QCM_functions.py (typically 0.03).
-
-    returns:
-        fstar_err (numpy array of complex values):
-            Array errors in delf (real part) and delg (imag part).
-    """
-
-    g0 = kwargs.get('g0', g0_default)
-    err_frac = kwargs.get('err_frac', err_frac_default)
-
-    g = g0 + np.imag(delfstar)
-
-    if 'overlayer' in layers:
-        delg = calc_delfstar(n, {'film': layers['overlayer']},
-                                             calctype='SLA')
-        g = g+delg
-
-    # start by specifying the error input parameters
-    fstar_err = err_frac*abs(g)*(1+1j)
-    return fstar_err
-
-
 def sauerbreyf(n, drho):
     return 2*n*f1 ** 2*drho/Zq
     """
@@ -936,12 +897,17 @@ def solve_for_props(delfstar, calc, **kwargs):
         calc (string):
             3 character string specifying calculation type (e.g., '353');
             only third character is used for filmtype='bulk'
+            if string has more than 3 characters, we use periods to 
+            separate the numbers (e.g., '7.11.11')
 
     kwargs:
         calctype (string):
             - 'SLA' (default): small load approximation with power law model
             - 'LL': Lu Lewis equation, using default or provided electrode props
             - 'Voigt': small load approximation
+        
+        overlayer (dictionary):
+            Dictionary with Properties of overlayer ('grho3', 'phi', 'drho')
 
         drho (real):
             - 0 (default): standard calculation returning drho, grho3, phi
@@ -952,14 +918,12 @@ def solve_for_props(delfstar, calc, **kwargs):
             - True: phase angle assumed to be 90 degrees and viscosity obtained
               from dissipation
 
-        err_frac (real):  Error in delf and delg as a fraction of delg
-            - Default is zero
 
         lb (list of 3 numbers):  Lower bound for Grho3, phi, drho - default [1e4, 0, 0]
         ub (list of 3 numbers):  Upper bound for Grho3, phi, drho - default [1e13, 90, 3e-2]
 
-        reftype (string)
-            - 'overlayer' (default):  if overlayer exists, then the reference
+        reftype (string):
+            - 'overlayer' (default):  if overlayer exists, then the reference \
                is the overlayer on a bare crystal
             - 'bare': ref is bare crystal, even if overlayer exists
 
@@ -970,7 +934,6 @@ def solve_for_props(delfstar, calc, **kwargs):
 
     """
 
-    err_frac = kwargs.get('err_frac', 0)
     df_in = delfstar.T  # transpose the input dataframe
     if 'overlayer' in kwargs.keys():
         layers = {'overlayer': kwargs['overlayer']}
@@ -978,7 +941,8 @@ def solve_for_props(delfstar, calc, **kwargs):
         layers = {}
 
     nplot = []
-    for n in [1, 3, 5, 7, 9]:
+    # consider possibility that our data has harmonics up to n=21
+    for n in np.arange(1, 22, 2):
         if n in df_in.index:
             nplot = nplot + [n]
     calctype = kwargs.get('calctype', 'SLA')
@@ -992,9 +956,19 @@ def solve_for_props(delfstar, calc, **kwargs):
     lb = np.array(lb)  # lower bounds drho, grho3, phi
     ub = np.array(ub)  # upper bounds drho, grho3, phi
 
+    # add dots between numbers if needed
+    if not '.' in calc and len(calc)<4:
+        calc = '.'.join(calc)
+    elif not '.' in calc and len(calc)>=4:
+        print('calc has '+str(len(calc))+' digits with no periods')
+        sys.exit()
+
+    # parse n1, n2, n3 from calc
     if drho != 0:
         fixed_drho = True
-        n1 = int(calc[0]); n2 = int(calc[0]); n3 = int(calc[0])
+        n1 = int(calc.split('.')[0])
+        n2 = int(calc.split('.')[0])
+        n3 = int(calc.split('.')[0])
 
         if 'guess' in kwargs.keys():
             guess = kwargs['guess']
@@ -1005,7 +979,9 @@ def solve_for_props(delfstar, calc, **kwargs):
             n1 = n3  # fixed thickness uses delta f and delta gamma from same harmonic
     else:
         fixed_drho = False
-        n1 = int(calc[0]); n2 = int(calc[1]); n3 = int(calc[2])
+        n1 = int(calc.split('.')[0])
+        n2 = int(calc.split('.')[1])
+        n3 = int(calc.split('.')[2])
 
         if 'guess' in kwargs.keys():
             guess = kwargs['guess']
@@ -1022,22 +998,18 @@ def solve_for_props(delfstar, calc, **kwargs):
     else:
         x0 = np.array([grho3, phi, drho])
 
-    # create keys for output dictionary and dataframe
-    out_rows = []
+    # create output dataframe, starting with columns with complex data
+    complex_columns = []
     for n in nplot:
-        out_rows = out_rows + ['df_expt'+str(n), 'df_calc'+str(n)]
+        complex_columns = complex_columns + ['df_expt'+str(n), 'df_calc'+str(n)]
+    df_out = pd.DataFrame(columns=complex_columns).astype('complex128')
 
-    out_rows = out_rows+['drho', 'drho_err', 'grho3', 'grho3_err', 'phi', 'phi_err',
-                       'dlam3', 't', 'temp']
+    # add  addtional dataframe columns that we need
+    df_out[['t', 'temp', 'grho3', 'phi', 'drho', 'dlam3']] = pd.Series(dtype='float64')
+    df_out[['props', 'jacobian']] = pd.Series()
+    df_out['jacobian'] = df_out['jacobian'].astype(object)
+    df_out[['calc', 'calctype']] = pd.Series()
 
-    data = {}
-    props = {}  # properties for each layer
-    for element in out_rows:
-        data[element] = np.array([])
-
-    for n in nplot:
-        data['df_expt'+str(n)] = np.array([])
-        data['df_calc'+str(n)] = np.array([])
 
     # obtain the solution, using either the SLA or LL methods
     for i in df_in.columns:
@@ -1073,8 +1045,6 @@ def solve_for_props(delfstar, calc, **kwargs):
                                            reftype = reftype).imag -
                              df_in[i][n1].imag])
 
-        # initialize the output uncertainties
-        err = {}
         soln = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
         grho3 = soln['x'][0]
         phi = soln['x'][1]
@@ -1083,52 +1053,25 @@ def solve_for_props(delfstar, calc, **kwargs):
         if not fixed_drho:
             drho = soln['x'][2]
 
-        layers['film'] = {'drho': drho, 'grho3': grho3, 'phi': phi}
+        props = {'drho': drho, 'grho3': grho3, 'phi': phi}
         dlam3 = calc_dlam(3, layers['film'])
-        jac = soln['jac']
+        jacobian = soln['jac']
 
-        try:
-            deriv = np.linalg.inv(jac)
-        except:
-            deriv = np.zeros([len(x0), len(x0)])
-
-        # put the input uncertainties into a 3 element vector
-        delfstar_err = np.zeros(3)
-        delfstar_err[0] = fstar_err_calc(n1, df_in[i][n1], layers,
-                                         err_frac=err_frac).real
-        delfstar_err[1] = fstar_err_calc(n2, df_in[i][n2], layers,
-                                         err_frac=err_frac).real
-        delfstar_err[2] = fstar_err_calc(n3, df_in[i][n3], layers,
-                                         err_frac=err_frac).imag
-
-        # determine error from Jacobian
-        err = {}
-        for p in np.arange(len(x0)):  # p = property
-            err[p] = 0
-            for k in np.arange(len(x0)):
-                err[p] = err[p]+(deriv[p, k]*delfstar_err[k])**2
-            err[p] = np.sqrt(err[p])
-
-        if fixed_drho:
-            err[2] = np.nan
-
+        # append a new row to the dataframe
+        df_out = df_out.append(pd.Series(name=i))
+            
         # now back calculate delfstar from the solution
-        delfstar_calc = {}
-
-        # add experimental and calculated values to the dictionary
+        # add experimental and calculated values to the dataframe
         for n in nplot:
-            delfstar_calc[n] = calc_delfstar(n, layers, calctype=calctype,
+            delfstar_calc = calc_delfstar(n, layers, calctype=calctype,
                                              reftype = reftype)
-            data['df_calc'+str(n)] = (np.append(data['df_calc'+str(n)],
-                                             round(delfstar_calc[n], 1)))
+            df_out.loc[i, 'df_calc'+str(n)] = round(delfstar_calc, 1)
             try:
-                data['df_expt'+str(n)] = (np.append(data['df_expt'+str(n)],
-                                             delfstar[n][i]))
+                df_out.loc[i, 'df_expt'+str(n)] =  delfstar[n][i]
             except:
-                data['df_expt' +
-                    str(n)] = np.append(data['df_expt'+str(n)], 'nan')
+                df_out.loc[i, 'df_expt'+str(n)] =  'nan'
 
-        # get t, temp, set to 'nan' if they doesn't exist
+        # get t, temp, set to 'nan' if they don't exist
         if 't' in df_in[i].keys():
             t = np.real(df_in[i]['t'])
         else:
@@ -1138,25 +1081,19 @@ def solve_for_props(delfstar, calc, **kwargs):
         else:
             temp = np.nan
 
-        var_name = ['grho3', 'phi', 'drho', 'grho3_err', 'phi_err', 'drho_err',
-                    'dlam3', 't', 'temp']
-        var = [grho3, phi, drho, err[0], err[1], err[2],
-               dlam3, t, temp]
+        var = [grho3, phi, drho, dlam3, t, temp, props, jacobian, calc, calctype]
+        var_name = ['grho3', 'phi', 'drho', 'dlam3', 't', 'temp', 'props',
+                    'jacobian', 'calc', 'calctype']
 
-        for k in np.arange(len(var_name)):
-            data[var_name[k]] = np.append(data[var_name[k]], var[k])
+        for k in np.arange(len(var)):
+            df_out.loc[i, var_name[k]] = [var[k]]
 
-        props[i] = layers['film']
         # set up the initial guess
         if fixed_drho:
             x0 = np.array([grho3, phi])
         else:
             x0 = np.array([grho3, phi, drho])
 
-    # add these calculated values to existing dataframe
-    df_out = pd.DataFrame(data)
-    df_out['props'] = props
-    df_out['calc'] = calc
     return df_out
 
 
@@ -1267,6 +1204,46 @@ def make_err_plot(df_in, **kwargs):
     return fig, ax
 
 
+def calc_error(soln, uncertainty):
+    '''
+    Calclate error in properties
+
+    args
+    ----------
+    soln : Dataframe 
+        Data being considered (from solve_for_props)
+        
+    uncertainty : list of 3 numbers
+        Uncertainty in delta_f(n1), delta_f(n2), delta_g(n3)
+
+    Returns
+    -------
+    input dictionary with errors for grho3, phi, drho added to it
+
+    '''
+    propname = {0:'grho3_err', 1:'phi_err', 2:'drho_err'}
+    soln['grho3_err']=''
+    soln['phi_err']=''
+    soln['drho_err']=''
+    for index in soln.index:
+        jacobian = soln.jacobian[index]
+        
+        try:
+            deriv = np.linalg.inv(jacobian)
+        except:
+            deriv = np.zeros([len(uncertainty), len(uncertainty)])
+    
+        # determine error from Jacobian
+        # p = property
+        for p in np.arange(len(uncertainty)):  
+            errval = 0
+            for k in np.arange(len(uncertainty)):
+                errval = errval + (deriv[p, k]*uncertainty[k])**2
+            soln.loc[index, propname[p]] = np.sqrt(errval)
+            
+    return soln
+        
+        
 def make_prop_axes(**kwargs):
     """
     Make a blank property figure.
@@ -1294,6 +1271,9 @@ def make_prop_axes(**kwargs):
             
         figsize (tuple of 2 real numbers):
             size of figure.  Defualt is (3*num of plots, 3)
+            
+        sharex (Boolean):
+            share x axis for zooming (default=True)
 
 
     returns:
@@ -1313,11 +1293,13 @@ def make_prop_axes(**kwargs):
     plots = kwargs.get('plots', ['grho3', 'phi', 'drho'])
     titles = kwargs.get('titles', {0: '(a)', 1: '(b)', 2: '(c)', 3: '(d)'})
     xunit = kwargs.get('xunit', 'index')
+    sharex = kwargs.get('sharex', True)
     num_plots = len(plots)
     figsize = kwargs.get('figsize', (3*num_plots, 3))
 
     fig, ax = plt.subplots(1, num_plots, figsize=figsize, num=num,
-                           constrained_layout=True, squeeze=False)
+                           constrained_layout=True, squeeze=False,
+                           sharex=sharex)
 
     # set the x label
     if xunit == 's':
@@ -1356,6 +1338,12 @@ def make_prop_axes(**kwargs):
         elif plots[p] == 'vgp' or plots[p] == 'vgp_lin':
             ax[0,p].set_ylabel(axlabels['phi'])
             ax[0,p].set_xlabel(axlabels['grho3'])
+            # remove links to other axes if they exist
+            if sharex:
+                axnums = np.arange(num_plots).tolist
+                axnums = axnums.remove(p)
+                for k in axnums:
+                    ax[0,p].get_shared_axes().remove(ax[0,k])
         elif plots[p] == 'jdp':
             ax[0,p].set_ylabel(axlabels['jdp'])
             ax[0,p].set_xlabel(xlabel)
@@ -1378,7 +1366,8 @@ def prop_plots(df, figinfo, **kwargs):
 
     args:
         df (dataframe):
-            dataframe containing data to be plotted
+            dataframe containing data to be plotted, typically output from
+            solve_for_props
         figinfo (dictionary cotnaining fig, ax and other info for plot):
 
     kwargs:
@@ -1392,8 +1381,9 @@ def prop_plots(df, figinfo, **kwargs):
             label for plots.  Used to generate legend.  Default is ''
         plotdrho (Boolean):
             Switch to plot mass data or not. Default is True
-        err_plot
-            True if you want to include errorbars (default is False)
+        uncertainty (3 element list):
+            Uncertaintly in Delta_f(n1), Delta_f(n2), Delta_g(n3)
+
 
     returns:
         Nothing is returned.  The function just updates an existing axis.
@@ -1402,7 +1392,10 @@ def prop_plots(df, figinfo, **kwargs):
     fmt=kwargs.get('fmt', '+')
     label=kwargs.get('label', '')
     xoffset=kwargs.get('xoffset', 0)
-    err_plot = kwargs.get('err_plot', False)
+    uncertainty = kwargs.get('uncertainty', [0,0,0])
+    
+    # add calculated errors to dataframe
+    df = calc_error(df, uncertainty)
     xunit = figinfo['info']['xunit']
 
     if xunit == 's':
@@ -1466,15 +1459,16 @@ def prop_plots(df, figinfo, **kwargs):
             print('not a recognized plot type ('+plots[p]+')')
             sys.exit()
                 
-        if err_plot:
-            ax[0, p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, label=label)
-        else:
-            ax[0, p].plot(xdata, ydata, fmt, label=label)
+        # if err_plot:
+        ax[0, p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, label=label)
+        # else:
+        #     ax[0, p].plot(xdata, ydata, fmt, label=label)
             
         if plots[p] == 'vgp':
                 ax[0, p].set_xscale('log')
         if plots[p] == 'grho3':
                 ax[0, p].set_yscale('log')
+                
                 
 
 def read_xlsx(infile, **kwargs):
@@ -1671,8 +1665,8 @@ def read_xlsx(infile, **kwargs):
         filename = os.path.splitext(infile)[0]+'_Tref.pdf'
         plot_bare_tempshift(df_ref, T_coef, Tref, nvals, T_range, filename)
         if T_range[0] < T_ref_range[0] or T_range[1] > T_ref_range[1]:
-            print ('experimental data outside of reference range')
-            sys.exit()
+            print ('deleting some points that are outside the reference temperature range')
+            df = df.query('temp >= @T_ref_range[0] & temp <= @T_ref_range[1]')
 
     return df[keep_column].copy()
 
@@ -1880,7 +1874,7 @@ def check_solution(df, **kwargs):
 
     args:
         df (dataframe):
-            input dataframe to consider
+            input solution to consider
 
     kwargs:
         filename (string):
@@ -1930,10 +1924,15 @@ def check_solution(df, **kwargs):
     plot_solutions=kwargs.get('plot_solutions', False)
     plot_interval = kwargs.get('plot_interval', 1)
     idxmin=df.index[0]
-    calc=df['calc'][idxmin]
+    calc=df['calc'][idxmin].split('.')
     filename=kwargs.get('filename', 'solution_check.pdf')
     xunit=kwargs.get('xunit', 'dlam')
     xoffset = kwargs.get('xoffset', 0)
+    
+    # adjust nplot if any of the values don't' exist in the dataframe
+    for n in nplot:
+        if not 'df_expt'+str(n) in df.keys():
+            nplot.remove(n)
 
     # set up x labels for plots of actual and back-calculated shifts
     if xunit == 's':
@@ -1951,13 +1950,13 @@ def check_solution(df, **kwargs):
     elif xunit == 'temp':
         xlabel=r'$T$ ($^\circ$C)'
         df.loc[:, 'xvals']=df.loc[:,'temp']-xoffset
+    elif xunit == 'index':
+        xlabel = 'index'
+        df.loc[:, 'xvals']=df.index
     else:
         xlabel=r'$d/\lambda_3$'
         df.loc[:,'xvals'] = df.loc[:,'dlam3']
         
-    # make the axes
-    fig, ax=plt.subplots(2, 2, figsize=(10, 6), sharex=False, sharey=False,
-                           num=filename, constrained_layout=True)
 
     # make meshgrid for contour
     phi=np.linspace(philim[0], philim[1], numxy)
@@ -2008,11 +2007,18 @@ def check_solution(df, **kwargs):
 
     levels1=np.linspace(min1, max1, numz)
     levels2=np.linspace(min2, max2, numz)
+    
+    # make the axes and link them for auto-zooming
+    fig, ax=plt.subplots(2, 2, figsize=(10, 6), sharex=False, sharey=False,
+                           num=filename, constrained_layout=True)
 
     contour1=ax[0, 0].contourf(DLAM, PHI, Z1, levels=levels1,
                               cmap='rainbow')
     contour2=ax[0, 1].contourf(DLAM, PHI, Z2, levels=levels2,
                               cmap='rainbow')
+    ax[0,0].sharex(ax[0,1])
+    ax[0,0].sharey(ax[0,1])
+    ax[1,0].sharex(ax[1,1])
 
     fig.colorbar(contour1, ax=ax[0, 0])
     fig.colorbar(contour2, ax=ax[0, 1])
@@ -2028,11 +2034,11 @@ def check_solution(df, **kwargs):
 
     # add titles
     if ratios:
-        ax[0, 0].set_title(calc + r': $r_h$')
-        ax[0, 1].set_title(calc + r': $r_d$')
+        ax[0, 0].set_title('.'.join(calc) + r': $r_h$')
+        ax[0, 1].set_title('.'.join(calc) + r': $r_d$')
     else:
-        ax[0, 0].set_title(calc + r': $\Delta f /n$ (Hz)')
-        ax[0, 1].set_title(calc + r': $\Delta\Gamma /n$ (Hz)')
+        ax[0, 0].set_title('.'.join(calc) + r': $\Delta f /n$ (Hz)')
+        ax[0, 1].set_title('.'.join(calc) + r': $\Delta\Gamma /n$ (Hz)')
 
     # set formatting for parameters that appear at the bottom of the plot
     # when mouse is moved
@@ -2055,24 +2061,27 @@ def check_solution(df, **kwargs):
 
     # now add the experimental data
     # variable to keep track of differentplots
-
-    col={1: 'C0', 3: 'C1', 5: 'C2'}
+    col = {}
+    for n in np.arange(1,22,2):
+        col[n]='C'+str(int((n-1)/2))
 
     for n in nplot:
-        nstr=str(n)+' (expt)'
+        nstr=str(n)+' (expt)' 
         # compare experimental and calculated frequency fits
-        ax[1, 0].plot(df['xvals'], np.real(df['df_expt'+str(n)])/n, '+', color=col[n],
-                     label='n='+nstr)
-        ax[1, 0].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, '-', color=col[n])
+        ax[1, 0].plot(df['xvals'], np.real(df['df_expt'+str(n)])/n, '+', 
+                      color=col[n], label='n='+nstr)
+        ax[1, 0].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, '-o', 
+                      color=col[n], markerfacecolor='none')
 
         # now compare experimental and calculated dissipation
-        ax[1, 1].plot(df['xvals'], np.imag(df['df_expt'+str(n)])/n, '+', color=col[n],
-                     label='n='+nstr)
-        ax[1, 1].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, '-', color=col[n])
+        ax[1, 1].plot(df['xvals'], np.imag(df['df_expt'+str(n)])/n, '+', 
+                      color=col[n], label='n='+nstr)
+        ax[1, 1].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, '-o', 
+                      color=col[n] , markerfacecolor='none')
 
     # add values to contour plots for n=3
-    ax[0, 0].plot(df['dlam3'], df['phi'], 'k-')
-    ax[0, 1].plot(df['dlam3'], df['phi'], 'k-')
+    ax[0, 0].plot(df['dlam3'], df['phi'], 'k-o', markerfacecolor='none')
+    ax[0, 1].plot(df['dlam3'], df['phi'], 'k-o', markerfacecolor='none')
 
     for k in [0, 1]:
         ax[1, k].legend()
@@ -2151,11 +2160,11 @@ def check_solution(df, **kwargs):
                 
             # add titles
             if ratios:
-                ax[0, 0].set_title(calc + r': $r_h$='+f'{rh:.4f}')
-                ax[0, 1].set_title(calc + r': $r_d$='+f'{rd:.4f}')
+                ax[0, 0].set_title('.'.join(calc) + r': $r_h$='+f'{rh:.4f}')
+                ax[0, 1].set_title('.'.join(calc) + r': $r_d$='+f'{rd:.4f}')
             else:
-                ax[0, 0].set_title(calc + r': $\Delta f /n$ (Hz)')
-                ax[0, 1].set_title(calc + r': $\Delta\Gamma /n$ (Hz)')
+                ax[0, 0].set_title('.'.join(calc) + r': $\Delta f /n$ (Hz)')
+                ax[0, 1].set_title('.'.join(calc) + r': $\Delta\Gamma /n$ (Hz)')
         
             pdf.savefig()
             
@@ -2166,3 +2175,71 @@ def check_solution(df, **kwargs):
                 
     pdf.close()
     return fig, ax
+
+def check_n_dependence(soln, **kwargs):
+    '''
+    Compare experimental and back-calculated frequency and dissipation shifts
+    for all harmonics for a given time point.
+
+    args:
+        df (dataframe):
+            input solution to consider
+        nvals (list of integers):
+            harmonics to plot
+            default is (1,3,5)
+
+    kwargs:
+        index (integer):
+            index to consider (default is minimum value)
+        suptitle (string):
+            suptitle for figure (default is '')
+            
+    Returns:
+        fig, ax for figure with n dependence of frequency and dissipation shifts
+
+    '''
+    idx = kwargs.get('index', soln.index.min())
+    filename = kwargs.get('filename', 'n_dependence.pdf')
+    suptitle = kwargs.get('suptitle', '')
+    nvals = kwargs.get('nvals', [1,3,5])
+    delf_expt=[]
+    delf_calc=[]
+    delg_expt=[]
+    delg_calc=[]
+
+    fig, ax = plt.subplots(1, 2, figsize=(7,3),constrained_layout=True, 
+                           num=filename)
+    for n in nvals:
+        delf_expt.append(np.real(soln['df_expt'+str(n)][idx])/n)
+        delf_calc.append(np.real(soln['df_calc'+str(n)][idx])/n)
+        delg_expt.append(np.imag(soln['df_expt'+str(n)][idx])/n)
+        delg_calc.append(np.imag(soln['df_calc'+str(n)][idx])/n)
+
+    p = ax[0].plot(nvals, delf_expt, '+', label='expt')
+    color = p[0].get_color()
+    ax[0].plot(nvals, delf_calc, '-o', color=color, label='calc',
+                      markerfacecolor='none')
+    ax[1].plot(nvals, delg_expt, '+', label='expt')
+    ax[1].plot(nvals, delg_calc, '-o', color=color, label='calc',
+                      markerfacecolor='none')
+    
+    ax[0].legend()
+    ax[1].legend()
+    ax[0].set_ylabel(r'$\Delta f_n/n$ (Hz)')
+    ax[1].set_ylabel(r'$\Delta \Gamma_n/n$ (Hz)')
+    for p in [0,1]:
+        ax[p].set_xlabel('$n$')
+        ax[p].set_xticks(np.arange(min(nvals), max(nvals)+2,2))
+    
+    # mark the values that correspond to the solution
+    calc = soln['calc'][idx].split('.')
+    n1 = int(calc[0])
+    n2 = int(calc[1])
+    n3 = int(calc[2])
+    ax[0].plot(n1, np.real(soln['df_expt'+str(n1)][idx])/n1, 'ro')
+    ax[0].plot(n2, np.real(soln['df_expt'+str(n2)][idx])/n2, 'ro')    
+    ax[1].plot(n3, np.imag(soln['df_expt'+str(n3)][idx])/n2, 'ro') 
+    
+    # print the figure
+    fig.suptitle(suptitle)
+    fig.savefig(filename)
