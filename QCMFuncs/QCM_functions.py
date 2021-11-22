@@ -250,7 +250,7 @@ def grho_from_dlam(n, drho, dlam, phi):
     return (drho*n*f1*np.cos(np.deg2rad(phi/2))/dlam) ** 2
 
 
-def grho_bulk(n, delfstar):
+def grho_bulk(n, delfstar, **kwargs):
     """
     Obtain |G*|\rho from for bulk material (infinite thicknes).
     args:
@@ -258,11 +258,16 @@ def grho_bulk(n, delfstar):
             Harmonic of interest.
         delfstar (complex number or numpy array of complex numbers):
             Complex frequency shift in Hz.
+    
+    kwargs:
+        f1 (real):
+            resonant frequency at first harmonic (hard-coded f1 is default)
 
     returns:
         |G*|\rho at harmonic of interest.
     """
-    return (np.pi*Zq*abs(delfstar[n])/f1) ** 2
+    f1val = kwargs.get('f1', f1)
+    return (np.pi*Zq*abs(delfstar[n])/f1val) ** 2
 
 
 def phi_bulk(n, delfstar):
@@ -273,7 +278,7 @@ def phi_bulk(n, delfstar):
             Harmonic of interest.
         delfstar (complex number or numpy array of complex numbers):
             Complex frequency shift in Hz.
-
+    
     returns:
         phase angle at harmonic of interest.
     """
@@ -281,7 +286,7 @@ def phi_bulk(n, delfstar):
                        np.imag(delfstar[n])))
 
 
-def deltarho_bulk(n, delfstar):
+def deltarho_bulk(n, delfstar, **kwargs):
     """
     Calculate decay length multiplied by density for bulk material.
     args:
@@ -289,12 +294,17 @@ def deltarho_bulk(n, delfstar):
             Harmonic of interest.
         delfstar (complex number or numpy array of complex numbers):
             Complex frequency shift in Hz.
+            
+    kwargs:
+        f1 (real):
+            Frequency of fundamental harmonic
 
     returns:
         Decay length multiplied by density (SI units).
     """
     # decay length multiplied by density
-    return -Zq*abs(delfstar[n])**2/(2*n*f1**2*delfstar[n].real)
+    f1val = kwargs.get('f1', f1)
+    return -Zq*abs(delfstar[n])**2/(2*n*f1val**2*delfstar[n].real)
 
 
 def calc_D(n, props, delfstar, calctype):
@@ -815,15 +825,16 @@ def rd_from_delfstar(n, delfstar):
     return -delfstar[n].imag/delfstar[n].real
 
 
-def bulk_props(delfstar):
+def bulk_props(delfstar, **kwargs):
     """
     Determine properties of bulk material from complex frequency shift.
     args:
-        calc (3 character string):
-            Calculation string ('353' for example).
-
         delfstar (complex):
             Complex frequency shift (at any harmonic).
+            
+    kwargs:
+        f1 (real):
+            resonant frequency of fundamental harmonic
 
     returns:
         grho:
@@ -832,7 +843,8 @@ def bulk_props(delfstar):
         phi:
             Phase angle in degrees, at harmonic where delfstar was measured.
     """
-    grho = (np.pi*Zq*abs(delfstar)/f1) ** 2
+    f1val = kwargs.get('f1', f1)
+    grho = (np.pi*Zq*abs(delfstar)/f1val) ** 2
     phi = -np.degrees(2*np.arctan(delfstar.real /
                       delfstar.imag))
     return grho, min(phi, 90)
