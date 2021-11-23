@@ -1005,10 +1005,10 @@ def solve_for_props(delfstar, calc, **kwargs):
     df_out = pd.DataFrame(columns=complex_columns).astype('complex128')
 
     # add  addtional dataframe columns that we need
-    df_out[['t', 'temp', 'grho3', 'phi', 'drho', 'dlam3']] = pd.Series(dtype='float64')
-    df_out[['props', 'jacobian']] = pd.Series()
+    df_out = df_out.reindex(columns = df_out.columns.tolist() +
+                            ['t', 'temp', 'grho3', 'phi', 'drho', 'dlam3',
+                             'props', 'jacobian', 'calc', 'calctype'])
     df_out['jacobian'] = df_out['jacobian'].astype(object)
-    df_out[['calc', 'calctype']] = pd.Series()
 
 
     # obtain the solution, using either the SLA or LL methods
@@ -1222,9 +1222,9 @@ def calc_error(soln, uncertainty):
 
     '''
     propname = {0:'grho3_err', 1:'phi_err', 2:'drho_err'}
-    soln['grho3_err']=''
-    soln['phi_err']=''
-    soln['drho_err']=''
+    soln = soln.reindex(columns = soln.columns.tolist() +
+                            ['grho3_err', 'phi_err', 'drho_err'])
+    
     for index in soln.index:
         jacobian = soln.jacobian[index]
         
