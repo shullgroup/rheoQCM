@@ -25,6 +25,7 @@ except ImportError:
 # setvvalues for standard constants
 Zq = 8.84e6  # shear acoustic impedance of at cut quartz
 f1 = 5e6  # fundamental resonant frequency
+    
 openplots = 4
 drho_q = Zq/(2*f1)
 e26 = 9.65e-2
@@ -111,8 +112,8 @@ def add_D_axis(ax):
     return axD
 
 
-def sauerbreyf(n, drho):
-    return 2*n*f1 ** 2*drho/Zq
+def sauerbreyf(n, drho, **kwargs):
+
     """
     Find indices of array with values within a specified range.
     args:
@@ -125,6 +126,7 @@ def sauerbreyf(n, drho):
         idx (numpy array):
             Numpy array of indices of x that are within range.
     """
+    return 2*n*f1 ** 2*drho/Zq
 
 
 def sauerbreym(n, delf):
@@ -258,16 +260,12 @@ def grho_bulk(n, delfstar, **kwargs):
             Harmonic of interest.
         delfstar (complex number or numpy array of complex numbers):
             Complex frequency shift in Hz.
-    
-    kwargs:
-        f1 (real):
-            resonant frequency at first harmonic (hard-coded f1 is default)
 
     returns:
         |G*|\rho at harmonic of interest.
     """
-    f1val = kwargs.get('f1', f1)
-    return (np.pi*Zq*abs(delfstar[n])/f1val) ** 2
+
+    return (np.pi*Zq*abs(delfstar[n])/f1) ** 2
 
 
 def phi_bulk(n, delfstar):
@@ -295,16 +293,10 @@ def deltarho_bulk(n, delfstar, **kwargs):
         delfstar (complex number or numpy array of complex numbers):
             Complex frequency shift in Hz.
             
-    kwargs:
-        f1 (real):
-            Frequency of fundamental harmonic
-
     returns:
         Decay length multiplied by density (SI units).
     """
-    # decay length multiplied by density
-    f1val = kwargs.get('f1', f1)
-    return -Zq*abs(delfstar[n])**2/(2*n*f1val**2*delfstar[n].real)
+    return -Zq*abs(delfstar[n])**2/(2*n*f1**2*delfstar[n].real)
 
 
 def calc_D(n, props, delfstar, calctype):
@@ -831,10 +823,6 @@ def bulk_props(delfstar, **kwargs):
     args:
         delfstar (complex):
             Complex frequency shift (at any harmonic).
-            
-    kwargs:
-        f1 (real):
-            resonant frequency of fundamental harmonic
 
     returns:
         grho:
@@ -843,8 +831,8 @@ def bulk_props(delfstar, **kwargs):
         phi:
             Phase angle in degrees, at harmonic where delfstar was measured.
     """
-    f1val = kwargs.get('f1', f1)
-    grho = (np.pi*Zq*abs(delfstar)/f1val) ** 2
+
+    grho = (np.pi*Zq*abs(delfstar)/f1) ** 2
     phi = -np.degrees(2*np.arctan(delfstar.real /
                       delfstar.imag))
     return grho, min(phi, 90)
