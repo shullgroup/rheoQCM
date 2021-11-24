@@ -11,6 +11,7 @@ import sys
 import os
 import scipy.optimize as optimize
 import matplotlib.pyplot as plt
+import matplotlib
 from matplotlib.backends.backend_pdf import PdfPages
 
 import pandas as pd
@@ -1338,12 +1339,24 @@ def make_prop_axes(**kwargs):
         elif plots[p] == 'vgp' or plots[p] == 'vgp_lin':
             ax[0,p].set_ylabel(axlabels['phi'])
             ax[0,p].set_xlabel(axlabels['grho3'])
+            
             # remove links to other axes if they exist
             if sharex:
-                axnums = np.arange(num_plots).tolist
-                axnums = axnums.remove(p)
-                for k in axnums:
-                    ax[0,p].get_shared_axes().remove(ax[0,k])
+                ax[0,p].get_shared_x_axes().remove(ax[0,p])
+                
+            # The following seems to be necessary, and comes from 
+            # https://stackoverflow.com/questions/54915124/how-to-unset-sharex-or-sharey-from-two-axes-in-matplotlib/54915930#54915930
+            # Create and assign new ticker
+            xticker = matplotlib.axis.Ticker()
+            ax[0,p].xaxis.major = xticker
+            
+            # The new ticker needs new locator and formatters
+            xloc = matplotlib.ticker.AutoLocator()
+            xfmt = matplotlib.ticker.ScalarFormatter()
+            
+            ax[0,p].xaxis.set_major_locator(xloc)
+            ax[0,p].xaxis.set_major_formatter(xfmt)
+            
         elif plots[p] == 'jdp':
             ax[0,p].set_ylabel(axlabels['jdp'])
             ax[0,p].set_xlabel(xlabel)
