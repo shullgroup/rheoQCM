@@ -1301,6 +1301,8 @@ def make_prop_axes(**kwargs):
     fig, ax = plt.subplots(1, num_plots, figsize=figsize, num=num,
                            constrained_layout=True, squeeze=False,
                            sharex=sharex)
+    
+    ax = ax.flatten()
 
     # set the x label
     if xunit == 's':
@@ -1328,48 +1330,49 @@ def make_prop_axes(**kwargs):
     
     for p in np.arange(num_plots):
         if plots[p] == 'grho3' or plots[p] == 'grho3_lin':
-            ax[0,p].set_ylabel(axlabels['grho3'])
-            ax[0,p].set_xlabel(xlabel)
+            ax[p].set_ylabel(axlabels['grho3'])
+            ax[p].set_xlabel(xlabel)
         elif plots[p] == 'phi':
-            ax[0,p].set_ylabel(axlabels['phi'])
-            ax[0,p].set_xlabel(xlabel)
+            ax[p].set_ylabel(axlabels['phi'])
+            ax[p].set_xlabel(xlabel)
         elif plots[p] == 'drho':
-            ax[0,p].set_ylabel(axlabels['drho'])
-            ax[0,p].set_xlabel(xlabel)
+            ax[p].set_ylabel(axlabels['drho'])
+            ax[p].set_xlabel(xlabel)
         elif plots[p] == 'vgp' or plots[p] == 'vgp_lin':
-            ax[0,p].set_ylabel(axlabels['phi'])
-            ax[0,p].set_xlabel(axlabels['grho3'])
+            ax[p].set_ylabel(axlabels['phi'])
+            ax[p].set_xlabel(axlabels['grho3'])
             
             # remove links to other axes if they exist
             if sharex:
-                ax[0,p].get_shared_x_axes().remove(ax[0,p])
+                ax[p].get_shared_x_axes().remove(ax[p])
                 
             # The following seems to be necessary, and comes from 
             # https://stackoverflow.com/questions/54915124/how-to-unset-sharex-or-sharey-from-two-axes-in-matplotlib/54915930#54915930
             # Create and assign new ticker
             xticker = matplotlib.axis.Ticker()
-            ax[0,p].xaxis.major = xticker
+            ax[p].xaxis.major = xticker
             
             # The new ticker needs new locator and formatters
             xloc = matplotlib.ticker.AutoLocator()
             xfmt = matplotlib.ticker.ScalarFormatter()
             
-            ax[0,p].xaxis.set_major_locator(xloc)
-            ax[0,p].xaxis.set_major_formatter(xfmt)
+            ax[p].xaxis.set_major_locator(xloc)
+            ax[p].xaxis.set_major_formatter(xfmt)
             
         elif plots[p] == 'jdp':
-            ax[0,p].set_ylabel(axlabels['jdp'])
-            ax[0,p].set_xlabel(xlabel)
+            ax[p].set_ylabel(axlabels['jdp'])
+            ax[p].set_xlabel(xlabel)
         elif plots[p] == 'temp':
-            ax[0,p].set_ylabel(axlabels['temp'])
-            ax[0,p].set_xlabel(xlabel)
+            ax[p].set_ylabel(axlabels['temp'])
+            ax[p].set_xlabel(xlabel)
         elif plots[p] == 't':
-            ax[0,p].set_ylabel('t (s)')
-            ax[0,p].set_xlabel(xlabel)
+            ax[p].set_ylabel('t (s)')
+            ax[p].set_xlabel(xlabel)
         if num_plots > 1:
-            ax[0,p].set_title(titles[p])
+            ax[p].set_title(titles[p])
 
     info = {'plots':plots, 'xunit':xunit}
+    ax = ax.flatten()
     return {'fig':fig, 'ax':ax, 'info':info}
 
 
@@ -1477,14 +1480,14 @@ def prop_plots(df, figinfo, **kwargs):
             sys.exit()
                 
         if (yerr == 0).all():
-            ax[0, p].plot(xdata, ydata, fmt, label=label)
+            ax[p].plot(xdata, ydata, fmt, label=label)
         else:
-            ax[0, p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, label=label)
+            ax[p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, label=label)
             
         if plots[p] == 'vgp':
-                ax[0, p].set_xscale('log')
+                ax[p].set_xscale('log')
         if plots[p] == 'grho3':
-                ax[0, p].set_yscale('log')
+                ax[p].set_yscale('log')
                 
                 
 
