@@ -1250,8 +1250,10 @@ def make_prop_axes(**kwargs):
     Make a blank property figure.
 
     kwargs:.
-        titles (dictionary):
-            titles for axes (defaults are (a), (b), (c), etc.)
+        titles (list):
+            titles for axes (defaults are (a), (b), (c), etc., unlabeled for 
+                             single plot)
+            
         num (string):
             window title (default is 'property fig')
         plots (list of strings):
@@ -1260,7 +1262,7 @@ def make_prop_axes(**kwargs):
             'vgp_lin'  and 'grho3_lin' put the grho3 on a linear scale
             'jdp' is loss compliance normalized by density
             'temp' is temperature in degrees C
-            't' is time in seconds
+            's', 'hr', 'day' is time in appropriate unit
             
         xunit (string):
             Units for x data.  Default is 'index', function currently handles
@@ -1292,10 +1294,14 @@ def make_prop_axes(**kwargs):
 
     num = kwargs.get('num', 'property fig')
     plots = kwargs.get('plots', ['grho3', 'phi', 'drho'])
-    titles = kwargs.get('titles', {0: '(a)', 1: '(b)', 2: '(c)', 3: '(d)'})
     xunit = kwargs.get('xunit', 'index')
     sharex = kwargs.get('sharex', True)
     num_plots = len(plots)
+    if num_plots == 1:
+        default_titles = ['']
+    else:
+        default_titles =  ['(a)', '(b)', '(c)', '(d)', '(e)', '(f)']
+    titles = kwargs.get('titles', default_titles)
     figsize = kwargs.get('figsize', (3*num_plots, 3))
 
     fig, ax = plt.subplots(1, num_plots, figsize=figsize, num=num,
@@ -1365,11 +1371,19 @@ def make_prop_axes(**kwargs):
         elif plots[p] == 'temp':
             ax[p].set_ylabel(axlabels['temp'])
             ax[p].set_xlabel(xlabel)
-        elif plots[p] == 't':
+        elif plots[p] == 's':
             ax[p].set_ylabel('t (s)')
             ax[p].set_xlabel(xlabel)
-        if num_plots > 1:
-            ax[p].set_title(titles[p])
+        elif plots[p] == 'min':
+            ax[p].set_ylabel('t (min)')
+            ax[p].set_xlabel(xlabel)
+        elif plots[p] == 'hrs':
+            ax[p].set_ylabel('t (hr)')
+            ax[p].set_xlabel(xlabel)
+        elif plots[p] == 'day':
+            ax[p].set_ylabel('t (day)')
+            ax[p].set_xlabel(xlabel)
+        ax[p].set_title(titles[p])
 
     info = {'plots':plots, 'xunit':xunit}
     ax = ax.flatten()
