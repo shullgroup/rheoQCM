@@ -1455,27 +1455,31 @@ def prop_plots(df, figinfo, **kwargs):
         elif plots[p] == 'vgp' or plots[p] == 'vgp_lin':
             xdata = df['grho3']/1000
             ydata = df['phi']
+            yerr = pd.Series(np.zeros(len(xdata)))
             
         elif plots[p] == 'jdp':
             xdata  = xvals
             ydata = (1000/df['grho3'])*np.sin(df['phi']*np.pi/180) 
+            yerr = pd.Series(np.zeros(len(xdata))) # may eventually add error for this one
             
         elif plots[p] == 'temp':
             xdata  = xvals
-            ydata = df['temp']    
+            ydata = df['temp']
+            yerr = pd.Series(np.zeros(len(xdata)))
             
         elif plots[p] == 't':
             xdata  = xvals
-            ydata = df['t']  
+            ydata = df['t']
+            yerr = pd.Series(np.zeros(len(xdata)))
         
         else:
             print('not a recognized plot type ('+plots[p]+')')
             sys.exit()
                 
-        # if err_plot:
-        ax[0, p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, label=label)
-        # else:
-        #     ax[0, p].plot(xdata, ydata, fmt, label=label)
+        if (yerr == 0).all():
+            ax[0, p].plot(xdata, ydata, fmt, label=label)
+        else:
+            ax[0, p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, label=label)
             
         if plots[p] == 'vgp':
                 ax[0, p].set_xscale('log')
@@ -1635,14 +1639,20 @@ def read_xlsx(infile, **kwargs):
 
                     # get the reference values and plot them
                     ref_vals=df_ref[var[p]+str(nvals[k])]
-
+                    
+                    # put temp and reference values into a temporary dataframe
+                    data = [temp, ref_vals]
+                    headers = ['temp', 'data']
+                    df_tmp = pd.concat(data, axis=1, keys=headers).dropna()
+            
                     # make the fitting function
-                    T_coef[var[p]][nvals[k]]=np.polyfit(temp, ref_vals, 3)
+                    T_coef[var[p]][nvals[k]]=np.polyfit(df_tmp['temp'], 
+                                                               df_tmp['data'], 3)
                     
                     # plot the data if fit was not obtained
                     if np.isnan(T_coef[var[p]][nvals[k]]).any():
                         fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
-                        ax.plot(temp, ref_vals)
+                        ax.plot(df_tmp['temp'], df_tmp['data'])
                         ax.set_xlabel(r'$T$ $^\circ$C')
                         ax.set_ylabel(var[p]+str(nvals[k]))
                         print('Temp. coefficients could not be obtained - see plot')
