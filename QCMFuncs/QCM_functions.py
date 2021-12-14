@@ -757,8 +757,8 @@ def rhcalc(calc, dlam3, phi):
     returns:
         Harmonic ratio.
     """
-    return normdelfstar(calc[0], dlam3, phi).real / \
-        normdelfstar(calc[1], dlam3, phi).real
+    return normdelfstar(calc.split('.')[0], dlam3, phi).real / \
+        normdelfstar(calc.split('.')[1], dlam3, phi).real
 
 
 def rh_from_delfstar(calc, delfstar):
@@ -776,8 +776,8 @@ def rh_from_delfstar(calc, delfstar):
         Harmonic ratio.
     """
     # calc here is the calc string (i.e., '353')
-    n1 = int(calc[0])
-    n2 = int(calc[1])
+    n1 = int(calc.split('.')[0])
+    n2 = int(calc.split('.')[1])
     return (n2/n1)*delfstar[n1].real/delfstar[n2].real
 
 
@@ -797,8 +797,8 @@ def rdcalc(calc, dlam3, phi):
     returns:
         Harmonic ratio.
     """
-    return -(normdelfstar(calc[2], dlam3, phi).imag /
-        normdelfstar(calc[2], dlam3, phi).real)
+    return -(normdelfstar(calc.split('.')[2], dlam3, phi).imag /
+        normdelfstar(calc.split('.')[2], dlam3, phi).real)
 
 
 def rd_from_delfstar(n, delfstar):
@@ -861,9 +861,9 @@ def thinfilm_guess(delfstar, calc):
     """
     # really a placeholder function until we develop a more creative strategy
     # for estimating the starting point
-    n1 = int(calc[0])
-    n2 = int(calc[1])
-    n3 = int(calc[2])
+    n1 = int(calc.split('.')[0])
+    n2 = int(calc.split('.')[1])
+    n3 = int(calc.split('.')[2])
 
     rd_exp = -delfstar[n3].imag/delfstar[n3].real
     rh_exp = (n2/n1)*delfstar[n1].real/delfstar[n2].real
@@ -1164,7 +1164,7 @@ def make_err_plot(df_in, **kwargs):
     # adjust values of delfstar and calculate properties
     for k in [0, 1, 2]:
         ax[0,k].set_xlabel(r'$(X-X_0)/X^{err}$')
-        n = int(calc[k])
+        n = int(calc.split('.')[k]) 
         err = err_range*delfstar_err[k]
         delta = np.linspace(-err, err, npts)
         delfstar_del[k][n] = delfstar_del[k][n]+delta*mult[k]
@@ -1195,7 +1195,7 @@ def make_err_plot(df_in, **kwargs):
     ax[0,0].legend(loc='center', bbox_to_anchor=(-0.5, 0, 0, 1))
     sub_string = {}
     for k in [0, 1, 2]:
-        n = calc[k]
+        n = calc.split('.')[k]
         sub_string[k] = (forg[k]+'$_'+n+'^{err}=$' +
                          f'{delfstar_err[k]:.0f}'+' Hz')
     title_string = (sub_string[0]+'; '+sub_string[1]+'; '+sub_string[2] +
@@ -2014,9 +2014,9 @@ def check_solution(df, **kwargs):
         fnorm=normdelf_bulk(3, x, y)
         gnorm=normdelg_bulk(3, x, y)
         if ratios:
-            n1=int(calc[0])
-            n2=int(calc[1])
-            n3=int(calc[2])
+            n1=int(calc.split('.')[0])
+            n2=int(calc.split('.')[1])
+            n3=int(calc.split('.')[2])
             Z1=np.real(normdelfstar(n2, x, y))/np.real(normdelfstar(n1, x, y))
             Z2=-np.imag(normdelfstar(n3, x, y))/np.real(normdelfstar(n3, x, y))
         else:
@@ -2273,9 +2273,9 @@ def check_n_dependence(soln, **kwargs):
     
     # mark the values that correspond to the solution
     calc = soln['calc'][idx].split('.')
-    n1 = int(calc[0])
-    n2 = int(calc[1])
-    n3 = int(calc[2])
+    n1 = int(calc.split('.')[0])
+    n2 = int(calc.split('.')[1])
+    n3 = int(calc.split('.')[2])
     ax[0].plot(n1, np.real(soln['df_expt'+str(n1)][idx])/n1, 'ro')
     ax[0].plot(n2, np.real(soln['df_expt'+str(n2)][idx])/n2, 'ro')    
     ax[1].plot(n3, np.imag(soln['df_expt'+str(n3)][idx])/n2, 'ro') 
