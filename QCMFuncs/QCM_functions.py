@@ -1575,7 +1575,7 @@ def read_xlsx(infile, **kwargs):
 
     # read shifts that account for changes from stress levels applied
     # to different sample holders
-    T_shift=kwargs.get('T_shift', {1: 0, 3: 0, 5: 0})
+    T_shift=kwargs.get('T_shift', {1: 0, 3: 0, 5: 0, 7:0, 9:0})
 
 
     df=pd.read_excel(infile, sheet_name=film_channel, header=0)
