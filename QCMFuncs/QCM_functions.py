@@ -1045,6 +1045,11 @@ def solve_for_props(delfstar, calc, **kwargs):
                              calc_delfstar(n1, layers, calctype=calctype,
                                            reftype = reftype).imag -
                              df_in[i][n1].imag])
+                
+        # make sure x0 is in the right bounds
+        for k in[0, 1, 2]:
+            x0[k]=max(x0[k], lb[k])
+            x0[k]=min(x0[k], ub[k])
 
         soln = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
         grho3 = soln['x'][0]
@@ -1250,33 +1255,43 @@ def make_prop_axes(**kwargs):
     Make a blank property figure.
 
     kwargs:.
-        titles (list):
-            titles for axes (defaults are (a), (b), (c), etc., unlabeled for 
-                             single plot)
+        titles (list):  
+            titles for axes
+            - (defaults are (a), (b), (c), etc., unlabeled for 
+                                 single plot)
             
-        num (string):
-            window title (default is 'property fig')
-        plots (list of strings):
+        num (string):           
+            window title (string):
+            - (default is 'property fig')
+            
+        plots (list of strings):  
             plots to include (default is ['grho3', 'phi', 'drho'])
-            'vgp' can be added as van Gurp-Palmen plot
-            'vgp_lin'  and 'grho3_lin' put the grho3 on a linear scale
-            'jdp' is loss compliance normalized by density
-            'temp' is temperature in degrees C
-            's', 'hr', 'day' is time in appropriate unit
+            
+            - 'vgp' can be added as van Gurp-Palmen plot
+            
+            - 'vgp_lin'  and 'grho3_lin' put the grho3 on a linear scale
+            
+            - 'jdp' is loss compliance normalized by density  
+            
+            - 'temp' is temperature in degrees C
+            
+            - 's', 'hr', 'day' is time in appropriate unit
             
         xunit (string):
             Units for x data.  Default is 'index', function currently handles
-            's', 'min', 'hr', 'day', 'temp', or user specified value corresponding
-            to a dataframe column
+            - 's', 'min', 'hr', 'day', 'temp', or user specified value corresponding
+                to a dataframe column
             
         xlabel (string):
             label for x axis.  Only used if user-specified for xunit is used
             
         figsize (tuple of 2 real numbers):
-            size of figure.  Defualt is (3*num of plots, 3)
+            size of figure.  
+            - Defualt is (3*num of plots, 3)
             
         sharex (Boolean):
-            share x axis for zooming (default=True)
+            share x axis for zooming
+            -(default=True)
 
 
     returns:
@@ -1519,40 +1534,56 @@ def read_xlsx(infile, **kwargs):
             Default is [], so that we include everything.
 
         film_channel (string):
-            sheet for data:  'S_channel' by default
+            sheet for data:  
+            - 'S_channel' by default
 
-        ref_channel (string)
-            Source for reference (bare crystal) frequency and dissipation,
-            - 'R_channel'  ('R_channel' sheet from xlsx file) (default)
-            - 'S_channel'  ('S_channel' sheet from xlsx file)
-            - 'S_reference'  ('S_reference' sheet from xlsx file)
-            - 'R_reference'  ('R_channel' sheet from xlsx file)
-            - 'self'  (read delf and delg read directly from the data channel.)
-            - 'T_coef' - Taken directly from T_coef dictionary
+        ref_channel (string):
+            Source for reference frequency and dissipation:  
+
+            - 'R_channel': 'R_channel' sheet from xlsx file) (default)  
+        
+            - 'S_channel': 'S_channel' sheet from xlsx file 
+                    
+            - 'S_reference': 'S_reference' sheet from xlsx file  
+                    
+            - 'R_reference': 'R_channel' sheet from xlsx file'  
+                    
+            - 'self':  read delf and delg read directly from the data channel   
+                    
+            - 'T_coef': Taken directly from T_coef dictionary  
 
         ref_idx (numpy array):
-            index values to include in reference determination
+            index values to include in reference determination  
+            
             - default is 'all', which takes everything
 
         film_idx (numpy array)
-            index values to include for film data
-            default is 'all' which takes everthing
+            index values to include for film data  
+            
+            - default is 'all' which takes everthing
 
         T_coef (dictionary):
-            Temperature coefficients for reference temp. shift
+            Temperature coefficients for reference temp. shift  
+            
             - default values used if not specified
 
         Tref: (numeric)
-            Temperature at which reference frequency shift was determined
+            Temperature at which reference frequency shift was determined  
+            
             - default is 22C
 
-        T_coef_plots (Boolean):  set to True to plot temp. dependent f and g for ref.
+        T_coef_plots (Boolean):  
+            set to True to plot temp. dependent f and g for ref.  
+        
             - default is True
 
-        T_shift (dictionary): shifts added to reference values
+        T_shift (dictionary): 
+            shifts added to reference values  
+        
             - default is {1:0, 3:0, 5:0}
 
-        nvals (list): harmonics to include
+        nvals (list): harmonics to include:  
+        
             - default is [1, 3, 5]
 
 
@@ -1634,10 +1665,6 @@ def read_xlsx(infile, **kwargs):
                     df[var[p]+str(nvals[k])+'_dat']=df[var[p]+str(nvals[k])]
                     df[var[p]+str(nvals[k])+'_ref']=ref_val
 
-                    # adjust temperature coefficient to get correct value
-                    # at ref temp
-                    T_coef[var[p]][nvals[k]][3]=(T_coef[var[p]][nvals[k]][3] +
-                            ref_val - np.polyval(T_coef[var[p]][nvals[k]], Tref))
 
             # set all the temperatures on df_ref to Tref
             df_ref['temp']=Tref
@@ -1665,6 +1692,12 @@ def read_xlsx(infile, **kwargs):
                     # make the fitting function
                     T_coef[var[p]][nvals[k]]=np.polyfit(df_tmp['temp'], 
                                                                df_tmp['data'], 3)
+                    
+                    
+                    # adjust temperature coefficient to get correct value
+                    # at ref temp
+                    T_coef[var[p]][nvals[k]][3]=(T_coef[var[p]][nvals[k]][3] +
+                            ref_val - np.polyval(T_coef[var[p]][nvals[k]], Tref))
                     
                     # plot the data if fit was not obtained
                     if np.isnan(T_coef[var[p]][nvals[k]]).any():
@@ -1926,15 +1959,19 @@ def check_solution(df, **kwargs):
         philim (list of two real numbers):
             min and max of phase angle (default is [0, 90], 'auto' scales to expt data)
         dlim (list of two real numbers):
-            min and max of d/lambda (default is [0, 0.5], 'auto' scales to expt data)
+            min and max of d/lambda 
+            - (default is [0, 0.5]
+            - 'auto' scales to expt data)
         nplot (list of integers):
-            list of harmonics to plot (default is [1,3,5])
+            list of harmonics to plot 
+            - default is [1,3,5]
         ratios (Boolean):
             plot rh and rd if True, delf, delg otherwise (default is False)
         autoscale (Boolean):
-            auto scale z values to min and max of calculated values if True
-            default is False
-        label ('string'): dataframe key to use to label individual points in
+            auto scale z values to min and max of calculated values if True 
+            - default is False
+        label ('string'): 
+            dataframe key to use to label individual points in 
             solution check (default is 'temp')
         plot_solutions (Boolean): True if we want to plot the solution checks
             for each point (default = False)
@@ -2064,21 +2101,24 @@ def check_solution(df, **kwargs):
     fig.colorbar(contour2, ax=ax[0, 1])
 
     # set label of ax[1]
-    ax[0, 0].set_xlabel(r'$d/\lambda_3$')
+    ax[0, 0].set_xlabel(r'$d/\lambda_n$')
     ax[0, 0].set_ylabel(r'$\Phi$ ($\degree$)')
     ax[1, 0].set_ylabel(r'$\Delta f/n$ (Hz)')
 
-    ax[0, 1].set_xlabel(r'$d/\lambda_3$')
+    ax[0, 1].set_xlabel(r'$d/\lambda_n$')
     ax[0, 1].set_ylabel(r'$\Phi$ ($\degree$)')
     ax[1, 1].set_ylabel(r'$\Delta\Gamma/n$ (Hz)')
 
     # add titles
     if ratios:
-        ax[0, 0].set_title('.'.join(calc) + r': $r_h$')
-        ax[0, 1].set_title('.'.join(calc) + r': $r_d$')
+        ax[0, 0].set_title('(a) '+'.'.join(calc) + r': $r_h$')
+        ax[0, 1].set_title('(b) '+'.'.join(calc) + r': $r_d$')
     else:
-        ax[0, 0].set_title('.'.join(calc) + r': $\Delta f /n$ (Hz)')
-        ax[0, 1].set_title('.'.join(calc) + r': $\Delta\Gamma /n$ (Hz)')
+        ax[0, 0].set_title('(a) '+'.'.join(calc) + r': $\Delta f /n$ (Hz)')
+        ax[0, 1].set_title('(b) '+'.'.join(calc) + r': $\Delta\Gamma /n$ (Hz)')
+        
+    ax[1,0].set_title('(c)')
+    ax[1,1].set_title('(d)')
 
     # set formatting for parameters that appear at the bottom of the plot
     # when mouse is moved
@@ -2108,22 +2148,29 @@ def check_solution(df, **kwargs):
     for n in nplot:
         nstr=str(n)+' (expt)' 
         # compare experimental and calculated frequency fits
-        ax[1, 0].plot(df['xvals'], np.real(df['df_expt'+str(n)])/n, '+', 
-                      color=col[n], label='n='+nstr)
+        p = ax[1, 0].plot(df['xvals'], np.real(df['df_expt'+str(n)])/n, '+', 
+                      label='n='+nstr)
+        col = p[0].get_color()
         ax[1, 0].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, '-o', 
-                      color=col[n], markerfacecolor='none')
+                      color = col, markerfacecolor='none')
 
         # now compare experimental and calculated dissipation
         ax[1, 1].plot(df['xvals'], np.imag(df['df_expt'+str(n)])/n, '+', 
-                      color=col[n], label='n='+nstr)
+                      label='n='+nstr)
+        col = p[0].get_color()
         ax[1, 1].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, '-o', 
-                      color=col[n] , markerfacecolor='none')
+                      color = col, markerfacecolor='none')
 
     # add values to contour plots for n=3
-    ax[0, 0].plot(df['dlam3'], df['phi'], 'k-o', markerfacecolor='none')
-    ax[0, 1].plot(df['dlam3'], df['phi'], 'k-o', markerfacecolor='none')
+    for n in nplot:
+        dlam = calc_dlam_from_dlam3(n, df['dlam3'], df['phi'])
+        ax[0, 0].plot(dlam, df['phi'], '-o', markerfacecolor='none',
+                      label = 'n='+str(n))
+        ax[0, 1].plot(dlam, df['phi'], '-o', markerfacecolor='none',
+                      label = 'n='+str(n))
 
     for k in [0, 1]:
+        ax[0, k].legend()
         ax[1, k].legend()
         ax[0, k].format_coord=fmt
         ax[1, k].set_xlabel(xlabel)
