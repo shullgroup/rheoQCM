@@ -1957,31 +1957,61 @@ def check_solution(df, **kwargs):
         numz (int):
             number of z levels (default is 100)
         philim (list of two real numbers):
-            min and max of phase angle (default is [0, 90], 'auto' scales to expt data)
+            min and max of phase angle 
+            
+            - default is [0, 90]
+            
+            - 'auto' scales to expt data)
+            
         dlim (list of two real numbers):
             min and max of d/lambda 
+            
             - (default is [0, 0.5]
+               
             - 'auto' scales to expt data)
+            
         nplot (list of integers):
             list of harmonics to plot 
+            
             - default is [1,3,5]
+            
         ratios (Boolean):
-            plot rh and rd if True, delf, delg otherwise (default is False)
+            plot rh and rd if True, delf, delg otherwise 
+            
+            - default is False
+            
         autoscale (Boolean):
             auto scale z values to min and max of calculated values if True 
+            
             - default is False
+            
         label ('string'): 
             dataframe key to use to label individual points in 
-            solution check (default is 'temp')
-        plot_solutions (Boolean): True if we want to plot the solution checks
-            for each point (default = False)
-        plot_interval (integer): interval between successive solution plots
-            (default is 1)
+            solution check  
+            
+            - default is 'temp'
+            
+        plot_solutions (Boolean): 
+            True if we want to plot the solution checks for each point  
+            
+            - default is  False
+            
+        plot_interval (integer): 
+            interval between successive solution plots
+            
+            - default is 1
+            
         xunit (string):
-            Units for x data.  Default is 'dlam', function currently also handles
-            's', 'min', 'hr', 'day', 'temp'
+            Units for x data
+            
+            - Default is 'dlam'
+            
+            - function currently also handles 's', 'min', 'hr', 'day', 'temp', 'index'
+            
         xoffset (real):
-            Value subtracted from x data (default is zero)
+            Value subtracted from x data 
+            
+            - default is 0
             
     Returns:
         fig, ax for solutioncheck figure
