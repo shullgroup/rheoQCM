@@ -905,7 +905,7 @@ def solve_for_props(delfstar, calc, **kwargs):
         calctype (string):
             - 'SLA' (default): small load approximation with power law model
             - 'LL': Lu Lewis equation, using default or provided electrode props
-            - 'Voigt': small load approximation
+            - 'Voigt': small load approximation with Voigt model
         
         overlayer (dictionary):
             Dictionary with Properties of overlayer ('grho3', 'phi', 'drho')
@@ -924,9 +924,16 @@ def solve_for_props(delfstar, calc, **kwargs):
         ub (list of 3 numbers):  Upper bound for Grho3, phi, drho - default [1e13, 90, 3e-2]
 
         reftype (string):
+            type of calculation 
+        
             - 'overlayer' (default):  if overlayer exists, then the reference \
-               is the overlayer on a bare crystal
+            is the overlayer on a bare crystal
+            
             - 'bare': ref is bare crystal, even if overlayer exists
+            
+        gmax (real):
+            maximum value of dissipation for calculation
+            - default is 20,000 Hz
 
     returns:
         df_out (dataframe):
@@ -950,7 +957,8 @@ def solve_for_props(delfstar, calc, **kwargs):
     reftype = kwargs.get('reftype', 'overlayer')
     drho = kwargs.get('drho', 0)
     newtonian = kwargs.get('newtonian', False)
-
+    gmax = kwargs.get('gmax', 20000)
+    
     # set upper and lower bounds
     lb = kwargs.get('lb', [1e4, 0, 0])
     ub = kwargs.get('ub', [1e13, 90, 3e-2])
@@ -1014,7 +1022,12 @@ def solve_for_props(delfstar, calc, **kwargs):
 
     # obtain the solution, using either the SLA or LL methods
     for i in df_in.columns:
+        # check to see if there are any nan values in the harmonics we need
         if np.isnan([df_in[i][n1], df_in[i][n2], df_in[i][n3]]).any():
+            continue
+        # now check to see if any of dissipation values exceed gmax
+        if (np.imag(df_in[i][n1]) > gmax or np.imag(df_in[i][n2]) > gmax or
+                                             np.imag(df_in[i][n3] > gmax)):
             continue
         if not fixed_drho:
             def ftosolve(x):
@@ -1426,8 +1439,8 @@ def prop_plots(df, figinfo, **kwargs):
             label for plots.  Used to generate legend.  Default is ''
         plotdrho (Boolean):
             Switch to plot mass data or not. Default is True
-        uncertainty (3 element list):
-            Uncertaintly in Delta_f(n1), Delta_f(n2), Delta_g(n3)
+        uncertainty_dict (dictionary of 2-elment lists of real numbers):
+            Uncertainty in f, gamma for each harmonic
 
 
     returns:
@@ -1437,7 +1450,19 @@ def prop_plots(df, figinfo, **kwargs):
     fmt=kwargs.get('fmt', '+')
     label=kwargs.get('label', '')
     xoffset=kwargs.get('xoffset', 0)
-    uncertainty = kwargs.get('uncertainty', [0,0,0])
+    uncertainty_dict = kwargs.get('uncertainty_dict', 'default')
+    
+    # extract uncertainty from datafrae if it is not [0, 0, 0]
+    if uncertainty_dict == 'default':
+        uncertainty = [0, 0, 0]
+    else:
+        calc = df['calc'][df.index.min()]
+        n1 = int(calc.split('.')[0])
+        n2 = int(calc.split('.')[1])
+        n3 = int(calc.split('.')[2])
+        uncertainty = [uncertainty_dict[n1][0],
+                       uncertainty_dict[n2][0],
+                       uncertainty_dict[n3][1]]
     
     # add calculated errors to dataframe
     df = calc_error(df, uncertainty)
@@ -1996,11 +2021,12 @@ def check_solution(df, **kwargs):
             
             - default is  False
             
-        plot_interval (integer): 
+        plot_interval (integer or string): 
             interval between successive solution plots
             
             - default is 1
             
+            - 'minmax'  means            
         xunit (string):
             Units for x data
             
@@ -2013,9 +2039,12 @@ def check_solution(df, **kwargs):
             
             - default is 0
             
+        gammascale (string):
+            'linear'  or 'log' for scale of dissipation axis
+            default is linear            
     Returns:
         fig, ax for solutioncheck figure
-
+        
     '''
 
     from pylab import meshgrid
@@ -2031,10 +2060,11 @@ def check_solution(df, **kwargs):
     plot_solutions=kwargs.get('plot_solutions', False)
     plot_interval = kwargs.get('plot_interval', 1)
     idxmin=df.index[0]
-    calc=df['calc'][idxmin].split('.')
+    calc=df['calc'][idxmin]
     filename=kwargs.get('filename', 'solution_check.pdf')
     xunit=kwargs.get('xunit', 'dlam')
     xoffset = kwargs.get('xoffset', 0)
+    gammascale = kwargs.get('gammascale', 'linear')
     
     # adjust nplot if any of the values don't' exist in the dataframe
     for n in nplot:
@@ -2070,7 +2100,7 @@ def check_solution(df, **kwargs):
     dlam=np.linspace(dlim[0], dlim[1], numxy)
     DLAM, PHI=meshgrid(dlam, phi)
 
-    # need to use n=3 in this calculation, since
+    # need to use n=3 in this calhttps://www.nytimes.com/2022/02/04/books/review/foreverland-heather-havrilesky.html?action=click&algo=bandit-all-surfaces_filter_new_arm_3_1&alpha=0.05&block=editors_picks_recirc&fellback=false&imp_id=750711052&impression_id=79bdbab5-870b-11ec-866f-89df1144c322&index=0&pgtype=Article&pool=pool%2Fe76d7165-92f7-4bd2-bc6e-298322d3680a&region=footer&req_id=865887890&surface=eos-home-featured&variant=0_bandit-all-surfaces_filter_new_arm_3_1culation, since
     # normdelfstar assumes third harmonic in its definition
 
     def Zfunction(x, y):
@@ -2141,11 +2171,11 @@ def check_solution(df, **kwargs):
 
     # add titles
     if ratios:
-        ax[0, 0].set_title('(a) '+'.'.join(calc) + r': $r_h$')
-        ax[0, 1].set_title('(b) '+'.'.join(calc) + r': $r_d$')
+        ax[0, 0].set_title('(a) '+ calc + r' $r_h$')
+        ax[0, 1].set_title('(b) '+ calc + r' $r_d$')
     else:
-        ax[0, 0].set_title('(a) '+'.'.join(calc) + r': $\Delta f /n$ (Hz)')
-        ax[0, 1].set_title('(b) '+'.'.join(calc) + r': $\Delta\Gamma /n$ (Hz)')
+        ax[0, 0].set_title('(a) ' + calc + r' $\Delta f /n$ (Hz)')
+        ax[0, 1].set_title('(b) ' + calc + r' $\Delta\Gamma /n$ (Hz)')
         
     ax[1,0].set_title('(c)')
     ax[1,1].set_title('(d)')
@@ -2169,39 +2199,50 @@ def check_solution(df, **kwargs):
                      z=z1+1j*z2,
                      drho=1000*drho, grho3=grho3/1000, fnorm=fnorm, gnorm=gnorm)
 
-    # now add the experimental data
-    # variable to keep track of differentplots
+    # set up standar color scheme for the different harmonics
     col = {}
     for n in np.arange(1,22,2):
         col[n]='C'+str(int((n-1)/2))
-
+        
+    # now add the comparison plots of measured and calcuated values
+    # go get the legend to work out we do all of the measured values firs, then
+    # all of the calculated values
+          
+    # plot the experimenta data first.
     for n in nplot:
-        nstr=str(n)+' (expt)' 
-        # compare experimental and calculated frequency fits
-        p = ax[1, 0].plot(df['xvals'], np.real(df['df_expt'+str(n)])/n, '+', 
-                      label='n='+nstr)
-        col = p[0].get_color()
-        ax[1, 0].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, '-o', 
-                      color = col, markerfacecolor='none')
-
-        # now compare experimental and calculated dissipation
+        nstr=str(n)+': expt' 
+        if len(df['xvals'])==1:
+            calcfmt = 'o'
+        else:
+            calcfmt = '-'
+        ax[1, 0].plot(df['xvals'], np.real(df['df_expt'+str(n)])/n, '+', 
+                      label='n='+nstr, color =col[n])
         ax[1, 1].plot(df['xvals'], np.imag(df['df_expt'+str(n)])/n, '+', 
-                      label='n='+nstr)
-        col = p[0].get_color()
-        ax[1, 1].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, '-o', 
-                      color = col, markerfacecolor='none')
+                      label='n='+nstr, color = col[n])
+    
+    # now plot the calculated values
+    for n in nplot:        
+        ax[1, 0].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, calcfmt, 
+                      color = col[n], markerfacecolor='none', label='calc')
+        ax[1, 1].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, calcfmt, 
+                      color = col[n], markerfacecolor='none', label='calc')
 
     # add values to contour plots for n=3
     for n in nplot:
         dlam = calc_dlam_from_dlam3(n, df['dlam3'], df['phi'])
         ax[0, 0].plot(dlam, df['phi'], '-o', markerfacecolor='none',
-                      label = 'n='+str(n))
+                      label = 'n='+str(n), color = col[n])
         ax[0, 1].plot(dlam, df['phi'], '-o', markerfacecolor='none',
-                      label = 'n='+str(n))
+                      label = 'n='+str(n), color = col[n])
+        
+    # change dissipation scale to log scale if needed
+    if gammascale=='log':
+        ax[1,1].set_yscale('log')
 
     for k in [0, 1]:
         ax[0, k].legend()
-        ax[1, k].legend()
+        ax[1, k].legend(ncol=2, labelspacing=0.2, columnspacing=0, 
+                        markerfirst=False, handletextpad=0.1)
         ax[0, k].format_coord=fmt
         ax[1, k].set_xlabel(xlabel)
 
@@ -2215,7 +2256,14 @@ def check_solution(df, **kwargs):
     pdf=PdfPages(filename)
     
     # we only take every nth row, where n = plot_interval
-    df_plot = df.iloc[::plot_interval, :]
+    if plot_interval == 'minmax':
+        df_plot = df.iloc[[0, -1], :]
+    elif plot_interval =='min':
+        df_plot = df.iloc[[0], :]
+    elif plot_interval == 'max':
+        df_plot = df.iloc[[-1], :]
+    else:
+        df_plot = df.iloc[::plot_interval, :]
     if plot_solutions:
         idxnum = 0 # keeps track of the fact that we don't always start from idx=0
         for idx, row in df_plot.iterrows():
@@ -2224,19 +2272,15 @@ def check_solution(df, **kwargs):
 
             # indicate where the solution is being taken
             print('writing solution '+str(idxnum)+' of '+str(len(df_plot)))
-            for k in [0, 1]:
-                curves[0+k]=ax[0, k].plot(row['dlam3'], row['phi'], 'kx', 
-                                markersize=14, label = 'x='+str(row['xvals']))
 
-            for p in np.arange(len(nplot)):
-                n = nplot[p]
-                curves[2+2*p]=ax[1, 0].plot(row['xvals'],
-                            np.real(row['df_expt'+str(n)])/n, 'x',
-                             markersize=14, color=col[n])
-                curves[3+2*p]=ax[1, 1].plot(row['xvals'], 
-                            np.imag(row['df_expt'+str(n)])/n, 'x',
-                             markersize=14, color=col[n])
-
+            # label for data point in case we want use it
+            label_text = 'x='+str(row['xvals'])
+            curves[0]=ax[0, 0].plot(row['dlam3'], row['phi'], 'kx', 
+                            markersize=14)
+            
+            curves[1]=ax[0, 1].plot(row['dlam3'], row['phi'], 'wx', 
+                            markersize=14)
+            
             # now plot the lines for the solution
             rh=rhcalc(calc, row['dlam3'], row['phi'])
             rd=rdcalc(calc, row['dlam3'], row['phi'])
@@ -2248,8 +2292,8 @@ def check_solution(df, **kwargs):
                 def ftosolve_rd(d):
                     return rdcalc(calc, d, phi)-rd
 
-                soln_rh=optimize.least_squares(ftosolve_rh, guess[0], bounds=dlim)
-                soln_rd=optimize.least_squares(ftosolve_rd, guess[1], bounds=dlim)
+                soln_rh=optimize.least_squares(ftosolve_rh, guess[0])#, bounds=dlim)
+                soln_rd=optimize.least_squares(ftosolve_rd, guess[1])#, bounds=dlim)
                 return {'phi': phi, 'd_rh': soln_rh['x'][0], 'd_rd': soln_rd['x'][0],
                         'resid_rh':soln_rh['fun'][0], 'resid_rd':soln_rd['fun'][0]}
 
@@ -2271,27 +2315,32 @@ def check_solution(df, **kwargs):
                     guess=[soln['d_rh'], soln['d_rd']]
 
             dcalc=dcalc.sort_values(by=['phi'])
-            for k in [0, 1]:
-                curves[2+2*len(nplot)+k]=ax[0, k].plot(dcalc['d_rh'], dcalc['phi'], 'w-')
-                curves[4+2*len(nplot)+k]=ax[0, k].plot(dcalc['d_rd'], dcalc['phi'], 'w--')
-                
-            # add titles
-            if ratios:
-                ax[0, 0].set_title('.'.join(calc) + r': $r_h$='+f'{rh:.4f}')
-                ax[0, 1].set_title('.'.join(calc) + r': $r_d$='+f'{rd:.4f}')
-            else:
-                ax[0, 0].set_title('.'.join(calc) + r': $\Delta f /n$ (Hz)')
-                ax[0, 1].set_title('.'.join(calc) + r': $\Delta\Gamma /n$ (Hz)')
-        
-            pdf.savefig()
             
-            for k in np.arange(6+2*len(nplot)):
-                curves[k][0].remove()
+            # now plot the curves of constant rh and rd
+            curves[2]=ax[0, 0].plot(dcalc['d_rh'], dcalc['phi'], 'k-',
+                                    label =r'$r_h$')
+            curves[3]=ax[0, 0].plot(dcalc['d_rd'], dcalc['phi'], 'k--',
+                                    label = r'$r_d$')
+            curves[4]=ax[0, 1].plot(dcalc['d_rh'], dcalc['phi'], 'w-',
+                                    label = r'$r_h$')
+            curves[5]=ax[0, 1].plot(dcalc['d_rd'], dcalc['phi'], 'w--',
+                                    label = r'$r_d$')
+            
+            ax[0,0].legend(ncol=2)
+            ax[0,1].legend(ncol=2)
+            
+            ax[0,0].set_xlim(left=0)
+            ax[0,1].set_xlim(left=0)
+                      
+            pdf.savefig()
+            if idxnum>1:
+                for k in np.arange(6):
+                    curves[k][0].remove()
     else:
         pdf.savefig()
                 
     pdf.close()
-    return fig, ax
+    return {'fig':fig, 'ax':ax, 'curves':curves}
 
 def check_n_dependence(soln, **kwargs):
     '''
