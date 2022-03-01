@@ -44,7 +44,6 @@ T_coef_default = {'f': {1: [0.00054625, 0.04338, 0.08075, 0],
 electrode_default = {'drho': 2.8e-3, 'grho3': 3.0e14, 'phi': 0}
 water = {'drho':np.inf, 'grho3':1e8, 'phi':90}
 
-
 def find_nearest_idx(values, array):
     """
     Find index of a point with value closest to the one specified.
@@ -943,10 +942,12 @@ def solve_for_props(delfstar, calc, **kwargs):
     """
 
     df_in = delfstar.T  # transpose the input dataframe
-    if 'overlayer' in kwargs.keys():
-        layers = {'overlayer': kwargs['overlayer']}
-    else:
+    overlayer = kwargs.get('overlayer', 'air')
+    if overlayer == 'air':
         layers = {}
+    else:        
+        layers = {'overlayer': overlayer}
+
 
     nplot = []
     # consider possibility that our data has harmonics up to n=21
@@ -1025,9 +1026,14 @@ def solve_for_props(delfstar, calc, **kwargs):
         # check to see if there are any nan values in the harmonics we need
         if np.isnan([df_in[i][n1], df_in[i][n2], df_in[i][n3]]).any():
             continue
-        # now check to see if any of dissipation values exceed gmax
-        if (np.imag(df_in[i][n1]) > gmax or np.imag(df_in[i][n2]) > gmax or
-                                             np.imag(df_in[i][n3] > gmax)):
+        # set delfstar to nan for gamma exceeding gmax
+        continue_flag = False
+        for n in [n1, n2, n3]:
+            if np.imag(df_in[i][n]) > gmax:
+                df_in[i][n]=np.nan
+                continue_flag=True
+                
+        if continue_flag:
             continue
         if not fixed_drho:
             def ftosolve(x):
@@ -2026,7 +2032,12 @@ def check_solution(df, **kwargs):
             
             - default is 1
             
-            - 'minmax'  means            
+            - 'firstlast': first and last points (by index)
+            
+            - 'first': first point (by index)
+            
+            - 'last':  last point by index
+    
         xunit (string):
             Units for x data
             
@@ -2256,11 +2267,11 @@ def check_solution(df, **kwargs):
     pdf=PdfPages(filename)
     
     # we only take every nth row, where n = plot_interval
-    if plot_interval == 'minmax':
+    if plot_interval == 'firstlast':
         df_plot = df.iloc[[0, -1], :]
-    elif plot_interval =='min':
+    elif plot_interval =='first':
         df_plot = df.iloc[[0], :]
-    elif plot_interval == 'max':
+    elif plot_interval == 'last':
         df_plot = df.iloc[[-1], :]
     else:
         df_plot = df.iloc[::plot_interval, :]
@@ -2340,7 +2351,7 @@ def check_solution(df, **kwargs):
         pdf.savefig()
                 
     pdf.close()
-    return {'fig':fig, 'ax':ax, 'curves':curves}
+    return {'fig':fig, 'ax':ax}
 
 def check_n_dependence(soln, **kwargs):
     '''
