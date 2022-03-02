@@ -1689,7 +1689,7 @@ def read_xlsx(infile, **kwargs):
         if ('temp' not in df_ref.keys()) or (df_ref.temp.isnull().values.all()):
             for k in np.arange(len(nvals)):
                 for p in [0, 1]:
-                    # get the reference values and plot them
+                    # get the reference values
                     ref_val=df_ref[var[p]+str(nvals[k])].mean()
 
                     # write the film and reference values to the data frame
@@ -1711,7 +1711,6 @@ def read_xlsx(infile, **kwargs):
             temp=df_ref['temp']
             for k in np.arange(len(nvals)):
                 for p in [0, 1]:
-
                     # get the reference values and plot them
                     ref_vals=df_ref[var[p]+str(nvals[k])]
                     
@@ -1727,8 +1726,8 @@ def read_xlsx(infile, **kwargs):
                     
                     # adjust temperature coefficient to get correct value
                     # at ref temp
-                    T_coef[var[p]][nvals[k]][3]=(T_coef[var[p]][nvals[k]][3] +
-                            ref_val - np.polyval(T_coef[var[p]][nvals[k]], Tref))
+                    # T_coef[var[p]][nvals[k]][3]=(T_coef[var[p]][nvals[k]][3] +
+                    #      refval - np.polyval(T_coef[var[p]][nvals[k]], Tref))
                     
                     # plot the data if fit was not obtained
                     if np.isnan(T_coef[var[p]][nvals[k]]).any():
@@ -1791,16 +1790,16 @@ def plot_bare_tempshift(df_ref, T_coef, Tref, nvals, T_range, filename):
             ax[p, k].plot(df_ref['temp'], meas_vals, 'x', label = 'meas')
 
             # now plot the fit values
-            ref_vals=bare_tempshift(temp_fit, T_coef, Tref, nvals[k])[var[p]]
-            ax[p, k].plot(temp_fit, ref_vals, 'o', label='fit')
+            ref_val=bare_tempshift(temp_fit, T_coef, Tref, nvals[k])[var[p]]
+            ax[p, k].plot(temp_fit, ref_val, 'o', label='fit')
 
             # set axis labels and plot titles
             ax[p, k].set_xlabel(r'$T$ ($^\circ$C)')
             ax[p, k].set_ylabel(ylabel[p])
             ax[p, k].set_title('n='+str(nvals[k]))
             ax[p, k].legend()
-            ymin=np.min([meas_vals.min(), ref_vals.min()])
-            ymax=np.max([meas_vals.max(), ref_vals.max()])
+            ymin=np.min([meas_vals.min(), ref_val.min()])
+            ymax=np.max([meas_vals.max(), ref_val.max()])
             ax[p, k].set_ylim([ymin, ymax])
     fig.suptitle(filename)
     fig.savefig(filename)
