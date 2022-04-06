@@ -1296,13 +1296,14 @@ def make_prop_axes(**kwargs):
             
             - 's', 'hr', 'day' is time in appropriate unit
             
-        xunit (string):
+        xunit (sinlge string or list of strings):
             Units for x data.  Default is 'index', function currently handles
             - 's', 'min', 'hr', 'day', 'temp', or user specified value corresponding
                 to a dataframe column
             
         xlabel (string):
             label for x axis.  Only used if user-specified for xunit is used
+            currently must be same for all axes
             
         figsize (tuple of 2 real numbers):
             size of figure.  
@@ -1328,7 +1329,7 @@ def make_prop_axes(**kwargs):
 
     num = kwargs.get('num', 'property fig')
     plots = kwargs.get('plots', ['grho3', 'phi', 'drho'])
-    xunit = kwargs.get('xunit', 'index')
+    xunit_input = kwargs.get('xunit', 'index')
     sharex = kwargs.get('sharex', True)
     num_plots = len(plots)
     if num_plots == 1:
@@ -1337,29 +1338,47 @@ def make_prop_axes(**kwargs):
         default_titles =  ['(a)', '(b)', '(c)', '(d)', '(e)', '(f)']
     titles = kwargs.get('titles', default_titles)
     figsize = kwargs.get('figsize', (3*num_plots, 3))
+    
+    # specify the xunit dictionary and xlabel dictionary
+    # all plots have same xunit if only one value is given
+    xunit = {}
+    xlabel = {}
+    if type(xunit_input)==str:
+        for p in np.arange(num_plots):
+            xunit[p] = xunit_input
+    else:
+        for p in np.arange(num_plots):
+            xunit[p]=xunit_input[p]
+            
+    # turn of sharex if not all axes have the same xunit
+    for p in np.arange(num_plots-1):
+        if xunit[p]!=xunit[p+1]:
+            sharex = False
 
+    
     fig, ax = plt.subplots(1, num_plots, figsize=figsize, num=num,
                            constrained_layout=True, squeeze=False,
                            sharex=sharex)
     
     ax = ax.flatten()
 
-    # set the x label
-    if xunit == 's':
-        xlabel = '$t$ (s)'
-    elif xunit == 'min':
-        xlabel = '$t$ (min.)'
-    elif xunit == 'hr':
-        xlabel = '$t$ (hr)'
-    elif xunit == 'day':
-        xlabel = '$t$ (days)'
-    elif xunit == 'temp':
-        xlabel = r'$T$ ($^\circ$C)'
-    elif xunit == 'index':
-        xlabel = 'index'
-    else:
-        xlabel = kwargs.get('xlabel', 'xlabel')
-
+    for p in np.arange(num_plots):
+        # set the x label
+        if xunit[p] == 's':
+            xlabel[p] = '$t$ (s)'
+        elif xunit[p] == 'min':
+            xlabel[p] = '$t$ (min.)'
+        elif xunit[p] == 'hr':
+            xlabel[p] = '$t$ (hr)'
+        elif xunit[p] == 'day':
+            xlabel[p] = '$t$ (days)'
+        elif xunit[p] == 'temp':
+            xlabel[p] = r'$T$ ($^\circ$C)'
+        elif xunit[p] == 'index':
+            xlabel[p] = 'index'
+        else:
+            xlabel[p] = kwargs.get('xlabel', 'xlabel')
+    
     # make a dictionary of the potential axis labels
     axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
                'phi': r'$\phi$ (deg.)',
@@ -1371,13 +1390,13 @@ def make_prop_axes(**kwargs):
     for p in np.arange(num_plots):
         if plots[p] == 'grho3' or plots[p] == 'grho3_lin':
             ax[p].set_ylabel(axlabels['grho3'])
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'phi':
             ax[p].set_ylabel(axlabels['phi'])
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'drho':
             ax[p].set_ylabel(axlabels['drho'])
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'vgp' or plots[p] == 'vgp_lin':
             ax[p].set_ylabel(axlabels['phi'])
             ax[p].set_xlabel(axlabels['grho3'])
@@ -1401,22 +1420,22 @@ def make_prop_axes(**kwargs):
             
         elif plots[p] == 'jdp':
             ax[p].set_ylabel(axlabels['jdp'])
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'temp':
             ax[p].set_ylabel(axlabels['temp'])
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 's':
             ax[p].set_ylabel('t (s)')
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'min':
             ax[p].set_ylabel('t (min)')
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'hrs':
             ax[p].set_ylabel('t (hr)')
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'day':
             ax[p].set_ylabel('t (day)')
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         ax[p].set_title(titles[p])
 
     info = {'plots':plots, 'xunit':xunit}
@@ -1436,7 +1455,7 @@ def prop_plots(df, figinfo, **kwargs):
 
     kwargs:
 
-        xoffset (real or string):
+        xoffset (real or string, (single value or list)):
             amount to subtract from x value for plotting (default is 0)
             'zero' means that the data are offset so that the minimum val is 0
         fmt (string):
@@ -1455,8 +1474,13 @@ def prop_plots(df, figinfo, **kwargs):
 
     fmt=kwargs.get('fmt', '+')
     label=kwargs.get('label', '')
-    xoffset=kwargs.get('xoffset', 0)
+    xoffset_input=kwargs.get('xoffset', 0)
     uncertainty_dict = kwargs.get('uncertainty_dict', 'default')
+    
+    # extract data from figinfo
+    plots = figinfo['info']['plots']
+    ax = figinfo['ax']
+    num_plots = len(plots)
     
     # extract uncertainty from datafrae if it is not [0, 0, 0]
     if uncertainty_dict == 'default':
@@ -1473,45 +1497,54 @@ def prop_plots(df, figinfo, **kwargs):
     # add calculated errors to dataframe
     df = calc_error(df, uncertainty)
     xunit = figinfo['info']['xunit']
-
-    if xunit == 's':
-        xvals=df['t']
-    elif xunit == 'min':
-        xvals=df['t']/60
-    elif xunit == 'hr':
-        xvals=df['t']/3600
-    elif xunit == 'day':
-        xvals=df['t']/(24*3600)
-    elif xunit == 'temp':
-        xvals=df['temp']
-    elif xunit == 'index':
-        xvals=df.index
+    
+    xvals = {}
+    
+    # set the offset for the x values (apart from vgp plots)
+    xoffset = {}
+    if type(xoffset_input) != list:
+        for p in np.arange(num_plots):
+            xoffset[p] = xoffset_input
     else:
-        xvals=df[xunit]
+        for p in np.arange(num_plots):
+            xoffset[p]=xoffset_input[p]   
+            
+    for p in np.arange(num_plots):
+        if xunit[p] == 's':
+            xvals[p]=df['t']
+        elif xunit[p] == 'min':
+            xvals[p]=df['t']/60
+        elif xunit[p] == 'hr':
+            xvals[p]=df['t']/3600
+        elif xunit[p] == 'day':
+            xvals[p]=df['t']/(24*3600)
+        elif xunit[p] == 'temp':
+            xvals[p]=df['temp']
+        elif xunit[p] == 'index':
+            xvals[p]=df.index
+        else:
+            xvals[p]=df[xunit]
+            
+        if xoffset[p] == 'zero':
+            xoffset[p] = min(xvals[p])
         
-    if xoffset == 'zero':
-        xoffset = min(xvals)
-    
-    xvals = xvals - xoffset
+        xvals[p] = xvals[p] - xoffset[p]
                 
-    plots = figinfo['info']['plots']
-    ax = figinfo['ax']
-    num_plots = len(plots)
-    
+   
     # now make all of the plots
     for p in np.arange(num_plots):
         if plots[p] == 'grho3' or plots[p] == 'grho3_lin': 
-            xdata = xvals
+            xdata = xvals[p]
             ydata = df['grho3']/1000
             yerr = df['grho3_err']/1000
 
         elif plots[p] == 'phi':
-            xdata = xvals
+            xdata = xvals[p]
             ydata = df['phi']
             yerr = df['phi_err']
                 
         elif plots[p] == 'drho':
-            xdata = xvals
+            xdata = xvals[p]
             ydata = 1000*df['drho']
             yerr = 1000*df['drho_err']
       
@@ -1521,17 +1554,17 @@ def prop_plots(df, figinfo, **kwargs):
             yerr = pd.Series(np.zeros(len(xdata)))
             
         elif plots[p] == 'jdp':
-            xdata  = xvals
+            xdata  = xvals[p]
             ydata = (1000/df['grho3'])*np.sin(df['phi']*np.pi/180) 
             yerr = pd.Series(np.zeros(len(xdata))) # may eventually add error for this one
             
         elif plots[p] == 'temp':
-            xdata  = xvals
+            xdata  = xvals[p]
             ydata = df['temp']
             yerr = pd.Series(np.zeros(len(xdata)))
             
         elif plots[p] == 't':
-            xdata  = xvals
+            xdata  = xvals[p]
             ydata = df['t']
             yerr = pd.Series(np.zeros(len(xdata)))
         
