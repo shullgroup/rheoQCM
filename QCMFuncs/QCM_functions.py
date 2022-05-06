@@ -13,6 +13,7 @@ import scipy.optimize as optimize
 import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.backends.backend_pdf import PdfPages
+from glob import glob
 
 import pandas as pd
 
@@ -39,7 +40,7 @@ T_coef_default = {'f': {1: [0.00054625, 0.04338, 0.08075, 0],
                        5: [0.002825, -0.22125, 15.375, 0]},
                   'g': {1: [0, 0, 0, 0],
                        3: [0, 0, 0, 0],
-                       5: [0, 0, 0, 9]}}
+                       5: [0, 0, 0, 0]}}
 
 electrode_default = {'drho': 2.8e-3, 'grho3': 3.0e14, 'phi': 0}
 water = {'drho':np.inf, 'grho3':1e8, 'phi':90}
@@ -1122,6 +1123,52 @@ def solve_for_props(delfstar, calc, **kwargs):
     return df_out
 
 
+def solve_all(datadir, calc, **kwargs):
+    """
+
+    Parameters
+    ----------
+    datadir : string
+        Directory for which solutions are obtained for all .xlsx files.
+    **kwargs : 
+        optional arguments passed along to solve_for_props.
+
+    Returns
+    -------
+    df : dictionary
+        dictionary of dataframes returned by read_xlsx
+    soln : dictionary
+        dictinoary of solutions returned by solve_for_props.
+    figinfo : dictionary
+        diectionary of figinfo returned by make_prop_axes
+
+    """
+    T_coef = kwargs.get('T_coef', 'calculated')
+    xunit = kwargs.get('xunit', 'index')
+
+    # function to solve for all .xlsx files in a directory
+
+    df = {}
+    soln = {}
+    figinfo = {}
+    
+    # create a list of all the .xlsx files in the data directory
+    files = glob(os.path.join(datadir, '*.xlsx'))
+    
+    # now do the analysis on each of these files
+    for infile in files:
+        prefix = os.path.split(infile)[-1].split('.')[0]
+        df[prefix] = read_xlsx(infile, T_coef = T_coef)
+        print('solving '+prefix)
+        soln[prefix] = solve_for_props(df[prefix], calc)
+        figinfo[prefix] = make_prop_axes(num = prefix, xunit = xunit)
+        prop_plots(soln[prefix], figinfo[prefix])
+        check_solution(soln[prefix], filename = os.path.join(datadir, 
+                         prefix+'_check.pdf'), nplot = [3, 5], xunit = xunit)
+        figinfo[prefix]['fig'].savefig(os.path.join(datadir, prefix+'_props.pdf'))
+    return df, soln, figinfo
+
+
 def make_err_plot(df_in, **kwargs):
     """
     Determine errors in properties based on uncertainies in a delfstar.
@@ -1586,23 +1633,20 @@ def prop_plots(df, figinfo, **kwargs):
 
 def read_xlsx(infile, **kwargs):
     """
-    Create data frame from.xlsx file output by RheoQCM.
+    Create data frame from .xlsx file output by RheoQCM.
 
     args:
-        infile (string):
-            full name of input  .xlsx file
+        :infile: (string) the full name of the input  .xlsx file
 
     kwargs:
-        restrict_to_marked (list):
-            List of frequencies that must be marked in order to be included.
-            Default is [], so that we include everything.
+        
+        :restrict_to_marked: (list) List of frequencies that must be marked in order to be included.
+        Default is [], so that we include everything.
 
-        film_channel (string):
-            sheet for data:  
+        :film_channel: (string) sheet for data
             - 'S_channel' by default
 
-        ref_channel (string):
-            Source for reference frequency and dissipation:  
+        :ref_channel: (string) Source for reference frequency and dissipation:  
 
             - 'R_channel': 'R_channel' sheet from xlsx file) (default)  
         
@@ -1614,46 +1658,51 @@ def read_xlsx(infile, **kwargs):
                     
             - 'self':  read delf and delg read directly from the data channel   
                     
-            - 'T_coef': Taken directly from T_coef dictionary  
 
-        ref_idx (numpy array):
-            index values to include in reference determination  
+        :ref_idx: (numpy array) index values to include in reference determination  
             
             - default is 'all', which takes everything
 
-        film_idx (numpy array)
-            index values to include for film data  
+        :film_idx: (numpy array) index values to include for film data  
             
             - default is 'all' which takes everthing
 
-        T_coef (dictionary):
-            Temperature coefficients for reference temp. shift  
+        :T_coef: (dictionary or string) Temperature coefficients for reference temp. shift  
             
-            - default values used if not specified
+            - calculated from ref. temp. data if not specified
+            - set to the following dictionary if equal to 'default'
+            
+                {'f': {1: [0.00054625, 0.04338, 0.08075, 0],                      
+                3: [0.0017, -0.135, 8.9375, 0],                
+                5: [0.002825, -0.22125, 15.375, 0]}, 
+                'g': {1: [0, 0, 0, 0], 
+                3: [0, 0, 0, 0], 
+                5: [0, 0, 0, 0]}}
+                
+            - other option is to specify the dictionary directly
 
-        Tref: (numeric)
+        :Tref: (numeric)
             Temperature at which reference frequency shift was determined  
             
             - default is 22C
 
-        T_coef_plots (Boolean):  
+        :T_coef_plots: (Boolean)  
             set to True to plot temp. dependent f and g for ref.  
         
             - default is True
 
-        T_shift (dictionary): 
+        :T_shift: (dictionary)
             shifts added to reference values  
         
             - default is {1:0, 3:0, 5:0}
 
-        nvals (list): harmonics to include:  
+        :nvals: (list) harmonics to include:  
         
             - default is [1, 3, 5]
 
 
     returns:
-        df:
-            Input data converted to dataframe
+        :df: (dataframe) Input data converted to dataframe
     """
 
     restrict_to_marked=kwargs.get('restrict_to_marked', [])
@@ -1665,8 +1714,11 @@ def read_xlsx(infile, **kwargs):
     nvals=kwargs.get('nvals', [1, 3, 5])
 
     Tref=kwargs.get('Tref', 22)
+    
     # specify default bare crystal temperature coefficients
-    T_coef=kwargs.get('T_coef', T_coef_default)
+    T_coef=kwargs.get('T_coef', 'calculated')
+    if T_coef == 'default':
+        T_coef = T_coef_default 
 
     # read shifts that account for changes from stress levels applied
     # to different sample holders
@@ -1694,14 +1746,32 @@ def read_xlsx(infile, **kwargs):
         keep_column.append('temp')
 
     # add each of the values of delfstar
-    if ref_channel == 'T_coef':
+    if T_coef != 'calculated':
+        # here we need to obtain T_coef from the info in the ref. channel
+        # start by reading in bare crystal ata
+        df_ref=pd.read_excel(infile, sheet_name=ref_channel, header=0)
+        if type(ref_idx) != str:
+            df_ref=df_ref[df_ref.index.isin(ref_idx)]
         T_coef_plots=False
         for n in nvals:
-            ref_f=np.polyval(T_coef['f'][n], df['temp'])
-            ref_g=np.polyval(T_coef['g'][n], df['temp'])
-            fstar_ref=ref_f+1j*ref_g
-            fstar=df['f'+str(n)] + 1j*df['g'+str(n)]
-            df[n]=fstar - fstar_ref - T_shift[n]  # -AS
+            # adjust constant last elment in T_coef (the 
+            # constant term) to give measured ref. values at Tref
+            for val in ['f', 'g']:
+                T_coef[val][n][3] = (T_coef[val][n][3] + df_ref[val+str(n)].mean() -
+                    np.polyval(T_coef[val][n], Tref))
+                
+                # add absolute frequency and reference values to dataframe
+                keep_column.append(val+str(n)+'_dat')
+                keep_column.append(val+str(n)+'_ref')
+                
+                # set reference and film values
+                df[val+str(n)+'_ref'] = np.polyval(T_coef[val][n], df['temp'])
+                df[val+str(n)+'_dat'] = df[val+str(n)]
+            
+            # keep track (of film and reference values in dataframe
+            df[n]  = (df['f'+str(n)+'_dat'] - df['f'+str(n) + '_ref'] +
+                  1j*(df['g'+str(n)+'_dat'] - df['g'+str(n) + '_ref']))
+            
 
     elif ref_channel == 'self':
         # this is the standard read protocol, with delf and delg already in
@@ -1777,11 +1847,11 @@ def read_xlsx(infile, **kwargs):
                          np.polyval(T_coef[var[p]][nvals[k]], df['temp']))
 
         for k in np.arange(len(nvals)):
-            # now write values delfstar to the dataframe
+            # now write values of delfstar to the dataframe
             df[nvals[k]]=(df['f'+str(nvals[k])+'_dat'] -
                           df['f'+str(nvals[k])+'_ref'] +
                       1j*(df['g'+str(nvals[k])+'_dat'] -
-                          df['g'+str(nvals[k])+'_ref'])-T_shift[nvals[k]]).round(1)  # -AS
+                          df['g'+str(nvals[k])+'_ref'])-T_shift[nvals[k]]).round(1)
 
             # add absolute frequency and reference values to dataframe
             keep_column.append('f'+str(nvals[k])+'_dat')
@@ -1789,10 +1859,11 @@ def read_xlsx(infile, **kwargs):
             keep_column.append('g'+str(nvals[k])+'_dat')
             keep_column.append('g'+str(nvals[k])+'_ref')
 
-    # add the constant applied shift to the reference values to the dataframe -AS
+    # add the constant applied shift to the reference values to the dataframe
     for n in nvals:
-        df[str(n)+'_refshift']=T_shift[n]
-        keep_column.append(str(n)+'_refshift')
+        if T_shift[n]!= 0:
+            df[str(n)+'_refshift']=T_shift[n]
+            keep_column.append(str(n)+'_refshift')
 
     if T_coef_plots and ref_channel != 'self' and len(df_ref.temp.unique()) > 1:
         T_range=[df['temp'].min(), df['temp'].max()]
