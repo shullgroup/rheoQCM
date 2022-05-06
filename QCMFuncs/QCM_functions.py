@@ -1145,6 +1145,7 @@ def solve_all(datadir, calc, **kwargs):
     """
     T_coef = kwargs.get('T_coef', 'calculated')
     xunit = kwargs.get('xunit', 'index')
+    nplot = kwargs.get('nplot', [3, 5])
 
     # function to solve for all .xlsx files in a directory
 
@@ -1157,14 +1158,17 @@ def solve_all(datadir, calc, **kwargs):
     
     # now do the analysis on each of these files
     for infile in files:
-        prefix = os.path.split(infile)[-1].split('.')[0]
+        # get the filename
+        filename = os.path.split(infile)[-1]
+        # remove the .xlsx to get the prefix 
+        prefix = filename.rsplit('.', 1)[0]
         df[prefix] = read_xlsx(infile, T_coef = T_coef)
         print('solving '+prefix)
         soln[prefix] = solve_for_props(df[prefix], calc)
         figinfo[prefix] = make_prop_axes(num = prefix, xunit = xunit)
         prop_plots(soln[prefix], figinfo[prefix])
         check_solution(soln[prefix], filename = os.path.join(datadir, 
-                         prefix+'_check.pdf'), nplot = [3, 5], xunit = xunit)
+                         prefix+'_check.pdf'), nplot = nplot, xunit = xunit)
         figinfo[prefix]['fig'].savefig(os.path.join(datadir, prefix+'_props.pdf'))
     return df, soln, figinfo
 
@@ -1874,6 +1878,9 @@ def read_xlsx(infile, **kwargs):
         if T_range[0] < T_ref_range[0] or T_range[1] > T_ref_range[1]:
             print ('deleting some points that are outside the reference temperature range')
             df = df.query('temp >= @T_ref_range[0] & temp <= @T_ref_range[1]')
+            
+    # eliminate rows with nan at n=3
+    df.dropna(subset=[3])
 
     return df[keep_column].copy()
 
