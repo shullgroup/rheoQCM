@@ -1146,6 +1146,7 @@ def solve_all(datadir, calc, **kwargs):
     T_coef = kwargs.get('T_coef', 'calculated')
     xunit = kwargs.get('xunit', 'index')
     nplot = kwargs.get('nplot', [3, 5])
+    fref_shift = kwargs.get('fref_shift', {1:0, 3:0, 5:0})
 
     # function to solve for all .xlsx files in a directory
 
@@ -1162,7 +1163,7 @@ def solve_all(datadir, calc, **kwargs):
         filename = os.path.split(infile)[-1]
         # remove the .xlsx to get the prefix 
         prefix = filename.rsplit('.', 1)[0]
-        df[prefix] = read_xlsx(infile, T_coef = T_coef)
+        df[prefix] = read_xlsx(infile, T_coef = T_coef, fref_shift = fref_shift)
         print('solving '+prefix)
         soln[prefix] = solve_for_props(df[prefix], calc)
         figinfo[prefix] = make_prop_axes(num = prefix, xunit = xunit)
@@ -1695,7 +1696,7 @@ def read_xlsx(infile, **kwargs):
         
             - default is True
 
-        :T_shift: (dictionary)
+        :fref_shift: (dictionary)
             shifts added to reference values  
         
             - default is {1:0, 3:0, 5:0}
@@ -1726,7 +1727,7 @@ def read_xlsx(infile, **kwargs):
 
     # read shifts that account for changes from stress levels applied
     # to different sample holders
-    T_shift=kwargs.get('T_shift', {1: 0, 3: 0, 5: 0, 7:0, 9:0})
+    fref_shift=kwargs.get('fref_shift', {1: 0, 3: 0, 5: 0, 7:0, 9:0})
 
 
     df=pd.read_excel(infile, sheet_name=film_channel, header=0)
@@ -1758,7 +1759,9 @@ def read_xlsx(infile, **kwargs):
             df_ref=df_ref[df_ref.index.isin(ref_idx)]
         T_coef_plots=False
         for n in nvals:
-            # adjust constant last elment in T_coef (the 
+            # apply fref_shift if needed
+            df_ref['f'+str(n)] = df_ref['f'+str(n)] + fref_shift[n]
+            # adjust constant lffast elment in T_coef (the 
             # constant term) to give measured ref. values at Tref
             for val in ['f', 'g']:
                 T_coef[val][n][3] = (T_coef[val][n][3] + df_ref[val+str(n)].mean() -
@@ -1782,7 +1785,7 @@ def read_xlsx(infile, **kwargs):
         # the .xlsx file
         for n in nvals:
             df[n]=df['delf'+str(n)] + 1j*df['delg'+str(n)
-                                ].round(1) - T_shift[n]  # -AS
+                                ].round(1) - fref_shift[n]  # -AS
 
     else:
         # here we need to obtain T_coef from the info in the ref. channel
@@ -1855,7 +1858,7 @@ def read_xlsx(infile, **kwargs):
             df[nvals[k]]=(df['f'+str(nvals[k])+'_dat'] -
                           df['f'+str(nvals[k])+'_ref'] +
                       1j*(df['g'+str(nvals[k])+'_dat'] -
-                          df['g'+str(nvals[k])+'_ref'])-T_shift[nvals[k]]).round(1)
+                          df['g'+str(nvals[k])+'_ref'])-fref_shift[nvals[k]]).round(1)
 
             # add absolute frequency and reference values to dataframe
             keep_column.append('f'+str(nvals[k])+'_dat')
@@ -1865,8 +1868,8 @@ def read_xlsx(infile, **kwargs):
 
     # add the constant applied shift to the reference values to the dataframe
     for n in nvals:
-        if T_shift[n]!= 0:
-            df[str(n)+'_refshift']=T_shift[n]
+        if fref_shift[n]!= 0:
+            df[str(n)+'_refshift']=fref_shift[n]
             keep_column.append(str(n)+'_refshift')
 
     if T_coef_plots and ref_channel != 'self' and len(df_ref.temp.unique()) > 1:
