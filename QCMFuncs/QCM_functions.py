@@ -1754,7 +1754,7 @@ def read_xlsx(infile, **kwargs):
     ref_channel=kwargs.get('ref_channel', 'R_channel')
     ref_idx=kwargs.get('ref_idx', 'all')
     T_coef_plots=kwargs.get('T_coef_plots', True)
-    nvals=kwargs.get('nvals', [1, 3, 5])
+    nvals_in=kwargs.get('nvals', [1, 3, 5, 7, 9])
 
     Tref=kwargs.get('Tref', 22)
     
@@ -1774,6 +1774,13 @@ def read_xlsx(infile, **kwargs):
     df=pd.read_excel(infile, sheet_name=film_channel, header=0)
     if type(film_idx) != str:
         df=df[df.index.isin(film_idx)]
+        
+    # include all values of n that we want and that exist in the input file
+    nvals = []
+    for n in nvals_in:
+        if 'f'+str(n) in df.keys():
+            nvals.append(n)
+        
 
     df['keep_row']=1  # keep all rows unless we are told to check for specific marks
     for n in restrict_to_marked:
