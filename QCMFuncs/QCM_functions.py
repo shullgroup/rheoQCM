@@ -15,6 +15,7 @@ import matplotlib
 from matplotlib.backends.backend_pdf import PdfPages
 from glob import glob
 import time
+import shutil
 
 import pandas as pd
 
@@ -1360,6 +1361,8 @@ def make_prop_axes(**kwargs):
             
             - 's', 'hr', 'day' is time in appropriate unit
             
+            - name of dataframe column can also be specified
+            
         xunit (single string or list of strings):
             Units for x data.  Default is 'index', function currently handles
             - 's', 'min', 'hr', 'day', 'temp', or user specified value corresponding
@@ -1411,6 +1414,7 @@ def make_prop_axes(**kwargs):
     # all plots have same xunit if only one value is given
     xunit = {}
     xlabel = {}
+    ylabel = {}
     if type(xunit_input)==str:
         for p in np.arange(num_plots):
             xunit[p] = xunit_input
@@ -1446,6 +1450,7 @@ def make_prop_axes(**kwargs):
             xlabel[p] = 'index'
         else:
             xlabel[p] = kwargs.get('xlabel', 'xlabel')
+            ylabel[p] = kwargs.get('ylabel', 'ylabel')
     
     # make a dictionary of the potential axis labels
     axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
@@ -1504,6 +1509,9 @@ def make_prop_axes(**kwargs):
         elif plots[p] == 'day':
             ax[p].set_ylabel('t (day)')
             ax[p].set_xlabel(xlabel[p])
+        else:
+            ax[p].set_xlabel(xlabel[p])
+            ax[p].set_ylabel(ylabel[p])
         ax[p].set_title(titles[p])
 
     info = {'plots':plots, 'xunit':xunit, 'xscale':xscale}
@@ -1526,6 +1534,8 @@ def prop_plots(df, figinfo, **kwargs):
         xoffset (real or string, (single value or list)):
             amount to subtract from x value for plotting (default is 0)
             'zero' means that the data are offset so that the minimum val is 0
+        xumult (real):
+            multiplicative factor we use to multiply the xdata by.
         fmt (string):
             Format sting: Default is '+'   .
         label (string):
@@ -1544,6 +1554,7 @@ def prop_plots(df, figinfo, **kwargs):
 
     fmt=kwargs.get('fmt', '+')
     label=kwargs.get('label', '')
+    xmult = kwargs.get('xmult', 1)
     xoffset_input=kwargs.get('xoffset', 0)
     uncertainty_dict = kwargs.get('uncertainty_dict', 'default')
     
@@ -1611,12 +1622,12 @@ def prop_plots(df, figinfo, **kwargs):
         elif xunit[p] == 'index':
             xvals[p]=df.index
         else:
-            xvals[p]=df[xunit]
+            xvals[p]=df[xunit[p]]
             
         if xoffset[p] == 'zero':
             xoffset[p] = min(xvals[p])
         
-        xvals[p] = xvals[p] - xoffset[p]
+        xvals[p] = xmult*(xvals[p] - xoffset[p])
                 
    
     # now make all of the plots
@@ -1655,6 +1666,11 @@ def prop_plots(df, figinfo, **kwargs):
         elif plots[p] == 't':
             xdata  = xvals[p]
             ydata = df['t']
+            yerr = pd.Series(np.zeros(len(xdata)))
+            
+        elif (plots[p] in df.keys()):
+            xdata = xvals[p]
+            ydata = df[plots[p]]
             yerr = pd.Series(np.zeros(len(xdata)))
         
         else:
@@ -2207,12 +2223,19 @@ def check_solution(df, **kwargs):
             
             - Default is 'dlam'
             
-            - function currently also handles 's', 'min', 'hr', 'day', 'temp', 'index'
+            - function currently also handles 's', 'min', 'hr', 'day', 'temp', 'index',
+              or the name of column in the input dataframe
+              
+        xlabel (string):
+            label for string (typicall used when datframe column name is used for xunit)
             
         xoffset (real):
             Value subtracted from x data 
-            
             - default is 0
+            
+        xmult (real):
+            Multiplicative factor for x data
+            - default is 1
             
         gammascale (string):
             'linear'  or 'log' for scale of dissipation axis
@@ -2228,6 +2251,7 @@ def check_solution(df, **kwargs):
     philim=kwargs.get('philim', [0.001, 90])
     dlim=kwargs.get('dlim', [0.001, 0.5])
     xscale = kwargs.get('xscale', 'linear')
+    xmult = kwargs.get('xmult')
     # having d of 0 causes some problems.  Change lower limit to be at least 0.001
     dlim[0] = max(dlim[0], 0.001)
     nplot=kwargs.get('nplot', [1, 3, 5])
@@ -2250,22 +2274,25 @@ def check_solution(df, **kwargs):
     # set up x labels for plots of actual and back-calculated shifts
     if xunit == 's':
         xlabel='$t$ (s)'
-        df.loc[:,'xvals']=df.loc[:,'t']-xoffset
+        df.loc[:,'xvals']=xmult*(df.loc[:,'t']-xoffset)
     elif xunit == 'min':
         xlabel='$t$ (min.)'
-        df.loc[:,'xvals']=df.loc[:,'t']/60-xoffset
+        df.loc[:,'xvals']=xmult*(df.loc[:,'t']/60-xoffset)
     elif xunit == 'hr':
         xlabel='$t$ (hr)'
-        df.loc[:,'xvals']=df.loc[:,'t']/3600-xoffset
+        df.loc[:,'xvals']=xmult*(df.loc[:,'t']/3600-xoffset)
     elif xunit == 'day':
         xlabel='$t$ (days)'
-        df.loc[:,'xvals']=df.loc[:, 't']/(24*3600)-xoffset
+        df.loc[:,'xvals']=xmult*(df.loc[:, 't']/(24*3600)-xoffset)
     elif xunit == 'temp':
         xlabel=r'$T$ ($^\circ$C)'
-        df.loc[:, 'xvals']=df.loc[:,'temp']-xoffset
+        df.loc[:, 'xvals']=xmult*(df.loc[:,'temp']-xoffset)
     elif xunit == 'index':
         xlabel = 'index'
         df.loc[:, 'xvals']=df.index
+    elif xunit in df.keys():
+        xlabel = kwargs.get('xlabel', 'xlabel')
+        df.loc[:, 'xvals'] = xmult*(df.loc[:, xunit]-xoffset)
     else:
         xlabel=r'$d/\lambda_3$'
         df.loc[:,'xvals'] = df.loc[:,'dlam3']
@@ -2325,36 +2352,36 @@ def check_solution(df, **kwargs):
     fig, ax=plt.subplots(2, 2, figsize=(10, 6), sharex=False, sharey=False,
                            num=num, constrained_layout=True)
 
-    contour1=ax[0, 0].contourf(DLAM, PHI, Z1, levels=levels1,
+    contour1=ax[1, 0].contourf(DLAM, PHI, Z1, levels=levels1,
                               cmap='rainbow')
-    contour2=ax[0, 1].contourf(DLAM, PHI, Z2, levels=levels2,
+    contour2=ax[1, 1].contourf(DLAM, PHI, Z2, levels=levels2,
                               cmap='rainbow')
-    ax[0,0].sharex(ax[0,1])
-    ax[0,0].sharey(ax[0,1])
     ax[1,0].sharex(ax[1,1])
+    ax[1,0].sharey(ax[1,1])
+    ax[0,0].sharex(ax[0,1])
 
-    cbar1 = fig.colorbar(contour1, ax=ax[0, 0])
-    cbar2 = fig.colorbar(contour2, ax=ax[0, 1])
+    cbar1 = fig.colorbar(contour1, ax=ax[1, 0])
+    cbar2 = fig.colorbar(contour2, ax=ax[1, 1])
 
     # set label of ax[1]
-    ax[0, 0].set_xlabel(r'$d/\lambda_n$')
-    ax[0, 0].set_ylabel(r'$\Phi$ ($\degree$)')
-    ax[1, 0].set_ylabel(r'$\Delta f/n$ (Hz)')
+    ax[1, 0].set_xlabel(r'$d/\lambda_n$')
+    ax[1, 0].set_ylabel(r'$\Phi$ ($\degree$)')
+    ax[0, 0].set_ylabel(r'$\Delta f/n$ (Hz)')
 
-    ax[0, 1].set_xlabel(r'$d/\lambda_n$')
-    ax[0, 1].set_ylabel(r'$\Phi$ ($\degree$)')
-    ax[1, 1].set_ylabel(r'$\Delta\Gamma/n$ (Hz)')
+    ax[1, 1].set_xlabel(r'$d/\lambda_n$')
+    ax[1, 1].set_ylabel(r'$\Phi$ ($\degree$)')
+    ax[0, 1].set_ylabel(r'$\Delta\Gamma/n$ (Hz)')
 
     # add titles
     if ratios:
-        ax[0, 0].set_title('(a) '+ calc + r' $r_h$')
-        ax[0, 1].set_title('(b) '+ calc + r' $r_d$')
+        ax[1, 0].set_title('(c) '+ calc + r' $r_h$')
+        ax[1, 1].set_title('(d) '+ calc + r' $r_d$')
     else:
-        ax[0, 0].set_title('(a) ' + calc + r' $\Delta f /n$ (Hz)')
-        ax[0, 1].set_title('(b) ' + calc + r' $\Delta\Gamma /n$ (Hz)')
+        ax[1, 0].set_title('(c) ' + calc + r' $\Delta f /n$ (Hz)')
+        ax[1, 1].set_title('(d) ' + calc + r' $\Delta\Gamma /n$ (Hz)')
         
-    ax[1,0].set_title('(c)')
-    ax[1,1].set_title('(d)')
+    ax[0,0].set_title('(a)')
+    ax[0,1].set_title('(b)')
 
     # set formatting for parameters that appear at the bottom of the plot
     # when mouse is moved
@@ -2391,47 +2418,47 @@ def check_solution(df, **kwargs):
             calcfmt = 'o'
         else:
             calcfmt = '-'
-        ax[1, 0].plot(df['xvals'], np.real(df['df_expt'+str(n)])/n, '+', 
+        ax[0, 0].plot(df['xvals'], np.real(df['df_expt'+str(n)])/n, '+', 
                       label='n='+nstr, color =col[n])
-        ax[1, 1].plot(df['xvals'], np.imag(df['df_expt'+str(n)])/n, '+', 
+        ax[0, 1].plot(df['xvals'], np.imag(df['df_expt'+str(n)])/n, '+', 
                       label='n='+nstr, color = col[n])
     
     # now plot the calculated values
     for n in nplot:        
-        ax[1, 0].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, calcfmt, 
+        ax[0, 0].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, calcfmt, 
                       color = col[n], markerfacecolor='none', label='calc')
-        ax[1, 1].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, calcfmt, 
+        ax[0, 1].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, calcfmt, 
                       color = col[n], markerfacecolor='none', label='calc')
 
     # add values to contour plots for n=3
     for n in nplot:
         dlam = calc_dlam_from_dlam3(n, df['dlam3'], df['phi'])
-        ax[0, 0].plot(dlam, df['phi'], '-o', markerfacecolor='none',
+        ax[1, 0].plot(dlam, df['phi'], '-o', markerfacecolor='none',
                       label = 'n='+str(n), color = col[n])
-        ax[0, 1].plot(dlam, df['phi'], '-o', markerfacecolor='none',
+        ax[1, 1].plot(dlam, df['phi'], '-o', markerfacecolor='none',
                       label = 'n='+str(n), color = col[n])
         
     # change dissipation scale to log scale if needed
     if gammascale=='log':
-        ax[1,1].set_yscale('log')
+        ax[0,1].set_yscale('log')
         
     # change scale to log scale if needed
     if xscale == 'log':
-        ax[1,0].set_xscale('log')
-        ax[1,1].set_xscale('log')
+        ax[0,0].set_xscale('log')
+        ax[0,1].set_xscale('log')
         
     for k in [0, 1]:
-        ax[0, k].legend()
-        ax[1, k].legend(ncol=2, labelspacing=0.2, columnspacing=0, 
+        ax[1, k].legend()
+        ax[0, k].legend(ncol=2, labelspacing=0.2, columnspacing=0, 
                         markerfirst=False, handletextpad=0.1)
-        ax[0, k].format_coord=fmt
-        ax[1, k].set_xlabel(xlabel)
+        ax[1, k].format_coord=fmt
+        ax[0, k].set_xlabel(xlabel)
 
     # reset axis limits
-    ax[0, 0].set_xlim(dlim)
-    ax[0, 1].set_xlim(dlim)
-    ax[0, 0].set_ylim(philim)
-    ax[0, 1].set_ylim(philim)
+    ax[1, 0].set_xlim(dlim)
+    ax[1, 1].set_xlim(dlim)
+    ax[1, 0].set_ylim(philim)
+    ax[1, 1].set_ylim(philim)
 
     # create a PdfPages object - one solution check per page
     pdf=PdfPages(num)
@@ -2455,10 +2482,10 @@ def check_solution(df, **kwargs):
             print('writing solution '+str(idxnum)+' of '+str(len(df_plot)))
 
             # label for data point in case we want use it
-            curves[0]=ax[0, 0].plot(row['dlam3'], row['phi'], 'kx', 
+            curves[0]=ax[1, 0].plot(row['dlam3'], row['phi'], 'kx', 
                             markersize=14)
             
-            curves[1]=ax[0, 1].plot(row['dlam3'], row['phi'], 'wx', 
+            curves[1]=ax[1, 1].plot(row['dlam3'], row['phi'], 'wx', 
                             markersize=14)
             
             # now plot the lines for the solution
@@ -2497,20 +2524,20 @@ def check_solution(df, **kwargs):
             dcalc=dcalc.sort_values(by=['phi'])
             
             # now plot the curves of constant rh and rd
-            curves[2]=ax[0, 0].plot(dcalc['d_rh'], dcalc['phi'], 'k-',
+            curves[2]=ax[1, 0].plot(dcalc['d_rh'], dcalc['phi'], 'k-',
                                     label =r'$r_h$')
-            curves[3]=ax[0, 0].plot(dcalc['d_rd'], dcalc['phi'], 'k--',
+            curves[3]=ax[1, 0].plot(dcalc['d_rd'], dcalc['phi'], 'k--',
                                     label = r'$r_d$')
-            curves[4]=ax[0, 1].plot(dcalc['d_rh'], dcalc['phi'], 'w-',
+            curves[4]=ax[1, 1].plot(dcalc['d_rh'], dcalc['phi'], 'w-',
                                     label = r'$r_h$')
-            curves[5]=ax[0, 1].plot(dcalc['d_rd'], dcalc['phi'], 'w--',
+            curves[5]=ax[1, 1].plot(dcalc['d_rd'], dcalc['phi'], 'w--',
                                     label = r'$r_d$')
             
-            ax[0,0].legend(ncol=2)
-            ax[0,1].legend(ncol=2)
+            ax[1,0].legend(ncol=2)
+            ax[1,1].legend(ncol=2)
             
-            ax[0,0].set_xlim(left=0)
-            ax[0,1].set_xlim(left=0)
+            ax[1,0].set_xlim(left=0)
+            ax[1,1].set_xlim(left=0)
                       
             pdf.savefig()
             if idxnum>1:
@@ -2521,6 +2548,37 @@ def check_solution(df, **kwargs):
                 
     pdf.close()
     return {'fig':fig, 'ax':ax, 'colorbars':[cbar1, cbar2]}
+
+
+def remove_contours(soln_check):
+    '''
+    Remove contour plots from check solution figure.
+
+    Parameters
+    ----------
+    soln_check : dictionary with 'fig', 'ax', 'colorbars'
+        DESCRIPTION.
+
+    Returns
+    -------
+    soln_check: input dictionary, contours and colorbars removed.
+
+    '''
+    fig = soln_check['fig']
+    ax = soln_check['ax']
+    cbar = soln_check['colorbars']
+     
+    gs = ax[0, 0].get_subplotspec().get_gridspec()
+    gs.set_height_ratios([1, 0.0001])
+    
+    cbar[0].remove()
+    cbar[1].remove()
+    ax[1, 0].remove()
+    ax[1, 1].remove()
+
+    fig.set_size_inches(8, 4)
+    
+    return {'fig':fig, 'ax':ax}
 
 def check_n_dependence(soln, **kwargs):
     '''
@@ -2589,3 +2647,10 @@ def check_n_dependence(soln, **kwargs):
     # print the figure
     fig.suptitle(suptitle)
     fig.savefig(filename)
+
+def add_QCM_functions():
+    ken_path = '/home/ken/Mydocs/Github/rheoQCM/QCMFuncs'
+    # copy QCM_functions to current working directory (ken only, so others have
+    # updated version without fiddling with GitHub)
+    if os.path.isdir(ken_path):
+        shutil.copy(os.path.join(ken_path, 'QCM_functions.py'), os.getcwd())
