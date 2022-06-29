@@ -13,6 +13,9 @@ import scipy.optimize as optimize
 import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.backends.backend_pdf import PdfPages
+from glob import glob
+import time
+import shutil
 
 import pandas as pd
 
@@ -39,7 +42,7 @@ T_coef_default = {'f': {1: [0.00054625, 0.04338, 0.08075, 0],
                        5: [0.002825, -0.22125, 15.375, 0]},
                   'g': {1: [0, 0, 0, 0],
                        3: [0, 0, 0, 0],
-                       5: [0, 0, 0, 9]}}
+                       5: [0, 0, 0, 0]}}
 
 electrode_default = {'drho': 2.8e-3, 'grho3': 3.0e14, 'phi': 0}
 water = {'drho':np.inf, 'grho3':1e8, 'phi':90}
@@ -1066,7 +1069,7 @@ def solve_for_props(delfstar, calc, **kwargs):
                              df_in[i][n1].imag])
                 
         # make sure x0 is in the right bounds
-        for k in[0, 1, 2]:
+        for k in np.arange(len(x0)):
             x0[k]=max(x0[k], lb[k])
             x0[k]=min(x0[k], ub[k])
 
@@ -1122,23 +1125,69 @@ def solve_for_props(delfstar, calc, **kwargs):
     return df_out
 
 
-def make_err_plot(df_in, **kwargs):
+def solve_all(datadir, calc, **kwargs):
     """
-    Determine errors in properties based on uncertainies in a delfstar.
-    args:
-        df_in (dataframe):
-            Input data.
 
+    Parameters
+    ----------
+    datadir : string
+        Directory for which solutions are obtained for all .xlsx files.
+    **kwargs : 
+        optional arguments passed along to read_xlsx, solve_for_props, 
+        make_prop_axes and check_solution
+
+    Returns
+    -------
+    df : dictionary
+        dictionary of dataframes returned by read_xlsx
+    soln : dictionary
+        dictinoary of solutions returned by solve_for_props.
+    figinfo : dictionary
+        diectionary of figinfo returned by make_prop_axes
+
+    """
+
+    # function to solve for all .xlsx files in a directory
+
+    df = {}
+    soln = {}
+    figinfo = {}
+    
+    # create a list of all the .xlsx files in the data directory
+    files = glob(os.path.join(datadir, '*.xlsx'))
+    
+    # now do the analysis on each of these files
+    for infile in files:
+        plt.close('all')
+        # get the filename
+        filename = os.path.split(infile)[-1]
+        
+        # remove the .xlsx to get the prefix 
+        prefix = filename.rsplit('.', 1)[0]
+        df[prefix] = read_xlsx(infile, **kwargs)
+        print('solving '+prefix + ' - ' +calc)
+        time.sleep(3)
+        soln[prefix] = solve_for_props(df[prefix], calc, **kwargs)
+        
+        # window title for property plots
+        kwargs['num']=os.path.join(datadir, prefix+'_'+calc+'_props.pdf')
+        figinfo[prefix] = make_prop_axes(**kwargs)
+        prop_plots(soln[prefix], figinfo[prefix])
+        
+        # now set the window title for the solution check
+        kwargs['num']=os.path.join(datadir, prefix+'_'+calc+'_check.pdf')
+        check_solution(soln[prefix], **kwargs)
+        figinfo[prefix]['fig'].savefig(os.path.join(datadir, prefix+
+                                                    '_'+calc+'_props.pdf'))
+    return df, soln, figinfo
+
+
+def make_err_axes(**kwargs):
+    """
     kwargs:
-        idx (int):
-            index of point in df_in to use (default is 0)
-        npts (int):
-            number of points to include in error plots (default is 10)
-        err_frac (real):
-            error in delfstar as a fraction of gamma.
-        err_range (real):
-            multiplicative factor that expands err range beyond err_frac.
-
+        num (string):
+            title for plot window
+            
 
     returns:
         fig:
@@ -1146,88 +1195,104 @@ def make_err_plot(df_in, **kwargs):
         ax:
             axes of the figure.
     """
-    fig = make_prop_axes(figsize=(12, 3))
-    ax = fig['ax']
+    num = kwargs.get('num','error plot')
+    fig, ax = plt.subplots(3,3, figsize=(9,9), constrained_layout=True,
+                           num = num)
+    return fig, ax
+
+
+def make_err_plot(ax, soln, uncertainty_dict, **kwargs):
+    """
+    Determine errors in properties based on uncertainies in a delfstar.
+    args:
+        soln (dataframe):
+            Input solution dataframe.
+        uncertainty_dict (dictionary):
+            Dictionary of uncertainties
+
+    kwargs:
+        idx (int or string):
+            index of point in soln to use (default is 'min')
+            numeric value of 'max' are also possible
+        npts (int):
+            number of points to include in error plots (default is 10)
+        num (string):
+            title of plot window
+        label (string):
+            label used for legend
+
+    """
+
+
     idx = kwargs.get('idx', 0)  # specify specific point to use
+    if idx == 'max':
+        idx = soln['calc'].index.max()
+    elif idx == 'min':
+        idx = soln['calc'].index.min()
+        
     npts = kwargs.get('npts', 10)
-    err_frac = kwargs.get('err_frac', err_frac_default)
-    # >1 to extend beyond calculated err
-    err_range = kwargs.get('err_range', 1)
-    err_range = max(1, err_range)
-    calctype = df_in['calctype'][idx]
-    calc = df_in['calc'][idx]
-    deriv = df_in['deriv'][idx]
-    delfstar_err = df_in['delfstar_err'][idx]
-    guess = {'grho3': df_in['grho3'][idx],
-             'phi': df_in['phi'][idx],
-             'drho': df_in['drho'][idx]}
+    label = kwargs.get('label', '')
+
+    calctype = soln['calctype'][idx]
+    calc = soln['calc'][idx]
+        
+    guess = {'grho3': soln['grho3'][idx],
+             'phi': soln['phi'][idx],
+             'drho': soln['drho'][idx]}
 
     delfstar_0 = {}
 
-    for nstr in list(set(calc)):
-        n = int(nstr)
-        delfstar_0[n] = df_in[n][idx]
+    # get list of harmonics we care about
+    nvals = list(set(calc.split('.')))
+    nvals = list(map(int, nvals))
+    for n in nvals:
+        delfstar_0[n] = soln['df_expt'+str(n)][idx]
 
     # now generate series of delfstar values based on the errors
-    delfstar_del = {}
-
     # set some parameters for the plots
     # frequency or dissipation shift
     mult = np.array([1, 1, 1j], dtype=complex)
+    pos = {0:0, 1:0, 2:1}  # used to ef the relevant uncertainty is f or g
     forg = {0: 'f', 1: 'f', 2: '$\Gamma$'}
     prop_type = {0: 'grho3', 1: 'phi', 2: 'drho'}
     scale_factor = {0: 0.001, 1: 1, 2: 1000}
-    marker = {0: '+', 1: 's', 2: 'o'}
 
     # intialize values of delfstar
+    delfstar_del = {}
     for k in [0, 1, 2]:
         delfstar_del[k] = {}
-        for n in [3, 5]:
+        for n in nvals:
             delfstar_del[k][n] = np.ones(npts)*delfstar_0[n]
-
-    # adjust values of delfstar and calculate properties
+            
+    #adjust values of delfstar and calculate properties
+    err = {}
     for k in [0, 1, 2]:
-        ax[0,k].set_xlabel(r'$(X-X_0)/X^{err}$')
+        n = int(calc.split('.')[k])
+        var = forg[k]
+        ax[k, 0].set_ylabel(r'$|G_3|\rho$ (Pa$\cdot$g/cm$^3$)')
+        ax[k, 1].set_ylabel(r'$\phi$ (deg.)')
+        ax[k, 2].set_ylabel(r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)')
+        for col in [0, 1, 2]:
+            ax[k, col].set_xlabel(r'$\Delta${}'.format(var) +
+                                r'$_{}$'.format(n) +' (Hz)')
+
         n = int(calc.split('.')[k]) 
-        err = err_range*delfstar_err[k]
-        delta = np.linspace(-err, err, npts)
+        err[k] = uncertainty_dict[n][pos[k]]
+        delta = np.linspace(-err[k], err[k], npts)
         delfstar_del[k][n] = delfstar_del[k][n]+delta*mult[k]
         delfstar_df = pd.DataFrame.from_dict(delfstar_del[k])
+
         props = solve_for_props(delfstar_df, calc=calc,
                                           calctype=calctype, guess=guess)
         # make the property plots
         for p in [0, 1, 2]:
-            ax[0,p].plot(delta/delfstar_err[k], props[prop_type[p]]*scale_factor[p],
-                       marker=marker[k], linestyle='none',
-                       label=r'X='+forg[k]+'$_'+str(n)+'$')
-
-    # reset color cycles so dervitave plots match the color scheme
-    for p in [0, 1, 2]:
-        ax[0,p].set_prop_cycle(None)
-        for k in [0, 1, 2]:
-            err = delfstar_err[k]
-            xdata = np.array([-err_range, 0, err_range])
-            ydata = (np.ones(3)*df_in[prop_type[p]][idx]*scale_factor[p] +
-                     err*xdata*scale_factor[p]*deriv[p][k])
-            ax[0,p].plot(xdata, ydata, '-')
-
-        # now add the originally calculated error
-            err0 = df_in[prop_type[p]+'_err']
-            ax[0,p].errorbar(0, df_in[prop_type[p]][idx]*scale_factor[p],
-                           yerr=err0*scale_factor[p], color='k')
-
-    ax[0,0].legend(loc='center', bbox_to_anchor=(-0.5, 0, 0, 1))
-    sub_string = {}
-    for k in [0, 1, 2]:
-        n = calc.split('.')[k]
-        sub_string[k] = (forg[k]+'$_'+n+'^{err}=$' +
-                         f'{delfstar_err[k]:.0f}'+' Hz')
-    title_string = (sub_string[0]+'; '+sub_string[1]+'; '+sub_string[2] +
-                  '; '+'err_frac='+str(err_frac))
-    fig.suptitle(r''+title_string)
-    fig.tight_layout()
-    return fig, ax
-
+            ax[k, p].plot(delta, props[prop_type[p]]*scale_factor[p],
+                       '-+', label = label)
+            ax[k, p].legend()
+            
+            # now add point for actual solution
+            ax[k, p].plot(0, soln[prop_type[p]][idx]*scale_factor[p],'or')
+        
 
 def calc_error(soln, uncertainty):
     '''
@@ -1296,13 +1361,19 @@ def make_prop_axes(**kwargs):
             
             - 's', 'hr', 'day' is time in appropriate unit
             
-        xunit (string):
+            - name of dataframe column can also be specified
+            
+        xunit (single string or list of strings):
             Units for x data.  Default is 'index', function currently handles
             - 's', 'min', 'hr', 'day', 'temp', or user specified value corresponding
                 to a dataframe column
+                
+        xscale (string):
+            'lin' (default) or 'log'
             
         xlabel (string):
             label for x axis.  Only used if user-specified for xunit is used
+            currently must be same for all axes
             
         figsize (tuple of 2 real numbers):
             size of figure.  
@@ -1328,8 +1399,9 @@ def make_prop_axes(**kwargs):
 
     num = kwargs.get('num', 'property fig')
     plots = kwargs.get('plots', ['grho3', 'phi', 'drho'])
-    xunit = kwargs.get('xunit', 'index')
+    xunit_input = kwargs.get('xunit', 'index')
     sharex = kwargs.get('sharex', True)
+    xscale = kwargs.get('xscale', 'lin')
     num_plots = len(plots)
     if num_plots == 1:
         default_titles = ['']
@@ -1337,29 +1409,49 @@ def make_prop_axes(**kwargs):
         default_titles =  ['(a)', '(b)', '(c)', '(d)', '(e)', '(f)']
     titles = kwargs.get('titles', default_titles)
     figsize = kwargs.get('figsize', (3*num_plots, 3))
+    
+    # specify the xunit dictionary and xlabel dictionary
+    # all plots have same xunit if only one value is given
+    xunit = {}
+    xlabel = {}
+    ylabel = {}
+    if type(xunit_input)==str:
+        for p in np.arange(num_plots):
+            xunit[p] = xunit_input
+    else:
+        for p in np.arange(num_plots):
+            xunit[p]=xunit_input[p]
+            
+    # turn of sharex if not all axes have the same xunit
+    for p in np.arange(num_plots-1):
+        if xunit[p]!=xunit[p+1]:
+            sharex = False
 
+    
     fig, ax = plt.subplots(1, num_plots, figsize=figsize, num=num,
                            constrained_layout=True, squeeze=False,
                            sharex=sharex)
     
     ax = ax.flatten()
 
-    # set the x label
-    if xunit == 's':
-        xlabel = '$t$ (s)'
-    elif xunit == 'min':
-        xlabel = '$t$ (min.)'
-    elif xunit == 'hr':
-        xlabel = '$t$ (hr)'
-    elif xunit == 'day':
-        xlabel = '$t$ (days)'
-    elif xunit == 'temp':
-        xlabel = r'$T$ ($^\circ$C)'
-    elif xunit == 'index':
-        xlabel = 'index'
-    else:
-        xlabel = kwargs.get('xlabel', 'xlabel')
-
+    for p in np.arange(num_plots):
+        # set the x label
+        if xunit[p] == 's':
+            xlabel[p] = '$t$ (s)'
+        elif xunit[p] == 'min':
+            xlabel[p] = '$t$ (min.)'
+        elif xunit[p] == 'hr':
+            xlabel[p] = '$t$ (hr)'
+        elif xunit[p] == 'day':
+            xlabel[p] = '$t$ (days)'
+        elif xunit[p] == 'temp':
+            xlabel[p] = r'$T$ ($^\circ$C)'
+        elif xunit[p] == 'index':
+            xlabel[p] = 'index'
+        else:
+            xlabel[p] = kwargs.get('xlabel', 'xlabel')
+            ylabel[p] = kwargs.get('ylabel', 'ylabel')
+    
     # make a dictionary of the potential axis labels
     axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
                'phi': r'$\phi$ (deg.)',
@@ -1371,13 +1463,13 @@ def make_prop_axes(**kwargs):
     for p in np.arange(num_plots):
         if plots[p] == 'grho3' or plots[p] == 'grho3_lin':
             ax[p].set_ylabel(axlabels['grho3'])
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'phi':
             ax[p].set_ylabel(axlabels['phi'])
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'drho':
             ax[p].set_ylabel(axlabels['drho'])
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'vgp' or plots[p] == 'vgp_lin':
             ax[p].set_ylabel(axlabels['phi'])
             ax[p].set_xlabel(axlabels['grho3'])
@@ -1401,25 +1493,28 @@ def make_prop_axes(**kwargs):
             
         elif plots[p] == 'jdp':
             ax[p].set_ylabel(axlabels['jdp'])
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'temp':
             ax[p].set_ylabel(axlabels['temp'])
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 's':
             ax[p].set_ylabel('t (s)')
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'min':
             ax[p].set_ylabel('t (min)')
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'hrs':
             ax[p].set_ylabel('t (hr)')
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'day':
             ax[p].set_ylabel('t (day)')
-            ax[p].set_xlabel(xlabel)
+            ax[p].set_xlabel(xlabel[p])
+        else:
+            ax[p].set_xlabel(xlabel[p])
+            ax[p].set_ylabel(ylabel[p])
         ax[p].set_title(titles[p])
 
-    info = {'plots':plots, 'xunit':xunit}
+    info = {'plots':plots, 'xunit':xunit, 'xscale':xscale}
     ax = ax.flatten()
     return {'fig':fig, 'ax':ax, 'info':info}
 
@@ -1436,9 +1531,11 @@ def prop_plots(df, figinfo, **kwargs):
 
     kwargs:
 
-        xoffset (real or string):
+        xoffset (real or string, (single value or list)):
             amount to subtract from x value for plotting (default is 0)
             'zero' means that the data are offset so that the minimum val is 0
+        xumult (real):
+            multiplicative factor we use to multiply the xdata by.
         fmt (string):
             Format sting: Default is '+'   .
         label (string):
@@ -1447,6 +1544,8 @@ def prop_plots(df, figinfo, **kwargs):
             Switch to plot mass data or not. Default is True
         uncertainty_dict (dictionary of 2-elment lists of real numbers):
             Uncertainty in f, gamma for each harmonic
+        plots_to_make (list of strings):
+            plots to make.  Equal to figinfo['info']['plots'] if not specified
 
 
     returns:
@@ -1455,63 +1554,97 @@ def prop_plots(df, figinfo, **kwargs):
 
     fmt=kwargs.get('fmt', '+')
     label=kwargs.get('label', '')
-    xoffset=kwargs.get('xoffset', 0)
+    xmult = kwargs.get('xmult', 1)
+    xoffset_input=kwargs.get('xoffset', 0)
     uncertainty_dict = kwargs.get('uncertainty_dict', 'default')
+    
+    # extract data from figinfo
+    plots = figinfo['info']['plots']
+    ax = figinfo['ax']
+    num_plots = len(plots)
+    plots_to_make = kwargs.get('plots_to_make', figinfo['info']['plots'])
+    calc = df['calc'][df.index.min()]
+    calc_list = calc.split('.')
     
     # extract uncertainty from datafrae if it is not [0, 0, 0]
     if uncertainty_dict == 'default':
-        uncertainty = [0, 0, 0]
+        uncertainty = [0]*len(calc_list)
     else:
-        calc = df['calc'][df.index.min()]
-        n1 = int(calc.split('.')[0])
-        n2 = int(calc.split('.')[1])
-        n3 = int(calc.split('.')[2])
-        uncertainty = [uncertainty_dict[n1][0],
-                       uncertainty_dict[n2][0],
-                       uncertainty_dict[n3][1]]
+
+        # handle case where calc is a single number, corresponding to the 
+        # harmonic where we take frequency and dissipation (for fixed freq.)
+
+        if len(calc_list) == 1:
+            n1 = int(calc_list[0])
+            uncertainty = [uncertainty_dict[n1][0],
+                           uncertainty_dict[n1][1]]
+        else: #  now handle the more normal case
+            n1 = int(calc.split('.')[0])
+            n2 = int(calc.split('.')[1])
+            n3 = int(calc.split('.')[2])
+            uncertainty = [uncertainty_dict[n1][0],
+                           uncertainty_dict[n2][0],
+                           uncertainty_dict[n3][1]]
     
     # add calculated errors to dataframe
     df = calc_error(df, uncertainty)
     xunit = figinfo['info']['xunit']
-
-    if xunit == 's':
-        xvals=df['t']
-    elif xunit == 'min':
-        xvals=df['t']/60
-    elif xunit == 'hr':
-        xvals=df['t']/3600
-    elif xunit == 'day':
-        xvals=df['t']/(24*3600)
-    elif xunit == 'temp':
-        xvals=df['temp']
-    elif xunit == 'index':
-        xvals=df.index
-    else:
-        xvals=df[xunit]
-        
-    if xoffset == 'zero':
-        xoffset = min(xvals)
     
-    xvals = xvals - xoffset
-                
-    plots = figinfo['info']['plots']
-    ax = figinfo['ax']
-    num_plots = len(plots)
+    xvals = {}
     
-    # now make all of the plots
+    # set the offset for the x values (apart from vgp plots)
+    xoffset = {}
+    
+    # determine the plots we actually need to make. Sometimes we don't add
+    # data to an existing axis
+    pvals = []
     for p in np.arange(num_plots):
+        if plots[p] in plots_to_make:
+            pvals.append(p)
+    if type(xoffset_input) != list:
+        for p in np.arange(num_plots):
+            xoffset[p] = xoffset_input
+    else:
+        for p in np.arange(num_plots):
+            xoffset[p]=xoffset_input[p]   
+            
+    for p in pvals:
+        if xunit[p] == 's':
+            xvals[p]=df['t']
+        elif xunit[p] == 'min':
+            xvals[p]=df['t']/60
+        elif xunit[p] == 'hr':
+            xvals[p]=df['t']/3600
+        elif xunit[p] == 'day':
+            xvals[p]=df['t']/(24*3600)
+        elif xunit[p] == 'temp':
+            xvals[p]=df['temp']
+        elif xunit[p] == 'index':
+            xvals[p]=df.index
+        else:
+            xvals[p]=df[xunit[p]]
+            
+        if xoffset[p] == 'zero':
+            xoffset[p] = min(xvals[p])
+        
+        xvals[p] = xmult*(xvals[p] - xoffset[p])
+                
+   
+    # now make all of the plots
+    for p in pvals:
         if plots[p] == 'grho3' or plots[p] == 'grho3_lin': 
-            xdata = xvals
+            xdata = xvals[p]
             ydata = df['grho3']/1000
             yerr = df['grho3_err']/1000
 
         elif plots[p] == 'phi':
-            xdata = xvals
+            xdata = xvals[p]
             ydata = df['phi']
             yerr = df['phi_err']
+            
                 
         elif plots[p] == 'drho':
-            xdata = xvals
+            xdata = xvals[p]
             ydata = 1000*df['drho']
             yerr = 1000*df['drho_err']
       
@@ -1521,18 +1654,23 @@ def prop_plots(df, figinfo, **kwargs):
             yerr = pd.Series(np.zeros(len(xdata)))
             
         elif plots[p] == 'jdp':
-            xdata  = xvals
+            xdata  = xvals[p]
             ydata = (1000/df['grho3'])*np.sin(df['phi']*np.pi/180) 
             yerr = pd.Series(np.zeros(len(xdata))) # may eventually add error for this one
             
         elif plots[p] == 'temp':
-            xdata  = xvals
+            xdata  = xvals[p]
             ydata = df['temp']
             yerr = pd.Series(np.zeros(len(xdata)))
             
         elif plots[p] == 't':
-            xdata  = xvals
+            xdata  = xvals[p]
             ydata = df['t']
+            yerr = pd.Series(np.zeros(len(xdata)))
+            
+        elif (plots[p] in df.keys()):
+            xdata = xvals[p]
+            ydata = df[plots[p]]
             yerr = pd.Series(np.zeros(len(xdata)))
         
         else:
@@ -1553,23 +1691,20 @@ def prop_plots(df, figinfo, **kwargs):
 
 def read_xlsx(infile, **kwargs):
     """
-    Create data frame from.xlsx file output by RheoQCM.
+    Create data frame from .xlsx file output by RheoQCM.
 
     args:
-        infile (string):
-            full name of input  .xlsx file
+        :infile: (string) the full name of the input  .xlsx file
 
     kwargs:
-        restrict_to_marked (list):
-            List of frequencies that must be marked in order to be included.
-            Default is [], so that we include everything.
+        
+        :restrict_to_marked: (list) List of frequencies that must be marked in order to be included.
+        Default is [], so that we include everything.
 
-        film_channel (string):
-            sheet for data:  
+        :film_channel: (string) sheet for data
             - 'S_channel' by default
 
-        ref_channel (string):
-            Source for reference frequency and dissipation:  
+        :ref_channel: (string) Source for reference frequency and dissipation:  
 
             - 'R_channel': 'R_channel' sheet from xlsx file) (default)  
         
@@ -1581,46 +1716,52 @@ def read_xlsx(infile, **kwargs):
                     
             - 'self':  read delf and delg read directly from the data channel   
                     
-            - 'T_coef': Taken directly from T_coef dictionary  
 
-        ref_idx (numpy array):
-            index values to include in reference determination  
+        :ref_idx: (numpy array) index values to include in reference determination  
             
-            - default is 'all', which takes everything
+            - default is 'all', which takes 
+            - 'max' means we take the value for which f3 is maximized
 
-        film_idx (numpy array)
-            index values to include for film data  
+        :film_idx: (numpy array) index values to include for film data  
             
             - default is 'all' which takes everthing
 
-        T_coef (dictionary):
-            Temperature coefficients for reference temp. shift  
+        :T_coef: (dictionary or string) Temperature coefficients for reference temp. shift  
             
-            - default values used if not specified
+            - calculated from ref. temp. data if not specified
+            - set to the following dictionary if equal to 'default'
+            
+                {'f': {1: [0.00054625, 0.04338, 0.08075, 0],                      
+                3: [0.0017, -0.135, 8.9375, 0],                
+                5: [0.002825, -0.22125, 15.375, 0]}, 
+                'g': {1: [0, 0, 0, 0], 
+                3: [0, 0, 0, 0], 
+                5: [0, 0, 0, 0]}}
+                
+            - other option is to specify the dictionary directly
 
-        Tref: (numeric)
+        :Tref: (numeric)
             Temperature at which reference frequency shift was determined  
             
             - default is 22C
 
-        T_coef_plots (Boolean):  
+        :T_coef_plots: (Boolean)  
             set to True to plot temp. dependent f and g for ref.  
         
             - default is True
 
-        T_shift (dictionary): 
+        :fref_shift: (dictionary)
             shifts added to reference values  
         
             - default is {1:0, 3:0, 5:0}
 
-        nvals (list): harmonics to include:  
+        :nvals: (list) harmonics to include:  
         
             - default is [1, 3, 5]
 
 
     returns:
-        df:
-            Input data converted to dataframe
+        :df: (dataframe) Input data converted to dataframe
     """
 
     restrict_to_marked=kwargs.get('restrict_to_marked', [])
@@ -1629,20 +1770,33 @@ def read_xlsx(infile, **kwargs):
     ref_channel=kwargs.get('ref_channel', 'R_channel')
     ref_idx=kwargs.get('ref_idx', 'all')
     T_coef_plots=kwargs.get('T_coef_plots', True)
-    nvals=kwargs.get('nvals', [1, 3, 5])
+    nvals_in=kwargs.get('nvals', [1, 3, 5, 7, 9])
 
     Tref=kwargs.get('Tref', 22)
+    
     # specify default bare crystal temperature coefficients
-    T_coef=kwargs.get('T_coef', T_coef_default)
+    T_coef=kwargs.get('T_coef', 'calculated')
+    if T_coef == 'default':
+        T_coef = T_coef_default 
 
     # read shifts that account for changes from stress levels applied
     # to different sample holders
-    T_shift=kwargs.get('T_shift', {1: 0, 3: 0, 5: 0, 7:0, 9:0})
+    fref_shift=kwargs.get('fref_shift', {1: 0, 3: 0, 5: 0, 7:0, 9:0})
 
-
+    if ref_idx == 'max':
+        df_ref=pd.read_excel(infile, sheet_name=ref_channel, header=0)
+        ref_idx = np.array([df_ref['f3'].idxmax()])
+        
     df=pd.read_excel(infile, sheet_name=film_channel, header=0)
     if type(film_idx) != str:
         df=df[df.index.isin(film_idx)]
+        
+    # include all values of n that we want and that exist in the input file
+    nvals = []
+    for n in nvals_in:
+        if 'f'+str(n) in df.keys():
+            nvals.append(n)
+        
 
     df['keep_row']=1  # keep all rows unless we are told to check for specific marks
     for n in restrict_to_marked:
@@ -1661,21 +1815,41 @@ def read_xlsx(infile, **kwargs):
         keep_column.append('temp')
 
     # add each of the values of delfstar
-    if ref_channel == 'T_coef':
+    if T_coef != 'calculated':
+        # here we need to obtain T_coef from the info in the ref. channel
+        # start by reading in bare crystal ata
+        df_ref=pd.read_excel(infile, sheet_name=ref_channel, header=0)
+        if type(ref_idx) != str:
+            df_ref=df_ref[df_ref.index.isin(ref_idx)]
         T_coef_plots=False
         for n in nvals:
-            ref_f=np.polyval(T_coef['f'][n], df['temp'])
-            ref_g=np.polyval(T_coef['g'][n], df['temp'])
-            fstar_ref=ref_f+1j*ref_g
-            fstar=df['f'+str(n)] + 1j*df['g'+str(n)]
-            df[n]=fstar - fstar_ref - T_shift[n]  # -AS
+            # apply fref_shift if needed
+            df_ref['f'+str(n)] = df_ref['f'+str(n)] + fref_shift[n]
+            # adjust constant lffast elment in T_coef (the 
+            # constant term) to give measured ref. values at Tref
+            for val in ['f', 'g']:
+                T_coef[val][n][3] = (T_coef[val][n][3] + df_ref[val+str(n)].mean() -
+                    np.polyval(T_coef[val][n], Tref))
+                
+                # add absolute frequency and reference values to dataframe
+                keep_column.append(val+str(n)+'_dat')
+                keep_column.append(val+str(n)+'_ref')
+                
+                # set reference and film values
+                df[val+str(n)+'_ref'] = np.polyval(T_coef[val][n], df['temp'])
+                df[val+str(n)+'_dat'] = df[val+str(n)]
+            
+            # keep track (of film and reference values in dataframe
+            df[n]  = (df['f'+str(n)+'_dat'] - df['f'+str(n) + '_ref'] +
+                  1j*(df['g'+str(n)+'_dat'] - df['g'+str(n) + '_ref']))
+            
 
     elif ref_channel == 'self':
         # this is the standard read protocol, with delf and delg already in
         # the .xlsx file
         for n in nvals:
             df[n]=df['delf'+str(n)] + 1j*df['delg'+str(n)
-                                ].round(1) - T_shift[n]  # -AS
+                                ].round(1) - fref_shift[n]  # -AS
 
     else:
         # here we need to obtain T_coef from the info in the ref. channel
@@ -1685,8 +1859,9 @@ def read_xlsx(infile, **kwargs):
         var=['f', 'g']
 
         # if no temperature is listed or a specific reference temperature
-        # is given we just average the values
+        # is given we just average the values or take the max value
         if ('temp' not in df_ref.keys()) or (df_ref.temp.isnull().values.all()):
+
             for k in np.arange(len(nvals)):
                 for p in [0, 1]:
                     # get the reference values
@@ -1711,6 +1886,8 @@ def read_xlsx(infile, **kwargs):
             temp=df_ref['temp']
             for k in np.arange(len(nvals)):
                 for p in [0, 1]:
+                    # set T_coef to defaults to start
+                    T_coef = T_coef_default
                     # get the reference values and plot them
                     ref_vals=df_ref[var[p]+str(nvals[k])]
                     
@@ -1744,11 +1921,11 @@ def read_xlsx(infile, **kwargs):
                          np.polyval(T_coef[var[p]][nvals[k]], df['temp']))
 
         for k in np.arange(len(nvals)):
-            # now write values delfstar to the dataframe
+            # now write values of delfstar to the dataframe
             df[nvals[k]]=(df['f'+str(nvals[k])+'_dat'] -
                           df['f'+str(nvals[k])+'_ref'] +
                       1j*(df['g'+str(nvals[k])+'_dat'] -
-                          df['g'+str(nvals[k])+'_ref'])-T_shift[nvals[k]]).round(1)  # -AS
+                          df['g'+str(nvals[k])+'_ref'])-fref_shift[nvals[k]]).round(1)
 
             # add absolute frequency and reference values to dataframe
             keep_column.append('f'+str(nvals[k])+'_dat')
@@ -1756,10 +1933,11 @@ def read_xlsx(infile, **kwargs):
             keep_column.append('g'+str(nvals[k])+'_dat')
             keep_column.append('g'+str(nvals[k])+'_ref')
 
-    # add the constant applied shift to the reference values to the dataframe -AS
+    # add the constant applied shift to the reference values to the dataframe
     for n in nvals:
-        df[str(n)+'_refshift']=T_shift[n]
-        keep_column.append(str(n)+'_refshift')
+        if fref_shift[n]!= 0:
+            df[str(n)+'_refshift']=fref_shift[n]
+            keep_column.append(str(n)+'_refshift')
 
     if T_coef_plots and ref_channel != 'self' and len(df_ref.temp.unique()) > 1:
         T_range=[df['temp'].min(), df['temp'].max()]
@@ -1770,6 +1948,9 @@ def read_xlsx(infile, **kwargs):
         if T_range[0] < T_ref_range[0] or T_range[1] > T_ref_range[1]:
             print ('deleting some points that are outside the reference temperature range')
             df = df.query('temp >= @T_ref_range[0] & temp <= @T_ref_range[1]')
+            
+    # eliminate rows with nan at n=3
+    df.dropna(subset=[3])
 
     return df[keep_column].copy()
 
@@ -1980,8 +2161,8 @@ def check_solution(df, **kwargs):
             input solution to consider
 
     kwargs:
-        filename (string):
-            Filename for pdf.  Also used for window title
+        num (string):
+            Also used for window title. Also used for filename
         numxy (int):
             number of grid points in x and y (default is 100)
         numz (int):
@@ -2042,18 +2223,25 @@ def check_solution(df, **kwargs):
             
             - Default is 'dlam'
             
-            - function currently also handles 's', 'min', 'hr', 'day', 'temp', 'index'
+            - function currently also handles 's', 'min', 'hr', 'day', 'temp', 'index',
+              or the name of column in the input dataframe
+              
+        xlabel (string):
+            label for string (typicall used when datframe column name is used for xunit)
             
         xoffset (real):
             Value subtracted from x data 
-            
             - default is 0
+            
+        xmult (real):
+            Multiplicative factor for x data
+            - default is 1
             
         gammascale (string):
             'linear'  or 'log' for scale of dissipation axis
             default is linear            
     Returns:
-        fig, ax for solutioncheck figure
+        {'fig', 'ax'} - dictionary with fig and ax
         
     '''
 
@@ -2062,6 +2250,8 @@ def check_solution(df, **kwargs):
     numz=kwargs.get('numz', 200)
     philim=kwargs.get('philim', [0.001, 90])
     dlim=kwargs.get('dlim', [0.001, 0.5])
+    xscale = kwargs.get('xscale', 'linear')
+    xmult = kwargs.get('xmult')
     # having d of 0 causes some problems.  Change lower limit to be at least 0.001
     dlim[0] = max(dlim[0], 0.001)
     nplot=kwargs.get('nplot', [1, 3, 5])
@@ -2071,7 +2261,7 @@ def check_solution(df, **kwargs):
     plot_interval = kwargs.get('plot_interval', 1)
     idxmin=df.index[0]
     calc=df['calc'][idxmin]
-    filename=kwargs.get('filename', 'solution_check.pdf')
+    num=kwargs.get('num', 'solution_check.pdf')
     xunit=kwargs.get('xunit', 'dlam')
     xoffset = kwargs.get('xoffset', 0)
     gammascale = kwargs.get('gammascale', 'linear')
@@ -2084,22 +2274,25 @@ def check_solution(df, **kwargs):
     # set up x labels for plots of actual and back-calculated shifts
     if xunit == 's':
         xlabel='$t$ (s)'
-        df.loc[:,'xvals']=df.loc[:,'t']-xoffset
+        df.loc[:,'xvals']=xmult*(df.loc[:,'t']-xoffset)
     elif xunit == 'min':
         xlabel='$t$ (min.)'
-        df.loc[:,'xvals']=df.loc[:,'t']/60-xoffset
+        df.loc[:,'xvals']=xmult*(df.loc[:,'t']/60-xoffset)
     elif xunit == 'hr':
         xlabel='$t$ (hr)'
-        df.loc[:,'xvals']=df.loc[:,'t']/3600-xoffset
+        df.loc[:,'xvals']=xmult*(df.loc[:,'t']/3600-xoffset)
     elif xunit == 'day':
         xlabel='$t$ (days)'
-        df.loc[:,'xvals']=df.loc[:, 't']/(24*3600)-xoffset
+        df.loc[:,'xvals']=xmult*(df.loc[:, 't']/(24*3600)-xoffset)
     elif xunit == 'temp':
         xlabel=r'$T$ ($^\circ$C)'
-        df.loc[:, 'xvals']=df.loc[:,'temp']-xoffset
+        df.loc[:, 'xvals']=xmult*(df.loc[:,'temp']-xoffset)
     elif xunit == 'index':
         xlabel = 'index'
         df.loc[:, 'xvals']=df.index
+    elif xunit in df.keys():
+        xlabel = kwargs.get('xlabel', 'xlabel')
+        df.loc[:, 'xvals'] = xmult*(df.loc[:, xunit]-xoffset)
     else:
         xlabel=r'$d/\lambda_3$'
         df.loc[:,'xvals'] = df.loc[:,'dlam3']
@@ -2157,38 +2350,38 @@ def check_solution(df, **kwargs):
     
     # make the axes and link them for auto-zooming
     fig, ax=plt.subplots(2, 2, figsize=(10, 6), sharex=False, sharey=False,
-                           num=filename, constrained_layout=True)
+                           num=num, constrained_layout=True)
 
-    contour1=ax[0, 0].contourf(DLAM, PHI, Z1, levels=levels1,
+    contour1=ax[1, 0].contourf(DLAM, PHI, Z1, levels=levels1,
                               cmap='rainbow')
-    contour2=ax[0, 1].contourf(DLAM, PHI, Z2, levels=levels2,
+    contour2=ax[1, 1].contourf(DLAM, PHI, Z2, levels=levels2,
                               cmap='rainbow')
-    ax[0,0].sharex(ax[0,1])
-    ax[0,0].sharey(ax[0,1])
     ax[1,0].sharex(ax[1,1])
+    ax[1,0].sharey(ax[1,1])
+    ax[0,0].sharex(ax[0,1])
 
-    fig.colorbar(contour1, ax=ax[0, 0])
-    fig.colorbar(contour2, ax=ax[0, 1])
+    cbar1 = fig.colorbar(contour1, ax=ax[1, 0])
+    cbar2 = fig.colorbar(contour2, ax=ax[1, 1])
 
     # set label of ax[1]
-    ax[0, 0].set_xlabel(r'$d/\lambda_n$')
-    ax[0, 0].set_ylabel(r'$\Phi$ ($\degree$)')
-    ax[1, 0].set_ylabel(r'$\Delta f/n$ (Hz)')
+    ax[1, 0].set_xlabel(r'$d/\lambda_n$')
+    ax[1, 0].set_ylabel(r'$\Phi$ ($\degree$)')
+    ax[0, 0].set_ylabel(r'$\Delta f/n$ (Hz)')
 
-    ax[0, 1].set_xlabel(r'$d/\lambda_n$')
-    ax[0, 1].set_ylabel(r'$\Phi$ ($\degree$)')
-    ax[1, 1].set_ylabel(r'$\Delta\Gamma/n$ (Hz)')
+    ax[1, 1].set_xlabel(r'$d/\lambda_n$')
+    ax[1, 1].set_ylabel(r'$\Phi$ ($\degree$)')
+    ax[0, 1].set_ylabel(r'$\Delta\Gamma/n$ (Hz)')
 
     # add titles
     if ratios:
-        ax[0, 0].set_title('(a) '+ calc + r' $r_h$')
-        ax[0, 1].set_title('(b) '+ calc + r' $r_d$')
+        ax[1, 0].set_title('(c) '+ calc + r' $r_h$')
+        ax[1, 1].set_title('(d) '+ calc + r' $r_d$')
     else:
-        ax[0, 0].set_title('(a) ' + calc + r' $\Delta f /n$ (Hz)')
-        ax[0, 1].set_title('(b) ' + calc + r' $\Delta\Gamma /n$ (Hz)')
+        ax[1, 0].set_title('(c) ' + calc + r' $\Delta f /n$ (Hz)')
+        ax[1, 1].set_title('(d) ' + calc + r' $\Delta\Gamma /n$ (Hz)')
         
-    ax[1,0].set_title('(c)')
-    ax[1,1].set_title('(d)')
+    ax[0,0].set_title('(a)')
+    ax[0,1].set_title('(b)')
 
     # set formatting for parameters that appear at the bottom of the plot
     # when mouse is moved
@@ -2225,45 +2418,50 @@ def check_solution(df, **kwargs):
             calcfmt = 'o'
         else:
             calcfmt = '-'
-        ax[1, 0].plot(df['xvals'], np.real(df['df_expt'+str(n)])/n, '+', 
+        ax[0, 0].plot(df['xvals'], np.real(df['df_expt'+str(n)])/n, '+', 
                       label='n='+nstr, color =col[n])
-        ax[1, 1].plot(df['xvals'], np.imag(df['df_expt'+str(n)])/n, '+', 
+        ax[0, 1].plot(df['xvals'], np.imag(df['df_expt'+str(n)])/n, '+', 
                       label='n='+nstr, color = col[n])
     
     # now plot the calculated values
     for n in nplot:        
-        ax[1, 0].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, calcfmt, 
+        ax[0, 0].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, calcfmt, 
                       color = col[n], markerfacecolor='none', label='calc')
-        ax[1, 1].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, calcfmt, 
+        ax[0, 1].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, calcfmt, 
                       color = col[n], markerfacecolor='none', label='calc')
 
     # add values to contour plots for n=3
     for n in nplot:
         dlam = calc_dlam_from_dlam3(n, df['dlam3'], df['phi'])
-        ax[0, 0].plot(dlam, df['phi'], '-o', markerfacecolor='none',
+        ax[1, 0].plot(dlam, df['phi'], '-o', markerfacecolor='none',
                       label = 'n='+str(n), color = col[n])
-        ax[0, 1].plot(dlam, df['phi'], '-o', markerfacecolor='none',
+        ax[1, 1].plot(dlam, df['phi'], '-o', markerfacecolor='none',
                       label = 'n='+str(n), color = col[n])
         
     # change dissipation scale to log scale if needed
     if gammascale=='log':
-        ax[1,1].set_yscale('log')
-
+        ax[0,1].set_yscale('log')
+        
+    # change scale to log scale if needed
+    if xscale == 'log':
+        ax[0,0].set_xscale('log')
+        ax[0,1].set_xscale('log')
+        
     for k in [0, 1]:
-        ax[0, k].legend()
-        ax[1, k].legend(ncol=2, labelspacing=0.2, columnspacing=0, 
+        ax[1, k].legend()
+        ax[0, k].legend(ncol=2, labelspacing=0.2, columnspacing=0, 
                         markerfirst=False, handletextpad=0.1)
-        ax[0, k].format_coord=fmt
-        ax[1, k].set_xlabel(xlabel)
+        ax[1, k].format_coord=fmt
+        ax[0, k].set_xlabel(xlabel)
 
     # reset axis limits
-    ax[0, 0].set_xlim(dlim)
-    ax[0, 1].set_xlim(dlim)
-    ax[0, 0].set_ylim(philim)
-    ax[0, 1].set_ylim(philim)
+    ax[1, 0].set_xlim(dlim)
+    ax[1, 1].set_xlim(dlim)
+    ax[1, 0].set_ylim(philim)
+    ax[1, 1].set_ylim(philim)
 
     # create a PdfPages object - one solution check per page
-    pdf=PdfPages(filename)
+    pdf=PdfPages(num)
     
     # we only take every nth row, where n = plot_interval
     if plot_interval == 'firstlast':
@@ -2284,11 +2482,10 @@ def check_solution(df, **kwargs):
             print('writing solution '+str(idxnum)+' of '+str(len(df_plot)))
 
             # label for data point in case we want use it
-            label_text = 'x='+str(row['xvals'])
-            curves[0]=ax[0, 0].plot(row['dlam3'], row['phi'], 'kx', 
+            curves[0]=ax[1, 0].plot(row['dlam3'], row['phi'], 'kx', 
                             markersize=14)
             
-            curves[1]=ax[0, 1].plot(row['dlam3'], row['phi'], 'wx', 
+            curves[1]=ax[1, 1].plot(row['dlam3'], row['phi'], 'wx', 
                             markersize=14)
             
             # now plot the lines for the solution
@@ -2327,20 +2524,20 @@ def check_solution(df, **kwargs):
             dcalc=dcalc.sort_values(by=['phi'])
             
             # now plot the curves of constant rh and rd
-            curves[2]=ax[0, 0].plot(dcalc['d_rh'], dcalc['phi'], 'k-',
+            curves[2]=ax[1, 0].plot(dcalc['d_rh'], dcalc['phi'], 'k-',
                                     label =r'$r_h$')
-            curves[3]=ax[0, 0].plot(dcalc['d_rd'], dcalc['phi'], 'k--',
+            curves[3]=ax[1, 0].plot(dcalc['d_rd'], dcalc['phi'], 'k--',
                                     label = r'$r_d$')
-            curves[4]=ax[0, 1].plot(dcalc['d_rh'], dcalc['phi'], 'w-',
+            curves[4]=ax[1, 1].plot(dcalc['d_rh'], dcalc['phi'], 'w-',
                                     label = r'$r_h$')
-            curves[5]=ax[0, 1].plot(dcalc['d_rd'], dcalc['phi'], 'w--',
+            curves[5]=ax[1, 1].plot(dcalc['d_rd'], dcalc['phi'], 'w--',
                                     label = r'$r_d$')
             
-            ax[0,0].legend(ncol=2)
-            ax[0,1].legend(ncol=2)
+            ax[1,0].legend(ncol=2)
+            ax[1,1].legend(ncol=2)
             
-            ax[0,0].set_xlim(left=0)
-            ax[0,1].set_xlim(left=0)
+            ax[1,0].set_xlim(left=0)
+            ax[1,1].set_xlim(left=0)
                       
             pdf.savefig()
             if idxnum>1:
@@ -2350,6 +2547,37 @@ def check_solution(df, **kwargs):
         pdf.savefig()
                 
     pdf.close()
+    return {'fig':fig, 'ax':ax, 'colorbars':[cbar1, cbar2]}
+
+
+def remove_contours(soln_check):
+    '''
+    Remove contour plots from check solution figure.
+
+    Parameters
+    ----------
+    soln_check : dictionary with 'fig', 'ax', 'colorbars'
+        DESCRIPTION.
+
+    Returns
+    -------
+    soln_check: input dictionary, contours and colorbars removed.
+
+    '''
+    fig = soln_check['fig']
+    ax = soln_check['ax']
+    cbar = soln_check['colorbars']
+     
+    gs = ax[0, 0].get_subplotspec().get_gridspec()
+    gs.set_height_ratios([1, 0.0001])
+    
+    cbar[0].remove()
+    cbar[1].remove()
+    ax[1, 0].remove()
+    ax[1, 1].remove()
+
+    fig.set_size_inches(8, 4)
+    
     return {'fig':fig, 'ax':ax}
 
 def check_n_dependence(soln, **kwargs):
@@ -2419,3 +2647,10 @@ def check_n_dependence(soln, **kwargs):
     # print the figure
     fig.suptitle(suptitle)
     fig.savefig(filename)
+
+def add_QCM_functions():
+    ken_path = '/home/ken/Mydocs/Github/rheoQCM/QCMFuncs'
+    # copy QCM_functions to current working directory (ken only, so others have
+    # updated version without fiddling with GitHub)
+    if os.path.isdir(ken_path):
+        shutil.copy(os.path.join(ken_path, 'QCM_functions.py'), os.getcwd())
