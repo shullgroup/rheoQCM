@@ -2755,7 +2755,7 @@ class DataSaver:
         '''
         convert time from in second to given unit
         input:
-            t: scaler or array or pd.series of t as float
+            t: scaler or array or pd.series of t as floatf
             unit: None, or str ('s', 'm', 'h', 'd')
         return:
             same size as input

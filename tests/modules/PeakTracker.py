@@ -244,7 +244,7 @@ def findpeaks_py(f, resonance, output=None, sortstr=None, threshold=None, promin
     # logger.info(resonance) 
     if f is None or len(f) == 1: # for debuging
         logger.warning('findpeaks_py input f is not well assigned!\nx = {}'.format(f))
-        return np.nan, np.nan, np.nan, np.nan
+        return np.array([]), np.array([]), np.array([]), np.array([])
 
     logger.info(threshold) 
     logger.info('f distance %s', distance / (f[1] - f[0])) 
@@ -431,6 +431,7 @@ class PeakTracker:
             self.harminput[chn_name][harm]['p_policy'] = 'maxamp'
         else: # initialize data
             self.harminput[chn_name][harm]['p_policy'] = None
+        self.harminput[chn_name][harm]['p_policy_idx'] = harm_dict.get('spinBox_peaks_policy_peakidx', 0)
 
         self.harminput[chn_name][harm]['lockphase'] = harm_dict.get('checkBox_settings_settings_harmlockphase', False)
         if harm_dict.get('doubleSpinBox_settings_settings_harmlockphase', None) is not None:
@@ -1096,6 +1097,7 @@ class PeakTracker:
             )
             report = fit_report(result, show_correl=False)
             logger.info(report)
+            # logger.warning(report) # export results to info.log
             print(report) 
             print('success: ', result.success)
             print('message: ', result.message)
@@ -1119,6 +1121,7 @@ class PeakTracker:
             harm = self.active_harm
             
         p_policy = self.harminput[chn_name][harm]['p_policy']
+        p_policy_idx = self.harminput[chn_name][harm]['p_policy_idx']
         result = self.harmoutput[chn_name][harm]['result'] 
         found_n = self.harmoutput[chn_name][harm]['found_n']
     
@@ -1135,17 +1138,21 @@ class PeakTracker:
             logger.info(amp_array) 
             logger.info(cen_array) 
             # get max amp index
-            maxamp_idx = np.argmax(amp_array)
+            maxamp_order = np.argsort(-amp_array) # get indices descending
             # get min cen index
-            mincen_idx = np.argmin(cen_array)
+            mincen_order = np.argsort(cen_array) # get indices ascending
 
             # since we are always tracking the peak with maxamp
-            p_trk = maxamp_idx
+            p_trk = maxamp_order[0]
+
+            if p_policy_idx > found_n-1: # idx exceeds the total number of peaks
+                p_policy_idx = 0 # set the idx back to 0 
+
             # get recording peak key by p_policy
             if p_policy == 'maxamp':
-                p_rec = maxamp_idx
+                p_rec = maxamp_order[p_policy_idx]
             elif p_policy == 'minf':
-                p_rec = mincen_idx
+                p_rec = mincen_order[p_policy_idx]
 
             # values for tracking peak
             val['amp_trk'] = {

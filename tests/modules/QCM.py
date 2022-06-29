@@ -57,8 +57,6 @@ prop_default = {
     'water':     {'calc': False, 'grho': 1e8, 'phi': np.pi / 2, 'drho': bulk_drho, 'n': 3}, #?? water ar R.T.
 }
 
-# fit_method = 'lmfit'
-fit_method = 'scipy'
 
 
 def nh2i(nh):
@@ -105,6 +103,8 @@ class QCM:
 
         self.piezoelectric_stiffening = False # set True if including piezoelectric stiffening
 
+        # self.fit_method = 'lmfit'
+        self.fit_method = 'scipy'
         
 
     def get_prop_by_name(self, name):
@@ -294,7 +294,7 @@ class QCM:
             grhostar = self.grhostar(grho, phi) 
         else: # Qsense version: constant G', G" linear in omega
             r = material['n']
-            grho_r = material['ghro']
+            grho_r = material['grho']
             greal = grho_r * np.cos(material['phi'])
             gimag= grho_r * np.sin(material['phi']) * (n/r) # NOTE: qcmfucn might missed grho_r
             grhostar = (gimag**2 + greal**2)**0.5 * (np.exp(1j*material['phi']))
@@ -315,7 +315,7 @@ class QCM:
 
         N = len(layers)
         # logger.info('N', N) 
-        Z = {}; D = {}; lo = {}; S = {}
+        Z = {}; D = {}; L = {}; S = {}
 
         # we use the matrix formalism to avoid typos.
         for i, layer_n in enumerate(sorted(layers.keys()), start=1): # iterate except the last layer
@@ -628,15 +628,18 @@ class QCM:
     ######## end of bulk functions ########
 
 
-    def guess_from_props(self, film):
+    def guess_from_props(self, material):
         '''
-        # TODO: check if prop_guress from calling function is material or film
+        # TODO: check if prop_guress from calling function is material or material
         '''
-        dlam_refh = self.calc_dlam(self.refh, film)
-        grho_refh = self.grho_from_material(self.refh, self.get_calc_material(film))
-        phi = self.get_calc_material(film)['phi']
-        drho = self.get_calc_material(film)['drho']
-        return [grho_refh, phi, drho, dlam_refh]
+        # dlam_refh = self.calc_dlam(self.refh, material)
+        try:
+            grho_refh = self.grho_from_material(self.refh, material)
+        except:
+            grho_refh = material.get('grho', np.nan)
+        phi = material.get('phi', np.nan)
+        drho = material.get('drho', np.nan)
+        return [grho_refh, phi, drho]
 
 
     def thinfilm_guess(self, delfstar, nh):
@@ -660,7 +663,7 @@ class QCM:
             logger.info('use thin film guess') 
             dlam_refh, phi = 0.05, np.pi/180*5
 
-            if fit_method == 'lmfit': # easier to read
+            if self.fit_method == 'lmfit': # easier to read
                 # we solve the problem initially using the harmonic and dissipation
                 # ratios, using the small load approximation
                 def residual(pars, rh_exp, rd_exp, nh): # function for residual to solve dlam & phi
@@ -843,15 +846,22 @@ class QCM:
         delfstar: dict {harm(int): complex, ...}
         film: dict e.g.: {0: 'calc': False, 'drho': 0, 'grho_refh': 0, 'phi': 0}
         bulklimt: 0.5 by default. rd > bulklimt use bulk calculation
-        nh_interests: a list of harmonics (int) to return calculated values. if None, [1, ... max(nh)]
-        brief_report: True, calculate all factors. Both True and False will return props as 2nd dict
-        return grho_refh, phi, drho, dlam_refh, err
+        nh_interests: a list of harmonics (int) to return calculated values. if None, [1, ... max(nh)] 
+        brief_report: True, calculate less factors. Both True and False will return props as 2nd dict (When it is True, only experiment data related factors are returned in props)
+        return brief_props, props
         '''
         if calctype is not None:
             self.calctype = calctype
 
         if nh_interests is None: # no list is given
             nh_interst = [i+1 for i in np.arange(max(nh)) if i%2 == 0]
+
+        # first pass at solution comes from rh and rd
+        rd_exp = self.rd_from_delfstar(nh[2], delfstar) # nh[2]
+        rh_exp = self.rh_from_delfstar(nh, delfstar) # nh[0], nh[1]
+        # logger.info('rd_exp %s', rd_exp) 
+        # logger.info('rh_exp %s', rh_exp) 
+   
 
         # input variables - this is helpfulf for the error analysis
         # define sensibly names partial derivatives for further use
@@ -867,12 +877,20 @@ class QCM:
 
         props = {} # dict used for returen detailed calculation
 
-        # first pass at solution comes from rh and rd
-        rd_exp = self.rd_from_delfstar(nh[2], delfstar) # nh[2]
-        rh_exp = self.rh_from_delfstar(nh, delfstar) # nh[0], nh[1]
-        # logger.info('rd_exp %s', rd_exp) 
-        # logger.info('rh_exp %s', rh_exp) 
-        
+        # we put those props not related to mechanical properties ahead of calculating to make sure to have them enven the mechnical calculation is failed
+        props['delf_exps'] = {n: np.real(delfstar[n]) for n in nh_interests}
+        props['delg_exps'] = {n: np.imag(delfstar[n]) for n in nh_interests}
+        props['delfn_exps'] = {n: props['delf_exps'][n] / n for n in nh_interests}
+        props['delgn_exps'] = {n: props['delg_exps'][n] / n for n in nh_interests}
+
+        props['sauerbreyms'] = {n: self.sauerbreym(n, props['delf_exps'][n]) for n in nh_interests}
+
+        props['delD_exps'] = {n: self.convert_gamma_to_D(props['delg_exps'][n], n) for n in nh_interests}
+
+        props['rd_exps'] = {n: self.rd_from_delfstar(n, delfstar) for n in nh_interests}
+        props['rh_exp'] = {n: rh_exp for n in nh_interests}
+
+
         # if there is na values, stop solving and return nans
         if np.isnan(rd_exp) or np.isnan(rh_exp):
             logger.warning('rd_exp and/or rh_exp have nan') 
@@ -912,7 +930,70 @@ class QCM:
             # logger.info('rd_exp, rh_exp is not nan') 
         # logger.info('rd_exp, rh_exp is not nan') 
         isbulk = self.isbulk(rd_exp, bulklimit)
-        if fit_method == 'lmfit':
+
+
+        # now let's get the guess (initial) values for calculating first
+        '''
+        The guess will overwrite the given guess
+        if guess failed, we go to bulk or thinfilm guess
+        guess doesn't have to be assigned with all values
+        '''
+        grho_refh_guess, phi_guess, drho_guess = np.nan, np.nan, np.nan
+        if prop_guess: # prop_guess is a film dict {'drho', 'grho_refh', 'phi'}
+            logger.info('use guess') 
+            # logger.info('use prop guess') 
+                # logger.info('use prop guess') 
+            # logger.info('use prop guess') 
+            grho_refh_guess, phi_guess, drho_guess = self.guess_from_props(prop_guess)
+        if np.isnan([grho_refh_guess, phi_guess, drho_guess]).any():
+            if isbulk: # bulk
+                logger.info('use bulk guess') 
+                grho_refh, phi, drho = self.bulk_props(delfstar)
+                # dlam_refh = self.bulk_dlam_refh(grho_refh, phi)
+            else: # thin layer
+                logger.info('use thin film guess') 
+                # logger.info('use thin film guess') 
+                    # logger.info('use thin film guess') 
+                # logger.info('use thin film guess') 
+                grho_refh, phi, drho, dlam_refh = self.thinfilm_guess(delfstar, nh)
+            # replace nan guess values
+        # use given value over write guess value
+        if ~np.isnan(grho_refh_guess):
+            grho_refh = grho_refh_guess
+        if ~np.isnan(phi_guess):
+            phi = phi_guess
+        if ~np.isnan(drho_guess):
+            drho = drho_guess
+
+        '''
+        use the value given in film calc layer as constrain (fixed prop)
+        value of n is not considered here!
+        '''
+        vary_vars = {'grho': True, 'phi': True, 'drho': True}
+        calc_material = self.get_calc_material(film)
+        if any([True for key in calc_material if key in ('grho', 'phi', 'drho')]): 
+            grho_refh_constrain, phi_constrain, drho_constrain = self.guess_from_props(calc_material)
+            # conditions to set if the value to be vary
+            if ~np.isnan(grho_refh_constrain):
+                vary_vars['grho'] = False  
+                grho_refh = grho_refh_constrain
+                err_names.remove('grho_refh') # fixed value has no covar
+
+            if ~np.isnan(phi_constrain):
+                vary_vars['phi'] = False  
+                phi = phi_constrain
+                err_names.remove('phi')
+
+            if ~np.isnan(drho_constrain):
+                vary_vars['drho'] = False  
+                drho = drho_constrain
+                if 'drho' in err_names:
+                    err_names.remove('drho')
+
+        '''
+        Build the function for solving 
+        '''
+        if self.fit_method == 'lmfit':
             logger.info('use lmfit')
 
             def residual(pars,):
@@ -935,40 +1016,18 @@ class QCM:
                         np.imag(self.calc_delfstar(n3, layers)) - np.imag(delfstar[n3])
                     ]
 
-            # now let's get the guess (initial) values for calculating
-            if isbulk: # bulk
-                logger.info('use bulk guess') 
-                grho_refh, phi, drho = self.bulk_props(delfstar)
-                dlam_refh = self.bulk_dlam_refh(grho_refh, phi)
-                err_names = err_names[0:1]
-            else: # thin layer
-                logger.info('use thin film guess') 
-                if prop_guess: # prop_guess is a film dict {'drho', 'grho_refh', 'phi'}
-                    # logger.info('use prop guess') 
-                        # logger.info('use prop guess') 
-                    # logger.info('use prop guess') 
-                    grho_refh, phi, drho, dlam_refh = self.guess_from_props(prop_guess)
-                else:
-                    # logger.info('use thin film guess') 
-                        # logger.info('use thin film guess') 
-                    # logger.info('use thin film guess') 
-                    grho_refh, phi, drho, dlam_refh = self.thinfilm_guess(delfstar, nh)
-
             # set parameters for minimize
             params = Parameters()
-            params.add('grho', value=grho_refh, min=grho_refh_range[0], max=grho_refh_range[1])
-            params.add('phi', value=phi, min=phi_range[0], max=phi_range[1])
+            params.add('grho', value=grho_refh, vary=vary_vars['grho'], min=grho_refh_range[0], max=grho_refh_range[1])
+            params.add('phi', value=phi, vary=vary_vars['phi'], min=phi_range[0], max=phi_range[1])
             if isbulk:
                 params.add('drho', value=drho, vary=False)
+                err_names = err_names[0:1]
             else:
-                params.add('drho', value=drho, min=phi_range[0], max=phi_range[1])
+                params.add('drho', value=drho, vary=vary_vars['drho'], min=phi_range[0], max=phi_range[1])
 
         else: # use scipy
-            if isbulk: # bulk
-                logger.info('use bulk guess') 
-                grho_refh, phi, drho = self.bulk_props(delfstar)
-                dlam_refh = self.bulk_dlam_refh(grho_refh, phi)
-                
+            if isbulk: # bulk              
                 # use bounds for grho and phi only
                 lb = lb[0:-1]
                 ub = ub[0:-1]
@@ -991,17 +1050,6 @@ class QCM:
                     ])
             else: # thin layer
                 logger.info('use thin film guess') 
-                if prop_guess: # prop_guess is a film dict {'drho', 'grho_refh', 'phi'}
-                    # logger.info('use prop guess') 
-                        # logger.info('use prop guess') 
-                    # logger.info('use prop guess') 
-                    grho_refh, phi, drho, dlam_refh = self.guess_from_props(prop_guess)
-                else:
-                    # logger.info('use thin film guess') 
-                        # logger.info('use thin film guess') 
-                    # logger.info('use thin film guess') 
-                    grho_refh, phi, drho, dlam_refh = self.thinfilm_guess(delfstar, nh)
-
                 # initial value
                 x0 = np.array([grho_refh, phi, drho])
 
@@ -1013,15 +1061,23 @@ class QCM:
                         np.real(self.calc_delfstar(n2, layers)) - np.real(delfstar[n2]),
                         np.imag(self.calc_delfstar(n3, layers)) - np.imag(delfstar[n3])
                     ])
-
+            # if ~vary_vars['grho']:
+            #     lb[0] = grho_refh
+            #     ub[0] = grho_refh
+            # if ~vary_vars['phi']:
+            #     lb[1] = phi
+            #     ub[1] = phi
+            # if isbulk and ~np.isnan(drho_constrain):
+            #     lb[2] = drho
+            #     ub[2] = drho
             
-        if ~np.isnan(np.array([grho_refh, phi, drho, dlam_refh]).any()) and grho_refh_range[0]<=grho_refh<=grho_refh_range[1] and phi_range[0]<=phi<=phi_range[1] and (isbulk or drho_range[0]<=drho<=drho_range[1]):
+        if ~np.isnan([grho_refh, phi, drho]).all() and grho_refh_range[0]<=grho_refh<=grho_refh_range[1] and phi_range[0]<=phi<=phi_range[1] and (isbulk or drho_range[0]<=drho<=drho_range[1]):
             logger.warning('film guess in range') 
             
             logger.info('delfstars: %s, %s, %s', delfstar[n1], delfstar[n2], delfstar[n3])
             
             # recalculate solution to give the uncertainty, if solution is viable
-            if fit_method == 'lmfit':
+            if self.fit_method == 'lmfit':
                 try:
                     soln = minimize(
                         residual,
@@ -1034,15 +1090,6 @@ class QCM:
                     phi = soln.params.get('phi').value
                     drho = soln.params.get('drho').value
 
-                    # update calc layer prop
-                    film = self.set_calc_layer_val(film, grho_refh, phi, drho)
-                    # logger.info('film after 2nd sol %s', film) 
-                        # logger.info('film after 2nd sol %s', film) 
-                    # logger.info('film after 2nd sol %s', film) 
-                    
-                    # dlam_refh = self.calc_dlam(self.refh, film)
-                    # comment above line to use the dlam_refh from soln
-
                     # put the input uncertainties into a n element vector
                     delfstar_err = np.zeros(3)
                     delfstar_err[0] = np.real(self.fstar_err_calc(delfstar[n1]))
@@ -1054,7 +1101,7 @@ class QCM:
                     
                     for i, nm in enumerate(err_names):
                         err[nm] = covar[i, :].sum()
-                        err[nm] = np.sqrt(err[nm]) 
+                        err[nm] = np.sqrt(err[nm]) if err[nm] >= 0 else 0 # sometimes covar<0
                 except:
                     logger.exception('error occurred while solving the thin film.')
             else: # scipy
@@ -1070,15 +1117,6 @@ class QCM:
                         logger.info('drho guess: %s', drho)
                         drho = soln['x'][2]
                         logger.info('drho recalc: %s', drho)
-
-                    # update calc layer prop
-                    film = self.set_calc_layer_val(film, grho_refh, phi, drho)
-                    # logger.info('film after 2nd sol %s', film) 
-                        # logger.info('film after 2nd sol %s', film) 
-                    # logger.info('film after 2nd sol %s', film) 
-                    
-                    dlam_refh = self.calc_dlam(self.refh, self.get_calc_material(film))
-                    # comment above line to use the dlam_refh from soln
 
                     # put the input uncertainties into a n element vector
                     if isbulk: # bulk
@@ -1111,6 +1149,16 @@ class QCM:
                         err[nm] = np.sqrt(err[nm]) 
                 except:
                     logger.exception('error occurred while solving the thin film.')
+
+            # update calc layer prop
+            film = self.set_calc_layer_val(film, grho_refh, phi, drho)
+            # logger.info('film after 2nd sol %s', film) 
+                # logger.info('film after 2nd sol %s', film) 
+            # logger.info('film after 2nd sol %s', film) 
+            
+            dlam_refh = self.calc_dlam(self.refh, self.get_calc_material(film))
+            # comment above line to use the dlam_refh from soln
+
         else:
             logger.warning('film guess out of range') 
             grho_refh, phi, drho, dlam_refh = np.nan, np.nan, np.nan, np.nan # set the used values back to nan
@@ -1143,7 +1191,7 @@ class QCM:
                 delfstar[n] = np.nan
 
         # these values are used for calculating others
-        delfstar_calc = {n: self.calc_delfstar(n, film) for n in nh_interests}
+        delfstar_calc = {n: self.calc_delfstar(n, film) for n in list(set(nh_interests) | set(nh))} # we need the harmonics in nh for other calculation
         normdelfstar_calcs = {n: self.normdelfstar(n, dlam_refh, phi) for n in nh_interests} # calculated normalized delfstar
         # normdelfstar_calcs = {n: np.real(delfstar_calc[n]) / delfsn[n] for n in nh_interests} # this is a test. it should be the same as normdelf_calcs[nh2i(n)] NOTE: they are not the same as tested
         rd_calc = self.rd_from_delfstar(nh[2], delfstar_calc) # single value to nh[2].
@@ -1172,22 +1220,15 @@ class QCM:
 
         # harmonic depended variables
         props['delfsn'] = {n: self.sauerbreyf(n, drho) for n in nh_interests} # fsn from sauerbrey eq
-        props['delf_exps'] = {n: np.real(delfstar[n]) for n in nh_interests}
-        props['delg_exps'] = {n: np.imag(delfstar[n]) for n in nh_interests}
-        props['delfn_exps'] = {n: props['delf_exps'][n] / n for n in nh_interests}
-        props['delgn_exps'] = {n: props['delg_exps'][n] / n for n in nh_interests}
 
         props['delf_calcs'] = {n: np.real(delfstar_calc[n]) for n in nh_interests}
         props['delg_calcs'] = {n: np.imag(delfstar_calc[n]) for n in nh_interests}
         props['delfn_calcs'] = {n: props['delf_calcs'][n] / n for n in nh_interests}
         props['delgn_calcs'] = {n: props['delg_calcs'][n] / n for n in nh_interests}
 
-        props['delD_exps'] = {n: self.convert_gamma_to_D(props['delg_exps'][n], n) for n in nh_interests}
         props['delD_calcs'] = {n: self.convert_gamma_to_D(props['delg_calcs'][n], n) for n in nh_interests}
 
-        props['sauerbreyms'] = {n: self.sauerbreym(n, props['delf_exps'][n]) for n in nh_interests}
 
-        props['rd_exps'] = {n: self.rd_from_delfstar(n, delfstar) for n in nh_interests}
         props['rd_calcs'] = {n: self.rd_from_delfstar(n, delfstar_calc) for n in nh_interests}
         
         props['dlams'] = {n: self.dlam(n, dlam_refh, phi) for n in nh_interests}
@@ -1217,7 +1258,8 @@ class QCM:
         props['drho_err'] = {n: err['drho'] for n in nh_interests}
         props['phi'] = {n: min(np.pi/2, phi) for n in nh_interests}
         props['phi_err'] = {n: err['phi'] for n in nh_interests}
-        props['rh_exp'] = {n: rh_exp for n in nh_interests}
+
+        props['rd_calc'] = {n: rh_calc for n in nh_interests}
         props['rh_calc'] = {n: rh_calc for n in nh_interests}
         
         # {n:  for n in nh_interests}

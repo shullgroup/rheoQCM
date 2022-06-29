@@ -191,13 +191,13 @@ def mp_solve_single_queue(ind, qcm_queue, mech_queue, prop_dict_ind, nh, calctyp
         return None
 
 
-def mp_solve_single_queue_to_prop(ind, qcm_queue, nh, calctype, bulklimit, refh, solve_single_queue_to_prop):
+def mp_solve_single_queue_to_prop(ind, qcm_queue, nh, calctype, bulklimit, refh, brief_report, solve_single_queue_to_prop):
     '''
     used to solve the known layers to prop
     '''
     
     # get prop
-    brief_props, props = solve_single_queue_to_prop(nh, qcm_queue, calctype=calctype, bulklimit=bulklimit, nh_interests=[refh], brief_report=True)
+    brief_props, props = solve_single_queue_to_prop(nh, qcm_queue, calctype=calctype, bulklimit=bulklimit, nh_interests=[refh], brief_report=brief_report)
 
     return (ind, dict(grho=brief_props['grho_refh'], phi=brief_props['phi'], drho=brief_props['drho'], n=refh))
 
@@ -934,6 +934,7 @@ class QCMApp(QMainWindow):
         self.ui.radioButton_peaks_num_fixed.toggled['bool'].connect(self.update_harmwidget)
         self.ui.radioButton_peaks_policy_minf.toggled['bool'].connect(self.update_harmwidget)
         self.ui.radioButton_peaks_policy_maxamp.toggled['bool'].connect(self.update_harmwidget)
+        self.ui.spinBox_peaks_policy_peakidx.valueChanged.connect(self.update_harmwidget)
         self.ui.checkBox_settings_settings_harmlockphase.toggled['bool'].connect(self.update_harmwidget)
         self.ui.doubleSpinBox_settings_settings_harmlockphase.valueChanged.connect(self.update_harmwidget)
 
@@ -4701,6 +4702,7 @@ class QCMApp(QMainWindow):
                                     calctype,
                                     bulklimit, 
                                     refh,
+                                    True, # brief_report. we don't need the details of the upper layer calculation
                                     self.qcm.solve_single_queue_to_prop,
                                 ) 
                                 for ind in idx_joined
@@ -5841,7 +5843,7 @@ class QCMApp(QMainWindow):
 
     def update_harmwidget(self, signal):
         '''
-        update widgets in treeWidget_settings_settings_harmtree
+        update value changes of widgets in treeWidget_settings_settings_harmtree
         to self.settings
         except lineEdit_harmstart & lineEdit_harmend
         '''
@@ -5989,6 +5991,10 @@ class QCMApp(QMainWindow):
         # update doubleSpinBox_settings_settings_harmlockphase
         self.ui.doubleSpinBox_settings_settings_harmlockphase.setValue(
             self.get_harmdata('doubleSpinBox_settings_settings_harmlockphase', harm=harm)
+        )
+        # update spinBox_peaks_policy_peakidx
+        self.ui.spinBox_peaks_policy_peakidx.setValue(
+            self.get_harmdata('spinBox_peaks_policy_peakidx', harm=harm)
         )
 
         # update lineEdit_peaks_threshold

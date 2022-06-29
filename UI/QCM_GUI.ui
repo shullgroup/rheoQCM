@@ -210,7 +210,7 @@ background-color: red;
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>3</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="tab_settings_control">
              <property name="sizePolicy">
@@ -1475,8 +1475,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
-                   <height>70</height>
+                   <width>247</width>
+                   <height>179</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1618,7 +1618,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>98</width>
+                   <width>86</width>
                    <height>70</height>
                   </rect>
                  </property>
@@ -1910,6 +1910,19 @@ background-color: red;
                   <widget class="QRadioButton" name="radioButton_peaks_policy_maxamp">
                    <property name="text">
                     <string>max Amp.</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QSpinBox" name="spinBox_peaks_policy_peakidx">
+                   <property name="buttonSymbols">
+                    <enum>QAbstractSpinBox::NoButtons</enum>
+                   </property>
+                   <property name="minimum">
+                    <number>-1</number>
+                   </property>
+                   <property name="maximum">
+                    <number>4</number>
                    </property>
                   </widget>
                  </item>

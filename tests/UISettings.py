@@ -148,6 +148,7 @@ config_default = {
         'pushButton_data_la', 
         'pushButton_data_ra', 
         'doubleSpinBox_settings_settings_harmlockphase',
+        'spinBox_peaks_policy_peakidx',
         # hide reference time widgets to simplify the setup
         # reference time can always be changed by shifted_t0
         'dateTimeEdit_reftime',
@@ -187,7 +188,7 @@ config_default = {
 
         'checkBox_settings_mech_liveupdate',
         'radioButton_settings_mech_refto_air',
-        'radioButton_settings_mech_refto_overylayer',
+        'radioButton_settings_mech_refto_overlayer',
         # 'toolButton_settings_mechanics_solve',
         # 'groupBox_nhplot',
         # 'groupBox_settings_mechanics_nhcalc',
@@ -1015,6 +1016,7 @@ harm_tree = {
     'radioButton_peaks_num_fixed': False,
     'radioButton_peaks_policy_minf': False,
     'radioButton_peaks_policy_maxamp': True,
+    'spinBox_peaks_policy_peakidx': 0,
     'checkBox_settings_settings_harmlockphase': False,
     'doubleSpinBox_settings_settings_harmlockphase': 0,
     'lineEdit_peaks_threshold': 0.00001,

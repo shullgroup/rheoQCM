@@ -1,0 +1,199 @@
+TODO: peak fiting w/ width constraints
+https://lmfit.github.io/lmfit-py/constraints.html#using-inequality-constraints
+
+############################
+
+d/lambda should be nan for bulk
+
+
+if it is possible to use json.dumps instead pd.to_json to save df. Latter method convert inf to null.
+
+
+
+####################################
+/home/janus/anaconda3/lib/python3.7/site-packages/pandas/core/indexing.py:1404: FutureWarning: 
+Passing list-likes to .loc or [] with any missing label will raise
+KeyError in the future, you can use .reindex() as an alternative.
+
+See the documentation here:
+https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#deprecate-loc-reindex-listlike
+  return self._getitem_tuple(key)
+2020-11-30 21:07:44,567 - __main__ - ERROR - 7207 - Exceptiion error
+Traceback (most recent call last):
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/rheoQCM.py", line 1409, in <lambda>
+    self.ui.actionRegenerate_allref.triggered.connect(lambda: self.regenerate_from_raw(chn_name='ref', mode='all'))
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/rheoQCM.py", line 3044, in regenerate_from_raw
+    self.data_refit(chn_name, sel_idx_dict, regenerate=True)
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/rheoQCM.py", line 7046, in data_refit
+    self.update_mpl_plt12()
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/rheoQCM.py", line 3214, in update_mpl_plt12
+    self.update_mpl_dataplt(plt_str='plt1')
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/rheoQCM.py", line 3288, in update_mpl_dataplt
+    harm_ydata = self.get_harm_data_by_typestr(plt_opt[0], plt_chnname, plt_harm, mark=mark, unit_t=timeuint, unit_temp=tempunit)
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/rheoQCM.py", line 3452, in get_harm_data_by_typestr
+    data = self.data_saver.get_marked_harm_col_from_list_column(chn_name, harm, 'fs', deltaval=True, norm=True, mark=mark)
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/modules/DataSaver.py", line 1350, in get_marked_harm_col_from_list_column
+    cols = self.get_list_column_to_columns(chn_name, col, mark=False, deltaval=deltaval, norm=norm) # get all data
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/modules/DataSaver.py", line 1588, in get_list_column_to_columns
+    s = self.convert_col_to_delta_val(chn_name, col, norm=norm)
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/modules/DataSaver.py", line 1694, in convert_col_to_delta_val
+    self.set_ref_set(chn_name, *self.exp_ref[chn_name + '_ref'])
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/modules/DataSaver.py", line 1885, in set_ref_set
+    self.copy_to_ref(chn_name, df.loc[idx_list_opened, :]) # copy to reference data set
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/modules/DataSaver.py", line 1815, in copy_to_ref
+    df = self.reset_match_marks(df, mark_pair=(0, 1)) # mark 1 to 0
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/modules/DataSaver.py", line 2388, in reset_match_marks
+    df_new.marks = df_new.marks.apply(lambda x: [new_mark if mark == old_mark else mark for mark in x])
+  File "/home/janus/anaconda3/lib/python3.7/site-packages/pandas/core/series.py", line 4038, in apply
+    mapped = lib.map_infer(values, f, convert=convert_dtype)
+  File "pandas/_libs/lib.pyx", line 2227, in pandas._libs.lib.map_infer
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/modules/DataSaver.py", line 2388, in <lambda>
+    df_new.marks = df_new.marks.apply(lambda x: [new_mark if mark == old_mark else mark for mark in x])
+TypeError: 'float' object is not iterable
+UI error occured.
+
+
+
+###########################
+# NOTE: Fixed by using 'mode' instead of '_active'
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/modules/MatplotlibWidget.py", line 660, in data_rectsleector_picker_switch
+    if self.toolbar._active == "PAN":
+AttributeError: 'NavigationToolbar' object has no attribute '_active'
+UI error occured.
+
+matplotlib 3.3.x上で、NavigationToolBarの属性値_activeが使えなくなったこと、__init_tools の扱いが変わったなどがあったので、コード内でmatplotlibのバージョンが3.0.0以上で扱いを変えるという仕組みにしたが、Windows版を作成した際にインストールされている3.0.2では、
+
+
+##########################
+File "c:\Users\PolyPeep\Documents\GitHub\QCM_py\tests\modules\PeakTracker.py", line 333, in guess_peak_factors
+    prominences = peak_prominences(resonance, np.array([cen_index])) # tuple of 3 arrays
+  File "C:\Users\PolyPeep\Anaconda3\lib\site-packages\scipy\signal\_peak_finding.py", line 407, in peak_prominences
+    return _peak_prominences(x, peaks, wlen)
+  File "_peak_finding_utils.pyx", line 243, in scipy.signal._peak_finding_utils._peak_prominences
+ValueError: 399 is not a valid peak
+
+
+
+#########################################
+rename error. using mapper has the same error. 
+May be due to the data type issue when we change it while setting the data.
+May wait for new pandas version or chack the datatype.
+
+https://www.it-swarm.jp.net/ja/pandas/%E5%88%97%E3%81%AE%E5%90%8D%E5%89%8D%E3%82%92%E5%A4%89%E6%9B%B4%E3%81%97%E3%81%9F%E5%BE%8C%E3%80%81%E3%82%AD%E3%83%BC%E3%82%A8%E3%83%A9%E3%83%BC%E3%81%8C%E7%99%BA%E7%94%9F%E3%81%99%E3%82%8B/831083945/
+
+Traceback (most recent call last):
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/rheoQCM.py", line 3222, in update_mpl_plt1
+    self.update_mpl_dataplt(plt_str='plt1')
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/rheoQCM.py", line 3288, in update_mpl_dataplt
+    harm_ydata = self.get_harm_data_by_typestr(plt_opt[0], plt_chnname, plt_harm, mark=mark, unit_t=timeuint, unit_temp=tempunit)
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/rheoQCM.py", line 3448, in get_harm_data_by_typestr
+    data = self.data_saver.minus_columns(data)
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/modules/DataSaver.py", line 1805, in minus_columns
+    df.rename(mapper=lambda x: 'm'+x, axis=1, inplace=True)
+TypeError: rename() got an unexpected keyword argument 'mapper'
+
+
+===========================================
+Traceback (most recent call last):
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/rheoQCM.py", line 3899, in <lambda>
+    actionRefit_selpts.triggered.connect(lambda: self.data_refit(chn_name, UIModules.sel_ind_dict(plt_harms, sel_idx_dict, 'selpts', marks)))
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/rheoQCM.py", line 6962, in data_refit
+    fit_result = self.peak_tracker.peak_fit(chn_name, harm, components=False)
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/modules/PeakTracker.py", line 1306, in peak_fit
+    self.minimize_GB()
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/modules/PeakTracker.py", line 988, in minimize_GB
+    self.auto_guess()
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/modules/PeakTracker.py", line 883, in auto_guess
+    self.params_guess(method=method)
+  File "/home/janus/Documents/FS/zhczq_repo/rheoQCM/tests/modules/PeakTracker.py", line 758, in params_guess
+    if indices.size == 0:
+AttributeError: 'float' object has no attribute 'size'
+
+
+############################################
+/rheoQCM/tests/modules/DataSaver.py:2756: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  df[col][ind_list] = df[col][ind_list].apply(lambda x: list(mean_list[seg % len(mean_list)]))
+
+
+
+1. best practice for making a copy of df: df.copy()
+2. best practice to change value of a single cell of df (.at[r,c] or [r][c])
+
+multipe processing
+
+time.sleep() alternative? 
+use QTimer and seperate scan and collect data to two functions and the former shot by timer.
+
+
+## multiprocessing
+https://realpython.com/python-concurrency/
+https://timber.io/blog/multiprocessing-vs-multithreading-in-python-what-you-need-to-know/
+https://stackoverflow.com/questions/5442910/how-to-use-multiprocessing-pool-map-with-multiple-arguments
+https://miguendes.me/how-to-pass-multiple-arguments-to-a-map-function-in-python
+# Qthread
+https://realpython.com/python-pyqt-qthread/
+https://stackoverflow.com/questions/6783194/background-thread-with-qthread-in-pyqt
+https://stackoverflow.com/questions/16879971/example-of-the-right-way-to-use-qthread-in-pyqt
+https://elsampsa.github.io/valkka-examples/_build/html/qt_notes.html
+
+
+5'22"
+353
+1 core: 324.5359208583832 s
+4 core: 47.53559899330139 s
+355
+1 core: 352.5771815776825 s
+4 core: 39.18436336517334 s
+
+
+lock phi for all peak to given value
+
+override class
+
+#########################################
+CovB = inv(J'*J)*MSE
+MSE = (R'*R)/(N-p)
+https://stats.stackexchange.com/questions/231868/relation-between-covariance-matrix-and-jacobian-in-nonlinear-least-squares
+https://www.mathworks.com/help/stats/nlinfit.html
+# ===================
+
+
+#######################
+add f/gamma (if all fit checked) choice to start/end center/spain list 
+
+#######################
+add bare (air) to medium condition
+
+
+#######################
+add point to point to reference type
+
+
+#######################
+add "max freq" to peak policy
+
+
+
+
+
+
+######### qcm_functions ############
+
+# qcmfun uses n1 as bulk refh!
+# qcmfun fix drho, n1=n2=n3=nh[0]?
+# qcmfun newtonian solution: -calc_df=exp_dg, calc_dg=exp_df
+
+qcmfun: electro_default
+
+calc_delfstar: refto
+    LL when refto == 0 dfc should consider electrode
+
+
+###### method to plot components from lmfit ########
+comps = result.eval_components(x=x)
+axes[1].plot(x, y)
+axes[1].plot(x, comps['g1_'], '--', label='Gaussian component 1')
+axes[1].plot(x, comps['g2_'], '--', label='Gaussian component 2')
