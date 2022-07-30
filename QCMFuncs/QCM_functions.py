@@ -1742,7 +1742,6 @@ def read_xlsx(infile, **kwargs):
 
         :Tref: (numeric)
             Temperature at which reference frequency shift was determined  
-            
             - default is 22C
 
         :T_coef_plots: (Boolean)  
@@ -1806,18 +1805,27 @@ def read_xlsx(infile, **kwargs):
     df=df[df.keep_row == 1]  # Delete all rows that are not appropriately marked
 
     # now sort out which columns we want to keep in the dataframe
-    keep_column=['t']
+    keep_column=['t', 'temp']
     for n in nvals:
         keep_column.append(n)
 
-    # keep the temperature column if it exists
-    if 'temp' in df.keys():
-        keep_column.append('temp')
-
+    # add the temperature column to original dataframe if it does not exist or
+    # contains all nan values, and set all Temperatures to Tref
+    if ('temp' not in df.keys()) or (df.temp.isnull().values.all()):
+        df['temp'] = Tref
+        
     # add each of the values of delfstar
-    if T_coef != 'calculated':
-        # here we need to obtain T_coef from the info in the ref. channel
-        # start by reading in bare crystal ata
+    if ref_channel == 'self':
+        # this is the simplest read protocol, with delf and delg already in
+        # the .xlsx file
+        for n in nvals:
+            df[n]=df['delf'+str(n)] + 1j*df['delg'+str(n)
+                                ].round(1) - fref_shift[n]
+            
+    elif T_coef != 'calculated':
+        # this is the case where the temperature coefficients are input
+        # directly as a dictionary,  includes the case where we just use
+        # the default values
         df_ref=pd.read_excel(infile, sheet_name=ref_channel, header=0)
         if type(ref_idx) != str:
             df_ref=df_ref[df_ref.index.isin(ref_idx)]
@@ -1843,13 +1851,6 @@ def read_xlsx(infile, **kwargs):
             df[n]  = (df['f'+str(n)+'_dat'] - df['f'+str(n) + '_ref'] +
                   1j*(df['g'+str(n)+'_dat'] - df['g'+str(n) + '_ref']))
             
-
-    elif ref_channel == 'self':
-        # this is the standard read protocol, with delf and delg already in
-        # the .xlsx file
-        for n in nvals:
-            df[n]=df['delf'+str(n)] + 1j*df['delg'+str(n)
-                                ].round(1) - fref_shift[n]  # -AS
 
     else:
         # here we need to obtain T_coef from the info in the ref. channel
@@ -2251,7 +2252,7 @@ def check_solution(df, **kwargs):
     philim=kwargs.get('philim', [0.001, 90])
     dlim=kwargs.get('dlim', [0.001, 0.5])
     xscale = kwargs.get('xscale', 'linear')
-    xmult = kwargs.get('xmult')
+    xmult = kwargs.get('xmult', 1)
     # having d of 0 causes some problems.  Change lower limit to be at least 0.001
     dlim[0] = max(dlim[0], 0.001)
     nplot=kwargs.get('nplot', [1, 3, 5])
