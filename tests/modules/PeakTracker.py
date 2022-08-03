@@ -294,7 +294,7 @@ def findpeaks_py(f, resonance, output=None, sortstr=None, threshold=None, promin
     return indices, heights, prominences, widths
 
 
-def guess_peak_factors(freq, resonance):
+def guess_peak_factors(freq, resonance, peak_finder_method=peak_finder_method):
     ''' 
     guess the factors of a peak.
     input:
@@ -629,13 +629,11 @@ class PeakTracker:
         # else:
         #     _, cen, half_wid, _ = guess_peak_factors(freq, resonance)
     
-        # use the guessed value
-        _, cen, half_wid, _ = guess_peak_factors(freq, resonance)
-
-        current_xlim = np.array(self.harminput[chn_name][harm]['current_span'])
         # get the current center and current span of the data in Hz
         current_center, current_span = UIModules.converter_startstop_to_centerspan(*self.harminput[chn_name][harm]['current_span'])
         
+        current_xlim = np.array(self.harminput[chn_name][harm]['current_span'])
+
         logger.info('current_center %s', current_center)
         logger.info('current_span %s', current_span)
         logger.info('current_xlim %s', current_xlim)
@@ -645,62 +643,67 @@ class PeakTracker:
         # initiate new_xlim == previous span
         new_xlim = self.harminput[chn_name][harm]['current_span']
 
-        # find the starting and ending frequency of the peak in Hz
-        if track_condition == 'fixspan':
-            new_cen = set_new_cen(freq, cen, current_span, current_xlim) # replace current_xlim with current_span
-            new_xlim = set_new_xlim(new_cen, current_span)
-            ''' if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > 0.1 * current_span:
-                # new start and end frequencies in Hz
-                new_xlim=np.array([cen-0.5*current_span,cen+0.5*current_span]) '''
-        elif track_condition == 'fixcenter':
-            new_span = set_new_span(current_span, half_wid), config_default['peak_min_width_Hz']
-            new_xlim = set_new_xlim(current_center, new_span)
+        try:
+            # use the guessed value
+            _, cen, half_wid, _ = guess_peak_factors(freq, resonance)
 
-            ''' # peak_xlim = np.array([cen-half_wid*3, cen+half_wid*3])
-            if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*half_wid, current_center + 3*half_wid])))) > 3e3:
-                #TODO above should equal to abs(sp - 6 * half_wid) > 3e3
-                # set new start and end freq based on the location of the peak in Hz
-                new_xlim = np.array(current_center-3*half_wid, current_center+3*half_wid) '''
+            # find the starting and ending frequency of the peak in Hz
+            if track_condition == 'fixspan':
+                new_cen = set_new_cen(freq, cen, current_span, current_xlim) # replace current_xlim with current_span
+                new_xlim = set_new_xlim(new_cen, current_span)
+                ''' if np.absolute(np.mean(np.array([freq[0],freq[-1]]))-cen) > 0.1 * current_span:
+                    # new start and end frequencies in Hz
+                    new_xlim=np.array([cen-0.5*current_span,cen+0.5*current_span]) '''
+            elif track_condition == 'fixcenter':
+                new_span = set_new_span(current_span, half_wid), config_default['peak_min_width_Hz']
+                new_xlim = set_new_xlim(current_center, new_span)
 
-        elif track_condition == 'auto':
-            new_cen = set_new_cen(freq, cen, current_span, current_xlim)
-            new_span = set_new_span(current_span, half_wid)
-            new_xlim = set_new_xlim(new_cen, new_span)
+                ''' # peak_xlim = np.array([cen-half_wid*3, cen+half_wid*3])
+                if np.sum(np.absolute(np.subtract(current_xlim, np.array([current_center-3*half_wid, current_center + 3*half_wid])))) > 3e3:
+                    #TODO above should equal to abs(sp - 6 * half_wid) > 3e3
+                    # set new start and end freq based on the location of the peak in Hz
+                    new_xlim = np.array(current_center-3*half_wid, current_center+3*half_wid) '''
+
+            elif track_condition == 'auto':
+                new_cen = set_new_cen(freq, cen, current_span, current_xlim)
+                new_span = set_new_span(current_span, half_wid)
+                new_xlim = set_new_xlim(new_cen, new_span)
 
 
-            logger.info('current_center %s', current_center) 
-            logger.info('current_span %s', current_span) 
-            logger.info('current_xlim %s', current_xlim) 
-            logger.info('new_cen %s', new_cen) 
-            logger.info('new_span %s', new_span) 
-            logger.info('new_xlim %s', new_xlim) 
+                logger.info('current_center %s', current_center) 
+                logger.info('current_span %s', current_span) 
+                logger.info('current_xlim %s', current_xlim) 
+                logger.info('new_cen %s', new_cen) 
+                logger.info('new_span %s', new_span) 
+                logger.info('new_xlim %s', new_xlim) 
 
-            ''' # adjust window if neither span or center is fixed (default)
-            if(np.mean(current_xlim)-cen) > 1*current_span/12: # peak center freq too low
-                new_xlim = current_xlim - current_span / 15  # new start and end frequencies in Hz
-            elif (np.mean(current_xlim)-cen) < -1*current_span/12: # peak center freq too high
-                new_xlim = current_xlim + current_span / 15  # new start and end frequencies in Hz
-            else: # peak center in the accessible range
+                ''' # adjust window if neither span or center is fixed (default)
+                if(np.mean(current_xlim)-cen) > 1*current_span/12: # peak center freq too low
+                    new_xlim = current_xlim - current_span / 15  # new start and end frequencies in Hz
+                elif (np.mean(current_xlim)-cen) < -1*current_span/12: # peak center freq too high
+                    new_xlim = current_xlim + current_span / 15  # new start and end frequencies in Hz
+                else: # peak center in the accessible range
+                    pass
+
+                thresh1 = .05 * current_span + current_xlim[0] # Threshold frequency in Hz
+                thresh2 = .03 * current_span # Threshold frequency span in Hz
+                LB_peak = cen - half_wid * 3 # lower bound of the resonance peak
+                if LB_peak - thresh1 > half_wid * 8: # if peak is too thin, zoom into the peak
+                    new_xlim = [(current_xlim[0] + thresh2), (current_xlim[1] - thresh2)] # Hz
+                elif thresh1 - LB_peak > -half_wid*5: # if the peak is too fat, zoom out of the peak
+                    new_xlim = [(current_xlim[0] - thresh2), (current_xlim[1] + thresh2)] # Hz '''
+            elif track_condition == 'fixcntspn':
+                logger.info('fixcntspn') 
+                # both span and cent are fixed
+                # no changes
                 pass
-
-            thresh1 = .05 * current_span + current_xlim[0] # Threshold frequency in Hz
-            thresh2 = .03 * current_span # Threshold frequency span in Hz
-            LB_peak = cen - half_wid * 3 # lower bound of the resonance peak
-            if LB_peak - thresh1 > half_wid * 8: # if peak is too thin, zoom into the peak
-                new_xlim = [(current_xlim[0] + thresh2), (current_xlim[1] - thresh2)] # Hz
-            elif thresh1 - LB_peak > -half_wid*5: # if the peak is too fat, zoom out of the peak
-                new_xlim = [(current_xlim[0] - thresh2), (current_xlim[1] + thresh2)] # Hz '''
-        elif track_condition == 'fixcntspn':
-            logger.info('fixcntspn') 
-            # both span and cent are fixed
-            # no changes
-            pass
-        elif track_condition == 'usrdef': #run custom tracking algorithm
-            ### CUSTOM, USER-DEFINED
-            ### CUSTOM, USER-DEFINED
-            ### CUSTOM, USER-DEFINED
-            pass
-
+            elif track_condition == 'usrdef': #run custom tracking algorithm
+                ### CUSTOM, USER-DEFINED
+                ### CUSTOM, USER-DEFINED
+                ### CUSTOM, USER-DEFINED
+                pass
+        except Exception as e:
+            logger.warning('use previous cen/xlim\npeak guessing error: %s', e)
         logger.info('new_cen: %s', new_cen)
         logger.info('new_xlim: %s', new_xlim)
 
