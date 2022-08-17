@@ -908,6 +908,9 @@ def solve_for_props(delfstar, calc, **kwargs):
             - 'SLA' (default): small load approximation with power law model
             - 'LL': Lu Lewis equation, using default or provided electrode props
             - 'Voigt': small load approximation with Voigt model
+            
+        guess (dictionary):
+            Dictionary with initial guesses for properties ('grho3', 'phi', 'drho')            
         
         overlayer (dictionary):
             Dictionary with Properties of overlayer ('grho3', 'phi', 'drho')
@@ -966,8 +969,8 @@ def solve_for_props(delfstar, calc, **kwargs):
     # set upper and lower bounds
     lb = kwargs.get('lb', [1e4, 0, 0])
     ub = kwargs.get('ub', [1e13, 90, 3e-2])
-    lb = np.array(lb)  # lower bounds drho, grho3, phi
-    ub = np.array(ub)  # upper bounds drho, grho3, phi
+    lb = np.array(lb)  # lower bounds on grho3, phi, drho
+    ub = np.array(ub)  # upper bounds on grho3, phi, drho
 
     # add dots between numbers if needed
     if not '.' in calc and len(calc)<4:
@@ -1001,7 +1004,13 @@ def solve_for_props(delfstar, calc, **kwargs):
             drho, grho3, phi = guess['drho'], guess['grho3'], guess['phi']
         else:
             start_key = np.min(df_in.keys())
-            drho, grho3, phi = thinfilm_guess(df_in[start_key], calc)
+            try:
+                drho, grho3, phi = thinfilm_guess(df_in[start_key], calc)
+            except:
+                grho3 = 1e11
+                phi = 45
+                drho = 2e-3
+                
 
     # set up the initial guess
     if fixed_drho:
@@ -1026,6 +1035,10 @@ def solve_for_props(delfstar, calc, **kwargs):
 
     # obtain the solution, using either the SLA or LL methods
     for i in df_in.columns:
+        # if an initial guess exists in the input file, we use that
+        if 'guess' in df_in[i].index:
+            x0 = [df_in[i].guess['grho3'], df_in[i].guess['phi'],
+                  df_in[i].guess['drho']]
         # check to see if there are any nan values in the harmonics we need
         if np.isnan([df_in[i][n1], df_in[i][n2], df_in[i][n3]]).any():
             continue
@@ -1355,7 +1368,13 @@ def make_prop_axes(**kwargs):
             
             - 'vgp_lin'  and 'grho3_lin' put the grho3 on a linear scale
             
-            - 'jdp' is loss compliance normalized by density  
+            - 'jdp' is loss compliance normalized by density
+            
+            -'tanphi' is loss tangent
+            
+            - 'Gprho3' storage modulus at n=3 times density
+            
+            - 'Gdprho3'  loss modulus at n = 3 time density
             
             - 'temp' is temperature in degrees C
             
@@ -1455,6 +1474,9 @@ def make_prop_axes(**kwargs):
     # make a dictionary of the potential axis labels
     axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
                'phi': r'$\phi$ (deg.)',
+               'tanphi': r'$\tan \phi$',
+               'gprho3': r'$G^\prime_3\rho$ (Pa $\cdot$ g/cm$^3$)',
+               'gdprho3': r'$G^{\prime\prime}_3\rho$ (Pa $\cdot$ g/cm$^3$)',
                'drho': r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)',
                'jdp': r'$J^{\prime \prime}/\rho$ (Pa$^{-1}\cdot$cm$^3$/g)',
                'temp':r'$T$ ($^\circ$C)'
@@ -1466,6 +1488,15 @@ def make_prop_axes(**kwargs):
             ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'phi':
             ax[p].set_ylabel(axlabels['phi'])
+            ax[p].set_xlabel(xlabel[p])
+        elif plots[p] == 'tanphi':
+            ax[p].set_ylabel(axlabels['tanphi'])
+            ax[p].set_xlabel(xlabel[p])
+        elif plots[p] == 'gprho3':
+            ax[p].set_ylabel(axlabels['gprho3'])
+            ax[p].set_xlabel(xlabel[p])
+        elif plots[p] == 'gdprho3':
+            ax[p].set_ylabel(axlabels['gdprho3'])
             ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'drho':
             ax[p].set_ylabel(axlabels['drho'])
@@ -1566,6 +1597,9 @@ def prop_plots(df, figinfo, **kwargs):
     calc = df['calc'][df.index.min()]
     calc_list = calc.split('.')
     
+    # make sure properties are cast as floats
+    for vals in ['grho3', 'phi', 'grho3']:
+        df[vals]=df[vals].astype(float)
     # extract uncertainty from datafrae if it is not [0, 0, 0]
     if uncertainty_dict == 'default':
         uncertainty = [0]*len(calc_list)
@@ -1642,7 +1676,21 @@ def prop_plots(df, figinfo, **kwargs):
             ydata = df['phi']
             yerr = df['phi_err']
             
-                
+        elif plots[p] == 'tanphi':
+            xdata = xvals[p]
+            ydata = np.tan(np.pi*df['phi']/180)
+            yerr = df['phi_err']  # approximate for now
+            
+        elif plots[p] == 'gprho3':
+            xdata = xvals[p]
+            ydata = df['grho3']*np.cos(np.pi*df['phi']/180)/1000
+            yerr = df['grho3_err'] # appoximate for now
+
+        elif plots[p] == 'gdprho3':
+            xdata = xvals[p]
+            ydata = df['grho3']*np.sin(np.pi*df['phi']/180)/1000
+            yerr = df['grho3_err'] # approximate 
+                          
         elif plots[p] == 'drho':
             xdata = xvals[p]
             ydata = 1000*df['drho']
@@ -1757,7 +1805,10 @@ def read_xlsx(infile, **kwargs):
         :nvals: (list) harmonics to include:  
         
             - default is [1, 3, 5]
-
+            
+        :Ggess_sheet: (string) sheet name containing property guesses
+    
+            - used when calculating were eported into the Excel file
 
     returns:
         :df: (dataframe) Input data converted to dataframe
@@ -1786,9 +1837,31 @@ def read_xlsx(infile, **kwargs):
         df_ref=pd.read_excel(infile, sheet_name=ref_channel, header=0)
         ref_idx = np.array([df_ref['f3'].idxmax()])
         
-    df=pd.read_excel(infile, sheet_name=film_channel, header=0)
+    df=pd.read_excel(infile, sheet_name=film_channel, header=0,
+                     index_col = 0)
     if type(film_idx) != str:
         df=df[df.index.isin(film_idx)]
+        
+    # keep track of columns for output dataframe
+    keep_column = []
+        
+    # read guess values if they exist
+    guess_sheet = kwargs.get('guess_sheet', 'none')
+    sheet_names = pd.ExcelFile(infile).sheet_names
+    if guess_sheet in sheet_names:
+        df_guess_sheet = pd.read_excel(infile, sheet_name = guess_sheet, header=0,
+                                 index_col = 0)
+        series = [{}for _ in range(len(df_guess_sheet))]
+        for idx in df_guess_sheet.index:
+            series[idx] = {'grho3':df_guess_sheet.loc[idx, 'grhos3'],
+                       'phi':df_guess_sheet.loc[idx, 'phi'],
+                       'drho':df_guess_sheet.loc[idx, 'drho']}
+        df_guess = pd.DataFrame({'guess':series})
+        # merge in the guesses, keeping the indices from df
+        df = df.reset_index().merge(df_guess, left_index = True, right_index = True,
+                                    how="left").set_index('index')
+
+        keep_column.append('guess')
         
     # include all values of n that we want and that exist in the input file
     nvals = []
@@ -1805,7 +1878,8 @@ def read_xlsx(infile, **kwargs):
     df=df[df.keep_row == 1]  # Delete all rows that are not appropriately marked
 
     # now sort out which columns we want to keep in the dataframe
-    keep_column=['t', 'temp']
+    keep_column.append('t')
+    keep_column.append('temp')
     for n in nvals:
         keep_column.append(n)
 
