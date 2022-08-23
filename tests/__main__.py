@@ -1,5 +1,7 @@
 from rheoQCM import *
 
+
+# NOTE: make sue sync code below with rheoQCM.py 
 if __name__ == '__main__':
     # import sys
     # import traceback
