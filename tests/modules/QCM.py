@@ -854,7 +854,7 @@ class QCM:
             self.calctype = calctype
 
         if nh_interests is None: # no list is given
-            nh_interst = [i+1 for i in np.arange(max(nh)) if i%2 == 0]
+            nh_interests = [i+1 for i in np.arange(max(nh)) if i%2 == 0]
 
         # first pass at solution comes from rh and rd
         rd_exp = self.rd_from_delfstar(nh[2], delfstar) # nh[2]
