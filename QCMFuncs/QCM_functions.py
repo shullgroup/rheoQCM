@@ -1394,13 +1394,19 @@ def make_prop_axes(**kwargs):
             label for x axis.  Only used if user-specified for xunit is used
             currently must be same for all axes
             
-        figsize (tuple of 2 real numbers):
-            size of figure.  
-            - Defualt is (3*num of plots, 3)
+        plotsize (tuple of 2 real numbers):
+            size of individual plots.  
+            - Defualt is (4, 3)
             
         sharex (Boolean):
             share x axis for zooming
             -(default=True)
+            
+        orientation (string)
+            'horizontal' (default) for horizontal arrangement of figures
+        
+        no3 (Boolean):
+            False (default) if we want to keep the '3' subscript in axis label for G
 
 
     returns:
@@ -1421,13 +1427,19 @@ def make_prop_axes(**kwargs):
     xunit_input = kwargs.get('xunit', 'index')
     sharex = kwargs.get('sharex', True)
     xscale = kwargs.get('xscale', 'lin')
+    no3 = kwargs.get('no3', False)
     num_plots = len(plots)
+    plotsize = kwargs.get('plotsize', (4,3))
     if num_plots == 1:
         default_titles = ['']
     else:
         default_titles =  ['(a)', '(b)', '(c)', '(d)', '(e)', '(f)']
     titles = kwargs.get('titles', default_titles)
-    figsize = kwargs.get('figsize', (3*num_plots, 3))
+    orientation = kwargs.get('orientation', 'horizontal')
+    if orientation == 'horizontal':
+        figsize = (plotsize[0]*num_plots, plotsize[1])
+    else:
+        figsize = (plotsize[0], num_plots*plotsize[1])
     
     # specify the xunit dictionary and xlabel dictionary
     # all plots have same xunit if only one value is given
@@ -1446,11 +1458,15 @@ def make_prop_axes(**kwargs):
         if xunit[p]!=xunit[p+1]:
             sharex = False
 
-    
-    fig, ax = plt.subplots(1, num_plots, figsize=figsize, num=num,
-                           constrained_layout=True, squeeze=False,
-                           sharex=sharex)
-    
+    if orientation == 'horizontal':
+        fig, ax = plt.subplots(1, num_plots, figsize=figsize, num=num,
+                               constrained_layout=True, squeeze=False,
+                               sharex=sharex)
+    else:
+        fig, ax = plt.subplots(num_plots, 1, figsize=figsize, num=num,
+                               constrained_layout=True, squeeze=False,
+                               sharex=sharex)        
+        
     ax = ax.flatten()
 
     for p in np.arange(num_plots):
@@ -1481,6 +1497,12 @@ def make_prop_axes(**kwargs):
                'jdp': r'$J^{\prime \prime}/\rho$ (Pa$^{-1}\cdot$cm$^3$/g)',
                'temp':r'$T$ ($^\circ$C)'
                }
+    
+    # change labels in case where we don't want the 3 subscript for G
+    if no3:
+        axlabels['grho3'] = r'$|G^*|\rho$ (Pa $\cdot$ g/cm$^3$)'
+        axlabels['gprho3'] = r'$G^\prime\rho$ (Pa $\cdot$ g/cm$^3$)'
+        axlabels['gdprho3'] = r'$G^{\prime\prime}\rho$ (Pa $\cdot$ g/cm$^3$)'
     
     for p in np.arange(num_plots):
         if plots[p] == 'grho3' or plots[p] == 'grho3_lin':
@@ -1599,7 +1621,7 @@ def prop_plots(df, figinfo, **kwargs):
     
     # make sure properties are cast as floats
     for vals in ['grho3', 'phi', 'grho3']:
-        df[vals]=df[vals].astype(float)
+        df[vals].iloc[:]=df[vals].iloc[:].astype(float)
     # extract uncertainty from datafrae if it is not [0, 0, 0]
     if uncertainty_dict == 'default':
         uncertainty = [0]*len(calc_list)
@@ -1668,52 +1690,55 @@ def prop_plots(df, figinfo, **kwargs):
     for p in pvals:
         if plots[p] == 'grho3' or plots[p] == 'grho3_lin': 
             xdata = xvals[p]
-            ydata = df['grho3']/1000
+            ydata = df['grho3'].astype(float)/1000
             yerr = df['grho3_err']/1000
 
         elif plots[p] == 'phi':
             xdata = xvals[p]
-            ydata = df['phi']
+            ydata = df['phi'].astype(float)
             yerr = df['phi_err']
             
         elif plots[p] == 'tanphi':
             xdata = xvals[p]
-            ydata = np.tan(np.pi*df['phi']/180)
+            ydata = np.tan(np.pi*df['phi'].astype(float)/180)
             yerr = df['phi_err']  # approximate for now
             
         elif plots[p] == 'gprho3':
             xdata = xvals[p]
-            ydata = df['grho3']*np.cos(np.pi*df['phi']/180)/1000
+            ydata = (df['grho3'].astype(float)*
+                     np.cos(np.pi*df['phi'].astype(float)/180)/1000)
             yerr = df['grho3_err'] # appoximate for now
 
         elif plots[p] == 'gdprho3':
             xdata = xvals[p]
-            ydata = df['grho3']*np.sin(np.pi*df['phi']/180)/1000
+            ydata = (df['grho3'].astype(float)*
+                     np.sin(np.pi*df['phi'].astype(float)/180)/1000)
             yerr = df['grho3_err'] # approximate 
                           
         elif plots[p] == 'drho':
             xdata = xvals[p]
-            ydata = 1000*df['drho']
+            ydata = 1000*df['drho'].astype(float)
             yerr = 1000*df['drho_err']
       
         elif plots[p] == 'vgp' or plots[p] == 'vgp_lin':
-            xdata = df['grho3']/1000
-            ydata = df['phi']
+            xdata = df['grho3'].astype(float)/1000
+            ydata = df['phi'].astype(float)
             yerr = pd.Series(np.zeros(len(xdata)))
             
         elif plots[p] == 'jdp':
             xdata  = xvals[p]
-            ydata = (1000/df['grho3'])*np.sin(df['phi']*np.pi/180) 
+            ydata = ((1000/df['grho3'].astype(float))*
+                     np.sin(df['phi'].astype(float)*np.pi/180))
             yerr = pd.Series(np.zeros(len(xdata))) # may eventually add error for this one
             
         elif plots[p] == 'temp':
             xdata  = xvals[p]
-            ydata = df['temp']
+            ydata = df['temp'].astype(float)
             yerr = pd.Series(np.zeros(len(xdata)))
             
         elif plots[p] == 't':
             xdata  = xvals[p]
-            ydata = df['t']
+            ydata = df['t'].astype(float)
             yerr = pd.Series(np.zeros(len(xdata)))
             
         elif (plots[p] in df.keys()):
@@ -2026,6 +2051,11 @@ def read_xlsx(infile, **kwargs):
             
     # eliminate rows with nan at n=3
     df.dropna(subset=[3])
+    
+    # add time increments
+    df = add_t_diff(df)
+    keep_column.append('t_prev')
+    keep_column.append('t_next')
 
     return df[keep_column].copy()
 
@@ -2314,7 +2344,26 @@ def check_solution(df, **kwargs):
             
         gammascale (string):
             'linear'  or 'log' for scale of dissipation axis
-            default is linear            
+            default is linear
+        
+        write_pdf (Boolean):
+            True (default)  if we want to write the pdf file
+            
+        contour_plots (Boolean):
+            True (default) if we want to write the contour plots
+            
+        orientation ('string')
+            'horizontal' (default) if delf and delg plots are in a row
+            'vertical' if we want a column plot
+            
+        df_lim ('string')
+            controls max and min of delf and delg for plotting
+            - 'expt' (default) - based on max and min of experimental values
+            - 'auto' accounts for all values, including calculated values
+            
+        plotsize (2-tubple)
+            size of individual plots.  Default is (4,3)
+            
     Returns:
         {'fig', 'ax'} - dictionary with fig and ax
         
@@ -2340,12 +2389,23 @@ def check_solution(df, **kwargs):
     xunit=kwargs.get('xunit', 'dlam')
     xoffset = kwargs.get('xoffset', 0)
     gammascale = kwargs.get('gammascale', 'linear')
+    write_pdf = kwargs.get('write_pdf', True)
+    contour_plots = kwargs.get('contour_plots', True)
+    orientation = kwargs.get('orientation', 'horizontal')
+    df_lim = kwargs.get('df_lim', 'expt')
+    plotsize = kwargs.get('plotsize', (4,3))
     
     # adjust nplot if any of the values don't' exist in the dataframe
     for n in nplot:
         if not 'df_expt'+str(n) in df.keys():
             nplot.remove(n)
-
+        
+    # make sure values of experimental and calculated frequency shifts are cast
+    # as complex numbers
+    for n in nplot:
+        df['df_expt'+str(n)] = df['df_expt'+str(n)].astype(complex)
+        df['df_calc'+str(n)] = df['df_calc'+str(n)].astype(complex)
+        
     # set up x labels for plots of actual and back-calculated shifts
     if xunit == 's':
         xlabel='$t$ (s)'
@@ -2372,15 +2432,6 @@ def check_solution(df, **kwargs):
         xlabel=r'$d/\lambda_3$'
         df.loc[:,'xvals'] = df.loc[:,'dlam3']
         
-
-    # make meshgrid for contour
-    phi=np.linspace(philim[0], philim[1], numxy)
-    dlam=np.linspace(dlim[0], dlim[1], numxy)
-    DLAM, PHI=meshgrid(dlam, phi)
-
-    # need to use n=3 in this calhttps://www.nytimes.com/2022/02/04/books/review/foreverland-heather-havrilesky.html?action=click&algo=bandit-all-surfaces_filter_new_arm_3_1&alpha=0.05&block=editors_picks_recirc&fellback=false&imp_id=750711052&impression_id=79bdbab5-870b-11ec-866f-89df1144c322&index=0&pgtype=Article&pool=pool%2Fe76d7165-92f7-4bd2-bc6e-298322d3680a&region=footer&req_id=865887890&surface=eos-home-featured&variant=0_bandit-all-surfaces_filter_new_arm_3_1culation, since
-    # normdelfstar assumes third harmonic in its definition
-
     def Zfunction(x, y):
         # function used for calculating the z values
         # this Z is the value plotted in the contour plot and NOT the impedance
@@ -2399,65 +2450,82 @@ def check_solution(df, **kwargs):
             Z1=np.real(delfstar)
             Z2=np.imag(delfstar)
         return Z1, Z2, drho, grho3, fnorm, gnorm
-
-    Z1, Z2, drho, grho3, fnorm, gnorm=Zfunction(DLAM, PHI)
-
-    # specify the range of the Z values
-    if autoscale:
-        min1=Z1.min()
-        max1=Z1.max()
-        min2=Z2.min()
-        max2=Z2.max()
-    else:
-        if ratios:
-            min1=-1
-            max1=1.2
-            min2=0
-            max2=2
-        else:
-            min1=-3*sauerbreyf(1, df['drho'][idxmin])
-            max1=3*sauerbreyf(1, df['drho'][idxmin])
-            min2=0
-            max2=5000
-
-    levels1=np.linspace(min1, max1, numz)
-    levels2=np.linspace(min2, max2, numz)
-    
-    # make the axes and link them for auto-zooming
-    fig, ax=plt.subplots(2, 2, figsize=(10, 6), sharex=False, sharey=False,
-                           num=num, constrained_layout=True)
-
-    contour1=ax[1, 0].contourf(DLAM, PHI, Z1, levels=levels1,
-                              cmap='rainbow')
-    contour2=ax[1, 1].contourf(DLAM, PHI, Z2, levels=levels2,
-                              cmap='rainbow')
-    ax[1,0].sharex(ax[1,1])
-    ax[1,0].sharey(ax[1,1])
-    ax[0,0].sharex(ax[0,1])
-
-    cbar1 = fig.colorbar(contour1, ax=ax[1, 0])
-    cbar2 = fig.colorbar(contour2, ax=ax[1, 1])
-
-    # set label of ax[1]
-    ax[1, 0].set_xlabel(r'$d/\lambda_n$')
-    ax[1, 0].set_ylabel(r'$\Phi$ ($\degree$)')
-    ax[0, 0].set_ylabel(r'$\Delta f/n$ (Hz)')
-
-    ax[1, 1].set_xlabel(r'$d/\lambda_n$')
-    ax[1, 1].set_ylabel(r'$\Phi$ ($\degree$)')
-    ax[0, 1].set_ylabel(r'$\Delta\Gamma/n$ (Hz)')
-
-    # add titles
-    if ratios:
-        ax[1, 0].set_title('(c) '+ calc + r' $r_h$')
-        ax[1, 1].set_title('(d) '+ calc + r' $r_d$')
-    else:
-        ax[1, 0].set_title('(c) ' + calc + r' $\Delta f /n$ (Hz)')
-        ax[1, 1].set_title('(d) ' + calc + r' $\Delta\Gamma /n$ (Hz)')
         
-    ax[0,0].set_title('(a)')
-    ax[0,1].set_title('(b)')
+    if contour_plots:
+        # make meshgrid for contour
+        phi=np.linspace(philim[0], philim[1], numxy)
+        dlam=np.linspace(dlim[0], dlim[1], numxy)
+        DLAM, PHI=meshgrid(dlam, phi)
+        Z1, Z2, drho, grho3, fnorm, gnorm=Zfunction(DLAM, PHI)
 
+        # specify the range of the Z values
+        if autoscale:
+            min1=Z1.min()
+            max1=Z1.max()
+            min2=Z2.min()
+            max2=Z2.max()
+        else:
+            if ratios:
+                min1=-1
+                max1=1.2
+                min2=0
+                max2=2
+            else:
+                min1=-3*sauerbreyf(1, df['drho'][idxmin])
+                max1=3*sauerbreyf(1, df['drho'][idxmin])
+                min2=0
+                max2=5000
+    
+        levels1=np.linspace(min1, max1, numz)
+        levels2=np.linspace(min2, max2, numz)
+        
+    # make the axes and link them for auto-zooming
+    if contour_plots:
+        ntypes = 2
+    else:
+        ntypes = 1
+    
+    if orientation == 'horizontal': 
+        fig, ax=plt.subplots(ntypes, 2, figsize=(2*plotsize[0], ntypes*plotsize[1]), 
+                             sharex=False, sharey=False,
+                             num=num, constrained_layout=True)
+        ax = ax.flatten(order = 'C')
+    else:
+        fig, ax=plt.subplots(2, ntypes, figsize=(ntypes*plotsize[0], 2*plotsize[1]), 
+                                sharex=False, sharey=False,
+                                num=num, constrained_layout=True)
+        ax = ax.flatten(order = 'F') 
+        
+    ax[0].sharex(ax[1])
+    ax[0].set_ylabel(r'$\Delta f/n$ (Hz)')
+    ax[1].set_ylabel(r'$\Delta\Gamma/n$ (Hz)')
+    ax[0].set_title('(a)')
+    ax[1].set_title('(b)')
+    
+    if contour_plots:
+        contour1=ax[2].contourf(DLAM, PHI, Z1, levels=levels1,
+                                  cmap='rainbow')
+        contour2=ax[3].contourf(DLAM, PHI, Z2, levels=levels2,
+                                  cmap='rainbow')
+        ax[2].sharex(ax[3])
+        ax[2].sharey(ax[3])
+        cbar1 = fig.colorbar(contour1, ax=ax[2])
+        cbar2 = fig.colorbar(contour2, ax=ax[3])
+
+        # set labels for contour plots
+        ax[2].set_xlabel(r'$d/\lambda_n$')
+        ax[2].set_ylabel(r'$\Phi$ ($\degree$)')
+        ax[3].set_xlabel(r'$d/\lambda_n$')
+        ax[3].set_ylabel(r'$\Phi$ ($\degree$)')
+
+        # add titles
+        if ratios:
+            ax[2].set_title('(c) '+ calc + r' $r_h$')
+            ax[3].set_title('(d) '+ calc + r' $r_d$')
+        else:
+            ax[2].set_title('(c) ' + calc + r' $\Delta f /n$ (Hz)')
+            ax[3].set_title('(d) ' + calc + r' $\Delta\Gamma /n$ (Hz)')
+        
     # set formatting for parameters that appear at the bottom of the plot
     # when mouse is moved
     def fmt(x, y):
@@ -2482,61 +2550,81 @@ def check_solution(df, **kwargs):
     for n in np.arange(1,22,2):
         col[n]='C'+str(int((n-1)/2))
         
-    # now add the comparison plots of measured and calcuated values
-    # go get the legend to work out we do all of the measured values firs, then
-    # all of the calculated values
-          
-    # plot the experimenta data first.
+    # now add the comparison plots of measured and calcuated values         
+    # plot the experimenta data first
+    # keep track of max and min values for plotting purposes
+    df_min = []
+    df_max = []
+    dg_min = []
+    dg_max = []
     for n in nplot:
+        dfval = np.real(df['df_expt'+str(n)])/n
+        dgval = np.imag(df['df_expt'+str(n)])/n
+        df_min.append(dfval.min())
+        df_max.append(dfval.max())
+        dg_min.append(dgval.min())
+        dg_max.append(dgval.max())
         nstr=str(n)+': expt' 
         if len(df['xvals'])==1:
             calcfmt = 'o'
         else:
             calcfmt = '-'
-        ax[0, 0].plot(df['xvals'], np.real(df['df_expt'+str(n)])/n, '+', 
-                      label='n='+nstr, color =col[n])
-        ax[0, 1].plot(df['xvals'], np.imag(df['df_expt'+str(n)])/n, '+', 
-                      label='n='+nstr, color = col[n])
+        ax[0].plot(df['xvals'], dfval, '+', label='n='+nstr, color = col[n])
+        ax[1].plot(df['xvals'], dgval, '+', label='n='+nstr, color = col[n])
+    df_min = min(df_min)
+    df_max = max(df_max)
+    dg_min = min(dg_min)
+    dg_max = max(dg_max)    
     
     # now plot the calculated values
     for n in nplot:        
-        ax[0, 0].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, calcfmt, 
+        ax[0].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, calcfmt, 
                       color = col[n], markerfacecolor='none', label='calc')
-        ax[0, 1].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, calcfmt, 
+        ax[1].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, calcfmt, 
                       color = col[n], markerfacecolor='none', label='calc')
-
-    # add values to contour plots for n=3
-    for n in nplot:
-        dlam = calc_dlam_from_dlam3(n, df['dlam3'], df['phi'])
-        ax[1, 0].plot(dlam, df['phi'], '-o', markerfacecolor='none',
-                      label = 'n='+str(n), color = col[n])
-        ax[1, 1].plot(dlam, df['phi'], '-o', markerfacecolor='none',
-                      label = 'n='+str(n), color = col[n])
         
     # change dissipation scale to log scale if needed
     if gammascale=='log':
-        ax[0,1].set_yscale('log')
+        ax[1].set_yscale('log')
         
     # change scale to log scale if needed
     if xscale == 'log':
-        ax[0,0].set_xscale('log')
-        ax[0,1].set_xscale('log')
+        ax[0].set_xscale('log')
+        ax[1].set_xscale('log')
         
     for k in [0, 1]:
-        ax[1, k].legend()
-        ax[0, k].legend(ncol=2, labelspacing=0.2, columnspacing=0, 
+        ax[k].legend(ncol=2, labelspacing=0.2, columnspacing=0, 
                         markerfirst=False, handletextpad=0.1)
-        ax[1, k].format_coord=fmt
-        ax[0, k].set_xlabel(xlabel)
+        ax[k].set_xlabel(xlabel)
+        
+    # reset y axis limits for delf and delg if needed
+    if df_lim == 'expt':
+        delf_range = df_max - df_min
+        delg_range = dg_max - dg_min
+        ax[0].set_ylim([df_min - 0.05*delf_range, df_max +0.05*delf_range])
+        ax[1].set_ylim([dg_min - 0.05*delg_range, dg_max +0.05*delg_range])
 
-    # reset axis limits
-    ax[1, 0].set_xlim(dlim)
-    ax[1, 1].set_xlim(dlim)
-    ax[1, 0].set_ylim(philim)
-    ax[1, 1].set_ylim(philim)
+    # add values to contour plots
+    if contour_plots:
+        for n in nplot:
+            dlam = calc_dlam_from_dlam3(n, df['dlam3'], df['phi'])
+            ax[2].plot(dlam, df['phi'], '-o', markerfacecolor='none',
+                          label = 'n='+str(n), color = col[n])
+            ax[3].plot(dlam, df['phi'], '-o', markerfacecolor='none',
+                          label = 'n='+str(n), color = col[n])
+            
+        for k in [2, 3]:
+            ax[k].legend()
+            ax[k].format_coord=fmt
+    
+            # reset axis limits
+            ax[k].set_xlim(dlim)
+            ax[k].set_ylim(philim)
+
 
     # create a PdfPages object - one solution check per page
-    pdf=PdfPages(num)
+    if write_pdf:
+        pdf=PdfPages(num)
     
     # we only take every nth row, where n = plot_interval
     if plot_interval == 'firstlast':
@@ -2547,7 +2635,7 @@ def check_solution(df, **kwargs):
         df_plot = df.iloc[[-1], :]
     else:
         df_plot = df.iloc[::plot_interval, :]
-    if plot_solutions:
+    if plot_solutions and write_pdf:
         idxnum = 0 # keeps track of the fact that we don't always start from idx=0
         for idx, row in df_plot.iterrows():
             idxnum = idxnum + 1
@@ -2599,61 +2687,33 @@ def check_solution(df, **kwargs):
             dcalc=dcalc.sort_values(by=['phi'])
             
             # now plot the curves of constant rh and rd
-            curves[2]=ax[1, 0].plot(dcalc['d_rh'], dcalc['phi'], 'k-',
+            curves[2]=ax[2].plot(dcalc['d_rh'], dcalc['phi'], 'k-',
                                     label =r'$r_h$')
-            curves[3]=ax[1, 0].plot(dcalc['d_rd'], dcalc['phi'], 'k--',
+            curves[3]=ax[2].plot(dcalc['d_rd'], dcalc['phi'], 'k--',
                                     label = r'$r_d$')
-            curves[4]=ax[1, 1].plot(dcalc['d_rh'], dcalc['phi'], 'w-',
+            curves[4]=ax[3].plot(dcalc['d_rh'], dcalc['phi'], 'w-',
                                     label = r'$r_h$')
-            curves[5]=ax[1, 1].plot(dcalc['d_rd'], dcalc['phi'], 'w--',
+            curves[5]=ax[3].plot(dcalc['d_rd'], dcalc['phi'], 'w--',
                                     label = r'$r_d$')
             
-            ax[1,0].legend(ncol=2)
-            ax[1,1].legend(ncol=2)
-            
-            ax[1,0].set_xlim(left=0)
-            ax[1,1].set_xlim(left=0)
+            for k in [2,3]:
+                ax[k].legend(ncol=2)
+                ax[k].set_xlim(left=0)
                       
             pdf.savefig()
             if idxnum>1:
                 for k in np.arange(6):
                     curves[k][0].remove()
     else:
-        pdf.savefig()
+        if write_pdf:
+            pdf.savefig()
                 
-    pdf.close()
-    return {'fig':fig, 'ax':ax, 'colorbars':[cbar1, cbar2]}
+    if write_pdf: pdf.close()
+    figinfo = {'fig':fig, 'ax':ax} 
+    if contour_plots:
+        figinfo['colorbars'] =[cbar1, cbar2]
+    return figinfo
 
-
-def remove_contours(soln_check):
-    '''
-    Remove contour plots from check solution figure.
-
-    Parameters
-    ----------
-    soln_check : dictionary with 'fig', 'ax', 'colorbars'
-        DESCRIPTION.
-
-    Returns
-    -------
-    soln_check: input dictionary, contours and colorbars removed.
-
-    '''
-    fig = soln_check['fig']
-    ax = soln_check['ax']
-    cbar = soln_check['colorbars']
-     
-    gs = ax[0, 0].get_subplotspec().get_gridspec()
-    gs.set_height_ratios([1, 0.0001])
-    
-    cbar[0].remove()
-    cbar[1].remove()
-    ax[1, 0].remove()
-    ax[1, 1].remove()
-
-    fig.set_size_inches(8, 4)
-    
-    return {'fig':fig, 'ax':ax}
 
 def check_n_dependence(soln, **kwargs):
     '''
@@ -2729,3 +2789,14 @@ def add_QCM_functions():
     # updated version without fiddling with GitHub)
     if os.path.isdir(ken_path):
         shutil.copy(os.path.join(ken_path, 'QCM_functions.py'), os.getcwd())
+        
+def add_t_diff(df):
+    # add time until previous and next point in the file.  Helpful if we want to
+    # use data collected at beginning or end of a relaxation step
+    df.insert(2, 't_prev', 'nan')
+    df.insert(3, 't_next', 'nan')
+    df['t_next'] = -df['t'].diff(periods=-1)
+    df.iloc[-1, df.columns.get_loc('t_next')] = np.inf
+    df['t_prev'] = -df['t'].diff(periods=1)
+    df.iloc[0, df.columns.get_loc('t_prev')] = np.inf
+    return df
