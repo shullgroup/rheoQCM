@@ -1523,7 +1523,6 @@ class DataSaver:
             return []
 
 
-
     def get_idx_marked_rows(self, chn_name, dropnanmarkrow=False):
         '''
         return rows with marks of df from self.get_queue_id

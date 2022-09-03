@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.20.0] - 2022-08-23
+
+### Added
+
+- Add `__main__.py` to make the program can be ran with it's name `rheoQCM'.
+
+### Changed
+
+### Fixed
+
+### Removed
+
 ## [0.20.0] - 2022-02-11
 
 ### Added
