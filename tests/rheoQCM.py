@@ -7388,7 +7388,7 @@ class QCMApp(QMainWindow):
 
 
 
-if __name__ == '__main__':
+def run():
     # import sys
     # import traceback
     # import logging
@@ -7417,3 +7417,6 @@ if __name__ == '__main__':
     sys.exit(app.exec_())
 
 
+
+if __name__ == '__main__':
+    run()
