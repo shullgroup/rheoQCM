@@ -1559,10 +1559,6 @@ def make_prop_axes(**kwargs):
             # remove links to other axes if they exist
             if sharex:
                 ax[p].get_shared_x_axes().remove(ax[p])
-                
-            # The following seems to be necessary, and comes from 
-            # https://stackoverflow.com/questions/54915124/how-to-unset-sharex-or-sharey-from-two-axes-in-matplotlib/54915930#54915930
-            # Create and assign new ticker
             xticker = matplotlib.axis.Ticker()
             ax[p].xaxis.major = xticker
             
@@ -1590,6 +1586,12 @@ def make_prop_axes(**kwargs):
             ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'day':
             ax[p].set_ylabel('t (day)')
+            ax[p].set_xlabel(xlabel[p])
+        elif 'df' in plots[p]:
+            ax[p].set_ylabel(r'$\Delta f$ (Hz)')
+            ax[p].set_xlabel(xlabel[p])
+        elif 'dg' in plots[p]:
+            ax[p].set_ylabel(r'$\Delta \Gamma$ (Hz)')
             ax[p].set_xlabel(xlabel[p])
         else:
             ax[p].set_xlabel(xlabel[p])
@@ -1772,6 +1774,19 @@ def prop_plots(df, figinfo, **kwargs):
         elif plots[p] == 't':
             xdata  = xvals[p]
             ydata = df['t'].astype(float)
+            yerr = pd.Series(np.zeros(len(xdata)))
+            
+        elif 'df_expt' in plots[p]:
+            xdata  = xvals[p]    
+            yvals = df[plots[p]].astype(complex)
+            ydata = np.real(yvals)
+            yerr = pd.Series(np.zeros(len(xdata)))
+            
+        elif 'dg_expt' in plots[p]:
+            xdata  = xvals[p]
+            key = plots[p].replace('dg', 'df')
+            yvals = df[key].astype(complex)
+            ydata = np.imag(yvals)
             yerr = pd.Series(np.zeros(len(xdata)))
             
         elif (plots[p] in df.keys()):
@@ -2551,8 +2566,10 @@ def check_solution(df, **kwargs):
                                   cmap='rainbow')
         ax[2].sharex(ax[3])
         ax[2].sharey(ax[3])
-        cbar1 = fig.colorbar(contour1, ax=ax[2])
-        cbar2 = fig.colorbar(contour2, ax=ax[3])
+        cbax2 = ax[2].inset_axes([1.05, 0, 0.1, 1])
+        cbar2 = fig.colorbar(contour1, ax=ax[2], cax = cbax2)
+        cbax3 = ax[3].inset_axes([1.05, 0, 0.1, 1])
+        cbar3 = fig.colorbar(contour2, ax=ax[3], cax = cbax3)
 
         # set labels for contour plots
         ax[2].set_xlabel(r'$d/\lambda_n$')
@@ -2648,10 +2665,14 @@ def check_solution(df, **kwargs):
         ax[0].set_xscale('log')
         ax[1].set_xscale('log')    
 
-    ax[0].legend(ncol=len(nfplot), labelspacing=0.1, columnspacing=0, 
-                    markerfirst=False, handletextpad=0.1)
-    ax[1].legend(ncol=len(ngplot), labelspacing=0.1, columnspacing=0, 
-                    markerfirst=False, handletextpad=0.1)
+    ax[0].legend(ncol=1, labelspacing=0.1, columnspacing=0, 
+                    markerfirst=False, handletextpad=0.1,
+                    bbox_to_anchor=(1.02, 1),
+                    handlelength=1)
+    ax[1].legend(ncol=1, labelspacing=0.1, columnspacing=0, 
+                    markerfirst=False, handletextpad=0.1,
+                    bbox_to_anchor=(1.02, 1),
+                    handlelength=1)
     for k in [0, 1]: ax[k].set_xlabel(xlabel) 
         
     # reset y axis limits for delf and delg if needed
@@ -2772,7 +2793,7 @@ def check_solution(df, **kwargs):
     if write_pdf: pdf.close()
     figinfo = {'fig':fig, 'ax':ax} 
     if contour_plots:
-        figinfo['colorbars'] =[cbar1, cbar2]
+        figinfo['colorbars'] =[cbar2, cbar3]
     return figinfo
 
 
