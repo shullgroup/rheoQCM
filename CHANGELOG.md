@@ -1,12 +1,14 @@
 # Changelog
 
-## [0.20.0] - 2022-08-23
+## [0.20.1] - 2022-09-12
 
 ### Added
 
 - Add `__main__.py` to make the program can be ran with it's name `rheoQCM'.
 
 ### Changed
+
+- Change the number of samples (for each scan) to nSteps + 1 which is consistent with it in myVNA software.
 
 ### Fixed
 
