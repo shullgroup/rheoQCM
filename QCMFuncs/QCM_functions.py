@@ -1588,10 +1588,12 @@ def make_prop_axes(**kwargs):
             ax[p].set_ylabel('t (day)')
             ax[p].set_xlabel(xlabel[p])
         elif 'df' in plots[p]:
-            ax[p].set_ylabel(r'$\Delta f$ (Hz)')
+            n = plots[p][-1]
+            ax[p].set_ylabel(f'$\Delta f_{{{n}}}$ (Hz)')
             ax[p].set_xlabel(xlabel[p])
         elif 'dg' in plots[p]:
-            ax[p].set_ylabel(r'$\Delta \Gamma$ (Hz)')
+            n = plots[p][-1]
+            ax[p].set_ylabel(f'$\Delta \Gamma_{{{n}}}$ (Hz)')
             ax[p].set_xlabel(xlabel[p])
         else:
             ax[p].set_xlabel(xlabel[p])
@@ -1807,7 +1809,7 @@ def prop_plots(df, figinfo, **kwargs):
             
         if plots[p] == 'vgp':
             ax[p].set_xscale('log')
-        if plots[p] == 'grho3':
+        if plots[p] == 'grho3' or plots[p] == 'gprho3' or plots[p] == 'gdprho3':
             ax[p].set_yscale('log')
         if plots[p] == 'cole-cole':
             ax[p].set_xscale('log')
@@ -2102,7 +2104,7 @@ def read_xlsx(infile, **kwargs):
             df = df.query('temp >= @T_ref_range[0] & temp <= @T_ref_range[1]')
             
     # eliminate rows with nan at n=3
-    df.dropna(subset=[3], inplace=True)
+    df = df.dropna(subset=[3]).copy()
     
     # add time increments
     df = add_t_diff(df)
@@ -2680,9 +2682,9 @@ def check_solution(df, **kwargs):
         delf_range = df_max - df_min
         delg_range = dg_max - dg_min
         ax[0].set_ylim([df_min - 0.05*delf_range, df_max +0.05*delf_range])
-        if gammascale == 'log':
+        if gammascale == 'log' and dg_min>0:
             ax[1].set_ylim([0.9*dg_min, 1.1*dg_max])
-        else:
+        elif gammascale == 'linear':
             ax[1].set_ylim([dg_min - 0.05*delg_range, 
                         dg_max +0.05*delg_range])
 
@@ -2877,7 +2879,7 @@ def add_t_diff(df):
     # use data collected at beginning or end of a relaxation step
     df.insert(2, 't_prev', 'nan')
     df.insert(3, 't_next', 'nan')
-    df['t_next'] = -df['t'].diff(periods=-1)
+    df.loc[:,'t_next'] = -df.loc[:,'t'].diff(periods=-1)
     df.iloc[-1, df.columns.get_loc('t_next')] = np.inf
     df['t_prev'] = -df['t'].diff(periods=1)
     df.iloc[0, df.columns.get_loc('t_prev')] = np.inf
