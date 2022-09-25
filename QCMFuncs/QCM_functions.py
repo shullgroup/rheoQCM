@@ -2449,6 +2449,9 @@ def check_solution(df, **kwargs):
     gammascale = kwargs.get('gammascale', 'linear')
     write_pdf = kwargs.get('write_pdf', True)
     contour_plots = kwargs.get('contour_plots', True)
+    # we don't make the contour plots if we have any np.inf values
+    if (df['drho']==np.inf).any():
+        contour_plots = False
     orientation = kwargs.get('orientation', 'horizontal')
     df_lim = kwargs.get('df_lim', 'expt')
     plotsize = kwargs.get('plotsize', (4,3))
