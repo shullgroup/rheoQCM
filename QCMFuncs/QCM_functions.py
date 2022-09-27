@@ -748,7 +748,7 @@ def rhcalc(calc, dlam3, phi):
     Calculate harmonic ratio from material properties.
     args:
         calc (3 character string):
-            Calculation string ('353' for example).
+            Calculation string in format a.b:c.
 
         dlam3 (real):
             d/lambda at n=3.
@@ -759,8 +759,12 @@ def rhcalc(calc, dlam3, phi):
     returns:
         Harmonic ratio.
     """
-    return normdelfstar(calc.split('.')[0], dlam3, phi).real / \
-        normdelfstar(calc.split('.')[1], dlam3, phi).real
+    nvals = calc.split(':')[0]
+    if '.' not in nvals:
+        return np.nan
+    else:
+        return normdelfstar(nvals.split('.')[0], dlam3, phi).real / \
+            normdelfstar(nvals.split('.')[1], dlam3, phi).real
 
 
 def rh_from_delfstar(calc, delfstar):
@@ -788,7 +792,8 @@ def rdcalc(calc, dlam3, phi):
     Calculate dissipation ratio from material properties.
     args:
         calc (3 character string):
-            Calculation string ('353' for example).
+            Calculation string in a.b:c  format.  
+            Ratio taken for last given for gamma
 
         dlam3 (real):
             d/lambda at n=3.
@@ -799,8 +804,9 @@ def rdcalc(calc, dlam3, phi):
     returns:
         Harmonic ratio.
     """
-    return -(normdelfstar(calc.split('.')[2], dlam3, phi).imag /
-        normdelfstar(calc.split('.')[2], dlam3, phi).real)
+    n = calc.split(':')[-1][-1]
+    return -(normdelfstar(n, dlam3, phi).imag /
+        normdelfstar(n, dlam3, phi).real)
 
 
 def rd_from_delfstar(n, delfstar):
@@ -2406,6 +2412,9 @@ def check_solution(df, **kwargs):
         contour_plots (Boolean):
             True (default) if we want to write the contour plots
             
+        compare_plots (Boolean):
+            True (default) if we want to compare expt and calc delf and delg
+            
         orientation ('string')
             'horizontal' (default) if delf and delg plots are in a row
             'vertical' if we want a column plot
@@ -2414,6 +2423,10 @@ def check_solution(df, **kwargs):
             controls max and min of delf and delg for plotting
             - 'expt' (default) - based on max and min of experimental values
             - 'auto' accounts for all values, including calculated values
+            
+        contour_range (dictionary)
+            limits for z range of contour plots, format is
+            {1:[min1, max1], 2[min2, max2]}
             
         plotsize (2-tubple)
             size of individual plots.  Default is (4,3)
@@ -2442,16 +2455,20 @@ def check_solution(df, **kwargs):
     plot_solutions=kwargs.get('plot_solutions', False)
     plot_interval = kwargs.get('plot_interval', 1)
     idxmin=df.index[0]
-    calc=df['calc'][idxmin]
     num=kwargs.get('num', 'solution_check.pdf')
     xunit=kwargs.get('xunit', 'dlam')
     xoffset = kwargs.get('xoffset', 0)
     gammascale = kwargs.get('gammascale', 'linear')
     write_pdf = kwargs.get('write_pdf', True)
+    compare_plots = kwargs.get('compare_plots', True)
     contour_plots = kwargs.get('contour_plots', True)
     # we don't make the contour plots if we have any np.inf values
     if (df['drho']==np.inf).any():
         contour_plots = False
+        
+    if not contour_plots and not compare_plots:
+        print('compare_plots and contour_plots are both False')
+        return
     orientation = kwargs.get('orientation', 'horizontal')
     df_lim = kwargs.get('df_lim', 'expt')
     plotsize = kwargs.get('plotsize', (4,3))
@@ -2526,6 +2543,12 @@ def check_solution(df, **kwargs):
             max1=Z1.max()
             min2=Z2.min()
             max2=Z2.max()
+        elif 'contour_range' in kwargs.keys():
+            contour_range = kwargs.get('contour_range')
+            min1 = contour_range[1][0]
+            max1 = contour_range[1][1]
+            min2 = contour_range[2][0]
+            max2 = contour_range[2][1]
         else:
             if ratios:
                 min1=-1
@@ -2542,10 +2565,15 @@ def check_solution(df, **kwargs):
         levels2=np.linspace(min2, max2, numz)
         
     # make the axes and link them for auto-zooming
-    if contour_plots:
-        ntypes = 2
-    else:
+    # in general, we have four axes:
+    # f_comp:  comparison of experimental and calculated delf
+    # g_comp:  comparison of experimental and calculated delg
+    # f_cont:  contour plot of frequency shifts
+    # g_cont:  contour plot of dissipation shifts
+    if not contour_plots or not compare_plots:
         ntypes = 1
+    else:
+        ntypes = 2
     
     if orientation == 'horizontal': 
         fig, ax=plt.subplots(ntypes, 2, figsize=(2*plotsize[0], ntypes*plotsize[1]), 
@@ -2558,37 +2586,59 @@ def check_solution(df, **kwargs):
                                 num=num, constrained_layout=True)
         ax = ax.flatten(order = 'F') 
         
-    ax[0].sharex(ax[1])
-    ax[0].set_ylabel(r'$\Delta f/n$ (Hz)')
-    ax[1].set_ylabel(r'$\Delta\Gamma/n$ (Hz)')
-    ax[0].set_title('(a)')
-    ax[1].set_title('(b)')
-    
+    # set dictionary where we keep track of the axis number for each plot
+    axnum = {}
+    if compare_plots:
+        axnum['f_comp'] = 0
+        axnum['g_comp'] = 1
+        ax[axnum['f_comp']].sharex(ax[axnum['g_comp']])
+        ax[axnum['f_comp']].set_ylabel(r'$\Delta f/n$ (Hz)')
+        ax[axnum['g_comp']].set_ylabel(r'$\Delta\Gamma/n$ (Hz)')
+        ax[axnum['f_comp']].set_title('(a)')
+        ax[axnum['g_comp']].set_title('(b)')
+        if contour_plots:
+            axnum['f_cont'] = 2
+            axnum['g_cont'] = 3
+    else:
+        axnum['f_cont'] = 0
+        axnum['g_cont'] = 1     
+        
     if contour_plots:
-        contour1=ax[2].contourf(DLAM, PHI, Z1, levels=levels1,
+        contour1=ax[axnum['f_cont']].contourf(DLAM, PHI, Z1, levels=levels1,
                                   cmap='rainbow')
-        contour2=ax[3].contourf(DLAM, PHI, Z2, levels=levels2,
+        contour2=ax[axnum['g_cont']].contourf(DLAM, PHI, Z2, levels=levels2,
                                   cmap='rainbow')
-        ax[2].sharex(ax[3])
-        ax[2].sharey(ax[3])
-        cbax2 = ax[2].inset_axes([1.05, 0, 0.1, 1])
-        cbar2 = fig.colorbar(contour1, ax=ax[2], cax = cbax2)
-        cbax3 = ax[3].inset_axes([1.05, 0, 0.1, 1])
-        cbar3 = fig.colorbar(contour2, ax=ax[3], cax = cbax3)
+        ax[axnum['f_cont']].sharex(ax[axnum['g_cont']])
+        ax[axnum['f_cont']].sharey(ax[axnum['g_cont']])
+        cbax1 = ax[axnum['f_cont']].inset_axes([1.05, 0, 0.1, 1])
+        cbar1 = fig.colorbar(contour1, ax=ax[axnum['f_cont']], cax = cbax1)
+        cbax2 = ax[axnum['g_cont']].inset_axes([1.05, 0, 0.1, 1])
+        cbar2 = fig.colorbar(contour2, ax=ax[axnum['g_cont']], cax = cbax2)
+        
+        # set ticks for the colorbars
+        cbar1.set_ticks(np.linspace(min1, max1, 11))
+        cbar2.set_ticks(np.linspace(min2, max2, 11))
+        
+        # set ticks for the contour plots
+        ax[axnum['f_cont']].set_yticks(np.linspace(philim[0], philim[1], 7))
 
         # set labels for contour plots
-        ax[2].set_xlabel(r'$d/\lambda_n$')
-        ax[2].set_ylabel(r'$\Phi$ ($\degree$)')
-        ax[3].set_xlabel(r'$d/\lambda_n$')
-        ax[3].set_ylabel(r'$\Phi$ ($\degree$)')
+        ax[axnum['f_cont']].set_xlabel(r'$d/\lambda_n$')
+        ax[axnum['f_cont']].set_ylabel(r'$\Phi$ ($\degree$)')
+        ax[axnum['g_cont']].set_xlabel(r'$d/\lambda_n$')
+        ax[axnum['g_cont']].set_ylabel(r'$\Phi$ ($\degree$)')
 
         # add titles
-        if ratios:
-            ax[2].set_title('(c) '+ calc + r' $r_h$')
-            ax[3].set_title('(d) '+ calc + r' $r_d$')
+        if compare_plots:
+            figparts = ['(c)', '(d) ']
         else:
-            ax[2].set_title('(c) ' + calc + r' $\Delta f /n$ (Hz)')
-            ax[3].set_title('(d) ' + calc + r' $\Delta\Gamma /n$ (Hz)')
+            figparts = ['(a)', '(b) ']
+        if ratios:
+            ax[axnum['f_cont']].set_title(figparts[0] + r' $r_h$')
+            ax[axnum['g_cont']].set_title(figparts[1] + r' $r_d$')
+        else:
+            ax[axnum['f_cont']].set_title(figparts[0] + r' $\Delta f /n$ (Hz)')
+            ax[axnum['g_cont']].set_title(figparts[1] + r' $\Delta\Gamma /n$ (Hz)')
         
     # set formatting for parameters that appear at the bottom of the plot
     # when mouse is moved
@@ -2614,93 +2664,94 @@ def check_solution(df, **kwargs):
     for n in np.arange(1,22,2):
         col[n]='C'+str(int((n-1)/2))
         
-    # now add the comparison plots of measured and calcuated values         
-    # plot the experimenta data first
-    # keep track of max and min values for plotting purposes
-    if len(df['xvals'])==1:
-        calcfmt = 'o'
-    else:
-        calcfmt = '-'
-    df_min = []
-    df_max = []
-    dg_min = []
-    dg_max = []
-    df['xvals'] = df['xvals'].astype('float64')
+    if compare_plots:
+        # now add the comparison plots of measured and calcuated values         
+        # plot the experimenta data first
+        # keep track of max and min values for plotting purposes
+        if len(df['xvals'])==1:
+            calcfmt = 'o'
+        else:
+            calcfmt = '-'
+        df_min = []
+        df_max = []
+        dg_min = []
+        dg_max = []
+        df['xvals'] = df['xvals'].astype('float64')
+        
+        # now plot the calculated values
+        nfplot = nplot.copy()
+        ngplot = nplot.copy()
+        if not plot_df1:
+            try:
+                nfplot.remove(1)
+            except ValueError:
+                pass
+            
+        for n in nfplot: 
+            dfval = np.real(df['df_expt'+str(n)])/n
+            df_min.append(np.nanmin(dfval))
+            df_max.append(np.nanmax(dfval))
+            nstr=str(n)+': expt' 
+            ax[axnum['f_comp']].plot(df['xvals'].astype('float64'), 
+                       dfval, '+', label='n='+nstr, color = col[n])
+            ax[axnum['f_comp']].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, calcfmt, 
+                          color = col[n], markerfacecolor='none', label='calc')
+        df_min = min(df_min)
+        df_max = max(df_max)
+     
+        for n in ngplot:
+            dgval = np.imag(df['df_expt'+str(n)])/n
+            dg_min.append(np.nanmin(dgval))
+            dg_max.append(np.nanmax(dgval))
+            nstr=str(n)+': expt' 
+            ax[axnum['g_comp']].plot(df['xvals'].astype('float64'),
+                       dgval, '+', label='n='+nstr, color = col[n])
+            ax[axnum['g_comp']].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, calcfmt, 
+                          color = col[n], markerfacecolor='none', label='calc')
     
-    # now plot the calculated values
-    nfplot = nplot.copy()
-    ngplot = nplot.copy()
-    if not plot_df1:
-        try:
-            nfplot.remove(1)
-        except ValueError:
-            pass
-        
-    for n in nfplot: 
-        dfval = np.real(df['df_expt'+str(n)])/n
-        df_min.append(np.nanmin(dfval))
-        df_max.append(np.nanmax(dfval))
-        nstr=str(n)+': expt' 
-        ax[0].plot(df['xvals'].astype('float64'), 
-                   dfval, '+', label='n='+nstr, color = col[n])
-        ax[0].plot(df['xvals'], np.real(df['df_calc'+str(n)])/n, calcfmt, 
-                      color = col[n], markerfacecolor='none', label='calc')
-    df_min = min(df_min)
-    df_max = max(df_max)
- 
-    for n in ngplot:
-        dgval = np.imag(df['df_expt'+str(n)])/n
-        dg_min.append(np.nanmin(dgval))
-        dg_max.append(np.nanmax(dgval))
-        nstr=str(n)+': expt' 
-        ax[1].plot(df['xvals'].astype('float64'),
-                   dgval, '+', label='n='+nstr, color = col[n])
-        ax[1].plot(df['xvals'], np.imag(df['df_calc'+str(n)])/n, calcfmt, 
-                      color = col[n], markerfacecolor='none', label='calc')
-
-    dg_min = min(dg_min)
-    dg_max = max(dg_max)    
-        
-    # change dissipation scale to log scale if needed
-    if gammascale=='log':
-        ax[1].set_yscale('log')
-        
-    # change scale to log scale if needed
-    if xscale == 'log':
-        ax[0].set_xscale('log')
-        ax[1].set_xscale('log')    
-
-    ax[0].legend(ncol=1, labelspacing=0.1, columnspacing=0, 
-                    markerfirst=False, handletextpad=0.1,
-                    bbox_to_anchor=(1.02, 1),
-                    handlelength=1)
-    ax[1].legend(ncol=1, labelspacing=0.1, columnspacing=0, 
-                    markerfirst=False, handletextpad=0.1,
-                    bbox_to_anchor=(1.02, 1),
-                    handlelength=1)
-    for k in [0, 1]: ax[k].set_xlabel(xlabel) 
-        
-    # reset y axis limits for delf and delg if needed
-    if df_lim == 'expt':
-        delf_range = df_max - df_min
-        delg_range = dg_max - dg_min
-        ax[0].set_ylim([df_min - 0.05*delf_range, df_max +0.05*delf_range])
-        if gammascale == 'log' and dg_min>0:
-            ax[1].set_ylim([0.9*dg_min, 1.1*dg_max])
-        elif gammascale == 'linear':
-            ax[1].set_ylim([dg_min - 0.05*delg_range, 
-                        dg_max +0.05*delg_range])
+        dg_min = min(dg_min)
+        dg_max = max(dg_max)    
+            
+        # change dissipation scale to log scale if needed
+        if gammascale=='log':
+            ax[axnum['g_comp']].set_yscale('log')
+            
+        # change scale to log scale if needed
+        if xscale == 'log':
+            ax[axnum['f_comp']].set_xscale('log')
+            ax[axnum['g_comp']].set_xscale('log')    
+    
+        ax[axnum['f_comp']].legend(ncol=1, labelspacing=0.1, columnspacing=0, 
+                        markerfirst=False, handletextpad=0.1,
+                        bbox_to_anchor=(1.02, 1),
+                        handlelength=1)
+        ax[axnum['g_comp']].legend(ncol=1, labelspacing=0.1, columnspacing=0, 
+                        markerfirst=False, handletextpad=0.1,
+                        bbox_to_anchor=(1.02, 1),
+                        handlelength=1)
+        for k in [0, 1]: ax[k].set_xlabel(xlabel) 
+            
+        # reset y axis limits for delf and delg if needed
+        if df_lim == 'expt':
+            delf_range = df_max - df_min
+            delg_range = dg_max - dg_min
+            ax[axnum['f_comp']].set_ylim([df_min - 0.05*delf_range, df_max +0.05*delf_range])
+            if gammascale == 'log' and dg_min>0:
+                ax[axnum['g_comp']].set_ylim([0.9*dg_min, 1.1*dg_max])
+            elif gammascale == 'linear':
+                ax[axnum['g_comp']].set_ylim([dg_min - 0.05*delg_range, 
+                            dg_max +0.05*delg_range])
 
     # add values to contour plots
     if contour_plots:
         for n in nplot:
             dlam = calc_dlam_from_dlam3(n, df['dlam3'], df['phi'])
-            ax[2].plot(dlam, df['phi'], '-o', markerfacecolor='none',
-                          label = 'n='+str(n), color = col[n])
-            ax[3].plot(dlam, df['phi'], '-o', markerfacecolor='none',
-                          label = 'n='+str(n), color = col[n])
+            ax[axnum['f_cont']].plot(dlam, df['phi'], '-o',
+                    label = 'n='+str(n), mfc = col[n], mec = 'k', c=col[n])
+            ax[axnum['g_cont']].plot(dlam, df['phi'], '-o',
+                    label = 'n='+str(n), mfc = col[n], mec = 'k', c= col[n])
             
-        for k in [2, 3]:
+        for k in [axnum['f_cont'], axnum['g_cont']]:
             ax[k].legend()
             ax[k].format_coord=fmt
     
@@ -2711,7 +2762,7 @@ def check_solution(df, **kwargs):
 
     # create a PdfPages object - one solution check per page
     if write_pdf:
-        pdf=PdfPages(num)
+        pdf=PdfPages(num +'_solutions.pdf')
     
     # we only take every nth row, where n = plot_interval
     if plot_interval == 'firstlast':
@@ -2725,6 +2776,15 @@ def check_solution(df, **kwargs):
     if plot_solutions and write_pdf:
         idxnum = 0 # keeps track of the fact that we don't always start from idx=0
         for idx, row in df_plot.iterrows():
+            calc = df['calc'][idx]
+            # figure out if this is a solution we want to deal with
+            rh=rhcalc(calc, row['dlam3'], row['phi'])
+            rd=rdcalc(calc, row['dlam3'], row['phi'])
+            
+            if np.isnan(rh) or np.isnan(rd):
+                print('nan rh or rd for solution '+str(idxnum)+' of '+str(len(df_plot)))
+                continue
+            
             idxnum = idxnum + 1
             curves={}
 
@@ -2732,16 +2792,15 @@ def check_solution(df, **kwargs):
             print('writing solution '+str(idxnum)+' of '+str(len(df_plot)))
 
             # label for data point in case we want use it
-            curves[0]=ax[1, 0].plot(row['dlam3'], row['phi'], 'kx', 
+            curves[0]=ax[axnum['f_cont']].plot(row['dlam3'], row['phi'], 'kx', 
                             markersize=14)
             
-            curves[1]=ax[1, 1].plot(row['dlam3'], row['phi'], 'wx', 
+            curves[1]=ax[axnum['g_cont']].plot(row['dlam3'], row['phi'], 'wx', 
                             markersize=14)
+            
+
             
             # now plot the lines for the solution
-            rh=rhcalc(calc, row['dlam3'], row['phi'])
-            rd=rdcalc(calc, row['dlam3'], row['phi'])
-
             def solutions(phi, guess):
                 def ftosolve_rh(d):
                     return rhcalc(calc, d, phi)-rh
@@ -2751,8 +2810,10 @@ def check_solution(df, **kwargs):
 
                 soln_rh=optimize.least_squares(ftosolve_rh, guess[0])
                 soln_rd=optimize.least_squares(ftosolve_rd, guess[1])
-                return {'phi': phi, 'd_rh': soln_rh['x'][0], 'd_rd': soln_rd['x'][0],
-                        'resid_rh':soln_rh['fun'][0], 'resid_rd':soln_rd['fun'][0]}
+                dic = {'phi': [phi], 'd_rh': [soln_rh['x'][0]], 
+                       'd_rd': [soln_rd['x'][0]], 'resid_rh':[soln_rh['fun'][0]], 
+                       'resid_rd':[soln_rd['fun'][0]]}
+                return pd.DataFrame.from_dict(dic)
 
             npts=25
             dcalc=pd.DataFrame(columns=['phi', 'd_rh', 'd_rd'])
@@ -2766,24 +2827,24 @@ def check_solution(df, **kwargs):
                     soln=solutions(phival, guess)
                     # break if there is not solution for this value of phi
                     # for either rd or rh
-                    if soln['resid_rh'] > 1e-4 or soln['resid_rd']>1e-4:
-                        break
-                    dcalc=dcalc.append(soln, ignore_index=True)
+                    if (soln['resid_rh'][0] > 1e-4) or (soln['resid_rd'][0]>1e-4):
+                        continue
+                    dcalc=pd.concat([dcalc, soln], ignore_index=True)
                     guess=[soln['d_rh'], soln['d_rd']]
 
             dcalc=dcalc.sort_values(by=['phi'])
             
             # now plot the curves of constant rh and rd
-            curves[2]=ax[2].plot(dcalc['d_rh'], dcalc['phi'], 'k-',
+            curves[2]=ax[axnum['f_cont']].plot(dcalc['d_rh'], dcalc['phi'], 'k-',
                                     label =r'$r_h$')
-            curves[3]=ax[2].plot(dcalc['d_rd'], dcalc['phi'], 'k--',
+            curves[3]=ax[axnum['f_cont']].plot(dcalc['d_rd'], dcalc['phi'], 'k--',
                                     label = r'$r_d$')
-            curves[4]=ax[3].plot(dcalc['d_rh'], dcalc['phi'], 'w-',
+            curves[4]=ax[axnum['g_cont']].plot(dcalc['d_rh'], dcalc['phi'], 'w-',
                                     label = r'$r_h$')
-            curves[5]=ax[3].plot(dcalc['d_rd'], dcalc['phi'], 'w--',
+            curves[5]=ax[axnum['g_cont']].plot(dcalc['d_rd'], dcalc['phi'], 'w--',
                                     label = r'$r_d$')
             
-            for k in [2,3]:
+            for k in [axnum['f_cont'], axnum['g_cont']]:
                 ax[k].legend(ncol=2)
                 ax[k].set_xlim(left=0)
                       
@@ -2798,7 +2859,7 @@ def check_solution(df, **kwargs):
     if write_pdf: pdf.close()
     figinfo = {'fig':fig, 'ax':ax} 
     if contour_plots:
-        figinfo['colorbars'] =[cbar2, cbar3]
+        figinfo['colorbars'] =[cbar1, cbar2]
     return figinfo
 
 
