@@ -2,7 +2,12 @@
 
 # QCM Data Collection and Analysis Software
 
-This is the Python project page for the QCM data collection and analysis software used by the Shull research group at Northwestern University. The data collection and analysis are at the testing point. Currently, it is using its own data format (hdf5). The data importing function with QCM-D data is useful to the community doing QCM-D tests. Some of the analysis routines are generally useful, regardless of how the QCM data were generated.
+This is the Python project page for the QCM data collection and analysis software used by the Shull research group at Northwestern University. The data collection and analysis are at the testing point. Curently, it is using its own data format (hdf5). The data importing function with QCM-D data is useful to the community doing QCM-D tests. Some of the analysis routines are generally useful, regardless of how the QCM data were generated.
+
+![](Screenshot.png)
+<p align = "center">
+<b>Screenshot of the User Interface</b>
+</p>
 
 ## Getting Started
 
