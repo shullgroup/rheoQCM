@@ -2,11 +2,11 @@
 
 # QCM Data Collection and Analysis Software
 
-This is the Python project page for the QCM data collection and analysis software used by the Shull research group at Northwestern University. The data collection and analysis are at the testing point. Curentlly, it is using its own data format (hdf5). The data importing function with QCM-D data is useful to the community doing QCM-D tests. Some of the analysis routines are generally useful, regardless of how the QCM data were generated.
+This is the Python project page for the QCM data collection and analysis software used by the Shull research group at Northwestern University. The data collection and analysis are at the testing point. Currently, it is using its own data format (hdf5). The data importing function with QCM-D data is useful to the community doing QCM-D tests. Some of the analysis routines are generally useful, regardless of how the QCM data were generated.
 
 ## Getting Started
 
-The analysis portions of the software should work on Windows/Mac/Linux platforms. In all cases you'll need some familiarity with running commands from the terminal, however. It's assumed in the following that you know how to do this on your platform. The software to interface with network analyzers and collect the QCM data only runs on Windows-based computers (The analyser currently interfaced with only works on Windows).
+The analysis portions of the software should work on Windows/Mac/Linux platforms. In all cases you'll need some familiarity with running commands from the terminal, however. It's assumed in the following that you know how to do this on your platform. The software to interface with network analyzers and collect the QCM data only runs on Windows-based computers (The analyser, [N2PK Vector Network Analyzer](https://www.makarov.ca/vna.htm), currently interfaced with only works on Windows)
 
 ### Capabilities
 
@@ -51,7 +51,7 @@ All the modules needed for the data collection program are in the `rheoQCM/` fol
 
 ### Running the UI from Terminal
 
-Go to the `rheoQCM/` folder and run `rheoQCM.py` will start the UI and it will check the environment by itself.  
+Go to the `rheoQCM/` folder and run `rheoQCM.py` or `rheoQCM` will start the UI and it will check the environment by itself.  
 
 ## Using UI with QCM-D Data
 
