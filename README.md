@@ -11,7 +11,7 @@ This is the Python project page for the QCM data collection and analysis softwar
 
 ## Getting Started
 
-The analysis portions of the software should work on Windows/Mac/Linux platforms. In all cases you'll need some familiarity with running commands from the terminal, however. It's assumed in the following that you know how to do this on your platform. The software to interface with network analyzers and collect the QCM data only runs on Windows-based computers (The analyser currently interfaced with only works on Windows).
+The analysis portions of the software should work on Windows/Mac/Linux platforms. In all cases you'll need some familiarity with running commands from the terminal, however. It's assumed in the following that you know how to do this on your platform. The software to interface with network analyzers and collect the QCM data only runs on Windows-based computers (The analyser, [N2PK Vector Network Analyzer](https://www.makarov.ca/vna.htm), currently interfaced with only works on Windows)
 
 ### Capabilities
 
@@ -56,7 +56,7 @@ All the modules needed for the data collection program are in the `rheoQCM/` fol
 
 ### Running the UI from Terminal
 
-Go to the `rheoQCM/` folder and run `rheoQCM.py` will start the UI and it will check the environment by itself.  
+Go to the `rheoQCM/` folder and run `rheoQCM.py` or `rheoQCM` will start the UI and it will check the environment by itself.  
 
 ## Using UI with QCM-D Data
 
