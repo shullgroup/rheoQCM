@@ -1602,8 +1602,8 @@ def make_prop_axes(**kwargs):
             ax[p].set_ylabel(f'$\Delta \Gamma_{{{n}}}$ (Hz)')
             ax[p].set_xlabel(xlabel[p])
         else:
-            ax[p].set_xlabel(xlabel[p])
-            ax[p].set_ylabel(ylabel[p])
+            ax[p].set_xlabel('xlabel')
+            ax[p].set_ylabel('ylabel')
         ax[p].set_title(titles[p])
 
     info = {'plots':plots, 'xunit':xunit, 'xscale':xscale}
