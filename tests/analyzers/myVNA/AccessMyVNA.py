@@ -63,11 +63,7 @@ win_names = [
     u'myVNA - Reflection mode "myVNA"']
 # win_name = 'AccessMyVNA'
 
-# dll path
-# dll_path = r'./VNA/AccessMyVNA_v0.7/release/AccessMyVNAdll.dll'
-# dll_path = r'./VNA/AccessMyVNAv0.7_J/release/AccessMyVNAdll.dll'
-
-dll_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'dll', 'AccessMyVNAdll.dll')
+dll_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'AccessMyVNAdll.dll')
 
 vna = WinDLL(dll_path, use_last_error=False) # this only works with AccessMyVNA
 # vna = OleDLL(r'AccessMyVNAdll.dll', use_last_error=True) # this only works with AccessMyVNA
