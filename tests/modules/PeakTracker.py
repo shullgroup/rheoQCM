@@ -711,7 +711,7 @@ class PeakTracker:
 
         # set new start/end freq in Hz
         self.update_output(chn_name, harm, span=new_xlim)
-        self.update_output(chn_name, harm, cen_trk=new_cen)
+        self.update_output(chn_name, harm, cen_trk=cen) # NOTE: new_cen is the mean of limitsl cen is the peak location
 
 
     ########### peak finding functions ###########
