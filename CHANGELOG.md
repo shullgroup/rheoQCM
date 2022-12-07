@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.20.1] - 2022-09-12
+## [0.20.1] - 2022-10-20
 
 ### Added
 
@@ -11,6 +11,8 @@
 - Change the number of samples (for each scan) to nSteps + 1 which is consistent with it in myVNA software.
 
 ### Fixed
+
+- Fix PeakTracker bugs in peak_tracker() function.
 
 ### Removed
 

@@ -72,7 +72,7 @@ if UIModules.system_check() == 'win32': # windows
     if struct.calcsize('P') * 8 == 32: # 32-bit version Python
         try:
             # from modules.AccessMyVNA_dummy import AccessMyVNA
-            from modules.AccessMyVNA import AccessMyVNA
+            from analyzers.myVNA.AccessMyVNA import AccessMyVNA
             logger.info(AccessMyVNA) 
             # test if MyVNA program is available
             with AccessMyVNA() as vna:
@@ -133,7 +133,7 @@ class VNATracker:
     def get_cal_filenames(self):
         '''
         find calc file for ADC1 and ADC2 separately
-        The fill should be stored in config_default['vna_cal_file_path'] for each channel
+        The file should be stored in config_default['vna_cal_file_path'] for each channel
         '''
         cal = {'ADC1': '', 'ADC2': ''}
         if (UIModules.system_check() == 'win32') and (struct.calcsize('P') * 8 == 32): # windows (if is win32, struct will already be imported above)

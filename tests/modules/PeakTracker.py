@@ -325,17 +325,19 @@ def guess_peak_factors(freq, resonance, peak_finder_method=peak_finder_method):
         return amp, cen, half_wid, half_max
     elif peak_finder_method == 'py_func': 
         #TODO if find_peaks(f) is necessary?
-        cen_index = np.argmax(resonance) # use max value as peak
-        prominences = peak_prominences(resonance, np.array([cen_index])) # tuple of 3 arrays
-        widths = peak_widths(resonance, np.array([cen_index]), prominence_data=prominences, rel_height=0.5)
-        
-        cen = freq[cen_index] # peak center
-        # use prominence as amp since the peak we are looking for is th tallest one
-        amp = prominences[0][0]
-        half_wid = min(cen_index-widths[2][0], widths[3][0]-cen_index) * (freq[1] - freq[0]) # min of left and right side
-        half_max = widths[1][0]
-
-        return amp, cen, half_wid, half_max
+        try:
+            cen_index = np.argmax(resonance) # use max value as peak
+            prominences = peak_prominences(resonance, np.array([cen_index])) # tuple of 3 arrays
+            widths = peak_widths(resonance, np.array([cen_index]), prominence_data=prominences, rel_height=0.5)
+            
+            cen = freq[cen_index] # peak center
+            # use prominence as amp since the peak we are looking for is th tallest one
+            amp = prominences[0][0]
+            half_wid = min(cen_index-widths[2][0], widths[3][0]-cen_index) * (freq[1] - freq[0]) # min of left and right side
+            half_max = widths[1][0]
+            return amp, cen, half_wid, half_max
+        except: # in case the python peak functions fail, use simple math
+            return guess_peak_factors(freq, resonance, peak_finder_method='simple_func')
 
 
 class PeakTracker:
@@ -655,7 +657,7 @@ class PeakTracker:
                     # new start and end frequencies in Hz
                     new_xlim=np.array([cen-0.5*current_span,cen+0.5*current_span]) '''
             elif track_condition == 'fixcenter':
-                new_span = set_new_span(current_span, half_wid), config_default['peak_min_width_Hz']
+                new_span = set_new_span(current_span, half_wid)
                 new_xlim = set_new_xlim(current_center, new_span)
 
                 ''' # peak_xlim = np.array([cen-half_wid*3, cen+half_wid*3])
@@ -709,7 +711,7 @@ class PeakTracker:
 
         # set new start/end freq in Hz
         self.update_output(chn_name, harm, span=new_xlim)
-        self.update_output(chn_name, harm, cen_trk=cen)
+        self.update_output(chn_name, harm, cen_trk=cen) # NOTE: new_cen is the mean of limitsl cen is the peak location
 
 
     ########### peak finding functions ###########

@@ -63,11 +63,7 @@ win_names = [
     u'myVNA - Reflection mode "myVNA"']
 # win_name = 'AccessMyVNA'
 
-# dll path
-# dll_path = r'./VNA/AccessMyVNA_v0.7/release/AccessMyVNAdll.dll'
-# dll_path = r'./VNA/AccessMyVNAv0.7_J/release/AccessMyVNAdll.dll'
-
-dll_path = os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), 'dll', 'AccessMyVNAdll.dll')
+dll_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'AccessMyVNAdll.dll')
 
 vna = WinDLL(dll_path, use_last_error=False) # this only works with AccessMyVNA
 # vna = OleDLL(r'AccessMyVNAdll.dll', use_last_error=True) # this only works with AccessMyVNA
@@ -1574,6 +1570,12 @@ if __name__ == '__main__':
     import time
     import logging
     # logging.basicConfig(level=logging.INFO)
+
+    # manually use Init() and Close() is the same as with statement
+    vna = AccessMyVNA()
+    vna.Init()
+    vna.Close() # NOTE: we need Close(). Otherwise, the code will freeze.
+
     with AccessMyVNA() as vna:
         if vna.Init() == 0:
             print('open')
@@ -1586,7 +1588,11 @@ if __name__ == '__main__':
     # vna.change_settings(nSteps=400)
     with vna:
         print('start')
-        # vna.SingleScan()
+        ret, vna._f[0], vna._f[1] = vna.SetFequencies(f1=4.9e6, f2=5.1e6, nFlags=1)
+        print(ret, vna._f)
+
+        vna.SingleScan()
+        time.sleep(1)
         t0 = time.time()
         ret, f, G = vna.GetScanData(nStart=0, nEnd=int(vna._nsteps), nWhata=-1, nWhatb=15)
         # print(i, t - t0, f[-1], G[-1])
