@@ -952,12 +952,13 @@ def solve_for_props(delfstar, calc, **kwargs):
             - default is 20,000 Hz
             
     returns:
-        df_soln (dataframe):
+        df_out (dataframe):
             dataframe with properties added, deleting rows with any NaN values \
             that didn't allow calculation to be performed
 
     """
 
+    df_in = delfstar.T  # transpose the input dataframe
     overlayer = kwargs.get('overlayer', 'air')
     if overlayer == 'air':
         layers = {}
@@ -968,7 +969,7 @@ def solve_for_props(delfstar, calc, **kwargs):
     nplot = []
     # consider possibility that our data has harmonics up to n=21
     for n in np.arange(1, 22, 2):
-        if n in delfstar.keys():
+        if n in df_in.index:
             nplot = nplot + [n]
     calctype = kwargs.get('calctype', 'SLA')
     reftype = kwargs.get('reftype', 'overlayer')
@@ -1028,14 +1029,14 @@ def solve_for_props(delfstar, calc, **kwargs):
             guess = kwargs['guess']
             drho, grho3, phi = guess['drho'], guess['grho3'], guess['phi']
         else:
-            start_idx = delfstar.index.min()
+            start_key = np.min(df_in.keys())
             try:
-                drho, grho3, phi = thinfilm_guess(
-                    delfstar.iloc[start_idx, :].to_dict(), calc)
+                drho, grho3, phi = thinfilm_guess(df_in[start_key], calc)
             except:
                 grho3 = 1e11
                 phi = 45
                 drho = 2e-3
+                
 
     # set up the initial guess
     if fixed_drho:
@@ -1045,42 +1046,49 @@ def solve_for_props(delfstar, calc, **kwargs):
     else:
         x0 = np.array([grho3, phi, drho])
 
-    # create df_soln dataframe, starting with time and Temp from delfstar
-    df_soln = delfstar[['t', 't_prev', 't_next', 'temp']].copy()
+    # create output dataframe, starting with time and temperature
+    df_time_temp = pd.DataFrame(columns = ['t', 'temp'], dtype = 'Float64',
+                                index = df_in.keys())
     
     # now create dataframe with the complex frequency shifts
-    npts = len(df_soln.index)
-    real_series = np.zeros(npts, dtype=np.float64)
-    complex_series = np.zeros(npts, dtype = np.complex128)
-    object_series = np.empty(npts, dtype = np.object)
-    
+    delfstar_columns = []
     for n in nplot:
-        df_soln.insert(df_soln.shape[1], 'df_expt'+str(n), delfstar[n])
-        df_soln.insert(df_soln.shape[1], 'df_calc'+str(n), complex_series)          
+        delfstar_columns = delfstar_columns + ['df_expt'+str(n), 'df_calc'+str(n)]
+    df_delfstar = pd.DataFrame(columns=delfstar_columns, dtype = 'complex128',
+                                index = df_in.keys())
 
-    # now add columns for calculated properties
-    for prop in ['grho3', 'phi', 'drho', 'dlam3']:
-        df_soln.insert(df_soln.shape[1], prop, real_series)
+    # now we make the dataframe with calculated properties
+    df_real = pd.DataFrame(columns = ['grho3', 'phi', 'drho', 'dlam3'],
+                            dtype = 'Float64', index = df_in.keys())
     
-    # now add column for Jacobian
-    df_soln.insert(df_soln.shape[1], 'jacobian', object_series)
+    # now we make the dataframe with the objects
+    df_object = pd.DataFrame(columns = ['jacobian'],
+                            dtype = 'object', index = df_in.keys())
   
-    # now add columns for 'calc' and 'calctype'
-    for obj in ['calc', 'calctype']:
-        df_soln.insert(df_soln.shape[1], obj, object_series)
+    # now we make the dataframe with the strings
+    df_string = pd.DataFrame(columns = ['calc', 'calctype'],
+                            dtype = 'string', index = df_in.keys())
                              
+    # concatenate individual datafames to get df_out
+    df_out = pd.concat([df_time_temp, df_delfstar, df_real, df_object,
+                        df_string], axis = 1)
+    
     # obtain the solution, using either the SLA or LL methods
-    for idx, row in df_soln.iterrows(): 
+    for i in df_in.columns:
         # if an initial guess exists in the input file, we use that
-        if 'guess' in row:
-            x0 = [row.guess['grho3'], row.guess['phi'], row.guess['drho']]
+        if 'guess' in df_in[i].index:
+            x0 = [df_in[i].guess['grho3'], df_in[i].guess['phi'],
+                  df_in[i].guess['drho']]
         # check to see if there are any nan values in the harmonics we need
         # also set delfstar to nan for gamma exceeding gmax
-
-        for n in list(set(nall)):
-            delfstar_val = row['df_expt'+str(n)]
-            if np.isnan(delfstar_val) or np.imag(delfstar_val) > gmax:
-                continue
+        continue_flag = False
+        for n in nall:
+            if np.isnan(df_in[i][n]) or np.imag(df_in[i][n]) > gmax:
+                continue_flag = True
+                df_in[i][n]=np.nan  # may not need this anymore
+                
+        if continue_flag:
+            continue
         
         # set up the function to solve
         def ftosolve(x):
@@ -1093,12 +1101,12 @@ def solve_for_props(delfstar, calc, **kwargs):
             for n in nf: 
                 val = (calc_delfstar(n, layers, calctype=calctype,
                                        reftype=reftype).real -
-                         row['df_expt'+str(n)].real)
+                         df_in[i][n].real)
                 vals.append(val)
             for n in ng: 
                 val = (calc_delfstar(n, layers, calctype=calctype,
                                        reftype=reftype).imag -
-                         row['df_expt'+str(n)].imag)
+                         df_in[i][n].imag)
                 vals.append(val)
             return vals
                
@@ -1107,10 +1115,7 @@ def solve_for_props(delfstar, calc, **kwargs):
             x0[k]=max(x0[k], lb[k])
             x0[k]=min(x0[k], ub[k])
 
-        try:
-            soln = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
-        except:
-            print('error at index = '+str(idx))
+        soln = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
         grho3 = soln['x'][0]
         phi = soln['x'][1]
         print(soln['x'])
@@ -1119,29 +1124,48 @@ def solve_for_props(delfstar, calc, **kwargs):
             drho = soln['x'][2]
 
         dlam3 = calc_dlam(3, layers['film'])
-        jacobian = (soln['jac']).astype(object)
+        jacobian = soln['jac']
         
         # now back calculate delfstar from the solution
         # add experimental and calculated values to the dataframe
         for n in nplot:
             delfstar_calc = calc_delfstar(n, layers, calctype=calctype,
                                              reftype = reftype)
-            df_soln.loc[idx, 'df_calc'+str(n)] = round(delfstar_calc, 1)
+            df_out.loc[i, 'df_calc'+str(n)] = round(delfstar_calc, 1)
+            try:
+                df_out.loc[i, 'df_expt'+str(n)] =  delfstar[n][i]
+            except:
+                df_out.loc[i, 'df_expt'+str(n)] =  'nan'
 
-        var_vals = [grho3, phi, drho, dlam3, jacobian, calc, calctype]
-        var_names = ['grho3', 'phi', 'drho', 'dlam3','jacobian', 
-                    'calc', 'calctype']
+        # get t, temp, set to 'nan' if they don't exist
+        if 't' in df_in[i].keys():
+            t = np.real(df_in[i]['t'])
+        else:
+            t = np.nan
+        if 'temp' in df_in[i].keys():
+            temp = np.real(df_in[i]['temp'])
+        else:
+            temp = np.nan
+
+        var = [grho3, phi, drho, dlam3, t, temp, jacobian, calc, calctype]
+        var_name = ['grho3', 'phi', 'drho', 'dlam3', 't', 'temp',
+                    'jacobian', 'calc', 'calctype']
+
+        for k in np.arange(len(var)):
+            df_out.at[i, var_name[k]] = var[k]
         
-        for var_val, var_name in zip(var_vals, var_names):
-            df_soln.at[idx, var_name] = var_val
-        
+        # sometimes addition of nan values mess up the dtype for the outputs
+        # here we make sure we recast everything to 'float64'
+        for varname in ['grho3', 'phi', 'drho', 'dlam3', 't', 'temp']:
+            df_out[varname] = df_out[varname].astype('float64')
+
         # set up the initial guess
         if fixed_drho:
             x0 = np.array([grho3, phi])
         else:
             x0 = np.array([grho3, phi, drho])
 
-    return df_soln
+    return df_out
 
 
 def solve_all(datadir, calc, **kwargs):
@@ -1376,7 +1400,7 @@ def make_prop_axes(**kwargs):
             
             - 'jdp' is loss compliance normalized by density
             
-            - 'tanphi' is loss tangent
+            -'tanphi' is loss tangent
             
             - 'Gprho3' storage modulus at n=3 times density
             
@@ -1502,8 +1526,6 @@ def make_prop_axes(**kwargs):
                'gprho3': r'$G^\prime_3\rho$ (Pa $\cdot$ g/cm$^3$)',
                'gdprho3': r'$G^{\prime\prime}_3\rho$ (Pa $\cdot$ g/cm$^3$)',
                'drho': r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-               'drho_change': r'change in $d\rho$',
-               'drho_norm': r'$d\rho / (d\rho)_{dry}$',
                'jdp': r'$J^{\prime \prime}/\rho$ (Pa$^{-1}\cdot$cm$^3$/g)',
                'temp':r'$T$ ($^\circ$C)'
                }
@@ -1532,12 +1554,6 @@ def make_prop_axes(**kwargs):
             ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'drho':
             ax[p].set_ylabel(axlabels['drho'])
-            ax[p].set_xlabel(xlabel[p])
-        elif plots[p] == 'drho_norm':
-            ax[p].set_ylabel(axlabels['drho_norm'])
-            ax[p].set_xlabel(xlabel[p])
-        elif plots[p] == 'drho_change':
-            ax[p].set_ylabel(axlabels['drho_change'])
             ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'cole-cole':
             ax[p].set_ylabel(axlabels['gdprho3'])
@@ -1620,8 +1636,6 @@ def prop_plots(df, figinfo, **kwargs):
             Uncertainty in f, gamma for each harmonic
         plots_to_make (list of strings):
             plots to make.  Equal to figinfo['info']['plots'] if not specified
-        drho_ref (real):
-            reference drho for plots of drho_norm or drho_ref
 
 
     returns:
@@ -1631,9 +1645,8 @@ def prop_plots(df, figinfo, **kwargs):
     fmt=kwargs.get('fmt', '+')
     label=kwargs.get('label', '')
     xmult = kwargs.get('xmult', 1)
-    xoffset_input=kwargs.get('xoffset', 0)  
+    xoffset_input=kwargs.get('xoffset', 0)
     uncertainty_dict = kwargs.get('uncertainty_dict', 'default')
-    drho_ref = kwargs.get('drho_ref', np.nan)
     
     # drop dataframe rows with all nan
     df = df.dropna(how='all') 
@@ -1747,17 +1760,7 @@ def prop_plots(df, figinfo, **kwargs):
             xdata = xvals[p]
             ydata = 1000*df['drho'].astype(float)
             yerr = 1000*df['drho_err']
-
-        elif plots[p] == 'drho_norm':
-            xdata = xvals[p]
-            ydata = (df['drho']/drho_ref).astype(float)
-            yerr = 1000*df['drho_err']
-                    
-        elif plots[p] == 'drho_change':
-            xdata = xvals[p]
-            ydata = 1000*(df['drho']-drho_ref).astype(float)
-            yerr = 1000*df['drho_err']
-            
+      
         elif plots[p] == 'vgp' or plots[p] == 'vgp_lin':
             xdata = df['grho3'].astype(float)/1000
             ydata = df['phi'].astype(float)
