@@ -67,32 +67,21 @@ import _version
 print('Version: {}'.format(_version.__version__))
 
 
-if UIModules.system_check() == 'win32': # windows
-    import struct
-    if struct.calcsize('P') * 8 == 32: # 32-bit version Python
-        try:
-            # from modules.AccessMyVNA_dummy import AccessMyVNA
-            from analyzers.myVNA.AccessMyVNA import AccessMyVNA
-            logger.info(AccessMyVNA) 
-            # test if MyVNA program is available
-            with AccessMyVNA() as vna:
-                if vna.Init() == 0: # connection with myVNA is available
-                    try:
-                        from modules import TempDevices,TempModules
-                    except Exception as e:
-                        logger.warning('Failed to import TempDevices and/or TempModules.\nTemperature functions of the UI will not avaiable!')
-                        logger.exception('Failed to import TempDevices and/or TempModules.')
-
-        except Exception as e: # no myVNA connected. Analysis only
-            logger.error('Failed to import AccessMyVNA module!')
-            logger.exception('Failed to import AccessMyVNA module!')
+if UIModules.system_check() is UIModules.OSType.windows: # windows
+    try:
+        from modules import TempDevices, TempModules
+    except Exception as e:
+        logger.warning('Failed to import TempDevices and/or TempModules.\nTemperature functions of the UI will not avaiable!')
+        logger.exception('Failed to import TempDevices and/or TempModules.')
+    if UIModules.is_32bit_python(): # 32-bit version Python
+        ...
     else: # 64-bit version Python which doesn't work with AccessMyVNA
         # A 32-bit server may help 64-bit Python work with 32-bit dll
-        logger.warning('Current version of MyVNA does not work with 64-bit Python!\nData analysis only!')
+        logger.warning('MyVNA program does not work with 64-bit Python!')
 else: # linux or MacOS
     # for test only
     # from modules.AccessMyVNA_dummy import AccessMyVNA
-        logger.warning('Current version of MyVNA does not work with MacOS and Linux!\nData analysis only!')
+        logger.warning('Current analyzers do not work under MacOS and Linux!\nData analysis only!')
 
 
 ############# end of importing modules ####################
@@ -115,18 +104,27 @@ def setup_logging():
 
 
 class VNATracker:
-    def __init__(self):
+    def __init__(self, vna_name=None, vna_path=None):
+        '''
+        ideally, pass the qcm.settings['vna_path'] to vna_path
+        '''
+
+        self.vna_name = None if vna_name == 'none' else vna_name
         self.f =None       # current end frequency span in Hz (ndarray([float, float])
         self.steps = None   # current number of steps (int)
         self.chn = None     # current reflection ADC channel (1 or 2)
         self.avg = None     # average of scans (int)
         self.speed = None   # vna speed set up (int 1 to 10)
         self.instrmode = 0  # instrument mode (0: reflection)
-        self.cal = self.get_cal_filenames()
+        self.get_cal_filenames() # find calibration file(s) and save to self.cal
 
         self.setflg = {} # if vna needs to reset (set with reset selections)
         self.setflg.update(self.__dict__) # get all attributes in a dict
         self.setflg.pop('setflg', None) # remove setflg itself
+
+        # put the atributes will not include in setflg after setflg
+        self.vna_path_check(vna_path) # find the corresponding vna program and save in self.vna_path
+
         logger.info('setflg: %s', self.setflg) 
 
 
@@ -135,21 +133,76 @@ class VNATracker:
         find calc file for ADC1 and ADC2 separately
         The file should be stored in config_default['vna_cal_file_path'] for each channel
         '''
-        cal = {'ADC1': '', 'ADC2': ''}
-        if (UIModules.system_check() == 'win32') and (struct.calcsize('P') * 8 == 32): # windows (if is win32, struct will already be imported above)
-            vna_cal_path = os.path.abspath(config_default['vna_cal_file_path'])
-            if not os.path.isdir(vna_cal_path): # directory doesn't exist
-                os.makedirs(vna_cal_path) # create directory
-            else:
-                files = os.listdir(vna_cal_path) # list all file in the given folder
-                logger.info('cal folder: %s', files) 
-                for key in cal.keys():
-                    for file in files:
-                        if (key + '.myVNA.cal').lower() in file.lower():
-                            cal[key] = os.path.join(vna_cal_path, file) # use absolute path
-                            break
-                logger.info(cal) 
-        return cal
+        cal = {'ADC1': '', 'ADC2': ''} # initiate return dict
+
+        if self.vna_name is None:
+            self.cal = cal
+        
+        else:
+            if (UIModules.system_check() is UIModules.OSType.windows): # windows 
+                vna_cal_path = os.path.abspath(config_default['vna_cal_file_path'])
+                if not UIMOdules.make_folder(vna_cal_path): # folder exists
+                    #UIMOdules.make_folder create a folder and return true if the folder does not exist; return False if the folder exists.
+                    files = os.listdir(vna_cal_path) # list all file in the given folder
+                    logger.info('cal folder: %s', files) 
+
+                    # set by vna_name
+                    if (self.vna_name == 'myvna') and UIModules.is_32bit_python(): # myVNA needs 32-bit Python environment
+                        for key in cal.keys():
+                            for file in files:
+                                if (key + '.myVNA.cal').lower() in file.lower():
+                                    cal[key] = os.path.join(vna_cal_path, file) # use absolute path
+                                    break
+                        logger.info(cal) 
+                    elif self.vna_name == 'vnwa':
+                        for key in cal.keys():
+                            for file in files:
+                                if (key + '_Mastercal.cal').lower() in file.lower():
+                                    cal[key] = os.path.join(vna_cal_path, file) # use absolute path
+                                    break
+                        logger.info(cal)                     
+                    elif self.vna_name == 'openqcm':
+                        for key in cal.keys():
+                            for file in files:
+                                if ('Calibration.txt').lower() in file.lower(): # we set both keys the same since openQCM has only one channel
+                                    cal[key] = os.path.join(vna_cal_path, file) # use absolute path
+                                    break
+                        logger.info(cal)                     
+            self.cal = cal
+
+
+    def vna_path_check(self, vna_path):
+        '''
+        find the vna program corresponding to vna_name
+        if does not exist, set to None
+        '''
+
+        if UIModules.system_check() is not UIModules.OSTpye.windows: # not windows
+            self.vna_path = None
+            return
+
+        if not vna_path: # None or ''
+            # vna_path is not in settings of qcm class if it is passed from it
+            # get from config_default
+            vna_path = config_default['vna_path']
+            logger.info('not vna_path is passed and get it from config_default: %s\n', vna_path) 
+        
+        if isinstance(vna_path, str) and (self.vna_name in vna_path) and os.path.exists(vna_path):
+            logger.info('vna_path is str: %s\n', vna_path) 
+            self.vna_path = vna_path
+        
+        elif isinstance(vna_path, dict) and (self.vna_name in vna_path.keys()):
+            vna_paths = vna_path[self.vna_name]
+            logger.info('vna_path is dict and %s is: %s\n', vna_paths) 
+            for vna_path in vna_paths:
+                if os.path.exists(vna_path):
+                    logger.info('vna_path in config_default') 
+                    break
+                else:
+                    logger.info('vna_path not found') 
+                    vna_path = None            
+            self.vna_path = vna_path
+        
 
 
     def set_check(self, **kwargs):
@@ -226,6 +279,7 @@ class QCMApp(QMainWindow):
         self.data_saver = DataSaver.DataSaver(ver=_version.__version__, settings=self.settings)
 
         self.vna = None # vna class
+        self.vna_name = None # name of vna device
         self.temp_sensor = None # class for temp sensor
         self.idle = True # if test is running
         self.reading = False # if myVNA/tempsensor is scanning and reading data
@@ -242,25 +296,8 @@ class QCMApp(QMainWindow):
 
         # check system
         self.system = UIModules.system_check()
-        # initialize AccessMyVNA
-        #TODO add more code to disable settings_control tab and widges in settings_settings tab
-        if self.system == 'win32': # windows
-            try:
-                # test if MyVNA program is available
-                with AccessMyVNA() as vna:
-                    if vna.Init() == 0: # is available
-                        # self.vna = AccessMyVNA() # save class AccessMyVNA to vna
-                        self.vna = vna # save class AccessMyVNA to vna
-                    else: # not available
-                        pass
-                logger.info(vna) 
-                logger.info(vna._nsteps) 
-            except:
-                print('Initiating MyVNA failed!\nMake sure analyser is connected and MyVNA is correctly installed!')
-        else: # other system, data analysis only
-            # self.vna = AccessMyVNA() # for test only
-            pass
-        logger.info(self.vna) 
+        self.is_32bit = UIModules.is_32bit_python()
+        
 
         # does it necessary???
         # if self.vna is not None: # only set the timer when vna is available
@@ -687,23 +724,16 @@ class QCMApp(QMainWindow):
         )
 
         ## check comboBox_samp_channel & comboBox_ref_channel list by calibration file
-        # get current chn from myvna
+        # get current chn from vna
         curr_chn = None if self.vna is None else self.vna._chn
         logger.info('curr_chn: %s\n', curr_chn) 
-        if not self.vna_tracker.cal['ADC1'] and (curr_chn != 1): # no calibration file for ADC1
-            # delete ADC1 from both lists
-            if self.ui.comboBox_samp_channel.findData(1) != -1:
-                self.ui.comboBox_samp_channel.removeItem(self.ui.comboBox_samp_channel.findData(1))
-            if self.ui.comboBox_ref_channel.findData(1) != -1:
-                self.ui.comboBox_ref_channel.removeItem(self.ui.comboBox_ref_channel.findData(1))
-        if not self.vna_tracker.cal['ADC2'] and (curr_chn != 2): # no calibration file for ADC1
-            # delete ADC1 from both lists
-            if self.ui.comboBox_samp_channel.findData(2) != -1:
-                self.ui.comboBox_samp_channel.removeItem(self.ui.comboBox_samp_channel.findData(2))
-            if self.ui.comboBox_ref_channel.findData(2) != -1:
-                self.ui.comboBox_ref_channel.removeItem(self.ui.comboBox_ref_channel.findData(2))
-
-
+        for i in [1, 2]:
+            if not self.vna_tracker.cal['ADC'+str(i)] and (curr_chn != i): # no calibration file for ADC1/2
+                # delete ADC1/2 from both lists
+                if self.ui.comboBox_samp_channel.findData(i) != -1:
+                    self.ui.comboBox_samp_channel.removeItem(self.ui.comboBox_samp_channel.findData(i))
+                if self.ui.comboBox_ref_channel.findData(i) != -1:
+                    self.ui.comboBox_ref_channel.removeItem(self.ui.comboBox_ref_channel.findData(i))
 
         # connect ref_channel
         # self.ui.comboBox_ref_channel.currentIndexChanged.connect() #TODO add function checking if sample and ref have the same channel
@@ -746,7 +776,8 @@ class QCMApp(QMainWindow):
 
         self.ui.comboBox_settings_settings_analyzer.currentIndexChanged.connect(self.update_widget)
         # TODO connect module importing function here
-        self.ui.comboBox_settings_settings_analyzer.currentIndexChanged.connect(self.update_widget)
+        self.ui.comboBox_settings_settings_analyzer.currentIndexChanged.connect(self.set_vna_name)
+        self.ui.comboBox_settings_settings_analyzer.currentIndexChanged.connect(self.load_analyzer)
 
         # add comBox_tempmodule to treeWidget_settings_settings_hardware
         try:
@@ -765,7 +796,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_tempmodule.activated.connect(self.update_widget)
 
         # add comboBox_tempdevice to treeWidget_settings_settings_hardware
-        if self.vna and self.system == 'win32':
+        if self.vna and (self.system is UIModules.OSType.windows):
             config_default['tempdevs_opts'] = TempDevices.dict_available_devs(config_default['tempdevices_dict'])
             self.create_combobox(
                 'comboBox_tempdevice',
@@ -1495,7 +1526,7 @@ class QCMApp(QMainWindow):
         self.ui.actionExport.triggered.connect(self.on_triggered_actionExport)
         self.ui.actionReset.triggered.connect(self.on_triggered_actionReset)
         self.ui.actionClear_All.triggered.connect(self.on_triggered_actionClear_All)
-        self.ui.actionOpen_MyVNA.triggered.connect(self.on_triggered_actionOpen_MyVNA)
+        self.ui.actionOpen_VNA.triggered.connect(self.on_triggered_actionOpen_VNA)
         # import QCM-D
         self.ui.actionImport_QCM_D.triggered.connect(self.on_triggered_actionImport_QCM_D)
         # import QCM-Z
@@ -1817,43 +1848,26 @@ class QCMApp(QMainWindow):
         '''
         recalculate delf and delg by reference set saved in data_saver
         '''
-        self.data_saver.calc_fg_ref('samp', mark=False) # False or True??
-        self.data_saver.calc_fg_ref('ref', mark=False) # False or True??
+        self.data_saver.calc_fg_ref('samp', mark=False) # NOTE False or True??
+        self.data_saver.calc_fg_ref('ref', mark=False) # NOTE False or True??
 
 
-    def on_triggered_actionOpen_MyVNA(self):
+    def on_triggered_actionOpen_VNA(self):
         '''
-        open myVNA.exe
+        open analyzer program
+        #TODO: select software by device
         '''
-        if UIModules.system_check() != 'win32': # not windows
-            return
-
-        myvna_path = self.settings.get('vna_path', '')
-        logger.info('myvna_path: %s\n', myvna_path) 
-        if myvna_path and os.path.exists(myvna_path): # user defined myVNA.exe path exists and correct
-            logger.info('vna_path in self.settings') 
-            pass
-        else: # use default path list
-            logger.info('vna_path try config_default') 
-            for myvna_path in config_default['vna_path']:
-                if os.path.exists(myvna_path):
-                    logger.info('vna_path in config_default') 
-                    break
-                else:
-                    logger.info('vna_path not found') 
-                    myvna_path = ''
-
-        logger.info('myvna_path: %s\n', myvna_path) 
-        if myvna_path:
+        vnaprgm_path = self.vna_tracker.vna_path
+        if vnaprgm_path:
             logger.info('vna_path to open exe') 
-            subprocess.call(myvna_path) # open myVNA
+            subprocess.call(vnaprgm_path) # open myVNA
         else:
             logger.info('vna_path msg box') 
             process = self.process_messagebox(
-                text='Failed to open myVNA.exe',
-                message=['Cannot find myVNA.exe in: \n{}\nPlease add the path for "vna_path" in "settings_default.json"!'.format('\n'.join(config_default['vna_path'])),
-                'The format of the path should like this:',
-                r'"C:\\Program Files (x86)\\G8KBB\\myVNA\\myVNA.exe"'
+                text='Failed to open {0} program',
+                message=['Cannot find excutable {0} program!\nPlease check or add "vna_path" in "{1}"!'.format(config_default['analyzer_opts'][self.vna_tracker.vna_name], config_default['default_settings_file_name']),
+                'The format of the path in json file should like this:',
+                r'"vna_path": "C:\\Program Files (x86)\\G8KBB\\myVNA\\myVNA.exe"'
                 ],
                 opts=False,
                 forcepop=True,
@@ -2242,7 +2256,7 @@ class QCMApp(QMainWindow):
             for key, val in settings.items():
                 self.settings[key] = val
         self.peak_tracker = PeakTracker.PeakTracker(max_harm=self.settings['max_harmonic'])
-        self.vna_tracker = VNATracker()
+        self.vna_tracker = VNATracker(self.vna_name, self.settings['vna_path'])
 
         if not settings: # reset UI
             self.data_saver = DataSaver.DataSaver(ver=_version.__version__, settings=self.settings)
@@ -5232,11 +5246,12 @@ class QCMApp(QMainWindow):
         '''
         generate nhcalc str from relative widgets
         spinBox_settings_mechanics_nhcalc_n1/2/3
+        NOTE: starts from 0.21.0, '.' is used as the separation of the harmonics
         '''
         n1 = self.settings['spinBox_settings_mechanics_nhcalc_n1']
         n2 = self.settings['spinBox_settings_mechanics_nhcalc_n2']
         n3 = self.settings['spinBox_settings_mechanics_nhcalc_n3']
-        return ''.join(map(str, [n1, n2, n3]))
+        return '.'.join(map(str, [n1, n2, n3])) 
 
 
     def gen_nhcalc_list(self):
@@ -5653,6 +5668,80 @@ class QCMApp(QMainWindow):
         generate an array for contour_levels
         '''
         return np.linspace(lmin, lmax, interv)
+
+
+    def set_vna_name(self):
+        curr_id = self.ui.comboBox_settings_settings_analyzer.currentIndex()
+        curr_data = self.ui.comboBox_settings_settings_analyzer.itemData(curr_id)
+        
+        if curr_data == 'myvna': 
+            ...
+        elif curr_data == 'openqcm':
+            ...
+        elif curr_data == 'vnwa':
+            ...
+        elif curr_data == 'none':
+            ...
+        else:
+            curr_data = 'none'
+
+        if curr_data == 'none':
+            curr_data = None
+        
+        self.vna_name = curr_data
+
+
+    def load_analyzer(self):
+        '''
+        load vna modules to self.vna by self.vna_name
+        '''
+        if self.vna_name == 'myvna': 
+            # initialize AccessMyVNA
+            #TODO add more code to disable settings_control tab and widges in settings_settings tab
+            if (self.system is UIModules.OSType.windows) and (self.is_32bit): # windows and 32-bit
+                try:
+                    from analyzers.myVNA.AccessMyVNA import AccessMyVNA
+                    logger.info(AccessMyVNA) 
+                    # test if MyVNA program is available
+                    with AccessMyVNA() as vna:
+                        if vna.Init() == 0: # is available
+                            # self.vna = AccessMyVNA() # save class AccessMyVNA to vna
+                            self.vna = vna # save class AccessMyVNA to vna
+                        else: # not available
+                            pass
+                    logger.info(vna) 
+                    logger.info(vna._nsteps) 
+                except:
+                    print('Initiating MyVNA failed!\nMake sure analyser is connected and MyVNA is correctly installed!')
+            else: # other system, data analysis only
+                # self.vna = AccessMyVNA() # for test only
+                pass
+            logger.info(self.vna) 
+        elif self.vna_name == 'openqcm':
+            ...
+        elif self.vna_name == 'vnwa':
+            ...
+        elif self.vna_name is None:
+            ...
+        else:
+            ...
+        
+
+        # rest self.vna_tracker
+        self.vna_tracker = VNATracker(self.vna_name, self.settings['vna_path'])
+
+        # update vna_channel_opts
+
+        
+        # load tempmodules
+
+
+        # change icon link
+
+
+        # link program interface to button
+
+
 
 
     def on_clicked_set_temp_sensor(self, checked):

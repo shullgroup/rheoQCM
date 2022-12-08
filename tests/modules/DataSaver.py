@@ -3027,10 +3027,61 @@ class DataSaver:
 
     def get_mech_key(self, nhcalc):
         '''
+        nhcal: str
         return a str which represents the key in self.<chn_name>_mech[key]
+        You can use it to convert nhcal or mech_key to the version compatible str. This help to match the mech_key with prop_keys
         '''
-        return nhcalc
+        if self.data_ver_geq((0, 21, 0)): # the version mech_key is changed from '355' to '3.5.5'
+            if '.' in nhcalc:
+                return nhcalc
+            elif len(nhcalc) == 3:
+                return '.'.join(list(nhcalc))
+            else:
+                return None
+        else: # for older version
+            # remove '.'
+            if '.' in nhcalc: 
+                if len(nhcalc) == 3:
+                    return nhcalc.replace('.', '') 
+                else:
+                    return None 
+            else: 
+                return nhcalc
 
+
+    def data_ver_geq(self, ref_ver):
+        '''
+        compare if the version of the data is newer than ro equal to the given ref_ver (self.ver >= ref_ver)
+        ref_ver: str or tuple of int or str
+        '''
+        # data version 
+        data_ver = self.version_tup()
+        # refrence version to compare
+        ref_ver = self.version_tup(ref_ver)
+        return data_ver >= ref_ver
+
+
+    def version_tup(self, ver=None):
+        '''
+        ver: str or tuple of int or str
+        get verion in tuple of int 
+        e.g.: (0, 21, 0)
+        '''
+        if ver is None:
+            ver = self.ver
+        
+        # change both to tuple of int
+        if isinstance(ver, tuple):
+            if isinstance(ver[0], int):
+                ...
+            else:
+                ver = tuple(map(int, ver))
+        elif isinstance(ver, str):
+            if '.' in ver: # new format since 0.21.0
+                ver = tuple(ver.split('.'))
+            else: # older version w/ number only
+                ver = tuple(ver)
+        return ver
 
     ######## Following functions are for QCM-D 
 

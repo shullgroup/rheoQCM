@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './UI/QCM_GUI.ui'
+# Form implementation generated from reading ui file '.\UI\QCM_GUI.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -550,7 +550,7 @@ class Ui_MainWindow(object):
         self.toolBox = QtWidgets.QToolBox(self.tab_settings_settings)
         self.toolBox.setObjectName("toolBox")
         self.page_settings_settings_hardwares = QtWidgets.QWidget()
-        self.page_settings_settings_hardwares.setGeometry(QtCore.QRect(0, 0, 247, 179))
+        self.page_settings_settings_hardwares.setGeometry(QtCore.QRect(0, 0, 286, 225))
         self.page_settings_settings_hardwares.setObjectName("page_settings_settings_hardwares")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.page_settings_settings_hardwares)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -589,7 +589,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.treeWidget_settings_settings_hardware)
         self.toolBox.addItem(self.page_settings_settings_hardwares, "")
         self.page_settings_settings_plots = QtWidgets.QWidget()
-        self.page_settings_settings_plots.setGeometry(QtCore.QRect(0, 0, 86, 70))
+        self.page_settings_settings_plots.setGeometry(QtCore.QRect(0, 0, 286, 225))
         self.page_settings_settings_plots.setObjectName("page_settings_settings_plots")
         self.verticalLayout_24 = QtWidgets.QVBoxLayout(self.page_settings_settings_plots)
         self.verticalLayout_24.setContentsMargins(0, 0, 0, 0)
@@ -2488,7 +2488,7 @@ class Ui_MainWindow(object):
         self.gridLayout_6.addWidget(self.splitter, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 986, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 986, 21))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -2556,11 +2556,11 @@ class Ui_MainWindow(object):
         icon12.addPixmap(QtGui.QPixmap(":/icon/rc/temp_sensor.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.actionSet_Temperature_Sensor.setIcon(icon12)
         self.actionSet_Temperature_Sensor.setObjectName("actionSet_Temperature_Sensor")
-        self.actionOpen_MyVNA = QtWidgets.QAction(MainWindow)
+        self.actionOpen_VNA = QtWidgets.QAction(MainWindow)
         icon13 = QtGui.QIcon()
-        icon13.addPixmap(QtGui.QPixmap(":/icon/rc/myvna.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.actionOpen_MyVNA.setIcon(icon13)
-        self.actionOpen_MyVNA.setObjectName("actionOpen_MyVNA")
+        icon13.addPixmap(QtGui.QPixmap(":/icon/rc/openvna.svg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.actionOpen_VNA.setIcon(icon13)
+        self.actionOpen_VNA.setObjectName("actionOpen_VNA")
         self.actionAdd_Temperature_Data = QtWidgets.QAction(MainWindow)
         self.actionAdd_Temperature_Data.setCheckable(True)
         self.actionAdd_Temperature_Data.setIcon(icon12)
@@ -2647,7 +2647,7 @@ class Ui_MainWindow(object):
         self.menuFile.addAction(self.actionImport_QCM_Z)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionExit)
-        self.menuSetting.addAction(self.actionOpen_MyVNA)
+        self.menuSetting.addAction(self.actionOpen_VNA)
         self.menuSetting.addSeparator()
         self.menuSetting.addAction(self.actionReset)
         self.menuSetting.addAction(self.actionMaximum_Harmonic)
@@ -2666,7 +2666,7 @@ class Ui_MainWindow(object):
         self.toolBar.addAction(self.actionClear_All)
         self.toolBar.addAction(self.actionReset)
         self.toolBar.addSeparator()
-        self.toolBar.addAction(self.actionOpen_MyVNA)
+        self.toolBar.addAction(self.actionOpen_VNA)
         self.toolBar.addSeparator()
         self.label_9.setBuddy(self.comboBox_settings_control_dispmode)
         self.label_spectra_fit_zoomtimes.setBuddy(self.lineEdit_spectra_fit_span)
@@ -2828,14 +2828,14 @@ class Ui_MainWindow(object):
         self.textEdit_settings_data_sampmarks.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt;\">To be added!</span></p></body></html>"))
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">To be added!</p></body></html>"))
         self.tabWidget_settings_data_markindex.setTabText(self.tabWidget_settings_data_markindex.indexOf(self.tab_sampmarks), _translate("MainWindow", "&S Marks"))
         self.textEdit_settings_data_refmarks.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt;\">To be added!</span></p></body></html>"))
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\">To be added!</p></body></html>"))
         self.tabWidget_settings_data_markindex.setTabText(self.tabWidget_settings_data_markindex.indexOf(self.tab_refmarks), _translate("MainWindow", "&R Marks"))
         self.pushButton_settings_data_marksadd.setText(_translate("MainWindow", "1"))
         self.pushButton_settings_data_marksdel.setText(_translate("MainWindow", "0"))
@@ -3002,8 +3002,8 @@ class Ui_MainWindow(object):
         self.actionADC_1.setText(_translate("MainWindow", "ADC 1"))
         self.actionADC_2.setText(_translate("MainWindow", "ADC 2"))
         self.actionSet_Temperature_Sensor.setText(_translate("MainWindow", "Set Temperature Sensor"))
-        self.actionOpen_MyVNA.setText(_translate("MainWindow", "Open MyVNA"))
-        self.actionOpen_MyVNA.setToolTip(_translate("MainWindow", "Open MyVNA (The changes of setup will work only after the window is closed.)"))
+        self.actionOpen_VNA.setText(_translate("MainWindow", "Open MyVNA"))
+        self.actionOpen_VNA.setToolTip(_translate("MainWindow", "Open MyVNA (The changes of setup will work only after the window is closed.)"))
         self.actionAdd_Temperature_Data.setText(_translate("MainWindow", "Add Temperature Data"))
         self.actionHelp_Manual.setText(_translate("MainWindow", "Help Manual"))
         self.actionAbout_QCM_py.setText(_translate("MainWindow", "About QCMpy"))
@@ -3052,13 +3052,3 @@ class Ui_MainWindow(object):
         self.actionOpen_openQCM.setToolTip(_translate("MainWindow", "Open openQCM program"))
 
 import UI_source_rc
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
-

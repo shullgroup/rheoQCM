@@ -84,12 +84,9 @@ class NITempSensor():
                 data = task.read(number_of_samples_per_channel=self.nsamples)
                 return np.mean(data)
 
+
+
 ############## test code below
-
-
-
-
-
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     def get_temp(device, ai_channel, thrmpl_type):
@@ -115,6 +112,8 @@ if __name__ == "__main__":
                 )
             data = task.read(number_of_samples_per_channel=nsample)
             return np.mean(data)
+
+
     class Device():
         def __init__(self):
             self.name = 'Dev3'

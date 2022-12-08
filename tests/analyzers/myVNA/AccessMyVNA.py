@@ -895,10 +895,15 @@ _MyVNALoadCalibration = wfunc(
 # # __declspec(dllexport) int _stdcall MyVNASaveCalibration(_TCHAR * fileName)
 _MyVNASaveCalibration = wfunc(
     '?MyVNASaveCalibration@@YGHPA_W@Z', vna, c_int,
-    (c_char_p, (1, 'fileName')),
+    (c_wchar_p, (1, 'fileName')), # changed from : (c_char_p, (1, 'fileName'))
 )
-    
 
+#  MyVNASaveTraceData = vna[19]
+# __declspec(dllexport) int _stdcall MyVNASaveTraceData( _TCHAR * fileName )
+_MyVNASaveTraceData = wfunc(
+    '?MyVNASaveTraceData@@YGHPA_W@Z', vna, c_int,
+    (c_wchar_p, (1, 'fileName')),
+)
 
 #endregion
 
@@ -1314,6 +1319,14 @@ class AccessMyVNA():
         return ret
 
 
+    def SaveTraceData(self, fileName):
+        pfn = c_wchar_p(fileName)
+        ret = _MyVNASaveTraceData(pfn)
+        logger.info('MyVNASaveTraceData\n%s', ret) 
+        logger.info(pfn.value)
+        return ret
+
+
     ################ combined functions #################
     def single_scan(self):
         logger.info('single_scan') 
@@ -1609,68 +1622,6 @@ if __name__ == '__main__':
         print(f[1])
         print(G[1])
         print(B[1])
-
-        # print(t1 - t0)
-        
-        # vna.setADCChannel(reflectchn=2)
-        # ret, delays = vna.GetIntegerArray(nWhat=5, nIndex=0, nArraySize=4)
-        # print(delays)
-        # ret, chn = vna.getADCChannel()
-        # print('chn is ', chn)
-
-        # ls = [
-        #     (0, 0, 9),
-        #     (3, 0, 4),
-        #     (4, 0, 3),
-        #     (5, 0, 5),
-        # ]
-        # for l in ls:
-        #     ret, darr = vna.GetDoubleArray(nWhat=l[0], nIndex=l[1], nArraySize=l[2])
-        #     print(l[0], ret, darr)
-
-    exit(0)
-    # ret = _MyVNAInit()
-    # ret = _MyVNAShowWindow(0)
-    # ret = _MyVNAClose()
-    # exit(0)
-    # # ret = accvna.GetDoubleArray()
-    # # ret, f, G, B = accvna.single_scan()
-    accvna = AccessMyVNA()
-    # print('acc', accvna._naverage) 
-    with accvna:
-        ret, nSteps = accvna.SetScanSteps(nSteps=400)
-        accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=5)
-        # accvna._get_wait_time()
-        # pass
-        # print('acc', accvna._naverage) 
-        # print(11111) 
-
-    # print('acc', accvna._naverage)
-    # exit(0)
-    with AccessMyVNA() as accvna:
-        accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=5)
-        # exit(0)
-        fileName = r'C:\Users\ShullGroup\Documents\User Data\WQF\GoogleDriveSync\py_programs\QCM\QCM_py\tests\dll\Hermes_4k_steps_4_36MHz_base_ADC2.myVNA.cal'
-        ret = accvna.LoadCalibration(fileName)
-        ret = accvna.LoadConfiguration(fileName)
-
-        ret, accvna._f[0], accvna._f[1] = accvna.SetFequencies(f1=4.9e6, f2=5.1e6, nFlags=1)
-        nSteps = 400
-        ret, f, B = accvna.single_scan()
-        ret, f, G = accvna.GetScanData(nStart=0, nEnd=accvna._nsteps, nWhata=-1, nWhatb=15)
-
-        exit(1)
-        # print(accvna._get_wait_time())
-        print('acc', accvna._naverage)
-        ret, nSteps = accvna.SetScanSteps(nSteps=400)
-        print(accvna._nsteps)
-        # exit(0)
-        ret = accvna.ShowWindow(1)
-        ret, delays = accvna.GetIntegerArray(nWhat=5, nIndex=0, nArraySize=4)
-
-        ADC_speed, ADC_step_delay, sweep_start_delay, phase_change_delay = delays
-
-        accvna._get_wait_time()
     
     # accvna.GetIntegerArray(nWhat=6, nIndex=0, nArraySize=4)
     exit(0)
@@ -1686,89 +1637,12 @@ if __name__ == '__main__':
     [m[0] for m in inspect.getmembers(AccessMyVNA, inspect.isclass) if m[1].__module__ == 'AccessMyVNA']
     exit(0)
 
-    with AccessMyVNA() as accvna:
-        ret = accvna.ShowWindow(1)
-        accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
-        accvna.GetIntegerArray(nWhat=5, nIndex=0, nArraySize=4)
-        accvna.SetIntegerArray(nWhat=5, nIndex=0, nArraySize=4, nData=[10, 1, 500, 10])
-        exit(0)
-        accvna.setADCChannel(reflectchn=1)
-        accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
-        exit(1)
-        accvna.setADCChannel(reflectchn=2)
-        accvna.GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)
-        exit(0)
-        ret, nSteps = accvna.SetScanSteps()
-        ret, nSteps = accvna.GetScanSteps() 
-        ret, nAverage = accvna.SetScanAverage()
-        ret, nAverage = accvna.GetScanAverage()
-        ret, nMode = accvna.Setinstrmode()
-        ret, nMode = accvna.Getinstrmode()
-        ret, nMode = accvna.Setdisplaymode()
-        ret, nMode = accvna.Getdisplaymode()
-        t0 = time.time()
-        ret, nMode = accvna.SingleScan()
-        t1 = time.time()
-        print(t1-t0)
-        # exit(0)
-        ret, nMode = accvna.EqCctRefine()
-        ret = accvna.SetFequencies()
-        # for i in range(100):
-        #     print('i:', i)
-        #     ret, nResult = accvna.SetDoubleArray(nWhat=5, nIndex=0, nArraySize=2, nData=[1, 2])
-        ret, nResult = accvna.GetDoubleArray()
-        # print('nR', nResult)
-        ret, f, G = accvna.single_scan()
-        ret, f, B = accvna.GetScanData(nStart=0, nEnd=nSteps, nWhata=-1, nWhatb=15)
-        # ret = accvna.SingleScan()
-        print(ret)
-
-    # vna = AccessMyVNA()
-    # vna.Init()
-    # vna.SingleScan()
-    # vna.GetDoubleArray()                 # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: doesn't affect
-    # vna.Close()
-    
-    
-    # accvna = AccessMyVNA() 
-    # # call this function before trying to do anything else
-    # # Init()
-    # get_hWnd()
-    # # Init()
-    # # ShowWindow(nValue=0)               # AccessMyVNA Closed:OK
-    # # # SetScanSteps(nSteps=400)              # AccessMyVNA(Open: click NO; Closed:OK) NyVNA: set when it is closed. after restarted
-    # ret, nSteps = accvna.GetScanSteps()                # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: after closed
-    # # SetScanAverage(nAverage=1)                 # AccessMyVNA(Open: click NO; Closed:OK) NyVNA: set when it is closed. after restarted
-    # # GetScanAverage()                   # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: after closed
-    # # Init()
-    # # GetDoubleArray(nWhat=5, nIndex=0, nArraySize=2)                 # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: doesn't affect
-    # # SetDoubleArray(nWhat=3, nIndex=0, nArraySize=2, nData=np.array([4.9e6, 5.1e6])) # AccessMyVNA(Open: error)
-    # # Init()
-    # # # Setinstrmode()                      # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: need restart
-    # # Getinstrmode()                     # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: need restart
-    # # # Setdisplaymode()            # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: need restart
-    # # Getdisplaymode()           # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: need restart
-    # accvna.SetFequencies()                # AccessMyVNA(O: click NO; C:OK) MyVNA: need restart
-    # # Init()
-    # accvna.SingleScan()                # AccessMyVNA(O: click NO; C:OK)
-    # print('pause 2 s...')
-    # time.sleep(2)
-    # # # Autoscale()                 # AccessMyVNA(Open: click NO; Closed:OK) MyVNA: doesn't affect
-    # # # Init()
-    # # # EqCctRefine()      # return 1
-    # # # Init()
-    # # # follow with SingleScan
-    # # # Init()
-    # accvna.GetScanData(nStart=0, nEnd=nSteps, nWhata=-1, nWhatb=15) # open a MyVNA window with an error.
-    # # Init()
-    # # GetScanData(nStart=0, nEnd=nSteps, nWhata=-1, nWhatb=16)
-    # get_hWnd()
     # # # MUST call this before the calling windows application closes
     # get_hWnd()
 
 
 
-# to do
+# TODO: Below functions can be used for the application our of rheoQCM program
 #region
 '''
                                     nWhat   nArraySize
@@ -1814,11 +1688,6 @@ def MyVNASetString():
     MyVNASetString = vna[28]
     # // set miscellaneous double array based data
     # __declspec(dllexport) int _stdcall MyVNASetString(int nWhat, int nIndex, _TCHAR * sValue )
-    
-
-def MyVNASaveTraceData():
-    MyVNASaveTraceData = vna[19]
-    # __declspec(dllexport) int _stdcall MyVNASaveTraceData( _TCHAR * fileName )
     
 
 def MyVNAClipboardCopy():

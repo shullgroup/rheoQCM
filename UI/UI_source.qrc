@@ -7,8 +7,8 @@
     <file>rc/ref_self.svg</file>
     <file>rc/new.svg</file>
     <file>rc/delete_selected.svg</file>
-    <file>rc/myvna.svg</file>
     <file>rc/delete.svg</file>
+    <file>rc/openvna.svg</file>
     <file>rc/export.svg</file>
     <file>rc/reset.svg</file>
     <file>rc/load_settings.svg</file>
