@@ -141,7 +141,7 @@ class VNATracker:
         else:
             if (UIModules.system_check() is UIModules.OSType.windows): # windows 
                 vna_cal_path = os.path.abspath(config_default['vna_cal_file_path'])
-                if not UIMOdules.make_folder(vna_cal_path): # folder exists
+                if not UIModules.make_folder(vna_cal_path): # folder exists
                     #UIMOdules.make_folder create a folder and return true if the folder does not exist; return False if the folder exists.
                     files = os.listdir(vna_cal_path) # list all file in the given folder
                     logger.info('cal folder: %s', files) 
@@ -177,7 +177,7 @@ class VNATracker:
         if does not exist, set to None
         '''
 
-        if UIModules.system_check() is not UIModules.OSTpye.windows: # not windows
+        if UIModules.system_check() is not UIModules.OSType.windows: # not windows
             self.vna_path = None
             return
 

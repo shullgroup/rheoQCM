@@ -73,7 +73,10 @@ def nhcalc2nh(nhcalc):
     '''
     convert nhcalc (str) to list of harmonics (int) in nhcalc
     '''
-    return [int(s) for s in nhcalc] 
+    if '.' in nhcalc:
+        return list(map(int, nhcalc.split('.')))
+    else:
+        return [int(s) for s in nhcalc] 
 
 
 

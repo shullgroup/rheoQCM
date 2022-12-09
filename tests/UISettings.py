@@ -55,7 +55,7 @@ config_default = {
     'vna_cal_file_path': r'./cal/', 
 
     # highest harmonic can be shown in the UI. 
-    'max_harmonic': 11, # MUST >= 1 (and theoretically <= 99 for now)
+    'max_harmonic': 9, # MUST >= 1 (and theoretically <= 99 for now)
     
     # time string format
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',

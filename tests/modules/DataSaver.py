@@ -457,13 +457,13 @@ class DataSaver:
         try: # try to load settings from file
             with h5py.File(path, 'r') as fh:
                 settings = json.loads(fh['settings'][()])
-                if 'settings_init' in fh.keys(): # saved by version < 0.17.0
+                if 'settings_init' in fh.keys(): # NOTE: saved by version < 0.17.0
                     settings_init = json.loads(fh['settings_init'][()])
                     for key, val in settings_init.items():
                         settings[key] = val
                 
-                settings['max_harmonic'] = 9 # NOTE: may need to load the value from config_default
-                ver = fh.attrs['ver']
+                settings['max_harmonic'] = config_default['max_harmonic'] # NOTE: may need to load the value from config_default
+                ver = fh.attrs['ver'] # not using. version is not necessary for loaded setting
             return settings
         except: # failed to load settings
             logger.warning('Failed to load settings!\nPlease check data file.')
@@ -3031,6 +3031,8 @@ class DataSaver:
         return a str which represents the key in self.<chn_name>_mech[key]
         You can use it to convert nhcal or mech_key to the version compatible str. This help to match the mech_key with prop_keys
         '''
+        logger.info('nhcalc: %s', nhcalc)
+        logger.info('data ver: %s', self.ver)
         if self.data_ver_geq((0, 21, 0)): # the version mech_key is changed from '355' to '3.5.5'
             if '.' in nhcalc:
                 return nhcalc
@@ -3081,6 +3083,8 @@ class DataSaver:
                 ver = tuple(ver.split('.'))
             else: # older version w/ number only
                 ver = tuple(ver)
+        else:
+            return None
         return ver
 
     ######## Following functions are for QCM-D 
