@@ -49,14 +49,6 @@ print(os.getcwd())
 config_default = UISettings.get_config()
 settings_default = UISettings.get_settings()
 
-# copy some data related sets from settigs_init to settings_default if not exist
-if 'max_harmonic' not in settings_default:
-    settings_default['max_harmonic'] = config_default['max_harmonic']
-if 'time_str_format' not in settings_default:
-    settings_default['time_str_format'] = config_default['time_str_format']
-if 'vna_path' not in settings_default:
-    settings_default['vna_path'] = config_default['vna_path']
-
 
 # packages from program itself
 from modules import UIModules, PeakTracker, DataSaver

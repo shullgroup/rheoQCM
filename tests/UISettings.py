@@ -1063,13 +1063,21 @@ def get_settings():
     logger.info('user settings file_path %s', file_path)
     # print(file_path)
 
-    settings, complete = update_dict(file_path, settings)
+    # copy some data related sets from settigs_init to settings_default if not exist
+    if 'max_harmonic' not in settings:
+        settings['max_harmonic'] = config_default['max_harmonic']
+    if 'time_str_format' not in settings:
+        settings['time_str_format'] = config_default['time_str_format']
+    if 'vna_path' not in settings:
+        settings['vna_path'] = config_default['vna_path']
+
+    new_settings, complete = update_dict(file_path, settings)
     if complete:
         print('use user settings')
-        return settings
+        return new_settings
     else: 
         print('use default settings')
-        return settings_default
+        return settings
 
 
 def update_dict(file_path, default_dict):
