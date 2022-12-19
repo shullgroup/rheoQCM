@@ -4,6 +4,8 @@
 
 ### Added
 
+- Add auto analyzer icon change by selected device.
+
 ### Changed
 
 - Change `__version_info__` from string to int for easier comparison.

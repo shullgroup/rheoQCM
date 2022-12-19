@@ -185,7 +185,7 @@ class VNATracker:
         
         elif isinstance(vna_path, dict) and (self.vna_name in vna_path.keys()):
             vna_paths = vna_path[self.vna_name]
-            logger.info('vna_path is dict and %s is: %s\n', vna_paths) 
+            logger.info('vna_path is dict') 
             for vna_path in vna_paths:
                 if os.path.exists(vna_path):
                     logger.info('vna_path in config_default') 
@@ -1847,7 +1847,6 @@ class QCMApp(QMainWindow):
     def on_triggered_actionOpen_VNA(self):
         '''
         open analyzer program
-        #TODO: select software by device
         '''
         vnaprgm_path = self.vna_tracker.vna_path
         if vnaprgm_path:
@@ -2264,7 +2263,7 @@ class QCMApp(QMainWindow):
         # clear fileName
         self.set_filename()
 
-        # reset  status pts
+        # reset  status pts: total points collected to 0
         self.set_status_pts()
 
 
@@ -5700,7 +5699,7 @@ class QCMApp(QMainWindow):
                             # self.vna = AccessMyVNA() # save class AccessMyVNA to vna
                             self.vna = vna # save class AccessMyVNA to vna
                         else: # not available
-                            pass
+                            pass 
                     logger.info(vna) 
                     logger.info(vna._nsteps) 
                 except:
@@ -5728,9 +5727,14 @@ class QCMApp(QMainWindow):
         # load tempmodules
 
 
-        # change icon link
-
-
+        # change icon
+        _translate = QCoreApplication.translate
+        icon13 = QIcon()
+        icon13.addPixmap(QPixmap('./analyzers/{}/icon.png'.format(config_default['analyzer_opts'][self.vna_name])), QIcon.Normal, QIcon.Off)
+        self.ui.actionOpen_VNA.setIcon(icon13)
+        self.ui.actionOpen_VNA.setText(_translate("MainWindow", "Open {}".format(config_default['analyzer_opts'][self.vna_name])))
+        self.ui.actionOpen_VNA.setToolTip(_translate("MainWindow", "Open {} (The changes of setup will work only after the window is closed.)".format(config_default['analyzer_opts'][self.vna_name])))
+        
         # link program interface to button
 
 
