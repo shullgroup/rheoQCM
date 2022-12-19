@@ -460,7 +460,11 @@ def calc_delfstar(n, layers, **kwargs):
 
         layers (dictionary):
             Dictionary of material dictionaries specifying the properites of
-            each layer. These dictionaries are labeled from 1 to N, with 1
+            each layer. 
+            Generally a dictionary with 'film' that may also contain
+            'overlayer' and/or 'electrode'.  
+            If it doesn't contain 'film' it contains dictionaries
+            labeled from 1 to N, with 1
             being the layer in contact with the QCM.  Each dictionary must
             include values for 'grho3, 'phi' and 'drho'.
 
@@ -485,8 +489,9 @@ def calc_delfstar(n, layers, **kwargs):
     if not layers:  # if layers is empty {}
         return np.nan
 
-    # if layers is not empty:
-    if 'overlayer' in layers:
+    if 'film'  not in layers:
+        del_ZL = calc_ZL(n, layers, 0, calctype)
+    elif 'overlayer' in layers:
         ZL = calc_ZL(n, {1: layers['film'], 2: layers['overlayer']},
                          0, calctype)
         if reftype == 'overlayer':
