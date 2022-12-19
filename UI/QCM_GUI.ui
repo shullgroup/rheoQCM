@@ -1329,10 +1329,10 @@ background-color: red;
                    <attribute name="headerVisible">
                     <bool>false</bool>
                    </attribute>
-                   <attribute name="headerMinimumSectionSize">
+                   <attribute name="headerDefaultSectionSize">
                     <number>110</number>
                    </attribute>
-                   <attribute name="headerDefaultSectionSize">
+                   <attribute name="headerMinimumSectionSize">
                     <number>110</number>
                    </attribute>
                    <column>
@@ -1475,8 +1475,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>247</width>
-                   <height>179</height>
+                   <width>286</width>
+                   <height>225</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1530,10 +1530,10 @@ background-color: red;
                     <attribute name="headerCascadingSectionResizes">
                      <bool>true</bool>
                     </attribute>
-                    <attribute name="headerMinimumSectionSize">
+                    <attribute name="headerDefaultSectionSize">
                      <number>125</number>
                     </attribute>
-                    <attribute name="headerDefaultSectionSize">
+                    <attribute name="headerMinimumSectionSize">
                      <number>125</number>
                     </attribute>
                     <column>
@@ -1618,8 +1618,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>86</width>
-                   <height>70</height>
+                   <width>286</width>
+                   <height>225</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -1667,11 +1667,11 @@ background-color: red;
                     <attribute name="headerVisible">
                      <bool>false</bool>
                     </attribute>
-                    <attribute name="headerMinimumSectionSize">
-                     <number>37</number>
-                    </attribute>
                     <attribute name="headerDefaultSectionSize">
                      <number>140</number>
+                    </attribute>
+                    <attribute name="headerMinimumSectionSize">
+                     <number>37</number>
                     </attribute>
                     <column>
                      <property name="text">
@@ -2285,10 +2285,10 @@ border: none;
                    <attribute name="headerCascadingSectionResizes">
                     <bool>true</bool>
                    </attribute>
-                   <attribute name="headerMinimumSectionSize">
+                   <attribute name="headerDefaultSectionSize">
                     <number>70</number>
                    </attribute>
-                   <attribute name="headerDefaultSectionSize">
+                   <attribute name="headerMinimumSectionSize">
                     <number>70</number>
                    </attribute>
                    <column>
@@ -2500,8 +2500,8 @@ border: none;
                           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt;&quot;&gt;To be added!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;To be added!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                         </widget>
                        </item>
@@ -2533,8 +2533,8 @@ p, li { white-space: pre-wrap; }
                           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt;&quot;&gt;To be added!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;To be added!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                         </widget>
                        </item>
@@ -5370,10 +5370,10 @@ border: 1px solid blue;
                   <attribute name="verticalHeaderVisible">
                    <bool>true</bool>
                   </attribute>
-                  <attribute name="verticalHeaderMinimumSectionSize">
+                  <attribute name="verticalHeaderDefaultSectionSize">
                    <number>23</number>
                   </attribute>
-                  <attribute name="verticalHeaderDefaultSectionSize">
+                  <attribute name="verticalHeaderMinimumSectionSize">
                    <number>23</number>
                   </attribute>
                   <attribute name="verticalHeaderShowSortIndicator" stdset="0">
@@ -6196,7 +6196,7 @@ border: 1px solid blue;
      <x>0</x>
      <y>0</y>
      <width>986</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -6224,7 +6224,7 @@ border: 1px solid blue;
     <property name="title">
      <string>Settings</string>
     </property>
-    <addaction name="actionOpen_MyVNA"/>
+    <addaction name="actionOpen_VNA"/>
     <addaction name="separator"/>
     <addaction name="actionReset"/>
     <addaction name="actionMaximum_Harmonic"/>
@@ -6270,7 +6270,7 @@ border: 1px solid blue;
    <addaction name="actionClear_All"/>
    <addaction name="actionReset"/>
    <addaction name="separator"/>
-   <addaction name="actionOpen_MyVNA"/>
+   <addaction name="actionOpen_VNA"/>
    <addaction name="separator"/>
   </widget>
   <action name="actionLoad_Exp">
@@ -6395,10 +6395,10 @@ border: 1px solid blue;
     <string>Set Temperature Sensor</string>
    </property>
   </action>
-  <action name="actionOpen_MyVNA">
+  <action name="actionOpen_VNA">
    <property name="icon">
     <iconset resource="UI_source.qrc">
-     <normaloff>:/icon/rc/myvna.svg</normaloff>:/icon/rc/myvna.svg</iconset>
+     <normaloff>:/icon/rc/openvna.svg</normaloff>:/icon/rc/openvna.svg</iconset>
    </property>
    <property name="text">
     <string>Open MyVNA</string>

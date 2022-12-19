@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.21.0] - 2022-12-08
+
+### Added
+
+### Changed
+
+- Change `__version_info__` from string to int for easier comparison.
+- Change `mech_key` to the form separating haromincs with ".". e.g.: in older versions is "355"; in the new version is "3.5.5". You can use DataSaver.get_mech_key(your_mech_key) to convert it to the version compatible str.
+
+### Fixed
+
+### Removed
+
 ## [0.20.1] - 2022-10-20
 
 ### Added

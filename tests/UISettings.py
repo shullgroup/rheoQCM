@@ -30,33 +30,47 @@ config_default = {
         'default_level': logging.ERROR, # default level for logging
     },
 
+    # analyzer options
+    'analyzer_opts':{
+        # 'none': '--',
+        'myvna': 'myVNA', # '.myVNA.cal'
+        # 'openqcm': 'openQCM', # 'Calibration.txt'
+    },
+
     # myVNA path
-    'vna_path': [
-        r'C:\Program Files (x86)\G8KBB\myVNA\myVNA.exe',
-        r'C:\Program Files\G8KBB\myVNA\myVNA.exe',
-    ],
+    'vna_path': {
+        'myvna': [
+            r'C:\Program Files (x86)\G8KBB\myVNA\myVNA.exe',
+            r'C:\Program Files\G8KBB\myVNA\myVNA.exe',
+        ],
+        'vnwa': [
+            r'C:\VNWA\VNWA.exe',
+        ],
+        'openqcm': [
+            '', #path to openQCM python code
+        ],
+    },
 
     # where the calibration files saved (not necessary)
     'vna_cal_file_path': r'./cal/', 
 
     # highest harmonic can be shown in the UI. 
-    'max_harmonic': 9, # MUST >= 1
+    'max_harmonic': 9, # MUST >= 1 (and theoretically <= 99 for now)
     
     # time string format
     'time_str_format': '%Y-%m-%d %H:%M:%S.%f',
 
-    # if marked data will be shown when showing all data
+    # if marked data will be shown when displaying all data
     'show_marked_when_all': False,
 
     # keys to ingnore when loading settings
     'settings_ignored_keys': [
         'plainTextEdit_settings_sampledescription',
-
     ],
 
     'analysis_mode_disable_list':[
         'pushButton_runstop',
-        # 'actionOpen_MyVNA',
+        # 'actionOpen_VNA',
         # 'actionNew_Exp',
         # 'actionClear_All',
         # 'actionLoad_Settings',
@@ -446,13 +460,6 @@ config_default = {
     }),
 
     # crystal cuts options
-    'analyzer_opts':{
-        'none': '--',
-        'myvna': 'myVNA',
-        'openqcm': 'openQCM',
-    },
-
-    # crystal cuts options
     'crystal_cut_opts':{
         'AT': 'AT',
         'BT': 'BT',
@@ -492,7 +499,7 @@ config_default = {
     ]),
 
     # available base frequency of crystals
-    # key: number; val: for display in combobox
+    # key: str can be converted to number; val: for display in combobox
     'base_frequency_opts': OrderedDict([
         ('5' , '5 MHz'),
         ('6' , '6 MHz'),
@@ -501,7 +508,7 @@ config_default = {
     ]),
 
     # available range limitation for each harmonic
-    # key: number; val: for display in combobox
+    # key: str can be converted to numbe; val: for display in combobox
     'range_opts': OrderedDict([
         ('0.1', '0.1 MHz'),
         ('0.25', '0.25 MHz'),
@@ -890,6 +897,7 @@ settings_default = {
     }, # dictionary for saving the widgets for layers defination
 
     ### default hardware settings ###
+    'comboBox_settings_settings_analyzer': 'myvna',
     # 'tabWidget_settings_settings_samprefchn': 1,
 
     # checkBox_activechn_samp
@@ -1019,8 +1027,8 @@ harm_tree = {
     'spinBox_peaks_policy_peakidx': 0,
     'checkBox_settings_settings_harmlockphase': False,
     'doubleSpinBox_settings_settings_harmlockphase': 0,
-    'lineEdit_peaks_threshold': 0.00001,
-    'lineEdit_peaks_prominence': 0.0001,
+    'lineEdit_peaks_threshold': 1e-6,
+    'lineEdit_peaks_prominence': 1e-6,
 }
 
 # set harmdata value
@@ -1055,13 +1063,21 @@ def get_settings():
     logger.info('user settings file_path %s', file_path)
     # print(file_path)
 
-    settings, complete = update_dict(file_path, settings)
+    # copy some data related sets from settigs_init to settings_default if not exist
+    if 'max_harmonic' not in settings:
+        settings['max_harmonic'] = config_default['max_harmonic']
+    if 'time_str_format' not in settings:
+        settings['time_str_format'] = config_default['time_str_format']
+    if 'vna_path' not in settings:
+        settings['vna_path'] = config_default['vna_path']
+
+    new_settings, complete = update_dict(file_path, settings)
     if complete:
         print('use user settings')
-        return settings
+        return new_settings
     else: 
         print('use default settings')
-        return settings_default
+        return settings
 
 
 def update_dict(file_path, default_dict):

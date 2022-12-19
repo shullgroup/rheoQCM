@@ -42,6 +42,10 @@ dictionaries and dataframes are converted to json and are saved as text in the f
      |-settings      (json) # UI settings (it can be loaded to set the UI)
      |
      --config_default (json) # maximum harmonic and time string format for the collected data
+
+
+     This module can be used to to load data w/o GUI. 
+     NOTE: To load data in the GUI, checking if the 'max_harominc' match for the GUI and file is needed!
 '''
 
 import os
@@ -153,7 +157,7 @@ class DataSaver:
                 'temp': 'const', 
                 'fit': 'linear'
             },
-            # this key only saved in memory, will not be save to file!
+            # following key only saved in memory, will not be save to file!
             # example: '1': fun1 (return f0s, g0s)
             'func': self.nan_interp_func_list()
         } # experiment reference setup in dict
@@ -166,7 +170,7 @@ class DataSaver:
         func_g_list = [] # func for all gamma
         func_p_list = [] # func 
         nan_func = lambda temp: np.array([np.nan] * len(temp))
-        for _ in range(1, self.settings['max_harmonic']+2, 2): # calculate each harm
+        for _ in self.all_harm_list(): # calculate each harm
             func_f_list.append(nan_func) # add a func return nan
             func_g_list.append(nan_func) # add a func return nan
             func_p_list.append(nan_func) # add a func return nan
@@ -443,7 +447,19 @@ class DataSaver:
             return True
         else: 
             return False
-         
+
+
+    def file_max_harmonic(self, path):
+        '''
+        get 'max_harmoinc' in settings of the file
+        '''
+        if not self.check_file_format(path):
+            return None
+        
+        with h5py.File(path, 'r') as fh:
+            settings = json.loads(fh['settings'][()])
+            return settings['max_harmonic']
+
 
     def load_settings(self, path):
         '''
@@ -457,13 +473,14 @@ class DataSaver:
         try: # try to load settings from file
             with h5py.File(path, 'r') as fh:
                 settings = json.loads(fh['settings'][()])
-                if 'settings_init' in fh.keys(): # saved by version < 0.17.0
+                if 'settings_init' in fh.keys(): # NOTE: saved by version < 0.17.0
                     settings_init = json.loads(fh['settings_init'][()])
                     for key, val in settings_init.items():
                         settings[key] = val
                 
-                settings['max_harmonic'] = 9 # NOTE: may need to load the value from config_default
-                ver = fh.attrs['ver']
+                # NOTE: comment the line below keeps the 'max_harmonic' the same as loaded data!
+                # settings['max_harmonic'] = config_default['max_harmonic'] # may need to load the value from config_default
+                ver = fh.attrs['ver'] # not using. version is not necessary for loaded setting
             return settings
         except: # failed to load settings
             logger.warning('Failed to load settings!\nPlease check data file.')
@@ -597,7 +614,7 @@ class DataSaver:
         marks: [0]. by default all will be marked as 0
         '''
 
-        # for i in range(1, self.settings['max_harmonic']+2, 2):
+        # for i in self.all_harm_list():
         #     if str(i) not in harm_list: # tested harmonic
         #         marks.insert(int((i-1)/2), np.nan)
 
@@ -626,7 +643,7 @@ class DataSaver:
                     ps_all[int((harm-1)/2)] = ps[chn_name][i]
                 marks_all[int((harm-1)/2)] = marks[i]
 
-            # for i in range(1, self.settings['max_harmonic']+2, 2):
+            # for i in self.all_harm_list():
             #     if str(i) not in harm_list: # tested harmonic
             #         fs[chn_name].insert(int((i-1)/2), np.nan)
             #         gs[chn_name].insert(int((i-1)/2), np.nan)
@@ -838,6 +855,10 @@ class DataSaver:
     def nan_harm_list(self):
         return [np.nan] * int((self.settings['max_harmonic'] + 1) / 2)
 
+
+    def all_harm_list(self):
+        return  list[range(1, self.settings['max_harmonic']+2, 2)]
+        
 
     def get_raw(self, chn_name, queue_id, harm, with_t_temp=False):
         '''
@@ -1649,7 +1670,7 @@ class DataSaver:
             logger.warning('%s is empty', chn_name)
 
             # return an empty df with proper columns
-            return pd.DataFrame(columns=[col[:-1] + str(i) for i in range(1, self.settings['max_harmonic']+2, 2)])
+            return pd.DataFrame(columns=[col[:-1] + str(i) for i in self.all_harm_list()])
 
         if mark == False:
             return pd.DataFrame(s.values.tolist(), s.index).rename(columns=lambda x: col[:-1] + str(x * 2 + 1))
@@ -2110,7 +2131,7 @@ class DataSaver:
                     func_g_list = [] # func for all gamma
                     func_p_list = [] # func
                     tempind = temp[ind_list] 
-                    for harm in range(1, self.settings['max_harmonic']+2, 2): # calculate each harm
+                    for harm in self.all_harm_list(): # calculate each harm
                         fharmind = fs['f'+str(harm)][ind_list] # f of harm
                         gharmind = gs['g'+str(harm)][ind_list] # g of harm
                         pharmind = ps['p'+str(harm)][ind_list] # g of harm
@@ -2201,7 +2222,7 @@ class DataSaver:
                     func_g_list = [] # func for all gamma
                     func_p_list = [] # func
 
-                    for harm in range(1, self.settings['max_harmonic']+2, 2): # calculate each harm
+                    for harm in self.all_harm_list(): # calculate each harm
                         fharmind = fs['f'+str(harm)][ind_list] # f of harm
                         gharmind = gs['g'+str(harm)][ind_list] # g of harm
                         pharmind = ps['p'+str(harm)][ind_list] # g of harm
@@ -3027,10 +3048,65 @@ class DataSaver:
 
     def get_mech_key(self, nhcalc):
         '''
+        nhcal: str
         return a str which represents the key in self.<chn_name>_mech[key]
+        You can use it to convert nhcal or mech_key to the version compatible str. This help to match the mech_key with prop_keys
         '''
-        return nhcalc
+        logger.info('nhcalc: %s', nhcalc)
+        logger.info('data ver: %s', self.ver)
+        if self.data_ver_geq((0, 21, 0)): # >= the version mech_key is changed from '355' to '3.5.5'
+            if '.' in nhcalc:
+                return nhcalc
+            elif len(nhcalc) == 3:
+                return '.'.join(list(nhcalc))
+            else:
+                return None
+        else: # for older version
+            # remove '.'
+            if '.' in nhcalc: 
+                if len(nhcalc) == 3:
+                    return nhcalc.replace('.', '') 
+                else:
+                    return None 
+            else: 
+                return nhcalc
 
+
+    def data_ver_geq(self, ref_ver):
+        '''
+        compare if the version of the data is newer than ro equal to the given ref_ver (self.ver >= ref_ver)
+        ref_ver: str or tuple of int or str
+        '''
+        # data version 
+        data_ver = self.version_tup()
+        # refrence version to compare
+        ref_ver = self.version_tup(ref_ver)
+        return data_ver >= ref_ver
+
+
+    def version_tup(self, ver=None):
+        '''
+        ver: str or tuple of int or str
+        get verion in tuple of int 
+        e.g.: (0, 21, 0)
+        '''
+        if ver is None:
+            ver = self.ver
+        
+        # change both to tuple of int
+        if isinstance(ver, tuple):
+            if isinstance(ver[0], int):
+                ...
+            else:
+                ver = tuple(map(int, ver))
+        elif isinstance(ver, str):
+            if '.' in ver: # new format since 0.21.0
+                ver = tuple(ver.split('.'))
+            else: # older version w/ number only
+                ver = tuple(ver)
+        else:
+            return None
+        return ver
 
     ######## Following functions are for QCM-D 
 

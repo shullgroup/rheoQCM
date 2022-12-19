@@ -2,14 +2,15 @@
 modules for GUI
 '''
 
-import sys
-import os, subprocess
+import sys, os, subprocess
+from enum import Enum
 import inspect
 import re
 import numpy as np
 
 import logging
 logger = logging.getLogger(__name__)
+
 
 def open_file(path):
     '''
@@ -24,8 +25,40 @@ def open_file(path):
         subprocess.call([opener, path]) # this opens a new window on Linux every time
 
 
+# Enum for OS types 
+class OSType(Enum): # from openQCM
+    unknown = 0
+    linux = 1
+    macosx = 2
+    windows = 3
+
+
 def system_check():
-    return sys.platform
+    '''
+    System         platform value
+    AIX             'aix'
+    Emscripten      'emscripten'
+    Linux           'linux'
+    WASI            'wasi'
+    Windows         'win32'
+    Windows/Cygwin  'cygwin'
+    macOS           'darwin'
+    '''
+    if sys.platform.startswith('linux'):
+        return OSType.linux
+    elif sys.platform.startswith('darwin'):
+        return OSType.macosx
+    elif sys.platform.startswith('win32'):
+        return OSType.windows
+    else:
+        return OSType.unknown
+
+
+def is_32bit_python():
+    if sys.maxsize < 2**32: # is 32-bit
+        return True
+    else: # is 64-bit
+        return False
 
 
 def closest_spanctr_step(l, n):
@@ -57,6 +90,14 @@ def list_modules(module):
 
 def split_path(path):
     pass
+
+
+def make_folder(path):
+    if not os.path.isdir(path): # directory doesn't exist
+        os.makedirs(path) # create directory
+        return True
+    else:
+        return False
 
 
 def index_from_str(idx_str, chn_idx, join_segs=True):
