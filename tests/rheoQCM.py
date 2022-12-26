@@ -325,7 +325,7 @@ class QCMApp(QMainWindow):
 
 
     def init_ui(self):
-        #region ###### initiate UI #################################
+        ###### initiate UI #################################
 
         #region main UI
         # link tabWidget_settings and stackedWidget_spectra and stackedWidget_data
