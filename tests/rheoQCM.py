@@ -361,11 +361,11 @@ class QCMApp(QMainWindow):
                         getattr(self.ui, 'lineEdit_'+st1+'f'+harm+st2).setObjectName('lineEdit_'+st1+'f'+harm+st2)
 
                 # add to layout
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'checkBox_harm' + harm), (i+1)/2, 0, 1, 1)
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_startf'+harm), (i+1)/2, 1, 1, 1)
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_endf'+harm), (i+1)/2, 2, 1, 1)
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_startf'+harm+'_r'), (i+1)/2, 4, 1, 1)
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_endf'+harm+'_r'), (i+1)/2, 5, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'checkBox_harm' + harm), int((i+1)/2), 0, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_startf'+harm), int((i+1)/2), 1, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_endf'+harm), int((i+1)/2), 2, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_startf'+harm+'_r'), int((i+1)/2), 4, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_endf'+harm+'_r'), int((i+1)/2), 5, 1, 1)
 
             ## create frame_sp<n>
             if not getattr(self.ui, 'frame_sp'+harm, None): # check if the item exist
@@ -1336,7 +1336,7 @@ class QCMApp(QMainWindow):
         self.ui.frame_legend.setLayout(self.set_frame_layout(self.ui.mpl_legend))
         # change frame_legend height
         mpl_legend_p = self.ui.mpl_legend.leg.get_window_extent()
-        self.ui.frame_legend.setFixedHeight((mpl_legend_p.p1[1]-mpl_legend_p.p0[1]))
+        self.ui.frame_legend.setFixedHeight(int(mpl_legend_p.p1[1]-mpl_legend_p.p0[1]))
         # self.ui.frame_legend.adjustSize()
         #endregion
 
@@ -7460,13 +7460,13 @@ class QCMApp(QMainWindow):
 
     def all_harm_list(self, as_str=False):
         '''
-        return a list with all harms as int
+        return a list with all harms as int or str if as_str is True
         '''
         if as_str:
             return [str(i) for i in range(1, self.settings['max_harmonic']+2, 2)]
             
         else:
-            return list(range(1, self.settings['max_harmonic']+2, 2))
+            return list(map(int, range(1, self.settings['max_harmonic']+2, 2)))
 
 
 #endregion
