@@ -47,6 +47,14 @@ T_coef_default = {'f': {1: [0.00054625, 0.04338, 0.08075, 0],
 electrode_default = {'drho': 2.8e-3, 'grho3': 3.0e14, 'phi': 0}
 water = {'drho':np.inf, 'grho3':1e8, 'phi':90}
 
+def sig_figs(x, n):
+    # rounds x to n significant figures
+    if x == np.nan or x == np.inf:
+        return x
+    else:
+        round_num = -int(np.floor(np.log10(abs(x))))+n-1
+    return (round(x, round_num))
+
 def find_nearest_idx(values, array):
     """
     Find index of a point with value closest to the one specified.
@@ -1057,7 +1065,7 @@ def solve_for_props(delfstar, calc, **kwargs):
     npts = len(df_soln.index)
     real_series = np.zeros(npts, dtype=np.float64)
     complex_series = np.zeros(npts, dtype = np.complex128)
-    object_series = np.empty(npts, dtype = np.object)
+    object_series = np.empty(npts, dtype = object)
     
     for n in nplot:
         df_soln.insert(df_soln.shape[1], 'df_expt'+str(n), delfstar[n])
@@ -1318,7 +1326,7 @@ def make_err_plot(ax, soln, uncertainty_dict, **kwargs):
             ax[k, p].plot(0, soln[prop_type[p]][idx]*scale_factor[p],'or')
         
 
-def calc_error(soln, uncertainty):
+def calc_error(soln, uncertainty_dict):
     '''
     Calclate error in properties
 
@@ -1327,8 +1335,8 @@ def calc_error(soln, uncertainty):
     soln : Dataframe 
         Data being considered (from solve_for_props)
         
-    uncertainty : list of 3 numbers
-        Uncertainty in delta_f(n1), delta_f(n2), delta_g(n3)
+    uncertainty_dict : dictionary of uncertainty values of delf and delg
+        example: {3:[50, 100], 5:[100, 100]}
 
     Returns
     -------
@@ -1336,11 +1344,34 @@ def calc_error(soln, uncertainty):
 
     '''
     propname = {0:'grho3_err', 1:'phi_err', 2:'drho_err'}
-    soln = soln.reindex(columns = soln.columns.tolist() +
-                            ['grho3_err', 'phi_err', 'drho_err'])
+    # soln = soln.reindex(columns = soln.columns.tolist() +
+    #                         ['grho3_err', 'phi_err', 'drho_err'])
     
-    for index in soln.index:
-        jacobian = soln.jacobian[index]
+    for idx, row in soln.iterrows():
+        calc = row['calc']
+        delf_n = calc.split(':')[0].split('.')
+        delg_n = calc.split(':')[1].split('.')
+        all_n = delf_n + delg_n
+        
+        # extract uncertainty from dataframe if it is not [0, 0, 0]
+        if uncertainty_dict == 'default':
+            uncertainty = [0]*len(all_n)
+        else:
+            uncertainty = []
+            for val in delf_n:
+                uncertainty = uncertainty + [uncertainty_dict[int(val)][0]]
+            for val in delg_n:
+                uncertainty = uncertainty + [uncertainty_dict[int(val)][1]]
+            
+        # handle case where calc is a single number, corresponding to the 
+        # harmonic where we take frequency and dissipation
+        if len(all_n) == 1:
+            n1 = int(all_n[0])
+            uncertainty = [uncertainty_dict[n1][0],
+                           uncertainty_dict[n1][1]]
+
+        # extract the jacobian and turn it back into a numpy array of floats
+        jacobian = np.array(row['jacobian'], dtype='float')
         
         try:
             deriv = np.linalg.inv(jacobian)
@@ -1349,11 +1380,11 @@ def calc_error(soln, uncertainty):
     
         # determine error from Jacobian
         # p = property
-        for p in np.arange(len(uncertainty)):  
+        for p in np.arange(len(uncertainty)):
             errval = 0
             for k in np.arange(len(uncertainty)):
                 errval = errval + (deriv[p, k]*uncertainty[k])**2
-            soln.loc[index, propname[p]] = np.sqrt(errval)
+            soln.loc[idx, propname[p]] = np.sqrt(errval)
             
     return soln
         
@@ -1648,35 +1679,14 @@ def prop_plots(df, figinfo, **kwargs):
     ax = figinfo['ax']
     num_plots = len(plots)
     plots_to_make = kwargs.get('plots_to_make', figinfo['info']['plots'])
-    calc = df['calc'][df.index.min()]
-    calc_list = calc.split('.')
     
-    # extract uncertainty from dataframe if it is not [0, 0, 0]
-    if uncertainty_dict == 'default':
-        uncertainty = [0]*len(calc_list)
-    else:
+    if drho_ref == np.nan and (('drho_diff' in plots_to_make) or 
+                               ('drho_norm' in plots_to_make)):
+        sys.exit('need to specify a value of drho_noom')
+        
 
-        # handle case where calc is a single number, corresponding to the 
-        # harmonic where we take frequency and dissipation (for fixed freq.)
-
-        if len(calc_list) == 1:
-            n1 = int(calc_list[0])
-            uncertainty = [uncertainty_dict[n1][0],
-                           uncertainty_dict[n1][1]]
-        else: #  now handle the more normal case
-            # we assume here that the first two numbers are the frequency shifts
-            # and the last number is a dissipation shift
-            # may need to generalize this for more than 3 elements in 'calc'
-            calc = calc.replace(':','.')
-            n1 = int(calc.split('.')[0])
-            n2 = int(calc.split('.')[1])
-            n3 = int(calc.split('.')[2])
-            uncertainty = [uncertainty_dict[n1][0],
-                           uncertainty_dict[n2][0],
-                           uncertainty_dict[n3][1]]
-    
     # add calculated errors to dataframe
-    df = calc_error(df, uncertainty)
+    df = calc_error(df, uncertainty_dict)
     xunit = figinfo['info']['xunit']
     
     xvals = {}
@@ -2434,6 +2444,11 @@ def check_solution(df, **kwargs):
         contour_range (dictionary)
             limits for z range of contour plots, format is
             {1:[min1, max1], 2[min2, max2]}
+        
+        contour_range_units (dictionary)
+            units for contour range
+            'Sauerbrey' multiplies by Sauerbrey shift for first point
+            default is {1:'Hz', 2:'Hz'}
             
         plotsize (2-tubple)
             size of individual plots.  Default is (4,3)
@@ -2469,6 +2484,7 @@ def check_solution(df, **kwargs):
     write_pdf = kwargs.get('write_pdf', True)
     compare_plots = kwargs.get('compare_plots', True)
     contour_plots = kwargs.get('contour_plots', True)
+    contour_range_units = kwargs.get('contour_range_units', {1:'Hz', 2:'Hz'})
     # we don't make the contour plots if we have any np.inf values
     if (df['drho']==np.inf).any():
         contour_plots = False
@@ -2556,6 +2572,14 @@ def check_solution(df, **kwargs):
             max1 = contour_range[1][1]
             min2 = contour_range[2][0]
             max2 = contour_range[2][1]
+            if contour_range_units[1] == 'Sauerbrey':
+                norm = sauerbreyf(1, df['drho'][idxmin])
+                min1 = sig_figs(min1*norm, 2)
+                max1 = sig_figs(max1*norm, 2)
+            if contour_range_units[2] == 'Sauerbrey':
+                norm = sauerbreyf(1, df['drho'][idxmin])
+                min2 = sig_figs(min2*norm, 2)
+                max2 = sig_figs(max2*norm, 2)
         else:
             if ratios:
                 min1=-1
@@ -2566,7 +2590,7 @@ def check_solution(df, **kwargs):
                 min1=-3*sauerbreyf(1, df['drho'][idxmin])
                 max1=3*sauerbreyf(1, df['drho'][idxmin])
                 min2=0
-                max2=10000
+                max2=5000
     
         levels1=np.linspace(min1, max1, numz)
         levels2=np.linspace(min2, max2, numz)
