@@ -185,7 +185,7 @@ class VNATracker:
         
         elif isinstance(vna_path, dict) and (self.vna_name in vna_path.keys()):
             vna_paths = vna_path[self.vna_name]
-            logger.info('vna_path is dict and %s is: %s\n', vna_paths) 
+            logger.info('vna_path is dict') 
             for vna_path in vna_paths:
                 if os.path.exists(vna_path):
                     logger.info('vna_path in config_default') 
@@ -325,7 +325,7 @@ class QCMApp(QMainWindow):
 
 
     def init_ui(self):
-        #region ###### initiate UI #################################
+        ###### initiate UI #################################
 
         #region main UI
         # link tabWidget_settings and stackedWidget_spectra and stackedWidget_data
@@ -361,11 +361,11 @@ class QCMApp(QMainWindow):
                         getattr(self.ui, 'lineEdit_'+st1+'f'+harm+st2).setObjectName('lineEdit_'+st1+'f'+harm+st2)
 
                 # add to layout
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'checkBox_harm' + harm), (i+1)/2, 0, 1, 1)
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_startf'+harm), (i+1)/2, 1, 1, 1)
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_endf'+harm), (i+1)/2, 2, 1, 1)
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_startf'+harm+'_r'), (i+1)/2, 4, 1, 1)
-                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_endf'+harm+'_r'), (i+1)/2, 5, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'checkBox_harm' + harm), int((i+1)/2), 0, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_startf'+harm), int((i+1)/2), 1, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_endf'+harm), int((i+1)/2), 2, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_startf'+harm+'_r'), int((i+1)/2), 4, 1, 1)
+                self.ui.gridLayout_settings_control_harms.addWidget(getattr(self.ui, 'lineEdit_endf'+harm+'_r'), int((i+1)/2), 5, 1, 1)
 
             ## create frame_sp<n>
             if not getattr(self.ui, 'frame_sp'+harm, None): # check if the item exist
@@ -1336,7 +1336,7 @@ class QCMApp(QMainWindow):
         self.ui.frame_legend.setLayout(self.set_frame_layout(self.ui.mpl_legend))
         # change frame_legend height
         mpl_legend_p = self.ui.mpl_legend.leg.get_window_extent()
-        self.ui.frame_legend.setFixedHeight((mpl_legend_p.p1[1]-mpl_legend_p.p0[1]))
+        self.ui.frame_legend.setFixedHeight(int(mpl_legend_p.p1[1]-mpl_legend_p.p0[1]))
         # self.ui.frame_legend.adjustSize()
         #endregion
 
@@ -1847,7 +1847,6 @@ class QCMApp(QMainWindow):
     def on_triggered_actionOpen_VNA(self):
         '''
         open analyzer program
-        #TODO: select software by device
         '''
         vnaprgm_path = self.vna_tracker.vna_path
         if vnaprgm_path:
@@ -2264,7 +2263,7 @@ class QCMApp(QMainWindow):
         # clear fileName
         self.set_filename()
 
-        # reset  status pts
+        # reset  status pts: total points collected to 0
         self.set_status_pts()
 
 
@@ -5700,7 +5699,7 @@ class QCMApp(QMainWindow):
                             # self.vna = AccessMyVNA() # save class AccessMyVNA to vna
                             self.vna = vna # save class AccessMyVNA to vna
                         else: # not available
-                            pass
+                            pass 
                     logger.info(vna) 
                     logger.info(vna._nsteps) 
                 except:
@@ -5728,9 +5727,14 @@ class QCMApp(QMainWindow):
         # load tempmodules
 
 
-        # change icon link
-
-
+        # change icon
+        _translate = QCoreApplication.translate
+        icon13 = QIcon()
+        icon13.addPixmap(QPixmap('./analyzers/{}/icon.png'.format(config_default['analyzer_opts'][self.vna_name])), QIcon.Normal, QIcon.Off)
+        self.ui.actionOpen_VNA.setIcon(icon13)
+        self.ui.actionOpen_VNA.setText(_translate("MainWindow", "Open {}".format(config_default['analyzer_opts'][self.vna_name])))
+        self.ui.actionOpen_VNA.setToolTip(_translate("MainWindow", "Open {} (The changes of setup will work only after the window is closed.)".format(config_default['analyzer_opts'][self.vna_name])))
+        
         # link program interface to button
 
 
@@ -7456,13 +7460,13 @@ class QCMApp(QMainWindow):
 
     def all_harm_list(self, as_str=False):
         '''
-        return a list with all harms as int
+        return a list with all harms as int or str if as_str is True
         '''
         if as_str:
             return [str(i) for i in range(1, self.settings['max_harmonic']+2, 2)]
             
         else:
-            return list(range(1, self.settings['max_harmonic']+2, 2))
+            return list(map(int, range(1, self.settings['max_harmonic']+2, 2)))
 
 
 #endregion

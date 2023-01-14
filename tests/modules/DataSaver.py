@@ -857,7 +857,7 @@ class DataSaver:
 
 
     def all_harm_list(self):
-        return  list[range(1, self.settings['max_harmonic']+2, 2)]
+        return  list(range(1, self.settings['max_harmonic']+2, 2))
         
 
     def get_raw(self, chn_name, queue_id, harm, with_t_temp=False):
