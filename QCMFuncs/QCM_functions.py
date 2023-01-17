@@ -517,7 +517,7 @@ def calc_delfstar(n, layers, **kwargs):
 
     else:
         # this is the most general calculation
-        # use defaut electrode if it's not specified
+        # use default electrode if it's not specified
         if 'electrode' not in layers:
             layers['electrode'] = electrode_default
 
@@ -709,6 +709,34 @@ def normdelfstar(n, dlam3, phi):
 
     return -np.tan(2*np.pi*dlam(n, dlam3, phi)*(1-1j*np.tan(np.deg2rad(phi/2)))) / \
             (2*np.pi*dlam(n, dlam3, phi)*(1-1j*np.tan(np.deg2rad(phi/2))))
+            
+def normdelfstar_liq(n, dlamval, phi, drho, liquid):
+    """
+    Calculate normalized complex frequency shift for material immersed in a liquid
+    the plot is no longer universal and so depends on the harmonic.  This is for n=3
+    Small load approximation assumed here, as we mostly use this for visualization
+
+    Parameters
+    ----------
+    n : integer
+        harmonic of interest
+    dlam : TYPE
+        d/lambda for the film. - generally assumed to be n=3
+    phi : TYPE
+        phi for the film.
+    drho: 
+        drho for the film
+    liquid : dictionary of liquid overlayer properties
+        Must include 'grho', and 'phi',  'drho' assumed to be infinite if not listed.
+
+    Returns
+    -------
+    Complex frequency shift, normalized by Sauerbrey shift of film
+
+    """
+    R = calc_delfstar(n, {1:liquid})/sauerbreyf(n, drho)
+    D = 2*np.pi*dlamval*(1-1j*np.tan(phi*np.pi/360))
+    return (D**(-2)+R**2)/(1/(D*np.tan(D)) + R)
 
 
 def normdelf_bulk(n, dlam3, phi):
@@ -906,6 +934,32 @@ def thinfilm_guess(delfstar, calc):
     grho3 = grho_from_dlam(3, drho, dlam3, phi)
     return drho, grho3, phi
 
+def nvals_from_calc(calc):
+    '''
+    Get nvalues nf and ng used by solution
+
+    Parameters
+    ----------
+    calc : String
+        Calculation string.
+
+    Returns
+    -------
+    nh, ng: harmonics used to fit delf and delg.
+
+    '''
+    nf = calc.split(':')[0].split('.')
+    nf = [int(x) for x in nf]
+    
+    if len(calc.split(':'))>1:
+        ng = calc.split(':')[1].split('.')
+        ng = [int(x) for x in ng]
+    elif len(calc.split(':')) == 1:
+        ng = []
+    else:
+        sys.exit('not an allowed value of calc: '+calc)
+    return nf, ng
+
 
 def solve_for_props(delfstar, calc, **kwargs):
     """
@@ -922,6 +976,9 @@ def solve_for_props(delfstar, calc, **kwargs):
             frequency shift.  Numbers after the : are the harmonics used to
             fit against dissipation.  If no : exists ('x.y.z') we assume
             'x.y:z'.  If no . or : exists ('xyz') we assume 'x.y:z'.
+            a single number means we use the Sauerbrey shift
+            just two numbers (x:y) means we fix drho at the specfied value
+            
 
     kwargs:
         calctype (string):
@@ -974,8 +1031,10 @@ def solve_for_props(delfstar, calc, **kwargs):
     overlayer = kwargs.get('overlayer', 'air')
     if overlayer == 'air':
         layers = {}
+        overlayer_output = {'grho3':0, 'phi':0, 'drho':0}
     else:        
         layers = {'overlayer': overlayer}
+        overlayer_output = overlayer
 
 
     nplot = []
@@ -995,11 +1054,8 @@ def solve_for_props(delfstar, calc, **kwargs):
     ub = np.array(ub)  # upper bounds on grho3, phi, drho
 
     # add dots between numbers if needed
-    if not '.' in calc and len(calc)<4:
+    if not '.' in calc and not ':' in calc and len(calc)>1:
         calc = '.'.join(calc)
-    elif not '.' in calc and len(calc)>=4:
-        print('calc has '+str(len(calc))+' digits with no periods')
-        sys.exit()
 
     # now we add the colon if needed
     if not ':' in calc:
@@ -1010,21 +1066,12 @@ def solve_for_props(delfstar, calc, **kwargs):
         elif len(calc.split('.')) == 2:
             calc = (calc.split('.')[0]+':'+
                     calc.split('.')[1])
-        elif len(calc.split('.')) == 1:
-            calc = (calc.split('.')[0]+':'+
-                    calc.split('.')[0])
                 
                        
     # now we figure out which harmonics we use to fit to delg (ng)
     # or delf (nf)
-    nf = calc.split(':')[0].split('.')
-    nf = [int(x) for x in nf]
-    
-    ng = calc.split(':')[1].split('.')
-    ng = [int(x) for x in ng]
-    
-    # nall is a list of all the harmonics we care about for this calculation
-    nall = nf + ng
+    nf, ng = nvals_from_calc(calc)
+    n_all = nf + ng
         
     # set up initial guess
     if drho != 0:
@@ -1081,6 +1128,13 @@ def solve_for_props(delfstar, calc, **kwargs):
     # now add columns for 'calc' and 'calctype'
     for obj in ['calc', 'calctype']:
         df_soln.insert(df_soln.shape[1], obj, object_series)
+        
+    # now add a column for the overlayer
+    df_soln.insert(df_soln.shape[1], 'overlayer', object_series)
+
+    # make list of variable names that we'll use for making assignments
+    var_names = ['grho3', 'phi', 'drho', 'dlam3','jacobian', 
+                'calc', 'calctype', 'overlayer']
                              
     # obtain the solution, using either the SLA or LL methods
     for idx, row in df_soln.iterrows(): 
@@ -1090,70 +1144,79 @@ def solve_for_props(delfstar, calc, **kwargs):
         # check to see if there are any nan values in the harmonics we need
         # also set delfstar to nan for gamma exceeding gmax
 
-        for n in list(set(nall)):
+        for n in list(set(n_all)):
             delfstar_val = row['df_expt'+str(n)]
             if np.isnan(delfstar_val) or np.imag(delfstar_val) > gmax:
                 continue
         
-        # set up the function to solve
-        def ftosolve(x):
-            layers['film'] = {'grho3': x[0], 'phi': x[1]}
+        if len(n_all)>1:
+        # set up the function to solve for all but Sauerbrey calculation
+            def ftosolve(x):
+                layers['film'] = {'grho3': x[0], 'phi': x[1]}
+                if fixed_drho:
+                    layers['film']['drho'] = drho
+                else:
+                    layers['film']['drho'] = x[2]
+                vals = []
+                for n in nf: 
+                    val = (calc_delfstar(n, layers, calctype=calctype,
+                                           reftype=reftype).real -
+                             row['df_expt'+str(n)].real)
+                    vals.append(val)
+                for n in ng: 
+                    val = (calc_delfstar(n, layers, calctype=calctype,
+                                           reftype=reftype).imag -
+                             row['df_expt'+str(n)].imag)
+                    vals.append(val)
+                return vals
+                   
+            # make sure x0 is in the right bounds
+            for k in np.arange(len(x0)):
+                x0[k]=max(x0[k], lb[k])
+                x0[k]=min(x0[k], ub[k])
+    
+            try:
+                soln = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
+            except:
+                print('error at index = '+str(idx))
+            grho3 = soln['x'][0]
+            phi = soln['x'][1]
+            print(soln['x'])
+    
+            if not fixed_drho:
+                drho = soln['x'][2]
+    
+            dlam3 = calc_dlam(3, layers['film'])
+            jacobian = (soln['jac']).astype(object)
+            
+            # now back calculate delfstar from the solution
+            # add experimental and calculated values to the dataframe
+            for n in nplot:
+                delfstar_calc = calc_delfstar(n, layers, calctype=calctype,
+                                                 reftype = reftype)
+                df_soln.loc[idx, 'df_calc'+str(n)] = np.round(delfstar_calc, 1)
+
+            var_vals = [grho3, phi, drho, dlam3, jacobian, calc, calctype,
+                        overlayer]
+            for var_val, var_name in zip(var_vals, var_names):
+                df_soln.at[idx, var_name] = var_val
+            # set up the initial guess for the next row
             if fixed_drho:
-                layers['film']['drho'] = drho
+                x0 = np.array([grho3, phi])
             else:
-                layers['film']['drho'] = x[2]
-            vals = []
-            for n in nf: 
-                val = (calc_delfstar(n, layers, calctype=calctype,
-                                       reftype=reftype).real -
-                         row['df_expt'+str(n)].real)
-                vals.append(val)
-            for n in ng: 
-                val = (calc_delfstar(n, layers, calctype=calctype,
-                                       reftype=reftype).imag -
-                         row['df_expt'+str(n)].imag)
-                vals.append(val)
-            return vals
-               
-        # make sure x0 is in the right bounds
-        for k in np.arange(len(x0)):
-            x0[k]=max(x0[k], lb[k])
-            x0[k]=min(x0[k], ub[k])
-
-        try:
-            soln = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
-        except:
-            print('error at index = '+str(idx))
-        grho3 = soln['x'][0]
-        phi = soln['x'][1]
-        print(soln['x'])
-
-        if not fixed_drho:
-            drho = soln['x'][2]
-
-        dlam3 = calc_dlam(3, layers['film'])
-        jacobian = (soln['jac']).astype(object)
+                x0 = np.array([grho3, phi, drho])
         
-        # now back calculate delfstar from the solution
-        # add experimental and calculated values to the dataframe
-        for n in nplot:
-            delfstar_calc = calc_delfstar(n, layers, calctype=calctype,
-                                             reftype = reftype)
-            df_soln.loc[idx, 'df_calc'+str(n)] = round(delfstar_calc, 1)
-
-        var_vals = [grho3, phi, drho, dlam3, jacobian, calc, calctype]
-        var_names = ['grho3', 'phi', 'drho', 'dlam3','jacobian', 
-                    'calc', 'calctype']
-        
-        for var_val, var_name in zip(var_vals, var_names):
-            df_soln.at[idx, var_name] = var_val
-        
-        # set up the initial guess
-        if fixed_drho:
-            x0 = np.array([grho3, phi])
-        else:
-            x0 = np.array([grho3, phi, drho])
-
+        # now handle the Sauerbrey case
+        else: 
+            drho = sauerbreym(n_all[0], np.real(delfstar_val))
+            var_vals = [np.nan, np.nan, drho, np.nan, np.nan, calc, calctype,
+                        overlayer]
+            for var_val, var_name in zip(var_vals, var_names):
+                df_soln.at[idx, var_name] = var_val
+            # now back calculate delfstar from the solution
+            # add experimental and calculated values to the dataframe
+            for n in nplot:
+                df_soln.loc[idx, 'df_calc'+str(n)] = np.round(-sauerbreyf(n, drho))
     return df_soln
 
 
@@ -1349,42 +1412,50 @@ def calc_error(soln, uncertainty_dict):
     
     for idx, row in soln.iterrows():
         calc = row['calc']
-        delf_n = calc.split(':')[0].split('.')
-        delg_n = calc.split(':')[1].split('.')
-        all_n = delf_n + delg_n
-        
+        nf, ng = nvals_from_calc(calc)
+        n_all = nf + ng
+
         # extract uncertainty from dataframe if it is not [0, 0, 0]
         if uncertainty_dict == 'default':
-            uncertainty = [0]*len(all_n)
+            # we don't calculate an uncertainty if len(n_all)>3
+            uncertainty = [0]*min(3, len(n_all))
         else:
             uncertainty = []
-            for val in delf_n:
+            for val in nf:
                 uncertainty = uncertainty + [uncertainty_dict[int(val)][0]]
-            for val in delg_n:
+            for val in ng:
                 uncertainty = uncertainty + [uncertainty_dict[int(val)][1]]
-            
-        # handle case where calc is a single number, corresponding to the 
-        # harmonic where we take frequency and dissipation
-        if len(all_n) == 1:
-            n1 = int(all_n[0])
-            uncertainty = [uncertainty_dict[n1][0],
-                           uncertainty_dict[n1][1]]
 
-        # extract the jacobian and turn it back into a numpy array of floats
-        jacobian = np.array(row['jacobian'], dtype='float')
-        
-        try:
-            deriv = np.linalg.inv(jacobian)
-        except:
-            deriv = np.zeros([len(uncertainty), len(uncertainty)])
+        if len(n_all) == 1:
+            # handle the Sauerbrey case
+            soln.loc[idx, 'grho3_err'] = np.nan
+            soln.loc[idx, 'phi_err'] = np.nan
+            delf_err = uncertainty_dict[nf[0]][0]
+            soln.loc[idx, 'drho_err'] = abs(sauerbreym(nf[0], delf_err))
+
+        else:
+            # handle case where calc has two numbers, one for harmonic 
+            # for delf, one for harmonic for delg
+            if len(n_all) == 2:
+                n1 = int(n_all[0])
+                uncertainty = [uncertainty_dict[n1][0],
+                               uncertainty_dict[n1][1]]
     
-        # determine error from Jacobian
-        # p = property
-        for p in np.arange(len(uncertainty)):
-            errval = 0
-            for k in np.arange(len(uncertainty)):
-                errval = errval + (deriv[p, k]*uncertainty[k])**2
-            soln.loc[idx, propname[p]] = np.sqrt(errval)
+            # extract the jacobian and turn it back into a numpy array of floats
+            jacobian = np.array(row['jacobian'], dtype='float')
+            
+            try:
+                deriv = np.linalg.inv(jacobian)
+            except:
+                deriv = np.zeros([len(uncertainty), len(uncertainty)])
+        
+            # determine error from Jacobian
+            # p = property
+            for p in np.arange(len(uncertainty)):
+                errval = 0
+                for k in np.arange(len(uncertainty)):
+                    errval = errval + (deriv[p, k]*uncertainty[k])**2
+                soln.loc[idx, propname[p]] = np.sqrt(errval)
             
     return soln
         
@@ -2486,8 +2557,13 @@ def check_solution(df, **kwargs):
     contour_plots = kwargs.get('contour_plots', True)
     contour_range_units = kwargs.get('contour_range_units', {1:'Hz', 2:'Hz'})
     # we don't make the contour plots if we have any np.inf values
-    if (df['drho']==np.inf).any():
+    # or if all of the calcultions are simple Sauerbrey calculations
+    if (df['drho']==np.inf).any() or (df['dlam3'].isnull()).all():
         contour_plots = False
+        
+    # can't have xunit of dlam if they don't exist 
+    if (df['dlam3'].isnull()).all() and xunit == 'dlam':
+        xunit = 'index'
         
     if not contour_plots and not compare_plots:
         print('compare_plots and contour_plots are both False')
@@ -2497,7 +2573,7 @@ def check_solution(df, **kwargs):
     plotsize = kwargs.get('plotsize', (4,3))
     plot_df1 = kwargs.get('plot_df1', False)
     
-    # adjust nplot if any of the values don't' exist in the dataframe
+    # adjust nplot if any of the values don't exist in the dataframe
     for n in nplot:
         if not 'df_expt'+str(n) in df.keys():
             nplot.remove(n)
@@ -2538,17 +2614,16 @@ def check_solution(df, **kwargs):
         # function used for calculating the z values
         # this Z is the value plotted in the contour plot and NOT the impedance
         drho=df['drho'][idxmin]
+        overlayer = df['overlayer'][idxmin]
         grho3=grho_from_dlam(3, drho, x, y)
         fnorm=normdelf_bulk(3, x, y)
         gnorm=normdelg_bulk(3, x, y)
-        if ratios:
-            n1=int(calc.split('.')[0])
-            n2=int(calc.split('.')[1])
-            n3=int(calc.split('.')[2])
-            Z1=np.real(normdelfstar(n2, x, y))/np.real(normdelfstar(n1, x, y))
-            Z2=-np.imag(normdelfstar(n3, x, y))/np.real(normdelfstar(n3, x, y))
+        nf, ng = nvals_from_calc(df['calc'][idxmin])
+        if ratios:   # this only works if calc has the format x.y:z, no overlayer
+            Z1=np.real(normdelfstar(nf[1], x, y))/np.real(normdelfstar(nf[0], x, y))
+            Z2=-np.imag(normdelfstar(ng[0], x, y))/np.real(normdelfstar(ng[0], x, y))
         else:
-            delfstar=sauerbreyf(1, drho)*normdelfstar(3, x, y)
+            delfstar=-sauerbreyf(1, drho)*normdelfstar_liq(3, x, y, drho, overlayer)
             Z1=np.real(delfstar)
             Z2=np.imag(delfstar)
         return Z1, Z2, drho, grho3, fnorm, gnorm
@@ -2697,7 +2772,7 @@ def check_solution(df, **kwargs):
         
     if compare_plots:
         # now add the comparison plots of measured and calcuated values         
-        # plot the experimenta data first
+        # plot the experimental data first
         # keep track of max and min values for plotting purposes
         if len(df['xvals'])==1:
             calcfmt = 'o'
