@@ -46,6 +46,7 @@ T_coef_default = {'f': {1: [0.00054625, 0.04338, 0.08075, 0],
 
 electrode_default = {'drho': 2.8e-3, 'grho3': 3.0e14, 'phi': 0}
 water = {'drho':np.inf, 'grho3':1e8, 'phi':90}
+air = {'drho':np.inf, 'grho3':0, 'phi':90}
 
 def sig_figs(x, n):
     # rounds x to n significant figures
@@ -710,7 +711,7 @@ def normdelfstar(n, dlam3, phi):
     return -np.tan(2*np.pi*dlam(n, dlam3, phi)*(1-1j*np.tan(np.deg2rad(phi/2)))) / \
             (2*np.pi*dlam(n, dlam3, phi)*(1-1j*np.tan(np.deg2rad(phi/2))))
             
-def normdelfstar_liq(n, dlamval, phi, drho, liquid):
+def normdelfstar_liq(n, dlamval, phi, drho, overlayer):
     """
     Calculate normalized complex frequency shift for material immersed in a liquid
     the plot is no longer universal and so depends on the harmonic.  This is for n=3
@@ -726,7 +727,7 @@ def normdelfstar_liq(n, dlamval, phi, drho, liquid):
         phi for the film.
     drho: 
         drho for the film
-    liquid : dictionary of liquid overlayer properties
+    overlayer : dictionary of overlayer properties
         Must include 'grho', and 'phi',  'drho' assumed to be infinite if not listed.
 
     Returns
@@ -734,7 +735,7 @@ def normdelfstar_liq(n, dlamval, phi, drho, liquid):
     Complex frequency shift, normalized by Sauerbrey shift of film
 
     """
-    R = calc_delfstar(n, {1:liquid})/sauerbreyf(n, drho)
+    R = calc_delfstar(n, {1:overlayer})/sauerbreyf(n, drho)
     D = 2*np.pi*dlamval*(1-1j*np.tan(phi*np.pi/360))
     return (D**(-2)+R**2)/(1/(D*np.tan(D)) + R)
 
@@ -1197,7 +1198,7 @@ def solve_for_props(delfstar, calc, **kwargs):
                 df_soln.loc[idx, 'df_calc'+str(n)] = np.round(delfstar_calc, 1)
 
             var_vals = [grho3, phi, drho, dlam3, jacobian, calc, calctype,
-                        overlayer]
+                        overlayer_output]
             for var_val, var_name in zip(var_vals, var_names):
                 df_soln.at[idx, var_name] = var_val
             # set up the initial guess for the next row
@@ -1210,7 +1211,7 @@ def solve_for_props(delfstar, calc, **kwargs):
         else: 
             drho = sauerbreym(n_all[0], np.real(delfstar_val))
             var_vals = [np.nan, np.nan, drho, np.nan, np.nan, calc, calctype,
-                        overlayer]
+                        overlayer_output]
             for var_val, var_name in zip(var_vals, var_names):
                 df_soln.at[idx, var_name] = var_val
             # now back calculate delfstar from the solution
@@ -1430,35 +1431,28 @@ def calc_error(soln, uncertainty_dict):
             # handle the Sauerbrey case
             soln.loc[idx, 'grho3_err'] = np.nan
             soln.loc[idx, 'phi_err'] = np.nan
-            delf_err = uncertainty_dict[nf[0]][0]
-            soln.loc[idx, 'drho_err'] = abs(sauerbreym(nf[0], delf_err))
+            soln.loc[idx, 'drho_err'] = abs(sauerbreym(nf[0], uncertainty[0]))
 
-        else:
-            # handle case where calc has two numbers, one for harmonic 
-            # for delf, one for harmonic for delg
-            if len(n_all) == 2:
-                n1 = int(n_all[0])
-                uncertainty = [uncertainty_dict[n1][0],
-                               uncertainty_dict[n1][1]]
+        # handle case where calc has two numbers, one for harmonic 
+        # for delf, one for harmonic for delg
+
+        # extract the jacobian and turn it back into a numpy array of floats
+        jacobian = np.array(row['jacobian'], dtype='float')
+        try:
+            deriv = np.linalg.inv(jacobian)
+        except:
+            deriv = np.zeros([len(uncertainty), len(uncertainty)])
     
-            # extract the jacobian and turn it back into a numpy array of floats
-            jacobian = np.array(row['jacobian'], dtype='float')
-            
-            try:
-                deriv = np.linalg.inv(jacobian)
-            except:
-                deriv = np.zeros([len(uncertainty), len(uncertainty)])
-        
-            # determine error from Jacobian
-            # p = property
-            for p in np.arange(len(uncertainty)):
-                errval = 0
-                for k in np.arange(len(uncertainty)):
-                    errval = errval + (deriv[p, k]*uncertainty[k])**2
-                soln.loc[idx, propname[p]] = np.sqrt(errval)
+        # determine error from Jacobian
+        # p = property
+        for p in np.arange(len(uncertainty)):
+            errval = 0
+            for k in np.arange(len(uncertainty)):
+                errval = errval + (deriv[p, k]*uncertainty[k])**2
+            soln.loc[idx, propname[p]] = np.sqrt(errval)
             
     return soln
-        
+
         
 def make_prop_axes(**kwargs):
     """
