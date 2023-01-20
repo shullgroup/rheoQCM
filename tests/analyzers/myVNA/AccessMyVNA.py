@@ -1251,8 +1251,8 @@ class AccessMyVNA():
         # logger.info('nSteps=', nSteps) 
 
 
-        data_a = np.zeros(nSamples, dtype=np.float, order='C')
-        data_b = np.zeros(nSamples, dtype=np.float, order='C')
+        data_a = np.zeros(nSamples, dtype=np.float64, order='C')
+        data_b = np.zeros(nSamples, dtype=np.float64, order='C')
 
         ptr_a = data_a.ctypes.data_as(POINTER(c_double))
         ptr_b = data_b.ctypes.data_as(POINTER(c_double))

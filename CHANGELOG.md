@@ -11,6 +11,7 @@
 
 - Change `__version_info__` from string to int for easier comparison.
 - Change `mech_key` to the form separating haromincs with ".". e.g.: in older versions is "355"; in the new version is "3.5.5". You can use DataSaver.get_mech_key(your_mech_key) to convert it to the version compatible str.
+- Change np.float and 'float64' to `float` to fit numpy >= 1.20
 
 ### Fixed
 
