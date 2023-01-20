@@ -1686,9 +1686,9 @@ class DataSaver:
             # logger.info('mmmmm', m) 
             idx = s.index
             # convert s and m to ndarray
-            arr_s = np.array(s.values.tolist(), dtype=float) # the dtype=float replace None with np.nan
+            arr_s = np.array(s.values.tolist(), dtype=np.float) # the dtype=np.float replace None with np.nan
             # logger.info(arr_s) 
-            arr_m = np.array(m.values.tolist(), dtype=float) # the dtype=float replace None with np.nan
+            arr_m = np.array(m.values.tolist(), dtype=np.float) # the dtype=np.float replace None with np.nan
             # logger.info(arr_m) 
             # logger.info(np.any(arr_m == 1)) 
             if np.any(arr_m == 1): # there are marks (1)
@@ -1750,9 +1750,9 @@ class DataSaver:
             m = getattr(self, chn_name)['marks'].copy() # marks from data
             idx = s.index
             # convert s and m to ndarray
-            arr_s = np.array(s.values.tolist(), dtype=float) # the dtype=float replace None with np.nan
+            arr_s = np.array(s.values.tolist(), dtype=np.float) # the dtype=np.float replace None with np.nan
             # logger.info(arr_s) 
-            arr_m = np.array(m.values.tolist(), dtype=float) # the dtype=float replace None with np.nan
+            arr_m = np.array(m.values.tolist(), dtype=np.float) # the dtype=np.float replace None with np.nan
             # logger.info(arr_m) 
             # logger.info(np.any(arr_m == 1)) 
             if np.any(arr_m == 1): # there are marks (1)
@@ -1812,7 +1812,7 @@ class DataSaver:
 
             #     if all(np.isnan(np.array(self.exp_ref[chn_name][self._ref_keys[col]]))): # no reference or no constant reference exist
             #         logger.warning('ref still not set')
-            #         return col_s.apply(lambda x: list(np.array(x, dtype=float) * np.nan)) # return all nan
+            #         return col_s.apply(lambda x: list(np.array(x, dtype=np.float) * np.nan)) # return all nan
             #     else: # use constant ref in self.<chn_name>_ref
             #         logger.info('constant reference') 
             #         # get ref
@@ -1821,7 +1821,7 @@ class DataSaver:
             #         # logger.info(ref) 
             #         # logger.info(col_s[0]) 
                     
-            #         col_s = col_s.apply(lambda x: list(np.array(x, dtype=float) - np.array(ref, dtype=float)))
+            #         col_s = col_s.apply(lambda x: list(np.array(x, dtype=np.float) - np.array(ref, dtype=np.float)))
             #         if norm:
             #             return self._norm_by_harm(col_s)
             #         else: 
@@ -1863,7 +1863,7 @@ class DataSaver:
         normalize series 'fs' or 'gs' by harmonic
         this function doesn't change the column name of series
         '''
-        return s.apply(lambda x: list(np.array(x, dtype=float) / np.arange(1, len(x)*2+1, 2)))
+        return s.apply(lambda x: list(np.array(x, dtype=np.float) / np.arange(1, len(x)*2+1, 2)))
 
 
     def minus_columns(self, df):

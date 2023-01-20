@@ -1070,7 +1070,7 @@ class AccessMyVNA():
         '''
         logger.info('MyVNAGetDoubleArray') 
 
-        nResult = np.zeros(nArraySize, dtype=float, order='C')
+        nResult = np.zeros(nArraySize, dtype=np.float64, order='C')
         # self.narray = nResult
 
         nRes_ptr = nResult.ctypes.data_as(POINTER(c_double))
@@ -1101,7 +1101,7 @@ class AccessMyVNA():
         if len(nData) == nArraySize: # check nData size
             if not isinstance(nData, np.ndarray): # check nData type
                 nData = np.array(nData)
-            nData.astype(float, order='C')
+            nData.astype(np.float64, order='C')
         # logger.info(nData) 
         # logger.info(nData.ctypes.data) 
 
@@ -1251,8 +1251,8 @@ class AccessMyVNA():
         # logger.info('nSteps=', nSteps) 
 
 
-        data_a = np.zeros(nSamples, dtype=float, order='C')
-        data_b = np.zeros(nSamples, dtype=float, order='C')
+        data_a = np.zeros(nSamples, dtype=np.float, order='C')
+        data_b = np.zeros(nSamples, dtype=np.float, order='C')
 
         ptr_a = data_a.ctypes.data_as(POINTER(c_double))
         ptr_b = data_b.ctypes.data_as(POINTER(c_double))
