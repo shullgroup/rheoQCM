@@ -195,8 +195,8 @@ def findpeaks(array, output, sortstr=None, npeaks=np.inf, minpeakheight=-np.inf,
     '''
     # NOTUSING
     indices = np.array([]).astype('int64')
-    values = np.array([]).astype('float64')
-    data = np.atleast_1d(array).astype('float64')
+    values = np.array([]).astype(float)
+    data = np.atleast_1d(array).astype(float)
     if data.size < 3:
         return np.array([])
 
