@@ -1,10 +1,11 @@
 # Changelog
 
-## [0.21.0] - 2022-12-08
+## [0.21.0] - 2023-01-20
 
 ### Added
 
 - Add auto analyzer icon change by selected device.
+- Add code to convert binary to str for h5py >= 3.0.0
 
 ### Changed
 

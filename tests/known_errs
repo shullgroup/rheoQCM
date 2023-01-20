@@ -1,3 +1,8 @@
+
+h5py latest version (>=3.0) only support 64-bit Python.
+https://docs.h5py.org/en/stable/strings.html
+
+################################################
 TODO: peak fiting w/ width constraints
 https://lmfit.github.io/lmfit-py/constraints.html#using-inequality-constraints
 
