@@ -1445,6 +1445,8 @@ def calc_error(soln, uncertainty_dict):
     
         # determine error from Jacobian
         # p = property
+        # set drho error to zero to handle fixed drho case
+        soln.loc[idx, 'drho_err'] = 0
         for p in np.arange(len(uncertainty)):
             errval = 0
             for k in np.arange(len(uncertainty)):
@@ -1958,6 +1960,10 @@ def read_xlsx(infile, **kwargs):
         :Tref: (numeric)
             Temperature at which reference frequency shift was determined  
             - default is 22C
+            
+        :autodelete: (Boolean)
+            True (default) if we want delte points at temperatures where
+            we don't have a reference point'
 
         :T_coef_plots: (Boolean)  
             set to True to plot temp. dependent f and g for ref.  
@@ -1990,6 +1996,7 @@ def read_xlsx(infile, **kwargs):
     nvals_in=kwargs.get('nvals', [1, 3, 5, 7, 9])
 
     Tref=kwargs.get('Tref', 22)
+    autodelete = kwargs.get('autodelete', True)
     
     # specify default bare crystal temperature coefficients
     T_coef=kwargs.get('T_coef', 'calculated')
@@ -2187,9 +2194,13 @@ def read_xlsx(infile, **kwargs):
         # create a filename for saving the reference temperature data
         filename = os.path.splitext(infile)[0]+'_Tref.pdf'
         plot_bare_tempshift(df_ref, T_coef, Tref, nvals, T_range, filename)
-        if T_range[0] < T_ref_range[0] or T_range[1] > T_ref_range[1]:
-            print ('deleting some points that are outside the reference temperature range')
-            df = df.query('temp >= @T_ref_range[0] & temp <= @T_ref_range[1]')
+        if (autodelete and 
+            (T_range[0] < T_ref_range[0] or T_range[1] > T_ref_range[1])):
+            df_tmp = df.query('temp >= @T_ref_range[0] & temp <= @T_ref_range[1]')
+            # determine number of deleted points
+            n_del = len(df) - len(df_tmp)
+            print (f'deleting {n_del} points that are outside the reference temperature range')
+            df = df_tmp
             
     # eliminate rows with nan at n=3
     df = df.dropna(subset=[3]).copy()
@@ -2489,7 +2500,10 @@ def check_solution(df, **kwargs):
             default is linear
         
         write_pdf (Boolean):
-            True (default)  if we want to write the pdf file
+            True if we want to write the pdf file (default is False)
+            
+        write_dir (string)
+            Directory where we want to write the pdf
             
         contour_plots (Boolean):
             True (default) if we want to write the contour plots
@@ -2546,7 +2560,8 @@ def check_solution(df, **kwargs):
     xunit=kwargs.get('xunit', 'dlam')
     xoffset = kwargs.get('xoffset', 0)
     gammascale = kwargs.get('gammascale', 'linear')
-    write_pdf = kwargs.get('write_pdf', True)
+    write_pdf = kwargs.get('write_pdf', False)
+    write_dir = kwargs.get('write_dir', '.')
     compare_plots = kwargs.get('compare_plots', True)
     contour_plots = kwargs.get('contour_plots', True)
     contour_range_units = kwargs.get('contour_range_units', {1:'Hz', 2:'Hz'})
@@ -2862,7 +2877,9 @@ def check_solution(df, **kwargs):
 
     # create a PdfPages object - one solution check per page
     if write_pdf:
-        pdf=PdfPages(num +'_solutions.pdf')
+        filename = num+'.pdf'
+        write_path = os.path.join(write_dir, filename)
+        pdf=PdfPages(write_path)
     
     # we only take every nth row, where n = plot_interval
     if plot_interval == 'firstlast':
