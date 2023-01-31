@@ -801,7 +801,7 @@ def rhcalc(calc, dlam3, phi):
     returns:
         Harmonic ratio.
     """
-    nvals = calc.split(':')[0]
+    nvals = calc.split('_')[0]
     if '.' not in nvals:
         return np.nan
     else:
@@ -813,19 +813,20 @@ def rh_from_delfstar(calc, delfstar):
     """
     Determine harmonic ratio from experimental delfstar.
     args:
-        calc (3 character string):
-            Calculation string ('353' for example).
+        calc (character string):
+            Calculation string - requires n1.n2_n3 format
 
         delfstar (complex):
             ditionary of complex frequency shifts, included all harmonics
             within calc.
 
     returns:
-        Harmonic ratio.
+        Harmonic ratio for n1, n2
     """
     # calc here is the calc string (i.e., '353')
-    n1 = int(calc.split('.')[0])
-    n2 = int(calc.split('.')[1])
+    nf = calc.split('_')[0]
+    n1 = int(nf.split('.')[0])
+    n2 = int(nf.split('.')[1])
     return (n2/n1)*delfstar[n1].real/delfstar[n2].real
 
 
@@ -833,9 +834,9 @@ def rdcalc(calc, dlam3, phi):
     """
     Calculate dissipation ratio from material properties.
     args:
-        calc (3 character string):
-            Calculation string in a.b:c  format.  
-            Ratio taken for last given for gamma
+        calc (character string):
+            Calculation string.  
+            Ratio taken for first value of gamma
 
         dlam3 (real):
             d/lambda at n=3.
@@ -846,7 +847,7 @@ def rdcalc(calc, dlam3, phi):
     returns:
         Harmonic ratio.
     """
-    n = calc.split(':')[-1][-1]
+    n = int(calc.split('_')[-1][0])
     return -(normdelfstar(n, dlam3, phi).imag /
         normdelfstar(n, dlam3, phi).real)
 
@@ -855,12 +856,11 @@ def rd_from_delfstar(n, delfstar):
     """
     Determine dissipation ratio from experimental delfstar.
     args:
-        calc (3 character string):
-            Calculation string ('353' for example).
+        n (integer):
+            Harmonic of interest
 
         delfstar (complex):
-            ditionary of complex frequency shifts, included all harmonics
-            within calc.
+            ditionary of complex frequency shifts, harmonic of interest
 
     returns:
         Dissipation ratio.
@@ -949,17 +949,37 @@ def nvals_from_calc(calc):
     nh, ng: harmonics used to fit delf and delg.
 
     '''
-    nf = calc.split(':')[0].split('.')
+    nf = calc.split('_')[0].split('.')
     nf = [int(x) for x in nf]
     
-    if len(calc.split(':'))>1:
-        ng = calc.split(':')[1].split('.')
+    if len(calc.split('_'))>1:
+        ng = calc.split('_')[1].split('.')
         ng = [int(x) for x in ng]
-    elif len(calc.split(':')) == 1:
+    elif len(calc.split('_')) == 1:
         ng = []
     else:
         sys.exit('not an allowed value of calc: '+calc)
     return nf, ng
+
+
+def update_calc(calc):
+    # update calc to current format with underscore separating
+    # harmonics used for frequency and dissipation
+    # first replace colon with underscore if needed
+    calc = calc.replace(':', '_')
+    if not '.' in calc and not '_' in calc and len(calc)>1:
+        calc = '.'.join(calc)
+
+    # now we add the underscore if needed
+    if not '_' in calc:
+        if len(calc.split('.'))==3:
+            calc = (calc.split('.')[0]+'.'+
+                    calc.split('.')[1]+'_'+
+                    calc.split('.')[2])
+        elif len(calc.split('.')) == 2:
+            calc = (calc.split('.')[0]+'_'+
+                    calc.split('.')[1])
+    return calc
 
 
 def solve_for_props(delfstar, calc, **kwargs):
@@ -1054,20 +1074,8 @@ def solve_for_props(delfstar, calc, **kwargs):
     lb = np.array(lb)  # lower bounds on grho3, phi, drho
     ub = np.array(ub)  # upper bounds on grho3, phi, drho
 
-    # add dots between numbers if needed
-    if not '.' in calc and not ':' in calc and len(calc)>1:
-        calc = '.'.join(calc)
-
-    # now we add the colon if needed
-    if not ':' in calc:
-        if len(calc.split('.'))==3:
-            calc = (calc.split('.')[0]+'.'+
-                    calc.split('.')[1]+':'+
-                    calc.split('.')[2])
-        elif len(calc.split('.')) == 2:
-            calc = (calc.split('.')[0]+':'+
-                    calc.split('.')[1])
-                
+    # update calc to current format
+    calc = update_calc(calc)
                        
     # now we figure out which harmonics we use to fit to delg (ng)
     # or delf (nf)
@@ -1130,12 +1138,12 @@ def solve_for_props(delfstar, calc, **kwargs):
     for obj in ['calc', 'calctype']:
         df_soln.insert(df_soln.shape[1], obj, object_series)
         
-    # now add a column for the overlayer
+    # now add a column for the overlayer and for the film
     df_soln.insert(df_soln.shape[1], 'overlayer', object_series)
-
+    df_soln.insert(df_soln.shape[1], 'film', object_series)
     # make list of variable names that we'll use for making assignments
     var_names = ['grho3', 'phi', 'drho', 'dlam3','jacobian', 
-                'calc', 'calctype', 'overlayer']
+                'calc', 'calctype', 'overlayer', 'film']
                              
     # obtain the solution, using either the SLA or LL methods
     for idx, row in df_soln.iterrows(): 
@@ -1186,7 +1194,8 @@ def solve_for_props(delfstar, calc, **kwargs):
     
             if not fixed_drho:
                 drho = soln['x'][2]
-    
+            
+            film = {'grho3':grho3, 'phi':phi, 'drho':drho}
             dlam3 = calc_dlam(3, layers['film'])
             jacobian = (soln['jac']).astype(object)
             
@@ -1198,7 +1207,7 @@ def solve_for_props(delfstar, calc, **kwargs):
                 df_soln.loc[idx, 'df_calc'+str(n)] = np.round(delfstar_calc, 1)
 
             var_vals = [grho3, phi, drho, dlam3, jacobian, calc, calctype,
-                        overlayer_output]
+                        overlayer_output, film]
             for var_val, var_name in zip(var_vals, var_names):
                 df_soln.at[idx, var_name] = var_val
             # set up the initial guess for the next row
@@ -1211,7 +1220,7 @@ def solve_for_props(delfstar, calc, **kwargs):
         else: 
             drho = sauerbreym(n_all[0], np.real(delfstar_val))
             var_vals = [np.nan, np.nan, drho, np.nan, np.nan, calc, calctype,
-                        overlayer_output]
+                        overlayer_output, film]
             for var_val, var_name in zip(var_vals, var_names):
                 df_soln.at[idx, var_name] = var_val
             # now back calculate delfstar from the solution
