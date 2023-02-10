@@ -1482,6 +1482,11 @@ def make_prop_axes(**kwargs):
         plots (list of strings):  
             plots to include (default is ['grho3', 'phi', 'drho'])
             
+            - 'drho_change' is change in drho, relative to drho_ref
+            
+            - 'drho_change_nm' is change in drho with d in nm
+            
+            - 'drho_norm' is drho divided by drho_ref
             - 'vgp' can be added as van Gurp-Palmen plot
             
             - 'vgp_lin'  and 'grho3_lin' put the grho3 on a linear scale
@@ -1614,7 +1619,8 @@ def make_prop_axes(**kwargs):
                'gprho3': r'$G^\prime_3\rho$ (Pa $\cdot$ g/cm$^3$)',
                'gdprho3': r'$G^{\prime\prime}_3\rho$ (Pa $\cdot$ g/cm$^3$)',
                'drho': r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-               'drho_change': r'change in $d\rho$',
+               'drho_change': r'change in $d\rho$ ($\mu$m$\cdot$g/cm$^3$)',
+               'drho_change_nm': r'change in $d\rho$ (nm$\cdot$g/cm$^3$)',
                'drho_norm': r'$d\rho / (d\rho)_{dry}$',
                'jdp': r'$J^{\prime \prime}/\rho$ (Pa$^{-1}\cdot$cm$^3$/g)',
                'temp':r'$T$ ($^\circ$C)'
@@ -1650,6 +1656,9 @@ def make_prop_axes(**kwargs):
             ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'drho_change':
             ax[p].set_ylabel(axlabels['drho_change'])
+            ax[p].set_xlabel(xlabel[p])
+        elif plots[p] == 'drho_change_nm':
+            ax[p].set_ylabel(axlabels['drho_change_nm'])
             ax[p].set_xlabel(xlabel[p])
         elif plots[p] == 'cole-cole':
             ax[p].set_ylabel(axlabels['gdprho3'])
@@ -1848,12 +1857,17 @@ def prop_plots(df, figinfo, **kwargs):
             xdata = xvals[p]
             ydata = 1000*(df['drho']-drho_ref).astype(float)
             yerr = 1000*df['drho_err']
-            
+
+        elif plots[p] == 'drho_change_nm':
+            xdata = xvals[p]
+            ydata = 1e6*(df['drho']-drho_ref).astype(float)
+            yerr = 1e6*df['drho_err']
+
         elif plots[p] == 'vgp' or plots[p] == 'vgp_lin':
             xdata = df['grho3'].astype(float)/1000
             ydata = df['phi'].astype(float)
-            yerr = pd.Series(np.zeros(len(xdata)))  # not really included yet
-            
+            yerr = pd.Series(np.zeros(len(xdata)))  
+
         elif plots[p] == 'cole-cole' or plots[p] == 'cole-cole_lin':
             xdata = (df['grho3'].astype(float)*
                      np.cos(np.pi*df['phi'].astype(float)/180)/1000)
