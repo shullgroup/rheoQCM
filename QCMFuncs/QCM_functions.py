@@ -1219,6 +1219,7 @@ def solve_for_props(delfstar, calc, **kwargs):
         # now handle the Sauerbrey case
         else: 
             drho = sauerbreym(n_all[0], np.real(delfstar_val))
+            film = {'drho':drho, 'grho3':np.nan, 'phi':np.nan}
             var_vals = [np.nan, np.nan, drho, np.nan, np.nan, calc, calctype,
                         overlayer_output, film]
             for var_val, var_name in zip(var_vals, var_names):
