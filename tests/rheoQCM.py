@@ -324,6 +324,21 @@ class QCMApp(QMainWindow):
         self.load_settings()
 
 
+    def closeEvent(self, event):
+        '''
+        TODO: add unsave data check, data collecting check!
+        '''
+
+        reply = QMessageBox.question(self, 'Window Close', 'Are you sure you want to close rheoQCM?',
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            event.accept()
+            print('rheoQCM closed')
+        else:
+            event.ignore()
+
+
     def init_ui(self):
         ###### initiate UI #################################
 
