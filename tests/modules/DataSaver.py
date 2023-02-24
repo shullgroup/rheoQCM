@@ -2059,8 +2059,6 @@ class DataSaver:
                     func_f_list = [lambda x, f=f: np.full_like(x, f, dtype=float) for f in func_f_list]
                     func_g_list = [lambda x, g=g: np.full_like(x, g, dtype=float) for g in func_g_list]
                     func_p_list = [lambda x, p=p: np.full_like(x, p, dtype=float) for p in func_p_list]
-                    # print([x([0, 2]) for x in func_f_list])
-                    # print([x([0, 2]) for x in func_g_list])
                     # make function for each ind_list
                     func_list.append(self.make_interpfun(func_f_list, func_g_list, func_p_list))
 
@@ -3071,10 +3069,10 @@ class DataSaver:
         else: # for older version
             # remove '.'
             if '.' in nhcalc: 
-                if len(nhcalc) == 3:
+                if len(nhcalc) == 5:
                     return nhcalc.replace('.', '') 
                 else:
-                    return None 
+                    return 'none' 
             else: 
                 return nhcalc
 
@@ -3108,11 +3106,11 @@ class DataSaver:
                 ver = tuple(map(int, ver))
         elif isinstance(ver, str):
             if '.' in ver: # new format since 0.21.0
-                ver = tuple(ver.split('.'))
+                ver = tuple(map(int, ver.split('.')))
             else: # older version w/ number only
-                ver = tuple(ver)
+                ver = tuple(map(int, ver))
         else:
-            return None
+            return ()
         return ver
 
     ######## Following functions are for QCM-D 

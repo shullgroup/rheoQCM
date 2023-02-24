@@ -1,4 +1,10 @@
 
+
+
+##############################################
+/tests/rheoQCM.py:5611: MatplotlibDeprecationWarning: The join function was deprecated in Matplotlib 3.6 and will be removed two minor releases later.
+
+
 h5py latest version (>=3.0) only support 64-bit Python.
 https://docs.h5py.org/en/stable/strings.html
 
