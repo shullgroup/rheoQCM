@@ -53,7 +53,7 @@ def make_gmod(n):
     '''
     gmod = Model(fun_const, prefix='g_', independent_vars=['f'])
     for i in np.arange(n):
-        gmod_i = Model(fun_G, independent_vars='f', prefix='p'+str(i)+'_', name='g'+str(i))
+        gmod_i = Model(fun_G, independent_vars=['f'], prefix='p'+str(i)+'_', name='g'+str(i))
         gmod += gmod_i
     return gmod
 
@@ -66,7 +66,7 @@ def make_bmod(n):
     '''
     bmod = Model(fun_const, prefix='b_', independent_vars=['f'])
     for i in np.arange(n):
-        bmod_i = Model(fun_B, independent_vars='f', prefix='p'+str(i)+'_', name='b'+str(i))
+        bmod_i = Model(fun_B, independent_vars=['f'], prefix='p'+str(i)+'_', name='b'+str(i))
         bmod += bmod_i
     return bmod
 
@@ -106,8 +106,8 @@ def make_models(n=1):
 
     for i in np.arange(n):
         # gmod and bmod sharing the same varible so use the same prefix
-        gmod_i = Model(fun_G, independent_vars='f', prefix='p'+str(i)+'_', name='g'+str(i)) + gc
-        bmod_i = Model(fun_B, independent_vars='f', prefix='p'+str(i)+'_', name='b'+str(i)) + bc
+        gmod_i = Model(fun_G, independent_vars=['f'], prefix='p'+str(i)+'_', name='g'+str(i)) + gc
+        bmod_i = Model(fun_B, independent_vars=['f'], prefix='p'+str(i)+'_', name='b'+str(i)) + bc
         gmods.append(gmod_i)
         bmods.append(bmod_i)
     

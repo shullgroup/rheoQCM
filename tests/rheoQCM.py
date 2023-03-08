@@ -59,6 +59,15 @@ import _version
 print('Version: {}'.format(_version.__version__))
 
 
+# supress wornings
+import warnings
+# RuntimeWarning: All-NaN axis encountered maxy = np.nanmax(masked_verts[..., 1])
+warnings.filterwarnings(action='ignore', message='All-NaN axis encountered')
+
+# RuntimeWarning: invalid value encountered in divide    return -np.tan(2*np.pi*dlam_n*(1-1j*np.tan(phi/2))) / (2*np.pi*dlam_n*(1-1j*np.tan(phi/2)))
+warnings.filterwarnings(action='ignore', message='invalid value encountered in divide')
+
+
 if UIModules.system_check() is UIModules.OSType.windows: # windows
     try:
         from modules import TempDevices, TempModules
@@ -322,6 +331,21 @@ class QCMApp(QMainWindow):
             )
 
         self.load_settings()
+
+
+    def closeEvent(self, event):
+        '''
+        TODO: add unsave data check, data collecting check!
+        '''
+
+        reply = QMessageBox.question(self, 'Window Close', 'Are you sure you want to close rheoQCM?',
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+
+        if reply == QMessageBox.Yes:
+            event.accept()
+            print('rheoQCM closed')
+        else:
+            event.ignore()
 
 
     def init_ui(self):
@@ -3674,10 +3698,7 @@ class QCMApp(QMainWindow):
 
         if sender_name == 'checkBox_linkx': # link x axis of mpl_plt1 & mpl_plt2
             if signal:
-                self.ui.mpl_plt1.ax[0].get_shared_x_axes().join(
-                    self.ui.mpl_plt1.ax[0],
-                    self.ui.mpl_plt2.ax[0]
-                )
+                self.ui.mpl_plt1.ax[0].sharex(self.ui.mpl_plt2.ax[0])
             else:
                 self.ui.mpl_plt1.ax[0].get_shared_x_axes().remove(
                     self.ui.mpl_plt2.ax[0]
@@ -5608,14 +5629,8 @@ class QCMApp(QMainWindow):
         self.ui.mpl_contour2.init_contour(**mesh2, levels=levels2, cmap=cmap, title=title2)
 
         # linkxy
-        self.ui.mpl_contour1.ax[0].get_shared_x_axes().join(
-            self.ui.mpl_contour1.ax[0],
-            self.ui.mpl_contour2.ax[0]
-        )
-        self.ui.mpl_contour1.ax[0].get_shared_y_axes().join(
-            self.ui.mpl_contour1.ax[0],
-            self.ui.mpl_contour2.ax[0]
-        )
+        self.ui.mpl_contour1.ax[0].sharex(self.ui.mpl_contour2.ax[0])
+        self.ui.mpl_contour1.ax[0].sharey(self.ui.mpl_contour2.ax[0])
 
         # add data to contour
         # self.add_data_to_contour() # NOTE: comment this and let the data updated only by clicking the button

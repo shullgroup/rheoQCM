@@ -958,6 +958,7 @@ class AccessMyVNA():
 
         logger.info('__init__1') 
 
+
     # use __enter__ __exit__ for with or use try finally
     def __enter__(self):
         self.Init()
