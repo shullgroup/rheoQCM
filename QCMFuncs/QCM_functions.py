@@ -1082,7 +1082,7 @@ def solve_for_props(delfstar, calc, **kwargs):
     # now we figure out which harmonics we use to fit to delg (ng)
     # or delf (nf)
     nf, ng = nvals_from_calc(calc)
-    n_all = nf + ng
+    n_all = len(nf) + len(ng)
         
     # set up initial guess
     if drho != 0:
@@ -1117,6 +1117,8 @@ def solve_for_props(delfstar, calc, **kwargs):
         x0 = np.array([grho3, phi, drho])
 
     # create df_soln dataframe, starting with time and Temp from delfstar
+    if not 't_next' in delfstar.keys():
+        delfstar = add_t_diff(delfstar)
     df_soln = delfstar[['t', 't_prev', 't_next', 'temp']].copy()
     
     # now create dataframe with the complex frequency shifts
@@ -1155,12 +1157,12 @@ def solve_for_props(delfstar, calc, **kwargs):
         # check to see if there are any nan values in the harmonics we need
         # also set delfstar to nan for gamma exceeding gmax
 
-        for n in list(set(n_all)):
+        for n in list(set(nf+ng)):
             delfstar_val = row['df_expt'+str(n)]
             if np.isnan(delfstar_val) or np.imag(delfstar_val) > gmax:
                 continue
         
-        if len(n_all)>1:
+        if n_all>1:
         # set up the function to solve for all but Sauerbrey calculation
             def ftosolve(x):
                 layers['film'] = {'grho3': x[0], 'phi': x[1]}
@@ -1220,7 +1222,7 @@ def solve_for_props(delfstar, calc, **kwargs):
         
         # now handle the Sauerbrey case
         else: 
-            drho = sauerbreym(n_all[0], np.real(delfstar_val))
+            drho = sauerbreym(nf[0], np.real(delfstar_val))
             film = {'drho':drho, 'grho3':np.nan, 'phi':np.nan}
             var_vals = [np.nan, np.nan, drho, np.nan, np.nan, calc, calctype,
                         overlayer_output, film]
@@ -1426,12 +1428,12 @@ def calc_error(soln, uncertainty_dict):
     for idx, row in soln.iterrows():
         calc = row['calc']
         nf, ng = nvals_from_calc(calc)
-        n_all = nf + ng
+        n_all = len(nf) + len(ng)
 
         # extract uncertainty from dataframe if it is not [0, 0, 0]
         if uncertainty_dict == 'default':
-            # we don't calculate an uncertainty if len(n_all)>3
-            uncertainty = [0]*min(3, len(n_all))
+            # we don't calculate an uncertainty if n_all>3
+            uncertainty = [0]*min(3, n_all)
         else:
             uncertainty = []
             for val in nf:
@@ -1439,7 +1441,7 @@ def calc_error(soln, uncertainty_dict):
             for val in ng:
                 uncertainty = uncertainty + [uncertainty_dict[int(val)][1]]
 
-        if len(n_all) == 1:
+        if n_all == 1:
             # handle the Sauerbrey case
             soln.loc[idx, 'grho3_err'] = np.nan
             soln.loc[idx, 'phi_err'] = np.nan
@@ -2279,6 +2281,72 @@ def bare_tempshift(T, T_coef, Tref, n):
     g=np.polyval(T_coef['g'][n], T) - np.polyval(T_coef['g'][n], Tref)
     return {'f': f, 'g': g}
 
+def plot_delfstar(df, **kwargs):
+    '''
+    Simple way to plot delf and delg.
+    Parameters
+    ----------
+    df : dataframe
+        datframe of delfstar values in the format returned by qcm.read_excel.
+
+    Optional arguments
+    n : list of integers 
+        harmonics to inlude (default is [3])
+        
+    xkey : string
+        key within df that we'll use as our x variable.
+
+    df_ref : dataframe
+        dataframe for reference frequency shifts
+    
+    num : string
+        window title
+        
+    Returns
+    -------
+    fig, ax for the plot
+
+    '''
+    num = kwargs.get('num', 'delfstar plot')
+    nvals = kwargs.get('nvals', [3])
+    xkey = kwargs.get('xkey', 'index')
+    if 'df_ref' in kwargs.keys():
+        fig, ax = plt.subplots(2, 2, figsize = (8, 6), 
+                               constrained_layout = True, num = num)
+    else:
+        fig, ax = plt.subplots(1, 2, figsize = (8, 3), constrained_layout = True,
+                           num = num)
+
+    ax = ax.flatten()
+    
+    # set all the axis labels
+    for k in np.arange(len(ax)): 
+        ax[k].set_xlabel(xkey)
+
+    ax[0].set_ylabel(r'$\Delta f_n/n$ (Hz)')
+    ax[1].set_ylabel(r'$\Delta \Gamma _n/n$ (Hz)')
+    
+    if 'df_ref' in kwargs.keys():
+        ax[2].set_ylabel(r'$f_n^{ref}$-mean($f_n^{ref}$) (Hz)')
+        ax[3].set_ylabel(r'$\Gamma _n^{ref}$-mean($\Gamma_n^{ref}$) (Hz)')
+    
+    for n in nvals:
+        label = 'n='+str(n)
+        normdelfstar = df[n]/n
+        x = df[xkey]
+        ax[0].plot(x, np.real(normdelfstar), '.', label = label)
+        ax[1].plot(x, np.imag(normdelfstar), '.', label = label)
+        if 'df_ref' in kwargs.keys():
+            df_ref = kwargs.get('df_ref')
+            fref = df_ref['f'+str(n)+'_ref']
+            gref = df_ref['f'+str(n)+'_ref']
+            xref = df_ref[xkey]
+            ax[2].plot(xref, fref - fref.mean(), '.', label = label)
+            ax[3].plot(xref, gref - gref.mean(), '.', label = label)
+
+    for k in np.arange(len(ax)): ax[k].legend()
+    return fig, ax
+
 
 def gstar_maxwell(wtau):
     """
@@ -2515,6 +2583,9 @@ def check_solution(df, **kwargs):
               
         xlabel (string):
             label for string (typicall used when datframe column name is used for xunit)
+            
+        scale (string):
+            log or linear x scale (default is 'linear')
             
         xoffset (real):
             Value subtracted from x data 
