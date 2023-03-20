@@ -1,11 +1,13 @@
 # Changelog
 
-## [0.21.0] - 2023-02-16
+## [0.21.0] - 2023-03-17
 
 ### Added
 
 - Add auto analyzer icon change by selected device.
 - Add code to convert binary to str for h5py >= 3.0.0
+- Add code to ignore some of the warnings. (All-NaN axis, invalid value in divide)
+- Add auto scale switch for data selector in data plot. (Need to check if it works)
 
 ### Changed
 
@@ -13,6 +15,7 @@
 - Change `mech_key` to the form separating haromincs with ".". e.g.: in older versions is "355"; in the new version is "3.5.5". You can use DataSaver.get_mech_key(your_mech_key) to convert it to the version compatible str.
 - Change np.float and 'float64' to `float` to fit numpy >= 1.20
 - Change the method share x/y in Matplotlib since join was removed since 3.6
+- Change settings structure of analyzers to adopt mulitple available analyzers.
 
 ### Fixed
 

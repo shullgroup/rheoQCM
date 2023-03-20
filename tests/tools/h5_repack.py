@@ -116,7 +116,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process ptrepack to shrink .h5 file size. NOTE: This code uses h5repack from "HDF5 TOOlS". Install it before running this code.')
     
     parser.add_argument('path', metavar='path', type=str, nargs='*', help='path of a file or a folder (repack all .h5 files in the folder). Multiple paths are available.')
-    parser.add_argument('-sf', '--subfolder', action='store_true', default='False', help='Include files in subfolders')
+    parser.add_argument('-f', '--subfolder', action='store_true', default='False', help='Include files in subfolders')
     args = parser.parse_args()
     # parser.print_help() # print the help information when run the code w/ -h or --help. Can be commonted if don't want to show
 

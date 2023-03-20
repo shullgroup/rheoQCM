@@ -30,30 +30,45 @@ config_default = {
         'default_level': logging.ERROR, # default level for logging
     },
 
-    # analyzer options
-    'analyzer_opts':{
-        # 'none': '--',
-        'myvna': 'myVNA', # '.myVNA.cal'
-        # 'openqcm': 'openQCM', # 'Calibration.txt'
+    # new settings for supporting by hardwares
+    analyzers = {
+    'none': {
+        'name': 'none',
+        'opt': '--',
     },
-
-    # myVNA path
-    'vna_path': {
-        'myvna': [
+    'myvna': {
+        'name': 'myvna',
+        'opt': 'myVNA',
+        'activechn_num': 1,
+        'exec_path': [
             r'C:\Program Files (x86)\G8KBB\myVNA\myVNA.exe',
             r'C:\Program Files\G8KBB\myVNA\myVNA.exe',
         ],
-        'vnwa': [
+        'cal_file_path': r'./cal/',
+        'cal_ext': '.myVNA.cal',
+        'py_ver': 32, # int
+        },
+    'vnwa': {
+        'name': 'vnwa',
+        'opt': 'VNWA',
+        'activechn_num': 1,
+        'exec_path': [
             r'C:\VNWA\VNWA.exe',
         ],
-        'openqcm': [
+        'cal_file_path': r'./cal/',
+        'cal_ext': '_Mastercal.cal',
+        },
+    'openqcm': {
+        'name': 'openqcm',
+        'opt': 'openQCM',
+        'activechn_num': 1,
+        'exec_path': [
             '', #path to openQCM python code
         ],
-    },
-
-    # where the calibration files saved (not necessary)
-    'vna_cal_file_path': r'./cal/', 
-
+        'cal_file_path': r'./cal/',
+        'cal_ext': 'Calibration.txt',
+        },
+    }
     # highest harmonic can be shown in the UI. 
     'max_harmonic': 9, # MUST >= 1 (and theoretically <= 99 for now)
     
@@ -1069,7 +1084,7 @@ def get_settings():
     if 'time_str_format' not in settings:
         settings['time_str_format'] = config_default['time_str_format']
     if 'vna_path' not in settings:
-        settings['vna_path'] = config_default['vna_path']
+        settings['analyzers'] = config_default['analyzers']
 
     new_settings, complete = update_dict(file_path, settings)
     if complete:
