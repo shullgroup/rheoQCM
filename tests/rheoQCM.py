@@ -132,7 +132,7 @@ class VNATracker:
         # NOTE: put self.py_sys_check() above vna_path_check() and get_cal_filenames()
         self.vna_path_check() # find the corresponding vna program and save in self.analyzer['vna_path']
         # NOTE: self.vna_path_check() rests 'name' to 'none' if it failed
-        self.get_cal_filenames() # find calibration file(s) and save to self.cal
+        self.get_cal_filenames() # find calibration file(s) and save to self.analyzer['cal']
 
         self.setflg = {} # if vna needs to reset (set with reset selections)
         self.setflg.update(self.__dict__) # get all attributes in a dict
@@ -156,7 +156,6 @@ class VNATracker:
                 ...
             else: # does not fit
                 self.analyzer = config_default['analyzers']['none']
-        ...
         else: # no requirement
             ...
 
@@ -168,10 +167,7 @@ class VNATracker:
         '''
         cal = {'ADC1': '', 'ADC2': ''} # initiate return dict
 
-        if self.analyzer['name'] == 'none':
-            self.cal = cal
-        
-        else:
+        if self.analyzer['name'] != 'none':
             vna_cal_path = os.path.abspath(self.analyzer['cal_file_path'])
             if not UIModules.make_folder(vna_cal_path): # folder exists
                 #UIMOdules.make_folder create a path and return true if the folder does not exist; return False if the folder exists.
@@ -185,12 +181,12 @@ class VNATracker:
                             break
                 logger.info(cal) 
 
-            self.analyzer['cal'] = cal
+        self.analyzer['cal'] = cal
 
 
     def vna_path_check(self,):
         '''
-        find the vna program corresponding to vna_name
+        find the vna program corresponding to name
         if does not exist, set to None
         '''
         if self.analyzer['name'] == 'none':
@@ -304,7 +300,7 @@ class QCMApp(QMainWindow):
         self.data_saver = DataSaver.DataSaver(ver=_version.__version__, settings=self.settings)
 
         self.vna = None # vna class
-        self.vna_name = None # name of vna device
+        self.vna_name = 'none' # name of vna device: set to 'none' be consistent with vnatracker
         self.temp_sensor = None # class for temp sensor
         self.idle = True # if test is running
         self.reading = False # if myVNA/tempsensor is scanning and reading data
@@ -353,7 +349,7 @@ class QCMApp(QMainWindow):
         self.load_settings()
 
 
-    def set_ui_mode():
+    def set_ui_mode(self):
         # hide/show widgets not for analysis/data collection mode
         if self.vna_name == 'none':
             self.hide_widgets(
@@ -1670,10 +1666,10 @@ class QCMApp(QMainWindow):
         loop from config_default.analyzers to find available installed vna programs 
         '''
         analyzer_opts = {}
-        for analyzer in config_default.analyzers.values():
+        for analyzer in config_default['analyzers'].values():
             temp_vna_tracker = VNATracker(analyzer)
-            if temp_vna_tracker.name != 'none':
-                analyzer_opts[temp_vna_tracker.name] = temp_vna_tracker.opt
+            if temp_vna_tracker.analyzer['name'] != 'none':
+                analyzer_opts[temp_vna_tracker.analyzer['name']] = temp_vna_tracker.analyzer['opt']
         if not analyzer_opts:
             analyzer_opts['none'] = '--'
         return analyzer_opts
@@ -5740,7 +5736,7 @@ class QCMApp(QMainWindow):
             curr_data = 'none'
 
         if curr_data == 'none':
-            curr_data = None
+            ...
         
         self.vna_name = curr_data
 
@@ -5775,7 +5771,7 @@ class QCMApp(QMainWindow):
             ...
         elif self.vna_name == 'vnwa':
             ...
-        elif self.vna_name is None:
+        elif self.vna_name == 'none':
             ...
         else:
             ...
@@ -5799,7 +5795,7 @@ class QCMApp(QMainWindow):
         icon13.addPixmap(QPixmap('./analyzers/{}/icon.png'.format(self.vna_name)), QIcon.Normal, QIcon.Off)
         self.ui.actionOpen_VNA.setIcon(icon13)
         self.ui.actionOpen_VNA.setText(_translate("MainWindow", "Open {}".format(self.vna_name)))
-        self.ui.actionOpen_VNA.setToolTip(_translate("MainWindow", "Open {} (The changes of setup will work only after the opened window is closed.)".format(self.vna_name))
+        self.ui.actionOpen_VNA.setToolTip(_translate("MainWindow", "Open {} (The changes of setup will work only after the opened window is closed.)".format(self.vna_name)))
         
         # link program interface to button
 

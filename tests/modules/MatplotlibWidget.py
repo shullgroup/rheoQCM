@@ -1338,7 +1338,7 @@ class MatplotlibWidget(QWidget):
 
     def data_show_all(self):
         for ax in self.ax:
-            if (not get_attr(self, 'pushButton_selectorswitch', None)) and (not self.pushButton_selectorswitch.ischecked()): # keep auto scale off when selector is on
+            if (not getattr(self, 'pushButton_selectorswitch', None)) and (not self.pushButton_selectorswitch.ischecked()): # keep auto scale off when selector is on
                 ax.set_autoscale_on(True) # this reactive autoscale which might be turnned of by zoom/pan
             self.reset_ax_lim(ax)
 

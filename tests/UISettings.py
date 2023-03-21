@@ -31,7 +31,7 @@ config_default = {
     },
 
     # new settings for supporting by hardwares
-    analyzers = {
+    'analyzers': {
     'none': {
         'name': 'none',
         'opt': '--',
@@ -68,7 +68,7 @@ config_default = {
         'cal_file_path': r'./cal/',
         'cal_ext': 'Calibration.txt',
         },
-    }
+    },
     # highest harmonic can be shown in the UI. 
     'max_harmonic': 9, # MUST >= 1 (and theoretically <= 99 for now)
     
@@ -845,7 +845,7 @@ settings_default = {
     # copies of same keys in config_default
     'max_harmonic': config_default['max_harmonic'],
     'time_str_format': config_default['time_str_format'],
-    'vna_path': config_default['vna_path'],
+    'vna_path': config_default['analyzers'],
 
     # add na_path on your computer if it is not in the 
     # default path listed in config_default['vna_path']
