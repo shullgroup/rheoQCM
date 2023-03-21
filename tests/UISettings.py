@@ -1083,7 +1083,7 @@ def get_settings():
         settings['max_harmonic'] = config_default['max_harmonic']
     if 'time_str_format' not in settings:
         settings['time_str_format'] = config_default['time_str_format']
-    if 'vna_path' not in settings:
+    if 'analyzers' not in settings:
         settings['analyzers'] = config_default['analyzers']
 
     new_settings, complete = update_dict(file_path, settings)

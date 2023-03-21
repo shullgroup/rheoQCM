@@ -76,7 +76,7 @@ except Exception as e:
 
 
 print('System: {}'.format(sys.platform))
-print('Python version: /n{}'.format(sys.version))
+print('Python version: \n{}'.format(sys.version))
 
 if UIModules.system_check() is UIModules.OSType.windows: # windows
 
@@ -119,8 +119,10 @@ class VNATracker:
         
         cal, vna_path will be saved in analyzer
         '''
-
-        self.analyzer = config_default['analyzers']['none'] if analyzer != 'none' else analyzer
+        if isinstance(analyzer, str):
+            self.analyzer = settings_default['analyzers'].get(analyzer, settings_default['analyzers']['none'])
+        else:
+            self.analyzer = analyzer
         self.f =None       # current end frequency span in Hz (ndarray([float, float])
         self.steps = None   # current number of steps (int)
         self.chn = None     # current reflection ADC channel (1 or 2)
@@ -241,7 +243,7 @@ class VNATracker:
 
 
     def reset_flag(self):
-        ''' set to vna doesn't neet rest '''
+        ''' set to vna doesn't need reset '''
         self.setflg = {}
 
 
