@@ -65,7 +65,7 @@ import warnings
 warnings.filterwarnings(action='ignore', message='All-NaN axis encountered')
 
 # RuntimeWarning: invalid value encountered in divide    return -np.tan(2*np.pi*dlam_n*(1-1j*np.tan(phi/2))) / (2*np.pi*dlam_n*(1-1j*np.tan(phi/2)))
-warnings.filterwarnings(action='ignore', message='invalid value encountered in divide')
+warnings.filterwarnings(action='ignore', message='invalid value encountered in')
 
 # import temperature modules
 try:
@@ -2316,7 +2316,7 @@ class QCMApp(QMainWindow):
             for key, val in settings.items():
                 self.settings[key] = val
         self.peak_tracker = PeakTracker.PeakTracker(max_harm=self.settings['max_harmonic'])
-        self.vna_tracker = VNATracker(analyzer=config_default['analyzers'][self.vna_name])
+        self.vna_tracker = VNATracker(analyzer=self.settings['analyzers'][self.vna_name])
 
         if not settings: # reset UI
             self.data_saver = DataSaver.DataSaver(ver=_version.__version__, settings=self.settings)
@@ -5780,7 +5780,7 @@ class QCMApp(QMainWindow):
         
 
         # rest self.vna_tracker
-        self.vna_tracker = VNATracker(config_default.analyzers[self.vna_name])
+        self.vna_tracker = VNATracker(self.settings['analyzers'][self.vna_name])
 
         # update vna_channel_opts
 
