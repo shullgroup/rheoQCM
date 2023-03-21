@@ -1103,7 +1103,14 @@ def update_dict(file_path, default_dict):
                 for key, val in user_dict.items():
                     # overwrite keys to config_default
                     if key in default_dict:
-                        default_dict[key] = val
+                        if isinstance(default_dict[key], dict): # we iterate one more sublevel of the settings which should be sufficient.
+                            if isinstance(user_dict[key], dict): 
+                                for k, v in user_dict[key].items(): # subkeys
+                                    default_dict[key][k] = user_dict[key][k]
+                            else:
+                                default_dict[key] = val
+                        else:
+                            default_dict[key] = val
             complete = True
         except:
             complete = False
