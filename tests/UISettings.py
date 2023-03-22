@@ -97,6 +97,7 @@ config_default = {
         'checkBox_settings_temp_sensor',
         'comboBox_tempdevice',
         'comboBox_thrmcpltype',
+        'actionOpen_VNA',
     ],
 
     # enable and disable list

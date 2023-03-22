@@ -814,7 +814,7 @@ class QCMApp(QMainWindow):
         # insert comboBox_settings_settings_analyzer
         self.create_combobox(
             'comboBox_settings_settings_analyzer',
-            self.check_available_vnas(), # only list the available vnas.
+            self.check_available_vnas(), # only list the available vnas. TODO: we may show from self.settings if there are data collected from a certain vna. and lock it from being changed.
             100,
             'Analyzer',
             self.ui.treeWidget_settings_settings_hardware
