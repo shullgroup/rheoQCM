@@ -653,6 +653,7 @@ class MatplotlibWidget(QWidget):
     def data_rectsleector_picker_switch(self, checked):
         if checked:
             logger.info(True) 
+            self.ax[0].set_autoscale_on(False) # turn off auto scale
             # active rectangle selector
             self.rect_selector.set_active(True)
             # connect pick event
@@ -671,7 +672,7 @@ class MatplotlibWidget(QWidget):
             # elif self.toolbar.mode == "ZOOM": # matplotlib < 3.3
             #     self.toolbar.zoom()
         else:
-
+            self.ax[0].set_autoscale_on(True) # turn on auto scale
             # deactive rectangle selector
             self.rect_selector.set_active(False)
             # reset .l['ls<n>']
@@ -1337,7 +1338,8 @@ class MatplotlibWidget(QWidget):
 
     def data_show_all(self):
         for ax in self.ax:
-            ax.set_autoscale_on(True) # this reactive autoscale which might be turnned of by zoom/pan
+            if (not getattr(self, 'pushButton_selectorswitch', None)) and (not self.pushButton_selectorswitch.ischecked()): # keep auto scale off when selector is on
+                ax.set_autoscale_on(True) # this reactive autoscale which might be turnned of by zoom/pan
             self.reset_ax_lim(ax)
 
 

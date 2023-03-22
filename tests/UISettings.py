@@ -30,30 +30,45 @@ config_default = {
         'default_level': logging.ERROR, # default level for logging
     },
 
-    # analyzer options
-    'analyzer_opts':{
-        # 'none': '--',
-        'myvna': 'myVNA', # '.myVNA.cal'
-        # 'openqcm': 'openQCM', # 'Calibration.txt'
+    # new settings for supporting by hardwares
+    'analyzers': {
+    'none': {
+        'name': 'none',
+        'opt': '--',
     },
-
-    # myVNA path
-    'vna_path': {
-        'myvna': [
+    'myvna': {
+        'name': 'myvna',
+        'opt': 'myVNA',
+        'activechn_num': 1,
+        'exec_path': [
             r'C:\Program Files (x86)\G8KBB\myVNA\myVNA.exe',
             r'C:\Program Files\G8KBB\myVNA\myVNA.exe',
         ],
-        'vnwa': [
+        'cal_file_path': r'./cal/',
+        'cal_ext': '.myVNA.cal',
+        'py_ver': 32, # int
+        },
+    'vnwa': {
+        'name': 'vnwa',
+        'opt': 'VNWA',
+        'activechn_num': 1,
+        'exec_path': [
             r'C:\VNWA\VNWA.exe',
         ],
-        'openqcm': [
+        'cal_file_path': r'./cal/',
+        'cal_ext': '_Mastercal.cal',
+        },
+    'openqcm': {
+        'name': 'openqcm',
+        'opt': 'openQCM',
+        'activechn_num': 1,
+        'exec_path': [
             '', #path to openQCM python code
         ],
+        'cal_file_path': r'./cal/',
+        'cal_ext': 'Calibration.txt',
+        },
     },
-
-    # where the calibration files saved (not necessary)
-    'vna_cal_file_path': r'./cal/', 
-
     # highest harmonic can be shown in the UI. 
     'max_harmonic': 9, # MUST >= 1 (and theoretically <= 99 for now)
     
@@ -82,6 +97,7 @@ config_default = {
         'checkBox_settings_temp_sensor',
         'comboBox_tempdevice',
         'comboBox_thrmcpltype',
+        'actionOpen_VNA',
     ],
 
     # enable and disable list
@@ -830,7 +846,7 @@ settings_default = {
     # copies of same keys in config_default
     'max_harmonic': config_default['max_harmonic'],
     'time_str_format': config_default['time_str_format'],
-    'vna_path': config_default['vna_path'],
+    'vna_path': config_default['analyzers'],
 
     # add na_path on your computer if it is not in the 
     # default path listed in config_default['vna_path']
@@ -1068,8 +1084,8 @@ def get_settings():
         settings['max_harmonic'] = config_default['max_harmonic']
     if 'time_str_format' not in settings:
         settings['time_str_format'] = config_default['time_str_format']
-    if 'vna_path' not in settings:
-        settings['vna_path'] = config_default['vna_path']
+    if 'analyzers' not in settings:
+        settings['analyzers'] = config_default['analyzers']
 
     new_settings, complete = update_dict(file_path, settings)
     if complete:
@@ -1088,7 +1104,14 @@ def update_dict(file_path, default_dict):
                 for key, val in user_dict.items():
                     # overwrite keys to config_default
                     if key in default_dict:
-                        default_dict[key] = val
+                        if isinstance(default_dict[key], dict): # we iterate one more sublevel of the settings which should be sufficient.
+                            if isinstance(user_dict[key], dict): 
+                                for k, v in user_dict[key].items(): # subkeys
+                                    default_dict[key][k] = user_dict[key][k]
+                            else:
+                                default_dict[key] = val
+                        else:
+                            default_dict[key] = val
             complete = True
         except:
             complete = False
