@@ -6732,6 +6732,9 @@ class QCMApp(QMainWindow):
         # set window size
         if not self.isMaximized(): # resize window to default if is not maxized
             self.resize(*config_default['window_size'])
+            init_width = config_default['window_size'][0]
+            layout_px = [int(init_width * (x / sum(config_default['layout_ratio']))) for x in config_default['layout_ratio']]
+            self.ui.splitter.setSizes(layout_px)
 
         # set deflault displaying of tab_settings
         self.ui.tabWidget_settings.setCurrentIndex(0)
@@ -7306,7 +7309,6 @@ class QCMApp(QMainWindow):
 
         for idx in indeces:
             if not self.ui.pushButton_settings_control_stop_refit.isChecked():
-                print('break by stop_refit')
                 break # refit was manually stopped
             # initiate data of queue_id
 
