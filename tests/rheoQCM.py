@@ -360,15 +360,18 @@ class QCMApp(QMainWindow):
         else:
             self.show_widgets(
                 'analysis_mode_disable_list'
-            )            
+            )
 
 
     def closeEvent(self, event):
         '''
         TODO: add unsave data check, data collecting check!
         '''
-
-        reply = QMessageBox.question(self, 'Window Close', 'Are you sure you want to close rheoQCM?',
+        if self.data_saver.saveflg == False:
+            data_txt = 'There are changes not saved!\n'
+        else:
+            data_txt = ''
+        reply = QMessageBox.question(self, 'Window Close', data_txt + 'Are you sure you want to close rheoQCM?',
                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
@@ -381,6 +384,7 @@ class QCMApp(QMainWindow):
     def init_ui(self):
         ###### initiate UI #################################
 
+        self.ui.actionExit.triggered.connect(self.close)
         #region main UI
         # link tabWidget_settings and stackedWidget_spectra and stackedWidget_data
         self.ui.tabWidget_settings.currentChanged.connect(self.link_tab_page)
@@ -6810,6 +6814,9 @@ class QCMApp(QMainWindow):
             'comboBox_base_frequency', # load this first to create self.settings['freq_range'] & self.settings['freq_span']
             'comboBox_range', 
         ])
+
+        # initiate loading the analyzer class
+        self.load_analyzer()
 
         # update statusbar
         self.statusbar_f0bw_update()
