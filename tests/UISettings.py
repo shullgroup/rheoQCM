@@ -173,6 +173,7 @@ config_default = {
 
     # list for hide widges for current version
     'version_hide_list':[
+        'pushButton_settings_control_stop_refit', # button only show when refitting is active
         'pushButton_settings_la', 
         'pushButton_settings_ra', 
         'pushButton_data_la', 

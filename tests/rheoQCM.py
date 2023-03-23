@@ -520,6 +520,9 @@ class QCMApp(QMainWindow):
 
         # set RUN/STOP button
         self.ui.pushButton_runstop.toggled.connect(self.on_clicked_pushButton_runstop)
+        # set button for stopping refit
+        self.ui.pushButton_settings_control_stop_refit.setChecked(False)
+        self.ui.pushButton_settings_control_stop_refit.toggled.connect(self.on_click_pushButton_settings_control_stop_refit)
 
         # set arrows (la and ra) to change pages
         self.ui.pushButton_settings_la.clicked.connect(
@@ -1772,8 +1775,8 @@ class QCMApp(QMainWindow):
 
         self.counter = 0 # reset counter
 
-        logger.info('data saver samp') 
-        logger.info(self.data_saver.samp) 
+        # logger.info('data saver samp') 
+        # logger.info(self.data_saver.samp) 
 
         # enable features
         self.enable_widgets(
@@ -1782,6 +1785,15 @@ class QCMApp(QMainWindow):
 
         #
         self.ui.pushButton_runstop.setText('START RECORD')
+
+
+    def on_click_pushButton_settings_control_stop_refit(self, checked):
+        if checked:
+            print('checked')
+            self.ui.pushButton_settings_control_stop_refit.setVisible(True)
+        else:
+            print('unchecked')
+            self.ui.pushButton_settings_control_stop_refit.setVisible(False)
 
 
     # @pyqtSlot()
@@ -7289,7 +7301,13 @@ class QCMApp(QMainWindow):
         for harm in self.all_harm_list(as_str=True):
             getattr(self.ui, 'mpl_sp' + harm).clr_lines(l_list=['strk'])
 
+        # show pushButton_settings_control_stop_refit for manually stop the fitting. checked ture will set the button visable
+        self.ui.pushButton_settings_control_stop_refit.setChecked(True)
+
         for idx in indeces:
+            if not self.ui.pushButton_settings_control_stop_refit.isChecked():
+                print('break by stop_refit')
+                break # refit was manually stopped
             # initiate data of queue_id
 
             queue_id = self.data_saver.get_queue_id(chn_name)[idx]
