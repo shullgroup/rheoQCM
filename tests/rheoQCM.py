@@ -134,7 +134,8 @@ class VNATracker:
         # NOTE: put self.py_sys_check() above vna_path_check() and get_cal_filenames()
         self.vna_path_check() # find the corresponding vna program and save in self.analyzer['vna_path']
         # NOTE: self.vna_path_check() rests 'name' to 'none' if it failed
-        self.get_cal_filenames() # find calibration file(s) and save to self.analyzer['cal']
+        # self.cal
+        self.get_cal_filenames() # find calibration file(s) and save to self.cal
 
         self.setflg = {} # if vna needs to reset (set with reset selections)
         self.setflg.update(self.__dict__) # get all attributes in a dict
@@ -183,7 +184,7 @@ class VNATracker:
                             break
                 logger.info(cal) 
 
-        self.analyzer['cal'] = cal
+        self.cal = cal
 
 
     def vna_path_check(self,):
@@ -781,7 +782,7 @@ class QCMApp(QMainWindow):
         curr_chn = None if self.vna is None else self.vna._chn
         logger.info('curr_chn: %s\n', curr_chn) 
         for i in [1, 2]:
-            if not self.vna_tracker.analyzer['cal']['ADC'+str(i)] and (curr_chn != i): # no calibration file for ADC1/2
+            if not self.vna_tracker.cal['ADC'+str(i)] and (curr_chn != i): # no calibration file for ADC1/2
                 # delete ADC1/2 from both lists
                 if self.ui.comboBox_samp_channel.findData(i) != -1:
                     self.ui.comboBox_samp_channel.removeItem(self.ui.comboBox_samp_channel.findData(i))
@@ -1789,10 +1790,8 @@ class QCMApp(QMainWindow):
 
     def on_click_pushButton_settings_control_stop_refit(self, checked):
         if checked:
-            print('checked')
             self.ui.pushButton_settings_control_stop_refit.setVisible(True)
         else:
-            print('unchecked')
             self.ui.pushButton_settings_control_stop_refit.setVisible(False)
 
 
