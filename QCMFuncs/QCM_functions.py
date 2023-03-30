@@ -2527,6 +2527,35 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
     return g_br, g_tot
 
 
+def simon_data(w):
+    #  glassy and rubbery modulus for simon data
+    # J. Applied Polymer Science 76, 495–508 (2000).
+    # glassy and rubbery moduli
+    Gg = 8.58e8
+    Gr = 4.63e6
+    tau = np.logspace(-7, 4, 23)
+    tau = np.append(tau, 1e5)
+    g = [0.0215, 0.0215, 0.0215, 0.0215, 0.0267, 0.0267, 0.0375, 0.0405, 0.0630,
+         0.0630, 0.1054, 0.1160, 0.1160, 0.1653, 0.0561, 0.0561, 0.0199, 0.0119,
+         0.0055, 0.0028, 0.0008, 0.0002, 0.0003, 0.0003]
+    g = np.array(g)
+    g0 = (Gg-Gr)*g
+    
+    # everything added so far is a maxwell element
+    maxwell = np.arange(len(tau), dtype=int)
+    beta = np.ones(len(tau))
+    
+    # add spring (springpot with beta= 0) to add relaxed modulus
+    tau = np.append(tau, 1)
+    beta = np.append(beta, 0)
+    g0 = np.append(g0, Gr)
+    
+    # all elements are in parallel with one another
+    sp_type = np.ones(len(tau), dtype=int)
+    
+    return springpot(w, g0, tau, beta,sp_type, maxwell=maxwell)
+
+
 def vft(T, Tref, B, Tinf):
 
     """
