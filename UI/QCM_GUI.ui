@@ -27,7 +27,10 @@
    <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout_6">
+   <layout class="QHBoxLayout" name="horizontalLayout_33">
+    <property name="spacing">
+     <number>4</number>
+    </property>
     <property name="leftMargin">
      <number>0</number>
     </property>
@@ -40,13 +43,10 @@
     <property name="bottomMargin">
      <number>0</number>
     </property>
-    <property name="spacing">
-     <number>4</number>
-    </property>
-    <item row="0" column="0">
+    <item>
      <widget class="QSplitter" name="splitter">
       <property name="sizePolicy">
-       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
@@ -59,6 +59,9 @@
       </property>
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="opaqueResize">
+       <bool>true</bool>
       </property>
       <property name="handleWidth">
        <number>2</number>
@@ -78,7 +81,7 @@
        </property>
        <property name="maximumSize">
         <size>
-         <width>300</width>
+         <width>16777215</width>
          <height>16777215</height>
         </size>
        </property>
@@ -114,6 +117,28 @@
           </property>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_9">
+            <item>
+             <widget class="QPushButton" name="pushButton_settings_control_stop_refit">
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">#pushButton_settings_control_stop_refit
+{
+background-color: red;
+}</string>
+              </property>
+              <property name="text">
+               <string>STOP</string>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
             <item>
              <widget class="QPushButton" name="pushButton_runstop">
               <property name="sizePolicy">
@@ -1475,7 +1500,7 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>286</width>
+                   <width>377</width>
                    <height>225</height>
                   </rect>
                  </property>
@@ -1618,8 +1643,8 @@ background-color: red;
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>286</width>
-                   <height>225</height>
+                   <width>83</width>
+                   <height>71</height>
                   </rect>
                  </property>
                  <attribute name="label">
@@ -5466,7 +5491,7 @@ border: 1px solid blue;
       <widget class="QGroupBox" name="groupBox_data">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-         <horstretch>1</horstretch>
+         <horstretch>10</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
@@ -5762,7 +5787,7 @@ border: 1px solid blue;
                  <number>0</number>
                 </property>
                 <item>
-                 <layout class="QVBoxLayout" name="verticalLayout_5">
+                 <layout class="QVBoxLayout" name="verticalLayout_5" stretch="1,2">
                   <property name="spacing">
                    <number>0</number>
                   </property>

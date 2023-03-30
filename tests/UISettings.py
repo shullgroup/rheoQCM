@@ -19,7 +19,7 @@ config_default = {
 
     # window default size
     'window_size': [1200, 800], # px
-
+    'layout_ratio': [1, 1, 3], # the ratio of settings, spectra, and data layouts
     # UI will looking for the file to load the default setup
     'default_settings_file_name': 'user_settings.json',
     'default_config_file_name': 'config_default.json',
@@ -173,6 +173,7 @@ config_default = {
 
     # list for hide widges for current version
     'version_hide_list':[
+        'pushButton_settings_control_stop_refit', # button only show when refitting is active
         'pushButton_settings_la', 
         'pushButton_settings_ra', 
         'pushButton_data_la', 

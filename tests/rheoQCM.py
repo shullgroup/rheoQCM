@@ -134,7 +134,8 @@ class VNATracker:
         # NOTE: put self.py_sys_check() above vna_path_check() and get_cal_filenames()
         self.vna_path_check() # find the corresponding vna program and save in self.analyzer['vna_path']
         # NOTE: self.vna_path_check() rests 'name' to 'none' if it failed
-        self.get_cal_filenames() # find calibration file(s) and save to self.analyzer['cal']
+        # self.cal
+        self.get_cal_filenames() # find calibration file(s) and save to self.cal
 
         self.setflg = {} # if vna needs to reset (set with reset selections)
         self.setflg.update(self.__dict__) # get all attributes in a dict
@@ -183,7 +184,7 @@ class VNATracker:
                             break
                 logger.info(cal) 
 
-        self.analyzer['cal'] = cal
+        self.cal = cal
 
 
     def vna_path_check(self,):
@@ -360,15 +361,18 @@ class QCMApp(QMainWindow):
         else:
             self.show_widgets(
                 'analysis_mode_disable_list'
-            )            
+            )
 
 
     def closeEvent(self, event):
         '''
         TODO: add unsave data check, data collecting check!
         '''
-
-        reply = QMessageBox.question(self, 'Window Close', 'Are you sure you want to close rheoQCM?',
+        if self.data_saver.saveflg == False:
+            data_txt = 'There are changes not saved!\n'
+        else:
+            data_txt = ''
+        reply = QMessageBox.question(self, 'Window Close', data_txt + 'Are you sure you want to close rheoQCM?',
                 QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:
@@ -381,6 +385,7 @@ class QCMApp(QMainWindow):
     def init_ui(self):
         ###### initiate UI #################################
 
+        self.ui.actionExit.triggered.connect(self.close)
         #region main UI
         # link tabWidget_settings and stackedWidget_spectra and stackedWidget_data
         self.ui.tabWidget_settings.currentChanged.connect(self.link_tab_page)
@@ -516,6 +521,9 @@ class QCMApp(QMainWindow):
 
         # set RUN/STOP button
         self.ui.pushButton_runstop.toggled.connect(self.on_clicked_pushButton_runstop)
+        # set button for stopping refit
+        self.ui.pushButton_settings_control_stop_refit.setChecked(False)
+        self.ui.pushButton_settings_control_stop_refit.toggled.connect(self.on_click_pushButton_settings_control_stop_refit)
 
         # set arrows (la and ra) to change pages
         self.ui.pushButton_settings_la.clicked.connect(
@@ -774,7 +782,7 @@ class QCMApp(QMainWindow):
         curr_chn = None if self.vna is None else self.vna._chn
         logger.info('curr_chn: %s\n', curr_chn) 
         for i in [1, 2]:
-            if not self.vna_tracker.analyzer['cal']['ADC'+str(i)] and (curr_chn != i): # no calibration file for ADC1/2
+            if not self.vna_tracker.cal['ADC'+str(i)] and (curr_chn != i): # no calibration file for ADC1/2
                 # delete ADC1/2 from both lists
                 if self.ui.comboBox_samp_channel.findData(i) != -1:
                     self.ui.comboBox_samp_channel.removeItem(self.ui.comboBox_samp_channel.findData(i))
@@ -1768,8 +1776,8 @@ class QCMApp(QMainWindow):
 
         self.counter = 0 # reset counter
 
-        logger.info('data saver samp') 
-        logger.info(self.data_saver.samp) 
+        # logger.info('data saver samp') 
+        # logger.info(self.data_saver.samp) 
 
         # enable features
         self.enable_widgets(
@@ -1778,6 +1786,13 @@ class QCMApp(QMainWindow):
 
         #
         self.ui.pushButton_runstop.setText('START RECORD')
+
+
+    def on_click_pushButton_settings_control_stop_refit(self, checked):
+        if checked:
+            self.ui.pushButton_settings_control_stop_refit.setVisible(True)
+        else:
+            self.ui.pushButton_settings_control_stop_refit.setVisible(False)
 
 
     # @pyqtSlot()
@@ -6716,6 +6731,9 @@ class QCMApp(QMainWindow):
         # set window size
         if not self.isMaximized(): # resize window to default if is not maxized
             self.resize(*config_default['window_size'])
+            init_width = config_default['window_size'][0]
+            layout_px = [int(init_width * (x / sum(config_default['layout_ratio']))) for x in config_default['layout_ratio']]
+            self.ui.splitter.setSizes(layout_px)
 
         # set deflault displaying of tab_settings
         self.ui.tabWidget_settings.setCurrentIndex(0)
@@ -6810,6 +6828,9 @@ class QCMApp(QMainWindow):
             'comboBox_base_frequency', # load this first to create self.settings['freq_range'] & self.settings['freq_span']
             'comboBox_range', 
         ])
+
+        # initiate loading the analyzer class
+        self.load_analyzer()
 
         # update statusbar
         self.statusbar_f0bw_update()
@@ -7282,7 +7303,12 @@ class QCMApp(QMainWindow):
         for harm in self.all_harm_list(as_str=True):
             getattr(self.ui, 'mpl_sp' + harm).clr_lines(l_list=['strk'])
 
+        # show pushButton_settings_control_stop_refit for manually stop the fitting. checked ture will set the button visable
+        self.ui.pushButton_settings_control_stop_refit.setChecked(True)
+
         for idx in indeces:
+            if not self.ui.pushButton_settings_control_stop_refit.isChecked():
+                break # refit was manually stopped
             # initiate data of queue_id
 
             queue_id = self.data_saver.get_queue_id(chn_name)[idx]
