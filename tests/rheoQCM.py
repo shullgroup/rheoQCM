@@ -293,7 +293,7 @@ class QCMApp(QMainWindow):
         self.settings = settings_default.copy() # import default settings. It will be initalized later
 
         self.peak_tracker = PeakTracker.PeakTracker(max_harm=self.settings['max_harmonic'])
-        self.vna_tracker = VNATracker(analyzer=self.settings['comboBox_settings_settings_analyzer']) # use default analyzer to initiate the class. it will be rechecked later
+        self.vna_tracker = VNATracker() # analyzer='none' to initiate the class. it will be rechecked later
         self.qcm = QCM.QCM()
 
         # define instrument state variables
@@ -302,7 +302,7 @@ class QCMApp(QMainWindow):
         #### initialize the attributes for data saving
         self.data_saver = DataSaver.DataSaver(ver=_version.__version__, settings=self.settings)
 
-        self.vna = None # vna class
+        self.vna = None # vna class to comunicate with analyzer
         self.vna_name = 'none' # name of vna device: set to 'none' be consistent with vnatracker
         self.temp_sensor = None # class for temp sensor
         self.idle = True # if test is running
@@ -347,9 +347,9 @@ class QCMApp(QMainWindow):
             'version_disable_list'
         )
 
-        self.set_ui_mode()
-
         self.load_settings()
+
+        self.set_ui_mode()
 
 
     def set_ui_mode(self):
@@ -522,6 +522,7 @@ class QCMApp(QMainWindow):
         # set RUN/STOP button
         self.ui.pushButton_runstop.toggled.connect(self.on_clicked_pushButton_runstop)
         # set button for stopping refit
+        self.ui.pushButton_settings_control_stop_refit.setVisible(False) # it only show when refit is active
         self.ui.pushButton_settings_control_stop_refit.setChecked(False)
         self.ui.pushButton_settings_control_stop_refit.toggled.connect(self.on_click_pushButton_settings_control_stop_refit)
 
@@ -777,17 +778,6 @@ class QCMApp(QMainWindow):
             self.ui.treeWidget_settings_settings_hardware
         )
 
-        ## check comboBox_samp_channel & comboBox_ref_channel list by calibration file
-        # get current chn from vna
-        curr_chn = None if self.vna is None else self.vna._chn
-        logger.info('curr_chn: %s\n', curr_chn) 
-        for i in [1, 2]:
-            if not self.vna_tracker.cal['ADC'+str(i)] and (curr_chn != i): # no calibration file for ADC1/2
-                # delete ADC1/2 from both lists
-                if self.ui.comboBox_samp_channel.findData(i) != -1:
-                    self.ui.comboBox_samp_channel.removeItem(self.ui.comboBox_samp_channel.findData(i))
-                if self.ui.comboBox_ref_channel.findData(i) != -1:
-                    self.ui.comboBox_ref_channel.removeItem(self.ui.comboBox_ref_channel.findData(i))
 
         # connect ref_channel
         # self.ui.comboBox_ref_channel.currentIndexChanged.connect() #TODO add function checking if sample and ref have the same channel
@@ -1701,7 +1691,7 @@ class QCMApp(QMainWindow):
             harm_list = self.get_all_checked_harms()
             if not harm_list:
                 self.ui.pushButton_runstop.setChecked(False)
-                print('No harmonic is checked for recording!')
+                logger.warning('No harmonic is checked for recording!')
                 # TODO update statusbar
                 return
             # check filename if avaialbe
@@ -5762,6 +5752,10 @@ class QCMApp(QMainWindow):
         '''
         load vna modules to self.vna by self.vna_name
         '''
+
+        # rest self.vna_tracker
+        self.vna_tracker = VNATracker(self.settings['analyzers'][self.vna_name])
+
         if self.vna_name == 'myvna': 
             # initialize AccessMyVNA
             #TODO add more code to disable settings_control tab and widges in settings_settings tab
@@ -5794,11 +5788,25 @@ class QCMApp(QMainWindow):
             ...
         
 
-        # rest self.vna_tracker
-        self.vna_tracker = VNATracker(self.settings['analyzers'][self.vna_name])
-
         # update vna_channel_opts
-
+        ## check comboBox_samp_channel & comboBox_ref_channel list by calibration file
+        # get current chn from vna
+        curr_chn = None if self.vna is None else self.vna._chn
+        logger.info('curr_chn: %s\n', curr_chn) 
+        for i in [1, 2]:
+            if not self.vna_tracker.cal['ADC'+str(i)] and (curr_chn != i): # no calibration file for ADC1/2
+                # NOTE: we have two choises: disable/enable or remove
+                ## disable items
+                self.ui.comboBox_samp_channel.model().item(self.ui.comboBox_samp_channel.findData(i)).setEnabled(False)
+                self.ui.comboBox_ref_channel.model().item(self.ui.comboBox_ref_channel.findData(i)).setEnabled(False)
+                ## remove ADC1/2 from both lists
+                # if self.ui.comboBox_samp_channel.findData(i) != -1:
+                #     self.ui.comboBox_samp_channel.removeItem(self.ui.comboBox_samp_channel.findData(i))
+                # if self.ui.comboBox_ref_channel.findData(i) != -1:
+                #     self.ui.comboBox_ref_channel.removeItem(self.ui.comboBox_ref_channel.findData(i))
+            else:
+                self.ui.comboBox_samp_channel.model().item(self.ui.comboBox_samp_channel.findData(i)).setEnabled(True)
+                self.ui.comboBox_ref_channel.model().item(self.ui.comboBox_ref_channel.findData(i)).setEnabled(True)
         
         # load tempmodules
 
@@ -6489,7 +6497,7 @@ class QCMApp(QMainWindow):
 
     def check_checked_activechn(self):
 
-        if config_default['activechn_num'] == 1:
+        if self.vna_tracker.analyzer['activechn_num'] == 1:
             sender_name = self.sender().objectName()
             logger.info(sender_name) 
 
