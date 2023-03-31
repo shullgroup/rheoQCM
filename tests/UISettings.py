@@ -721,7 +721,7 @@ config_default = {
 
     'tempdevs_opts': {}, # this key will be updated while running and for the updating of 'comboBox_tempdevice'
 
-    'temp_class_opts_list': [], # this key will be updated while running and for the updating of 'comboBox_tempmodule'
+    'temp_class_opts': [], # this key will be updated while running and for the updating of 'comboBox_tempmodule'
 
     ######## params for PekTracker module #########
     # minium distance between the peakes to be found in Hz

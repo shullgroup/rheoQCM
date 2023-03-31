@@ -36,6 +36,7 @@ def available_devices(devices_dict):
             devices.remove(device)
     return devices            
 
+
 def dict_available_devs(devices_dict):
     '''
     return a dict of avaiable devices for UI
