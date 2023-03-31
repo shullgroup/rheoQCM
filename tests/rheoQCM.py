@@ -5785,6 +5785,8 @@ class QCMApp(QMainWindow):
                 self.enable_combobox_items(True, self.ui.comboBox_samp_channel, itemdatas=[i])
                 self.enable_combobox_items(True, self.ui.comboBox_ref_channel, itemdatas=[i])
 
+        # update temperature module and temperature devices
+        self.load_tempmodules_devices()
 
         # set ui mode
         self.set_ui_mode() # hide/show
@@ -5796,7 +5798,7 @@ class QCMApp(QMainWindow):
         self.ui.actionOpen_VNA.setIcon(icon13)
         self.ui.actionOpen_VNA.setText(_translate("MainWindow", "Open {}".format(self.vna_name)))
         self.ui.actionOpen_VNA.setToolTip(_translate("MainWindow", "Open {} (The changes of setup will work only after the opened window is closed.)".format(self.vna_name)))
-        
+
         # link program interface to button
 
 
@@ -5821,23 +5823,22 @@ class QCMApp(QMainWindow):
                 config_default['temp_class_opts'] = TempModules.class_list # when TempModules is loaded
             except:
                 config_default['temp_class_opts'] = {} # no temp module is loaded
-            # self.ui.comboBox_tempmodule.
-
+            # update comboBoxes
+            self.build_comboBox(self.ui.comBox_tempmodule, config_default['temp_class_opts'])
+            
             try:
                 config_default['tempdevs_opts'] = TempDevices.dict_available_devs(config_default['tempdevices_dict'])
             except:
                 config_default['tempdevs_opts'] = {}
-
             # update comboBoxes
+            self.build_comboBox(self.ui.comboBox_tempdevice, config_default['tempdevs_opts'])
 
+            if config_default['temp_class_opts'] and config_default['tempdevs_opts']: # temp related modules and devices are successfully loaded
+                self.ensable_widgets(
+                    'temp_device_setting_disable_list',
+                    'temp_settings_enable_disable_list',
+                )
         else:
-            self.disable_widgets(
-                'temp_device_setting_disable_list',
-                'temp_settings_enable_disable_list',
-            )
-
-        if not self.settings['comboBox_tempdevice']: # vna or tempdevice are not availabel
-            # set temp related widgets unavailable
             self.disable_widgets(
                 'temp_device_setting_disable_list',
                 'temp_settings_enable_disable_list',
