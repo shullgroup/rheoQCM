@@ -586,8 +586,6 @@ config_default = {
 
     'mechanics_modeswitch': 0, 
 
-    'activechn_num': 1,
-
 
     # 'qcm_layer_unknown_source_opts': {
     #     'none': '--',
@@ -610,7 +608,7 @@ config_default = {
     #     },
     # },
 
-    # steps ofr span control slider
+    # steps for span control slider
     'span_ctrl_steps': [1, 2, 5, 10, 20, 50, 100],
 
 
@@ -723,7 +721,7 @@ config_default = {
 
     'tempdevs_opts': {}, # this key will be updated while running and for the updating of 'comboBox_tempdevice'
 
-    'temp_class_opts_list': [], # this key will be updated while running and for the updating of 'comboBox_tempmodule'
+    'temp_class_opts': [], # this key will be updated while running and for the updating of 'comboBox_tempmodule'
 
     ######## params for PekTracker module #########
     # minium distance between the peakes to be found in Hz
@@ -843,11 +841,6 @@ config_default = {
 
 settings_default = {
     #### default settings control ####
-
-    # copies of same keys in config_default
-    'max_harmonic': config_default['max_harmonic'],
-    'time_str_format': config_default['time_str_format'],
-    'vna_path': config_default['analyzers'],
 
     # add na_path on your computer if it is not in the 
     # default path listed in config_default['vna_path']
@@ -1080,7 +1073,7 @@ def get_settings():
     logger.info('user settings file_path %s', file_path)
     # print(file_path)
 
-    # copy some data related sets from settigs_init to settings_default if not exist
+    # copy some data related sets from settigs_init to settings_default if not exist to adopt local setup
     if 'max_harmonic' not in settings:
         settings['max_harmonic'] = config_default['max_harmonic']
     if 'time_str_format' not in settings:

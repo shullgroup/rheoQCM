@@ -67,12 +67,6 @@ warnings.filterwarnings(action='ignore', message='All-NaN axis encountered')
 # RuntimeWarning: invalid value encountered in divide    return -np.tan(2*np.pi*dlam_n*(1-1j*np.tan(phi/2))) / (2*np.pi*dlam_n*(1-1j*np.tan(phi/2)))
 warnings.filterwarnings(action='ignore', message='invalid value encountered in')
 
-# import temperature modules
-try:
-    from modules import TempDevices, TempModules
-except Exception as e:
-    logger.warning('Failed to import TempDevices and/or TempModules.\nTemperature functions of the UI will not avaiable!')
-    logger.exception('Failed to import TempDevices and/or TempModules.')
 
 
 print('System: {}'.format(sys.platform))
@@ -293,7 +287,7 @@ class QCMApp(QMainWindow):
         self.settings = settings_default.copy() # import default settings. It will be initalized later
 
         self.peak_tracker = PeakTracker.PeakTracker(max_harm=self.settings['max_harmonic'])
-        self.vna_tracker = VNATracker(analyzer=self.settings['comboBox_settings_settings_analyzer']) # use default analyzer to initiate the class. it will be rechecked later
+        self.vna_tracker = VNATracker() # analyzer='none' to initiate the class. it will be rechecked later
         self.qcm = QCM.QCM()
 
         # define instrument state variables
@@ -302,7 +296,7 @@ class QCMApp(QMainWindow):
         #### initialize the attributes for data saving
         self.data_saver = DataSaver.DataSaver(ver=_version.__version__, settings=self.settings)
 
-        self.vna = None # vna class
+        self.vna = None # vna class to comunicate with analyzer
         self.vna_name = 'none' # name of vna device: set to 'none' be consistent with vnatracker
         self.temp_sensor = None # class for temp sensor
         self.idle = True # if test is running
@@ -347,9 +341,9 @@ class QCMApp(QMainWindow):
             'version_disable_list'
         )
 
-        self.set_ui_mode()
-
         self.load_settings()
+
+        self.set_ui_mode()
 
 
     def set_ui_mode(self):
@@ -522,6 +516,7 @@ class QCMApp(QMainWindow):
         # set RUN/STOP button
         self.ui.pushButton_runstop.toggled.connect(self.on_clicked_pushButton_runstop)
         # set button for stopping refit
+        self.ui.pushButton_settings_control_stop_refit.setVisible(False) # it only show when refit is active
         self.ui.pushButton_settings_control_stop_refit.setChecked(False)
         self.ui.pushButton_settings_control_stop_refit.toggled.connect(self.on_click_pushButton_settings_control_stop_refit)
 
@@ -777,17 +772,6 @@ class QCMApp(QMainWindow):
             self.ui.treeWidget_settings_settings_hardware
         )
 
-        ## check comboBox_samp_channel & comboBox_ref_channel list by calibration file
-        # get current chn from vna
-        curr_chn = None if self.vna is None else self.vna._chn
-        logger.info('curr_chn: %s\n', curr_chn) 
-        for i in [1, 2]:
-            if not self.vna_tracker.cal['ADC'+str(i)] and (curr_chn != i): # no calibration file for ADC1/2
-                # delete ADC1/2 from both lists
-                if self.ui.comboBox_samp_channel.findData(i) != -1:
-                    self.ui.comboBox_samp_channel.removeItem(self.ui.comboBox_samp_channel.findData(i))
-                if self.ui.comboBox_ref_channel.findData(i) != -1:
-                    self.ui.comboBox_ref_channel.removeItem(self.ui.comboBox_ref_channel.findData(i))
 
         # connect ref_channel
         # self.ui.comboBox_ref_channel.currentIndexChanged.connect() #TODO add function checking if sample and ref have the same channel
@@ -833,43 +817,30 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_settings_analyzer.currentIndexChanged.connect(self.set_vna_name)
         self.ui.comboBox_settings_settings_analyzer.currentIndexChanged.connect(self.load_analyzer)
 
+        ################################ start
         # add comBox_tempmodule to treeWidget_settings_settings_hardware
-        try:
-            config_default['temp_class_opts_list'] = TempModules.class_list # when TempModules is loaded
-        except:
-            config_default['temp_class_opts_list'] = None # no temp module is loaded
         self.create_combobox(
             'comboBox_tempmodule',
             # UIModules.list_modules(TempModules),
-            config_default['temp_class_opts_list'],
+            config_default['temp_class_opts'],
             100,
             'Module',
             self.ui.treeWidget_settings_settings_hardware,
-        )
+        ) # it is empty after initiate now
         self.settings['comboBox_tempmodule'] = self.ui.comboBox_tempmodule.itemData(self.ui.comboBox_tempmodule.currentIndex())
         self.ui.comboBox_tempmodule.activated.connect(self.update_widget)
 
         # add comboBox_tempdevice to treeWidget_settings_settings_hardware
-        if self.vna and (self.system is UIModules.OSType.windows):
-            config_default['tempdevs_opts'] = TempDevices.dict_available_devs(config_default['tempdevices_dict'])
-            self.create_combobox(
-                'comboBox_tempdevice',
-                config_default['tempdevs_opts'],
-                100,
-                'Device',
-                self.ui.treeWidget_settings_settings_hardware,
-            )
-            self.settings['comboBox_tempdevice'] = self.ui.comboBox_tempdevice.itemData(self.ui.comboBox_tempdevice.currentIndex())
-            self.ui.comboBox_tempdevice.currentIndexChanged.connect(self.update_tempdevice)
-        else: # vna is not available
-            self.create_combobox(
-                'comboBox_tempdevice',
-                [],  # an empty list
-                100,
-                'Device',
-                self.ui.treeWidget_settings_settings_hardware,
-            )
-            self.settings['comboBox_tempdevice'] = None # set to None
+        self.create_combobox(
+            'comboBox_tempdevice',
+            config_default['tempdevs_opts'],
+            100,
+            'Device',
+            self.ui.treeWidget_settings_settings_hardware,
+        )
+        self.settings['comboBox_tempdevice'] = self.ui.comboBox_tempdevice.itemData(self.ui.comboBox_tempdevice.currentIndex())
+        self.ui.comboBox_tempdevice.currentIndexChanged.connect(self.update_tempdevice)
+
 
         # insert thrmcpl type
         self.create_combobox(
@@ -879,14 +850,7 @@ class QCMApp(QMainWindow):
             'Thrmcpl Type',
             self.ui.treeWidget_settings_settings_hardware
         )
-
-        if not self.settings['comboBox_tempdevice']: # vna or tempdevice are not availabel
-            # set temp related widgets unavailable
-            self.disable_widgets(
-                'temp_device_setting_disable_list',
-                'temp_settings_enable_disable_list',
-            )
-
+        #################################### end
 
         # insert time_unit
         self.create_combobox(
@@ -1701,7 +1665,7 @@ class QCMApp(QMainWindow):
             harm_list = self.get_all_checked_harms()
             if not harm_list:
                 self.ui.pushButton_runstop.setChecked(False)
-                print('No harmonic is checked for recording!')
+                logger.warning('No harmonic is checked for recording!')
                 # TODO update statusbar
                 return
             # check filename if avaialbe
@@ -5762,6 +5726,10 @@ class QCMApp(QMainWindow):
         '''
         load vna modules to self.vna by self.vna_name
         '''
+
+        # rest self.vna_tracker
+        self.vna_tracker = VNATracker(self.settings['analyzers'][self.vna_name])
+
         if self.vna_name == 'myvna': 
             # initialize AccessMyVNA
             #TODO add more code to disable settings_control tab and widges in settings_settings tab
@@ -5794,14 +5762,31 @@ class QCMApp(QMainWindow):
             ...
         
 
-        # rest self.vna_tracker
-        self.vna_tracker = VNATracker(self.settings['analyzers'][self.vna_name])
-
         # update vna_channel_opts
 
-        
-        # load tempmodules
 
+        ## check comboBox_samp_channel & comboBox_ref_channel list by calibration file
+        # get current chn from vna
+        curr_chn = None if self.vna is None else self.vna._chn
+        logger.info('curr_chn: %s\n', curr_chn) 
+        for i in [1, 2]:
+            if not self.vna_tracker.cal['ADC'+str(i)] and (curr_chn != i): # no calibration file for ADC1/2
+                # NOTE: we have two choises: disable/enable or remove
+                ## disable items
+                self.enable_combobox_items(False, self.ui.comboBox_samp_channel, itemdatas=[i])
+                self.enable_combobox_items(False, self.ui.comboBox_ref_channel, itemdatas=[i])
+
+                ## remove ADC1/2 from both lists
+                # if self.ui.comboBox_samp_channel.findData(i) != -1:
+                #     self.ui.comboBox_samp_channel.removeItem(self.ui.comboBox_samp_channel.findData(i))
+                # if self.ui.comboBox_ref_channel.findData(i) != -1:
+                #     self.ui.comboBox_ref_channel.removeItem(self.ui.comboBox_ref_channel.findData(i))
+            else:
+                self.enable_combobox_items(True, self.ui.comboBox_samp_channel, itemdatas=[i])
+                self.enable_combobox_items(True, self.ui.comboBox_ref_channel, itemdatas=[i])
+
+        # update temperature module and temperature devices
+        self.load_tempmodules_devices()
 
         # set ui mode
         self.set_ui_mode() # hide/show
@@ -5813,77 +5798,121 @@ class QCMApp(QMainWindow):
         self.ui.actionOpen_VNA.setIcon(icon13)
         self.ui.actionOpen_VNA.setText(_translate("MainWindow", "Open {}".format(self.vna_name)))
         self.ui.actionOpen_VNA.setToolTip(_translate("MainWindow", "Open {} (The changes of setup will work only after the opened window is closed.)".format(self.vna_name)))
-        
+
         # link program interface to button
+
+
+    def load_tempmodules_devices(self):
+        # load tempmodules
+        if self.vna_name != 'none':
+            # import temperature modules
+            try:
+                from modules import TempDevices, TempModules
+            except Exception as e:
+                logger.warning('Failed to import TempDevices and/or TempModules.\nTemperature functions of the UI will not avaiable!')
+                logger.exception('Failed to import TempDevices and/or TempModules.')
+
+                self.disable_widgets(
+                    'temp_device_setting_disable_list',
+                    'temp_settings_enable_disable_list',
+                )
+            
+            # temp clas list
+            # add comBox_tempmodule to treeWidget_settings_settings_hardware
+            try:
+                config_default['temp_class_opts'] = TempModules.class_list # when TempModules is loaded
+            except:
+                config_default['temp_class_opts'] = {} # no temp module is loaded
+            # update comboBoxes
+            self.build_comboBox(self.ui.comBox_tempmodule, config_default['temp_class_opts'])
+            
+            try:
+                config_default['tempdevs_opts'] = TempDevices.dict_available_devs(config_default['tempdevices_dict'])
+            except:
+                config_default['tempdevs_opts'] = {}
+            # update comboBoxes
+            self.build_comboBox(self.ui.comboBox_tempdevice, config_default['tempdevs_opts'])
+
+            if config_default['temp_class_opts'] and config_default['tempdevs_opts']: # temp related modules and devices are successfully loaded
+                self.ensable_widgets(
+                    'temp_device_setting_disable_list',
+                    'temp_settings_enable_disable_list',
+                )
+        else:
+            self.disable_widgets(
+                'temp_device_setting_disable_list',
+                'temp_settings_enable_disable_list',
+            )
 
 
     def on_clicked_set_temp_sensor(self, checked):
         # below only runs when vna is available
-        if self.vna: # add not for testing code
-            if checked: # checkbox is checked
-                # if not self.temp_sensor: # tempModule is not initialized
-                # get all tempsensor settings
-                tempmodule_name = self.settings['comboBox_tempmodule'] # get temp module
+        if self.vna_name == 'none': # add not for testing code
+            return
+        if checked: # checkbox is checked
+            # if not self.temp_sensor: # tempModule is not initialized
+            # get all tempsensor settings
+            tempmodule_name = self.settings['comboBox_tempmodule'] # get temp module
 
-                thrmcpltype = self.settings['comboBox_thrmcpltype'] # get thermocouple type
-                tempdevice = TempDevices.device_info(self.settings['comboBox_tempdevice']) #get temp device info
+            thrmcpltype = self.settings['comboBox_thrmcpltype'] # get thermocouple type
+            tempdevice = TempDevices.device_info(self.settings['comboBox_tempdevice']) #get temp device info
 
-                # # check senor availability
-                # package_str = config_default['tempmodules_path'][2:].replace('/', '.') + tempmodule_name
-                # logger.info(package_str) 
-                # import package
-                temp_sensor = getattr(TempModules, tempmodule_name)
+            # # check senor availability
+            # package_str = config_default['tempmodules_path'][2:].replace('/', '.') + tempmodule_name
+            # logger.info(package_str) 
+            # import package
+            temp_sensor = getattr(TempModules, tempmodule_name)
 
-                try:
-                    self.temp_sensor = temp_sensor(
-                        tempdevice,
-                        config_default['tempdevices_dict'][tempdevice.product_type],
-                        thrmcpltype,
-                    )
-                except Exception as e: # if failed return
-                    print(e)
-                    #TODO update in statusbar
-                    return
+            try:
+                self.temp_sensor = temp_sensor(
+                    tempdevice,
+                    config_default['tempdevices_dict'][tempdevice.product_type],
+                    thrmcpltype,
+                )
+            except Exception as e: # if failed return
+                print(e)
+                #TODO update in statusbar
+                return
 
-                # after tempModule loaded
-                # # tempModule should take one arg 'thrmcpltype' and return temperature in C by calling tempModule.get_tempC
-                try:
-                    curr_temp = self.temp_sensor.get_tempC()
+            # after tempModule loaded
+            # # tempModule should take one arg 'thrmcpltype' and return temperature in C by calling tempModule.get_tempC
+            try:
+                curr_temp = self.temp_sensor.get_tempC()
 
-                    # save values to self.settings
-                    self.settings['checkBox_control_rectemp'] = True
-                    self.settings['checkBox_settings_temp_sensor'] = True
-                    # set statusbar pushButton_status_temp_sensor text
-                    self.statusbar_temp_update(curr_temp=curr_temp)
-                    # disable items to keep the setting
-                    self.disable_widgets(
-                        'temp_settings_enable_disable_list'
-                    )
-
-                except Exception as e: # failed to get temperature from sensor
-                    print(e)
-                    # uncheck checkBoxes
-                    self.ui.checkBox_control_rectemp.setChecked(False)
-                    self.ui.checkBox_settings_temp_sensor.setChecked(False)
-                    #TODO update in statusbar
-            else: # is unchecked
-
-                self.settings['checkBox_control_rectemp'] = False
-                self.settings['checkBox_settings_temp_sensor'] = False
-
+                # save values to self.settings
+                self.settings['checkBox_control_rectemp'] = True
+                self.settings['checkBox_settings_temp_sensor'] = True
                 # set statusbar pushButton_status_temp_sensor text
-                self.statusbar_temp_update()
-
-                # enable items to keep the setting
-                self.enable_widgets(
+                self.statusbar_temp_update(curr_temp=curr_temp)
+                # disable items to keep the setting
+                self.disable_widgets(
                     'temp_settings_enable_disable_list'
                 )
-                # reset self.temp_sensor
-                self.temp_sensor = None
+
+            except Exception as e: # failed to get temperature from sensor
+                print(e)
+                # uncheck checkBoxes
+                self.ui.checkBox_control_rectemp.setChecked(False)
+                self.ui.checkBox_settings_temp_sensor.setChecked(False)
+                #TODO update in statusbar
+        else: # is unchecked
+
+            self.settings['checkBox_control_rectemp'] = False
+            self.settings['checkBox_settings_temp_sensor'] = False
+
+            # set statusbar pushButton_status_temp_sensor text
+            self.statusbar_temp_update()
+
+            # enable items to keep the setting
+            self.enable_widgets(
+                'temp_settings_enable_disable_list'
+            )
+            # reset self.temp_sensor
+            self.temp_sensor = None
 
 
-            # update checkBox_settings_temp_sensor to self.settings
-            # self.update_tempsensor()
+        # update checkBox_settings_temp_sensor to self.settings
+        # self.update_tempsensor()
 
 
     def statusbar_temp_update(self, curr_temp=None):
@@ -6489,7 +6518,7 @@ class QCMApp(QMainWindow):
 
     def check_checked_activechn(self):
 
-        if config_default['activechn_num'] == 1:
+        if self.vna_tracker.analyzer['activechn_num'] == 1:
             sender_name = self.sender().objectName()
             logger.info(sender_name) 
 
@@ -6645,12 +6674,13 @@ class QCMApp(QMainWindow):
         build comboBox by addItem from opts in config_default[opts]
         '''
         for key, val in config_default[opts].items():
-            combobox.addItem(val, userData=key)
+            if combobox.findData(key) == -1: # only add it if the same entry does not exist
+                combobox.addItem(val, userData=key)
 
 
     def create_combobox(self, name, contents, box_width, row_text='', parent=''):
         '''
-        this function create a combobox object with its name = name, items = contents. and  set it't width.
+        this function create a combobox object with its name = name, items = contents. and  set it's width.
         And move it to row[0] = row_text in parent
         '''
         # create a combobox object
@@ -6672,6 +6702,23 @@ class QCMApp(QMainWindow):
         # insert to the row of row_text if row_text and parent_name are not empty
         if (row_text and parent):
             self.move_to_col(obj_box, parent, row_text, box_width)
+
+
+    def enable_combobox_items(self, bl, combobox, itemids=None, itemdatas=None, itemtxts=None):
+        '''
+        enable (bl=True) or disable (bl=False) items (list) by index, data or text
+        '''
+        if itemids:
+            for itemid in itemids:
+                combobox.model().item(itemid).setEnabled(bl)
+        elif itemdatas:
+            for itemdata in itemdatas:
+                combobox.model().item(combobox.findData(itemdata)).setEnabled(bl)
+        elif itemtexts:
+            for itemdata in itemdatas:
+                combobox.model().item(combobox.findText(itemdata)).setEnabled(bl)
+        else:
+            ...
 
 
     def update_guichecks(self, checkBox, name_in_settings):
