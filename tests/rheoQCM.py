@@ -818,7 +818,7 @@ class QCMApp(QMainWindow):
         self.ui.comboBox_settings_settings_analyzer.currentIndexChanged.connect(self.load_analyzer)
 
         ################################ start
-        # add comBox_tempmodule to treeWidget_settings_settings_hardware
+        # add comboBox_tempmodule to treeWidget_settings_settings_hardware
         self.create_combobox(
             'comboBox_tempmodule',
             # UIModules.list_modules(TempModules),
@@ -5807,6 +5807,8 @@ class QCMApp(QMainWindow):
         if self.vna_name != 'none':
             # import temperature modules
             try:
+                # NOTE: use global to let TempDevices and TempModules available across functions
+                global TempDevices, TempModules
                 from modules import TempDevices, TempModules
             except Exception as e:
                 logger.warning('Failed to import TempDevices and/or TempModules.\nTemperature functions of the UI will not avaiable!')
@@ -5824,17 +5826,17 @@ class QCMApp(QMainWindow):
             except:
                 config_default['temp_class_opts'] = {} # no temp module is loaded
             # update comboBoxes
-            self.build_comboBox(self.ui.comBox_tempmodule, config_default['temp_class_opts'])
+            self.build_comboBox(self.ui.comboBox_tempmodule, 'temp_class_opts')
             
             try:
                 config_default['tempdevs_opts'] = TempDevices.dict_available_devs(config_default['tempdevices_dict'])
             except:
                 config_default['tempdevs_opts'] = {}
             # update comboBoxes
-            self.build_comboBox(self.ui.comboBox_tempdevice, config_default['tempdevs_opts'])
+            self.build_comboBox(self.ui.comboBox_tempdevice, 'tempdevs_opts')
 
             if config_default['temp_class_opts'] and config_default['tempdevs_opts']: # temp related modules and devices are successfully loaded
-                self.ensable_widgets(
+                self.enable_widgets(
                     'temp_device_setting_disable_list',
                     'temp_settings_enable_disable_list',
                 )
@@ -6876,9 +6878,6 @@ class QCMApp(QMainWindow):
             'comboBox_range', 
         ])
 
-        # initiate loading the analyzer class
-        self.load_analyzer()
-
         # update statusbar
         self.statusbar_f0bw_update()
 
@@ -7022,6 +7021,11 @@ class QCMApp(QMainWindow):
 
         # plot contours
         self.make_contours()
+
+        # initiate loading the analyzer class
+        self.set_vna_name() # NOTE: 
+        when loading analyzer value from settings, the signal is not triggered. we need to do it manually.
+        self.load_analyzer()
 
         ## end of load_settings
 

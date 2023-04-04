@@ -847,7 +847,7 @@ settings_default = {
     # add the string as 
     # 'vna_path': r'C:/...../myVNA.exe'.
     # if this key is empty, the program will look for the file in the default list in config_default['vna_path']
-    'vna_path': r'',
+    'analyzer': r'myvna',
     # keep key below (vna_wait_time_extra) commented.
     # it can be actived in user setting file
     # 'vna_wait_time_extra': 0.05, # in s. This extra time will be added to the calculated value
