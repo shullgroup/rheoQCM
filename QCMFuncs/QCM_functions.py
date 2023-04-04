@@ -118,7 +118,7 @@ def add_eta_axis(ax):
 
     Returns
     -------
-    No return - just updates the axis.
+    Returns the new axis, but we generally don't use that for anything.
 
     """
     ax2 = ax.twinx()  
