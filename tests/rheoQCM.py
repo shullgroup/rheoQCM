@@ -7023,8 +7023,7 @@ class QCMApp(QMainWindow):
         self.make_contours()
 
         # initiate loading the analyzer class
-        self.set_vna_name() # NOTE: 
-        when loading analyzer value from settings, the signal is not triggered. we need to do it manually.
+        self.set_vna_name() # NOTE: when loading analyzer value from settings, the signal is not triggered. we need to do it manually.
         self.load_analyzer()
 
         ## end of load_settings

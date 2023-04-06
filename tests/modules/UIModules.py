@@ -18,7 +18,7 @@ def open_file(path):
     if path is not given, open active path
     '''
     platform = system_check()
-    if platform == "win32": # windows
+    if platform == OSType.windows: # windows
         os.startfile(path)
     else: # mac and linux
         opener ="open" if platform == "darwin" else "xdg-open" 
