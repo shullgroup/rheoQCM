@@ -18,7 +18,7 @@ import time
 import shutil
 from mpmath import findroot
 from scipy.io import loadmat
-
+from pylab import meshgrid
 import pandas as pd
 
 try:
@@ -2791,7 +2791,6 @@ def check_solution(df, **kwargs):
         
     '''
 
-    from pylab import meshgrid
     numxy=kwargs.get('numxy', 100)
     numz=kwargs.get('numz', 200)
     philim=kwargs.get('philim', [0.001, 90])
@@ -3256,6 +3255,57 @@ def check_solution(df, **kwargs):
         suptitle = kwargs.get('suptitle')
         figinfo['fig'].suptitle(suptitle)
     return figinfo
+
+
+def contour_plot():
+    """
+    Make a standard contour plot of the QCM response
+
+    Returns
+    -------
+    None.
+
+    """
+    def Zfunction(x, y):
+        Z1=np.real(normdelfstar(3, x, y))
+        Z2=np.imag(normdelfstar(3, x, y))
+        return Z1, Z2
+        # make meshgrid for contour
+    phi=np.linspace(0, 90, 100)
+    dlam=np.linspace(0.001, 1, 100)
+    DLAM, PHI=meshgrid(dlam, phi)
+    Z1, Z2=Zfunction(DLAM, PHI)
+
+    # specify the range of the Z values
+    min1=-2.5
+    max1=0.5
+    min2=0
+    max2=1
+
+    levels1=np.linspace(min1, max1, 100)
+    levels2=np.linspace(min2, max2, 100)
+
+    fig, ax=plt.subplots(1, 2, figsize=(10,4), constrained_layout=True)
+    contour1=ax[0].contourf(DLAM, PHI, Z1, levels=levels1, cmap='rainbow')
+    contour2=ax[1].contourf(DLAM, PHI, Z2, levels=levels2, cmap='rainbow')
+
+    cbax1 = ax[0].inset_axes([1.05, 0, 0.1, 1])
+    cbar1 = fig.colorbar(contour1, ax=ax[0], cax = cbax1)
+    cbax2 = ax[1].inset_axes([1.05, 0, 0.1, 1])
+    cbar2 = fig.colorbar(contour2, ax=ax[1], cax = cbax2)
+
+    cbar1.set_ticks(np.linspace(min1, max1, 11))
+    cbar2.set_ticks(np.linspace(min2, max2, 11))
+
+    for k in [0,1]:
+        ax[k].set_xlabel(r'$d/\lambda_n$')
+        ax[k].set_ylabel(r'$\Phi$ (deg.)')
+        
+    ax[0].set_title(r'(a) $\Delta f_n$/ $\Delta f_{sn}$')
+    ax[1].set_title(r'(b) $\Delta\Gamma_n$ / $\Delta f_{sn}$')
+    
+    return {'fig':fig, 'ax':ax, 'cbax1':cbax1, 'cbax2':cbax2,
+            'cbar1':cbar1, 'cbar2':cbar2}
 
 
 def check_n_dependence(soln, **kwargs):
