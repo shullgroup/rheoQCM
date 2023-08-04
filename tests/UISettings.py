@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 config_default = {
 
     # window default size
-    'window_size': [1200, 800], # px
-    'layout_ratio': [1, 1, 3], # the ratio of settings, spectra, and data layouts
+    'window_size': [1200, 400], # px
+    'layout_ratio': [1.2, 0.8, 3], # the ratio of settings, spectra, and data layouts
     # UI will looking for the file to load the default setup
     'default_settings_file_name': 'user_settings.json',
     'default_config_file_name': 'config_default.json',
