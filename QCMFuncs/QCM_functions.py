@@ -9,6 +9,7 @@ Created on Thu Jan  4 09:19:59 2018
 import numpy as np
 import sys
 import os
+import math
 import scipy.optimize as optimize
 import matplotlib.pyplot as plt
 import matplotlib
@@ -1025,6 +1026,10 @@ def solve_for_props(delfstar, calc, **kwargs):
         gmax (real):
             Maximum value of dissipation (in Hz) for calculation.
             - default is 20,000 Hz
+        
+        accuracy (real):
+            Max difference between actual and back-calculated delf, delg
+            - deault is 1 Hz
             
     returns:
         df_soln (dataframe):
@@ -1056,6 +1061,9 @@ def solve_for_props(delfstar, calc, **kwargs):
     ub = kwargs.get('ub', [1e13, 90, 3e-2])
     lb = np.array(lb)  # lower bounds on grho3, phi, drho
     ub = np.array(ub)  # upper bounds on grho3, phi, drho
+    
+    # set required accuracy for solution
+    accuracy =kwargs.get('accuracy', 1)
 
     # update calc to current format
     calc = update_calc(calc)
@@ -1101,7 +1109,8 @@ def solve_for_props(delfstar, calc, **kwargs):
     real_series = np.zeros(npts, dtype=np.float64)
     complex_series = np.zeros(npts, dtype = np.complex128)
     object_series = np.empty(npts, dtype = object)
-    
+    calc_array = np.array(npts*[calc])
+    calctype_array = np.array(npts*[calctype])
     for n in nplot:
         df_soln.insert(df_soln.shape[1], f'f_expt{n}', delfstar[f'{n}_dat'])
         df_soln.insert(df_soln.shape[1], 'df_expt'+str(n), delfstar[n])
@@ -1115,9 +1124,9 @@ def solve_for_props(delfstar, calc, **kwargs):
     df_soln.insert(df_soln.shape[1], 'jacobian', object_series)
   
     # now add columns for 'calc' and 'calctype'
-    for obj in ['calc', 'calctype']:
-        df_soln.insert(df_soln.shape[1], obj, object_series)
-        
+    df_soln.insert(df_soln.shape[1], 'calc', calc_array)
+    df_soln.insert(df_soln.shape[1], 'calctype', calctype_array)
+
     # now add a column for the overlayer and for the film
     df_soln.insert(df_soln.shape[1], 'overlayer', object_series)
     df_soln.insert(df_soln.shape[1], 'film', object_series)
@@ -1168,6 +1177,11 @@ def solve_for_props(delfstar, calc, **kwargs):
                 soln = optimize.least_squares(ftosolve, x0, bounds=(lb, ub))
             except:
                 print('error at index = '+str(idx))
+            
+            # make sure sufficienty accurate solutions was found
+            if soln['fun'].max() > accuracy:
+                continue
+            
             grho3 = soln['x'][0]
             phi = soln['x'][1]
             fstring = f'{grho3:.2e}, {phi:.1f}'
@@ -1620,14 +1634,14 @@ def make_prop_axes(**kwargs):
             
         plotsize (tuple of 2 real numbers):
             size of individual plots.  
-            - Defualt is (4, 3)
+            - Default is (4, 3)
             
         sharex (Boolean):
             share x axis for zooming
             -(default=True)
             
-        orientation (string)
-            'horizontal' (default) for horizontal arrangement of figures
+        rows (integer)
+            number of rows for subplots (default is 1, 0 sets it to num_plots)
         
         no3 (Boolean):
             False (default) if we want to keep the '3' subscript in axis label for G
@@ -1659,11 +1673,15 @@ def make_prop_axes(**kwargs):
     else:
         default_titles =  ['(a)', '(b)', '(c)', '(d)', '(e)', '(f)']
     titles = kwargs.get('titles', default_titles)
-    orientation = kwargs.get('orientation', 'horizontal')
-    if orientation == 'horizontal':
-        figsize = (plotsize[0]*num_plots, plotsize[1])
+    rows = kwargs.get('rows', 1)
+    if rows==0:
+        rows=num_plots
+    if math.modf(num_plots/rows)[0]==0:
+        cols = int(num_plots/rows)
     else:
-        figsize = (plotsize[0], num_plots*plotsize[1])
+        cols = int(math.modf(num_plots/rows)[1])+1
+    
+    figsize = (plotsize[0]*cols, plotsize[1]*rows)
     
     # specify the xunit dictionary and xlabel dictionary
     # all plots have same xunit if only one value is given
@@ -1682,17 +1700,14 @@ def make_prop_axes(**kwargs):
         if xunit[p]!=xunit[p+1]:
             sharex = False
 
-    if orientation == 'horizontal':
-        fig, ax = plt.subplots(1, num_plots, figsize=figsize, num=num,
-                               constrained_layout=True, squeeze=False,
-                               sharex=sharex)
-    else:
-        fig, ax = plt.subplots(num_plots, 1, figsize=figsize, num=num,
-                               constrained_layout=True, squeeze=False,
-                               sharex=sharex)        
-        
+    fig, ax = plt.subplots(rows, cols, figsize=figsize, num=num,
+                           constrained_layout=True, squeeze=False,
+                           sharex=sharex)
     ax = ax.flatten()
-
+    
+    # turn off unneeded plots
+    for p in np.arange(num_plots, rows*cols):
+        ax[p].set_visible(False)
     for p in np.arange(num_plots):
         # set the x label
         if xunit[p] == 's':
@@ -1845,10 +1860,8 @@ def prop_plots(df, figinfo, **kwargs):
             calculated properties.  Default is 'zeros', in which case we 
             don't calculate property uncertainties.  See the definition of
             calc_fstar_err for details.
-        plots_to_make (list of strings):
-            Plots to make.  Equal to figinfo['info']['plots'] 
-            f not specified.  This allows only some of the previously
-            defined axes in figinfo to be updated.
+        plots_to_make (list of integers):
+            Plots to make.  All axes included by default. 
         drho_ref (real):
             reference drho for plots of drho_norm or drho_ref
 
@@ -1874,12 +1887,8 @@ def prop_plots(df, figinfo, **kwargs):
     plots = figinfo['info']['plots']
     ax = figinfo['ax']
     num_plots = len(plots)
-    plots_to_make = kwargs.get('plots_to_make', figinfo['info']['plots'])
+    plots_to_make = kwargs.get('plots_to_make', np.arange(num_plots))
     
-    if drho_ref == np.nan and (('drho_diff' in plots_to_make) or 
-                               ('drho_norm' in plots_to_make)):
-        sys.exit('need to specify a value of drho_noom')
-        
 
     # add calculated errors to dataframe
     df = calc_prop_error(df, uncertainty_dict)
@@ -1894,7 +1903,10 @@ def prop_plots(df, figinfo, **kwargs):
     # data to an existing axis
     pvals = []
     for p in np.arange(num_plots):
-        if plots[p] in plots_to_make:
+        if drho_ref == np.nan and ((plots[p] == 'drho_diff' ) or 
+                                   (plots[p] == 'drho_norm' )):
+            sys.exit('need to specify a value of drho_norm')
+        if p in plots_to_make:
             pvals.append(p)
     if type(xoffset_input) != list:
         for p in np.arange(num_plots):
@@ -3066,32 +3078,37 @@ def check_solution(df, **kwargs):
         
         # add uncertainties in delf, delg
         df = add_fstar_err(df, uncertainty_dict)
-        xvals = df['xvals'].astype('float64')     
         for n in nfplot: 
-            dfval = np.real(df[f'df_expt{n}'])/n
-            ferr = np.real(df[f'fstar_err{n}'])/n
+            # drop nan values from dataframe to avoid problems with errorbar
+            df_tmp = df.dropna(subset=[f'df_expt{n}'])
+            xvals = df_tmp['xvals'].astype('float64')  
+            dfval = np.real(df_tmp[f'df_expt{n}'])/n
+            ferr = np.real(df_tmp[f'fstar_err{n}'])/n
             df_min.append(np.nanmin(dfval))
             df_max.append(np.nanmax(dfval))
             nstr=str(n)+': expt' 
             ax[axnum['f_comp']].errorbar(xvals, 
                        dfval, yerr = ferr, fmt = '+', color = col[n],       
                        label='n='+nstr)
-            calcvals = np.real(df['df_calc'+str(n)])/n
-            ax[axnum['f_comp']].plot(df['xvals'], calcvals, calcfmt, 
+            calcvals = np.real(df_tmp['df_calc'+str(n)])/n
+            ax[axnum['f_comp']].plot(df_tmp['xvals'], calcvals, calcfmt, 
                     color = col[n], markerfacecolor='none', label='calc')
         df_min = min(df_min)
         df_max = max(df_max)
      
         for n in ngplot:
-            dgval = np.imag(df['df_expt'+str(n)])/n
-            gerr = np.imag(df[f'fstar_err{n}'])/n
+            # drop nan values from dataframe to avoid problems with errorbar
+            df_tmp = df.dropna(subset=[f'df_expt{n}'])
+            xvals = df_tmp['xvals'].astype('float64')  
+            dgval = np.imag(df_tmp['df_expt'+str(n)])/n
+            gerr = np.imag(df_tmp[f'fstar_err{n}'])/n
             dg_min.append(np.nanmin(dgval))
             dg_max.append(np.nanmax(dgval))
             nstr=str(n)+': expt' 
             ax[axnum['g_comp']].errorbar(xvals, dgval, yerr = gerr, 
                                      fmt = '+', label='n='+nstr, color = col[n])
-            calcvals = np.imag(df['df_calc'+str(n)])/n
-            ax[axnum['g_comp']].plot(df['xvals'], calcvals, calcfmt, 
+            calcvals = np.imag(df_tmp['df_calc'+str(n)])/n
+            ax[axnum['g_comp']].plot(df_tmp['xvals'], calcvals, calcfmt, 
                           color = col[n], markerfacecolor='none',
                           label='calc')
         dg_min = min(dg_min)
