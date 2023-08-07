@@ -1143,9 +1143,14 @@ def solve_for_props(delfstar, calc, **kwargs):
         # also set delfstar to nan for gamma exceeding gmax
 
         for n in list(set(nf+ng)):
+            drop_status = False
             delfstar_val = row['df_expt'+str(n)]
             if np.isnan(delfstar_val) or np.imag(delfstar_val) > gmax:
+                drop_status = True
                 continue
+        if drop_status:
+            df_soln.drop(idx, inplace=True)
+            continue
         
         if n_all>1:
         # set up the function to solve for all but Sauerbrey calculation
@@ -1180,6 +1185,7 @@ def solve_for_props(delfstar, calc, **kwargs):
             
             # make sure sufficienty accurate solutions was found
             if soln['fun'].max() > accuracy:
+                df_soln.drop(idx, inplace=True)
                 continue
             
             grho3 = soln['x'][0]
@@ -1495,8 +1501,9 @@ def add_fstar_err(df, uncertainty_dict):
     for n in [1, 3, 5, 7, 9]:
         if f'df_expt{n}' in df.keys():
             n_list.append(n)
-            df.insert(df.columns.get_loc(f'df_expt{n}'), 
-                        f'fstar_err{n}', 0+1j*0)
+            if f'fstar_err{n}' not in df.keys():
+                df.insert(df.columns.get_loc(f'df_expt{n}'), 
+                            f'fstar_err{n}', 0+1j*0)
 
     for idx, row in df.iterrows():
         for n in n_list:
@@ -2373,20 +2380,31 @@ def read_xlsx(infile, **kwargs):
 def plot_bare_tempshift(df_ref, T_coef, Tref, nvals, T_range, filename):
     var=['f', 'g']
     n_num=len(nvals)
+    # figure for comparision of experimental and fit delf/n, delg/n
     fig, ax=plt.subplots(2, n_num, figsize=(3*n_num, 6),
                                    constrained_layout=True)
-    ylabel={0: r'$\Delta f$ (Hz)', 1: r'$\Delta \Gamma$ (Hz)'}
+    
+    # figure for comparison of all delf/n
+    fig2, ax2 = plt.subplots(1, 1, figsize = (4, 3), constrained_layout=True)
+    ylabel={0: r'$\Delta f/n$ (Hz)', 1: r'$\Delta \Gamma/n$ (Hz)'}
+    ax2.set_ylabel(r'$\Delta f/n$ (Hz)')
+    ax2.set_xlabel(r'$T$ ($^\circ$C)')
     # for now I'll use a default temp. range to plot
     temp_fit=np.linspace(T_range[0], T_range[1], 100)
-    for p in [0, 1]:
-        for k in np.arange(len(nvals)):
+    for k in np.arange(len(nvals)):
+        # plot fit values of delf/n for all harmonics
+        vals = bare_tempshift(temp_fit, T_coef, Tref, nvals[k])['f']/nvals[k]
+        ax2.plot(temp_fit, vals, '-', label=f'n={nvals[k]}')
+        for p in [0, 1]:
             # plot themeasured values, relative to value at ref. temp.
             meas_vals=(df_ref[var[p]+str(nvals[k])] -
                          np.polyval(T_coef[var[p]][nvals[k]], Tref))
+            meas_vals=meas_vals/nvals[k]
             ax[p, k].plot(df_ref['temp'], meas_vals, 'x', label = 'meas')
 
             # now plot the fit values
             ref_val=bare_tempshift(temp_fit, T_coef, Tref, nvals[k])[var[p]]
+            ref_val=ref_val/nvals[k]
             ax[p, k].plot(temp_fit, ref_val, 'o', label='fit')
 
             # set axis labels and plot titles
