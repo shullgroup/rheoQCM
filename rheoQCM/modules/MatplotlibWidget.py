@@ -548,7 +548,8 @@ class MatplotlibWidget(QWidget):
                 [], [], 
                 marker='o', 
                 markerfacecolor='none', 
-                picker=5, # 5 points tolerance
+                picker=True, # 5 points tolerance
+                pickradius=5, # 5 points tolerance
                 label='l'+str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
             ) # l
@@ -559,7 +560,8 @@ class MatplotlibWidget(QWidget):
                 marker='o', 
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
                 linestyle='none',
-                picker=5, # 5 points tolerance
+                picker=True, # 5 points tolerance
+                pickradius=5, # 5 points tolerance
                 label='lm'+str(i),
                 alpha=0.75,
             ) # marked points of line
@@ -569,7 +571,7 @@ class MatplotlibWidget(QWidget):
                 marker='o', 
                 color=self.l['l' + str(i)][0].get_color(), # set the same color as .l
                 linestyle='none',
-                picker=None, # disable
+                # picker=None, # disable
                 label='lt'+str(i),
                 alpha=0.35,
             ) # temperary points of line
@@ -827,14 +829,15 @@ class MatplotlibWidget(QWidget):
                 [], [], 
                 # marker='o', 
                 markerfacecolor='none', 
-                picker=5, # 5 points tolerance
+                picker=True, # 5 points tolerance
+                pickradius=5, # 5 points tolerance
                 label='l'+str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
             ) # l
 
         for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['p' + str(i)] = self.ax[0].errorbar(
-                [], [], 
+                np.nan, np.nan, 
                 yerr=np.nan,
                 xerr=np.nan,
                 marker='o', 
@@ -849,7 +852,7 @@ class MatplotlibWidget(QWidget):
 
         for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['pm' + str(i)] = self.ax[0].errorbar(
-                [], [], 
+                np.nan, np.nan, 
                 yerr=np.nan,
                 xerr=np.nan,
                 marker='o', 
@@ -918,7 +921,8 @@ class MatplotlibWidget(QWidget):
                 [], [], 
                 # marker='o', 
                 markerfacecolor='none', 
-                picker=5, # 5 points tolerance
+                picker=True, # 5 points tolerance
+                pickradius=5, # 5 points tolerance
                 label='l'+str(i),
                 alpha=0.75, # TODO markerfacecolor becomes dark on Linux when alpha used
             ) # l
@@ -935,7 +939,7 @@ class MatplotlibWidget(QWidget):
 
         for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['p' + str(i)] = self.ax[0].errorbar(
-                [], [], 
+                np.nan, np.nan, 
                 yerr=np.nan,
                 xerr=np.nan,
                 marker='o', 
@@ -950,7 +954,7 @@ class MatplotlibWidget(QWidget):
 
         for i in range(1, int(config_default['max_harmonic']+2), 2):
             self.l['pm' + str(i)] = self.ax[0].errorbar(
-                [], [], 
+                np.nan, np.nan, 
                 yerr=np.nan,
                 xerr=np.nan,
                 marker='o', 
