@@ -1127,7 +1127,7 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
 
     # now add complex frequency and frequency shifts
     npts = len(df_soln.index)
-    complex_series = np.empty(npts, dtype = np.complex128)
+    complex_series = np.empty(len(df_soln), dtype = np.complex128)
     for n in find_nplot(delfstar):
         df_soln.insert(df_soln.shape[1], f'f_expt{n}', delfstar[f'{n}_dat'])
         df_soln.insert(df_soln.shape[1], 'df_expt'+str(n), delfstar[n])
@@ -1705,6 +1705,10 @@ def calc_prop_error(soln, uncertainty_dict):
     npts = len(soln)
     real_series = np.zeros(npts, dtype=np.float64)
     for idx, row in soln.iterrows():
+        # this handles case where soln dataframe was not generated
+        # by solve_for_props
+        if 'props_calc' not in row:
+            continue
         props_calc = row['props_calc']
         for prop in props_calc:
             if f'{prop}_err' not in prop_err.columns.values:
@@ -1908,8 +1912,9 @@ def make_prop_axes(props, **kwargs):
     else:
         fig['props'] = fig['master'].add_subfigure(GridSpec[0,:])
         
-    ax['props'] = fig['props'].subplots(1,nprops, sharex=sharex)
-
+    ax['props'] = fig['props'].subplots(1,nprops, sharex=sharex, 
+                                        squeeze = False).flatten()
+    
     for k in np.arange(nprops):
         ax[k] = ax['props'][k]
         ax['props'][k].set_title(titles[k])
