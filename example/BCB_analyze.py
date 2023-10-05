@@ -4,7 +4,7 @@ import sys
 import matplotlib.pyplot as plt
 
 # add QCMFuncs
-sys.path.append('../QcmFuncs')
+sys.path.append('../QCMFuncs')
 
 import QCM_functions as qcm
 plt.close('all')
@@ -15,18 +15,13 @@ df = qcm.read_xlsx('../test_data/BCB_4.xlsx')
 # pick a calculation
 # we fit to the frequency shifts for the values before the colon
 # we fit to the dissipation shifts for the values after the colon
-calc = '3.5:5'
+calc = '3.5_5'
 
 # solve for the properties
-soln = qcm.solve_for_props(df, calc)
+layers = {1:{'grho3':1e12, 'phi':1, 'drho':5e-3}}
+soln = qcm.solve_for_props(df, calc, ['grho3', 'phi', 'drho'], layers)
 
 # now make the property axes and plot the property values on it
-props = qcm.make_prop_axes(xunit = 'index')
-qcm.prop_plots(soln, props, fmt='+-', num = 'BCB properties')
+props = qcm.make_prop_axes(['grho3.linear', 'phi', 'drho'], xunit = 'index')
+qcm.plot_props(soln, props, fmt='+-', num = 'BCB properties')
 
-# now generate the solution check
-check = qcm.check_solution(soln, nplot = [1, 3, 5], 
-                           plotsize = (5,3), df_lim = 'auto',
-                           gammascale = 'log',
-                           num = 'BCB solution check',
-                           plot_df1 = True)
