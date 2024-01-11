@@ -1135,7 +1135,10 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
     npts = len(df_soln.index)
     complex_series = np.empty(len(df_soln), dtype = np.complex128)
     for n in find_nplot(delfstar):
-        df_soln.insert(df_soln.shape[1], f'f_expt{n}', delfstar[f'{n}_dat'])
+        # we don't always have the reference and data values, sometimes
+        # we just have delfstar
+        if f'f_expt{n}_dat' in delfstar.keys():
+            df_soln.insert(df_soln.shape[1], f'f_expt{n}', delfstar[f'{n}_dat'])
         df_soln.insert(df_soln.shape[1], 'df_expt'+str(n), delfstar[n])
         df_soln.insert(df_soln.shape[1], 'df_calc'+str(n), complex_series)
     
@@ -1307,11 +1310,11 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
 
         lb (dictionary):  
             dictionary of lower bounds. keys must correspond to props.
-            ex: {'ghro3_1:1e8', 'phi_1:0', 'drho_1:0'}
+            ex: {'ghro3_1':1e8', 'phi_1':0, 'drho_1':0}
             
         ub (dictionary):  
             dictionary of upper bounds. keys must correspond to props.
-            ex: {'ghro3_1:1e13', 'phi_1:90', 'drho_1:0'}
+            ex: {'ghro3_1':1e13, 'phi_1':90, 'drho_1':0}
 
         reftype (string):
             Specification of the reference. 
@@ -1347,27 +1350,34 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
     reftype = kwargs.get('reftype', 'bare')
     gmax = kwargs.get('gmax', 20000)
     
+    # obtain starting guess from layers dictionary
+    guess = guess_from_layers(props_calc, layers)
+    
     # set default upper and lower bounds and guessfor properties
     default_prop_min = {'grho3':1e4, 'phi':0, 'drho':0}
     default_prop_max = {'grho3':1e13, 'phi':90, 'drho':3e-2}
-
-    lb_default = [None]*len(props_calc)
-    ub_default = [None]*len(props_calc)
+    
+    prop_min = kwargs.get('lb' ,default_prop_min)
+    prop_max = kwargs.get('ub', default_prop_max)
+    
+    # now put lb and ub into lists to pass to solve
+    lb = [None]*len(props_calc)
+    ub = [None]*len(props_calc)
     
     for i, prop_string in enumerate(props_calc):
         prop = prop_string.split('_')[0]
-        lb_default[i] = default_prop_min[prop]
-        ub_default[i] = default_prop_max[prop]
-    
-    lb = np.array(kwargs.get('lb', lb_default))
-    ub = np.array(kwargs.get('ub', ub_default))
-   
-    guess = guess_from_layers(props_calc, layers)
-    # make sure guess is in the right bounds
-    for k in np.arange(len(guess)):
-        guess[k]=max(guess[k], lb[k])
-        guess[k]=min(guess[k], ub[k])
-      
+        if prop_string in prop_min.keys():
+            lb[i] = prop_min[prop_string]
+        else:
+            lb[i] = prop_min[prop]
+        guess[i]=max(guess[i], lb[i])
+        
+        if prop_string in prop_max.keys():
+            ub[i] = prop_max[prop_string]
+        else:
+            ub[i] = prop_max[prop]
+        guess[i] = min(guess[i], ub[i])
+     
     # set required accuracy for solution
     accuracy =kwargs.get('accuracy', 1)
 
@@ -2426,7 +2436,7 @@ def read_xlsx(infile, **kwargs):
         include everything.
 
     film_channel : string
-        Sheet for data.  _channel' by default.
+        Sheet for data.  'S_channel' by default.
 
     ref_channel : string
         Source for reference frequency and dissipation. 
@@ -2592,10 +2602,11 @@ def read_xlsx(infile, **kwargs):
     # add each of the values of delfstar
     if ref_channel == 'self':
         # this is the simplest read protocol, with delf and delg already in
-        # the .xlsx file
+        # the .xlsx file.  All we need to do is read the values and return them
         for n in nvals:
             df[n]=df['delf'+str(n)] + 1j*df['delg'+str(n)
                                 ].round(1) - fref_shift[n]
+        return df [keep_column].copy()
             
     elif T_coef != 'calculated':
         # this is the case where the temperature coefficients are input
