@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.21.0] - 2023-03-23
+## [0.21.0] - 2024-01-11
 
 ### Added
 
@@ -27,6 +27,7 @@
 ### Fixed
 
 - Fix bugs of combining lmfit models.
+- Fix bugs of importing QCM-D data.
 
 ### Removed
 
