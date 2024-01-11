@@ -742,17 +742,17 @@ config_default = {
     ######### DataSaver module: import data format #####
     # a number is going to replace '{}'
     'data_saver_import_data':{
-        't': ['time(s)', 'time (s)', 't(s)'],
-        'temp': ['temp(c)', 'temp'],
-        'fs': ['freq{}'],
-        'gs': ['gamma{}'],
-        'delfs': ['delf{}'], 
-        'delgs': ['delg{}'],
+        't': ['time (s)', 'time (s)', 't (s)', 't'],
+        'temp': ['temp (C)', 'temp'],
+        'fs': ['freq{}', 'f{}', 'F{} (Hz)', ],
+        'gs': ['gamma{}', 'g{}'],
+        'delfs': ['delf{}', 'df{}', 'dF{}', ], 
+        'delgs': ['delg{}', 'dg{}', 'dD{}', 'D{}'],
         # 'harm_number_org': '1', 
     },
     'data_saver_import_raw':{
         't': ['time(s)', 't(s)', 't'],
-        'temp': ['temp', 'temp(c)'],
+        'temp': ['temp', 'temp(C)'],
         'f': ['{} Sweep [MHz]'],
         'G': ['{} G [S]'],
         'B': ['{} B [S]'],
