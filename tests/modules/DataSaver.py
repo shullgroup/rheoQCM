@@ -603,7 +603,7 @@ class DataSaver:
                 'ps': [self.nan_harm_list()],
             })
             # append empty data to chn_name
-            setattr(self, chn_name, getattr(self, chn_name).append(data_new, ignore_index=True))
+            setattr(self, chn_name, pd.concat([getattr(self, chn_name), data_new], ignore_index=True))
         
         return queue_id
 
@@ -3164,8 +3164,6 @@ class DataSaver:
                 t0 = datetime.datetime.now()
             t0_str = t0.strftime(self.settings['time_str_format'])
 
-        self.mode = data_format # set mode. it will be used to determine how to import data
-
         # initialize file
         if init_file and settings:
             self.init_file(name + '.h5', settings=settings, t0=t0_str)
@@ -3176,12 +3174,15 @@ class DataSaver:
             self.path = name + '.h5'  # convert xlsx file to h5
             self.set_t0(t0=t0_str) # save t0 (str)
 
+        self.mode = data_format # set mode. it will be used to determine how to import data
+        logger.info('mode %s', self.mode)
+
         g1 = 0 # in Hz
 
         # read QCM-D data
         logger.info('ext %s', ext) 
         if ext == '.csv':
-            df = pd.read_csv(path)
+            df = pd.read_csv(path, index_col=False)
         elif ext == '.xlsx':
             df = pd.read_excel(path)
         # logger.info(df.columns) 
@@ -3312,6 +3313,8 @@ class DataSaver:
                     # NOTE assuming fn0 = harm * f1 introduces errors to real values
                     df[delfs_str.format(harm)] = df[delfs_str.format(harm)] + f1 * harm
                     # dissipation
+
+                    logger.info('mode %s', self.mode)
                     if self.mode == 'qcmd': # 
                     # convert delD to delg
                         df[delgs_str.format(harm)] = self.convert_D_to_gamma(df[delgs_str.format(harm)], f1, harm)
