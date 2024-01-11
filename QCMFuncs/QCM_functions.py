@@ -322,7 +322,10 @@ def grho_from_dlam(n, drho, dlam, phi):
     returns:
         G*\rho at harmonic of interest.
     """
-    return (drho*n*f1*np.cos(np.deg2rad(phi/2))/dlam) ** 2
+    # min dlam value for calculation is 0.001
+    dlam_new = copy(dlam)
+    dlam_new[dlam_new==0]=0.001
+    return (drho*n*f1*np.cos(np.deg2rad(phi/2))/dlam_new) ** 2
 
 
 def grho_bulk(n, delfstar):
@@ -804,9 +807,9 @@ def normdelfstar(n, dlam3, phi):
         delfstar normalized by Sauerbrey value
     
     """
-
-    return -np.tan(2*np.pi*dlam(n, dlam3, phi)*(1-1j*np.tan(np.deg2rad(phi/2)))) / \
-            (2*np.pi*dlam(n, dlam3, phi)*(1-1j*np.tan(np.deg2rad(phi/2))))
+    D = 2*np.pi*dlam(n, dlam3, phi)*(1-1j*np.tan(np.deg2rad(phi/2)))
+    return -np.sinc(D/np.pi)/np.cos(D)
+    # note:  sinc(x)=sin(pi*x)/(pi*x)
             
 def normdelfstar_liq(n, dlamval, phi, drho, overlayer):
     """
@@ -853,10 +856,13 @@ def normdelf_bulk(n, dlam3, phi):
     returns:
         delf normalized bulk value
     """
-
-    answer = np.real(2*np.tan(2*np.pi*dlam(n, dlam3, phi) *
-                          (1-1j*np.tan(np.deg2rad(phi/2)))) /
-            (np.sin(np.deg2rad(phi))*(1-1j*np.tan(np.deg2rad(phi/2)))))
+    
+    # to avlid divergence for phi = 0 we set 0.1 degree as floor for phi
+    phi_new = copy(phi)
+    phi_new[phi_new==0]=0.1
+    answer = np.real(2*np.tan(2*np.pi*dlam(n, dlam3, phi_new) *
+        (1-1j*np.tan(np.deg2rad(phi_new/2)))) /
+        (np.sin(np.deg2rad(phi_new))*(1-1j*np.tan(np.deg2rad(phi_new/2)))))
     return answer
 
 
@@ -1832,7 +1838,7 @@ def make_prop_axes(props, **kwargs):
 
 
     returns:
-        prop_axes dictionary with the following elements
+        dictionary with the following elements
         fig:
             Handle for the figure
         ax:
@@ -1851,11 +1857,8 @@ def make_prop_axes(props, **kwargs):
     sharex = kwargs.get('sharex', True)
     xscale = kwargs.get('xscale', 'linear')
     no3 = kwargs.get('no3', False)
-    contour_range = kwargs.get('contour_range')
     nprops = len(props)
     plotsize = kwargs.get('plotsize', (4,3))
-    drho = kwargs.get('drho', 'Sauerbrey')
-    dlim = kwargs.get('dlim', [0, 0.5])
     if nprops == 1 and not checks and not maps:
         titles = ['']
     else:
@@ -1964,9 +1967,8 @@ def make_prop_axes(props, **kwargs):
         ax[iax+1]=ax['maps'][0]
         ax[iax+2]=ax['maps'][1]
         # make the response maps
-        make_response_maps(fig['maps'],ax['maps'], drho, contour_range
-                           =contour_range, dlim = dlim,
-                           first_plot = iax+1)
+        kwargs['first_plot'] = iax+1
+        make_response_maps(fig['maps'],ax['maps'], **kwargs)
         # set variable we'll use to make sure we don't duplicate labels
         for n in [1,3,5,7,9]:
             maplabels[n]=True
@@ -2088,7 +2090,8 @@ def plot_props(soln, figinfo, **kwargs):
 
 
     returns:
-        Nothing is returned.  The function updates the existing figure.
+        fig (master figure)
+        ax (all axes listed numerically)
     """
     
     if len(soln) ==0:
@@ -2402,6 +2405,7 @@ def plot_props(soln, figinfo, **kwargs):
             figinfo['info']['maplabels'][n]=False
         for k in [0, 1]:
             ax['maps'][k].legend(framealpha=1)
+    return figinfo['fig']['master'], figinfo['ax']
     
 
 def read_xlsx(infile, **kwargs):
@@ -2488,6 +2492,12 @@ def read_xlsx(infile, **kwargs):
     Guess_sheet : string
         Sheet name containing property guesses.  
         Used when calculating were eported into the Excel file
+        
+    overlayer : dictionary
+        dictionary containing values or 'grho', 'phi', and 'drho'
+        corresponding to properties of top layer - delfstar for this
+        layer is substracted from experimental values to give
+        delfstar used in calculations
 
     returns:
         Input data converted to dataframe.
@@ -2504,6 +2514,7 @@ def read_xlsx(infile, **kwargs):
     autodelete = kwargs.get('autodelete', True)
     index_col = kwargs.get('index_col', 0)
     
+   
     # specify default bare crystal temperature coefficients
     T_coef=kwargs.get('T_coef', 'calculated')
     if T_coef == 'default':
@@ -2570,6 +2581,13 @@ def read_xlsx(infile, **kwargs):
     # or contains all nan values, and set all Temperatures to Tref
     if ('temp' not in df.keys()) or (df.temp.isnull().values.all()):
         df['temp'] = Tref
+        
+    # account for possibility of overlayer
+    if 'overlayer' in kwargs.keys():
+        overlayer = kwargs.get('overlayer')
+        keep_column.append('overlayer')
+        df['overlayer'] = [overlayer for _ in range(df.shape[0])]
+
         
     # add each of the values of delfstar
     if ref_channel == 'self':
@@ -2688,10 +2706,13 @@ def read_xlsx(infile, **kwargs):
             keep_column.append(f'{nvals[k]}_ref')
 
     # add the constant applied shift to the reference values to the dataframe
+    # also account for overlayer if it exists
     for n in nvals:
         if fref_shift[n]!= 0:
             df[str(n)+'_refshift']=fref_shift[n]
             keep_column.append(str(n)+'_refshift')
+        if 'overlayer' in df.keys():
+            df[n]=df[n] - calc_delfstar(n, {1:overlayer})
 
     if (T_coef_plots and ref_channel != 'self' and 
         len(df_ref.temp.unique()) > 1):
@@ -2734,10 +2755,10 @@ def cull_df(df_in, **kwargs):
             this range are unaffected.
     """
     
-    t_range = kwargs.get('t_range', [-np.inf, np.inf])
     # copy the input dataframe
     df = df_in.copy()
-   
+    
+    t_range = kwargs.get('t_range', [-np.inf, np.inf])
     # dataframe based on time restrictions
     df_t = df.query('t>=@t_range[0] and t<=@t_range[1]')
     idxvals = df_t.index.values
@@ -3121,7 +3142,7 @@ def add_fstar_err(df, uncertainty_dict):
             
     return df
             
-def make_response_maps(fig, ax, drho, **kwargs):
+def make_response_maps(fig, ax, **kwargs):
     """
     Make response maps of the QCM response - delf and delg
     Args:
@@ -3129,23 +3150,36 @@ def make_response_maps(fig, ax, drho, **kwargs):
             figure to use for the plot
         ax (list of 2 axis handles):
             axes to use for plot
+        
+    Kwargs:
         drho (float or string):
             value of drho for the response map.  Set to 
             'Sauerbrey' (default) if we normalize by Sqauerbrey shift
-        
-    Kwargs:
-        axtitles (list of 2 strings):
-            axis titles (default is ['(a)', '(b)']
+        numxy (integer):
+            number of points in x and y directions (default 100)
+        numz (integer):
+            number of z contours (default 200)
+        philim (list of 2 floats):
+            range for phi axis (default [0.001, 90])
+        dlim (list of 2 floats):
+            range for d/lambda axis (default [0.001, 0.5])
+        autoscale (Boolean):
+            True if we authoscale the contours
+        contour_range (dictionary):
+            range of contours in form {0:[min,max], 1:[min, max])} \
+            default is {0:[-3, 3], 1:[0,3]})
+        first_plot (integer):
+            number of first plot, if so sublabelfigure is correct (default 0)
+        """
             
-    """
     numxy=kwargs.get('numxy', 100)
     numz=kwargs.get('numz', 200)
-    philim=kwargs.get('philim', [0.001, 90])
-    dlim=kwargs.get('dlim', [0.001, 0.5])
-    dlim[0] = max(dlim[0], 0.001)
+    philim=kwargs.get('philim', [0, 90])
+    dlim=kwargs.get('dlim', [0, 0.5])
     autoscale = kwargs.get('autoscale', False)
     contour_range = kwargs.get('contour_range', {0:[-3, 3], 1:[0,3]})
     first_plot = kwargs.get('first_plot', 0)
+    drho = kwargs.get('drho', 'Sauerbrey')
 
     def Zfunction(x, y):
         if drho == 'Sauerbrey':
@@ -3223,10 +3257,10 @@ def make_response_maps(fig, ax, drho, **kwargs):
         title_units = [r'$\Delta f_n /\Delta f_{sn}$',
                        r'$\Delta \Gamma _n/ \Delta f_{sn}$']
     else:
-        title_units = [r'$\Delta f_n$ (Hz): $d\rho$='+
-                       f'{1000*drho}'+r' $\mu$m$\cdot$g/cm$^3$',
-                       r'$\Delta \Gamma _n$ (Hz): $d\rho$='+
-                       f'{1000*drho}'+r' $\mu$m$\cdot$g/cm$^3$']
+        title_units = [r'$\Delta f_n/n$ (Hz): $d\rho$='+
+                       f'{1000*drho:.3g}'+r' $\mu$m$\cdot$g/cm$^3$',
+                       r'$\Delta \Gamma _n/n$ (Hz): $d\rho$='+
+                       f'{1000*drho:.3g}'+r' $\mu$m$\cdot$g/cm$^3$']
         
     for k in [0, 1]:
         ax[k].set_title(f'{titles_default[k+first_plot]} {title_units[k]}')

@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import sys
 import matplotlib.pyplot as plt
 
 # add QCMFuncs
-sys.path.append('../QCMFuncs')
+sys.path.append('/home/ken/Mydocs/Github/rheoQCM/QCMFuncs')
 
 import QCM_functions as qcm
 plt.close('all')
@@ -22,6 +20,7 @@ layers = {1:{'grho3':1e12, 'phi':1, 'drho':5e-3}}
 soln = qcm.solve_for_props(df, calc, ['grho3', 'phi', 'drho'], layers)
 
 # now make the property axes and plot the property values on it
-props = qcm.make_prop_axes(['grho3.linear', 'phi', 'drho'], xunit = 'index')
-qcm.plot_props(soln, props, fmt='+-', num = 'BCB properties')
+figinfo = qcm.make_prop_axes(['grho3.linear', 'phi', 'drho'], xunit = 'index')
+qcm.plot_props(soln, figinfo, fmt='+-', num = 'BCB properties',
+               nplot = [3,5,7])
 
