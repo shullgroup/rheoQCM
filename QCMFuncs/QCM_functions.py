@@ -1248,14 +1248,15 @@ def guess_from_layers(props, layers):
     return guess
 
 
-def update_df_soln(df_soln, soln, idx, layers, props_calc):
+def update_df_soln(df_soln, soln, idx, layers, props_calc, reftype):
     for layer_num in layers.keys():
         for prop in ['grho3', 'phi', 'drho']:
             df_soln.loc[idx, f'{prop}_{layer_num}'] = layers[layer_num][prop] 
     
     nvals = nvals_from_df_soln(df_soln)
     for n in nvals:
-        df_soln.at[idx, f'df_calc{n}']=calc_delfstar(n, layers)
+        df_soln.at[idx, f'df_calc{n}']=calc_delfstar(n, layers,
+                                                     reftype=reftype)
         
     df_soln.at[idx, 'layers'] = deepcopy(layers)
     df_soln.at[idx, 'jacobian'] = (soln['jac']).astype(object)
@@ -1402,7 +1403,8 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
             continue
         
         layers = update_layers(props_calc, soln['x'], layers)
-        df_soln = update_df_soln(df_soln, soln, idx, layers, props_calc)
+        df_soln = update_df_soln(df_soln, soln, idx, layers, props_calc,
+                                 reftype)
       
     return df_soln
                              
