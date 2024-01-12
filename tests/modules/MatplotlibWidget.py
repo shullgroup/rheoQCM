@@ -454,7 +454,7 @@ class MatplotlibWidget(QWidget):
             useblit=True,
             button=[1],  # left click
             minspan=5,
-            span_stays=False,
+            # span_stays=False,
             rectprops=dict(facecolor='red', alpha=0.2)
         )        
 
@@ -465,7 +465,7 @@ class MatplotlibWidget(QWidget):
             useblit=True,
             button=[3],  # right
             minspan=5,
-            span_stays=False,
+            # span_stays=False,
             rectprops=dict(facecolor='blue', alpha=0.2)
         )        
 
