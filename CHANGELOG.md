@@ -28,6 +28,7 @@
 
 - Fix bugs of combining lmfit models.
 - Fix bugs of importing QCM-D data.
+- Fix compatibility with new version Matplotlib.SpanSlector (span_stays)
 
 ### Removed
 

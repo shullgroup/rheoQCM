@@ -9,7 +9,7 @@ ax.set_visible(False)
 ax.change_geometry(2,2,i+1)
 '''
 
-# import matplotlib
+from matplotlib import __version__ as mp_ver
 # # matplotlib.use('QT5Agg')
 # matplotlib.rcParams['toolbar'] = 'toolmanager'
 # matplotlib.rcParams['font.size'] = 10
@@ -447,27 +447,50 @@ class MatplotlibWidget(QWidget):
         # self.ax[1].autoscale()
 
         # add span selector
-        self.span_selector_zoomin = SpanSelector(
-            self.ax[0], 
-            self.sp_spanselect_zoomin_callback,
-            direction='horizontal', 
-            useblit=True,
-            button=[1],  # left click
-            minspan=5,
-            span_stays=False,
-            rectprops=dict(facecolor='red', alpha=0.2)
-        )        
+        if mp_ver >= '3.5.0':  # newer version matplotlib use 'props'
+            self.span_selector_zoomin = SpanSelector(
+                self.ax[0], 
+                self.sp_spanselect_zoomin_callback,
+                direction='horizontal', 
+                useblit=True,
+                button=[1],  # left click
+                minspan=5,
+                # span_stays=False,
+                props=dict(facecolor='red', alpha=0.2)
+            )        
 
-        self.span_selector_zoomout = SpanSelector(
-            self.ax[0], 
-            self.sp_spanselect_zoomout_callback,
-            direction='horizontal', 
-            useblit=True,
-            button=[3],  # right
-            minspan=5,
-            span_stays=False,
-            rectprops=dict(facecolor='blue', alpha=0.2)
-        )        
+            self.span_selector_zoomout = SpanSelector(
+                self.ax[0], 
+                self.sp_spanselect_zoomout_callback,
+                direction='horizontal', 
+                useblit=True,
+                button=[3],  # right
+                minspan=5,
+                # span_stays=False,
+                props=dict(facecolor='blue', alpha=0.2)
+            )        
+        else:  # older version matplotlib use 'rectprops'
+            self.span_selector_zoomin = SpanSelector(
+                self.ax[0], 
+                self.sp_spanselect_zoomin_callback,
+                direction='horizontal', 
+                useblit=True,
+                button=[1],  # left click
+                minspan=5,
+                # span_stays=False,
+                rectprops=dict(facecolor='red', alpha=0.2)
+            )        
+
+            self.span_selector_zoomout = SpanSelector(
+                self.ax[0], 
+                self.sp_spanselect_zoomout_callback,
+                direction='horizontal', 
+                useblit=True,
+                button=[3],  # right
+                minspan=5,
+                # span_stays=False,
+                rectprops=dict(facecolor='blue', alpha=0.2)
+            )        
 
 
     def sp_spanselect_zoomin_callback(self, xclick, xrelease): 
@@ -605,22 +628,39 @@ class MatplotlibWidget(QWidget):
         # self.ax[0].autoscale()
 
         # add rectangle_selector
-        self.rect_selector = RectangleSelector(
-            self.ax[0], 
-            self.data_rectselector_callback,
-            drawtype='box',
-            button=[1], # left
-            useblit=True,
-            minspanx=5,
-            minspany=5,
-            # lineprops=None,
-            rectprops=dict(edgecolor = 'black', facecolor='none', alpha=0.2, fill=False),
-            spancoords='pixels', # default 'data'
-            maxdist=10,
-            marker_props=None,
-            interactive=False, # change rect after drawn
-            state_modifier_keys=None,
-        )  
+        if mp_ver >= '3.5.0':  # newer version matplotlib use 'props'
+            self.rect_selector = RectangleSelector(
+                self.ax[0], 
+                self.data_rectselector_callback,
+                button=[1], # left
+                useblit=True,
+                minspanx=5,
+                minspany=5,
+                # lineprops=None,
+                props=dict(edgecolor = 'black', facecolor='none', alpha=0.2, fill=False),
+                spancoords='pixels', # default 'data'
+                # maxdist=10,
+                # marker_props=None,
+                interactive=False, # change rect after drawn
+                state_modifier_keys=None,
+            )  
+        else:  # older version matplotlib use 'rectprops'
+            self.rect_selector = RectangleSelector(
+                self.ax[0], 
+                self.data_rectselector_callback,
+                drawtype='box',
+                button=[1], # left
+                useblit=True,
+                minspanx=5,
+                minspany=5,
+                # lineprops=None,
+                rectprops=dict(edgecolor = 'black', facecolor='none', alpha=0.2, fill=False),
+                spancoords='pixels', # default 'data'
+                maxdist=10,
+                marker_props=None,
+                interactive=False, # change rect after drawn
+                state_modifier_keys=None,
+            )  
         # set if inavtive
         self.rect_selector.set_active(False)
 
