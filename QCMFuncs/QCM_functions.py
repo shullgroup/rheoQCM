@@ -69,6 +69,7 @@ axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
             'grho3p': r'$G^\prime_3\rho$ (Pa $\cdot$ g/cm$^3$)',
             'grho3pp': r'$G^{\prime\prime}_3\rho$ (Pa $\cdot$ g/cm$^3$)',
             'drho': r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)',
+            'AF':r'AF',
             'drho_nm':r'$d\rho$ (nm$\cdot$g/cm$^3$)',
             'drho_change': r'change in $d\rho$ ($\mu$m$\cdot$g/cm$^3$)',
             'drho_change_nm': r'change in $d\rho$ (nm$\cdot$g/cm$^3$)',
@@ -463,6 +464,7 @@ def calc_ZL_sla(delfstar):
 def calc_ZL(n, layers, delfstar, calctype):
     """
     Calculate complex load impendance for stack of layers of known props.
+    Layers are assumed to be laterally homogeneous
     args:
         n (int):
             Harmonic of interest.
@@ -525,7 +527,17 @@ def calc_ZL(n, layers, delfstar, calctype):
         uvec = L[i]@S[i]@uvec
 
     rstar = uvec[1, 0]/uvec[0, 0]
-    return Z[1]*(1-rstar)/(1+rstar)
+    ZL = Z[1]*(1-rstar)/(1+rstar)
+    # account for the possibility of a fractional layer
+    # only one of the layers can have fractional coverage
+    for i in np.arange(layer_min, layer_max):
+        if 'AF' in layers[i].keys():
+            AF = layers[i]['AF']
+            layers_ref = delete_layer(layers, 1)
+            ZL_ref = calc_ZL(n, layers_ref, 0, calctype)
+            ZL = AF*ZL+(1-AF)*ZL_ref
+    return ZL
+
 
 def delete_layer(old_layers, num):
     # removes l layer, shifting all the higher levels down 1
@@ -1160,6 +1172,9 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
     # add column for dlam3_1
     df_soln.insert(df_soln.shape[1], 'dlam3_1', real_series)
     
+    # add column for AF_1
+    df_soln['AF_1'] = 1.0
+    
     # now add columns for Jacobian and layers
     df_soln.insert(df_soln.shape[1], 'jacobian', object_series)
     df_soln.insert(df_soln.shape[1], 'layers', object_series)
@@ -1252,6 +1267,9 @@ def update_df_soln(df_soln, soln, idx, layers, props_calc, reftype):
     for layer_num in layers.keys():
         for prop in ['grho3', 'phi', 'drho']:
             df_soln.loc[idx, f'{prop}_{layer_num}'] = layers[layer_num][prop] 
+    
+    if 'AF' in layers[1].keys():
+        df_soln.loc[idx, 'AF_1'] = layers[1]['AF']
     
     nvals = nvals_from_df_soln(df_soln)
     for n in nvals:
@@ -1355,8 +1373,8 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
     guess = guess_from_layers(props_calc, layers)
     
     # set default upper and lower bounds and guessfor properties
-    default_prop_min = {'grho3':1e4, 'phi':0, 'drho':0}
-    default_prop_max = {'grho3':1e13, 'phi':90, 'drho':3e-2}
+    default_prop_min = {'AF':0,'grho3':1e4, 'phi':0, 'drho':0}
+    default_prop_max = {'AF':1,'grho3':1e13, 'phi':90, 'drho':3e-2}
     
     prop_min = kwargs.get('lb' ,default_prop_min)
     prop_max = kwargs.get('ub', default_prop_max)
@@ -3288,18 +3306,6 @@ def make_response_maps(fig, ax, **kwargs):
     return {'fig':fig, 'ax':ax, 'cbax1':cbax1, 'cbax2':cbax2,
             'cbar1':cbar1, 'cbar2':cbar2}
 
-
-
-        
-
-
-        
-            
-
-       
-
-
- 
 
 def check_n_dependence(soln, **kwargs):
     '''
