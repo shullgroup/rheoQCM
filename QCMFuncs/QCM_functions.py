@@ -68,12 +68,7 @@ axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
             'tanphi': r'$\tan \phi$',
             'grho3p': r'$G^\prime_3\rho$ (Pa $\cdot$ g/cm$^3$)',
             'grho3pp': r'$G^{\prime\prime}_3\rho$ (Pa $\cdot$ g/cm$^3$)',
-            'drho': r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)',
             'AF':r'AF',
-            'drho_nm':r'$d\rho$ (nm$\cdot$g/cm$^3$)',
-            'drho_change': r'change in $d\rho$ ($\mu$m$\cdot$g/cm$^3$)',
-            'drho_change_nm': r'change in $d\rho$ (nm$\cdot$g/cm$^3$)',
-            'drho_norm': r'$d\rho / (d\rho)_{dry}$',
             'jdp': r'$J^{\prime \prime}/\rho$ (Pa$^{-1}\cdot$cm$^3$/g)',
             'temp':r'$T$ ($^\circ$C)',
             'etarho3':r'$|\eta_3^*| \rho$ (mPa$\cdot$s$\cdot$g/cm$^3$)',
@@ -86,6 +81,44 @@ axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
             'hr':'t (hr)',
             'day':'t (day)',
             'index':'index'}
+
+def drho_label(ext):
+    '''
+    Create axis labels for drho.
+    args:
+        A list of potential switches, generlly obtained by splitting a 
+        delimited input. Defaults to microns*density if empty, and is adjusted
+        by the following:
+            - nm:  units of nm instead of microns
+            - diff:  change in mass (requires drho_ref for plotting)
+            - norm:  normalized (requires drho_ref for plotting)
+
+    returns:
+        lbel (stiring):
+            String to use for axis label.
+    '''
+    str2 = '('
+    # change to change in mass or normalzied mass, if desired
+    if 'diff' in ext:
+        str1 = r'change in $d\rho$ '
+    elif 'norm' in ext:
+        str1 = r'$d\rho$/$d\rho_{ref}'
+        str3 = ''
+    else:
+        str1 = r'$d\rho$ '
+        
+    # now add g/m^2 unit if desired
+    if 'add_gm2' in ext:
+        str2 = str2 + r'g/m$^2$ or '
+        
+    # use nm instead of microns if desired
+    if 'nm' in ext:
+        str3 = r'nm$\cdot$g/cm$^3$)'
+    else:
+        if 'norm' not in ext:
+            str3 = r'$\mu$m$\cdot$g/cm$^3$)'
+            
+    return str1+str2+str3
 
 def sig_figs(x, n):
     # rounds x to n significant figures
@@ -253,7 +286,7 @@ def etarho(n, props):
 
 def grho(n, props):
     """
-    Use power law formulation to get G*\rho at different harmonics,
+    Use power law formulation to get |G*|rho at different harmonics,
     with properties at n=3 as an input.
     args:
         n (int):
@@ -263,27 +296,26 @@ def grho(n, props):
             grho3 and phi.
 
     returns:
-        G*\rho at harmonic of interest.
+        |G*rho| at harmonic of interest.
     """
     grho3 = props['grho3']
     phi = props['phi']
     return grho3*(n/3) ** (phi/90)
 
 
-def calc_grho3(n, grhostar):
+def calc_griho3(n, grhostar):
     """
-    Use power law formulation to get |G*|\rho at n=3.
+    Use power law formulation to get |G*|rho at n=3.
     args:
         n (int):
             Harmonic of interest.
         grhostar (complex):
-            G*\rho at harmonic of interest.
+            |G*|rho at harmonic of interest.
 
     returns:
-        grho3:
-            |G*|\rho (SI units) at n=3.
-        phi:
-            phase angle (degrees) - assumed independent of n.
+        grho3:  |G*|rho (SI units) at n=3.
+        
+        phi:  phase angle (degrees) - assumed independent of n.
     """
     phi = np.angle(grhostar, deg=True)
     grhon = abs(grhostar)
@@ -396,12 +428,12 @@ def calc_D(n, props, delfstar, calctype):
         D (complex) at harmonic of interest.
     """
     drho = props['drho']
-    # set switch to handle ase where drho = 0
-    if drho == 0:
-        return 0
-    else:
-        return 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n,
-                       props, calctype)
+    # set switch to handle case where drho = 0
+    # if drho == 0:
+    #     return 0
+    # else:
+    return 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n,
+                   props, calctype)
 
 
 def zstar_bulk(n, props, calctype):
@@ -527,7 +559,7 @@ def calc_ZL(n, layers, delfstar, calctype):
         uvec = L[i]@S[i]@uvec
 
     rstar = uvec[1, 0]/uvec[0, 0]
-    ZL = Z[1]*(1-rstar)/(1+rstar)
+    ZL = Z[layer_min]*(1-rstar)/(1+rstar)
     # account for the possibility of a fractional layer
     # only one of the layers can have fractional coverage
     for i in np.arange(layer_min, layer_max):
@@ -537,7 +569,6 @@ def calc_ZL(n, layers, delfstar, calctype):
             ZL_ref = calc_ZL(n, layers_ref, 0, calctype)
             ZL = AF*ZL+(1-AF)*ZL_ref
     return ZL
-
 
 def delete_layer(old_layers, num):
     # removes l layer, shifting all the higher levels down 1
@@ -558,24 +589,22 @@ def delete_layer(old_layers, num):
 
     return new_layers
 
-
-
-def calc_delfstar(n, layers, **kwargs):
+def calc_delfstar(n, layers_in, **kwargs):
     """
     Calculate complex frequency shift for stack of layers.
     args:
         n (int):
             Harmonic of interest.
 
-        layers (dictionary):
+        layers_in (dictionary):
             Dictionary of material dictionaries specifying the properites of
             each layer. 
-            Generally a dictionary with 'film' that may also contain
-            'overlayer' and/or 'electrode'.  
-            If it doesn't contain 'film' it contains dictionaries
+            it contains dictionaries
             labeled from 1 to N, with 1
             being the layer in contact with the QCM.  Each dictionary must
             include values for 'grho3, 'phi' and 'drho'.
+            layer 0 is the electrode itself.
+
 
     kwargs:
         calctype (string):
@@ -597,8 +626,9 @@ def calc_delfstar(n, layers, **kwargs):
 
     calctype = kwargs.get('calctype', 'SLA')
     reftype = kwargs.get('reftype', 'bare')
-    if not layers:  # if layers is empty {}
+    if not layers_in:  # if layers is empty {}
         return np.nan
+    layers = deepcopy(layers_in)
 
     ZL = calc_ZL(n, layers, 0, calctype)
     if (reftype=='overlayer') and (2 in layers.keys()):
@@ -617,16 +647,15 @@ def calc_delfstar(n, layers, **kwargs):
     else:
         # this is the most general calculation
         # use default electrode if it's not specified
-        layers_all = deepcopy(layers)
-        layers_ref = deepcopy(layers)
-        layers_all = {1: layers['electrode'], 2: layers['film']}
-        layers_ref = {1: layers['electrode']}
+
         if 0 not in layers:
             layers[0] = electrode_default
         
-        # not totally sure reftype is accounted or in all of this.
         layers_all = deepcopy(layers)
-        layers_ref = delete_layer(deepcopy(layers), 1)
+        if reftype == 'overlayer':
+            layers_ref = delete_layer(deepcopy(layers), 1)
+        else:
+            layers_ref = {0:layers[0]}
 
         ZL_all = calc_ZL(n, layers_all, 0, calctype)
         delfstar_sla_all = calc_delfstar_sla(ZL_all)
@@ -738,7 +767,7 @@ def calc_lamrho(n, grho3, phi):
             Harmonic of interest.
 
         grho3 (real):
-            |G*|\rho  at n=3 (SI units).
+            |G*|$\rho$  at n=3 (SI units).
 
         phi (real):
             Phase angle (degrees).
@@ -1128,7 +1157,7 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
     gmax = kwargs.get('gmax', 20000)
     calctype = kwargs.get('calctype', 'SLA')
     
-    if not 't_next' in delfstar.keys():
+    if 't' in delfstar.keys() and not 't_next' in delfstar.keys():
         delfstar = add_t_diff(delfstar)
         
     # check to see if there are any nan values in the harmonics we need  
@@ -1140,8 +1169,14 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
     for n in n_unique:
           delfstar_mod.drop(delfstar_mod[np.imag(delfstar_mod[n]) > gmax].index, 
                       inplace = True)
-    
-    df_soln = delfstar_mod[['t', 't_prev', 't_next', 'temp']].copy()
+          
+    # add time and temp infor if it exists
+    var_list = []
+    for var in ['t', 't_prev', 't_next', 'temp']:
+        if var in delfstar_mod.keys():
+            var_list.append(var)
+          
+    df_soln = delfstar_mod[var_list].copy()
 
     # now add complex frequency and frequency shifts
     npts = len(df_soln.index)
@@ -1149,7 +1184,7 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
     for n in find_nplot(delfstar):
         # we don't always have the reference and data values, sometimes
         # we just have delfstar
-        if f'f_expt{n}_dat' in delfstar.keys():
+        if f'{n}_dat' in delfstar.keys():
             df_soln.insert(df_soln.shape[1], f'f_expt{n}', delfstar[f'{n}_dat'])
         df_soln.insert(df_soln.shape[1], 'df_expt'+str(n), delfstar[n])
         df_soln.insert(df_soln.shape[1], 'df_calc'+str(n), complex_series)
@@ -1352,6 +1387,10 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
             - deault is 1 Hz 
             - this is not the uncertainty in delf, delg but is used to check
                 that a solution exists
+                
+        showvals (Boolean):
+            True if we want to displacy solutions as they are generated
+            - default is False
             
     returns:
         df_soln (dataframe):
@@ -1378,25 +1417,34 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
     
     prop_min = kwargs.get('lb' ,default_prop_min)
     prop_max = kwargs.get('ub', default_prop_max)
-    
-    # now put lb and ub into lists to pass to solve
-    lb = [None]*len(props_calc)
-    ub = [None]*len(props_calc)
-    
-    for i, prop_string in enumerate(props_calc):
-        prop = prop_string.split('_')[0]
-        if prop_string in prop_min.keys():
-            lb[i] = prop_min[prop_string]
-        else:
-            lb[i] = prop_min[prop]
-        guess[i]=max(guess[i], lb[i])
+    showvals = kwargs.get('showvals', False)
+    # if we input values for lb and ub we already have them
+    # note that if we specify lb, make sure to specify ub as well
+    if isinstance(prop_min, list):
+        lb = prop_min
+    else:
+        lb = [None]*len(props_calc)
+        for i, prop_string in enumerate(props_calc):
+            prop = prop_string.split('_')[0]
+            if prop_string in prop_min.keys():
+                lb[i] = prop_min[prop_string]
+            else:
+                lb[i] = prop_min[prop]
+    guess[i]=max(guess[i], lb[i])    
         
-        if prop_string in prop_max.keys():
-            ub[i] = prop_max[prop_string]
-        else:
-            ub[i] = prop_max[prop]
-        guess[i] = min(guess[i], ub[i])
-     
+    if isinstance(prop_max, list):
+        ub = prop_max
+    else:
+        ub = [None]*len(props_calc)
+        for i, prop_string in enumerate(props_calc):
+            prop = prop_string.split('_')[0]
+            if prop_string in prop_max.keys():
+                ub[i] = prop_max[prop_string]
+            else:
+                ub[i] = prop_max[prop]
+    guess[i] = min(guess[i], ub[i])        
+   
+  
     # set required accuracy for solution
     accuracy =kwargs.get('accuracy', 1)
 
@@ -1414,6 +1462,7 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
             soln = optimize.least_squares(ftosolve, guess, bounds=(lb, ub))
         except:
             print(f'error at index {idx}')
+            continue
             
         # make sure sufficienty accurate solutions was found
         if soln['fun'].max() > accuracy:
@@ -1421,8 +1470,16 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
             continue
         
         layers = update_layers(props_calc, soln['x'], layers)
+        guess = guess_from_layers(props_calc, layers)
         df_soln = update_df_soln(df_soln, soln, idx, layers, props_calc,
                                  reftype)
+        
+        #display the calculated values as the program is running
+        if showvals:  
+            valstring = ""
+            for i, prop in enumerate(props_calc):
+                valstring.append(f"{prop}: {soln['x']:.2g}")
+            print(valstring)
       
     return df_soln
                              
@@ -1799,14 +1856,14 @@ def make_prop_axes(props, **kwargs):
         props (list of strings):  
             props to include
             
-            - 'drho_change' is change in drho, relative to drho_ref
+            - 'drho.diff' is change in drho, relative to drho_ref
             
-            - 'drho_change_nm' is change in drho with d in nm
+            - 'drho.diff_nm' is change in drho with d in nm
             
             - 'drho_norm' is drho divided by drho_ref
             - 'vgp' can be added as van Gurp-Palmen plot
             
-            - 'vgp_lin'  and 'grho3_lin' put the grho3 on a linear scale
+            - 'vgp.lin'  and 'grho3.lin' put the grho3 on a linear scale
             
             - 'jdp' is loss compliance normalized by density
             
@@ -1829,8 +1886,7 @@ def make_prop_axes(props, **kwargs):
     kwargs:.
             
         num (string):           
-            window title (string):
-            - (default is 'property fig')
+            window title (string): (default is 'property fig')
             
         checks (boolean):
             True (default) if we plot the solution checks
@@ -1864,27 +1920,28 @@ def make_prop_axes(props, **kwargs):
             -(default=True)
                    
         no3 (Boolean):
-            False (default) if we want to keep the '3' subscript in axis label for G
+            False (default) if we want to keep the '3' 
+            subscript in axis label for G
 
 
     returns:
         dictionary with the following elements
         fig:
-            Handle for the figure
+            dictionary of figure elements, always contains 'master'
+            and 'props', may also contain 'checks', and 'maps'
+
         ax:
-            Handle for the axes, returned as a 2d array of 
-            dimensions (1, len(props))
+            dictionary of axes in the figure. Always has 'props',
+            may have 'checks'  and 'maps'.  Numbers correspond to 
+            flattened indices of all axes in the overall figure.
         info:
-            Dictionary with plot types for different axes
-        xunit:
-            Unit for the x axes
+            Dictionary with info used for plotting
     """
 
     num = kwargs.get('num', 'property fig')
     maps = kwargs.get('maps', False)
     checks = kwargs.get('checks', True)
     xunit_input = kwargs.get('xunit', 'index')
-    sharex = kwargs.get('sharex', True)
     xscale = kwargs.get('xscale', 'linear')
     no3 = kwargs.get('no3', False)
     nprops = len(props)
@@ -1909,10 +1966,6 @@ def make_prop_axes(props, **kwargs):
         for p in np.arange(nprops):
             xunit[p]=xunit_input[p]
             
-    # turn off sharex if not all axes have the same xunit
-    for p in np.arange(nprops-1):
-        if xunit[p]!=xunit[p+1]:
-            sharex = False
             
     # set the x labels
     for p in np.arange(nprops):
@@ -1945,7 +1998,7 @@ def make_prop_axes(props, **kwargs):
     else:
         fig['props'] = fig['master'].add_subfigure(GridSpec[0,:])
         
-    ax['props'] = fig['props'].subplots(1,nprops, sharex=sharex, 
+    ax['props'] = fig['props'].subplots(1,nprops, 
                                         squeeze = False).flatten()
     
     for k in np.arange(nprops):
@@ -2024,20 +2077,24 @@ def make_prop_axes(props, **kwargs):
         else:
             ax['props'][p].set_yscale('linear') # linear plots by default
                
-        props_parsed = props[p].split('.')
-        if len(props_parsed)==2:
-            yscale = props_parsed[1]
-            ax['props'][p].set_yscale(yscale)
+        ext = props[p].split('.')[-1]
+
+        if ext == 'linear' or  ext == 'log':
+            ax['props'][p].set_yscale(ext)
         
-            if yscale == 'linear' and 'grho3' in props[p]:
-                ax['props'][p].ticklabel_format(axis = 'y', style = 'sci',
-                                                scilimits = (0, 0),
-                                                useOffset = False)
+        if ext == 'linear' and 'grho3' in props[p]:
+            ax['props'][p].ticklabel_format(axis = 'y', style = 'sci',
+                                            scilimits = (0, 0),
+                                            useOffset = False)
 
     # now set the y labels 
     for p in np.arange(nprops):   
         # strip out layer number to make the connection to axlabels dictionary
         prop = props[p].split('.')[0].split('_')[0]
+        # get other options that we might need
+        ext = props[p].split('.')
+        
+        # we get most of the axes labels from axlabels dictionary
         if prop in axlabels.keys():
             ax['props'][p].set_ylabel(axlabels[prop])
             ax['props'][p].set_xlabel(xlabel[p])      
@@ -2048,9 +2105,6 @@ def make_prop_axes(props, **kwargs):
             ax['props'][p].set_ylabel(axlabels['phi'])
             ax['props'][p].set_xlabel(axlabels['grho3'])
             
-            # remove links to other axes if they exist
-            if sharex:
-                ax['props'][p].get_shared_x_axes().remove(ax['props'][p])
             xticker = matplotlib.axis.Ticker()
             ax['props'][p].xaxis.major = xticker
             
@@ -2060,6 +2114,8 @@ def make_prop_axes(props, **kwargs):
             
             ax['props'][p].xaxis.set_major_locator(xloc)
             ax['props'][p].xaxis.set_major_formatter(xfmt)
+            
+            xunit[p] = 'null'
             
         elif 'df' in prop:
             n = prop[-1]
@@ -2073,14 +2129,29 @@ def make_prop_axes(props, **kwargs):
             n = prop[-1]
             ax['props'][p].set_ylabel(f'$\Delta \Gamma_{{{n}}}$ (Hz)')
             ax['props'][p].set_xlabel(xlabel[p])
+            
+        elif 'drho' in prop:
+            ax['props'][p].set_ylabel(drho_label(ext))
+            ax['props'][p].set_xlabel(xlabel[p])  
+            
         else:
             ax['props'][p].set_xlabel('xlabel')
             ax['props'][p].set_ylabel('ylabel')
+            xunit[p]='null'
+
         ax['props'][p].set_title(titles[p])
 
     info = {'props':props, 'xunit':xunit, 'xscale':xscale,
             'maplabels':maplabels, 'checklabels':checklabels}
+    
+    # share x axes as appropriate
+    for p1 in np.arange(len(xunit)-1):
+        for p2 in np.arange(p1+1, len(xunit)-1):
+            if xunit[p1]==xunit[p2]:
+                ax[p1].sharex(ax[p2])
+        
     return {'fig':fig, 'ax':ax, 'info':info}
+
 
 
 def plot_props(soln, figinfo, **kwargs):
@@ -2098,7 +2169,7 @@ def plot_props(soln, figinfo, **kwargs):
 
         xoffset (real or string, single value or list):
             Amount to subtract from x value for plotting (default is 0)
-            'zero' means that the data are offset so that the minimum val 
+            -np.inf means that the data are offset so that the minimum val 
             is at 0.
         xmult (real):
             Multiplicative factor for rescaling x data.
@@ -2183,9 +2254,12 @@ def plot_props(soln, figinfo, **kwargs):
         elif xunit[p] == 'index':
             xvals[p]=soln.index
         else:
-            xvals[p]=soln[xunit[p]]
+            if xunit[p] in soln.keys():
+                xvals[p]=soln[xunit[p]]
+            else:
+                xvals[p] = []
             
-        if xoffset_input == 'zero':
+        if xoffset_input == -np.inf:
             xoffset[p] = min(xvals[p])
                     
    
@@ -2198,45 +2272,45 @@ def plot_props(soln, figinfo, **kwargs):
             prop = prop+'_1'
         layer = prop.split('_')[1]
         if 'grho3_' in prop: 
-            xdata = xvals[p]
+            xdata = xvals[p] - xoffset[p]
             ydata = soln[prop].astype(float)/1000
             if f'{prop}_err' in prop_error.columns.values:
                 yerr = prop_error[f'{prop}_err']/1000
     
         elif 'etarho3_' in prop:
-            xdata = xvals[p]
+            xdata = xvals[p] - xoffset[p]
             # units are mPa-s for viscosity
             ydata = soln[f'grho3_{layer}'].astype(float)/(np.pi*1.5e7)
             if f'grho3_{layer}_err' in prop_error.columns.values:
                 yerr = prop_error[f'grho3_{layer}_err']/(np.pi*1.5e7)
 
         elif 'phi_' in prop:
-            xdata = xvals[p]
+            xdata = xvals[p] - xoffset[p]
             ydata = soln[prop].astype(float)
             if f'{prop}_err' in prop_error.columns.values:
                 yerr = prop_error[f'{prop}_err']
             
         elif 'tanphi' in prop:
-            xdata = xvals[p]
+            xdata = xvals[p] - xoffset[p]
             ydata = np.tan(np.pi*soln[f'phi_{layer}'].astype(float)/180)
             
         elif 'grho3p' in prop:
-            xdata = xvals[p]
+            xdata = xvals[p] - xoffset[p]
             ydata = (soln[f'grho3_{layer}'].astype(float)*
                      np.cos(np.pi*soln['phi'].astype(float)/180)/1000)
 
         elif 'grho3pp' in prop:
-            xdata = xvals[p]
+            xdata = xvals[p] - xoffset[p]
             ydata = (soln[f'grho3_{layer}'].astype(float)*
                      np.sin(np.pi*soln['phi'].astype(float)/180)/1000)
             
         elif 'drhonm' in prop:
-            xdata = xvals[p]
+            xdata = xvals[p] - xoffset[p]
             ydata = 1e6*soln[f'drho_{layer}'].astype(float)
             yerr = 1e6*soln['drho_err']
                           
         elif 'drho' in prop:
-            xdata = xvals[p]
+            xdata = xvals[p] - xoffset[p]
             ydata = 1000*soln[f'drho_{layer}'].astype(float)
             if f'{prop}_err' in prop_error.columns.values:
                 yerr = 1000*prop_error[f'{prop}_err']
@@ -2253,32 +2327,32 @@ def plot_props(soln, figinfo, **kwargs):
 
             
         elif 'jdp' in prop:
-            xdata  = xvals[p]
+            xdata  = xvals[p] - xoffset[p]
             ydata = ((1000/soln['grho3_1'].astype(float))*
                      np.sin(soln['phi'].astype(float)*np.pi/180))
 
             
         elif prop == 'temp':
-            xdata  = xvals[p]
+            xdata  = xvals[p] - xoffset[p]
             ydata = soln['temp'].astype(float)
             
         elif prop == 't':
-            xdata  = xvals[p]
+            xdata  = xvals[p] - xoffset[p]
             ydata = soln['t'].astype(float)
             
         elif 'soln_expt' in prop:
-            xdata  = xvals[p]    
+            xdata  = xvals[p]     - xoffset[p]
             yvals = soln[props[p]].astype(complex)
             ydata = np.real(yvals)
             
         elif 'dg_expt' in prop:
-            xdata  = xvals[p]
+            xdata  = xvals[p] - xoffset[p]
             key = props[p].replace('dg', 'soln')
             yvals = soln[key].astype(complex)
             ydata = np.imag(yvals)
             
         elif prop in soln.keys():
-            xdata = xvals[p]
+            xdata = xvals[p] - xoffset[p]
             ydata = soln[props[p]]
             if 'grho' in props[p]:
                 ydata = ydata/1000
@@ -2286,23 +2360,36 @@ def plot_props(soln, figinfo, **kwargs):
                 ydata = 1e3*ydata
         
         else:
-            print('not a recognized prop type ('+props[p]+')')
-            sys.exit()
+            print('no data - not a recognized prop type ('+props[p]+')')
+            xdata=np.array([])
+            ydata=np.array([])
         
         xdata = xdata.astype('float64')
-                
-        if (yerr == 0).all() or np.isnan(yerr).all():
-            ax['props'][p].plot(xdata, ydata, fmt, label=label)
-        else:
-            ax['props'][p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, 
-                                    label=label)
+        # consider the case we we want to plot the difference from some value
+        if 'diff' in props[p].split('.'):
+            prop_ref = kwargs.get(prop.split('_')[0]+'_ref', np.inf)
+            if prop_ref == np.inf: # ref. to largest value
+                prop_ref = ydata.max()
+            elif prop_ref == -np.inf: # ref. to smallest value
+                prop_ref = ydata.min()
+            elif prop_ref == 0: # ref. to first value
+                prop_ref = ydata.iloc[0]
+            ydata = ydata - prop_ref
+            
+        if 'null' not in prop:
+            if (yerr == 0).all() or np.isnan(yerr).all():
+                ax['props'][p].plot(xdata, ydata, fmt, label=label)
+            else:
+                ax['props'][p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, 
+                                        label=label)
             
         if props[p] == 'vgp' or figinfo['info']['xscale'] == 'log':
             ax['props'][p].set_xscale('log')
         if props[p] == 'cole-cole':
             ax['props'][p].set_xscale('log')
             ax['props'][p].set_yscale('log')
-            
+
+        
             
     # now add the comparison plots of measured and calcuated values         
     # plot the experimental data first
@@ -3032,8 +3119,6 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
             Elments that are Rouse elments
 
     returns:
-        g_br (dictionary of numpy arrays)
-            complex modulus for each parallel branch (summed to get gstar)
         gstar (numpy array):
             complex shear modulus normalized by unrelaxed value
 
@@ -3081,7 +3166,7 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
 
     # now we sum the stiffnesses of each branch and return the result
     g_tot=br_g.sum(1)
-    return g_br, g_tot
+    return g_tot
 
 
 def simon_data(w):
@@ -3111,7 +3196,6 @@ def simon_data(w):
     
     # all elements are in parallel with one another
     sp_type = np.ones(len(tau), dtype=int)
-    
     return springpot(w, g0, tau, beta,sp_type, maxwell=maxwell)
 
 
@@ -3385,6 +3469,9 @@ def add_QCM_functions():
 def add_t_diff(df):
     # add time until previous and next point in the file.  Helpful if we want to
     # use data collected at beginning or end of a relaxation step
+    # we skip this if 't' is not in the dataframe
+    if 't' not in df.columns:
+        return
     df.insert(2, 't_prev', 'nan')
     df.insert(3, 't_next', 'nan')
     df['t_next'] = -df['t'].diff(periods=-1)    
