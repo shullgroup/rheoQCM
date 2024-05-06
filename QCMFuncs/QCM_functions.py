@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 import matplotlib
 from glob import glob
 import time
-import shutil
 from mpmath import findroot
 from scipy.io import loadmat
 from pylab import meshgrid
@@ -707,6 +706,12 @@ def calc_delfstar(n, layers_in, **kwargs):
     if not layers_in:  # if layers is empty {}
         return np.nan
     layers = deepcopy(layers_in)
+    
+    # run quick check to make sure we don't have an infinite layer 
+    # not at the top
+    for layernum in np.arange(min(layers.keys()), max(layers.keys())):
+        if layers[layernum]['drho'] == np.inf:
+            print('only outermost layer can have infinite thickness')
 
     ZL = calc_ZL(n, layers, 0, calctype)
     if (reftype=='overlayer') and (2 in layers.keys()):
@@ -1465,7 +1470,7 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
         Max difference between actual and back-calculated delf, delg
         - deault is 1 Hz 
         - this is not the uncertainty in delf, delg but is used to check
-            that a solution exists
+        that a solution exists
             
     showvals (Boolean):
         True if we want to displacy solutions as they are generated
@@ -1479,6 +1484,7 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
 
     """
     # add layer number as 1 if not specified
+    calc = update_calc(calc)
     layers = deepcopy(layers_in)
     for i, prop in enumerate(props_calc):
         if len(prop.split('_'))==1:
@@ -1510,7 +1516,7 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
                 lb[i] = prop_min[prop_string]
             else:
                 lb[i] = prop_min[prop]
-    guess[i]=max(guess[i], lb[i])    
+            guess[i]=max(guess[i], lb[i])    
         
     if isinstance(prop_max, list):
         ub = prop_max
@@ -1522,7 +1528,7 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
                 ub[i] = prop_max[prop_string]
             else:
                 ub[i] = prop_max[prop]
-    guess[i] = min(guess[i], ub[i])        
+            guess[i] = min(guess[i], ub[i])        
    
   
     # set required accuracy for solution
@@ -2043,19 +2049,19 @@ def make_prop_axes(props, **kwargs):
 
     Returns:
     ----------
-        dictionary with the following elements:
-            fig:
-                Dictionary of main figure 'master' along with included
-                subfigures.  It always includes the 'props' subfigure,
-                and will also include the 'checks' and 'maps' subfigures
-                if these were generated.
-    
-            ax:
-                Dictionary of axes in the figure. Always has 'props',
-                may have 'checks'  and 'maps'.  Numbers correspond to 
-                flattened indices of all axes in the overall figure.
-            info:
-                Dictionary with info used for plotting.
+    figinfo: dictionary with the following elements:
+        fig:
+            Dictionary of main figure 'master' along with included
+            subfigures.  It always includes the 'props' subfigure,
+            and will also include the 'checks' and 'maps' subfigures
+            if these were generated.
+
+        ax:
+            Dictionary of axes in the figure. Always has 'props',
+            may have 'checks'  and 'maps'.  Numbers correspond to 
+            flattened indices of all axes in the overall figure.
+        info:
+            Dictionary with info used for plotting.
     '''
 
     num = kwargs.get('num', 'property fig')
@@ -2092,7 +2098,12 @@ def make_prop_axes(props, **kwargs):
         if xunit[p] in axlabels.keys():
             xlabel[p] = axlabels[xunit[p]]
         else:
-            xlabel[p] = kwargs.get('xlabel', 'xlabel')
+            # read the xlabel
+            xlabel_input = kwargs.get('xlabel', 'xlabel')
+            if type(xlabel_input)==str:
+                xlabel[p] = xlabel_input
+            else :
+                xlabel[p] = xlabel_input[p]
             
     # make the main figure
     # fig includes 'master' (the full fig), plus subfigures of 'props',
@@ -2258,7 +2269,6 @@ def make_prop_axes(props, **kwargs):
         else:
             ax['props'][p].set_xlabel('xlabel')
             ax['props'][p].set_ylabel('ylabel')
-            xunit[p]='null'
 
         ax['props'][p].set_title(titles[p])
 
@@ -2269,7 +2279,11 @@ def make_prop_axes(props, **kwargs):
     for p1 in np.arange(len(xunit)-1):
         for p2 in np.arange(p1+1, len(xunit)-1):
             if xunit[p1]==xunit[p2]:
-                ax[p1].sharex(ax[p2])
+                # use try/except to avoid error if they are already shared
+                try:
+                    ax[p1].sharex(ax[p2])
+                except:
+                    pass
         
     return {'fig':fig, 'ax':ax, 'info':info}
 
@@ -2281,41 +2295,44 @@ def plot_props(soln, figinfo, **kwargs):
 
     Parameters
     ----------
-        soln (dataframe):
-            Dataframe containing data to be plotted, typically output from
-            solve_for_props.
-        figinfo (dictionary)
-            Dictionary containing 'fig', 'ax' and other info for plot.
+    soln " dataframe):
+        Dataframe containing data to be plotted, typically output from
+        solve_for_props.
+    figinfo : dictionary
+        Dictionary containing 'fig', 'ax' and other info for plot.
 
-    kwargs:
+    kwargs
+    ------
 
-        xoffset (real or string, single value or list):
-            Amount to subtract from x value for plotting (default is 0)
-            -np.inf means that the data are offset so that the minimum val 
-            is at 0.
-        xmult (real):
-            Multiplicative factor for rescaling x data.
-        fmt (string):
-            Format sting for plotting.  Default is '+'   .
-        label (string):
-            label for plots.  Used to generate legend.  Default is 
-            '', which will not generate a label.
-        uncertainty_dict (dictionary or string):
-            Information used to generate uncertainty in frequency and
-            dissipation values, used to determine uncertainties in 
-            calculated properties.  Default is 'zeros', in which case we 
-            don't calculate property uncertainties.  See the definition of
-            calc_fstar_err for details.
-        nplot (list of integers):
-            harmonics to plot, default is [3,5])
-        drho_ref (real):
-            reference drho for plots of drho_norm or drho_ref
+    xoffset (real or string, single value or list):
+        Amount to subtract from x value for plotting (default is 0)
+        -np.inf means that the data are offset so that the minimum val 
+        is at 0.
+    xmult (real):
+        Multiplicative factor for rescaling x data.
+    fmt (string):
+        Format sting for plotting.  Default is '+'   .
+    label (string):
+        label for plots.  Used to generate legend.  Default is 
+        '', which will not generate a label.
+    uncertainty_dict (dictionary or string):
+        Information used to generate uncertainty in frequency and
+        dissipation values, used to determine uncertainties in 
+        calculated properties.  Default is 'zeros', in which case we 
+        don't calculate property uncertainties.  See the definition of
+        calc_fstar_err for details.
+    nplot (list of integers):
+        harmonics to plot, default is [3,5])
+    drho_ref (real):
+        reference drho for plots of drho_norm or drho_ref
 
 
     Returns
     -------
-        fig (master figure)
-        ax (all axes listed numerically)
+    fig : figure handle
+        master figure
+    ax : list of axes handles
+        all axes listed numerically)
     """
     
     if len(soln) ==0:
@@ -2392,45 +2409,42 @@ def plot_props(soln, figinfo, **kwargs):
         yerr = pd.Series(np.zeros(len(xvals[p])))
         ext = props[p].split('.')
         prop = ext[0]
-        if len(prop.split('_'))==1:
+        
+        # add designation as layer 1 if it is not included explicitly
+        if len(prop.split('_'))==1 and prop in ['grho3', 'phi', 'drho']:
             prop = prop+'_1'
-        layer = prop.split('_')[1]
+            layer = 1
+            
+        # set default xdata - change below if necessary
+        xdata = xvals[p] - xoffset[p]
         if 'grho3_' in prop: 
-            xdata = xvals[p] - xoffset[p]
             ydata = soln[prop].astype(float)/1000
             if f'{prop}_err' in prop_error.columns.values:
                 yerr = prop_error[f'{prop}_err']/1000
     
         elif 'etarho3_' in prop:
-            xdata = xvals[p] - xoffset[p]
             # units are mPa-s for viscosity
             ydata = soln[f'grho3_{layer}'].astype(float)/(np.pi*1.5e7)
             if f'grho3_{layer}_err' in prop_error.columns.values:
                 yerr = prop_error[f'grho3_{layer}_err']/(np.pi*1.5e7)
 
         elif 'phi_' in prop:
-            xdata = xvals[p] - xoffset[p]
             ydata = soln[prop].astype(float)
             if f'{prop}_err' in prop_error.columns.values:
                 yerr = prop_error[f'{prop}_err']
             
         elif 'tanphi' in prop:
-            xdata = xvals[p] - xoffset[p]
             ydata = np.tan(np.pi*soln[f'phi_{layer}'].astype(float)/180)
             
         elif 'grho3p' in prop:
-            xdata = xvals[p] - xoffset[p]
             ydata = (soln[f'grho3_{layer}'].astype(float)*
                      np.cos(np.pi*soln['phi'].astype(float)/180)/1000)
 
         elif 'grho3pp' in prop:
-            xdata = xvals[p] - xoffset[p]
             ydata = (soln[f'grho3_{layer}'].astype(float)*
                      np.sin(np.pi*soln['phi'].astype(float)/180)/1000)
-            
-                         
+                                    
         elif 'drho' in prop:
-            xdata = xvals[p] - xoffset[p]
             ydata = 1000*soln[f'drho_{layer}'].astype(float)
             # multiply by 1000 if units are nm instead of microns
             if 'nm' in ext:
@@ -2447,35 +2461,36 @@ def plot_props(soln, figinfo, **kwargs):
                      np.cos(np.pi*soln['phi'].astype(float)/180)/1000)
             ydata = (soln['grho3_1'].astype(float)*
                      np.sin(np.pi*soln['phi'].astype(float)/180)/1000)
-
-            
+          
         elif 'jdp' in prop:
-            xdata  = xvals[p] - xoffset[p]
             ydata = ((1000/soln['grho3_1'].astype(float))*
                      np.sin(soln['phi'].astype(float)*np.pi/180))
 
-            
         elif prop == 'temp':
-            xdata  = xvals[p] - xoffset[p]
             ydata = soln['temp'].astype(float)
             
-        elif prop == 't':
-            xdata  = xvals[p] - xoffset[p]
+        elif prop == 's':
             ydata = soln['t'].astype(float)
             
+        elif prop == 'min':
+            ydata = soln['t'].astype(float)/60
+            
+        elif prop == 'hr':
+            ydata = soln['t'].astype(float)/3600
+            
+        elif prop == 'day':
+            ydata = soln['t'].astype(float)/(3600*24)
+            
         elif 'soln_expt' in prop:
-            xdata  = xvals[p]     - xoffset[p]
             yvals = soln[props[p]].astype(complex)
             ydata = np.real(yvals)
             
         elif 'dg_expt' in prop:
-            xdata  = xvals[p] - xoffset[p]
             key = props[p].replace('dg', 'soln')
             yvals = soln[key].astype(complex)
             ydata = np.imag(yvals)
             
         elif prop in soln.keys():
-            xdata = xvals[p] - xoffset[p]
             ydata = soln[props[p]]
             if 'grho' in props[p]:
                 ydata = ydata/1000
