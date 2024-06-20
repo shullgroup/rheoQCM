@@ -6,13 +6,11 @@ most recent version at the following link:
 https://github.com/shullgroup/rheoQCM/tree/master/QCMFuncs/QCM_functions.py
 @author: Ken Shull (k-shull@northwestern.edu)
 """
-
 import numpy as np
 import sys
 import os
 import scipy.optimize as optimize
 import matplotlib.pyplot as plt
-import matplotlib
 from glob import glob
 import time
 from mpmath import findroot
@@ -73,8 +71,8 @@ axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
             'etarho3':r'$|\eta_3^*| \rho$ (mPa$\cdot$s$\cdot$g/cm$^3$)',
             'delf':r'$\Delta f$ (Hz)',
             'delg':r'$\Delta \Gamma$ (Hz)',
-            'delf_n':r'$\Delta f/n$ (Hz)',
-            'delg_n':r'$\Delta \Gamma /n$ (Hz)',
+            'delf_n':r'$\Delta f_n/n$ (Hz)',
+            'delg_n':r'$\Delta \Gamma _n /n$ (Hz)',
             's':'t (s)',
             'min':'t (min)',
             'hr':'t (hr)',
@@ -2025,11 +2023,9 @@ def make_prop_axes(props, **kwargs):
         xunit (single string or list of strings):
             Units for x data.  Default is 'index', function currently handles
             - 's', 'min', 'hr', 'day', 'temp', or user specified value corresponding
-                to a dataframe column
+                to any property or dataframe column
+            - add .log to end of string to plot on log scale
                 
-        xscale (string):
-            'linear' (default) or 'log'
-            
         xlabel (string):
             label for x axis.  Only used if user-specified xunit is used
             currently must be same for all axes.
@@ -2072,6 +2068,7 @@ def make_prop_axes(props, **kwargs):
     no3 = kwargs.get('no3', False)
     nprops = len(props)
     plotsize = kwargs.get('plotsize', (4,3))
+    
     if nprops == 1 and not checks and not maps:
         titles = ['']
     else:
@@ -2095,8 +2092,9 @@ def make_prop_axes(props, **kwargs):
             
     # set the x labels
     for p in np.arange(nprops):
-        if xunit[p] in axlabels.keys():
-            xlabel[p] = axlabels[xunit[p]]
+        xunit_base = xunit[p].split('.')[0].split('_')[0]
+        if xunit_base in axlabels.keys():
+            xlabel[p] = axlabels[xunit_base]
         else:
             # read the xlabel
             xlabel_input = kwargs.get('xlabel', 'xlabel')
@@ -2104,6 +2102,7 @@ def make_prop_axes(props, **kwargs):
                 xlabel[p] = xlabel_input
             else :
                 xlabel[p] = xlabel_input[p]
+        
             
     # make the main figure
     # fig includes 'master' (the full fig), plus subfigures of 'props',
@@ -2132,9 +2131,10 @@ def make_prop_axes(props, **kwargs):
     ax['props'] = fig['props'].subplots(1,nprops, 
                                         squeeze = False).flatten()
     
-    for k in np.arange(nprops):
-        ax[k] = ax['props'][k]
-        ax['props'][k].set_title(titles[k])
+    for p in np.arange(nprops):
+        ax[p] = ax['props'][p]
+        ax[p].set_title(titles[p])
+        ax[p].set_xlabel(xlabel[p])
         
     iax = nprops-1  # running number of axes for axis labeling
     irow = 0  # running index of row
@@ -2201,24 +2201,6 @@ def make_prop_axes(props, **kwargs):
         axlabels['grho3p'] = r'$G^\prime\rho$ (Pa $\cdot$ g/cm$^3$)'
         axlabels['grho3pp'] = r'$G^{\prime\prime}\rho$ (Pa $\cdot$ g/cm$^3$)'
     
-    # extract 'linear' or 'log' scale factors from plots
-    for p in np.arange(nprops):
-        ext = props[p].split('.')[-1]
-        if 'grho3' in props[p]:
-            ax['props'][p].set_yscale('log')
-        else:
-            ax['props'][p].set_yscale('linear') # linear plots by default
-               
-        if 'linear' in ext:
-            ax['props'][p].set_yscale('linear')
-        elif 'log' in ext:
-            ax['props'][p].set_yscale('log')
-        
-        if 'linear' in ext and 'grho3' in props[p]:
-            ax['props'][p].ticklabel_format(axis = 'y', style = 'sci',
-                                            scilimits = (0, 0),
-                                            useOffset = False)
-
     # now set the y labels 
     for p in np.arange(nprops):   
         # strip out layer number to make the connection to axlabels dictionary
@@ -2233,19 +2215,6 @@ def make_prop_axes(props, **kwargs):
         elif prop == 'cole-cole':
             ax['props'][p].set_ylabel(axlabels['grho3pp'])
             ax['props'][p].set_xlabel(axlabels['grho3p'])
-        elif 'vgp' in prop: 
-            ax['props'][p].set_ylabel(axlabels['phi'])
-            ax['props'][p].set_xlabel(axlabels['grho3'])
-            
-            xticker = matplotlib.axis.Ticker()
-            ax['props'][p].xaxis.major = xticker
-            
-            # The new ticker needs new locator and formatters
-            xloc = matplotlib.ticker.AutoLocator()
-            xfmt = matplotlib.ticker.ScalarFormatter()
-            
-            ax['props'][p].xaxis.set_major_locator(xloc)
-            ax['props'][p].xaxis.set_major_formatter(xfmt)
             
             xunit[p] = 'null'
             
@@ -2288,6 +2257,112 @@ def make_prop_axes(props, **kwargs):
     return {'fig':fig, 'ax':ax, 'info':info}
 
 
+def make_data_array(var, soln, prop_error):
+    """
+    Extract appropriate data vector from solution dataframe
+
+    Parameters
+    ----------
+    var : string
+        The variable to be extracted.
+    soln : dataframe
+        The dataframe the data is extracted from.
+    prop_error : dataframe
+        Property errors calcualted from uncertainty_dict
+
+    Returns
+    -------
+    data_array : numpy array of data
+    err_array : numpy array of errors (if they exist, usually returns 'null')
+
+    """
+    
+    ext = var.split('.')
+    
+    # set errors to zero by default
+    err_array = np.zeros_like(soln.index)
+    
+    # add designation as layer 1 if it is not included explicitly
+    if len(ext[0].split('_'))==1 and ext[0] in ['grho3', 'phi', 'drho']:
+        ext[0] = ext[0]+'_1'
+        layer = 1
+
+    if ext[0] == 's':
+        data_array = soln['t']
+        
+    elif ext[0] == 'min':
+        data_array =soln['t']/60
+        
+    elif ext[0] == 'hr':
+        data_array = soln['t']/3600
+        
+    elif ext[0] == 'day':
+        data_array = soln['t']/(24*3600)
+        
+    elif ext[0] == 'temp':
+        data_array = soln['temp']
+        
+    elif ext[0] == 'index':
+        data_array = soln.index
+        
+    elif 'grho3_' in ext[0]: 
+       data_array = soln[ext[0]].astype(float)/1000
+       if f'{ext[0]}_err' in prop_error.columns.values:
+           err_array = prop_error[f'{ext[0]}_err']/1000
+
+    elif 'etarho3_' in ext[0]:
+       # units are mPa-s for viscosity
+       data_array = soln[f'grho3_{layer}'].astype(float)/(np.pi*1.5e7)
+       if f'grho3_{layer}_err' in prop_error.columns.values:
+           err_array = prop_error[f'grho3_{layer}_err']/(np.pi*1.5e7)
+
+    elif 'phi_' in ext[0]:
+       data_array = soln[ext[0]].astype(float)
+       if f'{ext[0]}_err' in prop_error.columns.values:
+           err_array = prop_error[f'{ext[0]}_err']
+       
+    elif 'tanphi' in ext[0]:
+       data_array = np.tan(np.pi*soln[f'phi_{layer}'].astype(float)/180)
+       
+    elif 'grho3p' in ext[0]:
+       data_array = (soln[f'grho3_{layer}'].astype(float)*
+                np.cos(np.pi*soln['phi'].astype(float)/180)/1000)
+
+    elif 'grho3pp' in ext[0]:
+       data_array = (soln[f'grho3_{layer}'].astype(float)*
+                np.sin(np.pi*soln['phi'].astype(float)/180)/1000)
+                               
+    elif 'drho' in ext[0]:
+       data_array = 1000*soln[f'drho_{layer}'].astype(float)
+       # multiply by 1000 if units are nm instead of microns
+       if 'nm' in ext[0]:
+           data_array = 1000*data_array
+       if f'{data_array}_err' in prop_error.columns.values:
+           err_array = 1000*prop_error[f'{data_array}_err']
+
+    elif 'jdp' in ext[0]:
+       data_array = ((1000/soln['grho3_1'].astype(float))*
+                np.sin(soln['phi'].astype(float)*np.pi/180))
+      
+    elif 'soln_expt' in ext[0]:
+       data_array = soln[ext[0]].astype(complex)
+       data_array = np.real(data_array)
+       
+    elif 'dg_expt' in ext[0]:
+       key = ext[0].replace('dg', 'soln')
+       data_array = soln[key].astype(complex)
+       data_array = np.imag(data_array)
+       
+    elif ext[0] in soln.keys():
+       data_array = soln[ext[0]]
+   
+    else:
+       print(f'no data - not a recognized prop type ({ext[0]})')
+       data_array=np.array([])
+       data_array=np.array([])
+       
+    return data_array.astype('float64'), err_array
+   
 
 def plot_props(soln, figinfo, **kwargs):
     """
@@ -2329,12 +2404,12 @@ def plot_props(soln, figinfo, **kwargs):
 
     Returns
     -------
-    fig : figure handle
+    fig : figure handle-
         master figure
     ax : list of axes handles
         all axes listed numerically)
     """
-    
+
     if len(soln) ==0:
         print('solution data frame for plotting is empty')
         return
@@ -2342,7 +2417,6 @@ def plot_props(soln, figinfo, **kwargs):
     label=kwargs.get('label', '')
     xoffset_input=kwargs.get('xoffset', 0)  
     uncertainty_dict = kwargs.get('uncertainty_dict', uncertainty_dict_default)
-    drho_ref = kwargs.get('drho_ref', np.nan)
     nplot = kwargs.get('nplot', [3,5])
     col = {1:'CO', 3:'C1', 5:'C2', 7:'C3', 9:'C5'}
     
@@ -2359,174 +2433,39 @@ def plot_props(soln, figinfo, **kwargs):
     # create dataframe with calculated errors
     prop_error = calc_prop_error(soln, uncertainty_dict)
     xunit = figinfo['info']['xunit']
-    xvals = {}
-    
-    # set the offset for the x values (apart from vgp plots)
-    xoffset = {}
-    
-    # determine the plots we actually need to make. Sometimes we don't add
-    # data to an existing axis
-    pvals = []
-    for p in np.arange(nprops):
-        if drho_ref == np.nan and ((props[p] == 'drho_diff' ) or 
-                                   (props[p] == 'drho_norm' )):
-            sys.exit('need to specify a value of drho_norm')
-        if p in plots_to_make:
-            pvals.append(p)
+    xoffset={}
+    # set the offset for the x values 
     if type(xoffset_input) != list:
-        for p in np.arange(nprops):
+        for p in plots_to_make:
             xoffset[p] = xoffset_input
     else:
-        for p in np.arange(nprops):
-            xoffset[p]=xoffset_input[p]   
+        for p in plots_to_make:
+            xoffset[p]=xoffset_input[p]  
             
-    for p in pvals:
-        if xunit[p] == 's':
-            xvals[p]=soln['t']
-        elif xunit[p] == 'min':
-            xvals[p]=soln['t']/60
-        elif xunit[p] == 'hr':
-            xvals[p]=soln['t']/3600
-        elif xunit[p] == 'day':
-            xvals[p]=soln['t']/(24*3600)
-        elif xunit[p] == 'temp':
-            xvals[p]=soln['temp']
-        elif xunit[p] == 'index':
-            xvals[p]=soln.index
+    # determine the plots we actually need to make. Sometimes we don't add
+    # data to an existing axis
+    # we need to keep xdata for each plot, because we'll use just
+    # one of these arrays (usually the first one) for the solution checks
+    xdata = {}
+    for p in plots_to_make:
+        xdata[p] = make_data_array(xunit[p], soln, prop_error)[0]
+        ydata, yerr  = make_data_array(props[p], soln, prop_error)
+
+        # offset xdata if desired
+        xdata[p] = xdata[p] - xoffset[p]
+        
+        if not np.any(yerr): 
+            ax['props'][p].plot(xdata[p], ydata, fmt, label=label)
+            
         else:
-            if xunit[p] in soln.keys():
-                xvals[p]=soln[xunit[p]]
-            else:
-                xvals[p] = []
+            ax['props'][p].errorbar(xdata[p], ydata, fmt=fmt, yerr=yerr, 
+                                    label=label)
             
-        if xoffset_input == -np.inf:
-            xoffset[p] = min(xvals[p])
-                    
-   
-    # now make all of the plots
-    for p in pvals:
-        # yerr is zero unless we specify otherwise
-        yerr = pd.Series(np.zeros(len(xvals[p])))
-        ext = props[p].split('.')
-        prop = ext[0]
-        
-        # add designation as layer 1 if it is not included explicitly
-        if len(prop.split('_'))==1 and prop in ['grho3', 'phi', 'drho']:
-            prop = prop+'_1'
-            layer = 1
-            
-        # set default xdata - change below if necessary
-        xdata = xvals[p] - xoffset[p]
-        if 'grho3_' in prop: 
-            ydata = soln[prop].astype(float)/1000
-            if f'{prop}_err' in prop_error.columns.values:
-                yerr = prop_error[f'{prop}_err']/1000
-    
-        elif 'etarho3_' in prop:
-            # units are mPa-s for viscosity
-            ydata = soln[f'grho3_{layer}'].astype(float)/(np.pi*1.5e7)
-            if f'grho3_{layer}_err' in prop_error.columns.values:
-                yerr = prop_error[f'grho3_{layer}_err']/(np.pi*1.5e7)
-
-        elif 'phi_' in prop:
-            ydata = soln[prop].astype(float)
-            if f'{prop}_err' in prop_error.columns.values:
-                yerr = prop_error[f'{prop}_err']
-            
-        elif 'tanphi' in prop:
-            ydata = np.tan(np.pi*soln[f'phi_{layer}'].astype(float)/180)
-            
-        elif 'grho3p' in prop:
-            ydata = (soln[f'grho3_{layer}'].astype(float)*
-                     np.cos(np.pi*soln['phi'].astype(float)/180)/1000)
-
-        elif 'grho3pp' in prop:
-            ydata = (soln[f'grho3_{layer}'].astype(float)*
-                     np.sin(np.pi*soln['phi'].astype(float)/180)/1000)
-                                    
-        elif 'drho' in prop:
-            ydata = 1000*soln[f'drho_{layer}'].astype(float)
-            # multiply by 1000 if units are nm instead of microns
-            if 'nm' in ext:
-                ydata = 1000*ydata
-            if f'{prop}_err' in prop_error.columns.values:
-                yerr = 1000*prop_error[f'{prop}_err']
-
-        elif 'vgp' in prop:
-            xdata = soln['grho3_1'].astype(float)/1000
-            ydata = soln['phi_1'].astype(float)
-
-        elif 'cole-cole' in prop:
-            xdata = (soln['grho3_1'].astype(float)*
-                     np.cos(np.pi*soln['phi'].astype(float)/180)/1000)
-            ydata = (soln['grho3_1'].astype(float)*
-                     np.sin(np.pi*soln['phi'].astype(float)/180)/1000)
-          
-        elif 'jdp' in prop:
-            ydata = ((1000/soln['grho3_1'].astype(float))*
-                     np.sin(soln['phi'].astype(float)*np.pi/180))
-
-        elif prop == 'temp':
-            ydata = soln['temp'].astype(float)
-            
-        elif prop == 's':
-            ydata = soln['t'].astype(float)
-            
-        elif prop == 'min':
-            ydata = soln['t'].astype(float)/60
-            
-        elif prop == 'hr':
-            ydata = soln['t'].astype(float)/3600
-            
-        elif prop == 'day':
-            ydata = soln['t'].astype(float)/(3600*24)
-            
-        elif 'soln_expt' in prop:
-            yvals = soln[props[p]].astype(complex)
-            ydata = np.real(yvals)
-            
-        elif 'dg_expt' in prop:
-            key = props[p].replace('dg', 'soln')
-            yvals = soln[key].astype(complex)
-            ydata = np.imag(yvals)
-            
-        elif prop in soln.keys():
-            ydata = soln[props[p]]
-            if 'grho' in props[p]:
-                ydata = ydata/1000
-            elif 'drho' in props[p]:
-                ydata = 1e3*ydata
-        
-        else:
-            print('no data - not a recognized prop type ('+props[p]+')')
-            xdata=np.array([])
-            ydata=np.array([])
-        
-        xdata = xdata.astype('float64')
-        # consider the case we we want to plot the difference from some value
-        if 'diff' in ext:
-            prop_ref = kwargs.get(prop.split('_')[0]+'_ref', np.inf)
-            if prop_ref == np.inf: # ref. to largest value
-                prop_ref = ydata.max()
-            elif prop_ref == -np.inf: # ref. to smallest value
-                prop_ref = ydata.min()
-            elif prop_ref == 0: # ref. to first value
-                prop_ref = ydata.iloc[0]
-            ydata = ydata - prop_ref
-            
-        if 'null' not in prop:
-            if (yerr == 0).all() or np.isnan(yerr).all():
-                ax['props'][p].plot(xdata, ydata, fmt, label=label)
-            else:
-                ax['props'][p].errorbar(xdata, ydata, fmt=fmt, yerr=yerr, 
-                                        label=label)
-            
-        if props[p] == 'vgp' or figinfo['info']['xscale'] == 'log':
+        if 'log' in xunit[p].split('.'):
             ax['props'][p].set_xscale('log')
-        if props[p] == 'cole-cole':
-            ax['props'][p].set_xscale('log')
+            
+        if 'log' in props[p].split('.'):
             ax['props'][p].set_yscale('log')
-
         
             
     # now add the comparison plots of measured and calcuated values         
@@ -2564,7 +2503,9 @@ def plot_props(soln, figinfo, **kwargs):
         # add uncertainties in delf, delg
 
         soln = add_fstar_err(soln, uncertainty_dict)
-        soln['xvals'] = xvals[0]           
+        
+        # use the first plotted property plot for the x values
+        soln['xdata'] = xdata[plots_to_make.min()]    
         for n in nfplot: 
             # drop nan values from dataframe to avoid problems with errorbar
             soln_tmp = soln.dropna(subset=[f'df_expt{n}'])
@@ -2578,11 +2519,11 @@ def plot_props(soln, figinfo, **kwargs):
             else:
                 label_expt = ''
                 label_calc = ''
-            ax['checks'][0].errorbar(soln_tmp['xvals'], 
+            ax['checks'][0].errorbar(soln_tmp['xdata'], 
                        dfval, yerr = ferr, fmt='+', color = col[n],       
                        label=label_expt)
             calcvals = np.real(soln_tmp['df_calc'+str(n)])/n
-            ax['checks'][0].plot(soln_tmp['xvals'], calcvals, calcfmt, 
+            ax['checks'][0].plot(soln_tmp['xdata'], calcvals, calcfmt, 
                     color = col[n], markerfacecolor='none', 
                     label=label_calc)
             
@@ -2598,11 +2539,11 @@ def plot_props(soln, figinfo, **kwargs):
             gerr = np.imag(soln_tmp[f'fstar_err{n}'])/n
             dg_min.append(np.nanmin(dgval))
             dg_max.append(np.nanmax(dgval))
-            ax['checks'][1].errorbar(soln_tmp['xvals'], dgval, yerr = gerr, 
+            ax['checks'][1].errorbar(soln_tmp['xdata'], dgval, yerr = gerr, 
                                      fmt = '+',  
                                      color = col[n])
             calcvals = np.imag(soln_tmp['df_calc'+str(n)])/n
-            ax['checks'][1].plot(soln_tmp['xvals'], calcvals, calcfmt, 
+            ax['checks'][1].plot(soln_tmp['xdata'], calcvals, calcfmt, 
                           color = col[n], markerfacecolor='none')
         dg_min = min(dg_min)
         dg_max = max(dg_max)    
@@ -2647,6 +2588,8 @@ def plot_props(soln, figinfo, **kwargs):
     # now add the response maps        
     if 'maps' in fig.keys():
         # add values to contour plots
+        # get xlim so we can reset it if we plot outside the range
+        xlim = ax['maps'][0].get_xlim()
         for n in nplot:
             dlam = calc_dlam_from_dlam3(n, soln['dlam3_1'], soln['phi_1'])
             if figinfo['info']['maplabels'][n]:
@@ -2660,6 +2603,7 @@ def plot_props(soln, figinfo, **kwargs):
             figinfo['info']['maplabels'][n]=False
         for k in [0, 1]:
             ax['maps'][k].legend(framealpha=1)
+            ax['maps'][k].set_xlim(xlim)
     return figinfo['fig']['master'], figinfo['ax']
     
 
@@ -3011,6 +2955,7 @@ def cull_df(df_in, **kwargs):
             this range are unaffected.
     """
     
+    t_range = kwargs.get('t_range', [-np.inf, np.inf])
     # copy the input dataframe
     df = df_in.copy()
     
