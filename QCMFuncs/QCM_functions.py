@@ -29,10 +29,7 @@ except ImportError:
 
 # setvvalues for standard constants
 Zq = 8.84e6  # shear acoustic impedance of at cut quartz
-f1 = 5e6  # fundamental resonant frequency
-    
-openplots = 4
-drho_q = Zq/(2*f1)
+f1_default = 5e6  # fundamental r_defaault_defaaultesonant frequency
 e26 = 9.65e-2
 
 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
@@ -46,7 +43,7 @@ T_coef_default = {'f': {1: [0.00054625, 0.04338, 0.08075, 0],
                        5: [0, 0, 0, 0]}}
 
 electrode_default = {'drho': 2.8e-3, 'grho3': 3.0e14, 'phi': 0}
-water = {'drho':np.inf, 'grho3':1e8, 'phi':90}
+water = {'drho':np.inf, 'grho3':9.4e7, 'phi':90}
 air = {'drho':np.inf, 'grho3':0, 'phi':90}
 
 # make an uncertainty dictionary we'll use for everything
@@ -78,6 +75,10 @@ axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
             'hr':'t (hr)',
             'day':'t (day)',
             'index':'index'}
+
+def drho_q(**kwargs):
+    f1 = kwargs.get('f1', f1_default)
+    return Zq/(2*f1)
 
 def drho_label(ext):
     '''
@@ -266,10 +267,11 @@ def sauerbreyf(n, drho, **kwargs):
     deltaf : float
         Calculated Sauerbrey frequency shift.
     """
+    f1 = kwargs.get('f1', f1_default)
     return 2*n*f1 ** 2*drho/Zq
 
 
-def sauerbreym(n, delf):
+def sauerbreym(n, delf, **kwargs):
     """
     Calculate Sauerbrey mass from frequency shift.
     
@@ -285,10 +287,11 @@ def sauerbreym(n, delf):
     drho : real float
         Sauerbrey mass in kg/m^2.
     """
+    f1 = kwargs.get('f1', f1_default)
     return -delf*Zq/(2*n*f1 ** 2)
 
 
-def etarho(n, props):
+def etarho(n, props, **kwargs):
     """
     Use power law formulation to get |eta*|rho at specified harmonic,
     with properties at n=3 as an input.
@@ -307,7 +310,7 @@ def etarho(n, props):
     eta_rho_mag : real
          |eta*|rho at harmonic of interest in SI units.
     """
-
+    f1 = kwargs.get('f1', f1_default)
     # first handle the case where we have a single dictionary of properties
     if 'grho3' in props.keys():
         grho_mag = grho(n, props)
@@ -392,7 +395,7 @@ def calc_jdp(grho):
     return (1/abs(grho))*np.sin(np.angle(grho))
 
 
-def grho_from_dlam(n, drho, dlam, phi):
+def grho_from_dlam(n, drho, dlam, phi, **kwargs):
     """
     Obtain |G*|\rho from d/lambda.
     
@@ -412,13 +415,14 @@ def grho_from_dlam(n, drho, dlam, phi):
     grho : real
         |G*|*density at harmonic of interest.
     """
+    f1 = kwargs.get('f1', f1_default)
     # min dlam value for calculation is 0.001
     dlam_new = copy(dlam)
     dlam_new[dlam_new==0]=0.001
     return (drho*n*f1*np.cos(np.deg2rad(phi/2))/dlam_new) ** 2
 
 
-def grho_bulk(n, delfstar):
+def grho_bulk(n, delfstar, **kwargs):
     """
     Obtain |G*|\rho from for bulk material (infinite thicknes).
     
@@ -435,7 +439,7 @@ def grho_bulk(n, delfstar):
     grho : real
         |G*|*rho at harmonic of interest.
     """
-
+    f1 = kwargs.get('f1', f1_default)
     return (np.pi*Zq*abs(delfstar[n])/f1) ** 2
 
 
@@ -475,10 +479,11 @@ def deltarho_bulk(n, delfstar, **kwargs):
     deltarho : real
         Decay length multiplied by density (SI units).
     """
+    f1 = kwargs.get('f1', f1_default)
     return -Zq*abs(delfstar[n])**2/(2*n*f1**2*delfstar[n].real)
 
 
-def calc_D(n, props, delfstar, calctype):
+def calc_D(n, props, delfstar, **kwargs):
     """
     Calculate D (dk*, thickness times complex wave number).
     
@@ -491,6 +496,9 @@ def calc_D(n, props, delfstar, calctype):
         'grho3' and 'phi'.
     delfstar : complex
         Complex frequency shift at harmonic of interest (Hz).
+        
+    kwargs
+    ----------
     calctype : string
         One of the following calculation types
         - 'SLA' (default): small load approximation with power law model
@@ -502,6 +510,8 @@ def calc_D(n, props, delfstar, calctype):
         D : complex
             Thickness times complex wave number.
     """
+    calctype = kwargs.get('calctype', 'SLA')
+    f1 = kwargs.get('f1', f1_default)
     drho = props['drho']
     return 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n,
                    props, calctype)
@@ -541,7 +551,7 @@ def zstar_bulk(n, props, calctype):
     return grhostar ** 0.5
 
 
-def calc_delfstar_sla(ZL):
+def calc_delfstar_sla(ZL, **kwargs):
     """
     Calculate complex frequency shift from load impedance using small
     load approximation.
@@ -552,23 +562,11 @@ def calc_delfstar_sla(ZL):
     returns:
         Complex frequency shift, delfstar (Hz).
     """
+    f1 = kwargs.get('f1', f1_default)
     return f1*1j*ZL/(np.pi*Zq)
 
-def calc_ZL_sla(delfstar):
-    """
-    Calculate complex load impedance from complex freq. shift using small
-    load approximation (the inverse of calc_dlfstar_sla)
-    args:
-        delfstar (complex):
-            complex frequency shift relative to bare crystal.
 
-    returns:
-        Complex load impedance in SI units .
-    """
-    return -1j*np.pi*Zq/f1
-
-
-def calc_ZL(n, layers, delfstar, calctype):
+def calc_ZL(n, layers, delfstar, **kwargs):
     """
     Calculate complex load impendance for stack of layers of known props.
     Layers are assumed to be laterally homogeneous
@@ -603,12 +601,13 @@ def calc_ZL(n, layers, delfstar, calctype):
     layer_nums = layers.keys()
     layer_min = min(layer_nums)
     layer_max = max(layer_nums)
+    calctype = kwargs.get('calctype', 'SLA')
 
     # we use the matrix formalism to avoid typos and simplify the extension
     # to large N.
     for i in np.arange(layer_min, layer_max):
         Z[i] = zstar_bulk(n, layers[i], calctype)
-        D[i] = calc_D(n, layers[i], delfstar, calctype)
+        D[i] = calc_D(n, layers[i], delfstar, **kwargs)
         L[i] = np.array([[np.cos(D[i])+1j*np.sin(D[i]), 0],
                  [0, np.cos(D[i])-1j*np.sin(D[i])]])
 
@@ -616,7 +615,8 @@ def calc_ZL(n, layers, delfstar, calctype):
     if 'Zf' in layers[layer_max].keys():
         Zf_max = layers[layer_max]['Zf'][n]
     else:
-        D[layer_max] = calc_D(n, layers[layer_max], delfstar, calctype)
+        D[layer_max] = calc_D(n, layers[layer_max], delfstar, 
+                              **kwargs)
         Zf_max = 1j*zstar_bulk(n, layers[layer_max], calctype)*np.tan(D[layer_max])
 
     # if there is only one layer, we're already done
@@ -635,13 +635,14 @@ def calc_ZL(n, layers, delfstar, calctype):
 
     rstar = uvec[1, 0]/uvec[0, 0]
     ZL = Z[layer_min]*(1-rstar)/(1+rstar)
+    
     # account for the possibility of a fractional layer
     # only one of the layers can have fractional coverage
     for i in np.arange(layer_min, layer_max):
         if 'AF' in layers[i].keys():
             AF = layers[i]['AF']
             layers_ref = delete_layer(layers, 1)
-            ZL_ref = calc_ZL(n, layers_ref, 0, calctype)
+            ZL_ref = calc_ZL(n, layers_ref, 0, **kwargs)
             ZL = AF*ZL+(1-AF)*ZL_ref
     return ZL
 
@@ -711,10 +712,10 @@ def calc_delfstar(n, layers_in, **kwargs):
         if layers[layernum]['drho'] == np.inf:
             print('only outermost layer can have infinite thickness')
 
-    ZL = calc_ZL(n, layers, 0, calctype)
+    ZL = calc_ZL(n, layers, 0, **kwargs)
     if (reftype=='overlayer') and (2 in layers.keys()):
         layers_ref = delete_layer(layers, 1)
-        ZL_ref = calc_ZL(n, layers_ref, 0, calctype)
+        ZL_ref = calc_ZL(n, layers_ref, 0, **kwargs)
     else:
         ZL_ref = 0
     
@@ -723,7 +724,7 @@ def calc_delfstar(n, layers_in, **kwargs):
     if calctype != 'LL':
         # use the small load approximation in all cases where calctype
         # is not explicitly set to 'LL'
-        return calc_delfstar_sla(del_ZL)
+        return calc_delfstar_sla(del_ZL, **kwargs)
 
     else:
         # this is the most general calculation
@@ -738,10 +739,10 @@ def calc_delfstar(n, layers_in, **kwargs):
         else:
             layers_ref = {0:layers[0]}
 
-        ZL_all = calc_ZL(n, layers_all, 0, calctype)
-        delfstar_sla_all = calc_delfstar_sla(ZL_all)
-        ZL_ref = calc_ZL(n, layers_ref, 0, calctype)
-        delfstar_sla_ref = calc_delfstar_sla(ZL_ref)
+        ZL_all = calc_ZL(n, layers_all, 0, **kwargs)
+        delfstar_sla_all = calc_delfstar_sla(ZL_all, **kwargs)
+        ZL_ref = calc_ZL(n, layers_ref, 0, **kwargs)
+        delfstar_sla_ref = calc_delfstar_sla(ZL_ref, **kwargs)
 
         def solve_Zmot(x):
             delfstar = x[0] + 1j*x[1]
@@ -763,7 +764,7 @@ def calc_delfstar(n, layers_in, **kwargs):
         return dfc-dfc_ref
 
 
-def calc_Zmot(n, layers, delfstar, calctype, **kwargs):
+def calc_Zmot(n, layers, delfstar, **kwargs):
     """
     Calculate motional impedance (used for .
     args:
@@ -776,25 +777,26 @@ def calc_Zmot(n, layers, delfstar, calctype, **kwargs):
             being the layer in contact with the QCM.  Each dictionary must
             include values for 'grho3, 'phi' and 'drho'.
 
-        calctype (string):
-            Generally passed from calling function.  Should always be 'LL'.
-
     kwargs:
         g0 (real):
             Dissipation at n for dissipation.  Default value set at top
             of QCM_functions.py (typically 50).
+            
+        calctype (string):
+            Generally passed from calling function.  Should always be 'LL'.
 
     returns:
         delfstar (complex):
             Complex frequency shift (Hz).
     """
+    f1 = kwargs.get('f1', f1_default)
     g0 = kwargs.get('g0', g0_default)
     om = 2 * np.pi * (n*f1 + delfstar)
     Zqc = Zq * (1 + 1j*2*g0/(n*f1))
 
     Dq = om*drho_q/Zq
     secterm = -1j*Zqc/np.sin(Dq)
-    ZL = calc_ZL(n, layers, delfstar, calctype)
+    ZL = calc_ZL(n, layers, delfstar, **kwargs)
     # eq. 4.5.9 in Diethelm book
     thirdterm = ((1j*Zqc*np.tan(Dq/2))**-1 +
                  (1j*Zqc*np.tan(Dq/2) + ZL)**-1)**-1
@@ -807,7 +809,7 @@ def calc_Zmot(n, layers, delfstar, calctype, **kwargs):
     return Zmot
 
 
-def calc_dlam(n, film):
+def calc_dlam(n, film, **kwargs):
     """
     Calculate d/lambda at specified harmonic.
     args:
@@ -822,7 +824,7 @@ def calc_dlam(n, film):
         delfstar (real):
             d/lambda at specified harmonic.
     """
-    return calc_D(n, film, 0, 'SLA').real/(2*np.pi)
+    return calc_D(n, film, 0, **kwargs).real/(2*np.pi)
 
 def calc_dlam_from_dlam3(n, dlam3, phi):
     """
@@ -840,7 +842,7 @@ def calc_dlam_from_dlam3(n, dlam3, phi):
     return dlam3*(n/3)**(1-phi/180)
     
 
-def calc_lamrho(n, grho3, phi):
+def calc_lamrho(n, grho3, phi, **kwargs):
     """
     Calculate lambda*\rho at specified harmonic.
     args:
@@ -856,12 +858,13 @@ def calc_lamrho(n, grho3, phi):
     returns:
         shear wavelength times density in SI units
     """
+    f1 = kwargs.get('f1', f1_default)
     # calculate lambda*rho
     grho = grho3*(n/3) ** (phi/90)
     return np.sqrt(grho)/(n*f1*np.cos(np.deg2rad(phi/2)))
 
 
-def calc_deltarho(n, grho3, phi):
+def calc_deltarho(n, grho3, phi, **kwargs):
     """
     Calculate delta*\rho at specified harmonic.
     args:
@@ -882,15 +885,18 @@ def calc_deltarho(n, grho3, phi):
 
 
 def phi_from_grho3_sadman(grho3):
-    # linear relationship between phi and Grho3 suggested
-    # by Kazi's hydrophobic polyelectrolyte complex paper
+    '''
+    linear relationship between phi and Grho3 suggested
+    by Kazi's hydrophobic polyelectrolyte complex paper 
+    SI units
+    '''
     logG = np.log10(grho3)
-    if logG <=5:
+    if logG <=8:
         return 90
-    elif logG >=9:
+    elif logG >=12:
         return 0
     else:
-        return 90-90*(logG-5)/4
+        return 90-90*(logG-8)/4
 
 
 def dlam(n, dlam3, phi):
@@ -979,9 +985,10 @@ def normdelf_bulk(n, dlam3, phi):
         delf normalized bulk value
     """
     
-    # to avlid divergence for phi = 0 we set 0.1 degree as floor for phi
+    # to avoid divergence for phi = 0 we set 0.1 degree as floor for phi
     phi_new = copy(phi)
-    phi_new[phi_new==0]=0.1
+    if isinstance(phi_new, np.ndarray):
+        phi_new[phi_new==0]=0.1
     answer = np.real(2*np.tan(2*np.pi*dlam(n, dlam3, phi_new) *
         (1-1j*np.tan(np.deg2rad(phi_new/2)))) /
         (np.sin(np.deg2rad(phi_new))*(1-1j*np.tan(np.deg2rad(phi_new/2)))))
@@ -1093,7 +1100,7 @@ def rd_from_delfstar(n, delfstar):
     return -delfstar[n].imag/delfstar[n].real
 
 
-def bulk_props(delfstar):
+def bulk_props(delfstar, **kwargs):
     """
     Determine properties of bulk material from complex frequency shift.
     
@@ -1107,7 +1114,7 @@ def bulk_props(delfstar):
         phi:
             Phase angle in degrees, at harmonic where delfstar was measured.
     """
-
+    f1 = kwargs.get('f1', f1_default)
     grho = (np.pi*Zq*abs(delfstar)/f1) ** 2
     phi = -np.degrees(2*np.arctan(delfstar.real /
                       delfstar.imag))
@@ -1132,6 +1139,7 @@ def nvals_from_calc(calc):
         n_unique:  unique harmonics used in calculation
 
     '''
+    calc = update_calc(calc)
     nf = calc.split('_')[0].split('.')
     nf = [int(x) for x in nf]
     
@@ -1235,21 +1243,21 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
             - 'Voigt': small load approximation with Voigt model
                      
     """
-    gmax = kwargs.get('gmax', 20000)
+    gmax = kwargs.get('gmax', np.inf)
     calctype = kwargs.get('calctype', 'SLA')
     
     if 't' in delfstar.keys() and not 't_next' in delfstar.keys():
         delfstar = add_t_diff(delfstar)
         
     # check to see if there are any nan values in the harmonics we need  
-    delfstar_mod = deepcopy(delfstar)
+    delfstar_mod = copy(delfstar)
     n_unique = nvals_from_calc(calc)[3]
     delfstar_mod  = delfstar_mod.dropna(subset = n_unique)
 
     # also set delfstar to nan for gamma exceeding gmax
     for n in n_unique:
-          delfstar_mod.drop(delfstar_mod[np.imag(delfstar_mod[n]) > gmax].index, 
-                      inplace = True)
+        index_overdamped = delfstar_mod[(np.imag(delfstar_mod[n])>gmax)].index
+        delfstar_mod.drop(index_overdamped, inplace = True)
           
     # add time and temp infor if it exists
     var_list = []
@@ -1257,7 +1265,7 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
         if var in delfstar_mod.keys():
             var_list.append(var)
           
-    df_soln = delfstar_mod[var_list].copy()
+    df_soln = copy(delfstar_mod[var_list])
 
     # now add complex frequency and frequency shifts
     npts = len(df_soln.index)
@@ -1266,8 +1274,9 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
         # we don't always have the reference and data values, sometimes
         # we just have delfstar
         if f'{n}_dat' in delfstar.keys():
-            df_soln.insert(df_soln.shape[1], f'f_expt{n}', delfstar[f'{n}_dat'])
-        df_soln.insert(df_soln.shape[1], 'df_expt'+str(n), delfstar[n])
+            df_soln.insert(df_soln.shape[1], f'f_expt{n}', 
+                           delfstar_mod[f'{n}_dat'])
+        df_soln.insert(df_soln.shape[1], 'df_expt'+str(n), delfstar_mod[n])
         df_soln.insert(df_soln.shape[1], 'df_calc'+str(n), complex_series)
     
     # add calc to each row
@@ -1292,7 +1301,7 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
     df_soln['AF_1'] = 1.0
     
     # now add columns for Jacobian and layers
-    df_soln.insert(df_soln.shape[1], 'jacobian', object_series)
+    df_soln.insert(df_soln.shape[1], 'jac', object_series)
     df_soln.insert(df_soln.shape[1], 'layers', object_series)
   
     # now add columns for 'calctype'
@@ -1358,15 +1367,48 @@ def compare_calc_expt(layers, row, calc, **kwargs):
     return vals
 
 
-def update_layers(props_calc, values, layers):
-    # updates layers dictionary, substituting the specified values
-    # into the properties specified by props_calc
+def extract_props(soln_df, props_calc):
+
+    propvals=[]
+    for prop in props_calc:
+        if len(prop.split('_')==1):
+            prop = prop+'_1'
+        propvals.append(soln_df[props_calc])
+    return propvals
+        
+
+def update_layers(props, values, layers):
+    '''
+    Updates layers dictionary, substituting the specified values
+    into the properties specified by props_calc.  
+    
+    Parameters
+    ----------
+    props_calc : list
+        List of values from the layers dictionary to be updated.
+    soln_df : Either a list of values corresponding to the 
+        value of props_calc (in the same order), or a dataframe row or pandas
+        series from which they are taken.
+    layers : Dictionary
+        The updated layers dictionary.
+    
+    Returns
+    -------
+    Updated layers dictionary.
+    '''
+    # 
     # make sure order of values corresponds to order of props_calc
-    for input_string, value in zip(props_calc, values): 
-        [prop, layer] = input_string.split('_')
-        layer = int(layer)
-        if value != 'no_change':
-            layers[layer][prop] = value
+    if isinstance(values, pd.DataFrame):
+        for input_string in props:
+            [prop, layer] = input_string.split('_')
+            layer = int(layer)
+            layers[layer][prop] = values.iloc[0][input_string]
+    else:
+        for input_string, value in zip(props, values): 
+            [prop, layer] = input_string.split('_')
+            layer = int(layer)
+            if value != 'no_change':
+                layers[layer][prop] = value
     return layers
 
 
@@ -1393,7 +1435,7 @@ def update_df_soln(df_soln, soln, idx, layers, props_calc, reftype):
                                                      reftype=reftype)
         
     df_soln.at[idx, 'layers'] = deepcopy(layers)
-    df_soln.at[idx, 'jacobian'] = (soln['jac']).astype(object)
+    df_soln.at[idx, 'jac'] = (soln['jac']).astype(object)
     df_soln.at[idx, 'dlam3_1'] = calc_dlam(3, layers[1])
     df_soln.at[idx, 'props_calc'] = props_calc
         
@@ -1465,7 +1507,7 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
         - default is 20,000 Hz
     
     accuracy (real):
-        Max difference between actual and back-calculated delf, delg
+        Max difference between acltual and back-calculated delf, delg
         - deault is 1 Hz 
         - this is not the uncertainty in delf, delg but is used to check
         that a solution exists
@@ -1737,7 +1779,7 @@ def make_err_plot(ax, soln, uncertainty_dict, **kwargs):
     # frequency or dissipation shift
     mult = np.array([1, 1, 1j], dtype=complex)
     pos = {0:0, 1:0, 2:1}  # used to ef the relevant uncertainty is f or g
-    forg = {0: 'f', 1: 'f', 2: '$\Gamma$'}
+    forg = {0: 'f', 1: 'f', 2: r'$\Gamma$'}
     prop_type = {0: 'grho3', 1: 'phi', 2: 'drho'}
     scale_factor = {0: 0.001, 1: 1, 2: 1000}
 
@@ -1917,7 +1959,7 @@ def calc_prop_error(soln, uncertainty_dict):
 
         # extract the jacobian and turn it back into a numpy array of floats
         try:
-            jacobian = np.array(row['jacobian'], dtype='float')
+            jacobian = np.array(row['jac'], dtype='float')
         except:
             jacobian = np.zeros([len(uncertainty), len(uncertainty)])
         try:
@@ -2015,6 +2057,10 @@ def make_prop_axes(props, **kwargs):
              
         maps (booleaan):
             True (default is false) if we make the response maps
+            
+        contour_range (dictionary):
+            range of contours in form {0:[min,max], 1:[min, max])} \
+            default is {0:[-3, 3], 1:[0,3]})
                     
         contour_range_units: 
             'Hz' (default) or Sauerbrey if we want to normalize
@@ -2041,6 +2087,9 @@ def make_prop_axes(props, **kwargs):
         no3 (Boolean):
             False (default) if we want to keep the '3' 
             subscript in axis label for G
+        
+        gammascale (string):
+            'log to plot dissipation on log scale'
 
 
     Returns:
@@ -2064,7 +2113,6 @@ def make_prop_axes(props, **kwargs):
     maps = kwargs.get('maps', False)
     checks = kwargs.get('checks', True)
     xunit_input = kwargs.get('xunit', 'index')
-    xscale = kwargs.get('xscale', 'linear')
     no3 = kwargs.get('no3', False)
     nprops = len(props)
     plotsize = kwargs.get('plotsize', (4,3))
@@ -2127,14 +2175,26 @@ def make_prop_axes(props, **kwargs):
         fig['props'] = fig['master'].add_subfigure(GridSpec[0,3:9])
     else:
         fig['props'] = fig['master'].add_subfigure(GridSpec[0,:])
-        
-    ax['props'] = fig['props'].subplots(1,nprops, 
-                                        squeeze = False).flatten()
     
+    # add the different axes to plots figure
+    ax['props']={}
+    ax['props'][0] = fig['props'].add_subplot(1, nprops, 1)
+    if 'log' in xunit[0].split('.'):
+        ax['props'][0].set_xscale('log')
+
+    for p in np.arange(1, nprops):
+        if xunit[p] == xunit[0]:
+            ax['props'][p] = fig['props'].add_subplot(1, nprops, p+1, 
+                                                      sharex = ax['props'][0])
+        else:
+            ax['props'][p] = fig['props'].add_subplot(1, nprops, p+1)
+            
     for p in np.arange(nprops):
         ax[p] = ax['props'][p]
         ax[p].set_title(titles[p])
         ax[p].set_xlabel(xlabel[p])
+        if 'log' in props[p].split('.'):
+            ax['props'][p].set_yscale('log')
         
     iax = nprops-1  # running number of axes for axis labeling
     irow = 0  # running index of row
@@ -2147,7 +2207,8 @@ def make_prop_axes(props, **kwargs):
         else:
             fig['checks'] = fig['master'].add_subfigure(GridSpec[irow,:])
             
-        ax['checks'] = fig['checks'].subplots(1,2, sharex=True)
+        ax['checks'] = {0:fig['checks'].add_subplot(1,2,1, sharex=ax['props'][0]),
+                        1:fig['checks'].add_subplot(1,2,2, sharex=ax['props'][0])}
         ax[iax+1]=ax['checks'][0]
         ax[iax+2]=ax['checks'][1]
         for k in [0, 1]:
@@ -2161,9 +2222,6 @@ def make_prop_axes(props, **kwargs):
         gammascale = kwargs.get('gammascale', 'linear')
         ax['checks'][1].set_yscale(gammascale)
         
-        # set linear or log scale
-        for k in [0,1]:
-            ax['checks'][k].set_xscale(xscale)
             
         # set variable we'll use to make sure we don't duplicate labels            
         for n in [1,3,5,7,9]:
@@ -2222,13 +2280,13 @@ def make_prop_axes(props, **kwargs):
             n = prop[-1]
             # handle the possibility that we want to plot negative of df
             if '-df' in props[p]:
-                ax['props'][p].set_ylabel(f'$-\Delta f_{{{n}}}$ (Hz)')
+                ax['props'][p].set_ylabel(f'-\u0394 f_{{{n}}} (Hz)')
             else:
-                ax['props'][p].set_ylabel(f'$\Delta f_{{{n}}}$ (Hz)')
+                ax['props'][p].set_ylabel(f'\u0394 f_{{{n}}}$ (Hz)')
             ax[p].set_xlabel(xlabel[p])
         elif 'dg' in prop:
             n = prop[-1]
-            ax['props'][p].set_ylabel(f'$\Delta \Gamma_{{{n}}}$ (Hz)')
+            ax['props'][p].set_ylabel(f'\u0394 \u0393_{{{n}}} (Hz)')
             ax['props'][p].set_xlabel(xlabel[p])
             
         elif 'drho' in prop:
@@ -2241,23 +2299,14 @@ def make_prop_axes(props, **kwargs):
 
         ax['props'][p].set_title(titles[p])
 
-    info = {'props':props, 'xunit':xunit, 'xscale':xscale,
+    info = {'props':props, 'xunit':xunit,
             'maplabels':maplabels, 'checklabels':checklabels}
     
-    # share x axes as appropriate
-    for p1 in np.arange(len(xunit)-1):
-        for p2 in np.arange(p1+1, len(xunit)-1):
-            if xunit[p1]==xunit[p2]:
-                # use try/except to avoid error if they are already shared
-                try:
-                    ax[p1].sharex(ax[p2])
-                except:
-                    pass
-        
+
     return {'fig':fig, 'ax':ax, 'info':info}
 
 
-def make_data_array(var, soln, prop_error):
+def make_data_array(var, soln, prop_error, **kwargs):
     """
     Extract appropriate data vector from solution dataframe
 
@@ -2276,16 +2325,18 @@ def make_data_array(var, soln, prop_error):
     err_array : numpy array of errors (if they exist, usually returns 'null')
 
     """
-    
+    f1 = kwargs.get('f1', f1_default)
     ext = var.split('.')
     
     # set errors to zero by default
     err_array = np.zeros_like(soln.index)
     
     # add designation as layer 1 if it is not included explicitly
-    if len(ext[0].split('_'))==1 and ext[0] in ['grho3', 'phi', 'drho']:
-        ext[0] = ext[0]+'_1'
+    # layer doesn't always have a meaning (time units, for example)
+    if len(ext[0].split('_')) == 1:
         layer = 1
+    else:
+        layer = ext[0].split('_')[1]
 
     if ext[0] == 's':
         data_array = soln['t']
@@ -2305,24 +2356,35 @@ def make_data_array(var, soln, prop_error):
     elif ext[0] == 'index':
         data_array = soln.index
         
-    elif 'grho3_' in ext[0]: 
-       data_array = soln[ext[0]].astype(float)/1000
-       if f'{ext[0]}_err' in prop_error.columns.values:
-           err_array = prop_error[f'{ext[0]}_err']/1000
+    elif 'grho3' in ext[0]:
+        # units are g/m^2 for grho3
+        prop_name = f'grho3_{layer}'
+        prop_err_name = prop_name+'_err'
+        data_array = soln[prop_name].astype(float)/1000
+        if prop_err_name in prop_error.columns.values:
+            err_array = prop_error[prop_err_name]/1000
 
-    elif 'etarho3_' in ext[0]:
+    elif 'etarho3' in ext[0]:
        # units are mPa-s for viscosity
-       data_array = soln[f'grho3_{layer}'].astype(float)/(np.pi*1.5e7)
+       prop_name = f'grho3_{layer}'
+       prop_err_name = prop_name+'_err'
+       data_array = soln[prop_name].astype(float)/(2*np.pi*3*f1)
        if f'grho3_{layer}_err' in prop_error.columns.values:
-           err_array = prop_error[f'grho3_{layer}_err']/(np.pi*1.5e7)
+           err_array = prop_error[f'grho3_{layer}_err']/(2*np.pi*3*f1)
 
-    elif 'phi_' in ext[0]:
-       data_array = soln[ext[0]].astype(float)
-       if f'{ext[0]}_err' in prop_error.columns.values:
-           err_array = prop_error[f'{ext[0]}_err']
+    elif 'phi' in ext[0]:
+        prop_name = f'phi_{layer}'
+        prop_err_name = prop_name+'_err'
+        data_array = soln[prop_name].astype(float)
+        if prop_err_name in prop_error.columns.values:
+            err_array = prop_error[prop_err_name]
        
     elif 'tanphi' in ext[0]:
-       data_array = np.tan(np.pi*soln[f'phi_{layer}'].astype(float)/180)
+        prop_name=f'phi_{layer}'
+        prop_err_name = prop_name +'_err'
+        data_array = np.tan(np.pi*soln[prop_name].astype(float)/180)
+        if prop_err_name in prop_error.columns.values:
+            err_array = np.tan(np.pi*prop_error[prop_err_name]/180)       
        
     elif 'grho3p' in ext[0]:
        data_array = (soln[f'grho3_{layer}'].astype(float)*
@@ -2333,33 +2395,41 @@ def make_data_array(var, soln, prop_error):
                 np.sin(np.pi*soln['phi'].astype(float)/180)/1000)
                                
     elif 'drho' in ext[0]:
-       data_array = 1000*soln[f'drho_{layer}'].astype(float)
-       # multiply by 1000 if units are nm instead of microns
-       if 'nm' in ext[0]:
-           data_array = 1000*data_array
-       if f'{data_array}_err' in prop_error.columns.values:
-           err_array = 1000*prop_error[f'{data_array}_err']
+        prop_name = f'drho_{layer}'
+        prop_err_name = prop_name+'_err'
+        data_array = 1000*soln[f'drho_{layer}'].astype(float)
+        
+        # multiply by 1000 if units are nm instead of microns
+        if 'nm' in ext[0]:
+            data_array = 1000*data_array
+        if prop_err_name in prop_error.columns.values:
+            err_array = 1000*prop_error[prop_err_name]
 
     elif 'jdp' in ext[0]:
-       data_array = ((1000/soln['grho3_1'].astype(float))*
-                np.sin(soln['phi'].astype(float)*np.pi/180))
+        data_array = ((1000/soln['grho3_1'].astype(float))*
+                 np.sin(soln['phi'].astype(float)*np.pi/180))
       
     elif 'soln_expt' in ext[0]:
-       data_array = soln[ext[0]].astype(complex)
-       data_array = np.real(data_array)
+        data_array = soln[ext[0]].astype(complex)
+        data_array = np.real(data_array)
        
-    elif 'dg_expt' in ext[0]:
-       key = ext[0].replace('dg', 'soln')
-       data_array = soln[key].astype(complex)
-       data_array = np.imag(data_array)
+    elif 'g_expt' in ext[0]:
+        # this handles g_exptn and dg_expt_n for different n
+        key = ext[0]
+        data_array = np.real(soln[key].astype(complex))
        
+    elif 'f_expt' in ext[0]:
+        # this handles f_exptn and df_expn for different n
+        key = ext[0]
+        data_array = np.real(soln[key].astype(complex))
+          
     elif ext[0] in soln.keys():
-       data_array = soln[ext[0]]
+        data_array = soln[ext[0]]
    
     else:
-       print(f'no data - not a recognized prop type ({ext[0]})')
-       data_array=np.array([])
-       data_array=np.array([])
+        print(f'no data - not a recognized prop type ({ext[0]})')
+        data_array=np.array([])
+        data_array=np.array([])
        
     return data_array.astype('float64'), err_array
    
@@ -2393,9 +2463,10 @@ def plot_props(soln, figinfo, **kwargs):
     uncertainty_dict (dictionary or string):
         Information used to generate uncertainty in frequency and
         dissipation values, used to determine uncertainties in 
-        calculated properties.  Default is 'zeros', in which case we 
-        don't calculate property uncertainties.  See the definition of
-        calc_fstar_err for details.
+        calculated properties.  Default is uncertainty_dict_defatult
+        (defined at top of QCM_functions).  See the definition of
+        calc_fstar_err for details. Set to 'zeros' if you don't want
+        error bars to appear in the plot.
     nplot (list of integers):
         harmonics to plot, default is [3,5])
     drho_ref (real):
@@ -2428,7 +2499,6 @@ def plot_props(soln, figinfo, **kwargs):
     ax = figinfo['ax']
     fig = figinfo['fig']
     nprops = len(props)
-    plots_to_make = kwargs.get('plots_to_make', np.arange(nprops))
     
     # create dataframe with calculated errors
     prop_error = calc_prop_error(soln, uncertainty_dict)
@@ -2436,10 +2506,10 @@ def plot_props(soln, figinfo, **kwargs):
     xoffset={}
     # set the offset for the x values 
     if type(xoffset_input) != list:
-        for p in plots_to_make:
+        for p in np.arange(nprops):
             xoffset[p] = xoffset_input
     else:
-        for p in plots_to_make:
+        for p in np.arange(nprops):
             xoffset[p]=xoffset_input[p]  
             
     # determine the plots we actually need to make. Sometimes we don't add
@@ -2447,13 +2517,27 @@ def plot_props(soln, figinfo, **kwargs):
     # we need to keep xdata for each plot, because we'll use just
     # one of these arrays (usually the first one) for the solution checks
     xdata = {}
-    for p in plots_to_make:
+    for p in np.arange(nprops):
         xdata[p] = make_data_array(xunit[p], soln, prop_error)[0]
         ydata, yerr  = make_data_array(props[p], soln, prop_error)
 
         # offset xdata if desired
+        if xoffset[p] == 'zero':
+            xoffset[p] = min(xdata[p])
         xdata[p] = xdata[p] - xoffset[p]
         
+        # make sure y limits are okay (needed for log axes)
+        y_min = []
+        y_max = []
+        if ax['checks'][0].lines:
+            y_min = [ax['props'][p].get_ylim()[0]]
+            y_max = [ax['props'][p].get_ylim()[1]]
+            
+        y_min.append(min(ydata-yerr))
+        y_max.append(max(ydata+yerr))
+        y_min = min(y_min)
+        y_max = max(y_max)
+
         if not np.any(yerr): 
             ax['props'][p].plot(xdata[p], ydata, fmt, label=label)
             
@@ -2461,17 +2545,22 @@ def plot_props(soln, figinfo, **kwargs):
             ax['props'][p].errorbar(xdata[p], ydata, fmt=fmt, yerr=yerr, 
                                     label=label)
             
-        if 'log' in xunit[p].split('.'):
-            ax['props'][p].set_xscale('log')
-            
-        if 'log' in props[p].split('.'):
-            ax['props'][p].set_yscale('log')
+        y_range = y_max - y_min
+        if ax['props'][p].get_yscale() == 'log' and y_min>0:
+            ax['props'][p].set_ylim([0.9*y_min, 1.1*y_max])
+        else:
+            ax['props'][p].set_ylim([y_min - 0.05*y_range, 
+                        y_max +0.05*y_range])     
         
+        # rest max phi to cut off meaningless phase angles 
+        if 'phi' in props[p] and ax['props'][p].get_ylim()[1]>92:
+            ax['props'][p].set_ylim(top = 92)
+        if 'phi' in props[p] and ax['props'][p].get_ylim()[0]<0:
+            ax['props'][p].set_ylim(bottom = 0)
             
     # now add the comparison plots of measured and calcuated values         
     # plot the experimental data first
     # keep track of max and min values for plotting purposes       
-    
     if 'checks' in fig.keys():       
         # decide to use df1 or not
         plot_df1 = kwargs.get('plot_df1', False)
@@ -2485,34 +2574,52 @@ def plot_props(soln, figinfo, **kwargs):
             calcfmt = 'o'
         else:
             calcfmt = '-'
+            
         df_min = []
         df_max = []
         dg_min = []
         dg_max = []
+        x_min = []
+        x_max = []
         
-        # now plot the calculated values
-        nfplot = nplot.copy()
-        ngplot = nplot.copy()
+        # start with previous limits if data were already plotted
+        if ax['checks'][0].lines:
+            df_min = [ax['checks'][0].get_ylim()[0]]
+            df_max = [ax['checks'][0].get_ylim()[1]]
+            dg_min = [ax['checks'][1].get_ylim()[0]]
+            dg_max = [ax['checks'][1].get_ylim()[1]]
+            x_min = [ax['checks'][1].get_xlim()[0]]
+            x_max = [ax['checks'][1].get_xlim()[1]]   
+            
+        # now plot the calculated values 
+        nfplot = []
+        ngplot = []
+        for n in nplot:
+            if f'df_expt{n}' in soln.keys():
+                nfplot.append(n)
+                ngplot.append(n)
+
         if not plot_df1:
             try:
                 nfplot.remove(1)
             except ValueError:
                 pass
+            
         # set up colors we'll use for the calculated values
         col = {1:'C0', 3:'C1', 5:'C2', 7:'C3', 9:'C4'}
+        
         # add uncertainties in delf, delg
-
         soln = add_fstar_err(soln, uncertainty_dict)
         
         # use the first plotted property plot for the x values
-        soln['xdata'] = xdata[plots_to_make.min()]    
+        soln['xdata'] = xdata[0]    
         for n in nfplot: 
             # drop nan values from dataframe to avoid problems with errorbar
             soln_tmp = soln.dropna(subset=[f'df_expt{n}'])
             dfval = np.real(soln_tmp[f'df_expt{n}'])/n
             ferr = np.real(soln_tmp[f'fstar_err{n}'])/n
-            df_min.append(np.nanmin(dfval))
-            df_max.append(np.nanmax(dfval))
+            df_min.append(np.nanmin(dfval-ferr))
+            df_max.append(np.nanmax(dfval+ferr))
             if figinfo['info']['checklabels'][n]:
                 label_expt = f'n={n}: expt'
                 label_calc = f'n={n}: calc'
@@ -2537,8 +2644,8 @@ def plot_props(soln, figinfo, **kwargs):
             soln_tmp = soln.dropna(subset=[f'df_expt{n}'])
             dgval = np.imag(soln_tmp['df_expt'+str(n)])/n
             gerr = np.imag(soln_tmp[f'fstar_err{n}'])/n
-            dg_min.append(np.nanmin(dgval))
-            dg_max.append(np.nanmax(dgval))
+            dg_min.append(np.nanmin(dgval-gerr))
+            dg_max.append(np.nanmax(dgval+gerr))
             ax['checks'][1].errorbar(soln_tmp['xdata'], dgval, yerr = gerr, 
                                      fmt = '+',  
                                      color = col[n])
@@ -2546,20 +2653,15 @@ def plot_props(soln, figinfo, **kwargs):
             ax['checks'][1].plot(soln_tmp['xdata'], calcvals, calcfmt, 
                           color = col[n], markerfacecolor='none')
         dg_min = min(dg_min)
-        dg_max = max(dg_max)    
+        dg_max = max(dg_max)   
         
-        gammascale = kwargs.get('gammascale', 'linear')
-        # change dissipation scale to log scale if needed
-        if gammascale=='log':
-            ax['checks'][1].set_yscale('log')
-            
-        # change x scale to log scale if needed
-        xscale = kwargs.get('xscale', 'linear')
-        if xscale == 'log':
-            ax['checks'][0].set_xscale('log')
-            ax['checks'][0].set_xscale('log')  
-            
-        # add lendend - single legend for both parts
+        # now get range for x data
+        x_min.append(min(soln_tmp['xdata']))
+        x_max.append(max(soln_tmp['xdata']))        
+        x_min = min(x_min)
+        x_max = max(x_max)
+                              
+        # add legend - single legend for both parts
         handles, labels = ax['checks'][0].get_legend_handles_labels()
         
         # sort legend entries
@@ -2584,6 +2686,14 @@ def plot_props(soln, figinfo, **kwargs):
             elif ax['checks'][1].get_yscale() == 'linear':
                 ax['checks'][1].set_ylim([dg_min - 0.05*delg_range, 
                             dg_max +0.05*delg_range])
+        
+        # now set x limits
+        x_range = x_max - x_min
+        if ax['checks'][1].get_xscale() == 'log' and x_min>0:
+            ax['checks'][1].set_xlim([0.9*x_min, 1.1*x_max])
+        else:
+            ax['checks'][1].set_xlim([x_min - 0.05*x_range, 
+                        x_max +0.05*x_range])
                 
     # now add the response maps        
     if 'maps' in fig.keys():
@@ -2955,7 +3065,6 @@ def cull_df(df_in, **kwargs):
             this range are unaffected.
     """
     
-    t_range = kwargs.get('t_range', [-np.inf, np.inf])
     # copy the input dataframe
     df = df_in.copy()
     
@@ -3615,7 +3724,50 @@ def kotula(xi, Gmstar, Gfstar, xi_crit, s,t):
 def abs_kotula(xi, Gmstar, Gfstar, xi_crit, s, t):
     return abs(kotula(xi, Gfstar, Gmstar, xi_crit, s, t))
 
+def vline(x, ax, **kwargs):
+    '''
+    Draws vertical line at x using existing limits
 
+    Parameters
+    ----------
+    x : float
+        location of the vertical line
+    ax : axis
+        axis on which to plot the line.
 
+    Returns
+    -------
+    None.
+
+    '''
+    ymin = ax.get_ylim()[0]
+    ymax = ax.get_ylim()[1]
+    linestyle = kwargs.get('linestyle', 'solid')
+    color = kwargs.get('color', 'k')
+    
+    ax.vlines(x, ymin, ymax, color = color, linestyle = linestyle)
+    
+def hline(x, ax, **kwargs):
+    '''
+    Draws horizontal line at y using existing limits
+
+    Parameters
+    ----------
+    y : float
+        location of the horizontal line
+    ax : axis
+        axis on which to plot the line.
+
+    Returns
+    -------
+    None.
+
+    '''
+    
+    xmin = ax.get_xlim()[0]
+    xmax = ax.get_xlim()[1]
+    linestyle = kwargs.get('linestyle', 'solid')
+    color = kwargs.get('color', 'k')
+    plt.vlines(x, xmin, xmax, color = color, linestyle = linestyle)
 
 
