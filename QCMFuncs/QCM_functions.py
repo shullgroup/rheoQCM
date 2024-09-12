@@ -19,6 +19,7 @@ from pylab import meshgrid
 import pandas as pd
 from copy import deepcopy, copy
 import matplotlib.gridspec as gridspec
+from matplotlib.ticker import FormatStrFormatter
 
 try:
   from kww import kwwc, kwws
@@ -46,12 +47,7 @@ electrode_default = {'drho': 2.8e-3, 'grho3': 3.0e14, 'phi': 0}
 water = {'drho':np.inf, 'grho3':9.4e7, 'phi':90}
 air = {'drho':np.inf, 'grho3':0, 'phi':90}
 
-# make an uncertainty dictionary we'll use for everything
-# the values of 0.05 in err_frac may be a bit high
-uncertainty_dict_default = {'err_frac':[0.05,0.05]}
-for n in [1,3,5,7,9]:
-    uncertainty_dict_default[n] = [n*15, 2]
-    
+   
 # make dictionary of default titles
 titles_default =  ['(a)', '(b)', '(c)', '(d)', '(e)', '(f)',
                    '(g)', '(h)']
@@ -59,7 +55,7 @@ titles_default =  ['(a)', '(b)', '(c)', '(d)', '(e)', '(f)',
 # make a dictionary of the potential axis labels
 axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
             'phi': r'$\phi$ (deg.)',
-            'tanphi': r'$\tan \phi$',
+            'phi.tan': r'tan$\phi$',
             'grho3p': r'$G^\prime_3\rho$ (Pa $\cdot$ g/cm$^3$)',
             'grho3pp': r'$G^{\prime\prime}_3\rho$ (Pa $\cdot$ g/cm$^3$)',
             'AF':r'AF',
@@ -226,6 +222,36 @@ def add_eta_axis(ax):
     ax2.set_ylim(ylim2)
     ax2.set_ylabel(axlabels['etarho3'])
     return ax2
+
+
+def update_twin(ax):
+    """
+    Updates any axes that are twins of x (typically etarho3, logphi)
+
+    Parameters
+    ----------
+    ax : axis
+        Axis that has twins.
+
+    Returns
+    -------
+    Twinned axis - generally not used
+
+    """
+    twinax = [a for a in ax.figure.axes if a is not ax and 
+                   a.bbox.bounds == ax.bbox.bounds]
+    twinax = twinax[0]
+    
+    if twinax.get_ylabel() == axlabels['phi']:
+        yticks = ax.get_yticks()
+        ylim = ax.get_ylim()
+        twinax.set_yticks(yticks)
+        twinax.set_ylim(ylim)
+        twinax.set_yticklabels(np.tan(np.radians(ax.get_yticks())))
+        twinax.yaxis.set_major_formatter(FormatStrFormatter('%.2g'))
+
+    
+    return twinax
     
 
 def add_D_axis(ax):
@@ -1170,7 +1196,7 @@ def nvals_from_df_soln(df_soln):
 
     nvals = []
     for n in [1,3,5,7,9,11,13,15,17,19]:
-        if f'df_expt{n}' in df_soln.columns.values:
+        if f'delfstar_expt_{n}' in df_soln.columns.values:
             nvals = nvals + [n]
             
     return nvals
@@ -1202,7 +1228,7 @@ def find_nplot(delfstar):
     nplot = []
     # consider possibility that our data has harmonics up to n=21
     for n in np.arange(1, 22, 2):
-        if n in delfstar.keys():
+        if f'delfstar_expt_{n}' in delfstar.keys():
             nplot = nplot + [n]
     return nplot
 
@@ -1245,6 +1271,7 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
     """
     gmax = kwargs.get('gmax', np.inf)
     calctype = kwargs.get('calctype', 'SLA')
+    reftype = kwargs.get('reftype', 'bare')
     
     if 't' in delfstar.keys() and not 't_next' in delfstar.keys():
         delfstar = add_t_diff(delfstar)
@@ -1252,11 +1279,14 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
     # check to see if there are any nan values in the harmonics we need  
     delfstar_mod = copy(delfstar)
     n_unique = nvals_from_calc(calc)[3]
-    delfstar_mod  = delfstar_mod.dropna(subset = n_unique)
+    for n_to_drop in n_unique:
+        delfstar_mod  = delfstar_mod.dropna(subset = 
+                                            f'delfstar_expt_{n_to_drop}')
 
     # also set delfstar to nan for gamma exceeding gmax
     for n in n_unique:
-        index_overdamped = delfstar_mod[(np.imag(delfstar_mod[n])>gmax)].index
+        index_overdamped = delfstar_mod[(np.imag(delfstar_mod[f'delfstar_expt_{n}'])
+                                         >gmax)].index
         delfstar_mod.drop(index_overdamped, inplace = True)
           
     # add time and temp infor if it exists
@@ -1271,13 +1301,10 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
     npts = len(df_soln.index)
     complex_series = np.empty(len(df_soln), dtype = np.complex128)
     for n in find_nplot(delfstar):
-        # we don't always have the reference and data values, sometimes
-        # we just have delfstar
-        if f'{n}_dat' in delfstar.keys():
-            df_soln.insert(df_soln.shape[1], f'f_expt{n}', 
-                           delfstar_mod[f'{n}_dat'])
-        df_soln.insert(df_soln.shape[1], 'df_expt'+str(n), delfstar_mod[n])
-        df_soln.insert(df_soln.shape[1], 'df_calc'+str(n), complex_series)
+        # add experimental delfstar and empty column for calculated delfstar
+        df_soln.insert(df_soln.shape[1], f'delfstar_expt_{n}', 
+                       delfstar_mod[f'delfstar_expt_{n}'])
+        df_soln.insert(df_soln.shape[1], f'delfstar_calc_{n}', complex_series)
     
     # add calc to each row
     calc_array = np.array(npts*[calc])
@@ -1307,6 +1334,10 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
     # now add columns for 'calctype'
     calctype_array = np.array(npts*[calctype])
     df_soln.insert(df_soln.shape[1], 'calctype', calctype_array)
+    
+    # now add columns for 'reftype'
+    reftype_array = np.array(npts*[reftype])
+    df_soln.insert(df_soln.shape[1], 'reftype', reftype_array)
        
     return df_soln, delfstar_mod
 
@@ -1319,7 +1350,7 @@ def compare_calc_expt(layers, row, calc, **kwargs):
         layers (datafame):
             input properties 
         row (series):
-            single row from input delfstar dataframe, obtained from iterrows
+            single row from input delfstar dataframe, obtained from itertuples
             
     kwargs:
         calctype ('string'):
@@ -1357,12 +1388,12 @@ def compare_calc_expt(layers, row, calc, **kwargs):
     for n in nf: 
         val = (calc_delfstar(n, layers, calctype=calctype,
                                reftype=reftype).real -
-                 row[n].real)
+                 np.real(getattr(row, f'delfstar_expt_{n}')))
         vals.append(val)
     for n in ng: 
         val = (calc_delfstar(n, layers, calctype=calctype,
                                reftype=reftype).imag -
-                 row[n].imag)
+                 np.imag(getattr(row, f'delfstar_expt_{n}')))
         vals.append(val)
     return vals
 
@@ -1402,7 +1433,7 @@ def update_layers(props, values, layers):
         for input_string in props:
             [prop, layer] = input_string.split('_')
             layer = int(layer)
-            layers[layer][prop] = values.iloc[0][input_string]
+                    
     else:
         for input_string, value in zip(props, values): 
             [prop, layer] = input_string.split('_')
@@ -1431,7 +1462,7 @@ def update_df_soln(df_soln, soln, idx, layers, props_calc, reftype):
     
     nvals = nvals_from_df_soln(df_soln)
     for n in nvals:
-        df_soln.at[idx, f'df_calc{n}']=calc_delfstar(n, layers,
+        df_soln.at[idx, f'delfstar_calc_{n}']=calc_delfstar(n, layers,
                                                      reftype=reftype)
         
     df_soln.at[idx, 'layers'] = deepcopy(layers)
@@ -1576,9 +1607,9 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
 
     # create df_soln dataframe                   
     df_soln, delfstar_mod = make_soln_df(delfstar, calc, props_calc, layers,
-                           gmax=gmax, calctype=calctype) 
+                           gmax=gmax, calctype=calctype, reftype=reftype) 
   
-    for idx, row in delfstar_mod.iterrows(): 
+    for row in delfstar_mod.itertuples(): 
         def ftosolve(x):
             layers_solve = update_layers(props_calc, x, layers)
             return compare_calc_expt(layers_solve, row, calc,
@@ -1587,17 +1618,17 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
         try:
             soln = optimize.least_squares(ftosolve, guess, bounds=(lb, ub))
         except:
-            print(f'error at index {idx}')
+            print(f'error at index {row.Index}')
             continue
             
         # make sure sufficienty accurate solutions was found
         if soln['fun'].max() > accuracy:
-            df_soln.drop(idx, inplace=True)
+            df_soln.drop(row.Index, inplace=True)
             continue
         
         layers = update_layers(props_calc, soln['x'], layers)
         guess = guess_from_layers(props_calc, layers)
-        df_soln = update_df_soln(df_soln, soln, idx, layers, props_calc,
+        df_soln = update_df_soln(df_soln, soln, row.Index, layers, props_calc,
                                  reftype)
         
         #display the calculated values as the program is running
@@ -1658,8 +1689,8 @@ def solve_all(datadir, calc, **kwargs):
         dictionary of dataframes returned by read_xlsx
     soln : dictionary
         dictinoary of solutions returned by solve_for_props.
-    figinfo : dictionary
-        dictionary of figinfo returned by make_prop_axes
+    figdic : dictionary
+        dictionary returned by make_prop_axes
 
     """
 
@@ -1667,7 +1698,7 @@ def solve_all(datadir, calc, **kwargs):
 
     df = {}
     soln = {}
-    figinfo = {}
+    figdic = {}
     
     # create a list of all the .xlsx files in the data directory
     files = glob(os.path.join(datadir, '*.xlsx'))
@@ -1687,14 +1718,14 @@ def solve_all(datadir, calc, **kwargs):
         
         # window title for property plots
         kwargs['num']=os.path.join(datadir, prefix+'_'+calc+'_props.pdf')
-        figinfo[prefix] = make_prop_axes(**kwargs)
-        plot_props(soln[prefix], figinfo[prefix])
+        figdic[prefix] = make_prop_axes(**kwargs)
+        plot_props(soln[prefix], figdic[prefix])
         
         # now set the window title for the solution check
         kwargs['num']=os.path.join(datadir, prefix+'_'+calc+'_check.pdf')
-        figinfo[prefix]['fig'].savefig(os.path.join(datadir, prefix+
+        figdic[prefix]['fig'].savefig(os.path.join(datadir, prefix+
                                                     '_'+calc+'_props.pdf'))
-    return df, soln, figinfo
+    return df, soln, figdic
 
 
 def make_err_axes(**kwargs):
@@ -1705,7 +1736,6 @@ def make_err_axes(**kwargs):
         num (string):
             title for plot window
             
-
     Returns
     ----------
         fig:
@@ -1718,8 +1748,100 @@ def make_err_axes(**kwargs):
                            num = num)
     return fig, ax
 
+def err_fn_correlated_df(df_soln_in, fn_err):
+    """
+    Function to calculate property error if all values of df/n change by fn_err
+    Parameters
+    ----------
+    df_soln_in : Dataframe
+        Solution Dataframe
+    fn_err : float
+        error in df/n (same for each harmonic).
 
-def make_err_plot(ax, soln, uncertainty_dict, **kwargs):
+    Returns
+    -------
+    df_soln_out : Dataframe
+        soln dataframe with property errors added
+
+    """
+    df_soln_out = deepcopy(df_soln_in)
+    npts = len(df_soln_out.index)
+ 
+    float_series = np.zeros(npts, dtype = np.float64)
+    for prop in df_soln_out.iloc[0]['props_calc']:
+        if f'{prop}_err_fn' not in df_soln_out.keys():
+            df_soln_out.insert(df_soln_out.shape[1], 
+                           f'{prop}_err_fn', float_series)
+        else:
+            df_soln_out.loc[:,f'{prop}_err_fn'] = float_series
+    
+    # now add columns for properties in all layers
+    for idx, row in df_soln_in.iterrows(): 
+        guess = guess_from_layers(row.props_calc, row.layers)
+        nf, ng, n_all, n_unique = nvals_from_calc(row.calc)
+        for n in nf:
+            row[f'delfstar_expt_{n}'] = row[f'delfstar_expt_{n}'] +n*fn_err
+        def ftosolve(x):
+            layers_solve = update_layers(row.props_calc, x, row.layers)
+            return compare_calc_expt(layers_solve, row, row.calc,
+                                     calctype=row.calctype, 
+                                     reftype=row.reftype)
+        try:
+            soln = optimize.least_squares(ftosolve, guess)
+        except:
+            print(f'error at index {row.Index}')
+            continue
+        
+        for i, prop in enumerate(row.props_calc):
+            df_soln_out.loc[idx, f'{prop}_err_fn'] = abs(soln['x'][i] - 
+                        df_soln_out.loc[idx, f'{prop}'])
+    
+    return df_soln_out
+
+
+def err_fn_correlated_row(row_in, fn_err):
+    """
+    Function to calculate property error if all values of df/n change by 
+    fn_err, operating only on a single row of a dataframe generated by iterrows
+    Parameters
+    ----------
+    row : Dataframe row
+        Solution Dataframe
+    fn_err : float
+        error in df/n (same for each harmonic).
+
+    Returns
+    -------
+    row_out : Dictionary
+        input row with property errors added
+
+    """
+    row = deepcopy(row_in)
+ 
+    guess = guess_from_layers(row.props_calc, row.layers)
+    nf, ng, n_all, n_unique = nvals_from_calc(row.calc)
+    for n in nf:
+        row[f'delfstar_expt_{n}'] = row[f'delfstar_expt_{n}'] +n*fn_err
+    
+    def ftosolve(x):
+        layers_solve = update_layers(row.props_calc, x, row.layers)
+        return compare_calc_expt(layers_solve, row, row.calc,
+                                 calctype=row.calctype, 
+                                 reftype=row.reftype)
+    try:
+        soln = optimize.least_squares(ftosolve, guess)
+    except:
+        print(f'error at index {row.Index} during fn_err calc)')
+        return
+    
+    for i, prop in enumerate(row.props_calc):
+        row[f'{prop}_err_fn'] = abs(soln['x'][i] - 
+                    row[f'{prop}'])
+    
+    return row
+
+
+def make_err_plot(soln, f_error, **kwargs):
     
     # this function needs to be updated to account for the way we now
     # deal with uncertainty+_dict.
@@ -1729,9 +1851,13 @@ def make_err_plot(ax, soln, uncertainty_dict, **kwargs):
     ----------
         soln (dataframe):
             Input solution dataframe.
-        uncertainty_dict (dictionary):
-            Dictionary of uncertainties
-
+    f_error (list of 3 numbers):
+        -uncertainty in f,g as a fraction of g
+        
+        -uncertainty in f/n (applied individually to harmonics)
+        
+        -uncertaintiy in correlated f/n (applied to all harmonics)]
+             
     kwargs:
         idx (int or string):
             index of point in soln to use (default is 'min')
@@ -1750,7 +1876,7 @@ def make_err_plot(ax, soln, uncertainty_dict, **kwargs):
     """
 
     # specify specific point in the solution dataframe to use
-    idx = kwargs.get('idx', 0)  
+    idx = kwargs.get('idx', 'min')  
     if idx == 'max':
         idx = soln['calc'].index.max()
     elif idx == 'min':
@@ -1762,17 +1888,18 @@ def make_err_plot(ax, soln, uncertainty_dict, **kwargs):
     calctype = soln['calctype'][idx]
     calc = soln['calc'][idx]
         
-    guess = {'grho3': soln['grho3'][idx],
+    guess = {'grho3': soln.loc[idx, 'grho3_1'],
              'phi': soln['phi'][idx],
              'drho': soln['drho'][idx]}
 
     delfstar_0 = {}
 
     # get list of harmonics we care about
-    nvals = list(set(calc.split('.')))
-    nvals = list(map(int, nvals))
-    for n in nvals:
-        delfstar_0[n] = soln['df_expt'+str(n)][idx]
+    row = soln.loc[idx]
+    calc = row.calc
+    nf, ng, n_all, n_unique = nvals_from_calc(calc)
+    for n in n_all:
+        delfstar_0[n] = getattr(row, f'delfstar_expt_{n}')
 
     # now generate series of delfstar values based on the errors
     # set some parameters for the plots
@@ -1784,45 +1911,44 @@ def make_err_plot(ax, soln, uncertainty_dict, **kwargs):
     scale_factor = {0: 0.001, 1: 1, 2: 1000}
 
     # intialize values of delfstar
-    delfstar_del = {}
-    for k in [0, 1, 2]:
-        delfstar_del[k] = {}
-        for n in nvals:
-            delfstar_del[k][n] = np.ones(npts)*delfstar_0[n]
+    # delfstar_del = {}
+    # for k in [0, 1, 2]:
+    #     delfstar_del[k] = {}
+    #     for n in nvals:
+    #         delfstar_del[k][n] = np.ones(npts)*delfstar_0[n]
             
     #adjust values of delfstar and calculate properties
     err = {}
-    for k in [0, 1, 2]:
-        n = int(calc.split('.')[k])
-        var = forg[k]
-        ax[k, 0].set_ylabel(r'$|G_3|\rho$ (Pa$\cdot$g/cm$^3$)')
-        ax[k, 1].set_ylabel(r'$\phi$ (deg.)')
-        ax[k, 2].set_ylabel(r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)')
-        for col in [0, 1, 2]:
-            ax[k, col].set_xlabel(r'$\Delta${}'.format(var) +
-                                r'$_{}$'.format(n) +' (Hz)')
+    # for k in [0, 1, 2]:
+    #     n = int(calc.split('.')[k])
+    #     var = forg[k]
+    #     ax[k, 0].set_ylabel(axlabels['grho3'])
+    #     ax[k, 1].set_ylabel(axlabels['phi'])
+    #     ax[k, 2].set_ylabel(axlabels['drho'])
+    #     for col in [0, 1, 2]:
+    #         ax[k, col].set_xlabel(r'$\Delta${}'.format(var) +
+    #                             r'$_{}$'.format(n) +' (Hz)')
 
-        n = int(calc.split('.')[k]) 
-        err[k] = uncertainty_dict[n][pos[k]]
-        delta = np.linspace(-err[k], err[k], npts)
-        delfstar_del[k][n] = delfstar_del[k][n]+delta*mult[k]
-        delfstar_df = pd.DataFrame.from_dict(delfstar_del[k])
+    #     n = int(calc.split('.')[k]) 
+    #     err[k] = - need correct expression involinv f_error
+    #     delta = np.linspace(-err[k], err[k], npts)
+    #     delfstar_del[k][n] = delfstar_del[k][n]+delta*mult[k]
+    #     delfstar_df = pd.DataFrame.from_dict(delfstar_del[k])
 
-        props = solve_for_props(delfstar_df, calc=calc,
-                                          calctype=calctype, guess=guess)
-        # make the property plots
-        for p in [0, 1, 2]:
-            ax[k, p].plot(delta, props[prop_type[p]]*scale_factor[p],
-                       '-+', label = label)
-            ax[k, p].legend()
+    #     props = solve_for_props(delfstar_df, calc=calc,
+    #                                       calctype=calctype, guess=guess)
+    #     # make the property plots
+    #     for p in [0, 1, 2]:
+    #         ax[k, p].plot(delta, props[prop_type[p]]*scale_factor[p],
+    #         ax[k, p].legend()
             
-            # now add point for actual solution
-            ax[k, p].plot(0, soln[prop_type[p]][idx]*scale_factor[p],'or')
+    #         # now add point for actual solution
+    #         ax[k, p].plot(0, soln[prop_type[p]][idx]*scale_factor[p],'or')
 
-def calc_fstar_err (n, row, uncertainty_dict):
+def calc_fstar_err (n, row, f_error):
     """
     Calculate uncertainties in delf and delg (expressed as complex delfstar)
-    from uncertainty_dict.
+    from f_error.
     
     Parameters
     ----------
@@ -1833,11 +1959,14 @@ def calc_fstar_err (n, row, uncertainty_dict):
         Dictionary of input values, typically taken from a row of the      
         solution dataframe generated by solve_for_props.
 
-    uncertainty_dict : Dictionary
-        Dictionary with the following format 
-            n1:[f_err, g_err], n2:[f_err, g_err]..., \\
-            'err_frac':[f_frac, g_frac]
-        'err_frac' is optional, and is taken as [0,0] if not specified
+    f_error (list of 3 numbers):
+        -uncertainty in f,g as a fraction of g
+        
+        -uncertainty in f/n (applied individually to harmonics)
+        
+        -uncertaintiy in correlated f/n (not used here)
+             
+        default is [0.05, 15, 0], set to [0,0,0] to elminate error bars
             
     Returns
     -------
@@ -1845,24 +1974,18 @@ def calc_fstar_err (n, row, uncertainty_dict):
     and the imaginary component is the uncertainty in delf.
 
     """
-    if uncertainty_dict == 'zeros':
-        return 0
-    
-    if 'err_frac' not in uncertainty_dict.keys():
-        uncertainty_dict['err_frac'] = [0.0, 0.0]
         
     # find the value of gamma for the harmonic of interest
-    gamma = np.imag(row[f'f_expt{n}'])
-    err_frac = uncertainty_dict['err_frac']
-    error_vals = np.array(uncertainty_dict[n], dtype = 'float')
+    delfstar = getattr(row, f'delfstar_expt_{n}')
+    gamma = np.imag(delfstar)
     
     # now we calculate f_err and g_err
-    f_err = round((err_frac[0]*gamma + error_vals[0]), 1)
-    g_err = round((err_frac[1]*gamma + error_vals[1]), 1)
+    f_err = round((f_error[0]*gamma + n*f_error[1]), 1)
+    g_err = round(f_error[0]*gamma, 1)
     return f_err + 1j*g_err
 
 
-def make_df_err(soln, uncertainty_dict):
+def make_df_err(soln, f_error):
     '''
     Calclate error in frequency shifts and dissipation,
 
@@ -1871,10 +1994,14 @@ def make_df_err(soln, uncertainty_dict):
     soln : Dataframe 
         Data being considered (from solve_for_props).
         
-    uncertainty_dict : dictionary
-        Dictionary used to determine uncertainties in frequency and
-        disipation values.  See definition of calc_fstar_err for the
-        details.
+    f_error (list of 3 numbers):
+        -uncertainty in f,g as a fraction of g
+        
+        -uncertainty in f/n (applied individually to harmonics)
+        
+        -uncertaintiy in correlated f/n (not used here)
+             
+        default is [0.05, 15, 0], set to [0,0,0] of just [0] to elminate error bars
 
     Returns
     -------
@@ -1894,19 +2021,19 @@ def make_df_err(soln, uncertainty_dict):
         df_err.insert(df_err.shape[1], f'f{n}_err', real_series)
         df_err.insert(df_err.shape[1], f'g{n}_err', real_series)
 
-    if uncertainty_dict != 'zeros':        
-        for idx, row in soln.iterrows():
+    if max(f_error) > 0 :        
+        for idx, row in soln.itertuples():
             # extract uncertainty from dataframe if it is not [0, 0, 0]
             for n in nvals:
                 df_err.loc[idx, f'f{n}_err'] = (
-                    np.real(calc_fstar_err(n, row, uncertainty_dict)))
+                    np.real(calc_fstar_err(n, row, f_error)))
 
                 df_err.loc[idx, f'g{n}_err'] = (
-                           np.imag(calc_fstar_err(n, row, uncertainty_dict)))
+                           np.imag(calc_fstar_err(n, row, f_error)))
     return df_err
             
 
-def calc_prop_error(soln, uncertainty_dict):
+def calc_prop_error(soln_in, f_error):
     '''
     Calclate error in properties
 
@@ -1915,10 +2042,14 @@ def calc_prop_error(soln, uncertainty_dict):
     soln : Dataframe 
         Data being considered (from solve_for_props).
         
-    uncertainty_dict : dictionary
-        Dictionary used to determine uncertainties in frequency and
-        disipation values.  See definition of calc_fstar_err for the
-        details.
+    f_error (list of 3 numbers):
+        -uncertainty in f,g as a fraction of g
+        
+        -uncertainty in f/n (applied individually to harmonics)
+        
+        -uncertainty in correlated f/n (same error applied to all delf/n)
+             
+        default is [0.05, 15, 0]
 
     Returns
     -------
@@ -1928,38 +2059,37 @@ def calc_prop_error(soln, uncertainty_dict):
     # make the error dataframe that will be returned by the function
     # solution doesn't necessarily have to have the same values of 
     # props_calc or calc for every line
-    prop_err=pd.DataFrame(index=soln.index)
-    npts = len(soln)
+    soln_out = deepcopy(soln_in)
+    prop_err=pd.DataFrame(index=soln_out.index)
+    npts = len(soln_out)
     real_series = np.zeros(npts, dtype=np.float64)
-    for idx, row in soln.iterrows():
+           
+    for idx, row in soln_out.iterrows():
         # this handles case where soln dataframe was not generated
         # by solve_for_props
-        if 'props_calc' not in row:
+        
+        if 'props_calc' not in dir(row):
             continue
-        props_calc = row['props_calc']
+        props_calc = row.props_calc
         for prop in props_calc:
             if f'{prop}_err' not in prop_err.columns.values:
                 prop_err.insert(prop_err.shape[1], f'{prop}_err', real_series)
     
-        calc = row['calc']
+        calc = row.calc
         nf, ng, n_all, n_unique = nvals_from_calc(calc)
 
-        # extract uncertainty from dataframe if it is not [0, 0, 0]
-        if uncertainty_dict == 'zeros':
-            # we don't calculate an uncertainty if n_all>3
-            uncertainty = [0]*min(3, n_all)
-        else:
-            uncertainty = []
-            for n in nf:
-                delf_err = np.real(calc_fstar_err(n, row, uncertainty_dict))
-                uncertainty.append(delf_err)
-            for n in ng:
-                delg_err = np.imag(calc_fstar_err(n, row, uncertainty_dict))
-                uncertainty.append(delg_err)
+        # extract uncertainty from dataframe
+        uncertainty = []
+        for n in nf:
+            delf_err = np.real(calc_fstar_err(n, row, f_error))
+            uncertainty.append(delf_err)
+        for n in ng:
+            delg_err = np.imag(calc_fstar_err(n, row, f_error))
+            uncertainty.append(delg_err)
 
         # extract the jacobian and turn it back into a numpy array of floats
         try:
-            jacobian = np.array(row['jac'], dtype='float')
+            jacobian = np.array(row.jac, dtype='float')
         except:
             jacobian = np.zeros([len(uncertainty), len(uncertainty)])
         try:
@@ -1972,13 +2102,16 @@ def calc_prop_error(soln, uncertainty_dict):
         # same as the number of elements in props_calc (n equations and
         # n unknowns)
 
+        # include errors from correlated changes in df/n
+        row = err_fn_correlated_row(row, f_error[2])
         n = len(props_calc)
         for p in np.arange(n):
             err_name = f'{props_calc[p]}_err'
-            errval = 0
+            errval = (row[f'{props_calc[p]}_err_fn'])**2
             for k in np.arange(n):
                 errval = errval + (deriv[p, k]*uncertainty[k])**2
             prop_err.loc[idx, err_name] = np.sqrt(errval)
+
     return prop_err
 
         
@@ -2017,15 +2150,16 @@ def make_prop_axes(props, **kwargs):
         'phi':
             Phase angle (degrees), assumed constant at all harmonics used.
             
+        'phi.tan':
+            Loss tangent
+            
         'vgp':
             Van Gurp-Palmen plot (phi vs. grho3).
         
         'jdp':
             Loss compliance normalized by density.
         
-        'tanphi':
-            Loss tangent.
-        
+       
         'grho3p':
             Storage modulus at n=3 times density.
         
@@ -2034,9 +2168,6 @@ def make_prop_axes(props, **kwargs):
         
         'etarho3':
             Complex viscosity (units of mPa-s-g/cm3).
-        
-        'cole-cole':
-            Plots grho3pp vs. grho3pp.
         
         'temp':
             Temperature in degrees C.
@@ -2094,7 +2225,7 @@ def make_prop_axes(props, **kwargs):
 
     Returns:
     ----------
-    figinfo: dictionary with the following elements:
+    figdic: dictionary with the following elements:
         fig:
             Dictionary of main figure 'master' along with included
             subfigures.  It always includes the 'props' subfigure,
@@ -2195,7 +2326,6 @@ def make_prop_axes(props, **kwargs):
         ax[p].set_xlabel(xlabel[p])
         if 'log' in props[p].split('.'):
             ax['props'][p].set_yscale('log')
-        
     iax = nprops-1  # running number of axes for axis labeling
     irow = 0  # running index of row
 
@@ -2266,15 +2396,15 @@ def make_prop_axes(props, **kwargs):
         # get other options that we might need
         ext = props[p].split('.')
         
+        # start with the special case of tanphi
+        if props[p] == 'phi.tan':
+            ax['props'][p].set_ylabel(r'tan$\phi$')
+            ax['props'][p].set_xlabel(xlabel[p])         
+        
         # we get most of the axes labels from axlabels dictionary
-        if prop in axlabels.keys():
+        elif prop in axlabels.keys():
             ax['props'][p].set_ylabel(axlabels[prop])
             ax['props'][p].set_xlabel(xlabel[p])      
-        elif prop == 'cole-cole':
-            ax['props'][p].set_ylabel(axlabels['grho3pp'])
-            ax['props'][p].set_xlabel(axlabels['grho3p'])
-            
-            xunit[p] = 'null'
             
         elif 'df' in prop:
             n = prop[-1]
@@ -2284,6 +2414,7 @@ def make_prop_axes(props, **kwargs):
             else:
                 ax['props'][p].set_ylabel(f'\u0394 f_{{{n}}}$ (Hz)')
             ax[p].set_xlabel(xlabel[p])
+            
         elif 'dg' in prop:
             n = prop[-1]
             ax['props'][p].set_ylabel(f'\u0394 \u0393_{{{n}}} (Hz)')
@@ -2317,7 +2448,7 @@ def make_data_array(var, soln, prop_error, **kwargs):
     soln : dataframe
         The dataframe the data is extracted from.
     prop_error : dataframe
-        Property errors calcualted from uncertainty_dict
+        Property errors calcualted from f_error
 
     Returns
     -------
@@ -2331,11 +2462,8 @@ def make_data_array(var, soln, prop_error, **kwargs):
     # set errors to zero by default
     err_array = np.zeros_like(soln.index)
     
-    # add designation as layer 1 if it is not included explicitly
-    # layer doesn't always have a meaning (time units, for example)
-    if len(ext[0].split('_')) == 1:
-        layer = 1
-    else:
+    # get layer number
+    if len(ext[0].split('_'))==2:
         layer = ext[0].split('_')[1]
 
     if ext[0] == 's':
@@ -2375,16 +2503,19 @@ def make_data_array(var, soln, prop_error, **kwargs):
     elif 'phi' in ext[0]:
         prop_name = f'phi_{layer}'
         prop_err_name = prop_name+'_err'
-        data_array = soln[prop_name].astype(float)
+        phi_d = soln[prop_name].astype(float)
+        phi_r = phi_d*np.pi/180
+        if 'tan' in ext:
+            data_array = np.tan(phi_r)
+        else:
+            data_array = phi_d
         if prop_err_name in prop_error.columns.values:
-            err_array = prop_error[prop_err_name]
-       
-    elif 'tanphi' in ext[0]:
-        prop_name=f'phi_{layer}'
-        prop_err_name = prop_name +'_err'
-        data_array = np.tan(np.pi*soln[prop_name].astype(float)/180)
-        if prop_err_name in prop_error.columns.values:
-            err_array = np.tan(np.pi*prop_error[prop_err_name]/180)       
+            err_d = prop_error[prop_err_name]  
+            if 'tan' in ext:
+                err_r = err_d*np.pi/180
+                err_array = np.tan(phi_r+err_r)-np.tan(phi_r)
+            else:
+                err_array = err_d
        
     elif 'grho3p' in ext[0]:
        data_array = (soln[f'grho3_{layer}'].astype(float)*
@@ -2434,7 +2565,7 @@ def make_data_array(var, soln, prop_error, **kwargs):
     return data_array.astype('float64'), err_array
    
 
-def plot_props(soln, figinfo, **kwargs):
+def plot_props(soln, figdic, **kwargs):
     """
     Add property data to an existing figure.
 
@@ -2443,12 +2574,17 @@ def plot_props(soln, figinfo, **kwargs):
     soln " dataframe):
         Dataframe containing data to be plotted, typically output from
         solve_for_props.
-    figinfo : dictionary
+    figdic : dictionary
         Dictionary containing 'fig', 'ax' and other info for plot.
 
     kwargs
     ------
 
+    props (list of strings):
+        properties to plot. Default is first layer of props specified in
+            figdic['info']['props']. Add .log to plot on log scale,
+            .tan to take tangent (generally only used for phi)
+        
     xoffset (real or string, single value or list):
         Amount to subtract from x value for plotting (default is 0)
         -np.inf means that the data are offset so that the minimum val 
@@ -2460,15 +2596,18 @@ def plot_props(soln, figinfo, **kwargs):
     label (string):
         label for plots.  Used to generate legend.  Default is 
         '', which will not generate a label.
-    uncertainty_dict (dictionary or string):
-        Information used to generate uncertainty in frequency and
-        dissipation values, used to determine uncertainties in 
-        calculated properties.  Default is uncertainty_dict_defatult
-        (defined at top of QCM_functions).  See the definition of
-        calc_fstar_err for details. Set to 'zeros' if you don't want
-        error bars to appear in the plot.
+    f_error (list of 3 numbers):
+        -uncertainty in f,g as a fraction of g
+        
+        -uncertainty in f/n (applied individually to harmonics)
+        
+        -uncertaintiy in correlated f/n (applied to all harmonics)]
+             
+        default is [0.05, 15, 0], set to [0,0,0] to elminate error bars
     nplot (list of integers):
         harmonics to plot, default is [3,5])
+    plot_df1 
+        True if we want to plot df1
     drho_ref (real):
         reference drho for plots of drho_norm or drho_ref
 
@@ -2487,22 +2626,38 @@ def plot_props(soln, figinfo, **kwargs):
     fmt=kwargs.get('fmt', '+')
     label=kwargs.get('label', '')
     xoffset_input=kwargs.get('xoffset', 0)  
-    uncertainty_dict = kwargs.get('uncertainty_dict', uncertainty_dict_default)
+    f_error = kwargs.get('f_error', [0.05, 15, 0])
+        
     nplot = kwargs.get('nplot', [3,5])
     col = {1:'CO', 3:'C1', 5:'C2', 7:'C3', 9:'C5'}
     
     # drop dataframe rows with all nan
     soln = soln.dropna(how='all') 
     
-    # extract data from figinfo
-    props = figinfo['info']['props']
-    ax = figinfo['ax']
-    fig = figinfo['fig']
+    # extract data from figdic, assumes all props are from first
+    # layer if they are taken from figdic
+    props = kwargs.get('props', figdic['info']['props'])
+    ax = figdic['ax']
+    fig = figdic['fig']
+    
+    # add '_1' to property if it wasn't included explicitly
+    # drop property if it is not in the solution data frame
+    i=0
+    for prop in props:
+        ext = prop.split('.')
+        if len(ext[0].split('_')) == 1:
+            ext[0]=ext[0]+'_1'
+        if ext[0] not in soln.keys():
+            props = props.remove(prop)
+        else:
+            props[i] = '.'.join(ext)
+            i=i+1
+
     nprops = len(props)
     
     # create dataframe with calculated errors
-    prop_error = calc_prop_error(soln, uncertainty_dict)
-    xunit = figinfo['info']['xunit']
+    prop_error = calc_prop_error(soln, f_error)
+    xunit = figdic['info']['xunit']
     xoffset={}
     # set the offset for the x values 
     if type(xoffset_input) != list:
@@ -2520,6 +2675,15 @@ def plot_props(soln, figinfo, **kwargs):
     for p in np.arange(nprops):
         xdata[p] = make_data_array(xunit[p], soln, prop_error)[0]
         ydata, yerr  = make_data_array(props[p], soln, prop_error)
+        
+        # handle case where are plotting the tangent
+        if 'tan' in props[p]:
+            baseprop = props[p].split('.')[0].split('_')[0]
+            if 'phi' in props[p]:
+                ydata = np.tan(np.radians(ydata))
+            else:
+                ydata = np.tan(ydata)      
+            ax['props'][p].set_ylabel(axlabels[f'{baseprop}.tan'])
 
         # offset xdata if desired
         if xoffset[p] == 'zero':
@@ -2529,7 +2693,7 @@ def plot_props(soln, figinfo, **kwargs):
         # make sure y limits are okay (needed for log axes)
         y_min = []
         y_max = []
-        if ax['checks'][0].lines:
+        if ax['props'][p].lines:
             y_min = [ax['props'][p].get_ylim()[0]]
             y_max = [ax['props'][p].get_ylim()[1]]
             
@@ -2549,10 +2713,12 @@ def plot_props(soln, figinfo, **kwargs):
         if ax['props'][p].get_yscale() == 'log' and y_min>0:
             ax['props'][p].set_ylim([0.9*y_min, 1.1*y_max])
         else:
-            ax['props'][p].set_ylim([y_min - 0.05*y_range, 
-                        y_max +0.05*y_range])     
+            if y_range>0:
+                ax['props'][p].set_ylim([y_min - 0.05*y_range, 
+                            y_max +0.05*y_range])     
         
         # rest max phi to cut off meaningless phase angles 
+        # this probably is okay for phi.tan as well
         if 'phi' in props[p] and ax['props'][p].get_ylim()[1]>92:
             ax['props'][p].set_ylim(top = 92)
         if 'phi' in props[p] and ax['props'][p].get_ylim()[0]<0:
@@ -2563,18 +2729,13 @@ def plot_props(soln, figinfo, **kwargs):
     # keep track of max and min values for plotting purposes       
     if 'checks' in fig.keys():       
         # decide to use df1 or not
-        plot_df1 = kwargs.get('plot_df1', False)
+        plot_df1 = kwargs.get('plot_df1', True)
         
         # adjust nplot if any of the values don't exist in the dataframe
         for n in nplot:
-            if not 'df_expt'+str(n) in soln.keys():
+            if not f'delfstar_expt_{n}' in soln.keys():
                 nplot.remove(n)
-        
-        if len(xdata)==1:
-            calcfmt = 'o'
-        else:
-            calcfmt = '-'
-            
+                   
         df_min = []
         df_max = []
         dg_min = []
@@ -2595,7 +2756,7 @@ def plot_props(soln, figinfo, **kwargs):
         nfplot = []
         ngplot = []
         for n in nplot:
-            if f'df_expt{n}' in soln.keys():
+            if f'delfstar_expt_{n}' in soln.keys():
                 nfplot.append(n)
                 ngplot.append(n)
 
@@ -2609,18 +2770,21 @@ def plot_props(soln, figinfo, **kwargs):
         col = {1:'C0', 3:'C1', 5:'C2', 7:'C3', 9:'C4'}
         
         # add uncertainties in delf, delg
-        soln = add_fstar_err(soln, uncertainty_dict)
+        soln = add_fstar_err(soln, f_error)
         
         # use the first plotted property plot for the x values
         soln['xdata'] = xdata[0]    
         for n in nfplot: 
             # drop nan values from dataframe to avoid problems with errorbar
-            soln_tmp = soln.dropna(subset=[f'df_expt{n}'])
-            dfval = np.real(soln_tmp[f'df_expt{n}'])/n
-            ferr = np.real(soln_tmp[f'fstar_err{n}'])/n
+            soln_tmp = soln.dropna(subset=[f'delfstar_expt_{n}'])
+            dfval = np.real(soln_tmp[f'delfstar_expt_{n}'])/n
+            dfval2 = np.real(soln_tmp[f'delfstar_calc_{n}'])/n
+            ferr = np.real(soln_tmp[f'fstar_err_{n}'])/n
             df_min.append(np.nanmin(dfval-ferr))
+            df_min.append(np.nanmin(dfval2))
             df_max.append(np.nanmax(dfval+ferr))
-            if figinfo['info']['checklabels'][n]:
+            df_max.append(np.nanmax(dfval2))
+            if figdic['info']['checklabels'][n]:
                 label_expt = f'n={n}: expt'
                 label_calc = f'n={n}: calc'
             else:
@@ -2629,28 +2793,31 @@ def plot_props(soln, figinfo, **kwargs):
             ax['checks'][0].errorbar(soln_tmp['xdata'], 
                        dfval, yerr = ferr, fmt='+', color = col[n],       
                        label=label_expt)
-            calcvals = np.real(soln_tmp['df_calc'+str(n)])/n
-            ax['checks'][0].plot(soln_tmp['xdata'], calcvals, calcfmt, 
+            calcvals = np.real(soln_tmp[f'delfstar_calc_{n}'])/n
+            ax['checks'][0].plot(soln_tmp['xdata'], calcvals, '-', 
                     color = col[n], markerfacecolor='none', 
                     label=label_calc)
             
             # don't include multiple harmonic labels
-            figinfo['info']['checklabels'][n]=False
+            figdic['info']['checklabels'][n]=False
         df_min = min(df_min)
         df_max = max(df_max)
      
         for n in ngplot:
             # drop nan values from dataframe to avoid problems with errorbar
-            soln_tmp = soln.dropna(subset=[f'df_expt{n}'])
-            dgval = np.imag(soln_tmp['df_expt'+str(n)])/n
-            gerr = np.imag(soln_tmp[f'fstar_err{n}'])/n
+            soln_tmp = soln.dropna(subset=[f'delfstar_expt_{n}'])
+            dgval = np.imag(soln_tmp[f'delfstar_expt_{n}'])/n
+            dgval2 = np.imag(soln_tmp[f'delfstar_calc_{n}'])/n
+            gerr = np.imag(soln_tmp[f'fstar_err_{n}'])/n
             dg_min.append(np.nanmin(dgval-gerr))
+            dg_min.append(np.nanmin(dgval2))
             dg_max.append(np.nanmax(dgval+gerr))
+            dg_max.append(np.nanmax(dgval2))
             ax['checks'][1].errorbar(soln_tmp['xdata'], dgval, yerr = gerr, 
                                      fmt = '+',  
                                      color = col[n])
-            calcvals = np.imag(soln_tmp['df_calc'+str(n)])/n
-            ax['checks'][1].plot(soln_tmp['xdata'], calcvals, calcfmt, 
+            calcvals = np.imag(soln_tmp[f'delfstar_calc_{n}'])/n
+            ax['checks'][1].plot(soln_tmp['xdata'], calcvals, '-', 
                           color = col[n], markerfacecolor='none')
         dg_min = min(dg_min)
         dg_max = max(dg_max)   
@@ -2691,7 +2858,7 @@ def plot_props(soln, figinfo, **kwargs):
         x_range = x_max - x_min
         if ax['checks'][1].get_xscale() == 'log' and x_min>0:
             ax['checks'][1].set_xlim([0.9*x_min, 1.1*x_max])
-        else:
+        elif ax['checks'][1].get_xscale() == 'linear':
             ax['checks'][1].set_xlim([x_min - 0.05*x_range, 
                         x_max +0.05*x_range])
                 
@@ -2702,7 +2869,7 @@ def plot_props(soln, figinfo, **kwargs):
         xlim = ax['maps'][0].get_xlim()
         for n in nplot:
             dlam = calc_dlam_from_dlam3(n, soln['dlam3_1'], soln['phi_1'])
-            if figinfo['info']['maplabels'][n]:
+            if figdic['info']['maplabels'][n]:
                 label = 'n='+str(n)
             else:
                 label = ''
@@ -2710,11 +2877,11 @@ def plot_props(soln, figinfo, **kwargs):
                 ax['maps'][k].plot(dlam, soln['phi_1'], '-o',
                     label = label, mfc = col[n], mec = 'k', c=col[n])         
             # don't include multiple harmonic labels
-            figinfo['info']['maplabels'][n]=False
+            figdic['info']['maplabels'][n]=False
         for k in [0, 1]:
             ax['maps'][k].legend(framealpha=1)
             ax['maps'][k].set_xlim(xlim)
-    return figinfo['fig']['master'], figinfo['ax']
+    return figdic['fig']['master'], figdic['ax']
     
 
 def read_xlsx(infile, **kwargs):
@@ -2798,10 +2965,7 @@ def read_xlsx(infile, **kwargs):
         Column in Excel spreadsheet to use for the dataframe index.
         Default is 0.  Use None to make a new index.
     
-    Guess_sheet : string
-        Sheet name containing property guesses.  
-        Used when calculating were eported into the Excel file
-        
+       
     overlayer : dictionary
         dictionary containing values or 'grho', 'phi', and 'drho'
         corresponding to properties of top layer - delfstar for this
@@ -2845,31 +3009,11 @@ def read_xlsx(infile, **kwargs):
         
     # keep track of columns for output dataframe
     keep_column = []
-        
-    # read guess values if they exist
-    guess_sheet = kwargs.get('guess_sheet', 'none')
-    sheet_names = pd.ExcelFile(infile).sheet_names
-    if guess_sheet in sheet_names:
-        df_guess_sheet = pd.read_excel(infile, sheet_name = guess_sheet, 
-                                       header=0, index_col = index_col)
-        series = [{}for _ in range(len(df_guess_sheet))]
-        for idx in df_guess_sheet.index:
-            series[idx] = {'grho3':df_guess_sheet.loc[idx, 'grhos3'],
-                       'phi':df_guess_sheet.loc[idx, 'phi'],
-                       'drho':df_guess_sheet.loc[idx, 'drho']}
-        df_guess = pd.DataFrame({'guess':series})
-        
-        # merge in the guesses, keeping the indices from df
-        df = df.reset_index().merge(df_guess, left_index = True, 
-                                    right_index = True,
-                                    how="left").set_index('index')
-
-        keep_column.append('guess')
-        
+                 
     # include all values of n that we want and that exist in the input file
     nvals = []
     for n in nvals_in:
-        if 'f'+str(n) in df.keys():
+        if f'f{n}' in df.keys():
             nvals.append(n)
         
     # keep all rows unless we are told to check for specific marks
@@ -2884,7 +3028,7 @@ def read_xlsx(infile, **kwargs):
     keep_column.append('t')
     keep_column.append('temp')
     for n in nvals:
-        keep_column.append(n)
+        keep_column.append(f'delfstar_expt_{n}')
 
     # add the temperature column to original dataframe if it does not exist
     # or contains all nan values, and set all Temperatures to Tref
@@ -2903,8 +3047,8 @@ def read_xlsx(infile, **kwargs):
         # this is the simplest read protocol, with delf and delg already in
         # the .xlsx file.  All we need to do is read the values and return them
         for n in nvals:
-            df[n]=df['delf'+str(n)] + 1j*df['delg'+str(n)
-                                ].round(1) - fref_shift[n]
+            df[f'delfstar_expt_{n}']=(df[f'delf{n}'] + 1j*df[f'delg{n}'].round(1) - 
+                               fref_shift[n])
         return df [keep_column].copy()
             
     elif T_coef != 'calculated':
@@ -2919,7 +3063,7 @@ def read_xlsx(infile, **kwargs):
         for n in nvals:
             # apply fref_shift if needed
             df_ref['f'+str(n)] = df_ref['f'+str(n)] + fref_shift[n]
-            # adjust constant lffast elment in T_coef (the 
+            # adjust constant last elment in T_coef (the 
             # constant term) to give measured ref. values at Tref
             for val in ['f', 'g']:
                 T_coef[val][n][3] = (T_coef[val][n][3] + 
@@ -2936,7 +3080,7 @@ def read_xlsx(infile, **kwargs):
                 df[val+str(n)+'_dat'] = df[val+str(n)]
             
             # keep track (of film and reference values in dataframe
-            df[n]  = (df['f'+str(n)+'_dat'] - df['f'+str(n) + '_ref'] +
+            df[f'delfstar_expt_{n}']  = (df['f'+str(n)+'_dat'] - df['f'+str(n) + '_ref'] +
                   1j*(df['g'+str(n)+'_dat'] - df['g'+str(n) + '_ref']))
             
 
@@ -2998,31 +3142,32 @@ def read_xlsx(infile, **kwargs):
                         sys.exit()
                                                                         
                 # write the film and reference values to the data frame
-                df[f'{nvals[k]}_dat'] = (df[f'f{nvals[k]}']+
+                df[f'fstar_{nvals[k]}_dat'] = (df[f'f{nvals[k]}']+
                                          1j*df[f'g{nvals[k]}']).round(1)
                 fref = np.polyval(T_coef['f'][nvals[k]], df['temp'])
                 gref = np.polyval(T_coef['g'][nvals[k]], df['temp'])
-                df[f'{nvals[k]}_ref'] = (fref + 1j*gref).round(1)
+                df[f'fstar_{nvals[k]}_ref'] = (fref + 1j*gref).round(1)
 
 
         for k in np.arange(len(nvals)):
             # now write values of delfstar to the dataframe
-            df[nvals[k]]=(df[f'{nvals[k]}_dat'] -
-                          df[f'{nvals[k]}_ref'] -
+            df[f'delfstar_expt_{nvals[k]}']=(df[f'fstar_{nvals[k]}_dat'] -
+                          df[f'fstar_{nvals[k]}_ref'] -
                           fref_shift[nvals[k]]).round(1)
 
             # add absolute frequency and reference values to dataframe
-            keep_column.append(f'{nvals[k]}_dat')
-            keep_column.append(f'{nvals[k]}_ref')
+            keep_column.append(f'fstar_{nvals[k]}_dat')
+            keep_column.append(f'fstar_{nvals[k]}_ref')
 
     # add the constant applied shift to the reference values to the dataframe
     # also account for overlayer if it exists
     for n in nvals:
         if fref_shift[n]!= 0:
-            df[str(n)+'_refshift']=fref_shift[n]
-            keep_column.append(str(n)+'_refshift')
+            df[f'{n}_refshift']=fref_shift[n]
+            keep_column.append(f'{n}_refshift')
         if 'overlayer' in df.keys():
-            df[n]=df[n] - calc_delfstar(n, {1:overlayer})
+            df[f'delfstar_expt_{n}']=(df[f'delfstar_expt_{n}'] - 
+                                 calc_delfstar(n, {1:overlayer}))
 
     if (T_coef_plots and ref_channel != 'self' and 
         len(df_ref.temp.unique()) > 1):
@@ -3040,7 +3185,7 @@ def read_xlsx(infile, **kwargs):
             df = df_tmp
             
     # eliminate rows with nan at n=3
-    df = df.dropna(subset=[3]).copy()
+    df = df.dropna(subset=['delfstar_expt_3']).copy()
     
     # add time increments
     df = add_t_diff(df)
@@ -3412,7 +3557,7 @@ def vft(T, Tref, B, Tinf):
     return -B/(Tref-Tinf) + B/(T-Tinf)
 
 
-def add_fstar_err(df, uncertainty_dict):
+def add_fstar_err(df, f_error):
     """
     Add fstar uncertainties based on values given in uncertainty dic
 
@@ -3420,9 +3565,14 @@ def add_fstar_err(df, uncertainty_dict):
     ----------
     df : dataframe
         Input solution dataframe, typically generated by solve_for_props.
-    uncertainty_dict : dictionary
-        Dictionary used to determine uncertainty in frequency and 
-        dissipation (see definition of calc_fstar_err.
+    f_error (list of 3 numbers):
+        -uncertainty in f,g as a fraction of g
+        
+        -uncertainty in f/n (applied individually to harmonics)
+        
+        -uncertaintiy in correlated f/n (not used here at this point]
+             
+        default is [0.05, 15, 0]
 
     Returns
     -------
@@ -3433,18 +3583,18 @@ def add_fstar_err(df, uncertainty_dict):
     # add uncertainty columns and set to zero for now
     n_list = []
     for n in [1, 3, 5, 7, 9]:
-        if f'df_expt{n}' in df.keys():
+        if f'delfstar_expt_{n}' in df.keys():
             n_list.append(n)
-            if f'fstar_err{n}' not in df.keys():
-                df.insert(df.columns.get_loc(f'df_expt{n}'), 
-                            f'fstar_err{n}', 0+1j*0)
+            if f'fstar_err_{n}' not in df.keys():
+                df.insert(df.columns.get_loc(f'delfstar_expt_{n}'), 
+                            f'fstar_err_{n}', 0+1j*0)
 
-    for idx, row in df.iterrows():
+    for row in df.itertuples():
         for n in n_list:
-            f_err = np.real(calc_fstar_err(n, row, uncertainty_dict))
-            g_err = np.imag(calc_fstar_err(n, row, uncertainty_dict))
+            f_err = np.real(calc_fstar_err(n, row, f_error))
+            g_err = np.imag(calc_fstar_err(n, row, f_error))
             fstar_err = f_err + 1j*g_err
-            df.loc[idx,f'fstar_err{n}'] = fstar_err
+            df.loc[row.Index,f'fstar_err_{n}'] = fstar_err
             
     return df
             
