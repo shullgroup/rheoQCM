@@ -7,7 +7,7 @@ import json
 
 # %% read settings from h5 file
 
-path = './tools/0.3 g HPC and ALA 2 AA (1).h5'
+path = './0.2g_AAP(0.6)_2TFA_ED(1).h5'
 with h5py.File(path, 'r') as fh:
     settings = json.loads(fh['settings'][()])
 
