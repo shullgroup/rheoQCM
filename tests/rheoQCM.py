@@ -4048,7 +4048,8 @@ class QCMApp(QMainWindow):
         logger.info(type(pk_data)) 
         logger.info(type(pk_data[0])) 
 
-        if isinstance(pk_data[0], (float, int, np.int64)): # data is not empty (float for values, int for index and queue_id)
+        if isinstance(pk_data[0], (float, int, np.int64, list)): # data is not empty (float for values, int for index and queue_id)
+            # NOTE: newer version of Matplotlib return ([], []) turple with list values
             label = mpl.l['lp'][0].get_label()
             line, ind = label.split('_')
             l, harm = line[:-1], line[-1]
@@ -6133,7 +6134,7 @@ class QCMApp(QMainWindow):
 
         self.update_frequencies() #update frequency dispaly by harm
 
-        logger.info(self.settings['harmdata'][self.settings_chn['name']][harm]) 
+        # logger.info(self.settings['harmdata'][self.settings_chn['name']][harm])  # TODO: KeyError: 'ref'
 
         # update lineEdit_scan_harmsteps
         self.ui.lineEdit_scan_harmsteps.setText(
