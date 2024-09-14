@@ -539,8 +539,9 @@ def calc_D(n, props, delfstar, **kwargs):
     calctype = kwargs.get('calctype', 'SLA')
     f1 = kwargs.get('f1', f1_default)
     drho = props['drho']
-    return 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n,
+    value = 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n,
                    props, calctype)
+    return value
 
 
 def zstar_bulk(n, props, calctype):
@@ -643,7 +644,8 @@ def calc_ZL(n, layers, delfstar, **kwargs):
     else:
         D[layer_max] = calc_D(n, layers[layer_max], delfstar, 
                               **kwargs)
-        Zf_max = 1j*zstar_bulk(n, layers[layer_max], calctype)*np.tan(D[layer_max])
+        Zf_max = 1j*zstar_bulk(n, layers[layer_max], 
+                               calctype)*np.tan(D[layer_max])
 
     # if there is only one layer, we're already done
     if N == 1:
@@ -1970,8 +1972,9 @@ def calc_fstar_err (n, row, f_error):
             
     Returns
     -------
-    deflstar_err, where the real component is the uncertainty in delf
-    and the imaginary component is the uncertainty in delf.
+    Dictionary with two calculated versions of error in measurd delfstar:
+        'p':  uncorrelated error, determined from f_error[0,1]
+        't':  total error, determined from f_error[0,1,2]
 
     """
         
@@ -1980,60 +1983,17 @@ def calc_fstar_err (n, row, f_error):
     gamma = np.imag(delfstar)
     
     # now we calculate f_err and g_err
-    f_err = round((f_error[0]*gamma + n*f_error[1]), 1)
+    f_err_p = round((f_error[0]*gamma + n*f_error[1]), 1)
+    f_err_t = f_err_p + n*f_error[2]
+
     g_err = round(f_error[0]*gamma, 1)
-    return f_err + 1j*g_err
-
-
-def make_df_err(soln, f_error):
-    '''
-    Calclate error in frequency shifts and dissipation,
-
-    Parameters
-    ----------
-    soln : Dataframe 
-        Data being considered (from solve_for_props).
-        
-    f_error (list of 3 numbers):
-        -uncertainty in f,g as a fraction of g
-        
-        -uncertainty in f/n (applied individually to harmonics)
-        
-        -uncertaintiy in correlated f/n (not used here)
-             
-        default is [0.05, 15, 0], set to [0,0,0] of just [0] to elminate error bars
-
-    Returns
-    -------
-    dataframe with uncertainties in measured values of delf, delg
-
-
-    '''
-    nvals = nvals_from_df_soln(soln)
-    # make the error dataframe that will be returned by the function
-    # solution doesn't necessarily have to have the same values of 
-    # props_calc or calc for every line
-    df_err = pd.DataFrame()
-    npts = len(soln)
-    real_series = np.zeros(npts, dtype=np.float64)
     
-    for n in nvals:
-        df_err.insert(df_err.shape[1], f'f{n}_err', real_series)
-        df_err.insert(df_err.shape[1], f'g{n}_err', real_series)
+    fstar_err = {'p': f_err_p + 1j*g_err,
+                 't': f_err_t + 1j*g_err}
+    return fstar_err
+           
 
-    if max(f_error) > 0 :        
-        for idx, row in soln.itertuples():
-            # extract uncertainty from dataframe if it is not [0, 0, 0]
-            for n in nvals:
-                df_err.loc[idx, f'f{n}_err'] = (
-                    np.real(calc_fstar_err(n, row, f_error)))
-
-                df_err.loc[idx, f'g{n}_err'] = (
-                           np.imag(calc_fstar_err(n, row, f_error)))
-    return df_err
-            
-
-def calc_prop_error(soln_in, f_error):
+def calc_prop_error(soln, f_error):
     '''
     Calclate error in properties
 
@@ -2056,46 +2016,49 @@ def calc_prop_error(soln_in, f_error):
     dataframe with errors in properties within props_calc
 
     '''
-    # make the error dataframe that will be returned by the function
-    # solution doesn't necessarily have to have the same values of 
+    # make the error dataframe
+    # Input solution doesn't necessarily have to have the same values of 
     # props_calc or calc for every line
-    soln_out = deepcopy(soln_in)
-    prop_err=pd.DataFrame(index=soln_out.index)
-    npts = len(soln_out)
+    prop_err=pd.DataFrame(index=soln.index)
+    npts = len(soln)
     real_series = np.zeros(npts, dtype=np.float64)
+    
+    for prop in soln.iloc[0]['props_calc']:
+        err_namep = f'{prop}_err_p' # partial error from f_error[0,1]
+        err_namet = f'{prop}_err_t' # total error form f_eroor[0,1,2]
+        for err_name in [err_namep, err_namet]:
+            if err_name not in prop_err.columns.values:
+                prop_err.insert(prop_err.shape[1], err_name, real_series)
            
-    for idx, row in soln_out.iterrows():
+    for idx, row in soln.iterrows():
         # this handles case where soln dataframe was not generated
         # by solve_for_props
-        
         if 'props_calc' not in dir(row):
             continue
+        # make dictionary where we'll keep the different contributions to error
+
         props_calc = row.props_calc
-        for prop in props_calc:
-            if f'{prop}_err' not in prop_err.columns.values:
-                prop_err.insert(prop_err.shape[1], f'{prop}_err', real_series)
-    
         calc = row.calc
         nf, ng, n_all, n_unique = nvals_from_calc(calc)
 
         # extract uncertainty from dataframe
-        uncertainty = []
+        uncertainty_p = []
         for n in nf:
-            delf_err = np.real(calc_fstar_err(n, row, f_error))
-            uncertainty.append(delf_err)
+            fstar_err = calc_fstar_err(n, row, f_error)
+            uncertainty_p.append(np.real(fstar_err['p']))
         for n in ng:
-            delg_err = np.imag(calc_fstar_err(n, row, f_error))
-            uncertainty.append(delg_err)
+            fstar_err = calc_fstar_err(n, row, f_error)
+            uncertainty_p.append(np.imag(fstar_err['p']))
 
         # extract the jacobian and turn it back into a numpy array of floats
         try:
             jacobian = np.array(row.jac, dtype='float')
         except:
-            jacobian = np.zeros([len(uncertainty), len(uncertainty)])
+            jacobian = np.zeros([len(uncertainty_p), len(uncertainty_p)])
         try:
             deriv = np.linalg.inv(jacobian)
         except:
-            deriv = np.zeros([len(uncertainty), len(uncertainty)])
+            deriv = np.zeros([len(uncertainty_p), len(uncertainty_p)])
     
         # determine error from Jacobian
         # this only works if the number of elements in calc is the 
@@ -2105,12 +2068,13 @@ def calc_prop_error(soln_in, f_error):
         # include errors from correlated changes in df/n
         row = err_fn_correlated_row(row, f_error[2])
         n = len(props_calc)
-        for p in np.arange(n):
-            err_name = f'{props_calc[p]}_err'
-            errval = (row[f'{props_calc[p]}_err_fn'])**2
+        for p, prop in enumerate(props_calc):
+            err2 = (row[f'{prop}_err_fn'])**2
+            errp = 0
             for k in np.arange(n):
-                errval = errval + (deriv[p, k]*uncertainty[k])**2
-            prop_err.loc[idx, err_name] = np.sqrt(errval)
+                errp = errp + (deriv[p, k]*uncertainty_p[k])**2
+            prop_err.loc[idx, f'{prop}_err_p'] = np.sqrt(errp)
+            prop_err.loc[idx, f'{prop}_err_t'] = np.sqrt(errp+err2)            
 
     return prop_err
 
@@ -2453,14 +2417,16 @@ def make_data_array(var, soln, prop_error, **kwargs):
     Returns
     -------
     data_array : numpy array of data
-    err_array : numpy array of errors (if they exist, usually returns 'null')
+    err_array_p : numpy array of errors based on f_error[1,2]
+    err_array_t : numpy array of errors based on f_error[1,2,3]
 
     """
     f1 = kwargs.get('f1', f1_default)
     ext = var.split('.')
     
     # set errors to zero by default
-    err_array = np.zeros_like(soln.index)
+    err_array_p = np.zeros_like(soln.index)
+    err_array_t = np.zeros_like(soln.index)
     
     # get layer number
     if len(ext[0].split('_'))==2:
@@ -2489,16 +2455,18 @@ def make_data_array(var, soln, prop_error, **kwargs):
         prop_name = f'grho3_{layer}'
         prop_err_name = prop_name+'_err'
         data_array = soln[prop_name].astype(float)/1000
-        if prop_err_name in prop_error.columns.values:
-            err_array = prop_error[prop_err_name]/1000
+
+        err_array_p = prop_error[f'{prop_err_name}_p']/1000
+        err_array_t = prop_error[f'{prop_err_name}_t']/1000
 
     elif 'etarho3' in ext[0]:
-       # units are mPa-s for viscosity
-       prop_name = f'grho3_{layer}'
-       prop_err_name = prop_name+'_err'
-       data_array = soln[prop_name].astype(float)/(2*np.pi*3*f1)
-       if f'grho3_{layer}_err' in prop_error.columns.values:
-           err_array = prop_error[f'grho3_{layer}_err']/(2*np.pi*3*f1)
+        # units are mPa-s for viscosity
+        prop_name = f'grho3_{layer}'
+        prop_err_name = prop_name+'_err'
+        data_array = soln[prop_name].astype(float)/(2*np.pi*3*f1)
+
+        err_array_p = prop_error[f'grho3_{layer}_err_p']/(2*np.pi*3*f1)
+        err_array_t = prop_error[f'grho3_{layer}_err_t']/(2*np.pi*3*f1)
 
     elif 'phi' in ext[0]:
         prop_name = f'phi_{layer}'
@@ -2509,13 +2477,16 @@ def make_data_array(var, soln, prop_error, **kwargs):
             data_array = np.tan(phi_r)
         else:
             data_array = phi_d
-        if prop_err_name in prop_error.columns.values:
-            err_d = prop_error[prop_err_name]  
-            if 'tan' in ext:
-                err_r = err_d*np.pi/180
-                err_array = np.tan(phi_r+err_r)-np.tan(phi_r)
-            else:
-                err_array = err_d
+
+        err_d_p = prop_error[f'{prop_err_name}_p']
+        err_d_t = prop_error[f'{prop_err_name}_t']
+        if 'tan' in ext:
+            err_r_p = err_d_p*np.pi/180
+            err_r_t = err_d_t*np.pi/180
+            err_array_p = np.tan(phi_r+err_r_p)-np.tan(phi_r)
+            err_array_t = np.tan(phi_r+err_r_t)-np.tan(phi_r)
+        else:
+            err_array_t = err_d_t
        
     elif 'grho3p' in ext[0]:
        data_array = (soln[f'grho3_{layer}'].astype(float)*
@@ -2533,8 +2504,9 @@ def make_data_array(var, soln, prop_error, **kwargs):
         # multiply by 1000 if units are nm instead of microns
         if 'nm' in ext[0]:
             data_array = 1000*data_array
-        if prop_err_name in prop_error.columns.values:
-            err_array = 1000*prop_error[prop_err_name]
+
+        err_array_p = 1000*prop_error[f'{prop_err_name}_p']
+        err_array_t = 1000*prop_error[f'{prop_err_name}_t']
 
     elif 'jdp' in ext[0]:
         data_array = ((1000/soln['grho3_1'].astype(float))*
@@ -2562,7 +2534,7 @@ def make_data_array(var, soln, prop_error, **kwargs):
         data_array=np.array([])
         data_array=np.array([])
        
-    return data_array.astype('float64'), err_array
+    return data_array.astype('float64'), err_array_p,  err_array_t
    
 
 def plot_props(soln, figdic, **kwargs):
@@ -2627,8 +2599,9 @@ def plot_props(soln, figdic, **kwargs):
     label=kwargs.get('label', '')
     xoffset_input=kwargs.get('xoffset', 0)  
     f_error = kwargs.get('f_error', [0.05, 15, 0])
-        
-    nplot = kwargs.get('nplot', [3,5])
+    
+    calc = soln.iloc[0]['calc']
+    nplot = kwargs.get('nplot', nvals_from_calc(calc)[3])
     col = {1:'CO', 3:'C1', 5:'C2', 7:'C3', 9:'C5'}
     
     # drop dataframe rows with all nan
@@ -2674,17 +2647,8 @@ def plot_props(soln, figdic, **kwargs):
     xdata = {}
     for p in np.arange(nprops):
         xdata[p] = make_data_array(xunit[p], soln, prop_error)[0]
-        ydata, yerr  = make_data_array(props[p], soln, prop_error)
+        ydata, yerr_p, yerr_t  = make_data_array(props[p], soln, prop_error)
         
-        # handle case where are plotting the tangent
-        if 'tan' in props[p]:
-            baseprop = props[p].split('.')[0].split('_')[0]
-            if 'phi' in props[p]:
-                ydata = np.tan(np.radians(ydata))
-            else:
-                ydata = np.tan(ydata)      
-            ax['props'][p].set_ylabel(axlabels[f'{baseprop}.tan'])
-
         # offset xdata if desired
         if xoffset[p] == 'zero':
             xoffset[p] = min(xdata[p])
@@ -2697,18 +2661,24 @@ def plot_props(soln, figdic, **kwargs):
             y_min = [ax['props'][p].get_ylim()[0]]
             y_max = [ax['props'][p].get_ylim()[1]]
             
-        y_min.append(min(ydata-yerr))
-        y_max.append(max(ydata+yerr))
+        y_min.append(min(ydata-yerr_t))
+        y_max.append(max(ydata+yerr_t))
         y_min = min(y_min)
         y_max = max(y_max)
 
-        if not np.any(yerr): 
+        if not np.any(yerr_t): 
             ax['props'][p].plot(xdata[p], ydata, fmt, label=label)
             
         else:
-            ax['props'][p].errorbar(xdata[p], ydata, fmt=fmt, yerr=yerr, 
-                                    label=label)
-            
+            # plot with 
+            ebar = ax['props'][p].errorbar(xdata[p], ydata, fmt=fmt, 
+                            yerr=yerr_p, label=label, capsize = 3,
+                            markersize = 0)
+            color = ebar[0].get_color()
+            # now plot extended error bars, including correlated error in f/n
+            ax['props'][p].errorbar(xdata[p], ydata, fmt=fmt, yerr=yerr_t, 
+                                   markersize = 0, color = color,
+                                   linewidth = 0.5)            
         y_range = y_max - y_min
         if ax['props'][p].get_yscale() == 'log' and y_min>0:
             ax['props'][p].set_ylim([0.9*y_min, 1.1*y_max])
@@ -2779,10 +2749,11 @@ def plot_props(soln, figdic, **kwargs):
             soln_tmp = soln.dropna(subset=[f'delfstar_expt_{n}'])
             dfval = np.real(soln_tmp[f'delfstar_expt_{n}'])/n
             dfval2 = np.real(soln_tmp[f'delfstar_calc_{n}'])/n
-            ferr = np.real(soln_tmp[f'fstar_err_{n}'])/n
-            df_min.append(np.nanmin(dfval-ferr))
+            ferr_p = np.real(soln_tmp[f'fstar_err_p_{n}'])/n
+            ferr_t = np.real(soln_tmp[f'fstar_err_t_{n}'])/n
+            df_min.append(np.nanmin(dfval-ferr_t))
             df_min.append(np.nanmin(dfval2))
-            df_max.append(np.nanmax(dfval+ferr))
+            df_max.append(np.nanmax(dfval+ferr_t))
             df_max.append(np.nanmax(dfval2))
             if figdic['info']['checklabels'][n]:
                 label_expt = f'n={n}: expt'
@@ -2790,9 +2761,14 @@ def plot_props(soln, figdic, **kwargs):
             else:
                 label_expt = ''
                 label_calc = ''
+                
+            # mow make the plot with both 'partial' and 'total' error bars
             ax['checks'][0].errorbar(soln_tmp['xdata'], 
-                       dfval, yerr = ferr, fmt='+', color = col[n],       
-                       label=label_expt)
+                       dfval, yerr = ferr_p, fmt='+', color = col[n],       
+                       label=label_expt, capsize=3, markersize = 0)
+            ax['checks'][0].errorbar(soln_tmp['xdata'], 
+                       dfval, yerr = ferr_t, fmt='+', color = col[n],       
+                       linewidth = 0.5, markersize = 0)
             calcvals = np.real(soln_tmp[f'delfstar_calc_{n}'])/n
             ax['checks'][0].plot(soln_tmp['xdata'], calcvals, '-', 
                     color = col[n], markerfacecolor='none', 
@@ -2808,14 +2784,15 @@ def plot_props(soln, figdic, **kwargs):
             soln_tmp = soln.dropna(subset=[f'delfstar_expt_{n}'])
             dgval = np.imag(soln_tmp[f'delfstar_expt_{n}'])/n
             dgval2 = np.imag(soln_tmp[f'delfstar_calc_{n}'])/n
-            gerr = np.imag(soln_tmp[f'fstar_err_{n}'])/n
+            gerr = np.imag(soln_tmp[f'fstar_err_t_{n}'])/n
             dg_min.append(np.nanmin(dgval-gerr))
             dg_min.append(np.nanmin(dgval2))
             dg_max.append(np.nanmax(dgval+gerr))
             dg_max.append(np.nanmax(dgval2))
             ax['checks'][1].errorbar(soln_tmp['xdata'], dgval, yerr = gerr, 
                                      fmt = '+',  
-                                     color = col[n])
+                                     color = col[n],
+                                     capsize = 3)
             calcvals = np.imag(soln_tmp[f'delfstar_calc_{n}'])/n
             ax['checks'][1].plot(soln_tmp['xdata'], calcvals, '-', 
                           color = col[n], markerfacecolor='none')
@@ -3585,16 +3562,16 @@ def add_fstar_err(df, f_error):
     for n in [1, 3, 5, 7, 9]:
         if f'delfstar_expt_{n}' in df.keys():
             n_list.append(n)
-            if f'fstar_err_{n}' not in df.keys():
-                df.insert(df.columns.get_loc(f'delfstar_expt_{n}'), 
-                            f'fstar_err_{n}', 0+1j*0)
+            for k in ['p', 't']:
+                if f'fstar_err_{k}_{n}' not in df.keys():
+                    df.insert(df.columns.get_loc(f'delfstar_expt_{n}'), 
+                                f'fstar_err_{k}_{n}', 0+1j*0)
 
     for row in df.itertuples():
         for n in n_list:
-            f_err = np.real(calc_fstar_err(n, row, f_error))
-            g_err = np.imag(calc_fstar_err(n, row, f_error))
-            fstar_err = f_err + 1j*g_err
-            df.loc[row.Index,f'fstar_err_{n}'] = fstar_err
+            fstar_err = calc_fstar_err(n, row, f_error)
+            for k in ['p', 't']:
+                df.loc[row.Index,f'fstar_err_{k}_{n}'] = fstar_err[k]
             
     return df
             
