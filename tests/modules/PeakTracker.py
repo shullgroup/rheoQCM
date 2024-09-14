@@ -403,8 +403,8 @@ class PeakTracker:
         if not harmdata: # harmdata is empty (for initialize)
             harm_dict = {}
         else:
+            logger.info(harmdata) # TODO: harmdata['ref'] might be empty and gives error!!!
             harm_dict = harmdata[chn_name][harm]
-        
             logger.info('chn_name:  %s, harm: %s', chn_name, harm)
             logger.info('harmdata[chn][harm] %s', harm_dict) 
         logger.info(' #####################') 

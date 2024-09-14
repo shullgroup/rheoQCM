@@ -1237,7 +1237,8 @@ class MatplotlibWidget(QWidget):
 
         for l_temp in self.l['temp']:
             # logger.info('l_temp %s', l_temp) 
-            ax.lines.remove(l_temp[0]) # remove from ax
+            # ax.lines.remove(l_temp[0]) # remove from ax
+           l_temp[0].remove() # remove from ax
         self.l['temp'] = [] # inintiate
 
         self.reset_ax_lim(ax)
