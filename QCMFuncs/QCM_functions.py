@@ -6,6 +6,7 @@ most recent version at the following link:
 https://github.com/shullgroup/rheoQCM/tree/master/QCMFuncs/QCM_functions.py
 @author: Ken Shull (k-shull@northwestern.edu)
 """
+
 import numpy as np
 import sys
 import os
@@ -20,6 +21,11 @@ import pandas as pd
 from copy import deepcopy, copy
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
+import seaborn as sns
+
+# Set the Seaborn colorblind palette as the default color cycle for Matplotlib
+colorblind_palette = sns.color_palette("colorblind")
+plt.rcParams['axes.prop_cycle'] = plt.cycler(color=colorblind_palette)
 
 try:
   from kww import kwwc, kwws
@@ -1303,7 +1309,9 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
     npts = len(df_soln.index)
     complex_series = np.empty(len(df_soln), dtype = np.complex128)
     for n in find_nplot(delfstar):
-        # add experimental delfstar and empty column for calculated delfstar
+        # add experimental delf, delfstar and empty column for calc. delfstar
+        df_soln.insert(df_soln.shape[1], f'fstar_expt_{n}', 
+                       delfstar_mod[f'fstar_{n}_dat'])        
         df_soln.insert(df_soln.shape[1], f'delfstar_expt_{n}', 
                        delfstar_mod[f'delfstar_expt_{n}'])
         df_soln.insert(df_soln.shape[1], f'delfstar_calc_{n}', complex_series)
@@ -1979,8 +1987,8 @@ def calc_fstar_err (n, row, f_error):
     """
         
     # find the value of gamma for the harmonic of interest
-    delfstar = getattr(row, f'delfstar_expt_{n}')
-    gamma = np.imag(delfstar)
+    fstar = getattr(row, f'fstar_expt_{n}')
+    gamma = np.imag(fstar)
     
     # now we calculate f_err and g_err
     f_err_p = round((f_error[0]*gamma + n*f_error[1]), 1)
@@ -2066,10 +2074,10 @@ def calc_prop_error(soln, f_error):
         # n unknowns)
 
         # include errors from correlated changes in df/n
-        row = err_fn_correlated_row(row, f_error[2])
+        row_new = deepcopy(err_fn_correlated_row(row, f_error[2]))
         n = len(props_calc)
         for p, prop in enumerate(props_calc):
-            err2 = (row[f'{prop}_err_fn'])**2
+            err2 = (row_new[f'{prop}_err_fn'])**2
             errp = 0
             for k in np.arange(n):
                 errp = errp + (deriv[p, k]*uncertainty_p[k])**2
@@ -2486,6 +2494,7 @@ def make_data_array(var, soln, prop_error, **kwargs):
             err_array_p = np.tan(phi_r+err_r_p)-np.tan(phi_r)
             err_array_t = np.tan(phi_r+err_r_t)-np.tan(phi_r)
         else:
+            err_array_p = err_d_t
             err_array_t = err_d_t
        
     elif 'grho3p' in ext[0]:
@@ -2595,7 +2604,7 @@ def plot_props(soln, figdic, **kwargs):
     if len(soln) ==0:
         print('solution data frame for plotting is empty')
         return
-    fmt=kwargs.get('fmt', '+')
+    fmt=kwargs.get('fmt', 'x')
     label=kwargs.get('label', '')
     xoffset_input=kwargs.get('xoffset', 0)  
     f_error = kwargs.get('f_error', [0.05, 15, 0])
@@ -2672,8 +2681,7 @@ def plot_props(soln, figdic, **kwargs):
         else:
             # plot with 
             ebar = ax['props'][p].errorbar(xdata[p], ydata, fmt=fmt, 
-                            yerr=yerr_p, label=label, capsize = 3,
-                            markersize = 0)
+                            yerr=yerr_p, label=label, capsize = 3)
             color = ebar[0].get_color()
             # now plot extended error bars, including correlated error in f/n
             ax['props'][p].errorbar(xdata[p], ydata, fmt=fmt, yerr=yerr_t, 
@@ -2764,10 +2772,10 @@ def plot_props(soln, figdic, **kwargs):
                 
             # mow make the plot with both 'partial' and 'total' error bars
             ax['checks'][0].errorbar(soln_tmp['xdata'], 
-                       dfval, yerr = ferr_p, fmt='+', color = col[n],       
-                       label=label_expt, capsize=3, markersize = 0)
+                       dfval, yerr = ferr_p, fmt='x', color = col[n],       
+                       label=label_expt, capsize=3)
             ax['checks'][0].errorbar(soln_tmp['xdata'], 
-                       dfval, yerr = ferr_t, fmt='+', color = col[n],       
+                       dfval, yerr = ferr_t, fmt='x', color = col[n],       
                        linewidth = 0.5, markersize = 0)
             calcvals = np.real(soln_tmp[f'delfstar_calc_{n}'])/n
             ax['checks'][0].plot(soln_tmp['xdata'], calcvals, '-', 
@@ -2790,7 +2798,7 @@ def plot_props(soln, figdic, **kwargs):
             dg_max.append(np.nanmax(dgval+gerr))
             dg_max.append(np.nanmax(dgval2))
             ax['checks'][1].errorbar(soln_tmp['xdata'], dgval, yerr = gerr, 
-                                     fmt = '+',  
+                                     fmt = 'x',  
                                      color = col[n],
                                      capsize = 3)
             calcvals = np.imag(soln_tmp[f'delfstar_calc_{n}'])/n
@@ -3074,9 +3082,9 @@ def read_xlsx(infile, **kwargs):
 
             for k in np.arange(len(nvals)):
                 # write the film and reference values to the data frame
-                df[f'{nvals[k]}_ref'] = (df_ref[f'f{nvals[k]}'].mean()+
+                df[f'fstar_{nvals[k]}_ref'] = (df_ref[f'f{nvals[k]}'].mean()+
                                  1j*df_ref[f'g{nvals[k]}'].mean()).round(1)
-                df[f'{nvals[k]}_dat'] = (df[f'f{nvals[k]}']+
+                df[f'fstar_{nvals[k]}_dat'] = (df[f'f{nvals[k]}']+
                                  1j*df[f'g{nvals[k]}']).round(1)
 
             # set all the temperatures on df_ref to Tref
@@ -3126,15 +3134,15 @@ def read_xlsx(infile, **kwargs):
                 df[f'fstar_{nvals[k]}_ref'] = (fref + 1j*gref).round(1)
 
 
-        for k in np.arange(len(nvals)):
-            # now write values of delfstar to the dataframe
-            df[f'delfstar_expt_{nvals[k]}']=(df[f'fstar_{nvals[k]}_dat'] -
-                          df[f'fstar_{nvals[k]}_ref'] -
-                          fref_shift[nvals[k]]).round(1)
+    for k in np.arange(len(nvals)):
+        # now write values of delfstar to the dataframe
+        df[f'delfstar_expt_{nvals[k]}']=(df[f'fstar_{nvals[k]}_dat'] -
+                      df[f'fstar_{nvals[k]}_ref'] -
+                      fref_shift[nvals[k]]).round(1)
 
-            # add absolute frequency and reference values to dataframe
-            keep_column.append(f'fstar_{nvals[k]}_dat')
-            keep_column.append(f'fstar_{nvals[k]}_ref')
+        # add absolute frequency and reference values to dataframe
+        keep_column.append(f'fstar_{nvals[k]}_dat')
+        keep_column.append(f'fstar_{nvals[k]}_ref')
 
     # add the constant applied shift to the reference values to the dataframe
     # also account for overlayer if it exists
