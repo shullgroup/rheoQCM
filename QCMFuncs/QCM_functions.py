@@ -21,11 +21,16 @@ import pandas as pd
 from copy import deepcopy, copy
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
-import seaborn as sns
+import re
 
-# Set the Seaborn colorblind palette as the default color cycle for Matplotlib
-colorblind_palette = sns.color_palette("colorblind")
-plt.rcParams['axes.prop_cycle'] = plt.cycler(color=colorblind_palette)
+try:
+  import seaborn as sns
+  # Set the Seaborn colorblind palette as the default color cycle for Matplotlib
+  colorblind_palette = sns.color_palette("colorblind")
+  plt.rcParams['axes.prop_cycle'] = plt.cycler(color=colorblind_palette)
+except ImportError:
+  pass
+
 
 try:
   from kww import kwwc, kwws
@@ -44,10 +49,12 @@ g0_default = 50
 
 T_coef_default = {'f': {1: [0.00054625, 0.04338, 0.08075, 0],
                        3: [0.0017, -0.135, 8.9375, 0],
-                       5: [0.002825, -0.22125, 15.375, 0]},
+                       5: [0.002825, -0.22125, 15.375, 0],
+                       7: [0.003955, -0.30975, 21.525, 0]},
                   'g': {1: [0, 0, 0, 0],
-                       3: [0, 0, 0, 0],
-                       5: [0, 0, 0, 0]}}
+                        3: [0, 0, 0, 0],
+                        5: [0, 0, 0, 0],
+                        7: [0, 0, 0, 0]}}
 
 electrode_default = {'drho': 2.8e-3, 'grho3': 3.0e14, 'phi': 0}
 water = {'drho':np.inf, 'grho3':9.4e7, 'phi':90}
@@ -545,8 +552,10 @@ def calc_D(n, props, delfstar, **kwargs):
     calctype = kwargs.get('calctype', 'SLA')
     f1 = kwargs.get('f1', f1_default)
     drho = props['drho']
-    value = 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n,
-                   props, calctype)
+    # ignore divide by zero errors that come up in some special cases
+    with np.errstate(divide='ignore'):
+        value = 2*np.pi*(n*f1+delfstar)*drho/zstar_bulk(n,
+                       props, calctype)
     return value
 
 
@@ -898,7 +907,7 @@ def calc_lamrho(n, grho3, phi, **kwargs):
     return np.sqrt(grho)/(n*f1*np.cos(np.deg2rad(phi/2)))
 
 
-def calc_deltarho(n, grho3, phi, **kwargs):
+def calc_deltarho(n, grho3, phi):
     """
     Calculate delta*\rho at specified harmonic.
     args:
@@ -1418,7 +1427,7 @@ def extract_props(soln_df, props_calc):
     return propvals
         
 
-def update_layers(props, values, layers):
+def update_layers(props, values, layers, **kwargs):
     '''
     Updates layers dictionary, substituting the specified values
     into the properties specified by props_calc.  
@@ -1450,7 +1459,20 @@ def update_layers(props, values, layers):
             layer = int(layer)
             if value != 'no_change':
                 layers[layer][prop] = value
+            if prop=='grho3' and 'phi_parms' in kwargs.keys():
+                phi_parms=kwargs.get('phi_parms')
+                layers[layer]['phi']=calc_phi(layers[layer]['grho3'], phi_parms)
     return layers
+
+def add_layer_num(prop):
+    # add _1 to property string if it is not already include
+    if re.match(r'^(grho3|phi|drho)+(\..+)?$', prop):
+        # Insert '_1' before the first dot
+        prop = prop.replace('.', '_1.', 1) if '.' in prop else prop + '_1'
+    return prop
+
+def add_layer_nums(props):
+    return [add_layer_num(prop) for prop in props]
 
 
 def guess_from_layers(props, layers):
@@ -1556,6 +1578,12 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
     showvals (Boolean):
         True if we want to displacy solutions as they are generated
         - default is False
+        
+    phi_parms (list)
+        Values used to calculate phi from grho3, assuming linear relationship
+        between phi and log(grho3) - used for polymer solutions
+        - first value is liquid viscosity (times density)
+        - second value is solid modulus (times density)
             
     Returns
     -------
@@ -1621,7 +1649,7 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
   
     for row in delfstar_mod.itertuples(): 
         def ftosolve(x):
-            layers_solve = update_layers(props_calc, x, layers)
+            layers_solve = update_layers(props_calc, x, layers, **kwargs)
             return compare_calc_expt(layers_solve, row, calc,
                                      calctype=calctype, reftype=reftype)
         
@@ -1738,6 +1766,42 @@ def solve_all(datadir, calc, **kwargs):
     return df, soln, figdic
 
 
+def calc_phi(grho3, phi_parms):
+    '''
+    Esitmates phase angle from grho3, assuming linear relationshp between phi
+    and log(grho3).  Based on Sadman, et al. Macromol. 50, 9417–9426 (2017).
+    This assumes f1 = the default value of 5 MHz for now
+
+    Parameters
+    ----------
+    grho3 : float
+        Value of grho3 for calculation.
+    phi_parms : list containing etarho, grho
+        etarho:  liquid limit - viscosity times density for pure solvent
+        grho: solid limit - modulus times density for pure polymer
+        
+
+    Returns
+    -------
+    phase angle (in degrees).
+
+    '''
+    f1 = 5e6
+    eta = phi_parms[0]
+    grho3_lo = 2*np.pi*3*f1*eta
+    grho3_hi = phi_parms[1]
+
+    if grho3 > grho3_hi:
+        return 0
+    elif grho3 < grho3_lo:
+        return 90
+    else:
+        phi =90-90*((np.log(grho3)-np.log(grho3_lo))/
+                    (np.log(grho3_hi)-np.log(grho3_lo)))
+        return phi
+        
+
+
 def make_err_axes(**kwargs):
     """
     Parameters
@@ -1827,15 +1891,26 @@ def err_fn_correlated_row(row_in, fn_err):
 
     """
     row = deepcopy(row_in)
+    # Return the original row if 'props_calc' does not exist
+    if ('props_calc' not in row or row['props_calc'] is None or (not 
+        isinstance(row['props_calc'], list)) or len(row['props_calc']) == 0):
+        return row
+    
+    # handle trivial case where fn_err = 0
+    if fn_err == 0:
+        for i, prop in enumerate(row.props_calc):
+            row[f'{prop}_err_fn'] = 0
+        return row
+        
  
     guess = guess_from_layers(row.props_calc, row.layers)
     nf, ng, n_all, n_unique = nvals_from_calc(row.calc)
     for n in nf:
-        row[f'delfstar_expt_{n}'] = row[f'delfstar_expt_{n}'] +n*fn_err
+        row_in[f'delfstar_expt_{n}'] = row_in[f'delfstar_expt_{n}'] +n*fn_err
     
     def ftosolve(x):
-        layers_solve = update_layers(row.props_calc, x, row.layers)
-        return compare_calc_expt(layers_solve, row, row.calc,
+        layers_solve = update_layers(row_in.props_calc, x, row.layers)
+        return compare_calc_expt(layers_solve, row_in, row.calc,
                                  calctype=row.calctype, 
                                  reftype=row.reftype)
     try:
@@ -2031,7 +2106,7 @@ def calc_prop_error(soln, f_error):
     npts = len(soln)
     real_series = np.zeros(npts, dtype=np.float64)
     
-    for prop in soln.iloc[0]['props_calc']:
+    for prop in soln[soln['props_calc'].notna()].iloc[0]['props_calc']:
         err_namep = f'{prop}_err_p' # partial error from f_error[0,1]
         err_namet = f'{prop}_err_t' # total error form f_eroor[0,1,2]
         for err_name in [err_namep, err_namet]:
@@ -2041,7 +2116,9 @@ def calc_prop_error(soln, f_error):
     for idx, row in soln.iterrows():
         # this handles case where soln dataframe was not generated
         # by solve_for_props
-        if 'props_calc' not in dir(row):
+        if ('props_calc' not in row or row['props_calc'] is None or (not 
+              isinstance(row['props_calc'], list)) or 
+              len(row['props_calc']) == 0):
             continue
         # make dictionary where we'll keep the different contributions to error
 
@@ -2081,8 +2158,11 @@ def calc_prop_error(soln, f_error):
             errp = 0
             for k in np.arange(n):
                 errp = errp + (deriv[p, k]*uncertainty_p[k])**2
-            prop_err.loc[idx, f'{prop}_err_p'] = np.sqrt(errp)
-            prop_err.loc[idx, f'{prop}_err_t'] = np.sqrt(errp+err2)            
+            # errors can't exceed actual values of the properties
+            prop_err.loc[idx, f'{prop}_err_p'] = (min(np.sqrt(errp), 
+                                                soln.loc[idx, f'{prop}']))
+            prop_err.loc[idx, f'{prop}_err_t'] = (min(np.sqrt(errp+err2),
+                                                 soln.loc[idx, f'{prop}']))
 
     return prop_err
 
@@ -2161,13 +2241,16 @@ def make_prop_axes(props, **kwargs):
         maps (booleaan):
             True (default is false) if we make the response maps
             
+        orientation ('string')
+            'horizontal' is default, swith to 'vertical' for vertical
+            plot graph (only valid if checks and maps are both False)
+        
         contour_range (dictionary):
             range of contours in form {0:[min,max], 1:[min, max])} \
             default is {0:[-3, 3], 1:[0,3]})
                     
         contour_range_units: 
             'Hz' (default) or Sauerbrey if we want to normalize
-            zscale of response maps by Sauerbrey shift
             
         xunit (single string or list of strings):
             Units for x data.  Default is 'index', function currently handles
@@ -2177,7 +2260,7 @@ def make_prop_axes(props, **kwargs):
                 
         xlabel (string):
             label for x axis.  Only used if user-specified xunit is used
-            currently must be same for all axes.
+            String if same for all axes, otherwise list.
                          
         plotsize (tuple of 2 real numbers):
             size of individual plots.  
@@ -2215,11 +2298,19 @@ def make_prop_axes(props, **kwargs):
     num = kwargs.get('num', 'property fig')
     maps = kwargs.get('maps', False)
     checks = kwargs.get('checks', True)
+    orientation = kwargs.get('orientation', 'horizontal')
     xunit_input = kwargs.get('xunit', 'index')
     no3 = kwargs.get('no3', False)
     nprops = len(props)
     plotsize = kwargs.get('plotsize', (4,3))
     
+          
+    # change labels in case we don't want the 3 subscript for G
+    if no3:
+        axlabels['grho3'] = r'$|G^*|\rho$ (Pa $\cdot$ g/cm$^3$)'
+        axlabels['grho3p'] = r'$G^\prime\rho$ (Pa $\cdot$ g/cm$^3$)'
+        axlabels['grho3pp'] = r'$G^{\prime\prime}\rho$ (Pa $\cdot$ g/cm$^3$)'
+        
     if nprops == 1 and not checks and not maps:
         titles = ['']
     else:
@@ -2270,34 +2361,49 @@ def make_prop_axes(props, **kwargs):
     if maps:
         nrows = nrows+1
     
-    GridSpec = gridspec.GridSpec(ncols=12, nrows=nrows, figure= fig['master'])
-    
-    # add subfigures - details depend on nprops, which must be 1, 2 or 3
-    # Subfigure - properties
-    if nprops==1:
-        fig['props'] = fig['master'].add_subfigure(GridSpec[0,3:9])
+    # create the gridspec and add property subfigure
+    # start with vertial version
+    if (not checks and not maps and orientation=='vertical'):
+        GridSpec = gridspec.GridSpec(ncols=1, nrows=1, 
+                                     figure= fig['master'])
+        fig['props'] = fig['master'].add_subfigure(GridSpec[0,0])
+    # now handle the standard horizontal verions
     else:
-        fig['props'] = fig['master'].add_subfigure(GridSpec[0,:])
-    
+        GridSpec = gridspec.GridSpec(ncols=12, nrows=nrows, 
+                                     figure= fig['master'])
+        if nprops==1:
+            fig['props'] = fig['master'].add_subfigure(GridSpec[0,3:9])
+        else:
+            fig['props'] = fig['master'].add_subfigure(GridSpec[0,:])
+
+
     # add the different axes to plots figure
     ax['props']={}
-    ax['props'][0] = fig['props'].add_subplot(1, nprops, 1)
-    if 'log' in xunit[0].split('.'):
-        ax['props'][0].set_xscale('log')
-
-    for p in np.arange(1, nprops):
-        if xunit[p] == xunit[0]:
-            ax['props'][p] = fig['props'].add_subplot(1, nprops, p+1, 
-                                                      sharex = ax['props'][0])
-        else:
-            ax['props'][p] = fig['props'].add_subplot(1, nprops, p+1)
+    
+    if orientation == 'vertical':
+        ax['props'][0] = fig['props'].add_subplot(nprops, 1, 1)
+    
+        for p in np.arange(1, nprops):
+            if xunit[p] == xunit[0]:
+                ax['props'][p] = fig['props'].add_subplot(nprops, 1, p+1, 
+                                                    sharex = ax['props'][0])
+            else:
+                ax['props'][p] = fig['props'].add_subplot(nprops, 1, p+1)
+    else:
+        ax['props'][0] = fig['props'].add_subplot(1, nprops, 1)
+    
+        for p in np.arange(1, nprops):
+            if xunit[p] == xunit[0]:
+                ax['props'][p] = fig['props'].add_subplot(1, nprops, p+1, 
+                                                    sharex = ax['props'][0])
+            else:
+                ax['props'][p] = fig['props'].add_subplot(1, nprops, p+1)
             
     for p in np.arange(nprops):
         ax[p] = ax['props'][p]
         ax[p].set_title(titles[p])
         ax[p].set_xlabel(xlabel[p])
-        if 'log' in props[p].split('.'):
-            ax['props'][p].set_yscale('log')
+
     iax = nprops-1  # running number of axes for axis labeling
     irow = 0  # running index of row
 
@@ -2350,16 +2456,16 @@ def make_prop_axes(props, **kwargs):
  
     # set the figure size
     # account for 2 extra rows for solution checks and response maps
-    cols = max(2, nprops)
-    figsize = (plotsize[0]*cols, plotsize[1]*nrows)
-    fig['master'].set_size_inches(figsize)
-
+    if orientation == 'vertical':
+        figsize = (plotsize[0], plotsize[1]*nprops)
         
-    # change labels in case we don't want the 3 subscript for G
-    if no3:
-        axlabels['grho3'] = r'$|G^*|\rho$ (Pa $\cdot$ g/cm$^3$)'
-        axlabels['grho3p'] = r'$G^\prime\rho$ (Pa $\cdot$ g/cm$^3$)'
-        axlabels['grho3pp'] = r'$G^{\prime\prime}\rho$ (Pa $\cdot$ g/cm$^3$)'
+    else: 
+        cols = max(2, nprops)
+        figsize = (plotsize[0]*cols, plotsize[1]*nrows)
+    
+    fig['master'].set_size_inches(figsize)
+    
+  
     
     # now set the y labels 
     for p in np.arange(nprops):   
@@ -2397,7 +2503,6 @@ def make_prop_axes(props, **kwargs):
             ax['props'][p].set_xlabel(xlabel[p])  
             
         else:
-            ax['props'][p].set_xlabel('xlabel')
             ax['props'][p].set_ylabel('ylabel')
 
         ax['props'][p].set_title(titles[p])
@@ -2494,7 +2599,7 @@ def make_data_array(var, soln, prop_error, **kwargs):
             err_array_p = np.tan(phi_r+err_r_p)-np.tan(phi_r)
             err_array_t = np.tan(phi_r+err_r_t)-np.tan(phi_r)
         else:
-            err_array_p = err_d_t
+            err_array_p = err_d_p
             err_array_t = err_d_t
        
     elif 'grho3p' in ext[0]:
@@ -2542,7 +2647,7 @@ def make_data_array(var, soln, prop_error, **kwargs):
         print(f'no data - not a recognized prop type ({ext[0]})')
         data_array=np.array([])
         data_array=np.array([])
-       
+        
     return data_array.astype('float64'), err_array_p,  err_array_t
    
 
@@ -2565,6 +2670,7 @@ def plot_props(soln, figdic, **kwargs):
         properties to plot. Default is first layer of props specified in
             figdic['info']['props']. Add .log to plot on log scale,
             .tan to take tangent (generally only used for phi)
+            'null' makes an empty set of axes
         
     xoffset (real or string, single value or list):
         Amount to subtract from x value for plotting (default is 0)
@@ -2590,7 +2696,9 @@ def plot_props(soln, figdic, **kwargs):
     plot_df1 
         True if we want to plot df1
     drho_ref (real):
-        reference drho for plots of drho_norm or drho_ref
+        reference drho for plots of drho_norm or drho_ref       
+    linewidth (float):
+            linewidth for plots
 
 
     Returns
@@ -2608,6 +2716,7 @@ def plot_props(soln, figdic, **kwargs):
     label=kwargs.get('label', '')
     xoffset_input=kwargs.get('xoffset', 0)  
     f_error = kwargs.get('f_error', [0.05, 15, 0])
+    linewidth = kwargs.get('linewidth', 1)
     
     calc = soln.iloc[0]['calc']
     nplot = kwargs.get('nplot', nvals_from_calc(calc)[3])
@@ -2623,18 +2732,7 @@ def plot_props(soln, figdic, **kwargs):
     fig = figdic['fig']
     
     # add '_1' to property if it wasn't included explicitly
-    # drop property if it is not in the solution data frame
-    i=0
-    for prop in props:
-        ext = prop.split('.')
-        if len(ext[0].split('_')) == 1:
-            ext[0]=ext[0]+'_1'
-        if ext[0] not in soln.keys():
-            props = props.remove(prop)
-        else:
-            props[i] = '.'.join(ext)
-            i=i+1
-
+    props = add_layer_nums(props)       
     nprops = len(props)
     
     # create dataframe with calculated errors
@@ -2655,6 +2753,8 @@ def plot_props(soln, figdic, **kwargs):
     # one of these arrays (usually the first one) for the solution checks
     xdata = {}
     for p in np.arange(nprops):
+        if props[p].split('.',1)[0] not in soln.keys():
+            continue
         xdata[p] = make_data_array(xunit[p], soln, prop_error)[0]
         ydata, yerr_p, yerr_t  = make_data_array(props[p], soln, prop_error)
         
@@ -2676,20 +2776,32 @@ def plot_props(soln, figdic, **kwargs):
         y_max = max(y_max)
 
         if not np.any(yerr_t): 
-            ax['props'][p].plot(xdata[p], ydata, fmt, label=label)
+            ax['props'][p].plot(xdata[p], ydata, fmt, label=label,
+                                linewidth=linewidth)
             
         else:
-            # plot with 
+            # plot with error bars
             ebar = ax['props'][p].errorbar(xdata[p], ydata, fmt=fmt, 
-                            yerr=yerr_p, label=label, capsize = 3)
+                            yerr=yerr_p, label=label, capsize = 3,
+                            linewidth=linewidth)
             color = ebar[0].get_color()
             # now plot extended error bars, including correlated error in f/n
-            ax['props'][p].errorbar(xdata[p], ydata, fmt=fmt, yerr=yerr_t, 
+            ax['props'][p].errorbar(xdata[p], ydata, yerr=yerr_t, 
                                    markersize = 0, color = color,
-                                   linewidth = 0.5)            
+                                   linewidth = linewidth)            
         y_range = y_max - y_min
-        if ax['props'][p].get_yscale() == 'log' and y_min>0:
-            ax['props'][p].set_ylim([0.9*y_min, 1.1*y_max])
+        
+        if 'log' in props[p].split('.'):
+            ax['props'][p].set_yscale('log')
+            
+        if 'log' in xunit[p].split('.'):
+            ax['props'][p].set_xscale('log')
+            
+        if ax['props'][p].get_yscale()=='log' and y_min>0:
+            # set axis limits so we have 5% white space at top and bottom
+            logrange = np.log(y_max/y_min)
+            padding = np.exp(0.05*logrange)
+            ax['props'][p].set_ylim([y_min/padding, y_max*padding])
         else:
             if y_range>0:
                 ax['props'][p].set_ylim([y_min - 0.05*y_range, 
@@ -2908,6 +3020,8 @@ def read_xlsx(infile, **kwargs):
             
             - default is 'all', which takes everything
             - 'max' means we take the single value for which f3 is maximized
+            - 'last' means the last index (highest value)
+            - 'first' means we take only the first index (highest value)
 
     film_idx: numpy array of integers or string
         Index values to include for film data.  Default is 'all' which 
@@ -2983,9 +3097,15 @@ def read_xlsx(infile, **kwargs):
     fref_shift=kwargs.get('fref_shift', {1: 0, 3: 0, 5: 0, 7:0, 9:0})
     
 
-    if type(ref_idx) == str and ref_idx == 'max':
+    if type(ref_idx)==str and ref_idx == 'max':
         df_ref=pd.read_excel(infile, sheet_name=ref_channel, header=0)
-        ref_idx = np.array([df_ref['f3'].idxmax()])
+        ref_idx = [df_ref['f3'].idxmax()]
+    elif type(ref_idx)== str and ref_idx == 'first':
+        df_ref=pd.read_excel(infile, sheet_name=ref_channel, header=0)
+        ref_idx = [df_ref.index[0]]
+    elif type(ref_idx)==str and ref_idx == 'last':
+        df_ref=pd.read_excel(infile, sheet_name=ref_channel, header=0)
+        ref_idx = [df_ref.index[-1]]
         
     df=pd.read_excel(infile, sheet_name=film_channel, header=0,
                      index_col = index_col)
@@ -3064,10 +3184,9 @@ def read_xlsx(infile, **kwargs):
                                                    df['temp'])
                 df[val+str(n)+'_dat'] = df[val+str(n)]
             
-            # keep track (of film and reference values in dataframe
-            df[f'delfstar_expt_{n}']  = (df['f'+str(n)+'_dat'] - df['f'+str(n) + '_ref'] +
-                  1j*(df['g'+str(n)+'_dat'] - df['g'+str(n) + '_ref']))
-            
+            # keep track of film and reference values in dataframe
+            df[f'fstar_{n}_dat']=df[f'f{n}_dat']+1j*df[f'g{n}_dat']
+            df[f'fstar_{n}_ref']=df[f'f{n}_ref']+1j*df[f'g{n}_ref']          
 
     else:
         # here we need to obtain T_coef from the info in the ref. channel
