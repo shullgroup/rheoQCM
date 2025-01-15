@@ -1262,6 +1262,8 @@ class DataSaver:
             if (col in config_default['data_saver_export_cols']) and (col != 'marks'):
                 df = df.assign(**self.get_list_column_to_columns(chn_name, col, mark=mark, deltaval=deltaval, norm=norm)) # split columns: fs and gs
                 df = df.drop(columns=col) # drop columns: fs and gs
+            elif (col not in config_default['data_saver_export_cols']) and (col != 'marks'):
+                df = df.drop(columns=col) # drop columns: fs and gs
 
         logger.info(df.head()) 
 
