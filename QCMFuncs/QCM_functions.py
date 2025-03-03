@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+Current version:  2025.03.03
 Created on Thu Jan  4 09:19:59 2018 and updated continuously
 most recent version at the following link:
 https://github.com/shullgroup/rheoQCM/tree/master/QCMFuncs/QCM_functions.py
@@ -28,7 +29,7 @@ try:
   # Set the Seaborn colorblind palette as the default color cycle for Matplotlib
   colorblind_palette = sns.color_palette("colorblind")
   plt.rcParams['axes.prop_cycle'] = plt.cycler(color=colorblind_palette)
-except ImportError:
+except ImportError:  
   pass
 
 
@@ -38,6 +39,10 @@ try:
   # kwws returns: integral from 0 to +infinity dt sin(omega*t) exp(-t^beta)
 except ImportError:
   pass
+
+            
+# set up colors we'll use to plot different harmonics
+col = {1:'C0', 3:'C1', 5:'C2', 7:'C3', 9:'C4'}
 
 # setvvalues for standard constants
 Zq = 8.84e6  # shear acoustic impedance of at cut quartz
@@ -50,7 +55,7 @@ g0_default = 50
 T_coef_default = {'f': {1: [0.00054625, 0.04338, 0.08075, 0],
                        3: [0.0017, -0.135, 8.9375, 0],
                        5: [0.002825, -0.22125, 15.375, 0],
-                       7: [0.003955, -0.30975, 21.525, 0]},
+                       7: [0.004, -0.30975, 21.525, 0]},
                   'g': {1: [0, 0, 0, 0],
                         3: [0, 0, 0, 0],
                         5: [0, 0, 0, 0],
@@ -71,6 +76,7 @@ axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
             'phi.tan': r'tan$\phi$',
             'grho3p': r'$G^\prime_3\rho$ (Pa $\cdot$ g/cm$^3$)',
             'grho3pp': r'$G^{\prime\prime}_3\rho$ (Pa $\cdot$ g/cm$^3$)',
+            'deltarho3': r'$\delta\rho$ ($\mu$m $\cdot$ g/cm$^3$)',
             'AF':r'AF',
             'jdp': r'$J^{\prime \prime}/\rho$ (Pa$^{-1}\cdot$cm$^3$/g)',
             'temp':r'$T$ ($^\circ$C)',
@@ -234,6 +240,7 @@ def add_eta_axis(ax):
     ylim2 = tuple((lim/omega)*1000 for lim in axlim)
     ax2.set_ylim(ylim2)
     ax2.set_ylabel(axlabels['etarho3'])
+    ax2.set_yscale(ax.get_yscale())
     return ax2
 
 
@@ -1596,8 +1603,12 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
     calc = update_calc(calc)
     layers = deepcopy(layers_in)
     for i, prop in enumerate(props_calc):
+        # remove any plotting designations ('log', etc.)
+        prop = prop.split('.')[0]
         if len(prop.split('_'))==1:
             props_calc[i]=prop+'_1'
+        else:
+            props_calc[i] = prop
                        
     calctype = kwargs.get('calctype', 'SLA')
     reftype = kwargs.get('reftype', 'bare')
@@ -2153,11 +2164,17 @@ def calc_prop_error(soln, f_error):
         # include errors from correlated changes in df/n
         row_new = deepcopy(err_fn_correlated_row(row, f_error[2]))
         n = len(props_calc)
+        if n != n_all:
+            print(f'{n_all} elements in calc but {n} props. Cannot calculate error')
+            return prop_err
         for p, prop in enumerate(props_calc):
             err2 = (row_new[f'{prop}_err_fn'])**2
             errp = 0
             for k in np.arange(n):
-                errp = errp + (deriv[p, k]*uncertainty_p[k])**2
+                try:
+                    errp = errp + (deriv[p, k]*uncertainty_p[k])**2
+                except:
+                    print(f'error with {prop} in calc_prop_error')
             # errors can't exceed actual values of the properties
             prop_err.loc[idx, f'{prop}_err_p'] = (min(np.sqrt(errp), 
                                                 soln.loc[idx, f'{prop}']))
@@ -2167,20 +2184,18 @@ def calc_prop_error(soln, f_error):
     return prop_err
 
         
-def make_prop_axes(props, **kwargs):
+def make_prop_axes(propnames, **kwargs):
     '''
     Make a blank property figure.
 
     Parameters
     ----------
                     
-    props : list of strings
+    propnamess : list of strings
         each in the format property_layer.ext. Here 
         layer is the layer number of the property, and ext is an optional
         argument that can include the following:
         
-        'linear': 
-            Force plot on linear scale.
         
         'log': 
             Force plot on log scale.
@@ -2266,9 +2281,9 @@ def make_prop_axes(props, **kwargs):
             size of individual plots.  
             - Default is (4, 3)
             
-        sharex (Boolean):
-            share x axis for zooming
-            -(default=True)
+        sharex (list of integers):
+            axes for potential sharing of x axis
+            -(default is np.arange(nplots), where nplots is number of prop plots)
                    
         no3 (Boolean):
             False (default) if we want to keep the '3' 
@@ -2301,10 +2316,22 @@ def make_prop_axes(props, **kwargs):
     orientation = kwargs.get('orientation', 'horizontal')
     xunit_input = kwargs.get('xunit', 'index')
     no3 = kwargs.get('no3', False)
-    nprops = len(props)
+    # add '_1' to property if it wasn't included explicitly
+    propnames = add_layer_nums(propnames)  
+    nprops = len(propnames)
+    
+    # make props dictionary that connects property axis number to the property
+    props = {}
+    for k in np.arange(nprops):
+        props[k] = propnames[k]
+    
+    # vertical orientation gets rid of unwanted whitespace if we only have
+    # one suplot
+    if nprops==1 and not maps and not checks:
+        orientation = 'vertical'
+    sharex = kwargs.get('sharex', np.arange(nprops))
     plotsize = kwargs.get('plotsize', (4,3))
     
-          
     # change labels in case we don't want the 3 subscript for G
     if no3:
         axlabels['grho3'] = r'$|G^*|\rho$ (Pa $\cdot$ g/cm$^3$)'
@@ -2384,7 +2411,7 @@ def make_prop_axes(props, **kwargs):
         ax['props'][0] = fig['props'].add_subplot(nprops, 1, 1)
     
         for p in np.arange(1, nprops):
-            if xunit[p] == xunit[0]:
+            if xunit[p] == xunit[0] and p in sharex:
                 ax['props'][p] = fig['props'].add_subplot(nprops, 1, p+1, 
                                                     sharex = ax['props'][0])
             else:
@@ -2393,7 +2420,7 @@ def make_prop_axes(props, **kwargs):
         ax['props'][0] = fig['props'].add_subplot(1, nprops, 1)
     
         for p in np.arange(1, nprops):
-            if xunit[p] == xunit[0]:
+            if xunit[p] == xunit[0] and p in sharex:
                 ax['props'][p] = fig['props'].add_subplot(1, nprops, p+1, 
                                                     sharex = ax['props'][0])
             else:
@@ -2568,9 +2595,9 @@ def make_data_array(var, soln, prop_error, **kwargs):
         prop_name = f'grho3_{layer}'
         prop_err_name = prop_name+'_err'
         data_array = soln[prop_name].astype(float)/1000
-
-        err_array_p = prop_error[f'{prop_err_name}_p']/1000
-        err_array_t = prop_error[f'{prop_err_name}_t']/1000
+        if f'{prop_err_name}_p' in prop_error.keys():
+            err_array_p = prop_error[f'{prop_err_name}_p']/1000
+            err_array_t = prop_error[f'{prop_err_name}_t']/1000
 
     elif 'etarho3' in ext[0]:
         # units are mPa-s for viscosity
@@ -2609,6 +2636,12 @@ def make_data_array(var, soln, prop_error, **kwargs):
     elif 'grho3pp' in ext[0]:
        data_array = (soln[f'grho3_{layer}'].astype(float)*
                 np.sin(np.pi*soln['phi'].astype(float)/180)/1000)
+       
+    elif 'deltarho3' in ext[0]:
+       layer=ext[0].split('_')[1]
+       grho3 = soln[f'grho3_{layer}'].astype(float)
+       phi = soln[f'phi_{layer}'].astype(float)
+       data_array = 1000*calc_deltarho(3, grho3, phi)
                                
     elif 'drho' in ext[0]:
         prop_name = f'drho_{layer}'
@@ -2666,15 +2699,19 @@ def plot_props(soln, figdic, **kwargs):
     kwargs
     ------
 
-    props (list of strings):
-        properties to plot. Default is first layer of props specified in
-            figdic['info']['props']. Add .log to plot on log scale,
-            .tan to take tangent (generally only used for phi)
-            'null' makes an empty set of axes
+    props (dictionary)
+        Default taken as figdic['info']['plots'].  Keys correspond to the axes, 
+        used for plotting, e.g., {1:'grho3_1.log', 2:'phi_1'}.
+        
+    make_checks(boolean)
+        Add data to solution checks if true (default)
+        Almost always true unless we are adding a new plot of the same data
+        over a different range and we don't want to mess things up.  
+       
         
     xoffset (real or string, single value or list):
         Amount to subtract from x value for plotting (default is 0)
-        -np.inf means that the data are offset so that the minimum val 
+        'zero' means that the data are offset so that the minimum val 
         is at 0.
     xmult (real):
         Multiplicative factor for rescaling x data.
@@ -2717,6 +2754,7 @@ def plot_props(soln, figdic, **kwargs):
     xoffset_input=kwargs.get('xoffset', 0)  
     f_error = kwargs.get('f_error', [0.05, 15, 0])
     linewidth = kwargs.get('linewidth', 1)
+    make_checks = kwargs.get('make_checks', True)
     
     calc = soln.iloc[0]['calc']
     nplot = kwargs.get('nplot', nvals_from_calc(calc)[3])
@@ -2725,26 +2763,23 @@ def plot_props(soln, figdic, **kwargs):
     # drop dataframe rows with all nan
     soln = soln.dropna(how='all') 
     
-    # extract data from figdic, assumes all props are from first
-    # layer if they are taken from figdic
+    # sort out which axes to use and whcih props to plot on these aces
     props = kwargs.get('props', figdic['info']['props'])
+    
+
     ax = figdic['ax']
     fig = figdic['fig']
-    
-    # add '_1' to property if it wasn't included explicitly
-    props = add_layer_nums(props)       
-    nprops = len(props)
-    
+        
     # create dataframe with calculated errors
     prop_error = calc_prop_error(soln, f_error)
     xunit = figdic['info']['xunit']
     xoffset={}
     # set the offset for the x values 
     if type(xoffset_input) != list:
-        for p in np.arange(nprops):
+        for p in props.keys():
             xoffset[p] = xoffset_input
     else:
-        for p in np.arange(nprops):
+        for p in props.keys():
             xoffset[p]=xoffset_input[p]  
             
     # determine the plots we actually need to make. Sometimes we don't add
@@ -2752,9 +2787,7 @@ def plot_props(soln, figdic, **kwargs):
     # we need to keep xdata for each plot, because we'll use just
     # one of these arrays (usually the first one) for the solution checks
     xdata = {}
-    for p in np.arange(nprops):
-        if props[p].split('.',1)[0] not in soln.keys():
-            continue
+    for p in props.keys():
         xdata[p] = make_data_array(xunit[p], soln, prop_error)[0]
         ydata, yerr_p, yerr_t  = make_data_array(props[p], soln, prop_error)
         
@@ -2817,7 +2850,7 @@ def plot_props(soln, figdic, **kwargs):
     # now add the comparison plots of measured and calcuated values         
     # plot the experimental data first
     # keep track of max and min values for plotting purposes       
-    if 'checks' in fig.keys():       
+    if 'checks' in fig.keys() and make_checks:       
         # decide to use df1 or not
         plot_df1 = kwargs.get('plot_df1', True)
         
@@ -2855,15 +2888,12 @@ def plot_props(soln, figdic, **kwargs):
                 nfplot.remove(1)
             except ValueError:
                 pass
-            
-        # set up colors we'll use for the calculated values
-        col = {1:'C0', 3:'C1', 5:'C2', 7:'C3', 9:'C4'}
-        
+
         # add uncertainties in delf, delg
         soln = add_fstar_err(soln, f_error)
         
         # use the first plotted property plot for the x values
-        soln['xdata'] = xdata[0]    
+        soln['xdata'] = xdata[min(list(props.keys()))]    
         for n in nfplot: 
             # drop nan values from dataframe to avoid problems with errorbar
             soln_tmp = soln.dropna(subset=[f'delfstar_expt_{n}'])
@@ -3033,12 +3063,14 @@ def read_xlsx(infile, **kwargs):
         - calculated from ref. temp. data if not specified
         - set to the following dictionary if equal to 'default'
         
-            {'f': {1: [0.00054625, 0.04338, 0.08075, 0],                      
-            3: [0.0017, -0.135, 8.9375, 0],                
-            5: [0.002825, -0.22125, 15.375, 0]}, 
-            'g': {1: [0, 0, 0, 0], 
-            3: [0, 0, 0, 0], 
-            5: [0, 0, 0, 0]}}
+            |  {'f': {1: [0.00054625, 0.04338, 0.08075, 0],           
+            |  3: [0.0017, -0.135, 8.9375, 0],     
+            |  5: [0.002825, -0.22125, 15.375, 0]}, 
+            |  7: [0.003955, -0.30975, 21.525, 0]}
+            |  'g': {1: [0, 0, 0, 0], 
+            |  3: [0, 0, 0, 0], 
+            |  5: [0, 0, 0, 0],
+            |  7: [0, 0, 0, 0]}}
             
         - other option is to specify the dictionary directly
 
@@ -3046,7 +3078,7 @@ def read_xlsx(infile, **kwargs):
         Temperature at which reference frequency shift was determined.
         Default is 22C.
             
-    Autodelete : Boolean
+    autodelete : Boolean
         True (default) if we want delete points at temperatures where
         we don't have a reference point'
 
@@ -3154,6 +3186,8 @@ def read_xlsx(infile, **kwargs):
         for n in nvals:
             df[f'delfstar_expt_{n}']=(df[f'delf{n}'] + 1j*df[f'delg{n}'].round(1) - 
                                fref_shift[n])
+            df[f'delfstar_ref_{n}']='self'
+            df[f'delfstar_dat_{n}']='self'
         return df [keep_column].copy()
             
     elif T_coef != 'calculated':
@@ -3212,16 +3246,16 @@ def read_xlsx(infile, **kwargs):
         else:
             # now we handle the case where we have a full range of
             # temperatures
-            # reorder rerence data according to temperature
+            # reorder reference data according to temperature
             df_ref=df_ref.sort_values('temp')
 
             # drop any duplicate temperature values
             df_ref=df_ref.drop_duplicates(subset='temp', keep='first')
             temp=df_ref['temp']
+            T_coef = deepcopy(T_coef_default)
             for k in np.arange(len(nvals)):
                 for var in ['f', 'g']:
                     # set T_coef to defaults to start
-                    T_coef = T_coef_default
                     # get the reference values and plot them
                     ref_vals=df_ref[var+str(nvals[k])]
                     
@@ -3364,30 +3398,40 @@ def plot_bare_tempshift(df_ref, T_coef, Tref, nvals, T_range, filename):
     ax2.set_xlabel(r'$T$ ($^\circ$C)')
     # for now I'll use a default temp. range to plot
     temp_fit=np.linspace(T_range[0], T_range[1], 100)
-    for k in np.arange(len(nvals)):
+    if 1 in nvals: nvals.remove(1) # con't plot values or n=1
+    for k , n in enumerate(nvals):
         # plot fit values of delf/n for all harmonics
-        vals = bare_tempshift(temp_fit, T_coef, Tref, nvals[k])['f']/nvals[k]
-        ax2.plot(temp_fit, vals, '-', label=f'n={nvals[k]}')
+        vals = bare_tempshift(temp_fit, T_coef, Tref, n)['f']/n
+        vals_default = bare_tempshift(temp_fit, T_coef_default, Tref, n)['f']/n
+        ax2.plot(temp_fit, vals, f'{col[n]}.', label=f'n={n}')
+        ax2.plot(temp_fit, vals_default, f'{col[n]}-', label=f'n={n}')
         for p in [0, 1]:
             # plot themeasured values, relative to value at ref. temp.
-            meas_vals=(df_ref[var[p]+str(nvals[k])] -
-                         np.polyval(T_coef[var[p]][nvals[k]], Tref))
-            meas_vals=meas_vals/nvals[k]
+            meas_vals=(df_ref[var[p]+str(n)] -np.polyval(T_coef[var[p]][n], 
+                                                         Tref))
+            meas_vals=meas_vals/n
             ax[p, k].plot(df_ref['temp'], meas_vals, 'x', label = 'meas')
 
             # now plot the fit values
-            ref_val=bare_tempshift(temp_fit, T_coef, Tref, nvals[k])[var[p]]
-            ref_val=ref_val/nvals[k]
+            ref_val=bare_tempshift(temp_fit, T_coef, Tref, n)[var[p]]
+            ref_val=ref_val/n
             ax[p, k].plot(temp_fit, ref_val, 'o', label='fit')
+            
+            # plot default T_coef values for comparison
+            ref_val_default=bare_tempshift(temp_fit, T_coef_default, Tref, 
+                                           n)[var[p]]
+            ref_val_default=ref_val_default/n
+            ax[p, k].plot(temp_fit, ref_val_default, '-', label='default')
 
             # set axis labels and plot titles
             ax[p, k].set_xlabel(r'$T$ ($^\circ$C)')
             ax[p, k].set_ylabel(ylabel[p])
-            ax[p, k].set_title('n='+str(nvals[k]))
+            ax[p, k].set_title(f'n={n}')
             ax[p, k].legend()
             ymin=np.min([meas_vals.min(), ref_val.min()])
             ymax=np.max([meas_vals.max(), ref_val.max()])
             ax[p, k].set_ylim([ymin, ymax])
+    ax2.legend()
     fig.suptitle(filename)
     fig.savefig(filename)
     sumfile = os.path.basename(filename).split('.')[0]+'_sum.pdf'
@@ -3466,6 +3510,21 @@ def plot_delfstar(df, **kwargs):
     for k in np.arange(len(ax)): ax[k].legend()
     return fig, ax
 
+def gstar(gmag, phi):
+    """
+    Complex gstar from magnitude and phase (in degrees).
+
+    args:
+        gmag (real):
+            magnitude of complex modulus
+        phi (real)
+            phas angle in degrees
+
+    returns:
+        gstar:
+            complex shear modulus
+    """
+    return gmag*np.exp(1j*phi*np.pi/180)
 
 def gstar_maxwell(wtau):
     """
@@ -3946,7 +4005,7 @@ def getxy_from_MATLAB_fig(filename):
     return nax, x, y, Color, Marker
 
 
-def kotula(xi, Gmstar, Gfstar, xi_crit, s,t):
+def kotula_gstar(xi, Gmstar, Gfstar, xi_crit, s,t):
     ''' 
     Kotua moldel of complex modulus as a function of filler fraction.
     
@@ -3967,16 +4026,43 @@ def kotula(xi, Gmstar, Gfstar, xi_crit, s,t):
     for i, xival in np.ndenumerate(xi):
         def ftosolve(gstar):
             A = (1-xi_crit)/xi_crit
-            gstar = ((1-xival)*(Gmstar**(1/s)-gstar**(1/s))/(Gmstar**(1/s)+
+            func = ((1-xival)*(Gmstar**(1/s)-gstar**(1/s))/(Gmstar**(1/s)+
                      A*gstar**(1/s)) + xival*(Gfstar**(1/t)-gstar**(1/t))/
                      (Gfstar**(1/t)+A*gstar**(1/t)))
-            return gstar
+            return func
         gstar[i] =findroot(ftosolve, Gmstar)
     return gstar
 
 
+def kotula_xi(gstar, Gmstar, Gfstar, xi_crit, s,t):
+    ''' 
+    Kotua moldel filler raction as a function of compex modulus.
+    Basically the inverse of kotula-gstar, but we can solve
+    this one anaytically
+    
+    Parameters
+    ----------
+    gstar : compplex 
+        Filler volume fraction.
+    Gmstar : complex
+        Matrix complex modulus.
+    Gfstar : complex
+        Filler complex modulus.
+    xi_crit : real
+        Critical filler volume fraction.
+    s, t : exponents
+    
+    '''
+    A = (1-xi_crit)/xi_crit
+    xi = (-A * Gmstar**(1/s) * gstar**(1/t) + A * gstar**((s + t)/(s * t)) -       
+            Gfstar**(1/t) * Gmstar**(1/s) + Gfstar**(1/t) * gstar**(1/s)) / (A *  
+            Gfstar**(1/t) * gstar**(1/s) - A * Gmstar**(1/s) * gstar**(1/t) +
+            Gfstar**(1/t) * gstar**(1/s) - Gmstar**(1/s) * gstar**(1/t))
+    return xi
+
+
 def abs_kotula(xi, Gmstar, Gfstar, xi_crit, s, t):
-    return abs(kotula(xi, Gfstar, Gmstar, xi_crit, s, t))
+    return abs(kotula_gstar(xi, Gfstar, Gmstar, xi_crit, s, t))
 
 def vline(x, ax, **kwargs):
     '''
