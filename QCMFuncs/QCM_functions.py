@@ -396,7 +396,7 @@ def grho(n, props):
     return grho3*(n/3) ** (phi/90)
 
 
-def calc_griho3(n, grhostar):
+def calc_grho3(n, grhostar):
     """
     Use power law formulation to get |G*|rho at n=3.
     
@@ -468,45 +468,22 @@ def grho_from_dlam(n, drho, dlam, phi, **kwargs):
     return (drho*n*f1*np.cos(np.deg2rad(phi/2))/dlam_new) ** 2
 
 
-def grho_bulk(n, delfstar, **kwargs):
+def grhostar_bulk(delfstar, **kwargs):
     """
-    Obtain |G*|\rho from for bulk material (infinite thicknes).
+    Obtain complex Gstar from for bulk material (infinite thicknes).
     
     Parameters
     ----------
-    
-    n : integer
-        Harmonic of interest.
     delfstar : complex or numpy array of complex numbers
         Complex frequency shift in Hz.
 
     Returns
     -------
-    grho : real
-        |G*|*rho at harmonic of interest.
+    grhostar : complex
+        |G*|*rho at harmonic corresonding to delfstar.
     """
     f1 = kwargs.get('f1', f1_default)
-    return (np.pi*Zq*abs(delfstar[n])/f1) ** 2
-
-
-def phi_bulk(n, delfstar):
-    """
-    Obtain phase angle for bulk material (infinite thicknes).
-    
-    Parameters
-    -----------
-    
-    n : integer
-        Harmonic of interest.
-    delfstar : complex number or numpy array of complex numbers
-        Complex frequency shift in Hz.
-    
-    Returns
-    -------
-    Phase angle at harmonic of interest.
-    """
-    return -np.degrees(2*np.arctan(np.real(delfstar[n]) /
-                       np.imag(delfstar[n])))
+    return -(np.pi*Zq*delfstar/f1) ** 2
 
 
 def deltarho_bulk(n, delfstar, **kwargs):
@@ -1326,8 +1303,10 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
     complex_series = np.empty(len(df_soln), dtype = np.complex128)
     for n in find_nplot(delfstar):
         # add experimental delf, delfstar and empty column for calc. delfstar
-        df_soln.insert(df_soln.shape[1], f'fstar_expt_{n}', 
-                       delfstar_mod[f'fstar_{n}_dat'])        
+        if f'fstar_{n}_dat' in delfstar_mod.keys():
+            # sometimes we only have delfstar and not the actual frequency
+            df_soln.insert(df_soln.shape[1], f'fstar_expt_{n}', 
+                           delfstar_mod[f'fstar_{n}_dat'])        
         df_soln.insert(df_soln.shape[1], f'delfstar_expt_{n}', 
                        delfstar_mod[f'delfstar_expt_{n}'])
         df_soln.insert(df_soln.shape[1], f'delfstar_calc_{n}', complex_series)
@@ -1556,14 +1535,16 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
     guess (dictionary):
         Dictionary with initial guesses for properties    
 
-    lb (dictionary):  
+    lb (dictionary or list):  
         dictionary of lower bounds. keys must correspond to props.
         ex: {'ghro3_1':1e8', 'phi_1':0, 'drho_1':0}
+        can also be a list of upperbounds of props in same order as props_calc
+
         
-    ub (dictionary):  
+    ub (dictionary or list):  
         dictionary of upper bounds. keys must correspond to props.
         ex: {'ghro3_1':1e13, 'phi_1':90, 'drho_1':0}
-
+        can also be a list of upperbounds of props in same order as props_calc
     reftype (string):
         Specification of the reference. 
         
@@ -1712,12 +1693,12 @@ def restrict_dlam(soln, n, dlam):
     if n != 3:
         soln['dlam'+str(n)] = calc_dlam_from_dlam3(n, soln['dlam3'], 
                                                    soln['phi'])
-        col = 'dlam'+str(n)
+        column = 'dlam'+str(n)
     else:
-        col = 'dlam3'
+        column = 'dlam3'
     # the following format comes from
     # https://stackoverflow.com/questions/49781626/pandas-query-with-variable-as-column-name
-    soln = soln.query('{0}>@dlam'.format(col))
+    soln = soln.query('{0}>@dlam'.format(column))
     return soln
 
 
@@ -2116,6 +2097,10 @@ def calc_prop_error(soln, f_error):
     prop_err=pd.DataFrame(index=soln.index)
     npts = len(soln)
     real_series = np.zeros(npts, dtype=np.float64)
+    
+    # handle the case where we're using prop_plots to plot other data
+    if 'props_calc' not in soln.keys():
+        return pd.DataFrame(None)
     
     for prop in soln[soln['props_calc'].notna()].iloc[0]['props_calc']:
         err_namep = f'{prop}_err_p' # partial error from f_error[0,1]
@@ -2571,6 +2556,8 @@ def make_data_array(var, soln, prop_error, **kwargs):
     # get layer number
     if len(ext[0].split('_'))==2:
         layer = ext[0].split('_')[1]
+    else:
+        layer = 1
 
     if ext[0] == 's':
         data_array = soln['t']
@@ -2604,9 +2591,9 @@ def make_data_array(var, soln, prop_error, **kwargs):
         prop_name = f'grho3_{layer}'
         prop_err_name = prop_name+'_err'
         data_array = soln[prop_name].astype(float)/(2*np.pi*3*f1)
-
-        err_array_p = prop_error[f'grho3_{layer}_err_p']/(2*np.pi*3*f1)
-        err_array_t = prop_error[f'grho3_{layer}_err_t']/(2*np.pi*3*f1)
+        if f'{prop_err_name}_p' in prop_error.keys():
+            err_array_p = prop_error[f'grho3_{layer}_err_p']/(2*np.pi*3*f1)
+            err_array_t = prop_error[f'grho3_{layer}_err_t']/(2*np.pi*3*f1)
 
     elif 'phi' in ext[0]:
         prop_name = f'phi_{layer}'
@@ -2617,17 +2604,17 @@ def make_data_array(var, soln, prop_error, **kwargs):
             data_array = np.tan(phi_r)
         else:
             data_array = phi_d
-
-        err_d_p = prop_error[f'{prop_err_name}_p']
-        err_d_t = prop_error[f'{prop_err_name}_t']
-        if 'tan' in ext:
-            err_r_p = err_d_p*np.pi/180
-            err_r_t = err_d_t*np.pi/180
-            err_array_p = np.tan(phi_r+err_r_p)-np.tan(phi_r)
-            err_array_t = np.tan(phi_r+err_r_t)-np.tan(phi_r)
-        else:
-            err_array_p = err_d_p
-            err_array_t = err_d_t
+        if f'{prop_err_name}_p' in prop_error.keys():
+            err_d_p = prop_error[f'{prop_err_name}_p']
+            err_d_t = prop_error[f'{prop_err_name}_t']
+            if 'tan' in ext:
+                err_r_p = err_d_p*np.pi/180
+                err_r_t = err_d_t*np.pi/180
+                err_array_p = np.tan(phi_r+err_r_p)-np.tan(phi_r)
+                err_array_t = np.tan(phi_r+err_r_t)-np.tan(phi_r)
+            else:
+                err_array_p = err_d_p
+                err_array_t = err_d_t
        
     elif 'grho3p' in ext[0]:
        data_array = (soln[f'grho3_{layer}'].astype(float)*
@@ -2638,7 +2625,6 @@ def make_data_array(var, soln, prop_error, **kwargs):
                 np.sin(np.pi*soln['phi'].astype(float)/180)/1000)
        
     elif 'deltarho3' in ext[0]:
-       layer=ext[0].split('_')[1]
        grho3 = soln[f'grho3_{layer}'].astype(float)
        phi = soln[f'phi_{layer}'].astype(float)
        data_array = 1000*calc_deltarho(3, grho3, phi)
@@ -2651,9 +2637,9 @@ def make_data_array(var, soln, prop_error, **kwargs):
         # multiply by 1000 if units are nm instead of microns
         if 'nm' in ext[0]:
             data_array = 1000*data_array
-
-        err_array_p = 1000*prop_error[f'{prop_err_name}_p']
-        err_array_t = 1000*prop_error[f'{prop_err_name}_t']
+        if f'{prop_err_name}_p' in prop_error.keys():
+            err_array_p = 1000*prop_error[f'{prop_err_name}_p']
+            err_array_t = 1000*prop_error[f'{prop_err_name}_t']
 
     elif 'jdp' in ext[0]:
         data_array = ((1000/soln['grho3_1'].astype(float))*
@@ -2702,12 +2688,7 @@ def plot_props(soln, figdic, **kwargs):
     props (dictionary)
         Default taken as figdic['info']['plots'].  Keys correspond to the axes, 
         used for plotting, e.g., {1:'grho3_1.log', 2:'phi_1'}.
-        
-    make_checks(boolean)
-        Add data to solution checks if true (default)
-        Almost always true unless we are adding a new plot of the same data
-        over a different range and we don't want to mess things up.  
-       
+              
         
     xoffset (real or string, single value or list):
         Amount to subtract from x value for plotting (default is 0)
@@ -2754,11 +2735,9 @@ def plot_props(soln, figdic, **kwargs):
     xoffset_input=kwargs.get('xoffset', 0)  
     f_error = kwargs.get('f_error', [0.05, 15, 0])
     linewidth = kwargs.get('linewidth', 1)
-    make_checks = kwargs.get('make_checks', True)
     
-    calc = soln.iloc[0]['calc']
-    nplot = kwargs.get('nplot', nvals_from_calc(calc)[3])
-    col = {1:'CO', 3:'C1', 5:'C2', 7:'C3', 9:'C5'}
+    nplot = kwargs.get('nplot', [3,5])
+    col = {1:'C0', 3:'C1', 5:'C2', 7:'C3', 9:'C5'}
     
     # drop dataframe rows with all nan
     soln = soln.dropna(how='all') 
@@ -2850,7 +2829,7 @@ def plot_props(soln, figdic, **kwargs):
     # now add the comparison plots of measured and calcuated values         
     # plot the experimental data first
     # keep track of max and min values for plotting purposes       
-    if 'checks' in fig.keys() and make_checks:       
+    if 'checks' in fig.keys(): 
         # decide to use df1 or not
         plot_df1 = kwargs.get('plot_df1', True)
         
