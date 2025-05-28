@@ -5,14 +5,14 @@ import h5py
 import argparse
 
 
-path_s = r'20241218140246.h5' # sourse file
-path_d = r'20241218140246.h5' # file to append to
+path_s = r'20250318lp57no2325.h5' # sourse file
+path_d = r'20250318lp57no2325.h5' # file to append to
 
 group_s = r'raw/samp'
 group_d = r'raw/ref'
 
-idx_s = list(range(8, 191))
-idx_d = list(range(8, 191)) 
+idx_s = list(range(107, 107+34))
+idx_d = list(range(107, 34+107)) 
 
 # 55 to 78 change to 187 to 210 (+132)
 # %% change names in destination file
@@ -25,6 +25,18 @@ with h5py.File(path_d, 'a') as fd:
         fd[group_d + '/' + str(id + 10)] = fd[group_d + '/' + str(id)] 
         # delete
         del fd[group_d + '/' + str(id)]
+
+# %%
+# move from group_s to group_d in the same file
+
+with h5py.File(path_d, 'a') as fd:
+    for id_s, id_d in zip(idx_s, idx_d):
+        print(id)
+        # copy
+        fd[group_d + '/' + str(id_d)] = fd[group_s + '/' + str(id_s)] 
+        # delete
+        del fd[group_s + '/' + str(id_s)]
+
 
 
 # %% change names in destination file
