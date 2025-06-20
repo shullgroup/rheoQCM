@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Current version:  2025.03.03
+Current version:  2025.06.18
 Created on Thu Jan  4 09:19:59 2018 and updated continuously
 most recent version at the following link:
 https://github.com/shullgroup/rheoQCM/tree/master/QCMFuncs/QCM_functions.py
@@ -1535,16 +1535,15 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
     guess (dictionary):
         Dictionary with initial guesses for properties    
 
-    lb (dictionary or list):  
+    lb (dictionary):  
         dictionary of lower bounds. keys must correspond to props.
         ex: {'ghro3_1':1e8', 'phi_1':0, 'drho_1':0}
-        can also be a list of upperbounds of props in same order as props_calc
 
         
-    ub (dictionary or list):  
+    ub (dictionary):  
         dictionary of upper bounds. keys must correspond to props.
         ex: {'ghro3_1':1e13, 'phi_1':90, 'drho_1':0}
-        can also be a list of upperbounds of props in same order as props_calc
+
     reftype (string):
         Specification of the reference. 
         
@@ -1605,31 +1604,28 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
     prop_min = kwargs.get('lb' ,default_prop_min)
     prop_max = kwargs.get('ub', default_prop_max)
     showvals = kwargs.get('showvals', False)
-    # if we input values for lb and ub we already have them
+
     # note that if we specify lb, make sure to specify ub as well
-    if isinstance(prop_min, list):
-        lb = prop_min
-    else:
-        lb = [None]*len(props_calc)
-        for i, prop_string in enumerate(props_calc):
-            prop = prop_string.split('_')[0]
-            if prop_string in prop_min.keys():
-                lb[i] = prop_min[prop_string]
-            else:
-                lb[i] = prop_min[prop]
-            guess[i]=max(guess[i], lb[i])    
+
+
+    lb = [None]*len(props_calc)
+    for i, prop_string in enumerate(props_calc):
+        prop = prop_string.split('_')[0]
+        if prop_string in prop_min.keys():
+            lb[i] = prop_min[prop_string]
+        else:
+            lb[i] = prop_min[prop]
+        guess[i]=max(guess[i], lb[i])    
         
-    if isinstance(prop_max, list):
-        ub = prop_max
-    else:
-        ub = [None]*len(props_calc)
-        for i, prop_string in enumerate(props_calc):
-            prop = prop_string.split('_')[0]
-            if prop_string in prop_max.keys():
-                ub[i] = prop_max[prop_string]
-            else:
-                ub[i] = prop_max[prop]
-            guess[i] = min(guess[i], ub[i])        
+
+    ub = [None]*len(props_calc)
+    for i, prop_string in enumerate(props_calc):
+        prop = prop_string.split('_')[0]
+        if prop_string in prop_max.keys():
+            ub[i] = prop_max[prop_string]
+        else:
+            ub[i] = prop_max[prop]
+        guess[i] = min(guess[i], ub[i])        
    
   
     # set required accuracy for solution
@@ -1782,15 +1778,12 @@ def calc_phi(grho3, phi_parms):
     eta = phi_parms[0]
     grho3_lo = 2*np.pi*3*f1*eta
     grho3_hi = phi_parms[1]
+    
+    # grho3 = grho3_in[(grho3_in>=grho3_lo) & (grho3_in<=grho3_hi)]
 
-    if grho3 > grho3_hi:
-        return 0
-    elif grho3 < grho3_lo:
-        return 90
-    else:
-        phi =90-90*((np.log(grho3)-np.log(grho3_lo))/
-                    (np.log(grho3_hi)-np.log(grho3_lo)))
-        return phi
+    phi =90-90*((np.log(grho3)-np.log(grho3_lo))/
+                (np.log(grho3_hi)-np.log(grho3_lo)))
+    return phi
         
 
 
@@ -3163,8 +3156,9 @@ def read_xlsx(infile, **kwargs):
         # this is the simplest read protocol, with delf and delg already in
         # the .xlsx file.  All we need to do is read the values and return them
         for n in nvals:
-            df[f'delfstar_expt_{n}']=(df[f'delf{n}'] + 1j*df[f'delg{n}'].round(1) - 
-                               fref_shift[n])
+            df[f'delfstar_expt_{n}']=(df[f'delf{n}'].round(1) 
+                                      + 1j*df[f'delg{n}'].round(1) - 
+                                      fref_shift[n].round(1))
             df[f'delfstar_ref_{n}']='self'
             df[f'delfstar_dat_{n}']='self'
         return df [keep_column].copy()
@@ -3214,10 +3208,10 @@ def read_xlsx(infile, **kwargs):
 
             for k in np.arange(len(nvals)):
                 # write the film and reference values to the data frame
-                df[f'fstar_{nvals[k]}_ref'] = (df_ref[f'f{nvals[k]}'].mean()+
-                                 1j*df_ref[f'g{nvals[k]}'].mean()).round(1)
-                df[f'fstar_{nvals[k]}_dat'] = (df[f'f{nvals[k]}']+
-                                 1j*df[f'g{nvals[k]}']).round(1)
+                df[f'fstar_{nvals[k]}_ref'] = (df_ref[f'f{nvals[k]}'].mean().round(1)+
+                                 1j*df_ref[f'g{nvals[k]}'].mean().round(1))
+                df[f'fstar_{nvals[k]}_dat'] = (df[f'f{nvals[k]}'].round(1)+
+                                 1j*df[f'g{nvals[k]}'].round(1))
 
             # set all the temperatures on df_ref to Tref
             df_ref['temp']=Tref
@@ -3259,18 +3253,18 @@ def read_xlsx(infile, **kwargs):
                         sys.exit()
                                                                         
                 # write the film and reference values to the data frame
-                df[f'fstar_{nvals[k]}_dat'] = (df[f'f{nvals[k]}']+
-                                         1j*df[f'g{nvals[k]}']).round(1)
-                fref = np.polyval(T_coef['f'][nvals[k]], df['temp'])
-                gref = np.polyval(T_coef['g'][nvals[k]], df['temp'])
-                df[f'fstar_{nvals[k]}_ref'] = (fref + 1j*gref).round(1)
+                df[f'fstar_{nvals[k]}_dat'] = (df[f'f{nvals[k]}'].round(1)+
+                                         1j*df[f'g{nvals[k]}'].round(1))
+                fref = np.polyval(T_coef['f'][nvals[k]], df['temp']).round(1)
+                gref = np.polyval(T_coef['g'][nvals[k]], df['temp']).round(1)
+                df[f'fstar_{nvals[k]}_ref'] = (fref + 1j*gref)
 
 
     for k in np.arange(len(nvals)):
         # now write values of delfstar to the dataframe
-        df[f'delfstar_expt_{nvals[k]}']=(df[f'fstar_{nvals[k]}_dat'] -
-                      df[f'fstar_{nvals[k]}_ref'] -
-                      fref_shift[nvals[k]]).round(1)
+        df[f'delfstar_expt_{nvals[k]}']=(df[f'fstar_{nvals[k]}_dat'].round(1) -
+                      df[f'fstar_{nvals[k]}_ref'].round(1) -
+                      fref_shift[nvals[k]])
 
         # add absolute frequency and reference values to dataframe
         keep_column.append(f'fstar_{nvals[k]}_dat')
