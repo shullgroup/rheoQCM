@@ -2690,7 +2690,13 @@ def plot_props(soln, figdic, **kwargs):
     xmult (real):
         Multiplicative factor for rescaling x data.
     fmt (string):
-        Format sting for plotting.  Default is '+'   .
+        Format sting for plotting.  Default is '+'
+    prop_color (string)
+        Valid color designation, used only if 'C' does not appear in fmt string
+    n_color (dictionary)
+        Color designation for different harmonics in solution checks,  keys
+        are harmonics and values are color designations
+    
     label (string):
         label for plots.  Used to generate legend.  Default is 
         '', which will not generate a label.
@@ -2724,13 +2730,20 @@ def plot_props(soln, figdic, **kwargs):
         print('solution data frame for plotting is empty')
         return
     fmt=kwargs.get('fmt', 'x')
+    # establish property color
+    if 'C' in fmt:
+        idx=fmt.find('C')
+        prop_color = f'C{fmt[idx+1]}'
+    else:
+        prop_color = kwargs.get('prop_color', 'C0')
+        
     label=kwargs.get('label', '')
     xoffset_input=kwargs.get('xoffset', 0)  
     f_error = kwargs.get('f_error', [0.05, 15, 0])
     linewidth = kwargs.get('linewidth', 1)
     
     nplot = kwargs.get('nplot', [3,5])
-    col = {1:'C0', 3:'C1', 5:'C2', 7:'C3', 9:'C5'}
+    n_color = kwargs.get('n_color', {1:'C0', 3:'C1', 5:'C2', 7:'C3', 9:'C5'})
     
     # drop dataframe rows with all nan
     soln = soln.dropna(how='all') 
@@ -2782,17 +2795,17 @@ def plot_props(soln, figdic, **kwargs):
 
         if not np.any(yerr_t): 
             ax['props'][p].plot(xdata[p], ydata, fmt, label=label,
+                                color = prop_color,
                                 linewidth=linewidth)
             
         else:
             # plot with error bars
-            ebar = ax['props'][p].errorbar(xdata[p], ydata, fmt=fmt, 
+            ax['props'][p].errorbar(xdata[p], ydata, fmt=fmt, 
                             yerr=yerr_p, label=label, capsize = 3,
-                            linewidth=linewidth)
-            color = ebar[0].get_color()
+                            linewidth=linewidth,color = prop_color)
             # now plot extended error bars, including correlated error in f/n
             ax['props'][p].errorbar(xdata[p], ydata, yerr=yerr_t, 
-                                   markersize = 0, color = color,
+                                   markersize = 0, color = prop_color,
                                    linewidth = linewidth)            
         y_range = y_max - y_min
         
@@ -2886,14 +2899,14 @@ def plot_props(soln, figdic, **kwargs):
                 
             # mow make the plot with both 'partial' and 'total' error bars
             ax['checks'][0].errorbar(soln_tmp['xdata'], 
-                       dfval, yerr = ferr_p, fmt='x', color = col[n],       
+                       dfval, yerr = ferr_p, fmt='x', color = n_color[n],       
                        label=label_expt, capsize=3)
             ax['checks'][0].errorbar(soln_tmp['xdata'], 
-                       dfval, yerr = ferr_t, fmt='x', color = col[n],       
+                       dfval, yerr = ferr_t, fmt='x', color = n_color[n],       
                        linewidth = 0.5, markersize = 0)
             calcvals = np.real(soln_tmp[f'delfstar_calc_{n}'])/n
             ax['checks'][0].plot(soln_tmp['xdata'], calcvals, '-', 
-                    color = col[n], markerfacecolor='none', 
+                    color = n_color[n], markerfacecolor='none', 
                     label=label_calc)
             
             # don't include multiple harmonic labels
@@ -2913,11 +2926,11 @@ def plot_props(soln, figdic, **kwargs):
             dg_max.append(np.nanmax(dgval2))
             ax['checks'][1].errorbar(soln_tmp['xdata'], dgval, yerr = gerr, 
                                      fmt = 'x',  
-                                     color = col[n],
+                                     color = n_color[n],
                                      capsize = 3)
             calcvals = np.imag(soln_tmp[f'delfstar_calc_{n}'])/n
             ax['checks'][1].plot(soln_tmp['xdata'], calcvals, '-', 
-                          color = col[n], markerfacecolor='none')
+                          color = n_color[n], markerfacecolor='none')
         dg_min = min(dg_min)
         dg_max = max(dg_max)   
         
