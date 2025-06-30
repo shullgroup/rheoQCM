@@ -67,8 +67,7 @@ air = {'drho':np.inf, 'grho3':0, 'phi':90}
 
    
 # make dictionary of default titles
-titles_default =  ['(a)', '(b)', '(c)', '(d)', '(e)', '(f)',
-                   '(g)', '(h)']
+titles_default =  ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
     
 # make a dictionary of the potential axis labels
 axlabels = {'drho': r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)',
@@ -2270,6 +2269,17 @@ def make_prop_axes(propnames, **kwargs):
         
         gammascale (string):
             'log to plot dissipation on log scale'
+            
+        title_strings (list of 2 strings):
+            characters to go before and after letters for parts of figures - default
+            is ['(',')']
+        
+        title_fontweight (string):
+            weight of axes titles - default is 'normal'
+            
+        title_loc (string):
+            location of title - default is 'center' can also be 'left', 'right'
+            
 
 
     Returns:
@@ -2310,6 +2320,10 @@ def make_prop_axes(propnames, **kwargs):
         orientation = 'vertical'
     sharex = kwargs.get('sharex', np.arange(nprops))
     plotsize = kwargs.get('plotsize', (4,3))
+    
+    title_strings = kwargs.get('title_strings', ['(', ')'])
+    title_fontweight = kwargs.get('title_fontweight', 'normal')
+    title_loc = kwargs.get('title_loc', 'left')
     
     # change labels in case we don't want the 3 subscript for G
     if no3:
@@ -2407,7 +2421,9 @@ def make_prop_axes(propnames, **kwargs):
             
     for p in np.arange(nprops):
         ax[p] = ax['props'][p]
-        ax[p].set_title(titles[p])
+        title = f'{title_strings[0]}{titles[p]}{title_strings[1]}'
+        ax[p].set_title(title, fontweight=title_fontweight,
+                        loc=title_loc)
         ax[p].set_xlabel(xlabel[p])
 
     iax = nprops-1  # running number of axes for axis labeling
@@ -2426,7 +2442,9 @@ def make_prop_axes(propnames, **kwargs):
         ax[iax+1]=ax['checks'][0]
         ax[iax+2]=ax['checks'][1]
         for k in [0, 1]:
-            ax['checks'][k].set_title(titles[iax +1+k])
+            title = f'{title_strings[0]}{titles[iax +1+k]}{title_strings[1]}'
+            ax['checks'][k].set_title(title, fontweight=title_fontweight,
+                            loc=title_loc)
             # used xlabel for first prop plot as the xlabel for checks
             ax['checks'][k].set_xlabel(xlabel[0])
         iax = iax + 2
@@ -2452,6 +2470,7 @@ def make_prop_axes(propnames, **kwargs):
         ax['maps'] = fig['maps'].subplots(1,2, sharex=True)
         ax[iax+1]=ax['maps'][0]
         ax[iax+2]=ax['maps'][1]
+        
         # make the response maps
         kwargs['first_plot'] = iax+1
         make_response_maps(fig['maps'],ax['maps'], **kwargs)
@@ -2511,7 +2530,6 @@ def make_prop_axes(propnames, **kwargs):
         else:
             ax['props'][p].set_ylabel('ylabel')
 
-        ax['props'][p].set_title(titles[p])
 
     info = {'props':props, 'xunit':xunit,
             'maplabels':maplabels, 'checklabels':checklabels}
@@ -3776,6 +3794,14 @@ def make_response_maps(fig, ax, **kwargs):
             default is {0:[-3, 3], 1:[0,3]})
         first_plot (integer):
             number of first plot, if so sublabelfigure is correct (default 0)
+        title_strings (list of 2 strings):
+            characters to go before and after letters for parts of figures - default
+            is ['(',')']
+        title_fontweight (string):
+            weight of axes titles - default is 'normal'
+            
+        title_loc (string):
+            location of title - default is 'center' can also be 'left', 'right'
         """
             
     numxy=kwargs.get('numxy', 100)
@@ -3786,6 +3812,10 @@ def make_response_maps(fig, ax, **kwargs):
     contour_range = kwargs.get('contour_range', {0:[-3, 3], 1:[0,3]})
     first_plot = kwargs.get('first_plot', 0)
     drho = kwargs.get('drho', 'Sauerbrey')
+    title_strings = kwargs.get('title_strings', ['(', ')'])
+    title_fontweight = kwargs.get('title_fontweight', 'normal')
+    title_loc = kwargs.get('title_loc', 'left')
+
 
     def Zfunction(x, y):
         if drho == 'Sauerbrey':
@@ -3869,7 +3899,10 @@ def make_response_maps(fig, ax, **kwargs):
                        f'{1000*drho:.3g}'+r' $\mu$m$\cdot$g/cm$^3$']
         
     for k in [0, 1]:
-        ax[k].set_title(f'{titles_default[k+first_plot]} {title_units[k]}')
+        title = (f'{title_strings[0]}{titles_default[k+first_plot]}'+
+                 f'{title_strings[1]} {title_units[k]}')
+        ax[k].set_title(title, fontweight=title_fontweight)
+        
             
         # set labels for contour plots
         ax[0].set_xlabel(r'$d/\lambda_n$')
