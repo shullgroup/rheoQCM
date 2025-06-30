@@ -71,7 +71,8 @@ titles_default =  ['(a)', '(b)', '(c)', '(d)', '(e)', '(f)',
                    '(g)', '(h)']
     
 # make a dictionary of the potential axis labels
-axlabels = {'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
+axlabels = {'drho': r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)',
+            'grho3': r'$|G_3^*|\rho$ (Pa $\cdot$ g/cm$^3$)',
             'phi': r'$\phi$ (deg.)',
             'phi.tan': r'tan$\phi$',
             'grho3p': r'$G^\prime_3\rho$ (Pa $\cdot$ g/cm$^3$)',
