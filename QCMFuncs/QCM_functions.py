@@ -52,10 +52,11 @@ e26 = 9.65e-2
 # Half bandwidth of unloaed resonator (intrinsic dissipation on crystalline quartz)
 g0_default = 50
 
+# note that these values give constant delf/n for n=3, 5, 7
 T_coef_default = {'f': {1: [0.00054625, 0.04338, 0.08075, 0],
-                       3: [0.0017, -0.135, 8.9375, 0],
-                       5: [0.002825, -0.22125, 15.375, 0],
-                       7: [0.004, -0.30975, 21.525, 0]},
+                       3: [0.0017, -0.135, 8.938, 0],
+                       5: [0.002833, -0.225, 14.890, 0],
+                       7: [0.00397, -0.315, 20.855, 0]},
                   'g': {1: [0, 0, 0, 0],
                         3: [0, 0, 0, 0],
                         5: [0, 0, 0, 0],
@@ -1911,109 +1912,6 @@ def err_fn_correlated_row(row_in, fn_err):
     return row
 
 
-def make_err_plot(soln, f_error, **kwargs):
-    
-    # this function needs to be updated to account for the way we now
-    # deal with uncertainty+_dict.
-    """
-    Determine errors in properties based on uncertainies in a delfstar.
-    Parameters
-    ----------
-        soln (dataframe):
-            Input solution dataframe.
-    f_error (list of 3 numbers):
-        -uncertainty in f,g as a fraction of g
-        
-        -uncertainty in f/n (applied individually to harmonics)
-        
-        -uncertaintiy in correlated f/n (applied to all harmonics)]
-             
-    kwargs:
-        idx (int or string):
-            index of point in soln to use (default is 'min')
-            numeric value of 'max' are also possible
-        npts (int):
-            number of points to include in error plots (default is 10)
-        num (string):
-            title of plot window
-        label (string):
-            label used for legend
-            
-    Returns
-    ----------
-        Does not return anything in its current form.  Just makes the plot.
-
-    """
-
-    # specify specific point in the solution dataframe to use
-    idx = kwargs.get('idx', 'min')  
-    if idx == 'max':
-        idx = soln['calc'].index.max()
-    elif idx == 'min':
-        idx = soln['calc'].index.min()
-        
-    npts = kwargs.get('npts', 10)
-    label = kwargs.get('label', '')
-
-    calctype = soln['calctype'][idx]
-    calc = soln['calc'][idx]
-        
-    guess = {'grho3': soln.loc[idx, 'grho3_1'],
-             'phi': soln['phi'][idx],
-             'drho': soln['drho'][idx]}
-
-    delfstar_0 = {}
-
-    # get list of harmonics we care about
-    row = soln.loc[idx]
-    calc = row.calc
-    nf, ng, n_all, n_unique = nvals_from_calc(calc)
-    for n in n_all:
-        delfstar_0[n] = getattr(row, f'delfstar_expt_{n}')
-
-    # now generate series of delfstar values based on the errors
-    # set some parameters for the plots
-    # frequency or dissipation shift
-    mult = np.array([1, 1, 1j], dtype=complex)
-    pos = {0:0, 1:0, 2:1}  # used to ef the relevant uncertainty is f or g
-    forg = {0: 'f', 1: 'f', 2: r'$\Gamma$'}
-    prop_type = {0: 'grho3', 1: 'phi', 2: 'drho'}
-    scale_factor = {0: 0.001, 1: 1, 2: 1000}
-
-    # intialize values of delfstar
-    # delfstar_del = {}
-    # for k in [0, 1, 2]:
-    #     delfstar_del[k] = {}
-    #     for n in nvals:
-    #         delfstar_del[k][n] = np.ones(npts)*delfstar_0[n]
-            
-    #adjust values of delfstar and calculate properties
-    err = {}
-    # for k in [0, 1, 2]:
-    #     n = int(calc.split('.')[k])
-    #     var = forg[k]
-    #     ax[k, 0].set_ylabel(axlabels['grho3'])
-    #     ax[k, 1].set_ylabel(axlabels['phi'])
-    #     ax[k, 2].set_ylabel(axlabels['drho'])
-    #     for col in [0, 1, 2]:
-    #         ax[k, col].set_xlabel(r'$\Delta${}'.format(var) +
-    #                             r'$_{}$'.format(n) +' (Hz)')
-
-    #     n = int(calc.split('.')[k]) 
-    #     err[k] = - need correct expression involinv f_error
-    #     delta = np.linspace(-err[k], err[k], npts)
-    #     delfstar_del[k][n] = delfstar_del[k][n]+delta*mult[k]
-    #     delfstar_df = pd.DataFrame.from_dict(delfstar_del[k])
-
-    #     props = solve_for_props(delfstar_df, calc=calc,
-    #                                       calctype=calctype, guess=guess)
-    #     # make the property plots
-    #     for p in [0, 1, 2]:
-    #         ax[k, p].plot(delta, props[prop_type[p]]*scale_factor[p],
-    #         ax[k, p].legend()
-            
-    #         # now add point for actual solution
-    #         ax[k, p].plot(0, soln[prop_type[p]][idx]*scale_factor[p],'or')
 
 def calc_fstar_err (n, row, f_error):
     """
@@ -2143,7 +2041,8 @@ def calc_prop_error(soln, f_error):
         row_new = deepcopy(err_fn_correlated_row(row, f_error[2]))
         n = len(props_calc)
         if n != n_all:
-            print(f'{n_all} elements in calc but {n} props. Cannot calculate error')
+            print(f'{n_all} elements in calc ({calc}) but {n} props' +
+                  ' {props_calc} Cannot calculate error')
             return prop_err
         for p, prop in enumerate(props_calc):
             err2 = (row_new[f'{prop}_err_fn'])**2
@@ -2169,7 +2068,7 @@ def make_prop_axes(propnames, **kwargs):
     Parameters
     ----------
                     
-    propnamess : list of strings
+    propnames : list of strings
         each in the format property_layer.ext. Here 
         layer is the layer number of the property, and ext is an optional
         argument that can include the following:
@@ -2323,7 +2222,7 @@ def make_prop_axes(propnames, **kwargs):
     
     title_strings = kwargs.get('title_strings', ['(', ')'])
     title_fontweight = kwargs.get('title_fontweight', 'normal')
-    title_loc = kwargs.get('title_loc', 'left')
+    title_loc = kwargs.get('title_loc', 'center')
     
     # change labels in case we don't want the 3 subscript for G
     if no3:
@@ -2333,6 +2232,7 @@ def make_prop_axes(propnames, **kwargs):
         
     if nprops == 1 and not checks and not maps:
         titles = ['']
+        title_strings=['','']
     else:
         titles = copy(titles_default)
      
@@ -2369,7 +2269,6 @@ def make_prop_axes(propnames, **kwargs):
     # make the main figure
     # fig includes 'master' (the full fig), plus subfigures of 'props',
     # 'checks' and 'maps'
-    # ax includes 'props', 'checks' and 'maps', in addition to sequential
     # listing of all axes within the master figure (ax[0], ax[1], etc.)
     fig = {}; ax = {}
     fig['master'] = plt.figure(constrained_layout = True, num = num)
@@ -2502,7 +2401,13 @@ def make_prop_axes(propnames, **kwargs):
         # start with the special case of tanphi
         if props[p] == 'phi.tan':
             ax['props'][p].set_ylabel(r'tan$\phi$')
-            ax['props'][p].set_xlabel(xlabel[p])         
+            ax['props'][p].set_xlabel(xlabel[p])       
+        
+        # we also handle 'drho' separately to allow for case where thickness 
+        # is in nm
+        elif 'drho' in prop:
+            ax['props'][p].set_ylabel(drho_label(ext))
+            ax['props'][p].set_xlabel(xlabel[p])  
         
         # we get most of the axes labels from axlabels dictionary
         elif prop in axlabels.keys():
@@ -2523,10 +2428,7 @@ def make_prop_axes(propnames, **kwargs):
             ax['props'][p].set_ylabel(f'\u0394 \u0393_{{{n}}} (Hz)')
             ax['props'][p].set_xlabel(xlabel[p])
             
-        elif 'drho' in prop:
-            ax['props'][p].set_ylabel(drho_label(ext))
-            ax['props'][p].set_xlabel(xlabel[p])  
-            
+           
         else:
             ax['props'][p].set_ylabel('ylabel')
 
@@ -2647,7 +2549,7 @@ def make_data_array(var, soln, prop_error, **kwargs):
         data_array = 1000*soln[f'drho_{layer}'].astype(float)
         
         # multiply by 1000 if units are nm instead of microns
-        if 'nm' in ext[0]:
+        if 'nm' in ext:
             data_array = 1000*data_array
         if f'{prop_err_name}_p' in prop_error.keys():
             err_array_p = 1000*prop_error[f'{prop_err_name}_p']
@@ -2709,9 +2611,10 @@ def plot_props(soln, figdic, **kwargs):
     xmult (real):
         Multiplicative factor for rescaling x data.
     fmt (string):
-        Format sting for plotting.  Default is '+'
+        Format sting for plotting.  Default is '+'.  Can include color designation
     prop_color (string)
-        Valid color designation, used only if 'C' does not appear in fmt string
+        Valid color designation for property plots, not used if color included
+        in fmt
     n_color (dictionary)
         Color designation for different harmonics in solution checks,  keys
         are harmonics and values are color designations
@@ -2745,17 +2648,19 @@ def plot_props(soln, figdic, **kwargs):
         all axes listed numerically)
     """
 
+
+    def extract_color_from_format(fmt):
+        color_chars = {'b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'}
+        for char in fmt:
+            if char in color_chars:
+                return char
+        return None
+
     if len(soln) ==0:
         print('solution data frame for plotting is empty')
         return
     fmt=kwargs.get('fmt', 'x')
-    # establish property color
-    if 'C' in fmt:
-        idx=fmt.find('C')
-        prop_color = f'C{fmt[idx+1]}'
-    else:
-        prop_color = kwargs.get('prop_color', 'C0')
-        
+           
     label=kwargs.get('label', '')
     xoffset_input=kwargs.get('xoffset', 0)  
     f_error = kwargs.get('f_error', [0.05, 15, 0])
@@ -2767,7 +2672,7 @@ def plot_props(soln, figdic, **kwargs):
     # drop dataframe rows with all nan
     soln = soln.dropna(how='all') 
     
-    # sort out which axes to use and whcih props to plot on these aces
+    # sort out which axes to use and whcih props to plot on these axes
     props = kwargs.get('props', figdic['info']['props'])
     
 
@@ -2791,7 +2696,26 @@ def plot_props(soln, figdic, **kwargs):
     # we need to keep xdata for each plot, because we'll use just
     # one of these arrays (usually the first one) for the solution checks
     xdata = {}
+
     for p in props.keys():
+        # establish property color
+        if 'C' in fmt:
+            idx=fmt.find('C')
+            prop_color = f'C{fmt[idx+1]}'
+            fmt = fmt.replace(f'C{fmt[idx+1]}', '')
+            
+        elif extract_color_from_format(fmt)!=None:
+            # handle case where we already have the olor in the fmt string
+            prop_color = extract_color_from_format(fmt)
+            fmt = fmt.replace(prop_color, '')
+            
+        elif 'prop_color' not in kwargs.keys():
+            # use the next color in the normal color sequence
+            prop_color = None
+            
+        else:
+            prop_color = kwargs['prop_color']
+            
         xdata[p] = make_data_array(xunit[p], soln, prop_error)[0]
         ydata, yerr_p, yerr_t  = make_data_array(props[p], soln, prop_error)
         
@@ -2825,7 +2749,7 @@ def plot_props(soln, figdic, **kwargs):
             # now plot extended error bars, including correlated error in f/n
             ax['props'][p].errorbar(xdata[p], ydata, yerr=yerr_t, 
                                    markersize = 0, color = prop_color,
-                                   linewidth = linewidth)            
+                                   linewidth = linewidth, fmt = fmt)            
         y_range = y_max - y_min
         
         if 'log' in props[p].split('.'):
@@ -3065,12 +2989,11 @@ def read_xlsx(infile, **kwargs):
         Temperature coefficients for reference temp. shift  
             
         - calculated from ref. temp. data if not specified
-        - set to the following dictionary if equal to 'default'
-        
+        - set to the following dictionary if unspecified or set to 'default'     
             |  {'f': {1: [0.00054625, 0.04338, 0.08075, 0],           
             |  3: [0.0017, -0.135, 8.9375, 0],     
-            |  5: [0.002825, -0.22125, 15.375, 0]}, 
-            |  7: [0.003955, -0.30975, 21.525, 0]}
+            |  5: [0.002833, -0.225, 14.89, 0]}, 
+            |  7: [0.00397, -0.315, 20.855, 0]}
             |  'g': {1: [0, 0, 0, 0], 
             |  3: [0, 0, 0, 0], 
             |  5: [0, 0, 0, 0],
@@ -3089,7 +3012,7 @@ def read_xlsx(infile, **kwargs):
     T_coef_plots : Boolean  
         True (default) to plot temp. dependent f and g for ref.  
 
-    fref_shift : dictionary
+    f_ref_shift : dictionary
         Shifts added to reference values.  
         Default is {1:0, 3:0, 5:0, 7:0, 9:0}.
 
@@ -3124,13 +3047,13 @@ def read_xlsx(infile, **kwargs):
     
    
     # specify default bare crystal temperature coefficients
-    T_coef=kwargs.get('T_coef', 'calculated')
+    T_coef = kwargs.get('T_coef', 'calculated')
     if T_coef == 'default':
         T_coef = T_coef_default 
 
     # read shifts that account for changes from stress levels applied
     # to different sample holders
-    fref_shift=kwargs.get('fref_shift', {1: 0, 3: 0, 5: 0, 7:0, 9:0})
+    f_ref_shift=kwargs.get('fref_shift', {1: 0, 3: 0, 5: 0, 7:0, 9:0})
     
 
     if type(ref_idx)==str and ref_idx == 'max':
@@ -3190,30 +3113,43 @@ def read_xlsx(infile, **kwargs):
         for n in nvals:
             df[f'delfstar_expt_{n}']=(df[f'delf{n}'].round(1) 
                                       + 1j*df[f'delg{n}'].round(1) - 
-                                      fref_shift[n].round(1))
+                                      f_ref_shift[n].round(1))
             df[f'delfstar_ref_{n}']='self'
             df[f'delfstar_dat_{n}']='self'
         return df [keep_column].copy()
-            
-    elif T_coef != 'calculated':
-        # this is the case where the temperature coefficients are input
-        # directly as a dictionary,  includes the case where we just use
-        # the default values
+    
+    else:
+        # read the reference data
         df_ref=pd.read_excel(infile, sheet_name=ref_channel, header=0)
         if type(ref_idx) != str:
-            df_ref=df_ref[df_ref.index.isin(ref_idx)]
-        T_coef_plots=False
-        
+            df_ref=df_ref[df_ref.index.isin(ref_idx)]  
+            
+        if ('temp' not in df_ref.keys()) or (df_ref.temp.isnull().values.all()):
+            df_ref['temp'] = Tref
+            # this is the common case where we don'to have a full set of 
+            # referene temp data, but only values at Tref
+            T_coef = T_coef_default
+            T_coef_plots = False
+            autodelete = False
+            
+        # determine temperature coefficients if needed
+        if T_coef == 'calculated':
+            T_coef = fit_T_coef(df_ref, nvals, ['f', 'g'])
+
+
         for n in nvals:
             # apply fref_shift if needed
-            df_ref['f'+str(n)] = df_ref['f'+str(n)] + fref_shift[n]
-            # adjust constant last elment in T_coef (the 
-            # constant term) to give measured ref. values at Tref
-            for val in ['f', 'g']:
-                T_coef[val][n][3] = (T_coef[val][n][3] + 
-                                     df_ref[val+str(n)].mean() -
-                                     np.polyval(T_coef[val][n], Tref))
-                
+            df_ref['f'+str(n)] = df_ref['f'+str(n)] + f_ref_shift[n]
+ 
+            for val in ['f', 'g']:  
+                # determine the constant in the fit function by fitting
+                # average values if need
+                if T_coef[val][n][3] == 0:
+                    if len(df_ref['temp'].unique())!=1:
+                        # check to make sure its okay to average
+                        print('averaging ref. vals over non-constant temp.')
+                    avg = df_ref[val+str(n)].mean()
+                    T_coef[val][n][3] = avg - np.polyval(T_coef[val][n],Tref)
                 # add absolute frequency and reference values to dataframe
                 keep_column.append(val+str(n)+'_dat')
                 keep_column.append(val+str(n)+'_ref')
@@ -3223,119 +3159,88 @@ def read_xlsx(infile, **kwargs):
                                                    df['temp'])
                 df[val+str(n)+'_dat'] = df[val+str(n)]
             
-            # keep track of film and reference values in dataframe
-            df[f'fstar_{n}_dat']=df[f'f{n}_dat']+1j*df[f'g{n}_dat']
-            df[f'fstar_{n}_ref']=df[f'f{n}_ref']+1j*df[f'g{n}_ref']          
-
-    else:
-        # here we need to obtain T_coef from the info in the ref. channel
-        df_ref=pd.read_excel(infile, sheet_name=ref_channel, header=0)
-        if type(ref_idx) != str:
-            df_ref=df_ref[df_ref.index.isin(ref_idx)]
-
-        # if no temperature is listed or a specific reference temperature
-        # is given we just average the values or take the max value
-        if (('temp' not in df_ref.keys()) or 
-            (df_ref.temp.isnull().values.all())):
-
-            for k in np.arange(len(nvals)):
-                # write the film and reference values to the data frame
-                df[f'fstar_{nvals[k]}_ref'] = (df_ref[f'f{nvals[k]}'].mean().round(1)+
-                                 1j*df_ref[f'g{nvals[k]}'].mean().round(1))
-                df[f'fstar_{nvals[k]}_dat'] = (df[f'f{nvals[k]}'].round(1)+
-                                 1j*df[f'g{nvals[k]}'].round(1))
-
-            # set all the temperatures on df_ref to Tref
-            df_ref['temp']=Tref
-
-        else:
-            # now we handle the case where we have a full range of
-            # temperatures
-            # reorder reference data according to temperature
-            df_ref=df_ref.sort_values('temp')
-
-            # drop any duplicate temperature values
-            df_ref=df_ref.drop_duplicates(subset='temp', keep='first')
-            temp=df_ref['temp']
-            T_coef = deepcopy(T_coef_default)
-            for k in np.arange(len(nvals)):
-                for var in ['f', 'g']:
-                    # set T_coef to defaults to start
-                    # get the reference values and plot them
-                    ref_vals=df_ref[var+str(nvals[k])]
-                    
-                    # put temp and reference values into a temporary
-                    # dataframe
-                    data = [temp, ref_vals]
-                    headers = ['temp', 'data']
-                    df_tmp = pd.concat(data, axis=1, keys=headers).dropna()
-            
-                    # make the fitting function
-                    T_coef[var][nvals[k]]=np.polyfit(df_tmp['temp'], 
-                                                        df_tmp['data'], 3)
-
-                    # plot the data if fit was not obtained
-                    if np.isnan(T_coef[var][nvals[k]]).any():
-                        fig, ax = plt.subplots(1,1, figsize=(4,3),
-                                               constrained_layout=True)
-                        ax.plot(df_tmp['temp'], df_tmp['data'])
-                        ax.set_xlabel(r'$T$ $^\circ$C')
-                        ax.set_ylabel(f'{var}{nvals[k]}')
-                        print('Temp. coefs could not be obtained - see plot')
-                        sys.exit()
-                                                                        
-                # write the film and reference values to the data frame
-                df[f'fstar_{nvals[k]}_dat'] = (df[f'f{nvals[k]}'].round(1)+
-                                         1j*df[f'g{nvals[k]}'].round(1))
-                fref = np.polyval(T_coef['f'][nvals[k]], df['temp']).round(1)
-                gref = np.polyval(T_coef['g'][nvals[k]], df['temp']).round(1)
-                df[f'fstar_{nvals[k]}_ref'] = (fref + 1j*gref)
-
-
-    for k in np.arange(len(nvals)):
-        # now write values of delfstar to the dataframe
-        df[f'delfstar_expt_{nvals[k]}']=(df[f'fstar_{nvals[k]}_dat'].round(1) -
-                      df[f'fstar_{nvals[k]}_ref'].round(1) -
-                      fref_shift[nvals[k]])
-
-        # add absolute frequency and reference values to dataframe
-        keep_column.append(f'fstar_{nvals[k]}_dat')
-        keep_column.append(f'fstar_{nvals[k]}_ref')
+            # keep track of film and reference values in dataframe    
+            df[f'fstar_{n}_dat'] = (df[f'f{n}'].round(1)+
+                                    1j*df[f'g{n}'].round(1))
+            fref = np.polyval(T_coef['f'][n], df['temp']).round(1)
+            gref = np.polyval(T_coef['g'][n], df['temp']).round(1)
+            df[f'fstar_{n}_ref'] = (fref + 1j*gref)
+            df[f'delfstar_expt_{n}']=(df[f'fstar_{n}_dat'].round(1) -
+                          df[f'fstar_{n}_ref'].round(1) - f_ref_shift[n])
+            keep_column.append(f'fstar_{n}_dat')
+            keep_column.append(f'fstar_{n}_ref')
+         
 
     # add the constant applied shift to the reference values to the dataframe
     # also account for overlayer if it exists
     for n in nvals:
-        if fref_shift[n]!= 0:
-            df[f'{n}_refshift']=fref_shift[n]
+        if f_ref_shift[n]!= 0:
+            df[f'{n}_refshift']=f_ref_shift[n]
             keep_column.append(f'{n}_refshift')
         if 'overlayer' in df.keys():
             df[f'delfstar_expt_{n}']=(df[f'delfstar_expt_{n}'] - 
                                  calc_delfstar(n, {1:overlayer}))
 
-    if (T_coef_plots and ref_channel != 'self' and 
-        len(df_ref.temp.unique()) > 1):
-        T_range=[df['temp'].min(), df['temp'].max()]
-        T_ref_range = [df_ref['temp'].min(), df_ref['temp'].max()]
-        # create a filename for saving the reference temperature data
-        filename = os.path.splitext(infile)[0]+'_Tref.pdf'
-        plot_bare_tempshift(df_ref, T_coef, Tref, nvals, T_range, filename)
-        if (autodelete and 
-            (T_range[0] < T_ref_range[0] or T_range[1] > T_ref_range[1])):
-            df_tmp = df.query('temp >= @T_ref_range[0] & temp <= @T_ref_range[1]')
-            # determine number of deleted points
-            n_del = len(df) - len(df_tmp)
-            print (f'deleting {n_del} points that are outside the ref T range')
-            df = df_tmp
+
+    T_range=[df['temp'].min(), df['temp'].max()]
+    T_ref_range = [df_ref['temp'].min(), df_ref['temp'].max()]
+    
+    if T_coef_plots:
+        plot_bare_tempshift(df_ref, T_coef, Tref, nvals, T_range)
+        
+    if (autodelete and 
+        (T_range[0] < T_ref_range[0] or T_range[1] > T_ref_range[1])):
+        df_tmp = df.query('temp >= @T_ref_range[0] & temp <= @T_ref_range[1]')
+        # determine number of deleted points
+        n_del = len(df) - len(df_tmp)
+        print (f'deleting {n_del} points that are outside the ref T range')
+        df = df_tmp
             
     # eliminate rows with nan at n=3
     df = df.dropna(subset=['delfstar_expt_3']).copy()
     
     # add time increments
-    df = add_t_diff(df)
-    keep_column.insert(1, 't_prev')
-    keep_column.insert(2, 't_next')
+    # df = add_t_diff(df)
+    # keep_column.insert(1, 't_prev')
+    # keep_column.insert(2, 't_next')
 
     return df[keep_column].copy()
+
+
+def fit_T_coef(df, nvals, varvals):
+    T_coef = {'f':{}, 'g':{}}
+    # reorder reference data according to temperature
+    df=df.sort_values('temp')
+   
+    # drop any duplicate temperature values
+    df=df.drop_duplicates(subset='temp', keep='first')
+    temp=df['temp']
+    if len(temp.unique())<5:
+        print('using default T_coef values')
+        return T_coef_default
+    
+    for n in nvals:
+        for var in varvals:
+            # set T_coef to defaults to start
+            # get the reference values and plot them
+            ydata=df[var+str(n)]
+            
+            # make the fitting function
+            idx = np.isfinite(temp) & np.isfinite(ydata)
+            T_coef[var][n]=np.polyfit(temp[idx], ydata[idx], 3)
+
+            # plot the data if fit was not obtained
+            if np.isnan(T_coef[var][n]).any():
+                fig, ax = plt.subplots(1,1, figsize=(4,3),
+                                       constrained_layout=True)
+                ax.plot(temp, ydata)
+                ax.set_xlabel(r'$T$ $^\circ$C')
+                ax.set_ylabel(f'{var}{n}')
+                fig.show()
+                print('Temp. coefs could not be obtained - see plot')
+                sys.exit()
+            
+    return T_coef
 
 
 def cull_df(df_in, **kwargs):
@@ -3388,19 +3293,21 @@ def cull_df(df_in, **kwargs):
        print('need \'t_diff\' or \'t_ratio\' in kwargs')
 
 
-def plot_bare_tempshift(df_ref, T_coef, Tref, nvals, T_range, filename):
+def plot_bare_tempshift(df_ref, T_coef, Tref, nvals, T_range):
     var=['f', 'g']
     n_num=len(nvals)
     # figure for comparision of experimental and fit delf/n, delg/n
     fig, ax=plt.subplots(2, n_num, figsize=(3*n_num, 6),
-                                   constrained_layout=True)
+                                   constrained_layout=True,
+                                   num = 'bare crystal data: individual n')
     
     # figure for comparison of all delf/n
     fig2, ax2 = plt.subplots(1, 1, figsize = (4, 3), constrained_layout=True,
-                             num=filename)
+                             num='bare crystal data: summary')
     ylabel={0: r'$\Delta f/n$ (Hz)', 1: r'$\Delta \Gamma/n$ (Hz)'}
     ax2.set_ylabel(r'$\Delta f/n$ (Hz)')
     ax2.set_xlabel(r'$T$ ($^\circ$C)')
+    
     # for now I'll use a default temp. range to plot
     temp_fit=np.linspace(T_range[0], T_range[1], 100)
     if 1 in nvals: nvals.remove(1) # con't plot values or n=1
@@ -3408,19 +3315,20 @@ def plot_bare_tempshift(df_ref, T_coef, Tref, nvals, T_range, filename):
         # plot fit values of delf/n for all harmonics
         vals = bare_tempshift(temp_fit, T_coef, Tref, n)['f']/n
         vals_default = bare_tempshift(temp_fit, T_coef_default, Tref, n)['f']/n
-        ax2.plot(temp_fit, vals, f'{col[n]}.', label=f'n={n}')
-        ax2.plot(temp_fit, vals_default, f'{col[n]}-', label=f'n={n}')
+        ax2.plot(temp_fit, vals, f'{col[n]}-', label=f'n={n} fit')
+        ax2.plot(temp_fit, vals_default, f'{col[n]}--', label=f'n={n} default fit')
+        
         for p in [0, 1]:
             # plot themeasured values, relative to value at ref. temp.
             meas_vals=(df_ref[var[p]+str(n)] -np.polyval(T_coef[var[p]][n], 
                                                          Tref))
             meas_vals=meas_vals/n
-            ax[p, k].plot(df_ref['temp'], meas_vals, 'x', label = 'meas')
+            ax[p, k].plot(df_ref['temp'], meas_vals, '-', label = 'meas')
 
             # now plot the fit values
             ref_val=bare_tempshift(temp_fit, T_coef, Tref, n)[var[p]]
             ref_val=ref_val/n
-            ax[p, k].plot(temp_fit, ref_val, 'o', label='fit')
+            ax[p, k].plot(temp_fit, ref_val, '-', label='fit')
             
             # plot default T_coef values for comparison
             ref_val_default=bare_tempshift(temp_fit, T_coef_default, Tref, 
@@ -3436,12 +3344,12 @@ def plot_bare_tempshift(df_ref, T_coef, Tref, nvals, T_range, filename):
             ymin=np.min([meas_vals.min(), ref_val.min()])
             ymax=np.max([meas_vals.max(), ref_val.max()])
             ax[p, k].set_ylim([ymin, ymax])
+            
     ax2.legend()
-    fig.suptitle(filename)
-    fig.savefig(filename)
-    sumfile = os.path.basename(filename).split('.')[0]+'_sum.pdf'
-    directory = os.path.dirname(filename)
-    fig2.savefig(os.path.join(directory, sumfile))
+    fig.suptitle('bare crystal data: indivdual n')
+    fig2.suptitle('bare crystal data: summary')
+    fig.show()
+    fig2.show()
 
 
 def bare_tempshift(T, T_coef, Tref, n):
@@ -3795,8 +3703,8 @@ def make_response_maps(fig, ax, **kwargs):
         first_plot (integer):
             number of first plot, if so sublabelfigure is correct (default 0)
         title_strings (list of 2 strings):
-            characters to go before and after letters for parts of figures - default
-            is ['(',')']
+            characters to go before and after letters for parts of figures - 
+            default is ['(',')']
         title_fontweight (string):
             weight of axes titles - default is 'normal'
             
@@ -3814,7 +3722,6 @@ def make_response_maps(fig, ax, **kwargs):
     drho = kwargs.get('drho', 'Sauerbrey')
     title_strings = kwargs.get('title_strings', ['(', ')'])
     title_fontweight = kwargs.get('title_fontweight', 'normal')
-    title_loc = kwargs.get('title_loc', 'left')
 
 
     def Zfunction(x, y):
@@ -3992,10 +3899,10 @@ def add_t_diff(df):
         return
     df.insert(2, 't_prev', 'nan')
     df.insert(3, 't_next', 'nan')
-    df['t_next'] = -df['t'].diff(periods=-1)    
-    df.iloc[-1, df.columns.get_loc('t_next')] = np.inf
-    df['t_prev'] = -df['t'].diff(periods=1)
-    df.iloc[0, df.columns.get_loc('t_prev')] = np.inf
+    df.loc[:,'t_next'] = -df.loc[:,'t'].diff(periods=-1)    
+    df.at[df.index[-1], 't_next'] = np.inf
+    df.loc[:,'t_prev'] = -df.loc[:,'t'].diff(periods=1)
+    df.loc[0,'t_prev'] = np.inf
     return df
 
 # extraction of data from MATLAB fig file
