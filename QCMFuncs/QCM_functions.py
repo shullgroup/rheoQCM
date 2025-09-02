@@ -3515,7 +3515,7 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
 
     args:
         w (numpy array of real values):
-            Angular frequencies.
+            Frequencies.
         g0 (list of real values):
             Unrelaxed moduli.
         tau (list of real values):
@@ -3540,8 +3540,7 @@ def springpot(w, g0, tau, beta, sp_type, **kwargs):
 
     returns:
         gstar (numpy array):
-            complex shear modulus normalized by unrelaxed value
-
+            complex moduli
     """
 
     # specify which elements are kww or Maxwell elements
