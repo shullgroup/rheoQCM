@@ -2120,6 +2120,9 @@ def make_prop_axes(propnames, **kwargs):
         
         's', 'hr', 'day':
             Time in correspoinding unit.
+            
+        dfn or dgn:
+            frequency or dissipation shift for a given harmonic
         
         Name of any dataframe column:
             In this case you'll need to label the y axis manually.
