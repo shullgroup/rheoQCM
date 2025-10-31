@@ -23,6 +23,11 @@ from copy import deepcopy, copy
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
 import re
+import warnings
+
+# Suppress the specific warning when working with All-nan arrays
+warnings.filterwarnings("ignore", message="All-NaN slice encountered")
+
 
 try:
   import seaborn as sns
@@ -1303,7 +1308,7 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
 
     # now add complex frequency and frequency shifts
     npts = len(df_soln.index)
-    complex_series = np.empty(len(df_soln), dtype = np.complex128)
+    complex_series = pd.Series([np.nan+1j*np.nan] * len(df_soln), dtype='complex128')
     for n in find_nplot(delfstar):
         # add experimental delf, delfstar and empty column for calc. delfstar
         if f'fstar_{n}_dat' in delfstar_mod.keys():
@@ -1313,7 +1318,9 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
         df_soln.insert(df_soln.shape[1], f'delfstar_expt_{n}', 
                        delfstar_mod[f'delfstar_expt_{n}'])
         df_soln.insert(df_soln.shape[1], f'delfstar_calc_{n}', complex_series)
-    
+        
+        
+   
     # add calc to each row
     calc_array = np.array(npts*[calc])
     df_soln.insert(df_soln.shape[1], 'calc', calc_array)
@@ -1597,6 +1604,13 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
     reftype = kwargs.get('reftype', 'bare')
     gmax = kwargs.get('gmax', 20000)
     
+    # create df_soln dataframe                   
+    df_soln, delfstar_mod = make_soln_df(delfstar, calc, props_calc, layers,
+                           gmax=gmax, calctype=calctype, reftype=reftype) 
+    
+    if len(props_calc)==0:
+        return df_soln
+    
     # obtain starting guess from layers dictionary
     guess = guess_from_layers(props_calc, layers)
     
@@ -1609,8 +1623,6 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
     showvals = kwargs.get('showvals', False)
 
     # note that if we specify lb, make sure to specify ub as well
-
-
     lb = [None]*len(props_calc)
     for i, prop_string in enumerate(props_calc):
         prop = prop_string.split('_')[0]
@@ -1634,9 +1646,7 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
     # set required accuracy for solution
     accuracy =kwargs.get('accuracy', 1)
 
-    # create df_soln dataframe                   
-    df_soln, delfstar_mod = make_soln_df(delfstar, calc, props_calc, layers,
-                           gmax=gmax, calctype=calctype, reftype=reftype) 
+
   
     for row in delfstar_mod.itertuples(): 
         def ftosolve(x):
@@ -1992,7 +2002,7 @@ def calc_prop_error(soln, f_error):
     real_series = np.zeros(npts, dtype=np.float64)
     
     # handle the case where we're using prop_plots to plot other data
-    if 'props_calc' not in soln.keys():
+    if ('props_calc' not in soln.keys() or soln['props_calc'].isna().all()):
         return pd.DataFrame(None)
     
     for prop in soln[soln['props_calc'].notna()].iloc[0]['props_calc']:
@@ -2250,7 +2260,9 @@ def make_prop_axes(propnames, **kwargs):
     xunit = {}
     xlabel = {}
     if type(xunit_input)==str:
-        for p in np.arange(nprops):
+        if nprops==0:
+            xunit[0]=xunit_input
+        for p in np.arange(0,nprops):
             xunit[p] = xunit_input
     else:
         for p in np.arange(nprops):
@@ -2258,7 +2270,7 @@ def make_prop_axes(propnames, **kwargs):
             
             
     # set the x labels
-    for p in np.arange(nprops):
+    for p in np.arange(max(1, nprops)):  # account for fact that nprops might be 0
         xunit_base = xunit[p].split('.')[0].split('_')[0]
         if xunit_base in axlabels.keys():
             xlabel[p] = axlabels[xunit_base]
@@ -2279,11 +2291,15 @@ def make_prop_axes(propnames, **kwargs):
     fig['master'] = plt.figure(constrained_layout = True, num = num)
     
     # build the GridSpec
-    nrows = 1
+    nrows = 0
+    irow=-1
+    if len(propnames)!=0:
+        nrows = 1
     if checks:
         nrows = nrows+1
     if maps:
         nrows = nrows+1
+    
     
     # create the gridspec and add property subfigure
     # start with vertial version
@@ -2302,36 +2318,37 @@ def make_prop_axes(propnames, **kwargs):
 
 
     # add the different axes to plots figure
-    ax['props']={}
-    
-    if orientation == 'vertical':
-        ax['props'][0] = fig['props'].add_subplot(nprops, 1, 1)
-    
-        for p in np.arange(1, nprops):
-            if xunit[p] == xunit[0] and p in sharex:
-                ax['props'][p] = fig['props'].add_subplot(nprops, 1, p+1, 
-                                                    sharex = ax['props'][0])
-            else:
-                ax['props'][p] = fig['props'].add_subplot(nprops, 1, p+1)
-    else:
-        ax['props'][0] = fig['props'].add_subplot(1, nprops, 1)
-    
-        for p in np.arange(1, nprops):
-            if xunit[p] == xunit[0] and p in sharex:
-                ax['props'][p] = fig['props'].add_subplot(1, nprops, p+1, 
-                                                    sharex = ax['props'][0])
-            else:
-                ax['props'][p] = fig['props'].add_subplot(1, nprops, p+1)
-            
-    for p in np.arange(nprops):
-        ax[p] = ax['props'][p]
-        title = f'{title_strings[0]}{titles[p]}{title_strings[1]}'
-        ax[p].set_title(title, fontweight=title_fontweight,
-                        loc=title_loc)
-        ax[p].set_xlabel(xlabel[p])
+    if nprops!=0:
+        irow=irow+1
+        ax['props']={}
+        
+        if orientation == 'vertical':
+            ax['props'][0] = fig['props'].add_subplot(nprops, 1, 1)
+        
+            for p in np.arange(1, nprops):
+                if xunit[p] == xunit[0] and p in sharex:
+                    ax['props'][p] = fig['props'].add_subplot(nprops, 1, p+1, 
+                                                        sharex = ax['props'][0])
+                else:
+                    ax['props'][p] = fig['props'].add_subplot(nprops, 1, p+1)
+        else:
+            ax['props'][0] = fig['props'].add_subplot(1, nprops, 1)
+        
+            for p in np.arange(1, nprops):
+                if xunit[p] == xunit[0] and p in sharex:
+                    ax['props'][p] = fig['props'].add_subplot(1, nprops, p+1, 
+                                                        sharex = ax['props'][0])
+                else:
+                    ax['props'][p] = fig['props'].add_subplot(1, nprops, p+1)
+                
+        for p in np.arange(nprops):
+            ax[p] = ax['props'][p]
+            title = f'{title_strings[0]}{titles[p]}{title_strings[1]}'
+            ax[p].set_title(title, fontweight=title_fontweight,
+                            loc=title_loc)
+            ax[p].set_xlabel(xlabel[p])
 
     iax = nprops-1  # running number of axes for axis labeling
-    irow = 0  # running index of row
 
     if checks:
         # Subfigure - solution checks
@@ -2340,9 +2357,14 @@ def make_prop_axes(propnames, **kwargs):
             fig['checks'] = fig['master'].add_subfigure(GridSpec[irow,1:11])
         else:
             fig['checks'] = fig['master'].add_subfigure(GridSpec[irow,:])
-            
-        ax['checks'] = {0:fig['checks'].add_subplot(1,2,1, sharex=ax['props'][0]),
-                        1:fig['checks'].add_subplot(1,2,2, sharex=ax['props'][0])}
+        if nprops!=0:    
+            ax['checks'] = {0:fig['checks'].add_subplot(1,2,1, 
+                                                        sharex=ax['props'][0]),
+                            1:fig['checks'].add_subplot(1,2,2, 
+                                                        sharex=ax['props'][0])}
+        else:
+            ax['checks'] = {0:fig['checks'].add_subplot(1,2,1),
+                            1:fig['checks'].add_subplot(1,2,2)}
         ax[iax+1]=ax['checks'][0]
         ax[iax+2]=ax['checks'][1]
         for k in [0, 1]:
@@ -2666,7 +2688,7 @@ def plot_props(soln, figdic, **kwargs):
         return
     fmt=kwargs.get('fmt', 'x')
            
-    label=kwargs.get('label', '')
+    label_input=kwargs.get('label', '')
     xoffset_input=kwargs.get('xoffset', 0)  
     f_error = kwargs.get('f_error', [0.05, 15, 0])
     linewidth = kwargs.get('linewidth', 1)
@@ -2701,7 +2723,7 @@ def plot_props(soln, figdic, **kwargs):
     # we need to keep xdata for each plot, because we'll use just
     # one of these arrays (usually the first one) for the solution checks
     xdata = {}
-
+    
     for p in props.keys():
         # establish property color
         if 'C' in fmt:
@@ -2740,7 +2762,12 @@ def plot_props(soln, figdic, **kwargs):
         y_max.append(max(ydata+yerr_t))
         y_min = min(y_min)
         y_max = max(y_max)
-
+        label = label_input
+        
+        # create layer labels if more than 1 laer are used
+        if len(soln.iloc[0]['layers'].keys())>1:
+            layer_num = props[p].split('_')[1].split('.')[0]
+            label = label_input + f' layer {layer_num}'
         if not np.any(yerr_t): 
             ax['props'][p].plot(xdata[p], ydata, fmt, label=label,
                                 color = prop_color,
@@ -2751,10 +2778,12 @@ def plot_props(soln, figdic, **kwargs):
             ax['props'][p].errorbar(xdata[p], ydata, fmt=fmt, 
                             yerr=yerr_p, label=label, capsize = 3,
                             linewidth=linewidth,color = prop_color)
+            
             # now plot extended error bars, including correlated error in f/n
             ax['props'][p].errorbar(xdata[p], ydata, yerr=yerr_t, 
                                    markersize = 0, color = prop_color,
-                                   linewidth = linewidth, fmt = fmt)            
+                                   linewidth = linewidth, fmt = fmt)     
+            
         y_range = y_max - y_min
         
         if 'log' in props[p].split('.'):
@@ -2779,6 +2808,8 @@ def plot_props(soln, figdic, **kwargs):
             ax['props'][p].set_ylim(top = 92)
         if 'phi' in props[p] and ax['props'][p].get_ylim()[0]<0:
             ax['props'][p].set_ylim(bottom = 0)
+            
+        ax['props'][p].legend()
             
     # now add the comparison plots of measured and calcuated values         
     # plot the experimental data first
@@ -2826,7 +2857,11 @@ def plot_props(soln, figdic, **kwargs):
         soln = add_fstar_err(soln, f_error)
         
         # use the first plotted property plot for the x values
-        soln['xdata'] = xdata[min(list(props.keys()))]    
+        if len(props.keys())==0:
+            # make sure we have xdata for nprops=0 case 
+            soln['xdata'] = make_data_array(xunit[0], soln, prop_error)[0]
+        else:
+            soln['xdata'] = xdata[min(list(props.keys()))]    
         for n in nfplot: 
             # drop nan values from dataframe to avoid problems with errorbar
             soln_tmp = soln.dropna(subset=[f'delfstar_expt_{n}'])
@@ -2843,6 +2878,9 @@ def plot_props(soln, figdic, **kwargs):
                 label_calc = f'n={n}: calc'
             else:
                 label_expt = ''
+                label_calc = ''
+            # we have no calculated curves if there are no properties
+            if len(props.keys())==0:
                 label_calc = ''
                 
             # mow make the plot with both 'partial' and 'total' error bars
@@ -3056,7 +3094,7 @@ def read_xlsx(infile, **kwargs):
     # specify default bare crystal temperature coefficients
     T_coef = kwargs.get('T_coef', 'calculated')
     if T_coef == 'default':
-        T_coef = T_coef_default 
+        T_coef = deepcopy(T_coef_default)
 
     # read shifts that account for changes from stress levels applied
     # to different sample holders
@@ -3135,7 +3173,7 @@ def read_xlsx(infile, **kwargs):
             df_ref['temp'] = Tref
             # this is the common case where we don'to have a full set of 
             # referene temp data, but only values at Tref
-            T_coef = T_coef_default
+            T_coef = deepcopy(T_coef_default)
             T_coef_plots = False
             autodelete = False
             
