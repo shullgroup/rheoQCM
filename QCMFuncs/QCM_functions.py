@@ -1286,7 +1286,7 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
         delfstar = add_t_diff(delfstar)
         
     # check to see if there are any nan values in the harmonics we need  
-    delfstar_mod = copy(delfstar)
+    delfstar_mod = deepcopy(delfstar)
     n_unique = nvals_from_calc(calc)[3]
     for n_to_drop in n_unique:
         delfstar_mod  = delfstar_mod.dropna(subset = 
@@ -1308,7 +1308,8 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
 
     # now add complex frequency and frequency shifts
     npts = len(df_soln.index)
-    complex_series = pd.Series([np.nan+1j*np.nan] * len(df_soln), dtype='complex128')
+    complex_series = pd.Series([np.nan + 1j * np.nan] * len(df_soln), 
+                               index=df_soln.index, dtype='complex128')
     for n in find_nplot(delfstar):
         # add experimental delf, delfstar and empty column for calc. delfstar
         if f'fstar_{n}_dat' in delfstar_mod.keys():
@@ -1317,10 +1318,9 @@ def make_soln_df(delfstar, calc, props_calc, layers_in,  **kwargs):
                            delfstar_mod[f'fstar_{n}_dat'])        
         df_soln.insert(df_soln.shape[1], f'delfstar_expt_{n}', 
                        delfstar_mod[f'delfstar_expt_{n}'])
-        df_soln.insert(df_soln.shape[1], f'delfstar_calc_{n}', complex_series)
+        df_soln.insert(df_soln.shape[1], f'delfstar_calc_{n}', complex_series)     
         
-        
-   
+  
     # add calc to each row
     calc_array = np.array(npts*[calc])
     df_soln.insert(df_soln.shape[1], 'calc', calc_array)
@@ -2194,6 +2194,9 @@ def make_prop_axes(propnames, **kwargs):
         title_loc (string):
             location of title - default is 'center' can also be 'left', 'right'
             
+        norm_by_n (Boolean):
+            True (default) if delg and delf normalized by n in soln_checks
+            
 
 
     Returns:
@@ -2219,6 +2222,7 @@ def make_prop_axes(propnames, **kwargs):
     orientation = kwargs.get('orientation', 'horizontal')
     xunit_input = kwargs.get('xunit', 'index')
     no3 = kwargs.get('no3', False)
+    norm_by_n = kwargs.get('norm_by_n', True)
     # add '_1' to property if it wasn't included explicitly
     propnames = add_layer_nums(propnames)  
     nprops = len(propnames)
@@ -2374,8 +2378,12 @@ def make_prop_axes(propnames, **kwargs):
             # used xlabel for first prop plot as the xlabel for checks
             ax['checks'][k].set_xlabel(xlabel[0])
         iax = iax + 2
-        ax['checks'][0].set_ylabel(axlabels['delf_n'])
-        ax['checks'][1].set_ylabel(axlabels['delg_n'])
+        if norm_by_n:
+            ax['checks'][0].set_ylabel(axlabels['delf_n'])
+            ax['checks'][1].set_ylabel(axlabels['delg_n'])
+        else:
+            ax['checks'][0].set_ylabel(axlabels['delf'])
+            ax['checks'][1].set_ylabel(axlabels['delg'])            
         
         gammascale = kwargs.get('gammascale', 'linear')
         ax['checks'][1].set_yscale(gammascale)
@@ -2461,7 +2469,8 @@ def make_prop_axes(propnames, **kwargs):
 
 
     info = {'props':props, 'xunit':xunit,
-            'maplabels':maplabels, 'checklabels':checklabels}
+            'maplabels':maplabels, 'checklabels':checklabels,
+            'norm_by_n':norm_by_n}
     
 
     return {'fig':fig, 'ax':ax, 'info':info}
@@ -2864,9 +2873,13 @@ def plot_props(soln, figdic, **kwargs):
             soln['xdata'] = xdata[min(list(props.keys()))]    
         for n in nfplot: 
             # drop nan values from dataframe to avoid problems with errorbar
-            soln_tmp = soln.dropna(subset=[f'delfstar_expt_{n}'])
-            dfval = np.real(soln_tmp[f'delfstar_expt_{n}'])/n
-            dfval2 = np.real(soln_tmp[f'delfstar_calc_{n}'])/n
+            soln_tmp = soln.dropna(subset=[f'delfstar_expt_{n}'])          
+            dfval = np.real(soln_tmp[f'delfstar_expt_{n}'])
+            dfval2 = np.real(soln_tmp[f'delfstar_calc_{n}'])
+            # normalize by n if desired
+            if figdic['info']['norm_by_n']:
+                dfval = dfval/n
+                dfval2 = dfval2/n       
             ferr_p = np.real(soln_tmp[f'fstar_err_p_{n}'])/n
             ferr_t = np.real(soln_tmp[f'fstar_err_t_{n}'])/n
             df_min.append(np.nanmin(dfval-ferr_t))
