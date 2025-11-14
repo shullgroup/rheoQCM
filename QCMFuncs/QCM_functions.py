@@ -29,6 +29,11 @@ import warnings
 warnings.filterwarnings("ignore", message="All-NaN slice encountered")
 
 
+# supress warning associated with blank legends
+warnings.filterwarnings("ignore", message="No artists with labels found to put in legend.")
+
+
+
 try:
   import seaborn as sns
   # Set the Seaborn colorblind palette as the default color cycle for Matplotlib
@@ -1501,7 +1506,7 @@ def update_df_soln(df_soln, soln, idx, layers, props_calc, reftype):
     return df_soln
 
 
-def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
+def solve_for_props(delfstar, calc, props_calc_in, layers_in, **kwargs):
     """
     Solve the QCM equations to determine the properties.
 
@@ -1590,8 +1595,10 @@ def solve_for_props(delfstar, calc, props_calc, layers_in, **kwargs):
 
     """
     # add layer number as 1 if not specified
+    props_calc=[]
     calc = update_calc(calc)
     layers = deepcopy(layers_in)
+    props_calc = deepcopy(props_calc_in)
     for i, prop in enumerate(props_calc):
         # remove any plotting designations ('log', etc.)
         prop = prop.split('.')[0]
@@ -2674,6 +2681,9 @@ def plot_props(soln, figdic, **kwargs):
         reference drho for plots of drho_norm or drho_ref       
     linewidth (float):
             linewidth for plots
+    layer_label (Boolean):
+        True if we want to add layer number to legend on property plot
+            default is False
 
 
     Returns
@@ -2698,6 +2708,7 @@ def plot_props(soln, figdic, **kwargs):
     fmt=kwargs.get('fmt', 'x')
            
     label_input=kwargs.get('label', '')
+    layer_label = kwargs.get('layer_label', False)
     xoffset_input=kwargs.get('xoffset', 0)  
     f_error = kwargs.get('f_error', [0.05, 15, 0])
     linewidth = kwargs.get('linewidth', 1)
@@ -2769,14 +2780,17 @@ def plot_props(soln, figdic, **kwargs):
             
         y_min.append(min(ydata-yerr_t))
         y_max.append(max(ydata+yerr_t))
-        y_min = min(y_min)
-        y_max = max(y_max)
+        y_min = np.nanmin(y_min)
+        y_max = np.nanmax(y_max)
         label = label_input
         
         # create layer labels if more than 1 laer are used
         if len(soln.iloc[0]['layers'].keys())>1:
             layer_num = props[p].split('_')[1].split('.')[0]
-            label = label_input + f' layer {layer_num}'
+            if layer_label:
+                label = label_input + f' layer {layer_num}'
+            else:
+                label = label_input
         if not np.any(yerr_t): 
             ax['props'][p].plot(xdata[p], ydata, fmt, label=label,
                                 color = prop_color,
