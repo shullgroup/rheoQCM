@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jul 13 09:49:48 2021
-
-@author: brodericklewis
-"""
-
 #Import any individual functions from outside packages 
 #that are used in your functions.
 #These are called dependencies.
@@ -20,6 +13,17 @@ from scipy.special import digamma
 from pymittagleffler import mittag_leffler
 
 palette = ['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25', '#75CA85', '#C892D6']
+
+
+# function used to figure out number of lines to ignore in DMA input file
+def first_numbered_line(file_path):
+    with open(file_path, 'r') as file:
+        for line_number, line in enumerate(file, start=1):
+            stripped_line = line.lstrip()
+            if stripped_line and stripped_line[0].isdigit():
+                return line_number
+    return None
+
 
 #Function definitions with docstrings
 def readDMA(path, **kwargs):
@@ -44,16 +48,18 @@ def readDMA(path, **kwargs):
     '''
     
     instrument = kwargs.get('instrument', 'g2');
-    skiprows = kwargs.get('skiprows', 2)
+    skiprows = kwargs.get('skiprows', first_numbered_line(path))
 
-    #if old DMA, read data with these labels
+
     if instrument=='rsa3':
+        #if old DMA, read data with these labels
+        # may need to update this to define other variables 
+        #vif it is still being used
         with open(path, 'r') as f:
             df = pd.read_csv(f, delimiter="\t", skiprows=skiprows,
                              usecols=[0,1,2,3],
                              names=['temp','storage','loss','tand'])
-            
-        return df
+
     
     # if newer G2 DMA, use these labels
     else:
@@ -64,22 +70,10 @@ def readDMA(path, **kwargs):
                                     'tand','storage','loss'])
             df['freq'] = df['w']/(2*np.pi)
         
-        return df
-	
-def readtTS(path, **kwargs):
-    '''Returns the frequency (in Hz), temp, storage & loss moduli, 
-    and tandelta from DMA temp and freq sweep'''
     
-    skiprows = kwargs.get('skiprows', 2)
-    
-    #open file
-    df = pd.read_csv(path, sep='\t', skiprows=skiprows,
-                     usecols=[0,1,2,3,4,5,6,7],
-                     names=['w','t','temp','strain','stress',
-                            'tand','storage','loss'])
-    df['freq'] = df['w']/(2*np.pi)
-    
+    f['phi'] = np.degrees(np.arctan(df['tand']))
     return df
+	
     
 def readStressRelax(path, **kwargs):
     '''Returns the time and modulus data for a stress relaxation test'''
