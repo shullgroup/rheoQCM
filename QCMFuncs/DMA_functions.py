@@ -71,7 +71,7 @@ def readDMA(path, **kwargs):
             df['freq'] = df['w']/(2*np.pi)
         
     
-    f['phi'] = np.degrees(np.arctan(df['tand']))
+    df['phi'] = np.degrees(np.arctan(df['tand']))
     return df
 	
     
