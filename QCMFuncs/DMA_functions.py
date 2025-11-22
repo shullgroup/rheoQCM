@@ -1,10 +1,11 @@
 #Import any individual functions from outside packages 
 #that are used in your functions.
 #These are called dependencies.
+# updated version of this file is maintained at
+# 
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import math
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.integrate import quad
@@ -12,17 +13,43 @@ from scipy.special import gamma as gammaf
 from scipy.special import digamma
 from pymittagleffler import mittag_leffler
 
-palette = ['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25', '#75CA85', '#C892D6']
 
+palette = ['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25', 
+           '#75CA85', '#C892D6', '#007d00']
+
+# axis labels
+axlabel = {'storage':r'$E^\prime$ (Pa)',
+           'loss': r'$E^{\prime\prime$ (Pa)',
+           'phi':r'$\phi$ (deg.)'}
 
 # function used to figure out number of lines to ignore in DMA input file
+
 def first_numbered_line(file_path):
+    """
+    Find the line number of the first line in a file that starts with a digit.
+
+    This function reads a text file line by line and returns the line number
+    of the first non-empty line whose first non-whitespace character is a digit.
+    If no such line exists, it returns None.
+
+    Parameters:
+    ----------
+    file_path : str
+        The path to the text file to be read.
+
+    Returns:
+    -------
+    int or None
+        The line number (1-based index) of the first line starting with a digit,
+        or None if no such line is found.
+    """
     with open(file_path, 'r') as file:
         for line_number, line in enumerate(file, start=1):
             stripped_line = line.lstrip()
             if stripped_line and stripped_line[0].isdigit():
                 return line_number
     return None
+
 
 
 #Function definitions with docstrings
@@ -75,484 +102,746 @@ def readDMA(path, **kwargs):
     return df
 	
     
+
 def readStressRelax(path, **kwargs):
-    '''Returns the time and modulus data for a stress relaxation test'''
+    """
+    Read stress relaxation test data from a tab-delimited file.
+
+    This function reads a text file containing stress relaxation data and
+    returns the time and modulus values as pandas Series objects.
+
+    Parameters
+    ----------
+    path : str
+        Path to the tab-delimited file containing the data.
+    **kwargs : dict, optional
+        Additional keyword arguments (currently unused).
+
+    Returns
+    -------
+    tuple of pandas.Series
+        A tuple containing:
+        - t : pandas.Series
+            Time values from the 'Step time' column.
+        - mod : pandas.Series
+            Modulus values from the 'Modulus' column.
+
+    Notes
+    -----
+    - The file is expected to have columns named 'Step time' and 'Modulus'.
+    - The second row of the file is skipped during reading (skiprows=[1]).
+
+    Example
+    -------
+    >>> t, mod = readStressRelax('data/stress_relax.txt')
+    >>> print(t.head(), mod.head())
+    """
     with open(path, 'r') as f:
         df = pd.read_csv(f, sep='\t', skiprows=[1])
         t = df['Step time']
         mod = df['Modulus']
-    
+
     return t, mod
 
+
+
 def plotStressRelax(*arg, **kwargs):
-    '''Returns a general plot of relaxation modulus with time'''
+
+    """
+    Plot relaxation modulus versus time for one or more datasets.
     
-    norm = kwargs.get('norm', True);
-    yaxis = kwargs.get('yaxis','log');        
+    This function generates a plot of relaxation modulus as a function of time
+    for viscoelastic materials, using data provided in the arguments. Each
+    dataset should be a tuple or list containing two arrays: time values and
+    corresponding modulus values. The function supports normalization and
+    different y-axis scales.
     
-    palette = ['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25', '#75CA85', '#C892D6']
-    fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
+    Parameters
+    ----------
+    *arg : tuple of arrays
+        One or more datasets, where each dataset is structured as:
+        (time_array, modulus_array). Both arrays should be of equal length.
+        The first element of each array is ignored (index 0), and plotting
+        starts from index 1 onward.
     
-    a = 0;
+    **kwargs : dict, optional
+        norm : bool, default=True
+            If True, normalizes the modulus values by the second modulus
+            value in the dataset (mod[1]).
+        yaxis : str, default='log'
+            Determines the y-axis scale:
+            - 'log' for log-log plot
+            - 'linear' for semi-log plot (logarithmic x-axis, linear y-axis)
+    
+    Returns
+    -------
+    None
+        Displays the plot using matplotlib's `plt.show()`.
+    
+    Notes
+    -----
+    - The function uses a predefined color palette (`palette`) for multiple
+      datasets.
+    - The figure size is fixed at (4, 3) inches with constrained layout.
+    - Normalization adjusts modulus values relative to the second data point.
+    
+    Example
+    -------
+    >>> plotStressRelax((time_array, modulus_array), norm=True, yaxis='log')
+    """
+
+    norm = kwargs.get('norm', True)
+    yaxis = kwargs.get('yaxis', 'log')
+
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
+
+    a = 0
     for A in arg:
-        time = A[0][1:]; mod = A[1][1:];
-        norm_mod = [m/mod[1] for m in mod]
-        #set modulus normalization
+        time = A[0][1:]
+        mod = A[1][1:]
+        norm_mod = [m / mod[1] for m in mod]
+
+        # Set modulus normalization
         if norm:
-            modulus = norm_mod;
-            ylabel = 'Normalized Relaxation Modulus';
+            modulus = norm_mod
+            ylabel = 'Normalized Relaxation Modulus'
         else:
-            modulus = mod;
+            modulus = mod
             ylabel = 'Relaxation Modulus, E(t) (Pa)'
-        #set log or linear yaxis
+
+        # Set log or linear y-axis
         if yaxis == 'log':
-            ax.loglog(time,modulus, '-', color=palette[a])    
+            ax.loglog(time, modulus, '-', color=palette[a])
         elif yaxis == 'linear':
-            ax.semilogx(time,modulus, '-', color=palette[a])
-        a = a + 1;
-        
-    ax.set_xlabel('Time (s)'); ax.set_ylabel(ylabel);
+            ax.semilogx(time, modulus, '-', color=palette[a])
+        a += 1
+
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel(ylabel)
     return plt.show()
-    
-def plotDMA(df, **kwargs):
-    '''Returns a general plot of storage & loss moduli and tand vs T'''
-    
-    tand_min = kwargs.get('tand_min', 0.003); tand_max = kwargs.get('tand_max', 2);
-    mod_min = kwargs.get('mod_min', 1e5); mod_max = kwargs.get('mod_max', 1e10);
-    temp_min = kwargs.get('temp_min', -120)
-    temp_max = kwargs.get('temp_max', 225)
-    
-    legendloc = kwargs.get('legendloc','best')
-    legend_adjust = kwargs.get('legend_adjust', None)
-    legendsize = kwargs.get('legendsize',10)
-    exclude_storage = kwargs.get('exclude_storage', False)
-    exclude_loss = kwargs.get('exclude_loss', False)
-    exclude_tand = kwargs.get('exclude_tand', False)
-    
-    title = kwargs.get('title', None)
-    save = kwargs.get('save', False); savepath = kwargs.get('savepath', None)
-    
-    
-    palette = ['#0093F5', '#F08E2C', '#000000']
-    
 
-    fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
-    ax.set_ylim(mod_min, mod_max)
-    ax.set_xlim(temp_min, temp_max)
-    ax.set_xlabel('Temperature ($^oC$)')
-    ax.set_ylabel('Storage and Loss Moduli (Pa)')
-    legend_elements = []
-    
-    if exclude_storage:
-        ax.set_ylabel('Loss Modulus (Pa)')
-    else:
-        p1, = ax.semilogy(df['temp'], df['storage'], '.-', ms=8, lw=2, 
-                          color=palette[0], label="E'")
-        legend_elements.append(p1)
-    
-    if exclude_loss:
-        ax.set_ylabel('Storage Modulus (Pa)')
-    else:
-        p2, = ax.semilogy(df['temp'], df['loss'], '.-', ms=8, lw=2, 
-                    color=palette[1], label='E"')
-        legend_elements.append(p2)
-    
-    if exclude_tand:
-        pass
-    else:
-        twin1 = ax.twinx()
-        p3, = twin1.semilogy(df['temp'], df['tand'], '.-', ms=8, lw=2, 
-                             color=palette[2], label='tan$\\delta$')
-        legend_elements.append(p3)
-        twin1.set_ylim(tand_min, tand_max)
-        twin1.set_ylabel('tan$\\delta$')
 
-    
-    
-    ax.set_title(title)
-    ax.legend(handles=legend_elements, loc=legendloc, bbox_to_anchor=legend_adjust,
-              prop={'size': legendsize})
-    
-    if save == True:
-        plt.savefig(savepath)
-        plt.close()
-        
-    else:
-        return plt.show()
-    
 def plottTS(df, ax, prop, **kwargs):
-    '''Returns plots of storage modulus, loss modulus, and 
-    tandelta vs. frequency for each temperature'''
+    """
+    Plot time–temperature superposition (TTS) data for a specified property.
+
+    This function creates log-log plots of a given viscoelastic property
+    (e.g., storage modulus, loss modulus, or tan delta) versus frequency
+    for multiple temperatures. Optional horizontal (aT) and vertical (bT)
+    shift factors can be applied for TTS analysis.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame containing experimental data. Must include columns:
+        - 'temp': Temperature values (°C)
+        - 'freq': Frequency values (Hz)
+        - `prop`: The property to plot (e.g., 'E_storage', 'E_loss').
+
+    ax : matplotlib.axes.Axes
+        Matplotlib Axes object on which the plot will be drawn.
+
+    prop : str
+        Name of the column in `df` representing the property to plot.
+
+    **kwargs : dict, optional
+        title : str, default=''
+            Title for the plot.
+        tempstep : float, default=2.5
+            Temperature increment for color mapping and grouping.
+        aT : dict, default=None
+            Horizontal shift factors for each temperature.
+        bT : dict, default=None
+            Vertical shift factors for each temperature.
+
+    Returns
+    -------
+    None
+        Displays the plot on the provided Axes object and adds a colorbar.
+
+    Notes
+    -----
+    - Color scale uses the 'magma' colormap.
+    - Shift factors allow construction of master curves for TTS analysis.
+
+    Example
+    -------
+    >>> fig, ax = plt.subplots()
+    >>> plottTS(df, ax, 'E_storage', title='Storage Modulus vs Frequency')
+    """
     title = kwargs.get('title', '')
-    
     tempstep = kwargs.get('tempstep', 2.5)
-    
     aT = kwargs.get('aT', None)
     bT = kwargs.get('bT', None)
 
-       
-    Tmin = round(min(df['temp']),0)
-    Tmax = round(max(df['temp']),0)
-    num_temps = int(round((Tmax-Tmin)/tempstep,0) + 1)
-    
-    #set color scale depending on number of testing temperatures
-    cmap = plt.cm.magma;
-    cmaplist = [cmap(i) for i in range(cmap.N)]
-    cmap = mpl.colors.LinearSegmentedColormap.from_list('Custom cmap', 
-                                                        cmaplist, cmap.N)
-    temps = np.linspace(Tmin, Tmax, num_temps)
-    mult = round(256/num_temps)
-    norm = mpl.colors.BoundaryNorm(temps, cmap.N)
-    
-    # set all horizontal shift factors to 1 if not provided
-    if aT == None:
-        aT = {}
-        for t in temps:
-            aT[t] = 1
-    
-    # set all vertical shift factors to 1 if not provided
-    if bT == None:
-        bT = {}
-        for t in temps:
-            bT[t] = 1
-    
-        # now plot the desired property
-        for t in temps:
-            i = int(round(t - Tmin)/tempstep)
-            ax.loglog(df.query('temp > @t-0.5 & temp < @t+0.5')['freq']*aT[t], 
-                         df.query('temp > @t-0.5 & temp < @t+0.5')[prop]*bT[t], 
-                         '.-', ms=10, lw=3, color=cmaplist[i*mult])
+    Tmin = round(min(df['temp']), 0)
+    Tmax = round(max(df['temp']), 0)
+    num_temps = int(round((Tmax - Tmin) / tempstep, 0) + 1)
 
-    
-        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-        sm._A = [];
-        plt.colorbar(sm, ax=ax, cmap=cmap, norm=norm, 
-                          label='Temperature ($^{\\circ}$C)')
-        ax.set_title(title)
+    # Set color scale based on number of temperatures
+    cmap = plt.cm.magma
+    cmaplist = [cmap(i) for i in range(cmap.N)]
+    cmap = mpl.colors.LinearSegmentedColormap.from_list(
+        'Custom cmap', cmaplist, cmap.N
+    )
+    temps = np.linspace(Tmin, Tmax, num_temps)
+    mult = round(256 / num_temps)
+    norm = mpl.colors.BoundaryNorm(temps, cmap.N)
+
+    # Default shift factors if not provided
+    if aT is None:
+        aT = {t: 1 for t in temps}
+    if bT is None:
+        bT = {t: 1 for t in temps}
+
+    # Plot property for each temperature
+    for t in temps:
+        i = int(round(t - Tmin) / tempstep)
+        subset = df.query('temp > @t-0.5 & temp < @t+0.5')
+        ax.loglog(
+            subset['freq'] * aT[t],
+            subset[prop] * bT[t],
+            '.-',
+            ms=10,
+            lw=3,
+            color=cmaplist[i * mult]
+        )
+
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm._A = []
+    plt.colorbar(
+        sm,
+        ax=ax,
+        cmap=cmap,
+        norm=norm,
+        label='Temperature ($^{\\circ}$C)'
+    )
+    ax.set_title(title)
+
 
 
 def VFTtau(T, tauref, Tref, B, Tinf):
-    lnaT=-B/(Tref-Tinf)+B/(T-Tinf)
-    return tauref*np.exp(lnaT)
+    """
+    Compute relaxation time using the Vogel–Fulcher–Tammann (VFT) equation.
+
+    The VFT equation describes the temperature dependence of relaxation time
+    in glass-forming systems and viscoelastic materials. It accounts for the
+    dramatic increase in relaxation time as temperature approaches a limiting
+    value (Tinf).
+
+    Parameters
+    ----------
+    T : float
+        Temperature at which to calculate the relaxation time (in Kelvin or °C,
+        consistent with other parameters).
+    tauref : float
+        Reference relaxation time at the reference temperature Tref.
+    Tref : float
+        Reference temperature corresponding to tauref.
+    B : float
+        VFT constant related to material fragility.
+    Tinf : float
+        Ideal glass transition temperature (temperature at which relaxation
+        time diverges).
+
+    Returns
+    -------
+    float
+        Relaxation time at temperature T.
+
+    Notes
+    -----
+    The equation used is:
+        ln(aT) = -B / (Tref - Tinf) + B / (T - Tinf)
+        tau(T) = tauref * exp(ln(aT))
+
+    Example
+    -------
+    >>> VFTtau(T=300, tauref=1e-3, Tref=298, B=800, Tinf=150)
+    0.001234  # Example output
+    """
+    lnaT = -B / (Tref - Tinf) + B / (T - Tinf)
+    return tauref * np.exp(lnaT)
+
+
 
 def fitVFT(ax, aT, **kwargs):
-    '''Fits tTS shift factors to Vogel-Fulcher-Tammann form and plots aT vs. T'''
-    
-    title = kwargs.get('title', None);
-    Bguess = kwargs.get('Bguess', 3000);
-    
+    """
+    Fit time–temperature superposition (TTS) shift factors to the
+    Vogel–Fulcher–Tammann (VFT) equation and plot aT vs. temperature.
+
+    This function performs a nonlinear curve fit of experimental shift
+    factors (aT) to the VFT model, estimates the parameters B and Tinf,
+    and plots both the experimental data and the fitted curve.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Matplotlib Axes object on which the plot will be drawn.
+    aT : dict
+        Dictionary of shift factors with temperature as keys (°C) and
+        corresponding aT values.
+    **kwargs : dict, optional
+        title : str, default=None
+            Title for the plot.
+        Bguess : float, default=3000
+            Initial guess for the VFT constant B.
+
+    Returns
+    -------
+    tuple
+        (B, B_err, Tinf, Tinf_err)
+        - B : float
+            Fitted VFT constant.
+        - B_err : float
+            Standard error of B.
+        - Tinf : float
+            Fitted ideal glass transition temperature.
+        - Tinf_err : float
+            Standard error of Tinf.
+
+    Notes
+    -----
+    - The VFT equation used is:
+        ln(aT) = -B / (Tref - Tinf) + B / (T - Tinf)
+    - Tref is determined as the temperature where aT = 1.
+
+    Example
+    -------
+    >>> fig, ax = plt.subplots()
+    >>> B, B_err, Tinf, Tinf_err = fitVFT(ax, aT_dict, title="VFT Fit")
+    """
+    title = kwargs.get('title', None)
+    Bguess = kwargs.get('Bguess', 3000)
+
     Tref = float(next(k for k, v in aT.items() if v == 1))
-    Tguess = Tref-50
-    
-    palette = ['#0093F5', '#F08E2C', '#000000']
-    
-    #plot aT vs. T
+    Tguess = Tref - 50
+
+    # Plot aT vs. T
     ax.set_xlabel('T ($^{\\circ}$C)')
     ax.set_ylabel(r'$a_T$')
     Tvals = [float(x) for x in aT.keys()]
     aTvals = [aT[i] for i in list(aT.keys())]
-    ax.semilogy(Tvals, aTvals, 'o', color=palette[0], label = 'Expt.')
-    
-    # define the fitting function (Vogel-Fulcher-Tamman Eq.)
+    ax.semilogy(Tvals, aTvals, 'o', color=palette[0], label='Expt.')
+
+    # Define the VFT fitting function
     def lnaT_VFT(T, B, Tinf):
-        return -B/(Tref-Tinf)+B/(T-Tinf)
+        return -B / (Tref - Tinf) + B / (T - Tinf)
 
-    # do the curve fit
-    popt, pcov = curve_fit(lnaT_VFT, Tvals, np.log(aTvals), 
-                           p0=[Bguess, Tguess], 
-                           maxfev=5000,
-                           bounds=([500, Tref-100],[5000, Tref-20]))
+    # Perform curve fitting
+    popt, pcov = curve_fit(
+        lnaT_VFT,
+        Tvals,
+        np.log(aTvals),
+        p0=[Bguess, Tguess],
+        maxfev=5000,
+        bounds=([500, Tref - 100], [5000, Tref - 20])
+    )
 
-    # extract the fit values for B and Tinf
+    # Extract fit values and errors
     B, Tinf = popt
-    
-    # Assign errors from fitting to physical variables
     B_err, Tinf_err = np.sqrt(np.diag(pcov))
 
-    # now plot the fit values
+    # Plot fitted curve
     Tfit = np.linspace(min(Tvals), max(Tvals), 100)
     aTfit = np.exp(lnaT_VFT(Tfit, B, Tinf))
-    ax.semilogy(Tfit, aTfit, '--', linewidth=2, color=palette[1], label = f'B={B:.0f}K; $T_\\infty$={Tinf:.0f}$^\\circ$C')
+    ax.semilogy(
+        Tfit,
+        aTfit,
+        '--',
+        linewidth=2,
+        color=palette[1],
+        label=f'B={B:.0f}K; $T_\\infty$={Tinf:.0f}$^\\circ$C'
+    )
 
-    # add the legend
-    ax.legend(); ax.set_title(title);
-        
+    # Add legend and title
+    ax.legend()
+    ax.set_title(title)
+
     return B, B_err, Tinf, Tinf_err
 
+
+
 def fitArrhenius(aT, **kwargs):
-    '''Fits tTS shift factors to Arrhenius form and plots aT vs. T'''
-    
-    title = kwargs.get('title', ' ');
+    """
+    Fit time–temperature superposition (TTS) shift factors to Arrhenius form
+    and plot aT vs. temperature.
+
+    Parameters
+    ----------
+    aT : dict
+        Dictionary of shift factors with temperature as keys (°C) and
+        corresponding aT values.
+    **kwargs : dict, optional
+        title : str, default ' '
+            Title for the plot.
+        savepath : str, default None
+            Path to save the plot. If None, the plot is not saved.
+
+    Returns
+    -------
+    tuple
+        Ea : float
+            Activation energy (J/mol).
+        Ea_err : float
+            Standard error of Ea.
+
+    Notes
+    -----
+    - The Arrhenius equation used is:
+        ln(aT) = (Ea / R) * (1 / (T + 273) - 1 / (Tref + 273))
+    - Tref is determined as the temperature where aT = 1.
+
+    Example
+    -------
+    >>> Ea, Ea_err = fitArrhenius(aT_dict, title="Arrhenius Fit")
+    """
+    title = kwargs.get('title', ' ')
     savepath = kwargs.get('savepath', None)
-    
-    palette = ['#0093F5', '#F08E2C', '#000000']
-    
-    for k in aT.keys():
-        if aT[k] == 1:
-            Tref = float(k)
-    
-    #plot aT vs. T
-    fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
+
+    # Find reference temperature
+    Tref = float(next(k for k, v in aT.items() if v == 1))
+
+    # Plot aT vs. T
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
     ax.set_xlabel('Temperature ($^{\\circ}$C)')
     ax.set_ylabel(r'$a_T$')
     Tvals = [float(x) for x in aT.keys()]
     aTvals = [aT[i] for i in list(aT.keys())]
-    ax.semilogy(Tvals, aTvals, 'o', color=palette[0], label = 'Expt.')
-    
-    # define the fitting function (Arrhenius)
+    ax.semilogy(Tvals, aTvals, 'o', color=palette[0], label='Expt.')
+
+    # Define Arrhenius fitting function
     def lnaT_Arrhenius(T, Ea):
-        return (Ea/8.314)*(1/(T+273) - 1/(Tref+273))
+        return (Ea / 8.314) * (1 / (T + 273) - 1 / (Tref + 273))
 
-    # do the curve fit
-    popt, pcov = curve_fit(lnaT_Arrhenius, Tvals, np.log(aTvals), maxfev=5000,
-                           absolute_sigma=False)
+    # Perform curve fit
+    popt, pcov = curve_fit(
+        lnaT_Arrhenius,
+        Tvals,
+        np.log(aTvals),
+        maxfev=5000,
+        absolute_sigma=False
+    )
 
-    # extract the fit values for Ea
+    # Extract Ea and its error
     Ea = popt[0]
-    
-    # Assign errors from fitting to physical variables
     Ea_err = np.sqrt(np.diag(pcov)[0])
-    #print(Ea_err/1000)
 
-    # now plot the fit values
+    # Plot fitted curve
     Tfit = np.linspace(min(Tvals), max(Tvals), 100)
     aTfit = np.exp(lnaT_Arrhenius(Tfit, Ea))
-    ax.semilogy(Tfit, aTfit, '--', linewidth=2, color=palette[1], 
-                label = f'$E_a$={Ea/1000:.0f} $\pm$ {Ea_err/1000:.0f} kJ/mol')
+    ax.semilogy(
+        Tfit,
+        aTfit,
+        '--',
+        linewidth=2,
+        color=palette[1],
+        label=f'$E_a$={Ea / 1000:.0f} ± {Ea_err / 1000:.0f} kJ/mol'
+    )
 
-    # add the legend
-    ax.legend(); ax.set_title(title);
-    
+    # Add legend and title
+    ax.legend()
+    ax.set_title(title)
+
     if savepath:
         plt.savefig(savepath)
-        #plt.close()
-    
+
     return Ea, Ea_err
 
+
+
 def Eg_VFT(B, Tg, Tinf, **kwargs):
-    '''Calculates effective activation energy of glass transition from VFT parameters'''
-    
+    """
+    Calculate effective activation energy of glass transition from VFT parameters.
+
+    Parameters
+    ----------
+    B : float
+        VFT constant.
+    Tg : float
+        Glass transition temperature (°C).
+    Tinf : float
+        Ideal glass transition temperature (°C).
+    **kwargs : dict, optional
+        B_err : float, default 0
+            Uncertainty in B.
+        Tg_err : float, default 0
+            Uncertainty in Tg.
+        Tinf_err : float, default 0
+            Uncertainty in Tinf.
+
+    Returns
+    -------
+    tuple
+        Eg : float
+            Effective activation energy (J/mol).
+        Eg_err : float
+            Uncertainty in Eg.
+    """
     B_err = kwargs.get('B_err', 0)
     Tg_err = kwargs.get('Tg_err', 0)
     Tinf_err = kwargs.get('Tinf_err', 0)
-    
-    R = 8.3145 # universal gas constant
-    
-    Eg = R*B*(Tg + 273)**2/(Tg - Tinf)**2
-    Bvar = B_err**2*(Eg/B)**2
-    Tgvar = Tg_err**2*(2*R*B*(Tg+273)/(Tg - Tinf)**3)**2
-    Tinfvar = Tinf_err**2*(2*R*B*(Tg+273**2)/(Tg - Tinf)**3)**2
+
+    R = 8.3145  # universal gas constant
+
+    Eg = R * B * (Tg + 273) ** 2 / (Tg - Tinf) ** 2
+    Bvar = B_err ** 2 * (Eg / B) ** 2
+    Tgvar = Tg_err ** 2 * (2 * R * B * (Tg + 273) / (Tg - Tinf) ** 3) ** 2
+    Tinfvar = Tinf_err ** 2 * (2 * R * B * (Tg + 273) ** 2 / (Tg - Tinf) ** 3) ** 2
     Eg_err = np.sqrt(Bvar + Tgvar + Tinfvar)
+
     return Eg, Eg_err
 
+
+
 def fitPowerLaw(df, **kwargs):
-    '''Fits modulus (or other data) and time values to power law model'''
-    
+    """
+    Fit modulus and time values to a power-law model.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame with columns 'time' and 'modulus'.
+
+    Returns
+    -------
+    None
+        Displays a plot of experimental data and fitted curve.
+    """
     df['lnmod'] = np.log(df['modulus'])
     df['lntime'] = np.log(df['time'])
     df = df.dropna()
-    
-    #plot modulus vs. t
-    fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
+
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
     ax.set_xlabel('Time (s)')
     ax.set_ylabel('Relaxation Modulus (Pa)')
-    
-    ax.loglog(df['time'], df['modulus'], 'o', color=palette[0], label = 'Expt.')
-    
-    def lnPowerLaw(logt, lnG0, m):
-        return lnG0 - m*logt
-    
-    # do the curve fit
-    popt, pcov = curve_fit(lnPowerLaw, df['lntime'], df['lnmod'], 
-                           bounds=((np.log(1e4),0),(np.log(1e12),1)),
-                            p0=[np.log(1e7), 0.5], maxfev=5000)#,
-                            #sigma=[x for x in df['lnmod']])
+    ax.loglog(df['time'], df['modulus'], 'o', color=palette[0], label='Expt.')
 
-    # extract the fit values for parameters
-    lnG0, m = popt;
+    def lnPowerLaw(logt, lnG0, m):
+        return lnG0 - m * logt
+
+    popt, pcov = curve_fit(
+        lnPowerLaw,
+        df['lntime'],
+        df['lnmod'],
+        bounds=((np.log(1e4), 0), (np.log(1e12), 1)),
+        p0=[np.log(1e7), 0.5],
+        maxfev=5000
+    )
+
+    lnG0, m = popt
     lnG0_err, m_err = [float(np.sqrt(p)) for p in np.diag(pcov)]
     G0_err = np.exp(lnG0 + lnG0_err) - np.exp(lnG0)
 
-    # now plot the fit values
     tfit = np.linspace(min(df['lntime']), max(df['lntime']), 1000)
     modfit = lnPowerLaw(tfit, lnG0, m)
-    ax.loglog([np.exp(t) for t in tfit], [np.exp(m) for m in modfit], '--', linewidth=2, color=palette[1],
-                label = f'$G_0$={np.exp(lnG0):.1e} $\pm$ {G0_err:.1e} Pa;\n m={m:.2f} $\pm$ {m_err:.2f}')
+    ax.loglog(
+        [np.exp(t) for t in tfit],
+        [np.exp(m) for m in modfit],
+        '--',
+        linewidth=2,
+        color=palette[1],
+        label=(f'$G_0$={np.exp(lnG0):.1e} ± {G0_err:.1e} Pa;\n'
+               f'm={m:.2f} ± {m_err:.2f}')
+    )
 
-    # add the legend
     ax.legend()
     return plt.show()
 
+
+
 def fitHybrid(df, B, Tinf, **kwargs):
-    '''Fits data to product VFT/Arrhenius form and plots data vs. T'''
-    
+    """
+    Fit data to a hybrid VFT/Arrhenius model and plot relaxation time vs. T.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame with columns 'temp' and 'tau'.
+    B : float
+        VFT constant.
+    Tinf : float
+        Ideal glass transition temperature.
+    **kwargs : dict, optional
+        Eaguess : float, default 1.9e5
+        tau0_arrguess : float, default 1e-12
+        tau0_vftguess : float, default 1e-12
+        title : str, default None
+
+    Returns
+    -------
+    None
+        Displays plot and prints relative errors.
+    """
     Eaguess = kwargs.get('Eaguess', 1.9e5)
     tau0_arrguess = kwargs.get('tau0_arrguess', 1e-12)
     tau0_vftguess = kwargs.get('tau0_vftguess', 1e-12)
     title = kwargs.get('title', None)
-    
-    palette = ['#0093F5', '#F08E2C', '#000000']
-    
-    #plot aT vs. T
-    fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
+
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
     ax.set_xlabel('T ($^{\\circ}$C)')
     ax.set_ylabel('Relaxation Time (s)')
-    ax.semilogy(df['temp'], df['tau'], 'o', color=palette[0], label = 'Expt.')
-    
-    # define the fitting function (Hybrid)
+    ax.semilogy(df['temp'], df['tau'], 'o', color=palette[0], label='Expt.')
+
     def addVFTArrhenius(T, tau0_vft, tau0_arr, Ea):
-        R = 8.3145 # universal gas constant
-        return tau0_vft*np.exp(B/(T - Tinf)) + tau0_arr*np.exp(Ea/(R*(T + 273)))
+        R = 8.3145
+        return (tau0_vft * np.exp(B / (T - Tinf)) +
+                tau0_arr * np.exp(Ea / (R * (T + 273))))
 
-    # do the curve fit
-    popt, pcov = curve_fit(addVFTArrhenius, df['temp'], df['tau'], 
-                           bounds=((1e-16, 1e-16, 1.0e5),(1e-9, 1e-9, 2.2e5)),
-                           p0=[tau0_vftguess, tau0_arrguess, Eaguess], maxfev=5000,
-                           sigma=[t for t in df['tau']], absolute_sigma=True)
+    popt, pcov = curve_fit(
+        addVFTArrhenius,
+        df['temp'],
+        df['tau'],
+        bounds=((1e-16, 1e-16, 1.0e5), (1e-9, 1e-9, 2.2e5)),
+        p0=[tau0_vftguess, tau0_arrguess, Eaguess],
+        maxfev=5000,
+        sigma=[t for t in df['tau']],
+        absolute_sigma=True
+    )
 
-    # extract the fit values for tau00 and Ea
     tau0_vft, tau0_arr, Ea = popt
-    tau0_vft_err, tau0_arr_err, Ea_err = [float(np.sqrt(p)) for p in np.diag(pcov)]
+    tau0_vft_err, tau0_arr_err, Ea_err = [float(np.sqrt(p)) 
+                                          for p in np.diag(pcov)]
 
-    # now plot the fit values
     Tfit = np.linspace(min(df['temp']), max(df['temp']), 100)
     taufit = addVFTArrhenius(Tfit, tau0_vft, tau0_arr, Ea)
-    ax.semilogy(Tfit, taufit, '--', linewidth=2, color=palette[1],
-                label = f'$E_a$={Ea/1000:.0f} kJ/mol;\n $\u03c4_0,Arr$={tau0_arr:0.2e} s; \n $\u03c4_0,VFT$={tau0_vft:0.2e} s')
+    ax.semilogy(
+        Tfit,
+        taufit,
+        '--',
+        linewidth=2,
+        color=palette[1],
+        label=(f'$E_a$={Ea / 1000:.0f} kJ/mol;\n'
+               f'$\\tau_0,Arr$={tau0_arr:0.2e} s;\n'
+               f'$\\tau_0,VFT$={tau0_vft:0.2e} s')
+    )
     ax.set_title(title)
-    # add the legend
     ax.legend()
-    return print(tau0_vft_err/tau0_vft, tau0_arr_err/tau0_arr, Ea_err/Ea)
+    return print(tau0_vft_err / tau0_vft, tau0_arr_err / tau0_arr, Ea_err / Ea)
 
-def fitMaxwell(df, **kwargs):
-    '''Fits time and modulus data from stress relaxation experiment
-    to exponential decay of single Maxwell element'''
-    
-    residual = kwargs.get('residual', None)
-    ylims = kwargs.get('ylims', [1e4, 1e7])
-    title = kwargs.get('title', None)
-    
-    #plot E vs. t
-    fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
-    ax.set_xlabel('Time (s)')
-    ax.set_ylabel(r'Relaxation Modulus $G(t)$ (Pa)')
-    
-    df.dropna()
-    
-    ax.loglog(df['time'], df['modulus'], '.', color=palette[0], label = 'Expt.')
-    
-    if residual:
-        #define maxwell response with residual modulus
-        def maxwell(t, G0, tau):
-            return residual + G0*np.exp(-t/tau)
-    
-    else:
-        #define maxwell element response
-        def maxwell(t, G0, tau):
-            return G0*np.exp(-t/tau)
-    
-    # do the curve fit
-    popt, pcov = curve_fit(maxwell, df['time'], df['modulus'],
-                           maxfev=5000,
-                           p0=[1e7, 10],
-                           bounds=([1e5,0.1],[1e8,1e5]))
 
-    # extract the fit value for tau
-    G0, tau = popt
-    G0_err, tau_err = np.sqrt(np.diag(pcov))
-
-    # now plot the fit values
-    tfit = np.logspace(np.log10(min(df['time'])), np.log10(max(df['time'])), 1000)
-    Gfit = maxwell(tfit, G0, tau)
-    ax.loglog(tfit, Gfit, '--', linewidth=2, color=palette[1],
-                label = f'$\u03c4={tau:.1f} \pm {tau_err:.1f}$ s')
-
-    # add the legend
-    ax.legend()
-    ax.set_title(title)
-    ax.set_ylim(ylims)
-    return tau, tau_err
 
 def fitKWW(df, **kwargs):
-    '''Fits time and modulus data from stress relaxation experiment
-    to exponential decay of stretched exponential form'''
-    
-    Emin = kwargs.get('Emin', 0.01)
+    """
+    Fit stress relaxation data to a stretched exponential (KWW) model.
+
+    This function fits time and modulus data from a stress relaxation
+    experiment to the Kohlrausch-Williams-Watts (KWW) stretched exponential
+    form and plots the experimental data with the fitted curve.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame with columns 'time' and 'modulus'.
+    **kwargs : dict, optional
+        norm : bool, default False
+            If True, use normalized modulus for plotting.
+        residual : float, default None
+            Residual modulus to include in the fit.
+        ylims : list, default [1e4, 2e7]
+            y-axis limits for the plot.
+        title : str, default ''
+            Plot title.
+        tts : bool, default False
+            If True, x-axis is aT*Time; otherwise, x-axis is Time.
+        markevery : int, default 1
+            Marker frequency for plotting.
+        savepath : str, default None
+            Path to save the plot. If None, the plot is not saved.
+
+    Returns
+    -------
+    tuple
+        avgtau : float
+            Ensemble average relaxation time (s).
+        avgtau_err : float
+            Uncertainty in avgtau.
+
+    Notes
+    -----
+    - The KWW equation used is:
+        G(t) = G0 * exp(-(t / tau)^beta)
+    - Ensemble average tau is computed as:
+        ⟨tau⟩ = (tau / beta) * Gamma(1 / beta)
+
+    Example
+    -------
+    >>> avgtau, avgtau_err = fitKWW(df, title="KWW Fit")
+    """
     norm = kwargs.get('norm', False)
     residual = kwargs.get('residual', None)
-    
     ylims = kwargs.get('ylims', [1e4, 2e7])
     title = kwargs.get('title', '')
     tts = kwargs.get('tts', False)
     markevery = kwargs.get('markevery', 1)
     savepath = kwargs.get('savepath', None)
-    
-    #plot E vs. t
-    fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
-    
-    if tts:
-        ax.set_xlabel('Time / $a_T$ (s)')
-        ax.set_ylabel('G(t) / $b_T$ (Pa)')
-    else:
-        ax.set_xlabel('Time (s)')
-        ax.set_ylabel('Relaxation Modulus G(t)')
+
+    # Plot E vs. t
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
+    ax.set_xlabel('Time / $a_T$ (s)' if tts else 'Time (s)')
+    ax.set_ylabel('G(t) / $b_T$ (Pa)' if tts else 'Relaxation Modulus G(t)')
 
     df['lnmod'] = np.log(df['modulus'])
     df = df.dropna()
-    
-    if norm:
-        ax.semilogx(df['time'], df['mod_norm'], '.', color=palette[0], label = 'Expt.')
-        
-    else:
-        ax.loglog(df['time'], df['modulus'], '.', markevery=markevery, 
-                  color=palette[0], label = 'Expt.')
-    
-    if residual:
-        def KWW(t, G0, tau, beta):
-            return residual + G0*np.exp(-(t/tau)**beta)
-    else:
-        #define KWW
-        def KWW(t, G0, tau, beta):
-            return G0*np.exp(-(t/tau)**beta)
-    
-    # do the curve fit
-    popt, pcov = curve_fit(KWW, df['time'], df['modulus'],
-                           p0=[1e7, 100, 0.95],
-                           bounds=((1e5, 1e-1, 0.5),(1e8, 1e5, 1)),
-                           maxfev=1000)
 
-    # extract the fit value for tau and beta
+    if norm:
+        ax.semilogx(df['time'], df['mod_norm'], '.', color=palette[0],
+                    label='Expt.')
+    else:
+        ax.loglog(df['time'], df['modulus'], '.', markevery=markevery,
+                  color=palette[0], label='Expt.')
+
+    # Define KWW model
+    def KWW(t, G0, tau, beta):
+        return residual + G0 * np.exp(-(t / tau) ** beta) if residual \
+            else G0 * np.exp(-(t / tau) ** beta)
+
+    # Curve fitting
+    popt, pcov = curve_fit(
+        KWW,
+        df['time'],
+        df['modulus'],
+        p0=[1e7, 100, 0.95],
+        bounds=((1e5, 1e-1, 0.5), (1e8, 1e5, 1)),
+        maxfev=1000
+    )
+
     G0, tau, beta = popt
     G0_err, tau_err, beta_err = np.sqrt(np.diag(pcov))
-    
-    #calculate ensemble average tau and uncertainty
-    avgtau = (tau/beta)*gammaf(1/beta)
-    tauvar = tau_err**2 * ((1/beta)*gammaf(1/beta))**2
-    betavar = beta_err**2 * (tau*gammaf(1/beta)*(beta + digamma(1/beta))/beta**3)**2
+
+    # Ensemble average tau and uncertainty
+    avgtau = (tau / beta) * gammaf(1 / beta)
+    tauvar = tau_err ** 2 * ((1 / beta) * gammaf(1 / beta)) ** 2
+    betavar = (beta_err ** 2 *
+               (tau * gammaf(1 / beta) *
+                (beta + digamma(1 / beta)) / beta ** 3) ** 2)
     avgtau_err = np.sqrt(tauvar + betavar)
 
-    # now plot the fit values
-    tfit = np.logspace(np.log10(min(df['time'])), np.log10(max(df['time'])), 100)
+    # Plot fit
+    tfit = np.logspace(np.log10(min(df['time'])),
+                       np.log10(max(df['time'])), 100)
     modfit = KWW(tfit, G0, tau, beta)
-    
-    # residuals = df['modulus'] - modfit
-    # chi_sq = np.sum(residuals**2/modfit)
-    # dof = len(modfit) - len(popt)
-    # chi_sq_dof = chi_sq/dof
-    
-    ax.loglog(tfit, modfit, '--', linewidth=2, color=palette[1],
-                label = f'$\u03c4*={tau:.1f} \pm {tau_err:0.1f}$ s \n $\u03b2={beta:0.2f} \pm {beta_err:0.2f}$ \n $\u27e8\u03c4\u27e9={avgtau:.1f} \pm {avgtau_err:0.1f}$ s')
+    ax.loglog(
+        tfit,
+        modfit,
+        '--',
+        linewidth=2,
+        color=palette[1],
+        label=(f'$\\tau^*={tau:.1f} \\pm {tau_err:.1f}$ s\n'
+               f'$\\beta={beta:.2f} \\pm {beta_err:.2f}$\n'
+               f'$\\langle\\tau\\rangle={avgtau:.1f} \\pm {avgtau_err:.1f}$ s')
+    )
 
-    # add the legend
     ax.legend()
     ax.set_title(title)
     ax.set_ylim(ylims)
     plt.show()
-    
+
     if savepath:
         plt.savefig(savepath)
-    
+
     return avgtau, avgtau_err
+
 
 def MLf(z, a):
     '''
@@ -675,328 +964,419 @@ def ML2f(z, a, b, **kwargs):
         
         return np.vectorize(_QNfunc)(z, a, b, N)
 
+
 def fitFracMaxwell(df, **kwargs):
-    '''
-    Reads a dataframe of stress relaxation data and fits 
-    to a fractional Maxwell model according to the formulation laid out
-    in Jaishankar & McKinley 2013
+    """
+    Fit stress relaxation data to a fractional Maxwell model.
+
+    This function reads a DataFrame of stress relaxation data and fits it to
+    a fractional Maxwell model according to Jaishankar & McKinley (2013).
+    It supports variants for gels and liquids by fixing one of the fractional
+    exponents.
 
     Parameters
     ----------
-    df : pd.DataFrame
-        This should be a dataframe with a column of time values labelled 'time'
-        and a column of modulus values labelled 'modulus'
+    df : pandas.DataFrame
+        DataFrame with columns:
+        - 'time': Time values (s)
+        - 'modulus': Relaxation modulus values (Pa)
     model : str, default None
-        Flag used to fix exponents if expecting spring or dashpot for one of 
-        the springpots.  Use 'gel' to fit to fractional Maxwell gel, which 
-        uses a perfect spring; or use 'liquid' to fit to fractional Maxwell 
-        liquid, which uses a perfect dashpot.
+        Use 'gel' for fractional Maxwell gel (perfect spring) or 'liquid'
+        for fractional Maxwell liquid (perfect dashpot).
     aguess : float, default 0.9
-        Initial guess for the higher power law exponent.
+        Initial guess for the higher power-law exponent.
     bguess : float, default 0.05
-        Initial guess for the lower power law exponent.
+        Initial guess for the lower power-law exponent.
     Gguess : float, default 1e7
         Initial guess for the first quasi-property.
     Vguess : float, default 1e8
         Initial guess for the second quasi-property.
     residual : float, default None
-        Residual modulus to fit with model if expected or known.
-    params_out : boolean, default False
-        Option to output all the fitting parameters
+        Residual modulus to include in the fit if expected or known.
+    params_out : bool, default False
+        If True, returns all fitted parameters and their uncertainties.
     ylims : list, default [1e4, 1e7]
-        y-axis limits
+        y-axis limits for the plot.
     title : str, default None
-        Optional title for the output plot.
-    tts : boolean, default False
-        When False, x-axis is Time, but when True, x-axis is aT*Time
+        Optional title for the plot.
+    tts : bool, default False
+        If True, x-axis is aT*Time; otherwise, x-axis is Time.
     savepath : str, default None
-        Path to location to save plot.  If None, does not save.
-    
+        Path to save the plot. If None, the plot is not saved.
 
     Returns
     -------
-    A plot showing the experimental data and the fit.
-    tau : float
-        The fractional generalization of relaxation time in seconds.
+    tuple
+        tau : float
+            Fractional generalization of relaxation time (s).
+        tauerr : float
+            Uncertainty in tau.
+        If params_out=True, also returns:
+            G, Gerr, a, aerr, V, Verr, b, berr
 
-    '''
-    
+    Notes
+    -----
+    - Uses Mittag-Leffler function for fractional relaxation.
+    - Requires that 0 <= b < a <= 1.
+
+    Example
+    -------
+    >>> tau, tauerr = fitFracMaxwell(df, model='gel', title='FM Fit')
+    """
     model = kwargs.get('model', None)
-    
     aguess = kwargs.get('aguess', 0.9)
     bguess = kwargs.get('bguess', 0.05)
     Gguess = kwargs.get('Gguess', 1e7)
     Vguess = kwargs.get('Vguess', 1e8)
-    
     residual = kwargs.get('residual', None)
-    
     params_out = kwargs.get('params_out', False)
-    
     ylims = kwargs.get('ylims', [1e4, 1e7])
-    title = kwargs.get('title', None) # change title of plot
+    title = kwargs.get('title', None)
     tts = kwargs.get('tts', False)
     markevery = kwargs.get('markevery', 1)
     label = kwargs.get('label', 'Expt.')
-    
     savepath = kwargs.get('savepath', None)
-    
-    # Need that 0 <= b < a <= 1
+
+    # Ensure 0 <= b < a <= 1
     if bguess > aguess:
         bguess, aguess = aguess, bguess
-        
     if aguess == bguess:
         print('We need a > b.')
-    
     if aguess < 0 or bguess < 0 or aguess == 0:
         print('The exponents must be between 0 and 1.')
-    
-    if residual:
-        def fracMaxwell(time, G, a, V, b):
-            prefactor = [G*t**(-b) for t in time]
-            MLtime = [(-G/V)*t**(a-b) for t in time] # transformation of time for
-                                                        # Mittag-Leffler input
-            MLa = a - b # first parameter for the Mittag-Leffler function
-            MLb = 1 - b # second parameter for the Mittag-Leffler function
-            
-            mleval = [mittag_leffler(t, MLa, MLb) for t in MLtime]
-            return [residual + np.real(p*m) for p,m in zip(prefactor,mleval)]
-    else:
-        def fracMaxwell(time, G, a, V, b):
-            prefactor = [G*t**(-b) for t in time]
-            MLtime = [(-G/V)*t**(a-b) for t in time] # transformation of time for
-                                                        # Mittag-Leffler input
-            MLa = a - b # first parameter for the Mittag-Leffler function
-            MLb = 1 - b # second parameter for the Mittag-Leffler function
-            
-            mleval = [mittag_leffler(t, MLa, MLb) for t in MLtime]
-            return [np.real(p*m) for p,m in zip(prefactor,mleval)]
-    
-    # clean up dataframe
+
+    # Define fractional Maxwell model
+    def fracMaxwell(time, G, a, V, b):
+        prefactor = [G * t ** (-b) for t in time]
+        MLtime = [(-G / V) * t ** (a - b) for t in time]
+        MLa = a - b
+        MLb = 1 - b
+        mleval = [mittag_leffler(t, MLa, MLb) for t in MLtime]
+        if residual:
+            return [residual + np.real(p * m) for p, m in zip(prefactor, mleval)]
+        return [np.real(p * m) for p, m in zip(prefactor, mleval)]
+
+    # Clean up DataFrame
     df.reset_index()
     df = df.dropna()
-    
-    #plot G vs. t
-    fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
-    
-    if tts:
-        ax.set_xlabel('Time / $a_T$ (s)')
-        ax.set_ylabel('G(t) / $b_T$ (Pa)')
-    else:
-        ax.set_xlabel('Time (s)')
-        ax.set_ylabel('Relaxation Modulus G(t)')
-        
-    ax.loglog(df['time'], df['modulus'], '.', color=palette[0], 
-              markevery=markevery, label = label)
-    
+
+    # Plot experimental data
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
+    ax.set_xlabel('Time / $a_T$ (s)' if tts else 'Time (s)')
+    ax.set_ylabel('G(t) / $b_T$ (Pa)' if tts else 'Relaxation Modulus G(t)')
+    ax.loglog(df['time'], df['modulus'], '.', color=palette[0],
+              markevery=markevery, label=label)
+
+    # Fit based on model type
     if model == 'gel':
-        # use an elastic spring
-        b = 0 
+        b = 0
         berr = 0
-        
-        # do the fit
-        popt, pcov = curve_fit(lambda time, G, a, V : fracMaxwell(time, G, a, V, b),
-                               df['time'], df['modulus'], p0=[Gguess, aguess,
-                                                              Vguess],
-                               bounds=([1e4, 0.3, 1e4],[1e9, 1, 1e11]))
-        
-        # extract parameters and uncertainties
+        popt, pcov = curve_fit(
+            lambda time, G, a, V: fracMaxwell(time, G, a, V, b),
+            df['time'], df['modulus'],
+            p0=[Gguess, aguess, Vguess],
+            bounds=([1e4, 0.3, 1e4], [1e9, 1, 1e11])
+        )
         G, a, V = popt
         Gerr, aerr, Verr = np.sqrt(np.diag(pcov))
-    
+
     elif model == 'liquid':
-        # use a viscous dashpot
         a = 1
         aerr = 0
-        
-        # do the fit
-        popt, pcov = curve_fit(lambda time, G, V, b : fracMaxwell(time, G, a, V, b),
-                               df['time'], df['modulus'], p0=[Gguess, Vguess,
-                                                              bguess],
-                               bounds=([1e4, 1e4, 0],[1e9, 1e11, 0.5]))
-        
-        # extract parameters and uncertainties
-        G, a, V = popt
-        Gerr, aerr, Verr = np.sqrt(np.diag(pcov))
-    
+        popt, pcov = curve_fit(
+            lambda time, G, V, b: fracMaxwell(time, G, a, V, b),
+            df['time'], df['modulus'],
+            p0=[Gguess, Vguess, bguess],
+            bounds=([1e4, 1e4, 0], [1e9, 1e11, 0.5])
+        )
+        G, V, b = popt
+        Gerr, Verr, berr = np.sqrt(np.diag(pcov))
+
     else:
-    
-        # do the fit
-        popt, pcov = curve_fit(fracMaxwell, df['time'], df['modulus'],
-                               p0=[Gguess, aguess, Vguess, bguess],
-                               bounds=([1e4, 0.3, 1e4, 0],[1e9, 1, 1e11, 0.2]))
-        
-        # extract parameters and uncertainties
+        popt, pcov = curve_fit(
+            fracMaxwell,
+            df['time'], df['modulus'],
+            p0=[Gguess, aguess, Vguess, bguess],
+            bounds=([1e4, 0.3, 1e4, 0], [1e9, 1, 1e11, 0.2])
+        )
         G, a, V, b = popt
         Gerr, aerr, Verr, berr = np.sqrt(np.diag(pcov))
-    
-    tau = (V/G)**(1/(a-b)) # fractional equivalent of characteristic relaxation time
-    
-    #calculate error propagation for tau
-    dtaudV = tau/(V*(a-b))
-    dtaudG = tau/(G*(a-b))
-    dtauda = tau*np.log(V/G)/(a-b)**2
-    dtaudb = tau*np.log(V/G)/(a-b)**2
-    
-    tauerr = np.sqrt((Gerr*dtaudG)**2 + (Verr*dtaudV)**2 + (aerr*dtauda)**2 + (berr*dtaudb)**2)
-    
+
+    # Compute tau and its uncertainty
+    tau = (V / G) ** (1 / (a - b))
+    dtaudV = tau / (V * (a - b))
+    dtaudG = tau / (G * (a - b))
+    dtauda = tau * np.log(V / G) / (a - b) ** 2
+    dtaudb = tau * np.log(V / G) / (a - b) ** 2
+    tauerr = np.sqrt((Gerr * dtaudG) ** 2 + (Verr * dtaudV) ** 2 +
+                     (aerr * dtauda) ** 2 + (berr * dtaudb) ** 2)
+
+    # Prepare fit label
     if model == 'gel':
-        fitlabel = f'$\u03c4={tau:.1f} \pm {tauerr:.1f}$ s \n $\u03b1={a:0.2f} \pm {aerr:0.2f}$ \n $\u03b2=0$'
+        fitlabel = (f'τ={tau:.1f} ± {tauerr:.1f} s\n'
+                    f'α={a:.2f} ± {aerr:.2f}\nβ=0')
     elif model == 'liquid':
-        fitlabel = f'$\u03c4={tau:.1f} \pm {tauerr:.1f}$ s \n $\u03b1=0$ \n $\u03b2={b:0.2f} \pm {berr:0.2f}$'
+        fitlabel = (f'τ={tau:.1f} ± {tauerr:.1f} s\nα=0\n'
+                    f'β={b:.2f} ± {berr:.2f}')
     else:
-        fitlabel = f'$\u03c4={tau:.1f} \pm {tauerr:.1f}$ s \n $\u03b1={a:0.2f} \pm {aerr:0.2f}$ \n $\u03b2={b:0.2f} \pm {berr:0.2f}$'
-    
-    tfit = np.logspace(np.log10(min(df['time'])), np.log10(max(df['time'])), 100)
+        fitlabel = (f'τ={tau:.1f} ± {tauerr:.1f} s\n'
+                    f'α={a:.2f} ± {aerr:.2f}\n'
+                    f'β={b:.2f} ± {berr:.2f}')
+
+    # Plot fit
+    tfit = np.logspace(np.log10(min(df['time'])),
+                       np.log10(max(df['time'])), 100)
     modfit = fracMaxwell(tfit, G, a, V, b)
     ax.loglog(tfit, modfit, '--', linewidth=2, color=palette[1],
-              markevery=10,
-              label = fitlabel)
+              markevery=10, label=fitlabel)
 
-    # add the legend and such
+    # Finalize plot
     ax.legend()
     ax.set_title(title)
     ax.set_ylim(ylims)
-    #ax.set_xlim([min(df['time']), max(df['time'])])
     plt.show()
-    
+
     if savepath:
         plt.savefig(savepath)
-    
+
     if params_out:
         return tau, tauerr, G, Gerr, a, aerr, V, Verr, b, berr
-    else:
-        return tau, tauerr
+    return tau, tauerr
+
+
 
 def findTg(temp, data):
-    '''Returns the Tg for a dataset using the max of tand or loss modulus'''
-    
-    #find highest value of data
+    """
+    Return the glass transition temperature (Tg) using the maximum of
+    tan(delta) or loss modulus.
+
+    Parameters
+    ----------
+    temp : array-like
+        Temperature values.
+    data : array-like
+        Data values (e.g., tan(delta) or loss modulus).
+
+    Returns
+    -------
+    None
+        Prints the estimated Tg.
+    """
     maxi = np.argmax(data)
-    
-    #set fit range around data max
-    fitrange_temp = temp[maxi-5:maxi+5]
-    fitrange_data = data[maxi-5:maxi+5]
-    
-    #harmonic fit to range
-    pfit = np.polyfit(fitrange_temp,fitrange_data,2)
-    
-    #find max in fitted data and associated temperature
-    tempfit = np.linspace(temp[maxi-5],temp[maxi+5],100)
-    datafit = [pfit[0]*x**2 + pfit[1]*x + pfit[2] for x in tempfit]
+
+    fitrange_temp = temp[maxi - 5:maxi + 5]
+    fitrange_data = data[maxi - 5:maxi + 5]
+
+    pfit = np.polyfit(fitrange_temp, fitrange_data, 2)
+
+    tempfit = np.linspace(temp[maxi - 5], temp[maxi + 5], 100)
+    datafit = [pfit[0] * x ** 2 + pfit[1] * x + pfit[2] for x in tempfit]
     fitmaxi = np.argmax(datafit)
-    
-    Tg = round(tempfit[fitmaxi],1)
+
+    Tg = round(tempfit[fitmaxi], 1)
     return print(Tg)
 
+
+
 def findTandMax(df):
-    '''Returns the temperature of maximum in tand for frequency sweep data'''
-    
-    invT = [];
+    """
+    Return temperatures of maximum tan(delta) for frequency sweep data.
+
+    Parameters
+    ----------
+    df : dict
+        Dictionary of DataFrames for different frequencies.
+
+    Returns
+    -------
+    list
+        List of inverse temperatures (1/T) for each frequency.
+    """
+    invT = []
     for i in np.arange(0, len(df.keys()), 1):
         try:
-            #find max in tand
             maxi = np.argmax(df[list(df.keys())[i]]['Tan(delta)'])
-            #set fit range
-            fitrange_temp = df[list(df.keys())[i]]['Temperature'][maxi-2:maxi+2]
-            fitrange_tand = df[list(df.keys())[i]]['Tan(delta)'][maxi-2:maxi+2]
-            #harmonic fit to range
-            pfit = np.polyfit(fitrange_temp,fitrange_tand,2)
-            
-            #find max in fitted data and associated temperature
-            tempfit = np.linspace(df[list(df.keys())[i]]['Temperature'][maxi-2],
-                                  df[list(df.keys())[i]]['Temperature'][maxi+2],50)
-            tandfit = [pfit[0]*x**2 + pfit[1]*x + pfit[2] for x in tempfit]
+
+            fitrange_temp = df[list(df.keys())[i]]['Temperature'][maxi - 2:maxi + 2]
+            fitrange_tand = df[list(df.keys())[i]]['Tan(delta)'][maxi - 2:maxi + 2]
+
+            pfit = np.polyfit(fitrange_temp, fitrange_tand, 2)
+
+            tempfit = np.linspace(
+                df[list(df.keys())[i]]['Temperature'][maxi - 2],
+                df[list(df.keys())[i]]['Temperature'][maxi + 2],
+                50
+            )
+            tandfit = [pfit[0] * x ** 2 + pfit[1] * x + pfit[2] for x in tempfit]
             fitmaxi = np.argmax(tandfit)
-            t = tempfit[fitmaxi] +273
-            
-            invT.append(1/t)
-        except KeyError:
+            t = tempfit[fitmaxi] + 273
+
+            invT.append(1 / t)
+        except (KeyError, TypeError):
             invT.append(np.nan)
-        except TypeError:
-            invT.append(np.nan)
-        
+
     return invT
 
+
+
 def freqEa(path, **kwargs):
-    '''Fits temperature and frequency data to measure the Ea of tand peak'''
-    
-    freq_num = kwargs.get('freq_num',31);
-    title = kwargs.get('title',' ')
-    
-    #read in tTS by frequency
-    A = readtTS(path, keys='freq', freq_num=freq_num);
-    #find inverse Temperatures of each peak in tand by frequency
-    B = findTandMax(A);
-    #fitting log10(frequencies)
-    freqs = np.linspace(-2,1,freq_num).tolist()
-    
-    for j in reversed(np.arange(0,len(B))):
+    """
+    Fit temperature and frequency data to measure activation energy (Ea)
+    of tan(delta) peak.
+
+    Parameters
+    ----------
+    path : str
+        Path to DMA data file.
+    **kwargs : dict, optional
+        freq_num : int, default 31
+            Number of frequencies.
+        title : str, default ' '
+            Plot title.
+
+    Returns
+    -------
+    None
+        Displays plot and prints Ea.
+    """
+    freq_num = kwargs.get('freq_num', 31)
+    title = kwargs.get('title', ' ')
+
+    A = readDMA(path, keys='freq', freq_num=freq_num)
+    B = findTandMax(A)
+
+    freqs = np.linspace(-2, 1, freq_num).tolist()
+
+    for j in reversed(np.arange(0, len(B))):
         if float('-inf') < B[j] < float('inf'):
             continue
         else:
-            B.pop(j);
-            freqs.pop(j);
-    
-    
-    #linear fit between log10(frequency) and inverse temperature
-    linfit = np.polyfit(B,freqs,1)
-    fitx = [(y - linfit[1])/linfit[0] for y in freqs]
-    slope = linfit[0];
-    Ea = round(-1*slope*8.314e-3*np.log(10),0)
-    
-    fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
+            B.pop(j)
+            freqs.pop(j)
 
-    p1, = ax.plot([1000*b for b in B], freqs, 'o', color=palette[0], label='Expt. Data')
-    p2, = ax.plot([1000*x for x in fitx], freqs, '--', color=palette[1], label=f'$E_a$={Ea:.0f}kJ/mol')
-    ax.set_ylabel('$log_{10}$ f'); ax.set_xlabel('Inverse Temperature (1000$K^{-1}$)')
-    ax.legend(); ax.set_title(title)
+    linfit = np.polyfit(B, freqs, 1)
+    fitx = [(y - linfit[1]) / linfit[0] for y in freqs]
+    slope = linfit[0]
+    Ea = round(-1 * slope * 8.314e-3 * np.log(10), 0)
+
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
+    ax.plot([1000 * b for b in B], freqs, 'o', color=palette[0], 
+            label='Expt. Data')
+    ax.plot([1000 * x for x in fitx], freqs, '--', color=palette[1],
+            label=f'$E_a$={Ea:.0f} kJ/mol')
+    ax.set_ylabel('$log_{10}$ f')
+    ax.set_xlabel('Inverse Temperature (1000$K^{-1}$)')
+    ax.legend()
+    ax.set_title(title)
 
 
 def findEpr(temp, stor):
-    '''Returns the rubbery storage modulus minimum and temperature'''
+    """
+    Return the rubbery storage modulus minimum and corresponding temperature.
+
+    Parameters
+    ----------
+    temp : array-like
+        Temperature values.
+    stor : array-like
+        Storage modulus values.
+
+    Returns
+    -------
+    tuple
+        Epr : float
+            Minimum storage modulus.
+        T : float
+            Temperature at minimum storage modulus.
+    """
     mini = np.argmin(stor)
     T = temp[mini]
     Epr = np.min(stor)
     return Epr, T
 
-def compStor(path,f1,f2,f3,f4):
-    viridis = ['#440154', '#39568C', '#1F968B', '#73D055', '#FDE725', '#000000']
-    palette = ['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25']
-    A = readDMA(path, f1); B = readDMA(path, f2); C = readDMA(path, f3);
-    D = readDMA(path, f4); #E = readDMA(path, f5)
-    temp1 = A[0]; temp2 = B[0]; temp3 = C[0]; temp4 = D[0]; #temp5 = E[0];
-    stor1 = A[1]; stor2 = B[1]; stor3 = C[1]; stor4 = D[1]; #stor5 = E[1];
-    fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
-    p1, = ax.semilogy(temp1, stor1, '.-', markersize=10, linewidth=3, color=palette[0], label='DGEBA/MDA')
-    p2, = ax.semilogy(temp2, stor2, '.-', markersize=10, linewidth=3, color=palette[1], label='DGEBA/DTDA')
-    p3, = ax.semilogy(temp3, stor3, '.-', markersize=10, linewidth=3, color=palette[3], label='BGPDS/MDA')
-    p4, = ax.semilogy(temp4, stor4, '.-', markersize=10, linewidth=3, color=palette[4], label='BGPDS/DTDA')
-    #p5, = ax.semilogy(temp5, stor5, '.-', markersize=10, linewidth=3, color=viridis[4], label='100%')
-    
+
+
+def compStor(path, f1, f2, f3, f4):
+    """
+    Compare storage modulus for multiple datasets and plot results.
+
+    Parameters
+    ----------
+    path : str
+        Base path to data files.
+    f1, f2, f3, f4 : str
+        Filenames for datasets.
+
+    Returns
+    -------
+    None
+        Displays a comparison plot.
+    """
+    A = readDMA(path, f1)
+    B = readDMA(path, f2)
+    C = readDMA(path, f3)
+    D = readDMA(path, f4)
+
+    temp1, stor1 = A[0], A[1]
+    temp2, stor2 = B[0], B[1]
+    temp3, stor3 = C[0], C[1]
+    temp4, stor4 = D[0], D[1]
+
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
+    p1, = ax.semilogy(temp1, stor1, '.-', ms=10, lw=3, color=palette[0],
+                      label='DGEBA/MDA')
+    p2, = ax.semilogy(temp2, stor2, '.-', ms=10, lw=3, color=palette[1],
+                      label='DGEBA/DTDA')
+    p3, = ax.semilogy(temp3, stor3, '.-', ms=10, lw=3, color=palette[3],
+                      label='BGPDS/MDA')
+    p4, = ax.semilogy(temp4, stor4, '.-', ms=10, lw=3, color=palette[4],
+                      label='BGPDS/DTDA')
+
     ax.set_ylim(1e6, 1e10)
     ax.set_xlim(-125, 225)
     ax.set_xlabel('Temperature ($^oC$)')
-    ax.set_ylabel('Storage Modulus, E\' (Pa)')
+    ax.set_ylabel("Storage Modulus, E' (Pa)")
     ax.set_title('FDS Space Comparison')
-    ax.legend(handles=[p1,p2,p3,p4])#,p5])
+    ax.legend(handles=[p1, p2, p3, p4])
     return plt.show()
 
+
 def compLoss(path_base, *f, **kwargs):
-    
-    temp_min = kwargs.get('temp_min', -125); temp_max = kwargs.get('temp_max', 150);
-    mod_min = kwargs.get('mod_min', 1e7); mod_max = kwargs.get('mod_max', 5e8);
-    legendsize = kwargs.get('legendsize', 10);
-    
-    viridis = ['#440154', '#39568C', '#1F968B', '#73D055', '#FDE725', '#000000']
-    palette = ['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25', '#75CA85', '#C892D6']
-    fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
+    """
+    Compare loss modulus for multiple datasets and plot results.
 
-    for i in np.arange(0,len(f)):
-        A = readDMA(path_base.joinpath(f[i]));
-        temp = A[0]; loss = A[2];
-        ax.semilogy(temp, loss, '-', ms=10, lw=3, color=palette[i], label=str(f[i]).rstrip('.txt'))
+    Parameters
+    ----------
+    path_base : Path
+        Base path to data files.
+    *f : str
+        Filenames for datasets.
+    **kwargs : dict, optional
+        temp_min : float, default -125
+        temp_max : float, default 150
+        mod_min : float, default 1e7
+        mod_max : float, default 5e8
+        legendsize : int, default 10
 
-    
+    Returns
+    -------
+    None
+        Displays a comparison plot.
+    """
+    temp_min = kwargs.get('temp_min', -125)
+    temp_max = kwargs.get('temp_max', 150)
+    mod_min = kwargs.get('mod_min', 1e7)
+    mod_max = kwargs.get('mod_max', 5e8)
+    legendsize = kwargs.get('legendsize', 10)
+
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
+
+    for i in np.arange(0, len(f)):
+        A = readDMA(path_base.joinpath(f[i]))
+        temp, loss = A[0], A[2]
+        ax.semilogy(temp, loss, '-', ms=10, lw=3, color=palette[i],
+                    label=str(f[i]).rstrip('.txt'))
+
     ax.set_ylim(mod_min, mod_max)
     ax.set_xlim(temp_min, temp_max)
     ax.set_xlabel('Temperature ($^oC$)')
@@ -1005,27 +1385,31 @@ def compLoss(path_base, *f, **kwargs):
     ax.legend(prop={'size': legendsize})
     return plt.show()
 
-def compTand(path,*f):
-    viridis = ['#440154', '#39568C', '#1F968B', '#73D055', '#FDE725', '#000000']
-    palette = ['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25', '#75CA85', '#C892D6']
-    fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
-    
-    for i in np.arange(0,len(f)):
-        A = readDMA(path,f[i]);
-        temp = A[0]; tand = A[3];
-        ax.semilogy(temp, tand, '.-', ms=10, lw=3, color=palette[i], label=str(f[i]).rstrip('-1.txt'))
-        
-    # A = readDMA(path, f1); B = readDMA(path, f2); C = readDMA(path, f3);
-    # D = readDMA(path, f4); #E = readDMA(path, f5)
-    # temp1 = A[0]; temp2 = B[0]; temp3 = C[0]; temp4 = D[0];
-    # tand1 = A[3]; tand2 = B[3]; tand3 = C[3]; tand4 = D[3]; #tand5 = E[3];
-    
-    # p1, = ax.semilogy(temp1, tand1, '.-', markersize=10, linewidth=3, color=palette[0], label='DGEBA/MDA')
-    # p2, = ax.semilogy(temp2, tand2, '.-', markersize=10, linewidth=3, color=palette[1], label='DGEBA/DTDA')
-    # p3, = ax.semilogy(temp3, tand3, '.-', markersize=10, linewidth=3, color=palette[3], label='BGPDS/MDA')
-    # p4, = ax.semilogy(temp4, tand4, '.-', markersize=10, linewidth=3, color=palette[4], label='BGPDS/DTDA')
-    # #p5, = ax.semilogy(temp, tand5, '.-', markersize=10, linewidth=3, color=viridis[4], label='100%')
-    
+
+def compTand(path, *f):
+    """
+    Compare tan(delta) for multiple datasets and plot results.
+
+    Parameters
+    ----------
+    path : str
+        Base path to data files.
+    *f : str
+        Filenames for datasets.
+
+    Returns
+    -------
+    None
+        Displays a comparison plot.
+    """
+    fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
+
+    for i in np.arange(0, len(f)):
+        A = readDMA(path, f[i])
+        temp, tand = A[0], A[3]
+        ax.semilogy(temp, tand, '.-', ms=10, lw=3, color=palette[i],
+                    label=str(f[i]).rstrip('-1.txt'))
+
     ax.set_ylim(0.01, 2)
     ax.set_xlim(-125, 225)
     ax.set_xlabel('Temperature ($^oC$)')
@@ -1034,140 +1418,171 @@ def compTand(path,*f):
     ax.legend()
     return plt.show()
 
+
+
 def fitTwoGaussian(path, **kwargs):
-    '''Fits sub-Tg tan delta or loss modulus data to two Gaussian peaks'''
-    
-    betaprime_ctr = kwargs.get('betaprime_ctr', 25);
-    var = kwargs.get('var', 'tand');
-    
+    """
+    Fit sub-Tg tan delta or loss modulus data to two Gaussian peaks.
+
+    Parameters
+    ----------
+    path : str
+        Path to DMA data file.
+    **kwargs : dict, optional
+        betaprime_ctr : float, default 25
+            Center for beta-prime peak.
+        var : str, default 'tand'
+            Variable to fit ('tand' or 'loss').
+
+    Returns
+    -------
+    popt : ndarray
+        Optimal parameters for the two Gaussian peaks.
+    """
+    betaprime_ctr = kwargs.get('betaprime_ctr', 25)
+    var = kwargs.get('var', 'tand')
+
     if var == 'tand':
-        #read in file temperature and tand of interest
         df = readDMA(path)
         i_max = np.argmin(df['tand'][75:108]) + 75
-        
         df = df.iloc[0:i_max]
-        df['phi'] = np.rad2deg(np.arctan(df['tand'])) #convert tand to phase angle in degrees
+        df['phi'] = np.rad2deg(np.arctan(df['tand']))
 
-        #linear baseline between first and last points
-        baseline = [(df['tand'].iloc[0] + ((df['tand'].iloc[-1] - df['tand'].iloc[0])/(df['temp'].iloc[-1] - df['temp'].iloc[0]))*(i - df['temp'].iloc[0])) for i in df['temp']]
-        tand_base = np.subtract(np.array(df['tand']),np.array(baseline))
+        baseline = [
+            (df['tand'].iloc[0] +
+             ((df['tand'].iloc[-1] - df['tand'].iloc[0]) /
+              (df['temp'].iloc[-1] - df['temp'].iloc[0])) *
+             (i - df['temp'].iloc[0]))
+            for i in df['temp']
+        ]
+        tand_base = np.subtract(np.array(df['tand']), np.array(baseline))
 
         def twoGaussian(x, *params):
-            y = np.zeros_like(x);
-            ctr1 = params[0]; ctr2 = params[3];
-            amp1 = params[1]; amp2 = params[4];
-            wid1 = params[2]; wid2 = params[5];
-            y = y + amp1*np.exp(-((x - ctr1)/wid1)**2) + amp2*np.exp(-((x - ctr2)/wid2)**2)
-            return y
+            ctr1, amp1, wid1, ctr2, amp2, wid2 = params
+            return (amp1 * np.exp(-((x - ctr1) / wid1) ** 2) +
+                    amp2 * np.exp(-((x - ctr2) / wid2) ** 2))
 
-        #guesses for Temp, amplitude, and width for beta and SS peaks
-        guess = [-60, 5e-2, 10, betaprime_ctr, 5e-2, 10]; 
+        guess = [-60, 5e-2, 10, betaprime_ctr, 5e-2, 10]
+        popt, _ = curve_fit(twoGaussian, df['temp'], tand_base, p0=guess)
+        return popt
 
-        #fit function to data and calculate each individual peak
-        popt, pcov = curve_fit(twoGaussian, df['temp'], tand_base, p0=guess)
-        fit = twoGaussian(df['temp'], *popt)
-        peak1 = [popt[1]*np.exp(-((x - popt[0])/popt[2])**2) for x in df['temp']]
-        peak2 = [popt[4]*np.exp(-((x - popt[3])/popt[5])**2) for x in df['temp']]
-
-        # palette = ['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25']
-        # fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
-
-        # p1, = ax.plot(temp, tand_base, '.-', color=palette[2], label='Expt. Data')
-        # p2, = ax.plot(temp, fit, '--', color=palette[0], label='Dual Gaussian Fit')
-        # p3, = ax.plot(temp, peak1, '--', color=palette[1], label='Beta Peak Fit')
-        # p4, = ax.plot(temp, peak2, '--', color=palette[4], label='Disulfide Peak Fit')
-        # ax.set_xlabel('Temperature (K)'); ax.set_ylabel('Baselined tan$\delta$');
-        # ax.legend(prop={'size': 9})
-        
-        return popt#,plt.show()
-    
     elif var == 'loss':
-        #read in file temperature and loss modulus of interest
         A = readDMA(path)
         i_max = np.argmin(A[3][75:108]) + 75
-        temp = [T for T in A[0]][0:i_max]; #convert temperature to K
-        tand = np.array(A[3][0:i_max]);
-        loss = np.array(A[2][0:i_max]);
-        phi = [math.degrees(math.atan(d)) for d in tand] #convert tand to phase angle in degrees
+        temp = [T for T in A[0]][0:i_max]
+        loss = np.array(A[2][0:i_max])
 
-        #linear baseline between first and last points
-        baseline = [(loss[0] + ((loss[-1] - loss[0])/(temp[-1] - temp[0]))*(i - temp[0])) for i in temp]
-        loss_base = np.subtract(np.array(loss),np.array(baseline))
+        baseline = [
+            (loss[0] + ((loss[-1] - loss[0]) / (temp[-1] - temp[0])) *
+             (i - temp[0]))
+            for i in temp
+        ]
+        loss_base = np.subtract(np.array(loss), np.array(baseline))
 
         def twoGaussian(x, *params):
-            y = np.zeros_like(x);
-            ctr1 = params[0]; ctr2 = params[3];
-            amp1 = params[1]; amp2 = params[4];
-            wid1 = params[2]; wid2 = params[5];
-            y = y + amp1*np.exp(-((x - ctr1)/wid1)**2) + amp2*np.exp(-((x - ctr2)/wid2)**2)
-            return y
+            ctr1, amp1, wid1, ctr2, amp2, wid2 = params
+            return (amp1 * np.exp(-((x - ctr1) / wid1) ** 2) +
+                    amp2 * np.exp(-((x - ctr2) / wid2) ** 2))
 
-        #guesses for Temp, amplitude, and width for beta and SS peaks
-        guess = [-60, 1e8, 10, betaprime_ctr, 1e8, 10]; 
+        guess = [-60, 1e8, 10, betaprime_ctr, 1e8, 10]
+        popt, _ = curve_fit(
+            twoGaussian,
+            temp,
+            loss_base,
+            p0=guess,
+            bounds=((-90, 1e6, 5, -10, 1e6, 5), (-30, 1e9, 50, 80, 1e9, 50))
+        )
+        return popt
 
-        #fit function to data and calculate each individual peak
-        popt, pcov = curve_fit(twoGaussian, temp, loss_base, p0=guess, bounds=((-90, 1e6, 5, -10, 1e6, 5),(-30, 1e9, 50, 80, 1e9, 50)))
-        fit = twoGaussian(temp, *popt)
-        peak1 = [popt[1]*np.exp(-((x - popt[0])/popt[2])**2) for x in temp]
-        peak2 = [popt[4]*np.exp(-((x - popt[3])/popt[5])**2) for x in temp]
-
-        # palette = ['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25']
-        # fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
-
-        # p1, = ax.plot(temp, loss_base, '.-', color=palette[2], label='Expt. Data')
-        # p2, = ax.plot(temp, fit, '--', color=palette[0], label='Dual Gaussian Fit')
-        # p3, = ax.plot(temp, peak1, '--', color=palette[1], label='Beta Peak Fit')
-        # p4, = ax.plot(temp, peak2, '--', color=palette[4], label='Disulfide Peak Fit')
-        # ax.set_xlabel('Temperature ($^{\circ}$C)'); ax.set_ylabel('Baselined E"');
-        # ax.legend(prop={'size': 9})
-        
-        return popt#,plt.show()
     
-
 def fitGaussian(path, **kwargs):
-    '''Fits sub-Tg tan delta data to single Gaussian peak'''
-    
-    i_max = kwargs.get('i_max', 80);
-    
-    #read in file temperature and tand of interest
-    A = readDMA(path)
-    temp = [T + 273 for T in A[0]][0:i_max]; #convert temperature to K
-    tand = np.array(A[3][0:i_max]);
-    loss = np.array(A[2][0:i_max]);
-    phi = [math.degrees(math.atan(d)) for d in tand] #convert tand to phase angle in degrees
+    """
+    Fit sub-Tg tan delta data to a single Gaussian peak.
 
-    #linear baseline between first and last points
-    baseline = [(tand[0] + ((tand[-1] - tand[0])/(temp[-1] - temp[0]))*(i - temp[0])) for i in temp]
-    tand_base = np.subtract(np.array(tand),np.array(baseline))
+    Parameters
+    ----------
+    path : str
+        Path to DMA data file.
+    **kwargs : dict, optional
+        i_max : int, default 80
+            Maximum index for data slice.
+
+    Returns
+    -------
+    popt : ndarray
+        Optimal parameters for the Gaussian peak.
+    """
+    i_max = kwargs.get('i_max', 80)
+
+    A = readDMA(path)
+    temp = [T + 273 for T in A[0]][0:i_max]
+    tand = np.array(A[3][0:i_max])
+
+    baseline = [
+        (tand[0] + ((tand[-1] - tand[0]) / (temp[-1] - temp[0])) *
+         (i - temp[0]))
+        for i in temp
+    ]
+    tand_base = np.subtract(np.array(tand), np.array(baseline))
 
     def Gaussian(x, *params):
-        y = np.zeros_like(x);
-        ctr = params[0];
-        amp = params[1];
-        wid = params[2];
-        y = y + amp*np.exp(-((x - ctr)/wid)**2)
-        return y
+        ctr, amp, wid = params
+        return amp * np.exp(-((x - ctr) / wid) ** 2)
 
-    #guesses for Temp, amplitude, and width for peak
-    guess = [210, 5e-2, 10]; 
+    guess = [210, 5e-2, 10]
+    popt, _ = curve_fit(Gaussian, temp, tand_base, p0=guess)
+    return popt
 
-    #fit function to data and calculate each individual peak
-    popt, pcov = curve_fit(Gaussian, temp, tand_base, p0=guess)
-    fit = Gaussian(temp, *popt)
 
-    # palette = ['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25']
-    # fig, ax = plt.subplots(1,1, figsize=(4,3), constrained_layout=True)
+def frac_lin_solid(f, Er, Eg, lambda_t, lambda_g, tau_g):
+    """
+    Compute the complex modulus for a fractional linear solid model.
 
-    # p1, = ax.plot(temp, tand_base, '.-', color=palette[2], label='Expt. Data')
-    # p2, = ax.plot(temp, fit, '--', color=palette[0], label='Gaussian Fit')
-    # ax.set_xlabel('Temperature (K)'); ax.set_ylabel('Baselined tan$\delta$');
-    # ax.legend(prop={'size': 9})
-    
-    return popt#,plt.show()
+    The fractional linear solid model is a viscoelastic model that uses
+    fractional calculus to describe material behavior over a wide range
+    of frequencies. This function calculates the complex modulus as a
+    function of frequency and model parameters.
+
+    Parameters
+    ----------
+    f : float or array-like
+        Frequency (Hz) at which to compute the complex modulus.
+    Er : float
+        Relaxed modulus (low-frequency limit).
+    Eg : float
+        Glassy modulus (high-frequency limit).
+    lambda_t : float
+        Fractional exponent for the terminal relaxation process.
+    lambda_g : float
+        Fractional exponent for the glassy relaxation process.
+    tau_g : float
+        Characteristic relaxation time for the glassy process.
+
+    Returns
+    -------
+    complex or ndarray
+        Complex modulus at the given frequency or frequencies.
+
+    Notes
+    -----
+    The equation used is:
+        E*(f) = Er + (Eg - Er) / [(i * f * tau_g)^(-lambda_t) +
+                                  (i * f * tau_g)^(-lambda_g)]
+
+    Example
+    -------
+    >>> frac_lin_solid(f=1.0, Er=1e6, Eg=1e9,
+    ...                lambda_t=0.5, lambda_g=0.1, tau_g=1e-3)
+    (complex modulus value)
+    """
+    return Er + (Eg - Er) / (
+        (1j * f * tau_g) ** (-lambda_t) + (1j * f * tau_g) ** (-lambda_g)
+    )
+
 
 #This if statement should be included at the end of any module
 #If you don't include this, when you import the module, it will run
 #the module script from top to bottom instead of only importing the
 #functions	
 if __name__ == "__main__":
-	pass
+ 	pass
