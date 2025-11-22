@@ -2,7 +2,7 @@
 #that are used in your functions.
 #These are called dependencies.
 # updated version of this file is maintained at
-# 
+# https://github.com/shullgroup/rheoQCM/blob/master/QCMFuncs/DMA_functions.py
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
