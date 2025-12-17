@@ -33,14 +33,9 @@ warnings.filterwarnings("ignore", message="All-NaN slice encountered")
 warnings.filterwarnings("ignore", message="No artists with labels found to put in legend.")
 
 
-
-try:
-  import seaborn as sns
-  # Set the Seaborn colorblind palette as the default color cycle for Matplotlib
-  colorblind_palette = sns.color_palette("colorblind")
-  plt.rcParams['axes.prop_cycle'] = plt.cycler(color=colorblind_palette)
-except ImportError:  
-  pass
+#  Broderick's color palette
+palette = ['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25', 
+           '#75CA85', '#C892D6', '#007d00']
 
 
 try:
@@ -2752,13 +2747,13 @@ def plot_props(soln, figdic, **kwargs):
             fmt = fmt.replace(f'C{fmt[idx+1]}', '')
             
         elif extract_color_from_format(fmt)!=None:
-            # handle case where we already have the olor in the fmt string
+            # handle case where we already have the color in the fmt string
             prop_color = extract_color_from_format(fmt)
             fmt = fmt.replace(prop_color, '')
             
         elif 'prop_color' not in kwargs.keys():
             # use the next color in the normal color sequence
-            prop_color = None
+            prop_color = ax['props'][p]._get_lines.get_next_color()
             
         else:
             prop_color = kwargs['prop_color']
@@ -2772,18 +2767,17 @@ def plot_props(soln, figdic, **kwargs):
         xdata[p] = xdata[p] - xoffset[p]
         
         # make sure y limits are okay (needed for log axes)
-        y_min = []
-        y_max = []
-        if ax['props'][p].lines:
-            y_min = [ax['props'][p].get_ylim()[0]]
-            y_max = [ax['props'][p].get_ylim()[1]]
-            
-        y_min.append(min(ydata-yerr_t))
-        y_max.append(max(ydata+yerr_t))
-        y_min = np.nanmin(y_min)
-        y_max = np.nanmax(y_max)
-        label = label_input
+
+        lo = ydata - yerr_t
+        hi = ydata + yerr_t
         
+        if ax['props'][p].lines:
+            lo = np.r_[ax['props'][p].get_ylim()[0], lo]
+            hi = np.r_[ax['props'][p].get_ylim()[1], hi]
+        y_min = np.nan if (lo.size == 0 or np.isnan(lo).all()) else np.nanmin(lo)
+        y_max = np.nan if (hi.size == 0 or np.isnan(hi).all()) else np.nanmax(hi)
+    
+        label = label_input
         # create layer labels if more than 1 laer are used
         if len(soln.iloc[0]['layers'].keys())>1:
             layer_num = props[p].split('_')[1].split('.')[0]
@@ -2887,7 +2881,9 @@ def plot_props(soln, figdic, **kwargs):
             soln['xdata'] = xdata[min(list(props.keys()))]    
         for n in nfplot: 
             # drop nan values from dataframe to avoid problems with errorbar
-            soln_tmp = soln.dropna(subset=[f'delfstar_expt_{n}'])          
+            soln_tmp = soln.dropna(subset=[f'delfstar_expt_{n}'])      
+            if len(soln_tmp)==0:
+                continue
             dfval = np.real(soln_tmp[f'delfstar_expt_{n}'])
             dfval2 = np.real(soln_tmp[f'delfstar_calc_{n}'])
             # normalize by n if desired
@@ -2930,6 +2926,8 @@ def plot_props(soln, figdic, **kwargs):
         for n in ngplot:
             # drop nan values from dataframe to avoid problems with errorbar
             soln_tmp = soln.dropna(subset=[f'delfstar_expt_{n}'])
+            if len(soln_tmp)==0:
+                continue
             dgval = np.imag(soln_tmp[f'delfstar_expt_{n}'])/n
             dgval2 = np.imag(soln_tmp[f'delfstar_calc_{n}'])/n
             gerr = np.imag(soln_tmp[f'fstar_err_t_{n}'])/n
@@ -2948,8 +2946,9 @@ def plot_props(soln, figdic, **kwargs):
         dg_max = max(dg_max)   
         
         # now get range for x data
-        x_min.append(min(soln_tmp['xdata']))
-        x_max.append(max(soln_tmp['xdata']))        
+        x_min.append(min(soln['xdata']))
+        x_max.append(max(soln['xdata']))    
+            
         x_min = min(x_min)
         x_max = max(x_max)
                               
@@ -3966,18 +3965,19 @@ def check_n_dependence(soln, **kwargs):
     fig.savefig(filename)
 
        
-def add_t_diff(df):
+def add_t_diff(df_in):
     # add time until previous and next point in the file.  Helpful if we want to
     # use data collected at beginning or end of a relaxation step
     # we skip this if 't' is not in the dataframe
-    if 't' not in df.columns:
+    if 't' not in df_in.columns:
         return
+    df = deepcopy(df_in)
     df.insert(2, 't_prev', 'nan')
     df.insert(3, 't_next', 'nan')
     df.loc[:,'t_next'] = -df.loc[:,'t'].diff(periods=-1)    
     df.at[df.index[-1], 't_next'] = np.inf
     df.loc[:,'t_prev'] = -df.loc[:,'t'].diff(periods=1)
-    df.loc[0,'t_prev'] = np.inf
+    df.at[0,'t_prev'] = np.inf
     return df
 
 # extraction of data from MATLAB fig file

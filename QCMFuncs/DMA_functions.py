@@ -7,19 +7,59 @@ import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit, least_squares
 from scipy.integrate import quad
 from scipy.special import gamma as gammaf
 from scipy.special import digamma
 from pymittagleffler import mittag_leffler
+from matplotlib.patches import FancyArrowPatch
 
+
+def double_headed_arrow(ax, x1, y1, x2, y2, 
+                        color='C0', linewidth=2, 
+                        mutation_scale=15, 
+                        zorder=3, 
+                        **kwargs):
+    """
+    Draw a double-headed arrow from (x1, y1) to (x2, y2) on the given axes.
+    
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes to draw on.
+    x1, y1, x2, y2 : float
+        Coordinates in data space.
+    color : str
+        Arrow color.
+    linewidth : float
+        Line width.
+    mutation_scale : float
+        Controls the size of the arrowheads.
+    zorder : int
+        Drawing order.
+    kwargs : dict
+        Passed through to FancyArrowPatch (e.g., alpha, linestyle).
+    """
+    arrow = FancyArrowPatch(
+        (x1, y1), (x2, y2),
+        arrowstyle='<->',           # double-headed
+        mutation_scale=mutation_scale,
+        color=color,
+        linewidth=linewidth,
+        zorder=zorder,
+        shrinkA=0.0, shrinkB=0.0,   # no shrinking at ends
+        # By default, FancyArrowPatch uses data coordinates from the Axes
+        **kwargs
+    )
+    ax.add_patch(arrow)
+    return arrow
 
 palette = ['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25', 
            '#75CA85', '#C892D6', '#007d00']
 
 # axis labels
-axlabel = {'storage':r'$E^\prime$ (Pa)',
-           'loss': r'$E^{\prime\prime$ (Pa)',
+axlabels = {'storage':r'$E^\prime$ (Pa)',
+           'loss': r'$E^{\prime\prime}$ (Pa)',
            'phi':r'$\phi$ (deg.)'}
 
 # function used to figure out number of lines to ignore in DMA input file
@@ -51,7 +91,6 @@ def first_numbered_line(file_path):
     return None
 
 
-
 #Function definitions with docstrings
 def readDMA(path, **kwargs):
     '''
@@ -64,8 +103,10 @@ def readDMA(path, **kwargs):
     instrument : str, default 'g2'
         Instrument flag for different output formats.  Two options here are
         'g2' for the TA Instruments ARES G2 or 'rsa3' for the old TA RSAIII.
-    skiprows : int, default 2
-        Number of rows to skip at beginning of file to remove header.
+    skiprows : int
+        Number of rows to skip at beginning of file to remove header. Default skips 
+        all lines until the first one beginning with
+        a nun-numeric character.
 
     Returns
     -------
@@ -168,7 +209,7 @@ def plotStressRelax(*arg, **kwargs):
         norm : bool, default=True
             If True, normalizes the modulus values by the second modulus
             value in the dataset (mod[1]).
-        yaxis : str, default='log'
+         : str, default='log'
             Determines the y-axis scale:
             - 'log' for log-log plot
             - 'linear' for semi-log plot (logarithmic x-axis, linear y-axis)
@@ -221,7 +262,7 @@ def plotStressRelax(*arg, **kwargs):
     return plt.show()
 
 
-def plottTS(df, ax, prop, **kwargs):
+def plot_tTS(df, ax, prop, **kwargs):
     """
     Plot time–temperature superposition (TTS) data for a specified property.
 
@@ -249,10 +290,12 @@ def plottTS(df, ax, prop, **kwargs):
             Title for the plot.
         tempstep : float, default=2.5
             Temperature increment for color mapping and grouping.
-        aT : dict, default=None
-            Horizontal shift factors for each temperature.
+        aT : dataframe, default=None
+            Horizontal shift factors for each temperature
+            columns are labeled 'temp', and 'aT'
         bT : dict, default=None
             Vertical shift factors for each temperature.
+            colums are labeled 'temp' and 'bT'
 
     Returns
     -------
@@ -298,6 +341,8 @@ def plottTS(df, ax, prop, **kwargs):
     for t in temps:
         i = int(round(t - Tmin) / tempstep)
         subset = df.query('temp > @t-0.5 & temp < @t+0.5')
+        if t not in aT.keys():
+            continue
         ax.loglog(
             subset['freq'] * aT[t],
             subset[prop] * bT[t],
@@ -308,7 +353,7 @@ def plottTS(df, ax, prop, **kwargs):
         )
 
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm._A = []
+    # sm._A = []
     plt.colorbar(
         sm,
         ax=ax,
@@ -317,10 +362,16 @@ def plottTS(df, ax, prop, **kwargs):
         label='Temperature ($^{\\circ}$C)'
     )
     ax.set_title(title)
+    if 'aT' not in list(kwargs.keys()):
+        ax.set_xlabel (r'$f$ (s$^{-1}$)')
+    else:
+        ax.set_xlabel (r'$fa_T$ (s$^{-1}$)')
+    if prop in axlabels.keys():
+       ax.set_ylabel(axlabels[prop])
 
 
 
-def VFTtau(T, tauref, Tref, B, Tinf):
+def calc_tau_VFT(T, tauref, Tref, B, Tinf):
     """
     Compute relaxation time using the Vogel–Fulcher–Tammann (VFT) equation.
 
@@ -365,7 +416,7 @@ def VFTtau(T, tauref, Tref, B, Tinf):
 
 
 
-def fitVFT(ax, aT, **kwargs):
+def fitVFT(aT_in, **kwargs):
     """
     Fit time–temperature superposition (TTS) shift factors to the
     Vogel–Fulcher–Tammann (VFT) equation and plot aT vs. temperature.
@@ -376,16 +427,17 @@ def fitVFT(ax, aT, **kwargs):
 
     Parameters
     ----------
-    ax : matplotlib.axes.Axes
-        Matplotlib Axes object on which the plot will be drawn.
-    aT : dict
-        Dictionary of shift factors with temperature as keys (°C) and
-        corresponding aT values.
+
+    T : numpy array
+        temperatures
+    aT_in : dictionary with columns 'T' and 'aT'
     **kwargs : dict, optional
         title : str, default=None
             Title for the plot.
         Bguess : float, default=3000
             Initial guess for the VFT constant B.
+        ax : matplotlib.axes.Axes
+        Matplotlib Axes object on which the plot will be drawn.
 
     Returns
     -------
@@ -410,19 +462,19 @@ def fitVFT(ax, aT, **kwargs):
     -------
     >>> fig, ax = plt.subplots()
     >>> B, B_err, Tinf, Tinf_err = fitVFT(ax, aT_dict, title="VFT Fit")
+    
     """
+        
     title = kwargs.get('title', None)
     Bguess = kwargs.get('Bguess', 3000)
-
-    Tref = float(next(k for k, v in aT.items() if v == 1))
+    
+    #find referene temperature
+    T = aT_in['T']
+    aT = aT_in['aT']
+    logaT = np.log(aT)
+    ref_idx = np.argmin(np.abs(logaT))
+    Tref = T[ref_idx]
     Tguess = Tref - 50
-
-    # Plot aT vs. T
-    ax.set_xlabel('T ($^{\\circ}$C)')
-    ax.set_ylabel(r'$a_T$')
-    Tvals = [float(x) for x in aT.keys()]
-    aTvals = [aT[i] for i in list(aT.keys())]
-    ax.semilogy(Tvals, aTvals, 'o', color=palette[0], label='Expt.')
 
     # Define the VFT fitting function
     def lnaT_VFT(T, B, Tinf):
@@ -431,35 +483,58 @@ def fitVFT(ax, aT, **kwargs):
     # Perform curve fitting
     popt, pcov = curve_fit(
         lnaT_VFT,
-        Tvals,
-        np.log(aTvals),
+        T,
+        logaT,
         p0=[Bguess, Tguess],
         maxfev=5000,
-        bounds=([500, Tref - 100], [5000, Tref - 20])
+        bounds=([500, -273], [500000, Tref - 20])
     )
 
     # Extract fit values and errors
     B, Tinf = popt
     B_err, Tinf_err = np.sqrt(np.diag(pcov))
 
-    # Plot fitted curve
-    Tfit = np.linspace(min(Tvals), max(Tvals), 100)
-    aTfit = np.exp(lnaT_VFT(Tfit, B, Tinf))
-    ax.semilogy(
-        Tfit,
-        aTfit,
-        '--',
-        linewidth=2,
-        color=palette[1],
-        label=f'B={B:.0f}K; $T_\\infty$={Tinf:.0f}$^\\circ$C'
-    )
+    if 'ax' in kwargs.keys():
+        ax = kwargs.get('ax')
+        # Plot aT vs. T
+        ax.set_xlabel('T ($^{\\circ}$C)')
+        ax.set_ylabel(r'$a_T$')
+        ax.semilogy(T, aT, 'o', color=palette[0], label='Expt.')
+        # Plot fitted curve
+        Tfit = np.linspace(min(T), max(T), 100)
+        aTfit = np.exp(lnaT_VFT(Tfit, B, Tinf))
+        ax.semilogy(
+            Tfit,
+            aTfit,
+            '--',
+            linewidth=2,
+            color=palette[1],
+            label=f'B={B:.0f}K; $T_\\infty$={Tinf:.0f}$^\\circ$C'
+        )
+    
+        # Add legend and title
+        ax.legend()
+        ax.set_title(title)
 
-    # Add legend and title
-    ax.legend()
-    ax.set_title(title)
+    return B, B_err, Tinf, Tinf_err, Tref
 
-    return B, B_err, Tinf, Tinf_err
+def lnaT_VFT(T, B, Tinf, Tref):
+    lnaT = -B / (Tref - Tinf) + B / (T - Tinf)
+    return lnaT
 
+
+def aT_VFT(T, B, Tinf, Tref):
+    lnaT = -B / (Tref - Tinf) + B / (T - Tinf)
+    return np.exp(lnaT)
+
+
+def Tg_DMA(B, Tinf, Tref, tau_ref, tau):
+    def ftosolve(T):
+        return np.log(calc_tau_VFT(T, tau_ref, Tref, B, Tinf)) - np.log(tau)
+    soln = least_squares(ftosolve, Tinf+50, 
+                                  bounds=(Tinf+10, Tinf+400))
+    return soln['x']
+    
 
 
 def fitArrhenius(aT, **kwargs):
@@ -550,18 +625,18 @@ def fitArrhenius(aT, **kwargs):
 
 
 
-def Eg_VFT(B, Tg, Tinf, **kwargs):
+def E_A_VFT(T, B, Tinf, **kwargs):
     """
-    Calculate effective activation energy of glass transition from VFT parameters.
+    Calculate effective activation energy from VFT parameters.
 
     Parameters
     ----------
     B : float
         VFT constant.
-    Tg : float
-        Glass transition temperature (°C).
+    T : float
+        temperature of interest (°C).
     Tinf : float
-        Ideal glass transition temperature (°C).
+        Vogel temperature (°C).
     **kwargs : dict, optional
         B_err : float, default 0
             Uncertainty in B.
@@ -584,13 +659,13 @@ def Eg_VFT(B, Tg, Tinf, **kwargs):
 
     R = 8.3145  # universal gas constant
 
-    Eg = R * B * (Tg + 273) ** 2 / (Tg - Tinf) ** 2
-    Bvar = B_err ** 2 * (Eg / B) ** 2
-    Tgvar = Tg_err ** 2 * (2 * R * B * (Tg + 273) / (Tg - Tinf) ** 3) ** 2
-    Tinfvar = Tinf_err ** 2 * (2 * R * B * (Tg + 273) ** 2 / (Tg - Tinf) ** 3) ** 2
-    Eg_err = np.sqrt(Bvar + Tgvar + Tinfvar)
+    E_A = R * B * (T + 273) ** 2 / (T - Tinf) ** 2
+    Bvar = B_err ** 2 * (E_A / B) ** 2
+    Tgvar = Tg_err ** 2 * (2 * R * B * (T + 273) / (T - Tinf) ** 3) ** 2
+    Tinfvar = Tinf_err ** 2 * (2 * R * B * (T + 273) ** 2 / (T - Tinf) ** 3) ** 2
+    E_A_err = np.sqrt(Bvar + Tgvar + Tinfvar)
 
-    return Eg, Eg_err
+    return E_A, E_A_err
 
 
 
@@ -748,6 +823,8 @@ def fitKWW(df, **kwargs):
             Marker frequency for plotting.
         savepath : str, default None
             Path to save the plot. If None, the plot is not saved.
+        ax : axes handle
+            Axis to plot the data and the fit
 
     Returns
     -------
@@ -770,26 +847,14 @@ def fitKWW(df, **kwargs):
     """
     norm = kwargs.get('norm', False)
     residual = kwargs.get('residual', None)
-    ylims = kwargs.get('ylims', [1e4, 2e7])
-    title = kwargs.get('title', '')
-    tts = kwargs.get('tts', False)
     markevery = kwargs.get('markevery', 1)
     savepath = kwargs.get('savepath', None)
 
     # Plot E vs. t
-    fig, ax = plt.subplots(1, 1, figsize=(4, 3), constrained_layout=True)
-    ax.set_xlabel('Time / $a_T$ (s)' if tts else 'Time (s)')
-    ax.set_ylabel('G(t) / $b_T$ (Pa)' if tts else 'Relaxation Modulus G(t)')
+
 
     df['lnmod'] = np.log(df['modulus'])
     df = df.dropna()
-
-    if norm:
-        ax.semilogx(df['time'], df['mod_norm'], '.', color=palette[0],
-                    label='Expt.')
-    else:
-        ax.loglog(df['time'], df['modulus'], '.', markevery=markevery,
-                  color=palette[0], label='Expt.')
 
     # Define KWW model
     def KWW(t, G0, tau, beta):
@@ -821,24 +886,28 @@ def fitKWW(df, **kwargs):
     tfit = np.logspace(np.log10(min(df['time'])),
                        np.log10(max(df['time'])), 100)
     modfit = KWW(tfit, G0, tau, beta)
-    ax.loglog(
-        tfit,
-        modfit,
-        '--',
-        linewidth=2,
-        color=palette[1],
-        label=(f'$\\tau^*={tau:.1f} \\pm {tau_err:.1f}$ s\n'
-               f'$\\beta={beta:.2f} \\pm {beta_err:.2f}$\n'
-               f'$\\langle\\tau\\rangle={avgtau:.1f} \\pm {avgtau_err:.1f}$ s')
-    )
-
-    ax.legend()
-    ax.set_title(title)
-    ax.set_ylim(ylims)
-    plt.show()
-
-    if savepath:
-        plt.savefig(savepath)
+    
+    if 'ax' in kwargs.keys():
+        ax = kwargs.get('ax')
+        if norm:
+            ax.semilogx(df['time'], df['mod_norm'], '.', color=palette[0],
+                        label='Expt.', rasterized=True)
+        else:
+            ax.loglog(df['time'], df['modulus'], '.', markevery=markevery,
+                      color=palette[0], label='Expt.',rasterized=True)
+        ax.loglog(
+            tfit,
+            modfit,
+            '--',
+            linewidth=2,
+            color=palette[1],
+            label=(f'$\\tau^*={tau:.1f} \\pm {tau_err:.1f}$ s\n'
+                   f'$\\beta={beta:.2f} \\pm {beta_err:.2f}$\n'
+                   f'$\\langle\\tau\\rangle={avgtau:.1f} \\pm {avgtau_err:.1f}$ s')
+        )
+    
+        if savepath:
+            plt.savefig(savepath)
 
     return avgtau, avgtau_err
 
@@ -1578,6 +1647,60 @@ def frac_lin_solid(f, Er, Eg, lambda_t, lambda_g, tau_g):
     return Er + (Eg - Er) / (
         (1j * f * tau_g) ** (-lambda_t) + (1j * f * tau_g) ** (-lambda_g)
     )
+
+
+
+def round_n(numbers, n_figures):
+    """
+    Rounds a single number or a NumPy array of numbers to n
+    significant figures.
+
+    Args:
+        numbers (float|int|np.ndarray): The input number(s) to round.
+        n_figures (int): The number of significant figures required.
+
+    Returns:
+        float|int|np.ndarray: The rounded number(s) as the original type
+                              or np.ndarray.
+    """
+    is_scalar_input = np.isscalar(numbers)
+    # Use numpy.array to handle single inputs the same way as arrays
+    numbers_arr = np.array(numbers, dtype=float)
+
+    # Handle the edge case where the input number(s) might be 0
+    if np.all(numbers_arr == 0):
+        if is_scalar_input:
+            return 0
+        else:
+            # Return as array of zeros
+            return np.zeros_like(numbers_arr, dtype=float)
+
+    # Calculate the magnitude of the number(s) using log10
+    magnitude = np.floor(np.log10(np.abs(numbers_arr)))[0]
+
+    # Calculate the number of decimal places needed for standard rounding
+    # The negative sign adjusts the magnitude for the standard round()
+    # function's 'decimals' parameter
+    decimal_places = n_figures - 1 - magnitude
+
+    # Apply standard rounding element-wise
+    # np.around takes 'decimals' as the second argument
+    # Ensure decimals array is treated correctly as integer types for precision input
+    rounded_numbers = np.around(
+        numbers_arr, decimals=decimal_places.astype(int)
+    )
+
+    # If the input was a single scalar, return a single scalar result
+    if is_scalar_input:
+        # Use .item() to extract the scalar value from the 0D numpy array
+        return rounded_numbers.item()
+    else:
+        return rounded_numbers
+
+
+
+
+
 
 
 #This if statement should be included at the end of any module
