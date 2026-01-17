@@ -264,110 +264,168 @@ def plotStressRelax(*arg, **kwargs):
 
 def plot_tTS(df, ax, prop, **kwargs):
     """
-    Plot time–temperature superposition (TTS) data for a specified property.
+    Plot time–temperature superposition (TTS) data and return global bounds.
 
-    This function creates log-log plots of a given viscoelastic property
-    (e.g., storage modulus, loss modulus, or tan delta) versus frequency
-    for multiple temperatures. Optional horizontal (aT) and vertical (bT)
-    shift factors can be applied for TTS analysis.
+    This function creates log-log plots of a viscoelastic property (e.g.,
+    storage modulus, loss modulus, tan delta) versus frequency for multiple
+    temperatures. Optional horizontal (aT) and vertical (bT) shift factors
+    can be applied for TTS analysis. Optionally multiplies the x values by
+    a global factor (xmult). Colorbar and per-temperature coloring can be
+    disabled to plot all series in a single color.
 
     Parameters
     ----------
     df : pandas.DataFrame
-        DataFrame containing experimental data. Must include columns:
-        - 'temp': Temperature values (°C)
-        - 'freq': Frequency values (Hz)
-        - `prop`: The property to plot (e.g., 'E_storage', 'E_loss').
-
+        Data with columns:
+          - 'temp' : temperature (°C)
+          - 'freq' : frequency (Hz)
+          - prop   : column for the property to plot (e.g., 'E_storage')
     ax : matplotlib.axes.Axes
-        Matplotlib Axes object on which the plot will be drawn.
-
+        Axes to draw the plot on.
     prop : str
-        Name of the column in `df` representing the property to plot.
-
-    **kwargs : dict, optional
-        title : str, default=''
+        Name of the column in df representing the property to plot.
+    **kwargs :
+        title : str, default ''
             Title for the plot.
-        tempstep : float, default=2.5
+        tempstep : float, default 2.5
             Temperature increment for color mapping and grouping.
-        aT : dataframe, default=None
-            Horizontal shift factors for each temperature
-            columns are labeled 'temp', and 'aT'
-        bT : dict, default=None
-            Vertical shift factors for each temperature.
-            colums are labeled 'temp' and 'bT'
+        aT : dict or pandas.DataFrame, default None
+            Horizontal shift factors per temperature. If DataFrame, must
+            contain columns 'temp' and 'aT'.
+        bT : dict or pandas.DataFrame, default None
+            Vertical shift factors per temperature. If DataFrame, must
+            contain columns 'temp' and 'bT'.
+        xmult : float, default 1.0
+            Global multiplier applied to input x (frequency) before aT:
+            x = freq * xmult * aT[t].
+        colorbar : bool, default True
+            If False, do not draw a colorbar and plot all series in one
+            color.
+        color : str, default 'C0'
+            The single color to use when colorbar is False.
 
     Returns
     -------
-    None
-        Displays the plot on the provided Axes object and adds a colorbar.
+    dict
+        Global min/max of plotted (shifted) x and y values:
+          {
+            'x_min': float or None,
+            'x_max': float or None,
+            'y_min': float or None,
+            'y_max': float or None
+          }
+        If no valid points are plotted, all values are None.
 
     Notes
     -----
-    - Color scale uses the 'magma' colormap.
-    - Shift factors allow construction of master curves for TTS analysis.
-
-    Example
-    -------
-    >>> fig, ax = plt.subplots()
-    >>> plottTS(df, ax, 'E_storage', title='Storage Modulus vs Frequency')
+    - Non-positive or non-finite points are excluded (log-log axes).
+    - If aT/bT are not supplied, unity factors are used for all temps.
+    - When colorbar is False, all lines use a single color (kwargs['color']).
     """
     title = kwargs.get('title', '')
     tempstep = kwargs.get('tempstep', 2.5)
     aT = kwargs.get('aT', None)
     bT = kwargs.get('bT', None)
+    xmult = float(kwargs.get('xmult', 1.0))
+    show_cbar = bool(kwargs.get('colorbar', True))
+    flat_color = kwargs.get('color', 'C0')
 
-    Tmin = round(min(df['temp']), 0)
-    Tmax = round(max(df['temp']), 0)
-    num_temps = int(round((Tmax - Tmin) / tempstep, 0) + 1)
+    def _factors_to_dict(factors, key_name):
+        if factors is None:
+            return None
+        if isinstance(factors, dict):
+            return factors
+        if hasattr(factors, 'columns'):
+            if 'temp' not in factors.columns or key_name not in factors.columns:
+                raise ValueError(
+                    "Shift factor DataFrame must have 'temp' and '{}'.".format(
+                        key_name
+                    )
+                )
+            return dict(zip(factors['temp'], factors[key_name]))
+        raise TypeError(
+            "{} must be dict or DataFrame with 'temp' and '{}'.".format(
+                key_name, key_name
+            )
+        )
 
-    # Set color scale based on number of temperatures
+    aT = _factors_to_dict(aT, 'aT') if aT is not None else None
+    bT = _factors_to_dict(bT, 'bT') if bT is not None else None
+
+    Tmin = float(np.round(np.nanmin(df['temp']), 0))
+    Tmax = float(np.round(np.nanmax(df['temp']), 0))
+    num_temps = int(np.round((Tmax - Tmin) / tempstep, 0) + 1)
+
     cmap = plt.cm.magma
     cmaplist = [cmap(i) for i in range(cmap.N)]
     cmap = mpl.colors.LinearSegmentedColormap.from_list(
         'Custom cmap', cmaplist, cmap.N
     )
     temps = np.linspace(Tmin, Tmax, num_temps)
-    mult = round(256 / num_temps)
+    mult = max(1, int(np.round(256 / max(1, num_temps))))
     norm = mpl.colors.BoundaryNorm(temps, cmap.N)
 
-    # Default shift factors if not provided
     if aT is None:
-        aT = {t: 1 for t in temps}
+        aT = {t: 1.0 for t in temps}
     if bT is None:
-        bT = {t: 1 for t in temps}
+        bT = {t: 1.0 for t in temps}
 
-    # Plot property for each temperature
+    x_min, x_max = np.inf, -np.inf
+    y_min, y_max = np.inf, -np.inf
+
     for t in temps:
-        i = int(round(t - Tmin) / tempstep)
-        subset = df.query('temp > @t-0.5 & temp < @t+0.5')
-        if t not in aT.keys():
+        i = int(np.round((t - Tmin) / tempstep))
+        subset = df.query('temp > @t - 0.5 and temp < @t + 0.5')
+        if t not in aT or t not in bT:
             continue
-        ax.loglog(
-            subset['freq'] * aT[t],
-            subset[prop] * bT[t],
-            '.-',
-            ms=10,
-            lw=3,
-            color=cmaplist[i * mult]
+
+        x_vals = (subset['freq'].to_numpy(dtype=float) *
+                  xmult * float(aT[t]))
+        y_vals = subset[prop].to_numpy(dtype=float) * float(bT[t])
+
+        valid = (np.isfinite(x_vals) & np.isfinite(y_vals) &
+                 (x_vals > 0) & (y_vals > 0))
+        if not np.any(valid):
+            continue
+
+        xv = x_vals[valid]
+        yv = y_vals[valid]
+
+        color = (flat_color if not show_cbar
+                 else cmaplist[min(i * mult, len(cmaplist) - 1)])
+
+        ax.loglog(xv, yv, '.-', ms=10, lw=3, color=color)
+
+        x_min = min(x_min, float(np.nanmin(xv)))
+        x_max = max(x_max, float(np.nanmax(xv)))
+        y_min = min(y_min, float(np.nanmin(yv)))
+        y_max = max(y_max, float(np.nanmax(yv)))
+
+    if show_cbar:
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+        plt.colorbar(
+            sm, ax=ax, cmap=cmap, norm=norm,
+            label='Temperature ($^{\\circ}$C)'
         )
 
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    # sm._A = []
-    plt.colorbar(
-        sm,
-        ax=ax,
-        cmap=cmap,
-        norm=norm,
-        label='Temperature ($^{\\circ}$C)'
-    )
     ax.set_title(title)
-    if 'aT' not in list(kwargs.keys()):
-        ax.set_xlabel (r'$f$ (s$^{-1}$)')
+    if 'aT' not in kwargs:
+        ax.set_xlabel(r'$f$ (s$^{-1}$)')
     else:
-        ax.set_xlabel (r'$fa_T$ (s$^{-1}$)')
-    if prop in axlabels.keys():
-       ax.set_ylabel(axlabels[prop])
+        ax.set_xlabel(r'$f a_T$ (s$^{-1}$)')
+    if 'axlabels' in globals() and prop in axlabels:
+        ax.set_ylabel(axlabels[prop])
+    else:
+        ax.set_ylabel(prop)
+
+    has_pts = (np.isfinite(x_min) and np.isfinite(x_max) and
+               np.isfinite(y_min) and np.isfinite(y_max))
+    return {
+        'x_min': None if not has_pts else x_min,
+        'x_max': None if not has_pts else x_max,
+        'y_min': None if not has_pts else y_min,
+        'y_max': None if not has_pts else y_max,
+    }
 
 
 

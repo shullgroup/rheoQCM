@@ -24,6 +24,7 @@ import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
 import re
 import warnings
+from cycler import cycler
 
 # Suppress the specific warning when working with All-nan arrays
 warnings.filterwarnings("ignore", message="All-NaN slice encountered")
@@ -34,8 +35,12 @@ warnings.filterwarnings("ignore", message="No artists with labels found to put i
 
 
 #  Broderick's color palette
-palette = ['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25', 
-           '#75CA85', '#C892D6', '#007d00']
+palettes = {'Lewis':['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25', 
+                     '#75CA85', '#C892D6', '#007d00']}
+
+def set_color_palette(palette):
+    # changes the color scheme for rest of the python session
+    plt.rcParams['axes.prop_cycle'] = cycler(color=palettes[palette])
 
 
 try:
@@ -91,8 +96,8 @@ axlabels = {'drho': r'$d\rho$ ($\mu$m$\cdot$g/cm$^3$)',
             'etarho3':r'$|\eta_3^*| \rho$ (mPa$\cdot$s$\cdot$g/cm$^3$)',
             'delf':r'$\Delta f$ (Hz)',
             'delg':r'$\Delta \Gamma$ (Hz)',
-            'delf_n':r'$\Delta f_n/n$ (Hz)',
-            'delg_n':r'$\Delta \Gamma _n /n$ (Hz)',
+            'delfn':r'$\Delta f_n/n$ (Hz)',
+            'delgn':r'$\Delta \Gamma _n /n$ (Hz)',
             's':'t (s)',
             'min':'t (min)',
             'hr':'t (hr)',
@@ -1610,7 +1615,9 @@ def solve_for_props(delfstar, calc, props_calc_in, layers_in, **kwargs):
     df_soln, delfstar_mod = make_soln_df(delfstar, calc, props_calc, layers,
                            gmax=gmax, calctype=calctype, reftype=reftype) 
     
+    # there are no properties to calculate if we only want to plot delf, delg
     if len(props_calc)==0:
+        df_soln['layers'] = [layers_in] * len(df_soln)
         return df_soln
     
     # obtain starting guess from layers dictionary
@@ -2131,10 +2138,19 @@ def make_prop_axes(propnames, **kwargs):
             Temperature in degrees C.
         
         's', 'hr', 'day':
-            Time in correspoinding unit.
+            Time in corresponding unit.
             
-        dfn or dgn:
-            frequency or dissipation shift for a given harmonic
+        delf.x.y.z or delg.n1.n2.n3:
+            frequency or dissipation shift for n1, n2, n3, etc.
+            
+        delfn.x.y.z or delgn.n1.n2.n3
+            frequency or dissipation shift normalized by n 
+            
+        f.x.y.z or g.n1.n2.n3:
+            frequency or dissipation for n1, n2, n3, etc.
+
+        fn.x.y.z or g.n1.n2.n3:
+            frequency or dissipation, normalized by n
         
         Name of any dataframe column:
             In this case you'll need to label the y axis manually.
@@ -2199,8 +2215,6 @@ def make_prop_axes(propnames, **kwargs):
         norm_by_n (Boolean):
             True (default) if delg and delf normalized by n in soln_checks
             
-
-
     Returns:
     ----------
     figdic: dictionary with the following elements:
@@ -2381,8 +2395,8 @@ def make_prop_axes(propnames, **kwargs):
             ax['checks'][k].set_xlabel(xlabel[0])
         iax = iax + 2
         if norm_by_n:
-            ax['checks'][0].set_ylabel(axlabels['delf_n'])
-            ax['checks'][1].set_ylabel(axlabels['delg_n'])
+            ax['checks'][0].set_ylabel(axlabels['delfn'])
+            ax['checks'][1].set_ylabel(axlabels['delgn'])
         else:
             ax['checks'][0].set_ylabel(axlabels['delf'])
             ax['checks'][1].set_ylabel(axlabels['delg'])            
@@ -2596,20 +2610,20 @@ def make_data_array(var, soln, prop_error, **kwargs):
     elif 'jdp' in ext[0]:
         data_array = ((1000/soln['grho3_1'].astype(float))*
                  np.sin(soln['phi'].astype(float)*np.pi/180))
-      
-    elif 'soln_expt' in ext[0]:
-        data_array = soln[ext[0]].astype(complex)
-        data_array = np.real(data_array)
+    
+    
+    elif ext[0] in ['delf', 'delg', 'delfn', 'delgn']:
+        data_array={}
+        nvals = [item for item in ['1','3','5','7','9','11'] if item in ext]
+        for n in nvals:
+            data_array[n] = soln['delfstar_expt_'+n].astype(complex)
+            if 'f' in ext[0]:
+                data_array[n] = np.real(data_array[n]).astype('float64')
+            elif 'g' in ext[0]:
+                data_array[n] = np.imag(data_array[n]).astype('float64')
+            if 'n' in ext[0]:
+                data_array[n]=data_array[n]/int(n)
        
-    elif 'g_expt' in ext[0]:
-        # this handles g_exptn and dg_expt_n for different n
-        key = ext[0]
-        data_array = np.real(soln[key].astype(complex))
-       
-    elif 'f_expt' in ext[0]:
-        # this handles f_exptn and df_expn for different n
-        key = ext[0]
-        data_array = np.real(soln[key].astype(complex))
           
     elif ext[0] in soln.keys():
         data_array = soln[ext[0]]
@@ -2619,7 +2633,7 @@ def make_data_array(var, soln, prop_error, **kwargs):
         data_array=np.array([])
         data_array=np.array([])
         
-    return data_array.astype('float64'), err_array_p,  err_array_t
+    return data_array, err_array_p,  err_array_t
    
 
 def plot_props(soln, figdic, **kwargs):
@@ -2767,9 +2781,13 @@ def plot_props(soln, figdic, **kwargs):
         xdata[p] = xdata[p] - xoffset[p]
         
         # make sure y limits are okay (needed for log axes)
-
-        lo = ydata - yerr_t
-        hi = ydata + yerr_t
+        # doesn't implement error in delf and delg at this pont
+        if isinstance(ydata, dict):
+            lo = np.concatenate(list(ydata.values()))
+            hi = lo
+        else:
+            lo = ydata - yerr_t
+            hi = ydata + yerr_t
         
         if ax['props'][p].lines:
             lo = np.r_[ax['props'][p].get_ylim()[0], lo]
@@ -2778,14 +2796,26 @@ def plot_props(soln, figdic, **kwargs):
         y_max = np.nan if (hi.size == 0 or np.isnan(hi).all()) else np.nanmax(hi)
     
         label = label_input
-        # create layer labels if more than 1 laer are used
-        if len(soln.iloc[0]['layers'].keys())>1:
-            layer_num = props[p].split('_')[1].split('.')[0]
-            if layer_label:
-                label = label_input + f' layer {layer_num}'
-            else:
-                label = label_input
-        if not np.any(yerr_t): 
+        
+        # create layer labels if more than 1 layer is used
+        if props[p].split('.')[0] not in ['delf', 'delg', 'delfn', 'delgn']:
+            if len(soln.iloc[0]['layers'].keys())>1:
+                layer_num = props[p].split('_')[1].split('.')[0]
+                if layer_label:
+                    label = label_input + f' layer {layer_num}'
+                else:
+                    label = label_input
+                
+                
+        # now we make the plots
+        # start with case where the property involves delf or delg
+        if isinstance (ydata, dict):
+            for n in ydata.keys():
+                ax['props'][p].plot(xdata[p], ydata[n], fmt, 
+                                    label=f'n={n}',
+                                    linewidth=linewidth)            
+            
+        elif not np.any(yerr_t): 
             ax['props'][p].plot(xdata[p], ydata, fmt, label=label,
                                 color = prop_color,
                                 linewidth=linewidth)
