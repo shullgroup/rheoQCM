@@ -2524,26 +2524,28 @@ def make_data_array(var, soln, prop_error, **kwargs):
         layer = ext[0].split('_')[1]
     else:
         layer = 1
+        
+    prop = ext[0].split('_')[0]
 
-    if ext[0] == 's':
+    if prop == 's':
         data_array = soln['t']
         
-    elif ext[0] == 'min':
+    elif prop == 'min':
         data_array =soln['t']/60
         
-    elif ext[0] == 'hr':
+    elif prop == 'hr':
         data_array = soln['t']/3600
         
-    elif ext[0] == 'day':
+    elif prop == 'day':
         data_array = soln['t']/(24*3600)
         
-    elif ext[0] == 'temp':
+    elif prop == 'temp':
         data_array = soln['temp']
         
-    elif ext[0] == 'index':
+    elif prop == 'index':
         data_array = soln.index
         
-    elif 'grho3' in ext[0]:
+    elif prop == 'grho3':
         # units are g/m^2 for grho3
         prop_name = f'grho3_{layer}'
         prop_err_name = prop_name+'_err'
@@ -2552,7 +2554,7 @@ def make_data_array(var, soln, prop_error, **kwargs):
             err_array_p = prop_error[f'{prop_err_name}_p']/1000
             err_array_t = prop_error[f'{prop_err_name}_t']/1000
 
-    elif 'etarho3' in ext[0]:
+    elif prop=='etarho3':
         # units are mPa-s for viscosity
         prop_name = f'grho3_{layer}'
         prop_err_name = prop_name+'_err'
@@ -2561,7 +2563,7 @@ def make_data_array(var, soln, prop_error, **kwargs):
             err_array_p = prop_error[f'grho3_{layer}_err_p']/(2*np.pi*3*f1)
             err_array_t = prop_error[f'grho3_{layer}_err_t']/(2*np.pi*3*f1)
 
-    elif 'phi' in ext[0]:
+    elif prop=='phi':
         prop_name = f'phi_{layer}'
         prop_err_name = prop_name+'_err'
         phi_d = soln[prop_name].astype(float)
@@ -2582,20 +2584,20 @@ def make_data_array(var, soln, prop_error, **kwargs):
                 err_array_p = err_d_p
                 err_array_t = err_d_t
        
-    elif 'grho3p' in ext[0]:
+    elif prop=='grho3p':
        data_array = (soln[f'grho3_{layer}'].astype(float)*
-                np.cos(np.pi*soln['phi'].astype(float)/180)/1000)
+                np.cos(np.pi*soln[f'phi_{layer}'].astype(float)/180)/1000)
 
-    elif 'grho3pp' in ext[0]:
+    elif prop=='grho3pp':
        data_array = (soln[f'grho3_{layer}'].astype(float)*
-                np.sin(np.pi*soln['phi'].astype(float)/180)/1000)
+                np.sin(np.pi*soln[f'phi_{layer}'].astype(float)/180)/1000)
        
-    elif 'deltarho3' in ext[0]:
+    elif prop=='deltarho3':
        grho3 = soln[f'grho3_{layer}'].astype(float)
        phi = soln[f'phi_{layer}'].astype(float)
        data_array = 1000*calc_deltarho(3, grho3, phi)
                                
-    elif 'drho' in ext[0]:
+    elif prop=='drho':
         prop_name = f'drho_{layer}'
         prop_err_name = prop_name+'_err'
         data_array = 1000*soln[f'drho_{layer}'].astype(float)
@@ -2607,26 +2609,26 @@ def make_data_array(var, soln, prop_error, **kwargs):
             err_array_p = 1000*prop_error[f'{prop_err_name}_p']
             err_array_t = 1000*prop_error[f'{prop_err_name}_t']
 
-    elif 'jdp' in ext[0]:
-        data_array = ((1000/soln['grho3_1'].astype(float))*
-                 np.sin(soln['phi'].astype(float)*np.pi/180))
+    elif prop=='jdp':
+        data_array = ((1000/soln[f'grho3_{layer}'].astype(float))*
+                 np.sin(soln[f'phi_{layer}'].astype(float)*np.pi/180))
     
     
-    elif ext[0] in ['delf', 'delg', 'delfn', 'delgn']:
+    elif prop in ['delf', 'delg', 'delfn', 'delgn']:
         data_array={}
         nvals = [item for item in ['1','3','5','7','9','11'] if item in ext]
         for n in nvals:
             data_array[n] = soln['delfstar_expt_'+n].astype(complex)
-            if 'f' in ext[0]:
+            if 'f' in prop:
                 data_array[n] = np.real(data_array[n]).astype('float64')
-            elif 'g' in ext[0]:
+            elif 'g' in prop:
                 data_array[n] = np.imag(data_array[n]).astype('float64')
-            if 'n' in ext[0]:
+            if 'n' in prop:
                 data_array[n]=data_array[n]/int(n)
        
           
-    elif ext[0] in soln.keys():
-        data_array = soln[ext[0]]
+    elif prop in soln.keys():
+        data_array = soln[prop]
    
     else:
         print(f'no data - not a recognized prop type ({ext[0]})')

@@ -871,8 +871,8 @@ def fitKWW(df, **kwargs):
             If True, use normalized modulus for plotting.
         residual : float, default None
             Residual modulus to include in the fit.
-        ylims : list, default [1e4, 2e7]
-            y-axis limits for the plot.
+        xlim : list, default None
+            x-axis limits for the plot.
         title : str, default ''
             Plot title.
         tts : bool, default False
@@ -883,6 +883,10 @@ def fitKWW(df, **kwargs):
             Path to save the plot. If None, the plot is not saved.
         ax : axes handle
             Axis to plot the data and the fit
+        fmt : string
+            Format string for plotting
+        error : bool, defaut false
+            True if we want to include error in plot
 
     Returns
     -------
@@ -907,6 +911,9 @@ def fitKWW(df, **kwargs):
     residual = kwargs.get('residual', None)
     markevery = kwargs.get('markevery', 1)
     savepath = kwargs.get('savepath', None)
+    fmt = kwargs.get('fmt', '--')
+    error = kwargs.get('error', False)
+    xlim = kwargs.get('xlim', None)
 
     # Plot E vs. t
 
@@ -944,28 +951,27 @@ def fitKWW(df, **kwargs):
     tfit = np.logspace(np.log10(min(df['time'])),
                        np.log10(max(df['time'])), 100)
     modfit = KWW(tfit, G0, tau, beta)
+    if error:
+        label=(f'$\\tau^*={tau:.1f} \\pm {tau_err:.1f}$ s\n'
+               f'$\\beta={beta:.2f} \\pm {beta_err:.2f}$\n'
+               f'$\\langle\\tau\\rangle={avgtau:.1f} \\pm {avgtau_err:.1f}$ s')
+    else:
+        label=(f'$\\tau^*={tau:.1f}$ s\n'
+               f'$\\beta={beta:.2f}$\n'
+               f'$\\langle\\tau\\rangle={avgtau:.1f}$ s')
     
     if 'ax' in kwargs.keys():
         ax = kwargs.get('ax')
-        if norm:
-            ax.semilogx(df['time'], df['mod_norm'], '.', color=palette[0],
-                        label='Expt.', rasterized=True)
-        else:
-            ax.loglog(df['time'], df['modulus'], '.', markevery=markevery,
-                      color=palette[0], label='Expt.',rasterized=True)
         ax.loglog(
             tfit,
             modfit,
-            '--',
+            fmt,
             linewidth=2,
-            color=palette[1],
-            label=(f'$\\tau^*={tau:.1f} \\pm {tau_err:.1f}$ s\n'
-                   f'$\\beta={beta:.2f} \\pm {beta_err:.2f}$\n'
-                   f'$\\langle\\tau\\rangle={avgtau:.1f} \\pm {avgtau_err:.1f}$ s')
-        )
+            label=label)
     
         if savepath:
             plt.savefig(savepath)
+            
 
     return avgtau, avgtau_err
 
@@ -1756,9 +1762,151 @@ def round_n(numbers, n_figures):
         return rounded_numbers
 
 
+def downsample_points_per_decade(
+    x,
+    y=None,
+    points_per_decade=10,
+    base=10.0,
+    include_endpoints=True,
+):
+    """
+    Downsample data to approximately `points_per_decade` per logarithmic
+    decade in x.
 
+    Parameters
+    ----------
+    x : array-like, shape (n,)
+        Independent variable. Must be strictly positive (for log scaling).
+    y : None | array-like, shape (n,) or (n, m), optional
+        Dependent variable(s) aligned with x. If provided with shape (n, m),
+        each column is treated as a separate series sharing the same x.
+    points_per_decade : int, default=10
+        Target number of retained points per decade (in log-base `base`).
+        If a decade contains fewer than this many original points, they are
+        all kept.
+    base : float, default=10.0
+        Logarithm base that defines a “decade”. Use 10 for log10 decades,
+        or e.g. `np.e` for natural-log-based “decades”.
+    include_endpoints : bool, default=True
+        If True, always include the global first and last indices, and try
+        to include integer decade boundaries when present.
 
+    Returns
+    -------
+    x_ds : ndarray, shape (k,)
+        Downsampled x (sorted ascending).
+    y_ds : None | ndarray
+        Downsampled y aligned to x_ds. Returns None if y is None.
+        If input y was (n, m), output is (k, m).
+    idx : ndarray, shape (k,)
+        Indices into the original arrays for the retained samples.
 
+    Notes
+    -----
+    - This keeps actual data points; it does NOT interpolate.
+    - Selection is done by choosing points closest to evenly spaced targets
+      in log-space within each integer decade [d, d+1), except the last
+      decade which includes its upper bound.
+    - Duplicates are removed globally and order is preserved.
+    """
+    x = np.asarray(x)
+    if np.any(x <= 0):
+        raise ValueError("All x values must be > 0 for logarithmic decades.")
+    if x.ndim != 1:
+        raise ValueError("x must be 1-D.")
+
+    n = x.size
+    if y is not None:
+        y = np.asarray(y)
+        if y.shape[0] != n:
+            raise ValueError(
+                "x and y must have the same length along axis 0."
+            )
+
+    # Work in log-base `base`
+    logx = np.log(x) / np.log(base)
+
+    # Identify integer-decade bins covering the data
+    d_min = int(np.floor(np.min(logx)))
+    d_max = int(np.floor(np.max(logx)))  # inclusive starting decade
+
+    selected_idx = []
+
+    for d in range(d_min, d_max + 1):
+        # For all but the last decade, use [d, d+1); for the last, include
+        # right edge
+        if d < d_max:
+            mask = (logx >= d) & (logx < d + 1)
+            right_endpoint_included = False
+        else:
+            mask = (logx >= d) & (logx <= d + 1)
+            right_endpoint_included = True
+
+        idx_in_decade = np.nonzero(mask)[0]
+        if idx_in_decade.size == 0:
+            continue
+
+        # If there are already fewer points than target, keep them all
+        if idx_in_decade.size <= points_per_decade:
+            selected_idx.extend(idx_in_decade.tolist())
+            continue
+
+        # Target evenly spaced positions in log space for this decade
+        if right_endpoint_included:
+            targets = np.linspace(
+                d, d + 1, points_per_decade, endpoint=False
+            )
+        else:
+            targets = np.linspace(
+                d, d + 1, points_per_decade, endpoint=False
+            )
+
+        # For each target, pick the index whose logx is closest
+        logx_dec = logx[idx_in_decade]
+        for t in targets:
+            j = np.argmin(np.abs(logx_dec - t))
+            selected_idx.append(idx_in_decade[j])
+
+        # Optionally include decade boundaries if they exist in the data
+        if include_endpoints:
+            # Left boundary at d
+            j_left = np.where(
+                np.isclose(logx_dec, d, rtol=0, atol=1e-12)
+            )[0]
+            if j_left.size > 0:
+                selected_idx.append(idx_in_decade[j_left[0]])
+            # Right boundary at d+1 (only meaningful when last decade or
+            # if a data point hits exactly)
+            if right_endpoint_included:
+                j_right = np.where(
+                    np.isclose(logx_dec, d + 1, rtol=0, atol=1e-12)
+                )[0]
+                if j_right.size > 0:
+                    selected_idx.append(idx_in_decade[j_right[0]])
+
+    # Always include global endpoints if requested
+    if include_endpoints:
+        selected_idx.extend([0, n - 1])
+
+    # Deduplicate while preserving order
+    seen = set()
+    ordered_unique_idx = []
+    for i in selected_idx:
+        if i not in seen:
+            seen.add(i)
+            ordered_unique_idx.append(i)
+    ordered_unique_idx = np.array(ordered_unique_idx, dtype=int)
+
+    # Sort indices by original index to preserve input sequence
+    ordered_unique_idx.sort()
+
+    x_ds = x[ordered_unique_idx]
+    if y is None:
+        y_ds = None
+    else:
+        y_ds = y[ordered_unique_idx, ...]
+
+    return x_ds, y_ds, ordered_unique_idx
 
 
 #This if statement should be included at the end of any module
