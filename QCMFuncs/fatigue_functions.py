@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 import matplotlib.ticker as mticker
 from scipy.signal import savgol_filter
-from sympy import symbols, diff, log, sqrt, lambdify
+from sympy import symbols, diff, log, sqrt, lambdify, Rational
 from copy import deepcopy
 
 # a is the crack length
@@ -28,6 +28,8 @@ E_sym, nu_sym, B_sym, W_sym, L_sym, P_sym, alpha_sym, beta_sym, C_in_sym = (
     symbols(['E', 'nu', 'B', 'W', 'L', 'P', 'alpha', 'beta', 'C_in'], 
     positive=True, real=True))
 
+E_r_sym = E_sym/(1-nu_sym**2)
+
 # compliance expressions from Guinea et al. Eqs. 20-23
 # International Journal of Fracture 89: 103–116, 1998
 c1 = (-0.378*alpha_sym**3*log(1-alpha_sym)+alpha_sym**2*
@@ -42,13 +44,13 @@ c3 = (-0.176*alpha_sym**3*log(1-alpha_sym)+alpha_sym**2*
             (8.91-4.88*alpha_sym-0.435*alpha_sym**2+0.26*alpha_sym**3)/
             ((1-alpha_sym)**2*(1+2.9*alpha_sym)))
 
-C_sym = (beta_sym**3/(48*E_sym*B_sym))+(1/(E_sym*B_sym))*(c1 + 
+C_sym = (beta_sym**3/(48*E_sym*B_sym))+(1/(E_r_sym*B_sym))*(c1 + 
                                  beta_sym*c2+beta_sym**2*c3)
 
 
 # now calculate G and K from this compliance expression
 G_sym = (P_sym**2/(2*W_sym*B_sym))*diff(C_sym,alpha_sym)
-K_sym = sqrt(G_sym*E_sym/(1-nu_sym**2))
+K_sym = sqrt(G_sym*E_r_sym)
 
 
 # define the estimate for K valid for beta = 4
@@ -62,10 +64,10 @@ q1 = 0.98+3.77*beta_sym
 q2 = -(9.1+2.9*beta_sym**2)/(1+0.168*beta_sym)
 q3 = -3.2*beta_sym+8.9*beta_sym**2
 
-alpha_calc = (C_in_sym*E_sym*B_sym)**0.5/((C_in_sym*E_sym*B_sym + 
-                                           q1*(C_in_sym*E_sym*B_sym)**0.5 + 
-                               q2*(C_in_sym*E_sym*B_sym)**(1/3) + q3)**0.5)
-
+alpha_calc = (C_in_sym*E_r_sym*B_sym)**(Rational(1,2))/((C_in_sym*E_r_sym*B_sym + 
+                               q1*(C_in_sym*E_r_sym*B_sym)**Rational(1,2)+ 
+                               q2*(C_in_sym*E_r_sym*B_sym)**Rational(1,3) + 
+                               q3)**Rational(1,2))
 
 def calc_K(alpha, beta, B, P, W, nu):
     """
@@ -125,7 +127,7 @@ def calc_P(alpha, beta, B, K, W, nu):
                     K_sym, 'numpy')
     return K/func(alpha, beta, 1, B, W, nu)
 
-def calc_C(alpha, beta, B, E):
+def calc_C(alpha, beta, B, E, nu):
     """
     Calculate the value of the symbolic expression C_sym using provided parameters.
 
@@ -138,12 +140,12 @@ def calc_C(alpha, beta, B, E):
     Returns:
         float: Calculated sample compliance.
     """
-    func = lambdify([alpha_sym, beta_sym, B_sym, E_sym], C_sym, 'numpy')
-    return func(alpha, beta, B, E)
+    func = lambdify([alpha_sym, beta_sym, B_sym, E_sym, nu_sym], C_sym, 'numpy')
+    return func(alpha, beta, B, E, nu)
 
 from scipy.optimize import root_scalar
 
-def calc_alpha_single(C, beta, B, E):
+def calc_alpha_single(C, beta, B, E, nu):
     """
     Find the value of alpha (0 < alpha < 1) that yields the target compliance C.
 
@@ -152,21 +154,22 @@ def calc_alpha_single(C, beta, B, E):
         beta (float): Parameter beta.
         B (float): Sample dimension parallel to crack.
         E (float): Young's modulus.
+        nu (float): Poisson's ratio.
 
 
     Returns:
-        float: Estimated alpha value that gives the target C.
+        float: Alpha value that gives the target C.
 
     Raises:
         ValueError: If root finding does not converge.
     """
     def objective(alpha):
-        return calc_C(alpha, beta, B, E) - C
+        return calc_C(alpha, beta, B, E, nu) - C
     
     try:
         result = root_scalar(objective, bracket=(0.01, 0.99), method='brentq')
     except:
-        print(f'problem with beta={beta}, B={B}, E={E}, C={C}')
+        print(f'problem with beta={beta}, B={B}, E={E}, nu={nu}, C={C}')
         sys.exit()
     
     if result.converged:
@@ -184,17 +187,15 @@ def calc_alpha_approx(C, beta, B, E):
 
     Parameters:
         C (float): Sample compliance.
-        
         beta (float): L/W (span normlized by sample width).
-        
         B (float): Sample dimension parallel to crack.
-        
         E (float): Young's modulus.
+        nu (float): Poisson's ratio.
 
     Returns:
         float: Evaluated result of alpha_calc with the given inputs.
     """
-    func = lambdify([C_in_sym, beta_sym, B_sym, E_sym], alpha_calc, 'numpy')
+    func = lambdify([C_in_sym, beta_sym, B_sym, E_sym, nu_sym], alpha_calc, 'numpy')
     return func(C, beta, B, E)
 
 
@@ -249,7 +250,7 @@ def make_data_dict(directory, df_in, row):
             
     Returns:
         data_dict (dictionary):
-            Dictionary suitable of data suitable for subsequent analysis.
+            Dictionary of data suitable for subsequent analysis.
     '''
                 
     header, df = read_file(directory, df_in, row)

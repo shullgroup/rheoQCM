@@ -36,7 +36,9 @@ warnings.filterwarnings("ignore", message="No artists with labels found to put i
 
 #  Broderick's color palette
 palettes = {'Lewis':['#0093F5', '#F08E2C', '#000000', '#424EBD', '#B04D25', 
-                     '#75CA85', '#C892D6', '#007d00']}
+                     '#75CA85', '#C892D6', '#007d00'],
+            'Cook':['#4477AA', '#228833','#CCBB44','#EE6677', '#AA3377', 
+                    '#AA3377', '#66CCEE', '#BBBBBB']}
 
 def set_color_palette(palette):
     # changes the color scheme for rest of the python session
@@ -1528,6 +1530,8 @@ def solve_for_props(delfstar, calc, props_calc_in, layers_in, **kwargs):
         properties we want to solve for.  Generally in form
         'grho3_n', 'phi_n', 'drho_n', where n is the layer
         if no n is given ('grho3', for example) n is assumed to be 1
+        a blank list ([]) means no calculations are done - used if
+            you just want to plot delf and delg
         
     layers (dictionary):
         Dictionary with layer properties
@@ -2695,6 +2699,8 @@ def plot_props(soln, figdic, **kwargs):
     layer_label (Boolean):
         True if we want to add layer number to legend on property plot
             default is False
+    show_calc (Boolean): default is true
+        True if we want to plot the calculated values of delf and delg
 
 
     Returns
@@ -2726,6 +2732,8 @@ def plot_props(soln, figdic, **kwargs):
     
     nplot = kwargs.get('nplot', [3,5])
     n_color = kwargs.get('n_color', {1:'C0', 3:'C1', 5:'C2', 7:'C3', 9:'C5'})
+    
+    show_calc = kwargs.get('show_calc', True)
     
     # drop dataframe rows with all nan
     soln = soln.dropna(how='all') 
@@ -2925,9 +2933,8 @@ def plot_props(soln, figdic, **kwargs):
             ferr_p = np.real(soln_tmp[f'fstar_err_p_{n}'])/n
             ferr_t = np.real(soln_tmp[f'fstar_err_t_{n}'])/n
             df_min.append(np.nanmin(dfval-ferr_t))
-            df_min.append(np.nanmin(dfval2))
             df_max.append(np.nanmax(dfval+ferr_t))
-            df_max.append(np.nanmax(dfval2))
+
             if figdic['info']['checklabels'][n]:
                 label_expt = f'n={n}: expt'
                 label_calc = f'n={n}: calc'
@@ -2945,10 +2952,13 @@ def plot_props(soln, figdic, **kwargs):
             ax['checks'][0].errorbar(soln_tmp['xdata'], 
                        dfval, yerr = ferr_t, fmt='x', color = n_color[n],       
                        linewidth = 0.5, markersize = 0)
-            calcvals = np.real(soln_tmp[f'delfstar_calc_{n}'])/n
-            ax['checks'][0].plot(soln_tmp['xdata'], calcvals, '-', 
-                    color = n_color[n], markerfacecolor='none', 
-                    label=label_calc)
+            if show_calc:
+                calcvals = np.real(soln_tmp[f'delfstar_calc_{n}'])/n
+                ax['checks'][0].plot(soln_tmp['xdata'], calcvals, '-', 
+                        color = n_color[n], markerfacecolor='none', 
+                        label=label_calc)
+                df_min.append(np.nanmin(dfval2))
+                df_max.append(np.nanmax(dfval2))
             
             # don't include multiple harmonic labels
             figdic['info']['checklabels'][n]=False
@@ -2964,16 +2974,17 @@ def plot_props(soln, figdic, **kwargs):
             dgval2 = np.imag(soln_tmp[f'delfstar_calc_{n}'])/n
             gerr = np.imag(soln_tmp[f'fstar_err_t_{n}'])/n
             dg_min.append(np.nanmin(dgval-gerr))
-            dg_min.append(np.nanmin(dgval2))
             dg_max.append(np.nanmax(dgval+gerr))
-            dg_max.append(np.nanmax(dgval2))
             ax['checks'][1].errorbar(soln_tmp['xdata'], dgval, yerr = gerr, 
                                      fmt = 'x',  
                                      color = n_color[n],
                                      capsize = 3)
-            calcvals = np.imag(soln_tmp[f'delfstar_calc_{n}'])/n
-            ax['checks'][1].plot(soln_tmp['xdata'], calcvals, '-', 
-                          color = n_color[n], markerfacecolor='none')
+            if show_calc:
+                calcvals = np.imag(soln_tmp[f'delfstar_calc_{n}'])/n
+                ax['checks'][1].plot(soln_tmp['xdata'], calcvals, '-', 
+                              color = n_color[n], markerfacecolor='none')
+                dg_min.append(np.nanmin(dgval2))
+                dg_max.append(np.nanmax(dgval2))
         dg_min = min(dg_min)
         dg_max = max(dg_max)   
         
@@ -4004,8 +4015,8 @@ def add_t_diff(df_in):
     if 't' not in df_in.columns:
         return
     df = deepcopy(df_in)
-    df.insert(2, 't_prev', 'nan')
-    df.insert(3, 't_next', 'nan')
+    df.insert(2, 't_prev', np.nan)
+    df.insert(3, 't_next', np.nan)
     df.loc[:,'t_next'] = -df.loc[:,'t'].diff(periods=-1)    
     df.at[df.index[-1], 't_next'] = np.inf
     df.loc[:,'t_prev'] = -df.loc[:,'t'].diff(periods=1)

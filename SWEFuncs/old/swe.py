@@ -1,5 +1,7 @@
 # swe.py
-import sympy as sp
+from sympy import (symbols, Matrix, diff, 
+                   sqrt, eye, lambdify, simplify,
+                   solve, exp, sin, cos, atan, latex, preview)
 import numpy as np
 from sympy.physics.quantum import TensorProduct
 import scipy.optimize as optimize
@@ -21,55 +23,58 @@ parms = {
          'h': 1.1e-3, # material thickness
          'l': 0.02, # indenter length
          'fr_s':0.1, # fractional error in contact stiffness ratio
-         'fr_E':0.1} # fractional error in E_L/mu_T
+         'fr_E':0.1} # fractional error in E_par/mu_T
 
 
 # invariants
-i1, i4, i5, = sp.symbols(['I_1', 'I_4', 'I_5']) 
+i1, i4, i5, = symbols(['I_1', 'I_4', 'I_5']) 
 
 # strains
-lambda_L, delta = sp.symbols(['lambda_L', 'delta'],  positive = True)
+laml, delta = symbols(['lambda_ell', 'delta'],  positive = True)
+
+# symbolic forms of various incremental moduli
+mutt, mutl, mult =symbols(['mu_tt', 'mu_t\ell', 'mu_\ellt'])
 
 # symbolic forms for angle used to define group velocity
-theta_g = sp.symbols('theta_g', real=True)
+thetag = symbols('theta_g', real=True)
 
-# parameters used in HGY formulation
-c_2, c_4, mu_T, mu_L, E_L, beta = sp.symbols(['c_2', 'c_4', 'mu_T', 
-            'mu_L', 'E_L',  'beta'], positive = True)
+# parameters used in HGY formu_paration
+c2, c4, mu_T, mu_par, E_par, beta = symbols(['c_2', 'c_4', r'mu_T', 
+            r'mu_L', r'E_L',  'beta'], positive = True)
 
 # rotation angle arond 1 axis for incremental strain
-theta = sp.symbols('theta', real=True)
+theta = symbols('theta', real=True)
 
 # define various ratios used in contact stiffness equations
-a, h = sp.symbols(['a', 'h'])
+a, h = symbols(['a', 'h'])
 
 # hydrostatic pressure term
-p = sp.symbols('p')
+p = symbols('p')
 
 # vector pointing along fiber axis
-m = sp.Matrix([[0],[0],[1]])
+m = Matrix([[0],[0],[1]])
 
 # strain energy funtion from  Hegde et al. Int. J. of Non-Linear Mech. 
 # 160, 104663 (2024) (http://dx.doi.org/10.1016/j.ijnonlinmec.2024.104663)
-W =((mu_T/(2*c_2))*(sp.exp(c_2*(i1-3))-1)+((E_L+mu_T-4*mu_L)/(2*c_4))*
-                (sp.exp(c_4*(sp.sqrt(i4)-1)**2)-1) + ((mu_T-mu_L)/2)*(2*i4-i5-1))
+W =((mu_T/(2*c2))*(exp(c2*(i1-3))-1)+((E_par+mu_T-4*mu_par)/(2*c4))*
+                (exp(c4*(sqrt(i4)-1)**2)-1) + ((mu_T-mu_par)/2)*(2*i4-i5-1))
 
 # F for extensional prestrain
-F0 = (sp.Matrix([[1/sp.sqrt(lambda_L), 0, 0],
-              [0, 1/sp.sqrt(lambda_L), 0],
-              [0, 0, lambda_L]]))
+F0 = (Matrix([[1/sqrt(laml), 0, 0],
+              [0, 1/sqrt(laml), 0],
+              [0, 0, laml]]))
 
 # rotation matrix for rotation of theta degrees around axis 0
-R = sp.Matrix([[1, 0, 0],
-           [0, sp.cos(theta), -sp.sin(theta)],
-           [0, sp.sin(theta), sp.cos(theta)]])
+R = Matrix([[1, 0, 0],
+           [0, cos(theta), -sin(theta)],
+           [0, sin(theta), cos(theta)]])
 
 def F(idx):
     '''
     F is the deformation gradient tensor.  idx is a tuple describing the 
     deformation: 1st number is displacement direction, 2nd is gradient direction.
     example values of idx are: (descriptions are with theta = 0)
-    (1,1) or (1,1) transverse extension (lambda_L = 1 only)
+    (1,1) or (1,1) transverse extension (laml = 1 only)
     (2,2) longitudinal extension 
     (0,1) transverse polarization, transverse propagation (tt)
     (0,2) or (1,2) transverse polarization, longitudinal propagation (tl)
@@ -83,23 +88,23 @@ def F(idx):
           'SV': swe.modulus((1,2,1))}
     '''
            
-    F_inc = (sp.Matrix([[1, 0, 0],
+    F_inc = (Matrix([[1, 0, 0],
                     [0, 1, 0],
                     [0, 0, 1]]))
     
     F_inc[idx[0],idx[1]] = delta # this is the increment to F
     
-    if idx==(0,0):  # transverse extensiont, lambda_L = 1 by definition
-        F_inc[1,1] = sp.sqrt(1/(beta*delta))
-        F_inc[2,2] = sp.sqrt(beta/delta)
+    if idx==(0,0):  # transverse extensiont, laml = 1 by definition
+        F_inc[1,1] = sqrt(1/(beta*delta))
+        F_inc[2,2] = sqrt(beta/delta)
     
-    if idx==(1,1):  # transverse extensiont, lambda_L = 1 by definition
-        F_inc[0,0] = sp.sqrt(1/(beta*delta))
-        F_inc[2,2] = sp.sqrt(beta/delta)
+    if idx==(1,1):  # transverse extensiont, laml = 1 by definition
+        F_inc[0,0] = sqrt(1/(beta*delta))
+        F_inc[2,2] = sqrt(beta/delta)
     
     if idx==(2,2): # extension along fiber axes
-        F_inc[0,0] = sp.sqrt(1/delta)
-        F_inc[1,1] = sp.sqrt(1/delta)
+        F_inc[0,0] = sqrt(1/delta)
+        F_inc[1,1] = sqrt(1/delta)
     
     # we put a third element in the idx tuple if we want to use the angle
     if len(idx)>2:
@@ -111,7 +116,7 @@ def C(F):
     # right Cauchy-Green Tensor
     return F.transpose()*F
 
-def C_2(F):
+def C2(F):
     return C(F)*C(F)
 
 def B(F):
@@ -137,32 +142,17 @@ def stress(idx):
     tp4 = TensorProduct(F(idx)*m, F(idx)*m).reshape(3,3)
     tp5 = (TensorProduct(F(idx)*m, B(F(idx))*F(idx)*m).reshape(3,3)+
            TensorProduct(B(F(idx))*F(idx)*m, F(idx)*m).reshape(3,3))
-    W1 = sp.diff(W, i1)
-    W4 = sp.diff(W, i4)
-    W5 = sp.diff(W, i5)
-    sigma = -p*sp.eye(3) + 2*W1*B(F(idx))+2*W4*tp4+2*W5*tp5
+    W1 = diff(W, i1)
+    W4 = diff(W, i4)
+    W5 = diff(W, i5)
+    sigma = -p*eye(3) + 2*W1*B(F(idx))+2*W4*tp4+2*W5*tp5
     
-    pval = sp.solve(sigma[0,0], p)[0]
+    pval = solve(sigma[0,0], p)[0]
     sigma = sigma.subs(p, pval)
     sigma = sigma.subs(i1, I1(F(idx)))
     sigma = sigma.subs(i4, I4(F(idx)))
     sigma = sigma.subs(i5, I5(F(idx)))
-    return sp.simplify(sigma)
-
-def stressi(idx):
-    # Ogden Eq. 2.47
-    tp4 = TensorProduct(F(idx)*m, F(idx)*m).reshape(3,3)
-    tp5 = (TensorProduct(F(idx)*m, B(F(idx))*F(idx)*m).reshape(3,3)+
-           TensorProduct(B(F(idx))*F(idx)*m, F(idx)*m).reshape(3,3))
-    W1 = sp.diff(W, i1)
-    W4 = sp.diff(W, i4)
-    W5 = sp.diff(W, i5)
-    sigma = -p*sp.eye(3) + 2*W1*B(F(idx))+2*W4*tp4+2*W5*tp5
-    
-    pval = sp.solve(sigma[0,0], p)[0]
-    sigma = sigma.subs(p, pval)
-
-    return sp.simplify(sigma)
+    return simplify(sigma)
 
 def modulus(idx):
     # calculate differential modulus from stress function
@@ -171,39 +161,15 @@ def modulus(idx):
     else:
         stress_tensor = stress(idx)
     stress_component = stress_tensor[idx[0], idx[1]]
-    mod = sp.diff(stress_component, delta)
+    mod = diff(stress_component, delta)
     if idx[0]!=idx[1] : # don't need to do this for the extension cases
         mod = mod.subs(delta, 0)
     else:
         mod = mod.subs(delta, 1)
-    mod = sp.simplify(mod)
+    mod = simplify(mod)
     return mod
 
-# it's useful to have expressions for some specific incremental moduli
-# for the linearized mode we need the stress incrementa modluli
-mu_lt_sym = modulus((2, 1))
-mu_tl_sym = modulus((1, 2))
-mu_tt_sym = modulus((0, 1))
-E_ll_sym = modulus((2, 2))
-sigma_l_sym = stress((2,2))[2,2].subs(delta, 1)
-#sigma_l_sym = mu_tl_sym - mu_lt_sym - gives same result as above
-phi_i_sym = mu_lt_sym/mu_tt_sym-1
-zeta_i_sym = sp.Rational(1,4)*(E_ll_sym/mu_tt_sym-3)
-
-
-mu_lt, mu_tl, mu_tt, phi_i, zeta_i, sigma_l = sp.symbols(['mu_lt', 'mu_tl',
-        'mu_tt','phi_i', 'zeta_i', 'sigma_l'])
-
-# these functions for mu_SH and mu_SV are the  new simplified versions, but
-# are equivalent to what is in the paper
-
-mu_SH = (mu_tt*(1+phi_i)+sigma_l)*(sp.cos(theta))**2+mu_tt*(sp.sin(theta))**2
-
-mu_SV = (mu_tt*(1+phi_i+(zeta_i-phi_i)*(sp.sin(2*theta))**2)+
-                  sigma_l*((sp.cos(theta))**2-sp.Rational(1,2)*(sp.sin(2*theta))**2))
-
-
-def lambdify2(function, xvars, parms):
+def make_plotable(function, xvars, parms):
     '''
     function is a symbolic function of many variables
     this returns a lambdified version of the function as a function of 
@@ -235,10 +201,9 @@ def lambdify2(function, xvars, parms):
                 return np.full_like(var_array, const, dtype=float)
 
     else:
-        plot_function = sp.lambdify(xvars, function, modules=["numpy"])
+        plot_function = lambdify(xvars, function, modules=["numpy"])
         
     return plot_function
-
 
 def guess_beta(lamtval, parms):
     # low strain value for beta, used as initial guess calc_beta
@@ -253,7 +218,7 @@ def calc_beta(lamtval, parms):
     '''
     sigma = stress((1,1))[2,2]
     sigma = sigma.subs(delta, lamtval)
-    ftosolve = lambdify2(sigma, [beta], parms)    
+    ftosolve = make_plotable(sigma, [beta], parms)    
     guess = guess_beta(lamtval, parms)
     soln = optimize.least_squares(ftosolve, guess, bounds=(0.5*guess, 2*guess))    
     return soln['x']
@@ -268,18 +233,18 @@ def transverse_extension_single(lamtval, parms, **kwargs):
     else:
         beta_val = guess_beta(lamtval, parms)
     sigma = stress((1,1))[1,1]
-    sigma = sigma.subs(beta, beta_val).subs(lambda_L, 1)
-    stress_func = lambdify2(sigma, [delta], parms)
+    sigma = sigma.subs(beta, beta_val).subs(laml, 1)
+    stress_func = make_plotable(sigma, [delta], parms)
     return stress_func(lamtval)
 
 def group_velocity(mu):
     # input here is mu (either SH or SV)
-    v = sp.sqrt(mu)
-    v2 = v*sp.sin(theta)+sp.diff(v, theta)*sp.cos(theta)
-    v3 = v*sp.cos(theta)-sp.diff(v, theta)*sp.sin(theta)
-    vg = sp.sqrt(v2**2+v3**2) # group velocity
-    theta_g = theta + sp.atan(sp.diff(v,theta)/v) # angle of propagation
-    return vg, theta_g
+    v = sqrt(mu)
+    v2 = v*sin(theta)+diff(v, theta)*cos(theta)
+    v3 = v*cos(theta)-diff(v, theta)*sin(theta)
+    vg = sqrt(v2**2+v3**2) # group velocity
+    thetag = theta + atan(diff(v,theta)/v) # angle of propagation
+    return vg, thetag
 
 transverse_extension = np.vectorize(transverse_extension_single)
 calc_beta_vec = np.vectorize(calc_beta)
@@ -287,20 +252,20 @@ guess_beta_vec = np.vectorize(guess_beta)
 
 # Now we have some functions related to the indentation experiments
 # specify the varables
-rs = sp.symbols (r'r_s', real=True, positive=True) #s_perp/s_parallel
-alpha, beta, A = sp.symbols(['alpha', 'beta', 'A'])
-rmu = sp.symbols('r_mu', real=True, positive=True) #mu_L/mu_T
-rE = sp.symbols('r_E', real=True, positive = True)
-frs, frE = sp.symbols(['fr_s', 'fr_E'], real = True, positive =True)
+rs = symbols (r'r_s', real=True, positive=True) #s_perp/s_parallel
+alpha, beta, A = symbols(['alpha', 'beta', 'A'])
+rmu = symbols('r_mu', real=True, positive=True) #mu_L/mu_T
+rE = symbols('r_E', real=True, positive = True)
+frs, frE = symbols(['fr_s', 'fr_E'], real = True, positive =True)
 
-def mu_L_error(df, x_val, x_err, s_ratio, s_ratio_err):
+def mu_par_error(df, x_val, x_err, s_ratio, s_ratio_err):
     # create a dictionary for the relvant values of the stiffness ratio
     s = {0:s_ratio, # this is the actual value of r
         -1:(1-s_ratio_err)*s_ratio, # this is the lower limit of r, given the error
          1:(1+s_ratio_err)*s_ratio}  # this is the upper limit of r, given the error
     
     # now we define a similar dictionary for the relevant values of the 
-    # normalized value of E_L
+    # normalized value of E_parallel
     x = {0:x_val, # this is the actual value of r
         -1:(1-x_err)*x_val, # this is the lower limit of r, given the error
          1:(1+x_err)*x_val}  # this is the upper limit of r, given the error 
@@ -315,7 +280,7 @@ def mu_L_error(df, x_val, x_err, s_ratio, s_ratio_err):
     yerr_s=[[yval[0][0]-yval[-1][0]], [yval[1][0]-yval[0][0]]]
     yerr_s = np.array(yerr_s)
     
-    # now do the same thing for error from uncertainty in x (x is normallized E_L)
+    # now do the same thing for error from uncertainty in x (x is normallized E_par)
     yerr_x=[ [yval[0][0]-yval[0][-1]], [yval[0][1]-yval[0][0]]]
     yerr_x = np.array(yerr_x)
     
@@ -325,20 +290,20 @@ def ah_corr(ah):
     # ah here is the a/h ratio
     return -0.27 *np.log(ah/2)
 
-def s_parallel(lambda_L_vals, parms):
+def s_parallel(laml_vals, parms):
     # returns parallel contact modulus for different pre-strains
     ah = parms['a']/parms['h']
-    mu_Tt = lambdify2(modulus((0,1)), [lambda_L], parms)(lambda_L_vals)
+    mu_Tt = make_plotable(modulus((0,1)), [laml], parms)(laml_vals)
     s_parallel = mu_Tt/ah_corr(ah)
     return s_parallel
 
-def s_perp(lambda_L_vals, df, parms, shear_type):
+def s_perp(laml_vals, df, parms, shear_type):
     '''
     Calculate contact modulus for indenter aligned perpendicular to symmetry axis.
     
     Parameters
     ----------
-    lambda_L_vals : array of floats
+    laml_vals : array of floats
         extension ratio in fiber direction.
         
     df : dataframe
@@ -355,33 +320,33 @@ def s_perp(lambda_L_vals, df, parms, shear_type):
         low-strain contact stiffness useing mu_tl or mu_lt as the shear modulus.
     '''
     
-    Ell = lambdify2(modulus((2,2)), [lambda_L], parms)(lambda_L_vals)
-    mu_T = lambdify2(modulus((0,1)), [lambda_L], parms)(lambda_L_vals)
+    Ell = make_plotable(modulus((2,2)), [laml], parms)(laml_vals)
+    mu_T = make_plotable(modulus((0,1)), [laml], parms)(laml_vals)
     if shear_type=='tl':
-        mu_L = lambdify2(modulus((0,2)), [lambda_L], parms)(lambda_L_vals)
+        mu_par = make_plotable(modulus((0,2)), [laml], parms)(laml_vals)
     elif shear_type=='lt':
-        mu_L = lambdify2(modulus((2,0)), [lambda_L], parms)(lambda_L_vals)
+        mu_par = make_plotable(modulus((2,0)), [laml], parms)(laml_vals)
     else:
         print(f'shear_type of {shear_type} is not valid')
         return
     x = Ell/(3*mu_T)
-    y = mu_L/mu_T
+    y = mu_par/mu_T
     
     rs=s_ratio_func(df)(x,y)
 
-    s_perp = s_parallel(lambda_L_vals, parms)*rs
+    s_perp = s_parallel(laml_vals, parms)*rs
     return s_perp
 
 def print_latex(expression):
     # print the latex code for the specified expression
-    latex_expression = sp.latex(expression)
+    latex_expression = latex(expression)
     print(latex_expression)
 
 def save_image(expression, filename):
     with open(filename, 'wb') as outputfile:
         preamble = "\\documentclass[10pt]{standalone}\n" \
                     "\\usepackage{amsmath,amsfonts}\\begin{document}"
-        sp.preview(expression, viewer='BytesIO', outputbuffer=outputfile,
+        preview(expression, viewer='BytesIO', outputbuffer=outputfile,
                 output = 'pdf', preamble=preamble)
            
 def get_ah_values(df):
@@ -435,8 +400,8 @@ def s_ratio_func(df):
       Returns
       -------
       Function
-          function of x, y, where x is E_L/3mu_T and y
-          is mu_L/mu_T.
+          function of x, y, where x is E_parallel/3mu_T and y
+          is mu_parallel/mu_T.
     '''
     
     def loginter2d(x, y, z):
@@ -459,7 +424,7 @@ def s_ratio_func(df):
 
 def fixed_s_ratio_func(df, s_ratio):
     '''
-    Fitting function for mu_L/mu_T vs E_L/3mu_T at fixed
+    Fitting function for mu_parallel/mu_T vs E_parallel/3mu_T at fixed
     value of the contact stiffness ratio, r_perp/r_parallel.
 
     Parameters
@@ -473,7 +438,7 @@ def fixed_s_ratio_func(df, s_ratio):
     Returns
     -------
     Function
-        function of x where x is E_L/3mu_T and y
+        function of x where x is E_parallel/3mu_T and y
         is .
     '''
 
@@ -515,7 +480,7 @@ def make_s_ratio_plot(df, xrange, yrange):
     Returns
     -------
     Fig and ax handles for contour plot of stiffness ratio as a function of
-    E_L/3mu_T and mu_L/mu_T.
+    E_parallel/3mu_T and mu_parallel/mu_T.
     '''
     
     zfunc = s_ratio_func(df)
@@ -579,19 +544,4 @@ def add_s_ratio_line(df, ax, s_ratio, fmt, **kwargs):
     ax.plot(xr, yr, fmt, label = label)
     ax.set_ylim([ymin, ymax])
     return 
-
-def wrap_for_python_code(s: str, width=80, indent=4):
-    """
-    Return Python source code that reconstructs string `s`, formatted so that
-    each source line is ≤ width characters. Uses adjacent string literals.
-    """
-    max_chunk = width - indent - 2  # subtract 2 for the quotes
-    chunks = [s[i:i+max_chunk] for i in range(0, len(s), max_chunk)]
-
-    indent_spaces = " " * indent
-    lines = ["(\n"]
-    lines += [f'{indent_spaces}"{c}"\n' for c in chunks]
-    lines.append(")\n")
-
-    return "".join(lines)
     
