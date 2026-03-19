@@ -1598,7 +1598,7 @@ def solve_for_props(delfstar, calc, props_calc_in, layers_in, **kwargs):
             values that didn't allow calculation to be performed.
 
     """
-    # add layer number as 1 if not specified
+    # add layer number as 1 if not specified if prop is grho3, phi or drho
     props_calc=[]
     calc = update_calc(calc)
     layers = deepcopy(layers_in)
@@ -1606,7 +1606,7 @@ def solve_for_props(delfstar, calc, props_calc_in, layers_in, **kwargs):
     for i, prop in enumerate(props_calc):
         # remove any plotting designations ('log', etc.)
         prop = prop.split('.')[0]
-        if len(prop.split('_'))==1:
+        if prop in ['grho3','phi', 'drho'] and len(prop.split('_'))==1:
             props_calc[i]=prop+'_1'
         else:
             props_calc[i] = prop
@@ -2488,8 +2488,10 @@ def make_prop_axes(propnames, **kwargs):
             ax['props'][p].set_ylabel('ylabel')
 
 
-    info = {'props':props, 'xunit':xunit,
-            'maplabels':maplabels, 'checklabels':checklabels,
+    info = {'props':props,
+            'xunit':xunit,
+            'maplabels':maplabels, 
+            'checklabels':checklabels,
             'norm_by_n':norm_by_n}
     
 
@@ -2631,8 +2633,8 @@ def make_data_array(var, soln, prop_error, **kwargs):
                 data_array[n]=data_array[n]/int(n)
        
           
-    elif prop in soln.keys():
-        data_array = soln[prop]
+    elif ext[0] in soln.keys():
+        data_array = soln[ext[0]]
    
     else:
         print(f'no data - not a recognized prop type ({ext[0]})')
@@ -2810,7 +2812,10 @@ def plot_props(soln, figdic, **kwargs):
         # create layer labels if more than 1 layer is used
         if props[p].split('.')[0] not in ['delf', 'delg', 'delfn', 'delgn']:
             if len(soln.iloc[0]['layers'].keys())>1:
-                layer_num = props[p].split('_')[1].split('.')[0]
+                if len(props[p].split('_'))==1:
+                    layer_num = 1
+                else:
+                    layer_num = props[p].split('_')[1].split('.')[0]
                 if layer_label:
                     label = label_input + f' layer {layer_num}'
                 else:
