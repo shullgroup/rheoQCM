@@ -3196,8 +3196,13 @@ def read_xlsx(infile, **kwargs):
     # include all values of n that we want and that exist in the input file
     nvals = []
     for n in nvals_in:
-        if f'f{n}' in df.keys():
-            nvals.append(n)
+        col = f"f{n}"
+        if col in df.columns:
+            # Try to coerce to numeric; non-numeric become NaN.
+            # Keep n only if there's at least one numeric (non-NaN after coercion).
+            if pd.to_numeric(df[col], errors='coerce').notna().any():
+                nvals.append(n)
+
         
     # keep all rows unless we are told to check for specific marks
     df['keep_row']=1  
@@ -3350,6 +3355,7 @@ def fit_T_coef(df, nvals, varvals):
             
             # make the fitting function
             idx = np.isfinite(temp) & np.isfinite(ydata)
+            if temp[idx].empty: continue
             T_coef[var][n]=np.polyfit(temp[idx], ydata[idx], 3)
 
             # plot the data if fit was not obtained
