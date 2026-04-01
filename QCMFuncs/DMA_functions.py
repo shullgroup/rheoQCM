@@ -140,6 +140,7 @@ def readDMA(path, **kwargs):
         
     
     df['phi'] = np.degrees(np.arctan(df['tand']))
+    df['Estar'] = df['storage']+1j*df['loss']
     return df
 	
     
@@ -373,11 +374,23 @@ def plot_tTS(df, ax, prop, **kwargs):
     x_min, x_max = np.inf, -np.inf
     y_min, y_max = np.inf, -np.inf
 
+    # insert new columns we'll usefor shift factors and master curve frequencies
+    if 'aT' not in df.columns:
+        df.insert(3, 'aT', np.nan)
+    if 'faT' not in df.columns:
+        df.insert(4, 'waT', np.nan)
+    df['f'] = df['w']/(2*np.pi)
+    df['faT'] = np.nan
     for t in temps:
         i = int(np.round((t - Tmin) / tempstep))
         subset = df.query('temp > @t - 0.5 and temp < @t + 0.5')
         if t not in aT or t not in bT:
             continue
+        
+        idx = subset.index
+        df.loc[idx, 'aT']=aT[t]
+        df.loc[idx, 'waT']=df.loc[idx, 'w']*aT[t]
+        df.loc[idx, 'faT']=df.loc[idx, 'f']*aT[t]
 
         x_vals = (subset['freq'].to_numpy(dtype=float) *
                   xmult * float(aT[t]))
@@ -420,12 +433,12 @@ def plot_tTS(df, ax, prop, **kwargs):
 
     has_pts = (np.isfinite(x_min) and np.isfinite(x_max) and
                np.isfinite(y_min) and np.isfinite(y_max))
-    return {
+    return (df.dropna(), {
         'x_min': None if not has_pts else x_min,
         'x_max': None if not has_pts else x_max,
         'y_min': None if not has_pts else y_min,
         'y_max': None if not has_pts else y_max,
-    }
+    })
 
 
 
@@ -1712,6 +1725,120 @@ def frac_lin_solid(f, Er, Eg, lambda_t, lambda_g, tau_g):
         (1j * f * tau_g) ** (-lambda_t) + (1j * f * tau_g) ** (-lambda_g)
     )
 
+
+def residuals_old(params, f, Ep_data, Epp_data, Efunc):
+    """
+    General log-log residuals for fitting complex modulus models.
+
+    Parameters
+    ----------
+    params : array_like
+        Model parameters passed to Efunc
+    f : array_like
+        Frequency (Hz)
+    Ep_data : array_like
+        Measured storage modulus E'
+    Epp_data : array_like
+        Measured loss modulus E''
+    Efunc : callable
+        Function of the form Efunc(f, *params) -> complex array
+
+    Returns
+    -------
+    residuals : ndarray
+        Stacked log-log residuals [E', E'']
+    """
+
+    # Evaluate complex modulus model
+    E = Efunc(f, *params)
+
+    Ep_model = E.real
+    Epp_model = E.imag
+
+
+    r_Ep = np.log(Ep_model / Ep_data)
+    r_Epp = np.log(Epp_model / Epp_data)
+
+    # Equal weighting of storage and loss
+    return r_Ep  #np.hstack([r_Ep, r_Epp])
+
+
+def residuals(params, f, Estar_data, Efunc):
+    """
+    General log-log residuals for fitting complex modulus models.
+
+    Parameters
+    ----------
+    params : array_like
+        Model parameters passed to Efunc
+    f : array_like
+        Frequency (Hz)
+    Estar_data : array_like
+        Complex modulus E
+    Efunc : callable
+        Function of the form Efunc(f, *params) -> complex array
+
+    Returns
+    -------
+    residuals : ndarray
+        Stacked log-log residuals [E', E'']
+    """
+
+    # Evaluate complex modulus model
+    E_model = np.abs(Efunc(f, *params))
+    E_data = np.abs(Estar_data)
+    
+    return np.abs(np.log(E_model/E_data))-1
+
+def Estar_fit(f, Estar, Efunc, p0, bounds):    
+    f = np.asarray(f)          
+    Estar = np.asarray(Estar) 
+    result = least_squares(
+        residuals,
+        p0,
+        args=(f, Estar, Efunc),
+        bounds=bounds,
+        loss='linear',
+        x_scale='jac')
+    
+    popt = result.x
+    
+    r = result.fun
+    J = result.jac
+    
+    m = r.size
+    n = popt.size
+    sigma2 = np.sum(r**2) / (m - n)
+    
+    cov = sigma2 * np.linalg.inv(J.T @ J)
+    perr = np.sqrt(np.diag(cov))
+    return popt, perr
+
+def Estar_fit_old(f, Estar, Efunc, p0, bounds):    
+    f = np.asarray(f)          
+    Estar = np.asarray(Estar) 
+    Ep_data = np.real(Estar)
+    Epp_data = np.imag(Estar)
+    result = least_squares(
+        residuals_old,
+        p0,
+        args=(f, Ep_data, Epp_data, Efunc),
+        bounds=bounds,
+        loss='linear',
+        x_scale='jac')
+    
+    popt = result.x
+    
+    r = result.fun
+    J = result.jac
+    
+    m = r.size
+    n = popt.size
+    sigma2 = np.sum(r**2) / (m - n)
+    
+    cov = sigma2 * np.linalg.inv(J.T @ J)
+    perr = np.sqrt(np.diag(cov))
+    return popt, perr
 
 
 def round_n(numbers, n_figures):
