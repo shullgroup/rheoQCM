@@ -25,7 +25,9 @@ parms = {
 
 
 # invariants
-i1, i4, i5, = sp.symbols(['I_1', 'I_4', 'I_5']) 
+i={}
+for n in [1,4,5,6,7,8,9]:
+    i[n]=sp.symbols(f'I_{n}') 
 
 # strains
 lambda_L, delta = sp.symbols(['lambda_L', 'delta'],  positive = True)
@@ -51,8 +53,18 @@ m = sp.Matrix([[0],[0],[1]])
 
 # strain energy funtion from  Hegde et al. Int. J. of Non-Linear Mech. 
 # 160, 104663 (2024) (http://dx.doi.org/10.1016/j.ijnonlinmec.2024.104663)
-W =((mu_T/(2*c_2))*(sp.exp(c_2*(i1-3))-1)+((E_L+mu_T-4*mu_L)/(2*c_4))*
-                (sp.exp(c_4*(sp.sqrt(i4)-1)**2)-1) + ((mu_T-mu_L)/2)*(2*i4-i5-1))
+W =((mu_T/(2*c_2))*(sp.exp(c_2*(i[1]-3))-1)+((E_L+mu_T-4*mu_L)/(2*c_4))*
+                (sp.exp(c_4*(sp.sqrt(i[4])-1)**2)-1) +
+                ((mu_T-mu_L)/2)*(2*i[4]-i[5]-1))
+
+# define the incremental strain energy function and incrementa moduli
+mu_lt, mu_tl, mu_tt, E_ll, phi_i, zeta_i, sigma_l = sp.symbols(['mu_lt', 'mu_tl',
+        'mu_tt', 'E_ell_ell', 'phi_i', 'zeta_i', 'sigma_l'])
+
+Wi = sp.Rational(1,2)*(mu_tt*(i[1]-3)+
+    (E_ll+mu_tt-4*mu_lt)*(sp.sqrt(i[4])-1)**2
+    +(mu_tt-mu_lt)*(2*i[4]-i[5]-1))
+    # +(i[4]-1)*(i[6]-i[7]))
 
 # F for extensional prestrain
 F0 = (sp.Matrix([[1/sp.sqrt(lambda_L), 0, 0],
@@ -64,7 +76,7 @@ R = sp.Matrix([[1, 0, 0],
            [0, sp.cos(theta), -sp.sin(theta)],
            [0, sp.sin(theta), sp.cos(theta)]])
 
-def F(idx):
+def F(idx, incremental = False):
     '''
     F is the deformation gradient tensor.  idx is a tuple describing the 
     deformation: 1st number is displacement direction, 2nd is gradient direction.
@@ -81,6 +93,8 @@ def F(idx):
     (1,2,1) vertical shear mode as a functiono of angle 
     mu = {'SH': swe.modulus((0,2,1)),
           'SV': swe.modulus((1,2,1))}
+    
+    Set incremental to true if F only describes the incremental deformatoin
     '''
            
     F_inc = (sp.Matrix([[1, 0, 0],
@@ -104,65 +118,125 @@ def F(idx):
     # we put a third element in the idx tuple if we want to use the angle
     if len(idx)>2:
         F_inc = R*F_inc*R.transpose()
-        
-    return F_inc*F0
+    
+    if incremental:
+        return F_inc
+    else:
+        return F_inc*F0
                 
 def C(F):
     # right Cauchy-Green Tensor
-    return F.transpose()*F
-
-def C_2(F):
-    return C(F)*C(F)
+    return F.T*F
 
 def B(F):
     # left Cauch-Green Tensor
-    return F*F.transpose()
+    return F*F.T
 
-def I4(F):
-    # fourth strain invariant for fiber directed along x3
-    return m.dot(C(F)*m)
-
-def I5(F):
-    # fifth strain invariant for fiber directed along x3
-    return  m.dot((C(F)*C(F))*m)
 
 def I1(F):
     # first strain invariant
     return B(F).trace()
 
+def I4(F):
+    # fourth strain invariant for fiber directed along x3
+    return m.dot(C(F) * m)
+
+def I5(F):
+    # fifth strain invariant for fiber directed along x3
+    return m.dot((C(F) * C(F)) * m)
+
+def I6(F, prestress):
+    # sixth strain invariant for prestressed material
+    return (prestress * C(F)).trace()
+
+def I7(F, prestress):
+    # seventh strain invariant for prestressed material
+    return (prestress * C(F) * C(F)).trace()
+
+def I8(F, prestress):
+    # eighth strain invariant for prestressed fiber directed along x3
+    return m.dot(prestress * C(F) * m)
+
+def I9(F, prestress):
+    # eighth strain invariant for prestressed fiber directed along x3
+    return m.dot(prestress * C(F) * C(F) * m)
+
+# register functions
+I = {}
+I[1] = I1
+I[4] = I4
+I[5] = I5
+I[6] = I6
+I[7] = I7
+I[8] = I8
+I[9] = I9
+
+# values of I using prestrained reference state
+i0 = {}
+i0[1] = 3
+i0[4] = 1
+i0[5] = 1
+i0[6] = sigma_l
+i0[7] = sigma_l
+i0[8] = sigma_l
+i0[9] = sigma_l
+
 idx = np.arange(3) # used for nested loops
      
 def stress(idx):
     # Ogden Eq. 2.47
-    tp4 = TensorProduct(F(idx)*m, F(idx)*m).reshape(3,3)
-    tp5 = (TensorProduct(F(idx)*m, B(F(idx))*F(idx)*m).reshape(3,3)+
-           TensorProduct(B(F(idx))*F(idx)*m, F(idx)*m).reshape(3,3))
-    W1 = sp.diff(W, i1)
-    W4 = sp.diff(W, i4)
-    W5 = sp.diff(W, i5)
-    sigma = -p*sp.eye(3) + 2*W1*B(F(idx))+2*W4*tp4+2*W5*tp5
+    f = F(idx)
+    tp4 = TensorProduct(f*m, f*m).reshape(3,3)
+    tp5 = (TensorProduct(f*m, B(f)*f*m).reshape(3,3)+
+           TensorProduct(B(f)*f*m, f*m).reshape(3,3))
+    
+    # Wd[n] is dW/di[n]
+    Wd={}
+    for n in [1,4,5]:
+        Wd[n]=sp.diff(W, i[n])
+
+    sigma = -p*sp.eye(3) + 2*Wd[1]*B(f)+2*Wd[4]*tp4+2*Wd[5]*tp5
     
     pval = sp.solve(sigma[0,0], p)[0]
     sigma = sigma.subs(p, pval)
-    sigma = sigma.subs(i1, I1(F(idx)))
-    sigma = sigma.subs(i4, I4(F(idx)))
-    sigma = sigma.subs(i5, I5(F(idx)))
+    for n in [1,4,5]:
+        sigma = sigma.subs(i[n], I[n](f))
     return sp.simplify(sigma)
 
-def stressi(idx):
-    # Ogden Eq. 2.47
-    tp4 = TensorProduct(F(idx)*m, F(idx)*m).reshape(3,3)
-    tp5 = (TensorProduct(F(idx)*m, B(F(idx))*F(idx)*m).reshape(3,3)+
-           TensorProduct(B(F(idx))*F(idx)*m, F(idx)*m).reshape(3,3))
-    W1 = sp.diff(W, i1)
-    W4 = sp.diff(W, i4)
-    W5 = sp.diff(W, i5)
-    sigma = -p*sp.eye(3) + 2*W1*B(F(idx))+2*W4*tp4+2*W5*tp5
+# define the prestress, which is always uniaxial along the symmetry
+# axis for now
+prestress = (sp.Matrix([[0, 0, 0],
+                        [0, 0, 0],
+                        [0, 0, sigma_l]]))
+
+def stressi(idx):  # stress from incremental strain energy funcion
+    # Ogden and Singh Eq. 34
+    f = F(idx, incremental=True)
+    tp4 = TensorProduct(f*m, f*m).reshape(3,3)
+    tp5 = (TensorProduct(f*m, B(f)*f*m).reshape(3,3)+
+           TensorProduct(B(f)*f*m, f*m).reshape(3,3))
+   # Sig = f*prestress*f.T
+    
+    
+    # we don't use I8 and I9 currently, but maybe we will someday
+    Wd={}
+    for n in [1,4,5,6,7]:
+        Wd[n]=sp.diff(Wi, i[n])
+        
+    sigma = (-p*sp.eye(3) + 2*Wd[1]*B(f)+2*Wd[4]*tp4+2*Wd[5]*tp5)
+ #       +     2*Wd[6]*Sig + 2*Wd[7]*(B(f)*Sig+Sig*B(f)))
     
     pval = sp.solve(sigma[0,0], p)[0]
     sigma = sigma.subs(p, pval)
+    
+    for n in [1,4,5]:
+        sigma = sigma.subs(i[n], I[n](f))
+        
+    for n in [6,7]:
+        sigma = sigma.subs(i[n], I[n](f, prestress))
 
     return sp.simplify(sigma)
+
 
 def modulus(idx):
     # calculate differential modulus from stress function
@@ -170,6 +244,21 @@ def modulus(idx):
         stress_tensor= R.transpose()*stress(idx)*R
     else:
         stress_tensor = stress(idx)
+    stress_component = stress_tensor[idx[0], idx[1]]
+    mod = sp.diff(stress_component, delta)
+    if idx[0]!=idx[1] : # don't need to do this for the extension cases
+        mod = mod.subs(delta, 0)
+    else:
+        mod = mod.subs(delta, 1)
+    mod = sp.simplify(mod)
+    return mod
+
+def modulusi(idx):
+    # calculate differential modulus from stress function
+    if len(idx)>2:  # for theta dependence of SH and SV modes
+        stress_tensor= R.transpose()*stressi(idx)*R
+    else:
+        stress_tensor = stressi(idx)
     stress_component = stress_tensor[idx[0], idx[1]]
     mod = sp.diff(stress_component, delta)
     if idx[0]!=idx[1] : # don't need to do this for the extension cases
@@ -190,9 +279,6 @@ sigma_l_sym = stress((2,2))[2,2].subs(delta, 1)
 phi_i_sym = mu_lt_sym/mu_tt_sym-1
 zeta_i_sym = sp.Rational(1,4)*(E_ll_sym/mu_tt_sym-3)
 
-
-mu_lt, mu_tl, mu_tt, phi_i, zeta_i, sigma_l = sp.symbols(['mu_lt', 'mu_tl',
-        'mu_tt','phi_i', 'zeta_i', 'sigma_l'])
 
 # these functions for mu_SH and mu_SV are the  new simplified versions, but
 # are equivalent to what is in the paper

@@ -986,7 +986,7 @@ def fitKWW(df, **kwargs):
             plt.savefig(savepath)
             
 
-    return avgtau, avgtau_err
+    return tau, avgtau, avgtau_err, beta
 
 
 def MLf(z, a):
@@ -2036,9 +2036,129 @@ def downsample_points_per_decade(
     return x_ds, y_ds, ordered_unique_idx
 
 
+def downsample_df_per_decade(
+    df: pd.DataFrame,
+    column: str,
+    points_per_decade: int = 10,
+    base: float = 10.0,
+    include_endpoints: bool = False,
+):
+    """
+    Downsample DataFrame rows to approximately `points_per_decade`
+    per logarithmic decade of the specified column.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Input DataFrame.
+    column : str
+        Name of the column used for logarithmic downsampling.
+        Values must be strictly positive.
+    points_per_decade : int, default=10
+        Target number of retained points per decade.
+    base : float, default=10.0
+        Logarithm base that defines a “decade”.
+    include_endpoints : bool, default=False
+        If True, always retain the first and last rows and try to
+        include integer decade boundaries when present.
+
+    Returns
+    -------
+    df_ds : pandas.DataFrame
+        Downsampled DataFrame (rows preserved, no interpolation).
+    idx : ndarray
+        Integer indices of retained rows (relative to original df).
+
+    Notes
+    -----
+    - Keeps actual data rows; does NOT interpolate.
+    - Selection is made in log-space within each integer decade.
+    - Row order is preserved.
+    """
+
+    if column not in df.columns:
+        raise KeyError(f"Column '{column}' not found in DataFrame.")
+
+    x = df[column].to_numpy()
+
+    if np.any(x <= 0):
+        raise ValueError(
+            f"All values in column '{column}' must be > 0 "
+            "for logarithmic decades."
+        )
+
+    # Work in log-base `base`
+    logx = np.log(x) / np.log(base)
+
+    d_min = int(np.floor(logx.min()))
+    d_max = int(np.floor(logx.max()))
+
+    selected_idx = []
+
+    for d in range(d_min, d_max + 1):
+        if d < d_max:
+            mask = (logx >= d) & (logx < d + 1)
+            right_inclusive = False
+        else:
+            mask = (logx >= d) & (logx <= d + 1)
+            right_inclusive = True
+
+        idx_in_decade = np.nonzero(mask)[0]
+        if idx_in_decade.size == 0:
+            continue
+
+        # Keep all points if already sparse
+        if idx_in_decade.size <= points_per_decade:
+            selected_idx.extend(idx_in_decade.tolist())
+            continue
+
+        # Evenly spaced targets in log-space
+        targets = np.linspace(
+            d, d + 1, points_per_decade, endpoint=False
+        )
+
+        logx_dec = logx[idx_in_decade]
+
+        for t in targets:
+            j = np.argmin(np.abs(logx_dec - t))
+            selected_idx.append(idx_in_decade[j])
+
+        if include_endpoints:
+            # Left decade boundary
+            j_left = np.where(np.isclose(logx_dec, d, atol=1e-12))[0]
+            if j_left.size:
+                selected_idx.append(idx_in_decade[j_left[0]])
+
+            # Right decade boundary (only for last decade)
+            if right_inclusive:
+                j_right = np.where(
+                    np.isclose(logx_dec, d + 1, atol=1e-12)
+                )[0]
+                if j_right.size:
+                    selected_idx.append(idx_in_decade[j_right[0]])
+
+    # Always include global endpoints
+    if include_endpoints and len(df):
+        selected_idx.extend([0, len(df) - 1])
+
+    # Deduplicate while preserving order
+    seen = set()
+    ordered_idx = []
+    for i in selected_idx:
+        if i not in seen:
+            seen.add(i)
+            ordered_idx.append(i)
+
+    ordered_idx = np.array(ordered_idx, dtype=int)
+    ordered_idx.sort()
+
+    return df.iloc[ordered_idx].copy()
+
+
 #This if statement should be included at the end of any module
 #If you don't include this, when you import the module, it will run
 #the module script from top to bottom instead of only importing the
 #functions	
 if __name__ == "__main__":
  	pass
+ 
