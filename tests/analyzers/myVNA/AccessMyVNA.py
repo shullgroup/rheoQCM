@@ -1524,15 +1524,15 @@ class AccessMyVNA():
         self.Autoscale()
         logger.info('self._nsteps %s', self._nsteps) 
 
-        ## wait for VNA collecting data
-        # method 1: wait for some time
-        t_wait = time.time() + self._get_wait_time() 
-        # bg_wait_till(t_wait) # sleep
+        # ## wait for VNA collecting data
+        # # method 1: wait for some time
+        # t_wait = time.time() + self._get_wait_time() 
+        # # bg_wait_till(t_wait) # sleep
 
-        # method 2: use thread
-        thread = threading.Thread(target=time.sleep, args=(self._get_wait_time(),))
-        thread.start()
-        thread.join()
+        # # method 2: use thread
+        # thread = threading.Thread(target=time.sleep, args=(self._get_wait_time(),))
+        # thread.start()
+        # thread.join()
 
         logger.info('self._nsteps%s', self._nsteps) 
         # ret, nSteps = self.GetScanSteps()
@@ -1789,7 +1789,7 @@ if __name__ == '__main__':
     
     # vna.change_settings(nSteps=400)
     with vna:
-        print('start')
+        print('SingleScan() test start')
         ret, vna._f[0], vna._f[1] = vna.SetFequencies(f1=4.9e6, f2=5.1e6, nFlags=1)
         print(ret, vna._f)
 
@@ -1811,6 +1811,23 @@ if __name__ == '__main__':
             print(B[1])
         finally:
             vna.Close()
+
+
+    with vna:
+        print('single_scan() test start')
+        ret, vna._f[0], vna._f[1] = vna.SetFequencies(f1=4.9e6, f2=5.1e6, nFlags=1)
+        print(ret, vna._f)
+
+        try:
+            ret, f, G_mS, B_mS = vna.single_scan()
+            t0 = time.time()
+            print(f[1])
+            print(G[1])
+            print(B[1])
+        finally:
+            vna.Close()
+
+
     # accvna.GetIntegerArray(nWhat=6, nIndex=0, nArraySize=4)
     exit(0)
     import inspect
