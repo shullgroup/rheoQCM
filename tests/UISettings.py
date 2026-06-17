@@ -437,7 +437,9 @@ config_default = {
         ('2', 'ADC 2'),
     ]),
 
+    # NOTE: vna_wait_time_extra is not used in new version >= 0.21.0
     'vna_wait_time_extra': 0.05, # extra time adds to wait_time
+    'vna_timeout': 2,  # in second, maximum time the program waits for the vna scan finished message
 
     'channel_opts': OrderedDict([
     # key: str; val: for display in combobox
@@ -518,6 +520,9 @@ config_default = {
     # available base frequency of crystals
     # key: str can be converted to number; val: for display in combobox
     'base_frequency_opts': OrderedDict([
+        ('1' , '1 MHz'),
+        ('2' , '2 MHz'),
+        ('3' , '3 MHz'),
         ('5' , '5 MHz'),
         ('6' , '6 MHz'),
         ('9' , '9 MHz'),

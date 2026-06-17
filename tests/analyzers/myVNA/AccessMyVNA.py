@@ -15,6 +15,11 @@ import threading
 import win32ui
 import win32process
 
+# for msg window
+import win32api
+import win32con
+import win32gui
+
 import ctypes
 
 import logging
@@ -31,7 +36,9 @@ except:
     settings_default = {}
 
 # initialize extra_time by default
-extra_time = config_default.get('vna_wait_time_extra', 0.05) # in s. This extra time will be added to the calculated value
+extra_time = config_default.get('vna_wait_time_extra', 0.05) # in s. This extra time will be added to the calculated value #NOTE: not using
+
+vna_timeout = config_default.get('vna_timeout', 2) # in second, the time before send timouterror 
 
 if 'vna_wait_time_extra' in settings_default:
     extra_time = settings_default['vna_wait_time_extra']
@@ -738,11 +745,13 @@ _MyVNASetDisplayMode = wfunc(
 # int nRet = MyVNASingleScan(WM_COMMAND, GetSafeHwnd(), MESSAGE_SCAN_ENDED, 0 );
 
 _MyVNASingleScan = wfunc(
-    '?MyVNASingleScan@@YGHHPAUHWND__@@HH@Z', vna, c_int,
-    (c_int, (1, 'Message'), WM_COMMAND),
-    (HWND, (1, 'hWnd'), WM_COMMAND),
-    (c_int, (1, 'nCommand'), MESSAGE_SCAN_ENDED),
-    (c_int, (1, 'lParam'), 0),
+    '?MyVNASingleScan@@YGHHPAUHWND__@@HH@Z', 
+    vna, 
+    c_int,
+    (c_int, (1, 'Message')),
+    (HWND, (1, 'hWnd')),
+    (c_int, (1, 'nCommand')),
+    (c_int, (1, 'lParam')),
 )
 
 ##########################################
@@ -928,6 +937,127 @@ _MyVNASaveTraceData = wfunc(
 
 #endregion
 
+class ScanMessageReceiver:
+    """
+    Owns an invisible window and continuously processes its Win32 messages
+    on a dedicated thread.
+    """
+
+    def __init__(self):
+        self.scan_finished = threading.Event()
+        self.ready = threading.Event()
+
+        self.hwnd = None
+        self._thread = threading.Thread(
+            target=self._message_thread,
+            name="myVNA-message-receiver",
+            daemon=True,
+        )
+        self._thread.start()
+
+        if not self.ready.wait(5.0):
+            raise RuntimeError("Could not create the myVNA message window")
+
+        if not self.hwnd or not win32gui.IsWindow(self.hwnd):
+            raise RuntimeError("The myVNA message window handle is invalid")
+
+    def _message_thread(self):
+        hinstance = win32api.GetModuleHandle(None)
+        class_name = f"MyVNAScanReceiver_{os.getpid()}_{id(self)}"
+
+        # Keep a reference to the callback for the lifetime of the window.
+        self._wndproc_reference = self._window_proc
+
+        wc = win32gui.WNDCLASS()
+        wc.hInstance = hinstance
+        wc.lpszClassName = class_name
+        wc.lpfnWndProc = self._wndproc_reference
+
+        win32gui.RegisterClass(wc)
+
+        self.hwnd = win32gui.CreateWindow(
+            class_name,
+            "myVNA Python Scan Receiver",
+            0,       # invisible top-level window
+            0,
+            0,
+            0,
+            0,
+            0,       # parent
+            0,       # menu
+            hinstance,
+            None,
+        )
+
+        logger.info("Created myVNA receiver HWND: %#x", self.hwnd)
+        self.ready.set()
+
+        # Runs until WM_DESTROY posts WM_QUIT.
+        win32gui.PumpMessages()
+
+    def _window_proc(self, hwnd, message, wparam, lparam):
+        if message == WM_COMMAND:
+            command_id = int(wparam) & 0xFFFF
+
+            logger.info(
+                "Received WM_COMMAND: wParam=%#x lParam=%#x command_id=%#x",
+                int(wparam),
+                int(lparam),
+                command_id,
+            )
+
+            # Normally MESSAGE_SCAN_ENDED is in wParam.
+            # Also check lParam because the comments in the supplied header
+            # inconsistently describe the automation argument ordering.
+            if (
+                int(wparam) == MESSAGE_SCAN_ENDED
+                or command_id == (MESSAGE_SCAN_ENDED & 0xFFFF)
+                or int(lparam) == MESSAGE_SCAN_ENDED
+            ):
+                logger.info("myVNA scan-completion message received")
+                self.scan_finished.set()
+                return 0
+
+        if message == 0x0010:  # WM_CLOSE
+            win32gui.DestroyWindow(hwnd)
+            return 0
+
+        if message == 0x0002:  # WM_DESTROY
+            win32gui.PostQuitMessage(0)
+            return 0
+
+        return win32gui.DefWindowProc(hwnd, message, wparam, lparam)
+
+    def prepare_scan(self):
+        self.scan_finished.clear()
+
+    def wait(self, timeout):
+        return self.scan_finished.wait(timeout)
+
+    def self_test(self):
+        """Verify that the Python window and message loop work."""
+        self.scan_finished.clear()
+
+        win32gui.PostMessage(
+            self.hwnd,
+            WM_COMMAND,
+            MESSAGE_SCAN_ENDED,
+            0,
+        )
+
+        if not self.scan_finished.wait(1.0):
+            raise RuntimeError(
+                "Python receiver self-test failed: "
+                "the window is not processing WM_COMMAND"
+            )
+
+        self.scan_finished.clear()
+
+    def close(self):
+        if self.hwnd and win32gui.IsWindow(self.hwnd):
+            win32gui.PostMessage(self.hwnd, 0x0010, 0, 0)  # WM_CLOSE
+
+
 class AccessMyVNA():
     '''
     the module used to comunicate with MyVNA
@@ -958,17 +1088,39 @@ class AccessMyVNA():
 
         logger.info('__init__1') 
 
+        # for receiving the scan finishing msg 
+        self._scan_receiver = None
+        self._initialized = False
+        # self._scan_receiver.self_test()
+
 
     # use __enter__ __exit__ for with or use try finally
     def __enter__(self):
-        self.Init()
+        ret = self.Init()
         self.ShowWindow(1) # mininmize window (may not work)
         logger.info('in') 
+        # test receiver window
+        if ret != 0:
+            raise RuntimeError(f"MyVNAInit failed: ret={ret}")
+
+        self._initialized = True
+
+        # Create the callback window only after myVNA is initialized.
+        self._scan_receiver = ScanMessageReceiver()
+        self._scan_receiver.self_test()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         logger.info('out1') 
-        self.Close()
+        try:
+            if self._initialized:
+                self.Close()
+        finally:
+            self._initialized = False
+
+            if self._scan_receiver is not None:
+                self._scan_receiver.close()
+                self._scan_receiver = None
         logger.info('out2') 
 
 
@@ -1213,15 +1365,48 @@ class AccessMyVNA():
         # int nRet = MyVNASetDisplayMode( nDisplayMode);
 
 
-    def SingleScan(self):
+    def SingleScan(self, timeout=vna_timeout):
         '''
         starts a single scan 
         '''
-        # ret = MyVNASingleScan(0x0111, get_hWnd(), 0x0400 + 0x1234, 0)
-        hWnd = get_hWnd()
-        ret = _MyVNASingleScan(WM_COMMAND, hWnd, MESSAGE_SCAN_ENDED, 0)
-        logger.info('MyVNASingleScan\n%s %s', ret, hWnd) 
-        return ret, hWnd
+        if not self._initialized:
+            raise RuntimeError(
+                "AccessMyVNA must be used inside a with block."
+            )
+
+        if self._scan_receiver is None:
+            raise RuntimeError("Scan message receiver is not initialized.")
+
+        receiver = self._scan_receiver
+        receiver.prepare_scan()
+
+        # Important: pass the Python receiver HWND.
+        # Do not pass get_hWnd(), because that returns the myVNA window.
+        ret = _MyVNASingleScan(
+            WM_COMMAND,
+            self._scan_receiver.hwnd,
+            MESSAGE_SCAN_ENDED,
+            0,
+        )
+
+        logger.info(
+            "MyVNASingleScan returned %s; receiver HWND=%#x",
+            ret,
+            self._scan_receiver.hwnd,
+        )
+
+        if ret != 0:
+            raise RuntimeError(
+                f"MyVNASingleScan did not start successfully: ret={ret}"
+            )
+
+        if not self._scan_receiver.wait(timeout):
+            raise TimeoutError(
+                "myVNA scan started but no completion message was received "
+                f"within {timeout:.1f} seconds"
+            )
+
+        return ret
 
 
     def EqCctRefine(self):
@@ -1584,6 +1769,9 @@ if __name__ == '__main__':
     import time
     import logging
     # logging.basicConfig(level=logging.INFO)
+    # scan_receiver = ScanMessageReceiver()
+    # scan_receiver.self_test()
+    print("Receiver self-test passed")
 
     # manually use Init() and Close() is the same as with statement
     vna = AccessMyVNA()
@@ -1605,25 +1793,24 @@ if __name__ == '__main__':
         ret, vna._f[0], vna._f[1] = vna.SetFequencies(f1=4.9e6, f2=5.1e6, nFlags=1)
         print(ret, vna._f)
 
-        vna.SingleScan()
-        time.sleep(1)
-        t0 = time.time()
-        ret, f, G = vna.GetScanData(nStart=0, nEnd=int(vna._nsteps), nWhata=-1, nWhatb=15)
-        # print(i, t - t0, f[-1], G[-1])
-        t1 = time.time()
-        print(t1-t0)
+        try:
+            vna.SingleScan()
+            t0 = time.time()
+            ret, f, G = vna.GetScanData(nStart=0, nEnd=int(vna._nsteps), nWhata=-1, nWhatb=15)
+            # print(i, t - t0, f[-1], G[-1])
+            t1 = time.time()
+            print(t1-t0)
 
-        t0 = time.time()
-        ret, _, B = vna.GetScanData(nStart=0, nEnd=int(vna._nsteps), nWhata=-2, nWhatb=16)
-        # print(i, t - t0, f[-1], G[-1])
-        t1 = time.time()
-        print(t1-t0)
-
-        time.sleep(1)
-        print(f[1])
-        print(G[1])
-        print(B[1])
-    
+            t0 = time.time()
+            ret, _, B = vna.GetScanData(nStart=0, nEnd=int(vna._nsteps), nWhata=-2, nWhatb=16)
+            # print(i, t - t0, f[-1], G[-1])
+            t1 = time.time()
+            print(t1-t0)
+            print(f[1])
+            print(G[1])
+            print(B[1])
+        finally:
+            vna.Close()
     # accvna.GetIntegerArray(nWhat=6, nIndex=0, nArraySize=4)
     exit(0)
     import inspect
