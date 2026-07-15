@@ -439,7 +439,7 @@ config_default = {
 
     # NOTE: vna_wait_time_extra is not used in new version >= 0.21.0
     'vna_wait_time_extra': 0.05, # extra time adds to wait_time
-    'vna_timeout': 2,  # in second, maximum time the program waits for the vna scan finished message
+    'vna_timeout': 5,  # in second, maximum time the program waits for the vna scan finished message
 
     'channel_opts': OrderedDict([
     # key: str; val: for display in combobox

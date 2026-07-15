@@ -1794,7 +1794,10 @@ if __name__ == '__main__':
         print(ret, vna._f)
 
         try:
+            t0 = time.time()
             vna.SingleScan()
+            t1 = time.time()
+            print(f'SingleScan excueed for {t1-t0}s')
             t0 = time.time()
             ret, f, G = vna.GetScanData(nStart=0, nEnd=int(vna._nsteps), nWhata=-1, nWhatb=15)
             # print(i, t - t0, f[-1], G[-1])
