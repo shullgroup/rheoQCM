@@ -440,6 +440,11 @@ config_default = {
     # NOTE: vna_wait_time_extra is not used in new version >= 0.21.0
     'vna_wait_time_extra': 0.05, # extra time adds to wait_time
     'vna_timeout': 5,  # in second, maximum time the program waits for the vna scan finished message
+    # Use the original 32-bit ctypes shim instead of the automation
+    # interface. The automation path needs no DLL and avoids the
+    # one-element SafeArray overrun in MyVNAGetScanData; see
+    # analyzers/myVNA/AccessMyVNA_com.py.
+    'vna_use_dll': False,
 
     'channel_opts': OrderedDict([
     # key: str; val: for display in combobox
