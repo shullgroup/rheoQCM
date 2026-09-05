@@ -10,6 +10,31 @@ ax.change_geometry(2,2,i+1)
 '''
 
 from matplotlib import __version__ as mp_ver
+from packaging.version import parse as _parse_version
+
+# Compare matplotlib versions numerically, not as strings.
+# '3.11.1' >= '3.5.0' is False as a string compare -- it reaches the
+# '1' of '11', finds it below '5', and stops -- so every matplotlib
+# from 3.10 on was treated as older than 3.5 and took the legacy
+# branch, passing rectprops= to a SpanSelector that dropped it in 3.7.
+MPL_HAS_PROPS = _parse_version(mp_ver) >= _parse_version('3.5.0')
+
+
+def _as_sequence(v):
+    """Wrap a bare number so Line2D.set_data will take it.
+
+    Several callers plot a single marker from scalars -- the fitted
+    resonance, for instance, as {'ln': 'srec', 'x': cen_rec_freq,
+    'y': cen_rec_G} in rheoQCM.py. matplotlib used to accept that;
+    it deprecated scalars in set_data in 3.7 and now raises
+    RuntimeError("x must be a sequence"), which crashed the run
+    immediately *after* a successful fit.
+    """
+    if v is None:
+        return []
+    if np.isscalar(v):
+        return [v]
+    return v
 # # matplotlib.use('QT5Agg')
 # matplotlib.rcParams['toolbar'] = 'toolmanager'
 # matplotlib.rcParams['font.size'] = 10
@@ -447,7 +472,7 @@ class MatplotlibWidget(QWidget):
         # self.ax[1].autoscale()
 
         # add span selector
-        if mp_ver >= '3.5.0':  # newer version matplotlib use 'props'
+        if MPL_HAS_PROPS:  # 3.5 and later use 'props'
             self.span_selector_zoomin = SpanSelector(
                 self.ax[0], 
                 self.sp_spanselect_zoomin_callback,
@@ -628,7 +653,7 @@ class MatplotlibWidget(QWidget):
         # self.ax[0].autoscale()
 
         # add rectangle_selector
-        if mp_ver >= '3.5.0':  # newer version matplotlib use 'props'
+        if MPL_HAS_PROPS:  # 3.5 and later use 'props'
             self.rect_selector = RectangleSelector(
                 self.ax[0], 
                 self.data_rectselector_callback,
@@ -1186,8 +1211,8 @@ class MatplotlibWidget(QWidget):
                     axs.add(line.axes)
             else: # not errorbar
                 ln = arg['ln'] 
-                x = arg['x'] 
-                y = arg['y']
+                x = _as_sequence(arg['x'])
+                y = _as_sequence(arg['y'])
                 # logger.info(len(x: %s), len(y)) 
                 # self.l[ln][0].set_xdata(x)
                 # self.l[ln][0].set_ydata(y)

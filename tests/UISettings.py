@@ -46,7 +46,10 @@ config_default = {
         ],
         'cal_file_path': r'./cal/',
         'cal_ext': '.myVNA.cal',
-        'py_ver': 32, # int
+        # No py_ver constraint. It was 32 because AccessMyVNAdll.dll is
+        # 32-bit stdcall; the automation interface has none, and
+        # py_sys_check() would otherwise drop myVNA from the analyzer
+        # list on a 64-bit interpreter, leaving the dropdown empty.
         },
     'vnwa': {
         'name': 'vnwa',

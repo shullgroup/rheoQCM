@@ -76,9 +76,12 @@ if UIModules.system_check() is UIModules.OSType.windows: # windows
 
     if UIModules.is_32bit_python(): # 32-bit version Python
         ...
-    else: # 64-bit version Python which doesn't work with AccessMyVNA
-        # A 32-bit server may help 64-bit Python work with 32-bit dll
-        logger.warning('MyVNA program does not work with 64-bit Python!')
+    else: # 64-bit Python, which the automation interface supports
+        # The 32-bit requirement came from AccessMyVNAdll.dll, not from the
+        # instrument. myVNA is an out-of-process automation server, so its
+        # interface marshals across bitness and AccessMyVNA_com reaches it
+        # with only pywin32. Verified on 64-bit Python 3.13.
+        logger.info('64-bit Python: using the automation interface (no DLL).')
 else: # linux or MacOS
     # for test only
     # from modules.AccessMyVNA_dummy import AccessMyVNA
@@ -5734,13 +5737,13 @@ class QCMApp(QMainWindow):
         if self.vna_name == 'myvna': 
             # initialize AccessMyVNA
             #TODO add more code to disable settings_control tab and widges in settings_settings tab
-            if (self.system is UIModules.OSType.windows) and (self.is_32bit): # windows and 32-bit
+            if self.system is UIModules.OSType.windows:
                 try:
                     # The automation interface by default. It avoids
                     # MyVNAGetScanData, whose SafeArrays are one element
                     # shorter than what myVNA writes into them. The original
                     # ctypes shim is still selectable with vna_use_dll.
-                    if config_default.get('vna_use_dll', False):
+                    if config_default.get('vna_use_dll', False) and self.is_32bit:
                         from analyzers.myVNA.AccessMyVNA import AccessMyVNA
                     else:
                         from analyzers.myVNA.AccessMyVNA_com import AccessMyVNA

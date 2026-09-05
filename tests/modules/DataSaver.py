@@ -63,6 +63,24 @@ import csv
 import logging
 logger = logging.getLogger(__name__)
 
+
+def set_list_cells(df, idx_list, column, values):
+    """Write one list into each of several cells, by label.
+
+    Replaces ``df.col[idx_list] = values``, which pandas warns about as
+    chained assignment and will stop honouring under Copy-on-Write in
+    pandas 3.0 -- the write would land on a temporary and be silently
+    lost, which for saved data is the worst kind of failure.
+
+    The obvious rewrite does not work. These cells each hold a list, so
+    ``df.loc[idx_list, column] = values`` raises "Must have equal len
+    keys and value when setting with an ndarray" as pandas tries to
+    broadcast the lists across rows. Setting one cell at a time with .at
+    takes each list as a value and reproduces the old result exactly.
+    """
+    for pos, idx in enumerate(idx_list):
+        df.at[idx, column] = values[pos]
+
 import UISettings 
 config_default = UISettings.get_config() # load default configuration
 settings_default = UISettings.get_settings()
@@ -2382,9 +2400,9 @@ class DataSaver:
                     # save to df
                     # logger.info('cols.fs[ind_list] %s', cols.fs[ind_list])
                     # logger.info('fs_list %s', fs_list)
-                    cols.fs[ind_list] = fs_list
-                    cols.gs[ind_list] = gs_list
-                    cols.ps[ind_list] = ps_list
+                    set_list_cells(cols, ind_list, 'fs', fs_list)
+                    set_list_cells(cols, ind_list, 'gs', gs_list)
+                    set_list_cells(cols, ind_list, 'ps', ps_list)
 
                 # logger.info('cols[ind_list]\n%s', cols.iloc[ind_list]) 
                 logger.info(cols[col].head())
@@ -2432,9 +2450,9 @@ class DataSaver:
                     ps_list = np.transpose(np.array(p_list)).tolist()
 
                     # save to df
-                    cols.fs[ind_list] = fs_list
-                    cols.gs[ind_list] = gs_list
-                    cols.ps[ind_list] = ps_list
+                    set_list_cells(cols, ind_list, 'fs', fs_list)
+                    set_list_cells(cols, ind_list, 'gs', gs_list)
+                    set_list_cells(cols, ind_list, 'ps', ps_list)
 
                 logger.info('cols[ind_list]\n%s', cols.iloc[ind_list]) 
                 logger.info(cols[col].head())
@@ -2479,9 +2497,9 @@ class DataSaver:
                     ps_list = np.transpose(np.array(p_list)).tolist()
 
                     # save to df
-                    cols.fs[ind_list] = fs_list
-                    cols.gs[ind_list] = gs_list
-                    cols.ps[ind_list] = ps_list
+                    set_list_cells(cols, ind_list, 'fs', fs_list)
+                    set_list_cells(cols, ind_list, 'gs', gs_list)
+                    set_list_cells(cols, ind_list, 'ps', ps_list)
 
                 logger.info('cols[ind_list]\n%s', cols.iloc[ind_list]) 
                 logger.info(cols[col].head())

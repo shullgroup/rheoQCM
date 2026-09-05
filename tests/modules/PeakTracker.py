@@ -1089,6 +1089,25 @@ class PeakTracker:
         # logger.info(G) 
         # logger.info(B) 
         logger.info('mm params %s', self.harmoutput[chn_name][harm]['params']) 
+
+        # Refuse a fit that cannot possibly work, and say why. leastsq
+        # otherwise reports "Improper input: func input vector length N=6 must
+        # not exceed func output vector length M=4", which gives no hint that
+        # the real problem is a scan span far wider than the resonance: at
+        # 50 Hz per point a 78 Hz peak is a point and a half across, and the
+        # cen +/- wid*factor window catches almost nothing.
+        n_free = sum(1 for p in self.get_output(key='params').values() if p.vary)
+        n_points = len(f)
+        if 2 * n_points < n_free:
+            logger.error(
+                'not enough data to fit: %d points across the peak give %d '
+                'residuals for %d free parameters. Narrow the scan span -- '
+                'roughly 20x the resonance width is a good starting point.',
+                n_points, 2 * n_points, n_free,
+            )
+            self.update_output(chn_name, harm, found_n=0, result={})
+            return
+
         try:
             result = minimize(
                 res_GB, 
