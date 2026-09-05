@@ -46,7 +46,10 @@ config_default = {
         ],
         'cal_file_path': r'./cal/',
         'cal_ext': '.myVNA.cal',
-        'py_ver': 32, # int
+        # No py_ver constraint. It was 32 because AccessMyVNAdll.dll is
+        # 32-bit stdcall; the automation interface has none, and
+        # py_sys_check() would otherwise drop myVNA from the analyzer
+        # list on a 64-bit interpreter, leaving the dropdown empty.
         },
     'vnwa': {
         'name': 'vnwa',
@@ -440,6 +443,11 @@ config_default = {
     # NOTE: vna_wait_time_extra is not used in new version >= 0.21.0
     'vna_wait_time_extra': 0.05, # extra time adds to wait_time
     'vna_timeout': 5,  # in second, maximum time the program waits for the vna scan finished message
+    # Use the original 32-bit ctypes shim instead of the automation
+    # interface. The automation path needs no DLL and avoids the
+    # one-element SafeArray overrun in MyVNAGetScanData; see
+    # analyzers/myVNA/AccessMyVNA_com.py.
+    'vna_use_dll': False,
 
     'channel_opts': OrderedDict([
     # key: str; val: for display in combobox
