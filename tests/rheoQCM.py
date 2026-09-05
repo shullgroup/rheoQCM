@@ -5736,7 +5736,14 @@ class QCMApp(QMainWindow):
             #TODO add more code to disable settings_control tab and widges in settings_settings tab
             if (self.system is UIModules.OSType.windows) and (self.is_32bit): # windows and 32-bit
                 try:
-                    from analyzers.myVNA.AccessMyVNA import AccessMyVNA
+                    # The automation interface by default. It avoids
+                    # MyVNAGetScanData, whose SafeArrays are one element
+                    # shorter than what myVNA writes into them. The original
+                    # ctypes shim is still selectable with vna_use_dll.
+                    if config_default.get('vna_use_dll', False):
+                        from analyzers.myVNA.AccessMyVNA import AccessMyVNA
+                    else:
+                        from analyzers.myVNA.AccessMyVNA_com import AccessMyVNA
                     logger.info(AccessMyVNA) 
                     # test if MyVNA program is available
                     with AccessMyVNA() as vna:
