@@ -52,7 +52,10 @@ def main() -> int:
                 print("FAILED: could not reach myVNA. Is it installed and "
                       "registered? Try launching it once, elevated.")
                 return 1
-            print("connected. no DLL, no 32-bit interpreter.")
+            # Say only what is true here. The bitness is printed above,
+            # and the point is that it does not matter: this passes
+            # identically on 32-bit 3.7 and 64-bit 3.13.
+            print("connected, with no DLL in the path.")
 
             print("\nsettings")
             print("  instrument mode  %s" % (vna.Setinstrmode(0)[1],))
@@ -120,7 +123,7 @@ def main() -> int:
                 return 1
             peak = int(np.argmax(G))
             print("PASSED. Peak G at %.1f Hz." % f[peak])
-            print("This is the path rheoQCM will use with vna_use_dll = False.")
+            print("This is the path rheoQCM uses with vna_use_dll = False.")
             return 0
 
     except MyVNAError as exc:
